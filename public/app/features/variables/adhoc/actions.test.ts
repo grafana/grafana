@@ -1,6 +1,5 @@
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta, TypedVariableModel } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { VariableModel } from 'app/features/variables/types';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
@@ -499,7 +498,7 @@ describe('adhoc actions', () => {
   });
 });
 
-function createAddVariableAction(variable: VariableModel, index = 0) {
+function createAddVariableAction(variable: TypedVariableModel, index = 0) {
   const identifier = toKeyedVariableIdentifier(variable);
   const global = false;
   const data = { global, index, model: { ...variable, index: -1, global } };

@@ -239,6 +239,16 @@ export class KeybindingSrv {
       locationService.partial({ viewPanel: isViewing ? null : panelId });
     });
 
+    //toggle legend
+    this.bindWithPanelId('p l', (panelId) => {
+      const panel = dashboard.getPanelById(panelId)!;
+      const newOptions = { ...panel.options };
+
+      newOptions.legend.showLegend ? (newOptions.legend.showLegend = false) : (newOptions.legend.showLegend = true);
+
+      panel.updateOptions(newOptions);
+    });
+
     this.bindWithPanelId('i', (panelId) => {
       locationService.partial({ inspect: panelId });
     });
@@ -293,14 +303,6 @@ export class KeybindingSrv {
     });
 
     // toggle panel legend
-    this.bindWithPanelId('p l', (panelId) => {
-      const panelInfo = dashboard.getPanelInfoById(panelId)!;
-
-      if (panelInfo.panel.legend) {
-        panelInfo.panel.legend.show = !panelInfo.panel.legend.show;
-        panelInfo.panel.render();
-      }
-    });
 
     // toggle all panel legends
     this.bind('d l', () => {

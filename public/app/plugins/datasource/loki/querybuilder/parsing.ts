@@ -14,7 +14,7 @@ import {
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
 
 import { binaryScalarDefs } from './binaryScalarOperations';
-import { LokiVisualQuery, LokiVisualQueryBinary } from './types';
+import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {
   query: LokiVisualQuery;
@@ -155,7 +155,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     default: {
-      // Any other nodes we just ignore and go to it's children. This should be fine as there are lot's of wrapper
+      // Any other nodes we just ignore and go to its children. This should be fine as there are lots of wrapper
       // nodes that can be skipped.
       // TODO: there are probably cases where we will just skip nodes we don't support and we should be able to
       //  detect those and report back.
@@ -182,22 +182,24 @@ function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
 }
 
 function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
-  // Check for nodes not supported in visual builder and return error
-  const ipLineFilter = getAllByType(expr, node, 'Ip');
-  if (ipLineFilter.length > 0) {
-    return {
-      error: 'Matching ip addresses not supported in query builder',
-    };
-  }
-
-  const mapFilter: any = {
-    '|=': '__line_contains',
-    '!=': '__line_contains_not',
-    '|~': '__line_matches_regex',
-    '!~': '"__line_matches_regex"_not',
-  };
   const filter = getString(expr, node.getChild('Filter'));
   const filterExpr = handleQuotes(getString(expr, node.getChild('String')));
+  const ipLineFilter = node.getChild('FilterOp')?.getChild('Ip');
+
+  if (ipLineFilter) {
+    return {
+      operation: {
+        id: LokiOperationId.LineFilterIpMatches,
+        params: [filter, filterExpr],
+      },
+    };
+  }
+  const mapFilter: any = {
+    '|=': LokiOperationId.LineContains,
+    '!=': LokiOperationId.LineContainsNot,
+    '|~': LokiOperationId.LineMatchesRegex,
+    '!~': LokiOperationId.LineMatchesRegexNot,
+  };
 
   return {
     operation: {
@@ -238,12 +240,21 @@ function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuil
     };
   }
   if (node.firstChild!.name === 'IpLabelFilter') {
+    const ipLabelFilter = node.firstChild;
+    const label = ipLabelFilter?.getChild('Identifier');
+    const op = label?.nextSibling;
+    const value = ipLabelFilter?.getChild('String');
+    const valueString = handleQuotes(getString(expr, value));
+
     return {
-      error: 'IpLabelFilter not supported in query builder',
+      operation: {
+        id: LokiOperationId.LabelFilterIpMatches,
+        params: [getString(expr, label), getString(expr, op), valueString],
+      },
     };
   }
 
-  const id = '__label_filter';
+  const id = LokiOperationId.LabelFilter;
   if (node.firstChild!.name === 'UnitFilter') {
     const filter = node.firstChild!.firstChild;
     const label = filter!.firstChild;
@@ -269,7 +280,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuil
   if (params.join('') === `__error__=`) {
     return {
       operation: {
-        id: '__label_filter_no_errors',
+        id: LokiOperationId.LabelFilterNoErrors,
         params: [],
       },
     };
@@ -284,7 +295,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuil
 }
 
 function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  const id = 'line_format';
+  const id = LokiOperationId.LineFormat;
   const string = handleQuotes(getString(expr, node.getChild('String')));
 
   return {
@@ -294,7 +305,7 @@ function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  const id = 'label_format';
+  const id = LokiOperationId.LabelFormat;
   const renameTo = node.getChild('Identifier');
   const op = renameTo!.nextSibling;
   const originalLabel = op!.nextSibling;
@@ -323,16 +334,21 @@ function handleUnwrapExpr(
   }
 
   if (unwrapChild) {
-    if (unwrapChild?.nextSibling?.type.name === 'ConvOp') {
+    if (unwrapChild.nextSibling?.type.name === 'ConvOp') {
+      const convOp = unwrapChild.nextSibling;
+      const identifier = convOp.nextSibling;
       return {
-        error: 'Unwrap with conversion operator not supported in query builder',
+        operation: {
+          id: LokiOperationId.Unwrap,
+          params: [getString(expr, identifier), getString(expr, convOp)],
+        },
       };
     }
 
     return {
       operation: {
-        id: 'unwrap',
-        params: [getString(expr, unwrapChild?.nextSibling)],
+        id: LokiOperationId.Unwrap,
+        params: [getString(expr, unwrapChild?.nextSibling), ''],
       },
     };
   }

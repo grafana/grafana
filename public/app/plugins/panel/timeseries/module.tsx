@@ -18,7 +18,7 @@ export const plugin = new PanelPlugin<TimeSeriesOptions, GraphFieldConfig>(TimeS
 
     builder.addCustomEditor({
       id: 'timezones',
-      name: 'Timezone',
+      name: 'Time zone',
       path: 'timezones',
       category: ['Axis'],
       editor: TimezonesEditor,

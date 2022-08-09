@@ -11,7 +11,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestQueryJSON(t *testing.T) {
+	jsonString := []byte(`{
+		"type": "timeSeriesQuery"
+	}`)
+	var res QueryJson
+	err := json.Unmarshal(jsonString, &res)
+	require.NoError(t, err)
+	assert.Equal(t, "timeSeriesQuery", res.QueryType)
+}
+
 func TestRequestParser(t *testing.T) {
+	average := "Average"
+	false := false
 	t.Run("Query migration ", func(t *testing.T) {
 		t.Run("legacy statistics field is migrated", func(t *testing.T) {
 			oldQuery := &backend.DataQuery{
@@ -45,25 +57,22 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("New dimensions structure", func(t *testing.T) {
-		fixtureJSON := []byte(`{
-			"refId":      "ref1",
-			"region":     "us-east-1",
-			"namespace":  "ec2",
-			"metricName": "CPUUtilization",
-			"id":         "",
-			"expression": "",
-			"dimensions": {
-				"InstanceId":   ["test"],
-				"InstanceType": ["test2", "test3"]
+		query := QueryJson{
+			RefId:      "ref1",
+			Region:     "us-east-1",
+			Namespace:  "ec2",
+			MetricName: "CPUUtilization",
+			Id:         "",
+			Expression: "",
+			Dimensions: map[string]interface{}{
+				"InstanceId":   []interface{}{"test"},
+				"InstanceType": []interface{}{"test2", "test3"},
 			},
-			"statistic": "Average",
-			"period":    "600",
-			"hide":      false
-		}`)
+			Statistic: &average,
+			Period:    "600",
+			Hide:      &false,
+		}
 
-		var query QueryJson
-		err := json.Unmarshal(fixtureJSON, &query)
-		require.NoError(t, err)
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
 		assert.Equal(t, "us-east-1", res.Region)
@@ -82,25 +91,21 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Old dimensions structure (backwards compatibility)", func(t *testing.T) {
-		fixtureJSON := []byte(`{
-			"refId":      "ref1",
-			"region":     "us-east-1",
-			"namespace":  "ec2",
-			"metricName": "CPUUtilization",
-			"id":         "",
-			"expression": "",
-			"dimensions": {
-				"InstanceId":   ["test"],
-				"InstanceType": ["test2"]
+		query := QueryJson{
+			RefId:      "ref1",
+			Region:     "us-east-1",
+			Namespace:  "ec2",
+			MetricName: "CPUUtilization",
+			Id:         "",
+			Expression: "",
+			Dimensions: map[string]interface{}{
+				"InstanceId":   []interface{}{"test"},
+				"InstanceType": []interface{}{"test2"},
 			},
-			"statistic": "Average",
-			"period":    "600",
-			"hide":      false
-		}`)
-
-		var query QueryJson
-		err := json.Unmarshal(fixtureJSON, &query)
-		require.NoError(t, err)
+			Statistic: &average,
+			Period:    "600",
+			Hide:      &false,
+		}
 
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
@@ -120,25 +125,21 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Period defined in the editor by the user is being used when time range is short", func(t *testing.T) {
-		fixtureJSON := []byte(`{
-			"refId":      "ref1",
-			"region":     "us-east-1",
-			"namespace":  "ec2",
-			"metricName": "CPUUtilization",
-			"id":         "",
-			"expression": "",
-			"dimensions": {
-				"InstanceId":   ["test"],
-				"InstanceType": ["test2"]
+		query := QueryJson{
+			RefId:      "ref1",
+			Region:     "us-east-1",
+			Namespace:  "ec2",
+			MetricName: "CPUUtilization",
+			Id:         "",
+			Expression: "",
+			Dimensions: map[string]interface{}{
+				"InstanceId":   []interface{}{"test"},
+				"InstanceType": []interface{}{"test2"},
 			},
-			"statistic": "Average",
-			"hide":      false
-		}`)
-
-		var query QueryJson
-		err := json.Unmarshal(fixtureJSON, &query)
-		require.NoError(t, err)
-		query.Period = "900"
+			Statistic: &average,
+			Period:    "900",
+			Hide:      &false,
+		}
 
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
 		require.NoError(t, err)
@@ -146,25 +147,21 @@ func TestRequestParser(t *testing.T) {
 	})
 
 	t.Run("Period is parsed correctly if not defined by user", func(t *testing.T) {
-		fixtureJSON := []byte(`{
-			"refId":      "ref1",
-			"region":     "us-east-1",
-			"namespace":  "ec2",
-			"metricName": "CPUUtilization",
-			"id":         "",
-			"expression": "",
-			"dimensions": {
-				"InstanceId":   ["test"],
-				"InstanceType": ["test2"]
+		query := QueryJson{
+			RefId:      "ref1",
+			Region:     "us-east-1",
+			Namespace:  "ec2",
+			MetricName: "CPUUtilization",
+			Id:         "",
+			Expression: "",
+			Dimensions: map[string]interface{}{
+				"InstanceId":   []interface{}{"test"},
+				"InstanceType": []interface{}{"test2"},
 			},
-			"statistic": "Average",
-			"hide":      false,
-			"period":    "auto"
-		}`)
-
-		var query QueryJson
-		err := json.Unmarshal(fixtureJSON, &query)
-		require.NoError(t, err)
+			Statistic: &average,
+			Hide:      &false,
+			Period:    "auto",
+		}
 
 		t.Run("Time range is 5 minutes", func(t *testing.T) {
 			query.Period = "auto"
@@ -306,6 +303,34 @@ func TestRequestParser(t *testing.T) {
 		})
 	})
 
+	t.Run("hide and returnData", func(t *testing.T) {
+		t.Run("default", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.True(t, res.ReturnData)
+		})
+		t.Run("hide is true", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			true := true
+			query.Hide = &true
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.False(t, res.ReturnData)
+		})
+		t.Run("hide is false", func(t *testing.T) {
+			query := getBaseJsonQuery()
+			query.QueryType = "timeSeriesQuery"
+			false := false
+			query.Hide = &false
+			res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
+			require.NoError(t, err)
+			require.True(t, res.ReturnData)
+		})
+	})
+
 	t.Run("ID is the string `query` appended with refId if refId is a valid MetricData ID", func(t *testing.T) {
 		query := getBaseJsonQuery()
 		res, err := parseRequestQuery(query, "ref1", time.Now().Add(-2*time.Hour), time.Now().Add(-time.Hour))
@@ -340,21 +365,15 @@ func TestRequestParser(t *testing.T) {
 }
 
 func getBaseJsonQuery() QueryJson {
-	fixtureJSON := []byte(`{
-		"refId":      "ref1",
-		"region":     "us-east-1",
-		"namespace":  "ec2",
-		"metricName": "CPUUtilization",
-		"statistic":  "Average",
-		"period":     "900"
-	}`)
-
-	var query QueryJson
-	err := json.Unmarshal(fixtureJSON, &query)
-	if err != nil {
-		panic(err)
+	average := "Average"
+	return QueryJson{
+		RefId:      "ref1",
+		Region:     "us-east-1",
+		Namespace:  "ec2",
+		MetricName: "CPUUtilization",
+		Statistic:  &average,
+		Period:     "900",
 	}
-	return query
 }
 
 func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_creates_new_label(t *testing.T) {
@@ -375,43 +394,39 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 	}
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			queryJson := []byte(fmt.Sprintf(`{
-						"region": "us-east-1",
-						"namespace": "ec2",
-						"metricName": "CPUUtilization",
-						"alias": "%s",
-						"dimensions": {
-						  "InstanceId": ["test"]
-						},
-						"statistic": "Average",
-						"period": "600",
-						"hide": false
-				  }`, tc.inputAlias))
+			average := "Average"
+			false := false
 
-			var query QueryJson
-			err := json.Unmarshal(queryJson, &query)
-			require.NoError(t, err)
+			queryToMigrate := QueryJson{
+				Region:     "us-east-1",
+				Namespace:  "ec2",
+				MetricName: "CPUUtilization",
+				Alias:      &tc.inputAlias,
+				Dimensions: map[string]interface{}{
+					"InstanceId": []interface{}{"test"},
+				},
+				Statistic: &average,
+				Period:    "600",
+				Hide:      &false,
+			}
 
-			migrateAliasToDynamicLabel(&query)
+			migrateAliasToDynamicLabel(&queryToMigrate)
 
-			matchedJson := []byte(fmt.Sprintf(`{
-				"alias":      "%s",
-				"dimensions": {
-					"InstanceId": ["test"]
-				},			
-				"hide":       false,
-				"label":      "%s",
-				"metricName": "CPUUtilization",
-				"namespace":  "ec2",
-				"period":     "600",
-				"region":     "us-east-1",
-				"statistic":  "Average"
-			}`, tc.inputAlias, tc.expectedLabel))
+			expected := QueryJson{
+				Alias: &tc.inputAlias,
+				Dimensions: map[string]interface{}{
+					"InstanceId": []interface{}{"test"},
+				},
+				Hide:       &false,
+				Label:      &tc.expectedLabel,
+				MetricName: "CPUUtilization",
+				Namespace:  "ec2",
+				Period:     "600",
+				Region:     "us-east-1",
+				Statistic:  &average,
+			}
 
-			result, err := json.Marshal(query)
-			require.NoError(t, err)
-
-			assert.JSONEq(t, string(matchedJson), string(result))
+			assert.Equal(t, expected, queryToMigrate)
 		})
 	}
 }

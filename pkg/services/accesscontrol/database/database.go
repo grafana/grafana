@@ -60,8 +60,13 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 }
 
 func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
-	q := `
-	WHERE role.id IN (
+	params := []interface{}{}
+	q := `INNER JOIN (`
+
+	// This is an additional security. We should never have permissions granted to userID 0.
+	// Only allow real users to get user/team permissions (anonymous/apikeys)
+	if userID > 0 {
+		q += `
 		SELECT ur.role_id
 		FROM user_role AS ur
 		WHERE ur.user_id = ?
@@ -69,15 +74,18 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		UNION
 		SELECT tr.role_id FROM team_role as tr
 		INNER JOIN team_member as tm ON tm.team_id = tr.team_id
-		WHERE tm.user_id = ? AND tr.org_id = ?
-	`
-	params := []interface{}{userID, orgID, globalOrgID, userID, orgID}
+		WHERE tm.user_id = ? AND tr.org_id = ?`
+		params = []interface{}{userID, orgID, globalOrgID, userID, orgID}
+	}
 
 	if len(roles) != 0 {
+		if userID > 0 {
+			q += `
+			UNION`
+		}
 		q += `
-			UNION
 			SELECT br.role_id FROM builtin_role AS br
-			WHERE role IN (? ` + strings.Repeat(", ?", len(roles)-1) + `)
+			WHERE br.role IN (? ` + strings.Repeat(", ?", len(roles)-1) + `)
 		`
 		for _, role := range roles {
 			params = append(params, role)
@@ -87,7 +95,7 @@ func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}
 		params = append(params, orgID, globalOrgID)
 	}
 
-	q += `)`
+	q += `) as all_role ON role.id = all_role.role_id`
 
 	return q, params
 }

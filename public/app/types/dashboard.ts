@@ -43,6 +43,7 @@ export interface DashboardMeta {
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardAccessToken?: string;
   publicDashboardEnabled?: boolean;
+  dashboardNotFound?: boolean;
 }
 
 export interface AnnotationActions {

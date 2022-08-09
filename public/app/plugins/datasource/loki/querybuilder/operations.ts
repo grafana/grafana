@@ -12,6 +12,7 @@ import {
 import { FUNCTIONS } from '../syntax';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
+import { UnwrapParamEditor } from './components/UnwrapParamEditor';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
@@ -293,6 +294,27 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: (op) => `Return log lines that does not match regex \`${op.params[0]}\`.`,
     },
     {
+      id: LokiOperationId.LineFilterIpMatches,
+      name: 'IP line filter expression',
+      params: [
+        { name: 'Operator', type: 'string', options: ['|=', '!='] },
+        {
+          name: 'Pattern',
+          type: 'string',
+          placeholder: '<pattern>',
+          minWidth: 16,
+          runQueryOnEnter: true,
+        },
+      ],
+      defaultParams: ['|=', ''],
+      alternativesKey: 'line filter',
+      category: LokiVisualQueryOperationCategory.LineFilters,
+      orderRank: LokiOperationOrder.LineFilters,
+      renderer: (op, def, innerExpr) => `${innerExpr} ${op.params[0]} ip(\`${op.params[1]}\`)`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines using IP matching of \`${op.params[1]}\``,
+    },
+    {
       id: LokiOperationId.LabelFilter,
       name: 'Label filter expression',
       params: [
@@ -309,6 +331,23 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       explainHandler: () => `Label expression filter allows filtering using original and extracted labels.`,
     },
     {
+      id: LokiOperationId.LabelFilterIpMatches,
+      name: 'IP label filter expression',
+      params: [
+        { name: 'Label', type: 'string' },
+        { name: 'Operator', type: 'string', options: ['=', '!='] },
+        { name: 'Value', type: 'string' },
+      ],
+      defaultParams: ['', '=', ''],
+      alternativesKey: 'label filter',
+      category: LokiVisualQueryOperationCategory.LabelFilters,
+      orderRank: LokiOperationOrder.LabelFilters,
+      renderer: (model, def, innerExpr) =>
+        `${innerExpr} | ${model.params[0]} ${model.params[1]} ip(\`${model.params[2]}\`)`,
+      addOperationHandler: addLokiOperation,
+      explainHandler: (op) => `Return log lines using IP matching of \`${op.params[2]}\` for \`${op.params[0]}\` label`,
+    },
+    {
       id: LokiOperationId.LabelFilterNoErrors,
       name: 'No pipeline errors',
       params: [],
@@ -323,16 +362,37 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
     {
       id: LokiOperationId.Unwrap,
       name: 'Unwrap',
-      params: [{ name: 'Identifier', type: 'string', hideName: true, minWidth: 16, placeholder: 'Label key' }],
-      defaultParams: [''],
+      params: [
+        {
+          name: 'Identifier',
+          type: 'string',
+          hideName: true,
+          minWidth: 16,
+          placeholder: 'Label key',
+          editor: UnwrapParamEditor,
+        },
+        {
+          name: 'Conversion function',
+          hideName: true,
+          type: 'string',
+          options: ['duration', 'duration_seconds', 'bytes'],
+          optional: true,
+        },
+      ],
+      defaultParams: ['', ''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.Unwrap,
-      renderer: (op, def, innerExpr) => `${innerExpr} | unwrap ${op.params[0]}`,
+      renderer: (op, def, innerExpr) =>
+        `${innerExpr} | unwrap ${op.params[1] ? `${op.params[1]}(${op.params[0]})` : op.params[0]}`,
       addOperationHandler: addLokiOperation,
       explainHandler: (op) => {
         let label = String(op.params[0]).length > 0 ? op.params[0] : '<label>';
-        return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.`;
+        return `Use the extracted label \`${label}\` as sample values instead of log lines for the subsequent range aggregation.${
+          op.params[1]
+            ? ` Conversion function \`${op.params[1]}\` wrapping \`${label}\` will attempt to convert this label from a specific format (e.g. 3k, 500ms).`
+            : ''
+        }`;
       },
     },
     ...binaryScalarOperations,
@@ -429,7 +489,7 @@ function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOper
     return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
   }
 
-  return `${innerExpr} | ${model.params[0]}${model.params[1]}\`${model.params[2]}\``;
+  return `${innerExpr} | ${model.params[0]} ${model.params[1]} \`${model.params[2]}\``;
 }
 
 function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {

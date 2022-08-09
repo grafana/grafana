@@ -2,7 +2,14 @@ import { cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { Field, FieldType, formattedValueToString, getDisplayProcessor, getFieldDisplayName } from '@grafana/data';
+import {
+  DisplayProcessor,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
+  getFieldDisplayName,
+} from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -119,7 +126,7 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       return (
-        <a {...p.cellProps} href={p.userProps.href} className={classNames} title={name}>
+        <a {...p.cellProps} href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
           {name}
         </a>
       );
@@ -189,12 +196,18 @@ export const generateColumns = (
 
   if (sortField && sortFieldWith) {
     const disp = sortField.display ?? getDisplayProcessor({ field: sortField, theme: config.theme2 });
+
     columns.push({
       Header: () => <div className={styles.sortedHeader}>{getFieldDisplayName(sortField)}</div>,
       Cell: (p) => {
         return (
           <div {...p.cellProps} className={styles.sortedItems}>
-            {formattedValueToString(disp(sortField.values.get(p.row.index)))}
+            {getDisplayValue({
+              sortField,
+              getDisplay: disp,
+              index: p.row.index,
+              kind: access.kind,
+            })}
           </div>
         );
       },
@@ -391,4 +404,22 @@ function makeTagsColumn(
     Header: 'Tags',
     width,
   };
+}
+
+function getDisplayValue({
+  kind,
+  sortField,
+  index,
+  getDisplay,
+}: {
+  kind: Field;
+  sortField: Field;
+  index: number;
+  getDisplay: DisplayProcessor;
+}) {
+  const value = sortField.values.get(index);
+  if (['folder', 'panel'].includes(kind.values.get(index)) && value === 0) {
+    return '-';
+  }
+  return formattedValueToString(getDisplay(value));
 }
