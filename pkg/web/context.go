@@ -30,8 +30,6 @@ import (
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
 	mws []Middleware
-	// handlers []http.Handler
-	// index int
 
 	*Router
 	Req      *http.Request

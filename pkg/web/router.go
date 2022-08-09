@@ -193,7 +193,6 @@ func (r *Router) Any(pattern string, h ...Handler) { r.Handle("*", pattern, h) }
 // found. If it is not set, http.NotFound is used.
 // Be sure to set 404 response code in your handler.
 func (r *Router) NotFound(handlers ...Handler) {
-	// httpHandlers := validateAndWrapHandlers(handlers)
 	r.notFound = func(rw http.ResponseWriter, req *http.Request) {
 		c := r.m.createContext(rw, req)
 		for _, h := range handlers {
