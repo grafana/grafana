@@ -38,7 +38,6 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
     }
 
     const filterTerm = input.substring(string.from, string.to).trim();
-
     const backtickedTerm = filterTerm[0] === '`';
     const unwrappedFilterTerm = filterTerm.substring(1, filterTerm.length - 1);
 
