@@ -155,8 +155,6 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   );
 }
 
-RelativeTimeRangePicker.displayName = 'RelativeTimeRangePicker';
-
 const TooltipContent = () => {
   const styles = useStyles2(toolTipStyles);
   return (
