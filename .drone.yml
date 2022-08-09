@@ -1086,6 +1086,7 @@ steps:
     paths:
       include:
       - .drone.yml
+      - pkg/build/**
     repo:
     - grafana/grafana
 - image: grafana/drone-downstream
@@ -5145,6 +5146,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 000a4fa4dc0c88d9ee3d5096a9ded360037e23f4ba91896c02419cd4ccce38c3
+hmac: 897b1edfa7ffaf637939a7ede5d5aa8a38c828c5b4ac4bc501836b988d295de9
 
 ...
