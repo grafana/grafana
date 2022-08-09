@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type actionType string
@@ -50,11 +52,11 @@ func (h *DashboardHandler) GetHandlerForPath(_ string) (models.ChannelHandler, e
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *user.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
 	if parts[0] == "gitops" {
 		// gitops gets all changes for everything, so lets make sure it is an admin user
-		if !user.HasRole(models.ROLE_ADMIN) {
+		if !user.HasRole(org.ROLE_ADMIN) {
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 		}
 		return models.SubscribeReply{
@@ -88,11 +90,11 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedI
 }
 
 // OnPublish is called when someone begins to edit a dashboard
-func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (h *DashboardHandler) OnPublish(ctx context.Context, user *user.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
 	if parts[0] == "gitops" {
 		// gitops gets all changes for everything, so lets make sure it is an admin user
-		if !user.HasRole(models.ROLE_ADMIN) {
+		if !user.HasRole(org.ROLE_ADMIN) {
 			return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 		}
 

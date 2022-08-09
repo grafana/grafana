@@ -18,6 +18,7 @@ import (
 	service "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -51,7 +52,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Given folder not exists", func(t *testing.T) {
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderNotFound).Twice()
 		mockSQLStore := mockstore.NewSQLStoreMock()
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.ROLE_EDITOR, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 404, sc.resp.Code)
 		}, mockSQLStore)
@@ -83,8 +84,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, dashboards.ErrFolderAccessDenied).Twice()
 		mockSQLStore := mockstore.NewSQLStoreMock()
-
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+org.ROLE
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.ROLE_EDITOR, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 403, sc.resp.Code)
 		}, mockSQLStore)
@@ -129,8 +130,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(folderResponse, nil).Twice()
 		dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		mockSQLStore := mockstore.NewSQLStoreMock()
-
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+org.ROLE
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.ROLE_ADMIN, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
 
@@ -204,8 +205,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}, hs)
 	})
 
-	t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
-		role := models.ROLE_ADMIN
+	t.Run("Whorg.ROLEo update team or user permissions with a role", func(t *testing.T) {
+		role := org.ROLE_ADMIN
 		cmds := []dtos.UpdateDashboardACLCommand{
 			{
 				Items: []dtos.DashboardACLUpdateItem{
@@ -302,8 +303,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}).Return(nil).Once()
 
 		var resp []*models.DashboardACLInfoDTO
-		mockSQLStore := mockstore.NewSQLStoreMock()
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+		mockSQLStore := mockstore.NewSQLStoreMock()org.ROLE
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.ROLE_ADMIN, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
 

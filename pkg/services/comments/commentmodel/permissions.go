@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type PermissionChecker struct {
@@ -42,7 +43,7 @@ func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, i
 	return query.Result, nil
 }
 
-func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, objectType string, objectID string) (bool, error) {
+func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int64, signedInUser *user.SignedInUser, objectType string, objectID string) (bool, error) {
 	switch objectType {
 	case ObjectTypeOrg:
 		return false, nil
@@ -89,7 +90,7 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 	return true, nil
 }
 
-func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int64, signedInUser *models.SignedInUser, objectType string, objectID string) (bool, error) {
+func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int64, signedInUser *user.SignedInUser, objectType string, objectID string) (bool, error) {
 	switch objectType {
 	case ObjectTypeOrg:
 		return false, nil

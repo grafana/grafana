@@ -88,7 +88,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	cmd := &models.AddOrgUserCommand{
 		OrgId:  org.Id,
 		UserId: users[1].ID,
-		Role:   models.ROLE_EDITOR,
+		Role:   org.ROLE_EDITOR,
 	}
 	err = sqlStore.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
@@ -97,7 +97,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	cmd = &models.AddOrgUserCommand{
 		OrgId:  org.Id,
 		UserId: users[2].ID,
-		Role:   models.ROLE_VIEWER,
+		Role:   org.ROLE_VIEWER,
 	}
 	err = sqlStore.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)
@@ -112,7 +112,7 @@ func populateDB(t *testing.T, sqlStore *SQLStore) {
 	cmd = &models.AddOrgUserCommand{
 		OrgId:  org.Id,
 		UserId: users[0].ID,
-		Role:   models.ROLE_ADMIN,
+		Role:   org.ROLE_ADMIN,
 	}
 	err = sqlStore.AddOrgUser(context.Background(), cmd)
 	require.NoError(t, err)

@@ -6,13 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // These are the api contracts. The API should match the underlying service and store
 
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
-	BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*models.SignedInUser, error)
+	BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error)
 	GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)

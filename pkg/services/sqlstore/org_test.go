@@ -23,7 +23,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 	}
 	t.Run("Testing Account DB Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
-		testUser := &models.SignedInUser{
+		testUser := &user.SignedInUser{
 			Permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll}},
 			},
@@ -175,7 +175,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 			})
 
 			t.Run("Can search users", func(t *testing.T) {
-				query := models.SearchUsersQuery{Query: "", SignedInUser: &models.SignedInUser{
+				query := models.SearchUsersQuery{Query: "", SignedInUser: &user.SignedInUser{
 					OrgId: 1,
 					Permissions: map[int64]map[string][]string{
 						1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
@@ -208,7 +208,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 					orgUsersQuery := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
@@ -244,7 +244,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 				t.Run("Can get organization users", func(t *testing.T) {
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
@@ -260,7 +260,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
 						Query: "ac1",
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
@@ -277,7 +277,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						OrgId: ac1.OrgID,
 						Query: "ac",
 						Limit: 1,
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
@@ -362,7 +362,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},

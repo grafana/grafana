@@ -21,7 +21,7 @@ import (
 )
 
 var orgID = int64(1)
-var user = &models.SignedInUser{UserId: 1}
+var user = &user.SignedInUser{UserId: 1}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {

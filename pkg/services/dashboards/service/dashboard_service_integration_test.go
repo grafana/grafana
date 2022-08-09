@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -916,9 +917,9 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
-		User: &models.SignedInUser{
+		User: &user.SignedInUser{
 			UserId:  1,
-			OrgRole: models.ROLE_ADMIN,
+			OrgRole: org.ROLE_ADMIN,
 		},
 	}
 
@@ -953,9 +954,9 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
-		User: &models.SignedInUser{
+		User: &user.SignedInUser{
 			UserId:  1,
-			OrgRole: models.ROLE_ADMIN,
+			OrgRole: org.ROLE_ADMIN,
 		},
 	}
 
@@ -982,7 +983,7 @@ func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashboards.SaveDashboar
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     cmd.OrgId,
-		User:      &models.SignedInUser{UserId: cmd.UserId},
+		User:      &user.SignedInUser{UserId: cmd.UserId},
 		Overwrite: cmd.Overwrite,
 	}
 }

@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	mock "github.com/stretchr/testify/mock"
 
 	testing "testing"
@@ -17,11 +18,11 @@ type FakeFolderService struct {
 }
 
 // CreateFolder provides a mock function with given fields: ctx, user, orgID, title, uid
-func (_m *FakeFolderService) CreateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, title string, uid string) (*models.Folder, error) {
+func (_m *FakeFolderService) CreateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, title string, uid string) (*models.Folder, error) {
 	ret := _m.Called(ctx, user, orgID, title, uid)
 
 	var r0 *models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, *models.SignedInUser, int64, string, string) *models.Folder); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64, string, string) *models.Folder); ok {
 		r0 = rf(ctx, user, orgID, title, uid)
 	} else {
 		if ret.Get(0) != nil {
@@ -30,7 +31,7 @@ func (_m *FakeFolderService) CreateFolder(ctx context.Context, user *models.Sign
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.SignedInUser, int64, string, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64, string, string) error); ok {
 		r1 = rf(ctx, user, orgID, title, uid)
 	} else {
 		r1 = ret.Error(1)
@@ -40,11 +41,11 @@ func (_m *FakeFolderService) CreateFolder(ctx context.Context, user *models.Sign
 }
 
 // DeleteFolder provides a mock function with given fields: ctx, user, orgID, uid, forceDeleteRules
-func (_m *FakeFolderService) DeleteFolder(ctx context.Context, user *models.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
+func (_m *FakeFolderService) DeleteFolder(ctx context.Context, user *user.SignedInUser, orgID int64, uid string, forceDeleteRules bool) (*models.Folder, error) {
 	ret := _m.Called(ctx, user, orgID, uid, forceDeleteRules)
 
 	var r0 *models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, *models.SignedInUser, int64, string, bool) *models.Folder); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64, string, bool) *models.Folder); ok {
 		r0 = rf(ctx, user, orgID, uid, forceDeleteRules)
 	} else {
 		if ret.Get(0) != nil {
@@ -53,7 +54,7 @@ func (_m *FakeFolderService) DeleteFolder(ctx context.Context, user *models.Sign
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.SignedInUser, int64, string, bool) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64, string, bool) error); ok {
 		r1 = rf(ctx, user, orgID, uid, forceDeleteRules)
 	} else {
 		r1 = ret.Error(1)
@@ -63,11 +64,11 @@ func (_m *FakeFolderService) DeleteFolder(ctx context.Context, user *models.Sign
 }
 
 // GetFolderByID provides a mock function with given fields: ctx, user, id, orgID
-func (_m *FakeFolderService) GetFolderByID(ctx context.Context, user *models.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
+func (_m *FakeFolderService) GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error) {
 	ret := _m.Called(ctx, user, id, orgID)
 
 	var r0 *models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, *models.SignedInUser, int64, int64) *models.Folder); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64, int64) *models.Folder); ok {
 		r0 = rf(ctx, user, id, orgID)
 	} else {
 		if ret.Get(0) != nil {
@@ -76,7 +77,7 @@ func (_m *FakeFolderService) GetFolderByID(ctx context.Context, user *models.Sig
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.SignedInUser, int64, int64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64, int64) error); ok {
 		r1 = rf(ctx, user, id, orgID)
 	} else {
 		r1 = ret.Error(1)
@@ -86,11 +87,11 @@ func (_m *FakeFolderService) GetFolderByID(ctx context.Context, user *models.Sig
 }
 
 // GetFolderByTitle provides a mock function with given fields: ctx, user, orgID, title
-func (_m *FakeFolderService) GetFolderByTitle(ctx context.Context, user *models.SignedInUser, orgID int64, title string) (*models.Folder, error) {
+func (_m *FakeFolderService) GetFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*models.Folder, error) {
 	ret := _m.Called(ctx, user, orgID, title)
 
 	var r0 *models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, *models.SignedInUser, int64, string) *models.Folder); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64, string) *models.Folder); ok {
 		r0 = rf(ctx, user, orgID, title)
 	} else {
 		if ret.Get(0) != nil {
@@ -99,7 +100,7 @@ func (_m *FakeFolderService) GetFolderByTitle(ctx context.Context, user *models.
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.SignedInUser, int64, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64, string) error); ok {
 		r1 = rf(ctx, user, orgID, title)
 	} else {
 		r1 = ret.Error(1)
@@ -109,11 +110,11 @@ func (_m *FakeFolderService) GetFolderByTitle(ctx context.Context, user *models.
 }
 
 // GetFolderByUID provides a mock function with given fields: ctx, user, orgID, uid
-func (_m *FakeFolderService) GetFolderByUID(ctx context.Context, user *models.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
+func (_m *FakeFolderService) GetFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*models.Folder, error) {
 	ret := _m.Called(ctx, user, orgID, uid)
 
 	var r0 *models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, *models.SignedInUser, int64, string) *models.Folder); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64, string) *models.Folder); ok {
 		r0 = rf(ctx, user, orgID, uid)
 	} else {
 		if ret.Get(0) != nil {
@@ -122,7 +123,7 @@ func (_m *FakeFolderService) GetFolderByUID(ctx context.Context, user *models.Si
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.SignedInUser, int64, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64, string) error); ok {
 		r1 = rf(ctx, user, orgID, uid)
 	} else {
 		r1 = ret.Error(1)
@@ -132,11 +133,11 @@ func (_m *FakeFolderService) GetFolderByUID(ctx context.Context, user *models.Si
 }
 
 // GetFolders provides a mock function with given fields: ctx, user, orgID, limit, page
-func (_m *FakeFolderService) GetFolders(ctx context.Context, user *models.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
+func (_m *FakeFolderService) GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error) {
 	ret := _m.Called(ctx, user, orgID, limit, page)
 
 	var r0 []*models.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, *models.SignedInUser, int64, int64, int64) []*models.Folder); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64, int64, int64) []*models.Folder); ok {
 		r0 = rf(ctx, user, orgID, limit, page)
 	} else {
 		if ret.Get(0) != nil {
@@ -145,7 +146,7 @@ func (_m *FakeFolderService) GetFolders(ctx context.Context, user *models.Signed
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.SignedInUser, int64, int64, int64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64, int64, int64) error); ok {
 		r1 = rf(ctx, user, orgID, limit, page)
 	} else {
 		r1 = ret.Error(1)
@@ -169,11 +170,11 @@ func (_m *FakeFolderService) MakeUserAdmin(ctx context.Context, orgID int64, use
 }
 
 // UpdateFolder provides a mock function with given fields: ctx, user, orgID, existingUid, cmd
-func (_m *FakeFolderService) UpdateFolder(ctx context.Context, user *models.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
+func (_m *FakeFolderService) UpdateFolder(ctx context.Context, user *user.SignedInUser, orgID int64, existingUid string, cmd *models.UpdateFolderCommand) error {
 	ret := _m.Called(ctx, user, orgID, existingUid, cmd)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.SignedInUser, int64, string, *models.UpdateFolderCommand) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64, string, *models.UpdateFolderCommand) error); ok {
 		r0 = rf(ctx, user, orgID, existingUid, cmd)
 	} else {
 		r0 = ret.Error(0)

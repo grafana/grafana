@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type SQLBuilder struct {
@@ -32,15 +34,15 @@ func (sb *SQLBuilder) AddParams(params ...interface{}) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *models.SignedInUser, permission models.PermissionType) {
-	if user.OrgRole == models.ROLE_ADMIN {
+func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission models.PermissionType) {
+	if user.OrgRole == org.ROLE_ADMIN {
 		return
 	}
 
 	okRoles := []interface{}{user.OrgRole}
 
-	if user.OrgRole == models.ROLE_EDITOR {
-		okRoles = append(okRoles, models.ROLE_VIEWER)
+	if user.OrgRole == org.ROLE_EDITOR {
+		okRoles = append(okRoles, org.ROLE_VIEWER)
 	}
 
 	falseStr := dialect.BooleanStr(false)

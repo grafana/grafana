@@ -201,7 +201,7 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*models.OrgUserDTO, error) {
 	if err := hs.SQLStore.GetOrgUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}

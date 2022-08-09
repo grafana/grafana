@@ -26,7 +26,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			desc: "should return all users",
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
-				User: &models.SignedInUser{
+				User: &user.SignedInUser{
 					OrgId:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
@@ -37,7 +37,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			desc: "should return no users",
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
-				User: &models.SignedInUser{
+				User: &user.SignedInUser{
 					OrgId:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
 				},
@@ -48,7 +48,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			desc: "should return some users",
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
-				User: &models.SignedInUser{
+				User: &user.SignedInUser{
 					OrgId: 1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
 						"users:id:1",
@@ -95,7 +95,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			desc: "should return all users",
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
-				User: &models.SignedInUser{
+				User: &user.SignedInUser{
 					OrgId:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
@@ -106,7 +106,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			desc: "should return no users",
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
-				User: &models.SignedInUser{
+				User: &user.SignedInUser{
 					OrgId:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
 				},
@@ -117,7 +117,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			desc: "should return some users",
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
-				User: &models.SignedInUser{
+				User: &user.SignedInUser{
 					OrgId: 1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
 						"users:id:1",
@@ -271,7 +271,7 @@ func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
 	}
 }
 
-func hasWildcardScope(user *models.SignedInUser, action string) bool {
+func hasWildcardScope(user *user.SignedInUser, action string) bool {
 	for _, scope := range user.Permissions[user.OrgId][action] {
 		if strings.HasSuffix(scope, ":*") {
 			return true

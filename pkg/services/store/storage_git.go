@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"gocloud.dev/blob"
 )
@@ -341,7 +340,7 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 	}
 	user := cmd.User
 	if user == nil {
-		user = &models.SignedInUser{}
+		user = &user.SignedInUser{}
 	}
 
 	hash, err := w.Commit(msg, &git.CommitOptions{

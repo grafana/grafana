@@ -153,7 +153,7 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
-		c.SignedInUser = &models.SignedInUser{
+		c.SignedInUser = &user.SignedInUser{
 			UserId: 10,
 		}
 		hs.LoginView(c)
@@ -570,7 +570,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
-		c.SignedInUser = &models.SignedInUser{
+		c.SignedInUser = &user.SignedInUser{
 			UserId: 10,
 		}
 		hs.LoginView(c)

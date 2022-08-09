@@ -84,7 +84,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	ss := InitTestDB(t)
-	usr := &models.SignedInUser{
+	usr := &user.SignedInUser{
 		OrgId:       1,
 		Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
 	}
@@ -464,7 +464,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 
-		testUser := &models.SignedInUser{
+		testUser := &user.SignedInUser{
 			OrgId:       1,
 			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
 		}

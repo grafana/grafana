@@ -1279,7 +1279,7 @@ type scenarioContext struct {
 	ctx            context.Context
 	service        Service
 	elementService libraryelements.Service
-	user           *models.SignedInUser
+	user           *user.SignedInUser
 	folder         *models.Folder
 	initialResult  libraryPanelResult
 	sqlStore       *sqlstore.SQLStore
@@ -1364,7 +1364,7 @@ func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
+func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *user.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
 	dash.FolderId = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
@@ -1389,7 +1389,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 	return dashboard
 }
 
-func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *models.SignedInUser,
+func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *user.SignedInUser,
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
@@ -1514,7 +1514,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LibraryElementService: elementService,
 		}
 
-		usr := &models.SignedInUser{
+		usr := &user.SignedInUser{
 			UserId:     1,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",

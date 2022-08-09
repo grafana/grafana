@@ -31,12 +31,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -45,7 +47,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
 	httpReq.Header.Add("Content-Type", "application/json")
-	req := &models.ReqContext{SignedInUser: &models.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	req := &models.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 	prefService := preftest.NewPreferenceServiceFake()
@@ -145,8 +147,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		}
 
 		setUp := func() {
-			viewerRole := models.ROLE_VIEWER
-			editorRole := models.ROLE_EDITOR
+			viewerRole := org.ROLEEWER
+			editorRole := org.ROLE_EDITOR
 			dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 				q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 				q.Result = []*models.DashboardACLInfoDTO{
@@ -161,8 +163,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// 1. user is an org viewer
 		// 2. user is an org editor
 
-		t.Run("When user is an Org Viewer", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+		t.Run("Whorg.ROLEan Org Viewer", func(t *testing.T) {
+			role := org.ROLE_VIEWER
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -193,8 +195,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}, mockSQLStore)
 		})
 
-		t.Run("When user is an Org Editor", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+		t.Run("Whorg.ROLEan Org Editor", func(t *testing.T) {
+			role := org.ROLE_EDITOR
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -282,8 +284,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		// 5. user is an org viewer AND has been granted an admin permission
 		// 6. user is an org editor AND has been granted a view permission
 
-		t.Run("When user is an Org Viewer and has no permissions for this dashboard", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+		t.Run("Whorg.ROLEan Org Viewer and has no permissions for this dashboard", func(t *testing.T) {
+			role := org.ROLE_VIEWER
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -321,8 +323,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}, mockSQLStore)
 		})
 
-		t.Run("When user is an Org Editor and has no permissions for this dashboard", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+		t.Run("Whorg.ROLEan Org Editor and has no permissions for this dashboard", func(t *testing.T) {
+			role := org.ROLE_EDITOR
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					setUp()
@@ -358,8 +360,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}, mockSQLStore)
 		})
 
-		t.Run("When user is an Org Viewer but has an edit permission", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+		t.Run("Whorg.ROLEan Org Viewer but has an edit permission", func(t *testing.T) {
+			role := org.ROLE_VIEWER
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -420,8 +422,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}, mockSQLStore)
 		})
 
-		t.Run("When user is an Org Viewer and viewers can edit", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+		t.Run("Whorg.ROLEan Org Viewer and viewers can edit", func(t *testing.T) {
+			role := org.ROLE_VIEWER
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -460,8 +462,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}, mockSQLStore)
 		})
 
-		t.Run("When user is an Org Viewer but has an admin permission", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+		t.Run("Whorg.ROLEan Org Viewer but has an admin permission", func(t *testing.T) {
+			role := org.ROLE_VIEWER
 
 			setUpInner := func() {
 				origCanEdit := setting.ViewersCanEdit
@@ -519,8 +521,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}, mockSQLStore)
 		})
 
-		t.Run("When user is an Org Editor but has a view permission", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+		t.Run("Whorg.ROLEan Org Editor but has a view permission", func(t *testing.T) {
+			role := org.ROLE_EDITOR
 
 			setUpInner := func() {
 				dashboardService := dashboards.NewFakeDashboardService(t)
@@ -757,8 +759,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			DiffType: "basic",
 		}
 
-		t.Run("when user does not have permission", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+		t.Run("whorg.ROLEs not have permission", func(t *testing.T) {
+			role := org.ROLE_VIEWER
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				setUp()
 
@@ -767,8 +769,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}, &sqlmock, fakeDashboardVersionService)
 		})
 
-		t.Run("when user does have permission", func(t *testing.T) {
-			role := models.ROLE_ADMIN
+		t.Run("whorg.ROLEs have permission", func(t *testing.T) {
+			role := org.ROLE_ADMIN
 			postDiffScenario(t, "When calling POST on", "/api/dashboards/calculate-diff", "/api/dashboards/calculate-diff", cmd, role, func(sc *scenarioContext) {
 				// This test shouldn't hit GetDashboardACLInfoList, so no setup needed
 				sc.dashboardVersionService = fakeDashboardVersionService
@@ -871,8 +873,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			q.Result = []*models.DashboardACLInfoDTO{{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT}}
 		}).Return(nil)
 		guardian.InitLegacyGuardian(mockSQLStore, dashboardService)
-
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
+org.ROLE
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.ROLE_EDITOR, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
 			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
@@ -882,8 +884,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			assert.Equal(t, "../../../dashboard1.json", dash.Meta.ProvisionedExternalId, mockSQLStore)
 		}, mockSQLStore)
-
-		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
+org.ROLE
+		loggedInUserScenarioWithRole(t, "When allowUiUpdates is true and calling GET on", "GET", "/api/dashboards/uid/dash", "/api/dashboards/uid/:uid", org.ROLE_EDITOR, func(sc *scenarioContext) {
 			fakeProvisioningService := provisioning.NewProvisioningServiceMock(context.Background())
 			fakeProvisioningService.GetDashboardProvisionerResolvedPathFunc = func(name string) string {
 				return "/tmp/grafana/dashboards"
@@ -1032,7 +1034,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
+			sc.context.SignedInUser = &user.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
 			return hs.PostDashboard(c)
 		})
@@ -1044,7 +1046,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 }
 
 func postDiffScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CalculateDiffOptions,
-	role models.RoleType, fn scenarioFunc, sqlmock sqlstore.Store, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
+	role org.RoleType, fn scenarioFunc, sqlmock sqlstore.Store, fakeDashboardVersionService *dashvertest.FakeDashboardVersionService) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
@@ -1065,7 +1067,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{
+			sc.context.SignedInUser = &user.SignedInUser{
 				OrgId:  testOrgID,
 				UserId: testUserID,
 			}
@@ -1106,11 +1108,11 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{
+			sc.context.SignedInUser = &user.SignedInUser{
 				OrgId:  testOrgID,
 				UserId: testUserID,
-			}
-			sc.context.OrgRole = models.ROLE_ADMIN
+			}org.ROLE
+			sc.context.OrgRole = org.ROLE_ADMIN
 
 			return hs.RestoreDashboardVersion(c)
 		})
@@ -1148,23 +1150,23 @@ func (m *mockLibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Da
 	return nil
 }
 
-func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {
 	return nil
 }
 
-func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 	return nil
 }
 
 type mockLibraryElementService struct {
 }
 
-func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser *models.SignedInUser, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser *user.SignedInUser, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
 	return libraryelements.LibraryElementDTO{}, nil
 }
 
 // GetElement gets an element from a UID.
-func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *models.SignedInUser, UID string) (libraryelements.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, UID string) (libraryelements.LibraryElementDTO, error) {
 	return libraryelements.LibraryElementDTO{}, nil
 }
 
@@ -1174,7 +1176,7 @@ func (l *mockLibraryElementService) GetElementsForDashboard(c context.Context, d
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *models.SignedInUser, elementUIDs []string, dashboardID int64) error {
+func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error {
 	return nil
 }
 
@@ -1184,6 +1186,6 @@ func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c context.Co
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *models.SignedInUser, folderUID string) error {
+func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
 	return nil
 }

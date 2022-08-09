@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -112,12 +113,12 @@ type Subscriber interface {
 
 // PublishAuthChecker checks whether current user can publish to a channel.
 type PublishAuthChecker interface {
-	CanPublish(ctx context.Context, u *models.SignedInUser) (bool, error)
+	CanPublish(ctx context.Context, u *user.SignedInUser) (bool, error)
 }
 
 // SubscribeAuthChecker checks whether current user can subscribe to a channel.
 type SubscribeAuthChecker interface {
-	CanSubscribe(ctx context.Context, u *models.SignedInUser) (bool, error)
+	CanSubscribe(ctx context.Context, u *user.SignedInUser) (bool, error)
 }
 
 // LiveChannelRule is an in-memory representation of each specific rule to be executed by Pipeline.

@@ -76,7 +76,7 @@ func TestDashboardService(t *testing.T) {
 				for _, tc := range testCases {
 					dto.Dashboard = models.NewDashboard("title")
 					dto.Dashboard.SetUid(tc.Uid)
-					dto.User = &models.SignedInUser{}
+					dto.User = &user.SignedInUser{}
 
 					if tc.Error == nil {
 						fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
@@ -92,7 +92,7 @@ func TestDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 			})
@@ -103,7 +103,7 @@ func TestDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, true)
 				require.NoError(t, err)
 			})
@@ -129,7 +129,7 @@ func TestDashboardService(t *testing.T) {
 				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("alert validation error")).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Error(t, err)
 				require.Equal(t, err.Error(), "alert validation error")
@@ -145,7 +145,7 @@ func TestDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserId: 1}
 				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
 				require.NoError(t, err)
 			})
@@ -160,7 +160,7 @@ func TestDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserId: 1}
 				dto.Dashboard.Data.Set("refresh", "1s")
 				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
 				require.NoError(t, err)
@@ -177,7 +177,7 @@ func TestDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserId: 1}
 				_, err := service.ImportDashboard(context.Background(), dto)
 				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 			})

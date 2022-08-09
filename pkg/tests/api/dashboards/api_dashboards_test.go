@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -38,7 +39,7 @@ func TestDashboardQuota(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
 	})
@@ -130,8 +131,8 @@ providers:
 	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
-	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+	createUser(t, store, useorg.ROLErCommand{
+		DefaultOrgRole: string(org.ROLE_ADMIN),
 		Password:       "admin",
 		Login:          "admin",
 	})

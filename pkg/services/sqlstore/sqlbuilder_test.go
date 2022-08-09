@@ -300,7 +300,7 @@ func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID in
 	t.Helper()
 
 	builder := &SQLBuilder{}
-	signedInUser := &models.SignedInUser{
+	signedInUser := &user.SignedInUser{
 		UserId: 9999999999,
 	}
 

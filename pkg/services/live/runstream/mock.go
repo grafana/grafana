@@ -149,7 +149,7 @@ func (m *MockPluginContextGetter) EXPECT() *MockPluginContextGetterMockRecorder 
 }
 
 // GetPluginContext mocks base method.
-func (m *MockPluginContextGetter) GetPluginContext(ctx context.Context, arg0 *models.SignedInUser, arg1, arg2 string, arg3 bool) (backend.PluginContext, bool, error) {
+func (m *MockPluginContextGetter) GetPluginContext(ctx context.Context, arg0 *user.SignedInUser, arg1, arg2 string, arg3 bool) (backend.PluginContext, bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPluginContext", ctx, arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(backend.PluginContext)

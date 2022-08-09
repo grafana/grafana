@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -118,10 +119,10 @@ func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardInde
 	s.dashboardIndex.extender = ext.GetDocumentExtender()
 }
 
-func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {
+func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*user.SignedInUser, error) {
 	// TODO: get user & user's permissions from the request context
 
-	var user *models.SignedInUser
+	var user *user.SignedInUser
 	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
 		org, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
 		if err != nil {
@@ -129,10 +130,10 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 			return nil, err
 		}
 
-		user = &models.SignedInUser{
+		user = &user.SignedInUser{
 			OrgId:       org.Id,
 			OrgName:     org.Name,
-			OrgRole:     models.RoleType(s.cfg.AnonymousOrgRole),
+			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
 			IsAnonymous: true,
 		}
 	} else {

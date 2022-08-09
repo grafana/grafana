@@ -239,7 +239,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			OrgId:        1,
 			FolderIds:    []int64{savedFolder.Id},
-			SignedInUser: &models.SignedInUser{},
+			SignedInUser: &user.SignedInUser{},
 		}
 
 		res, err := dashboardStore.FindDashboards(context.Background(), &query)
@@ -306,7 +306,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			Title: "1 test dash folder",
 			OrgId: 1,
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId:   1,
 				OrgRole: models.ROLE_EDITOR,
 				Permissions: map[int64]map[string][]string{
@@ -330,7 +330,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			OrgId: 1,
 			Limit: 1,
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId:   1,
 				OrgRole: models.ROLE_EDITOR,
 				Permissions: map[int64]map[string][]string{
@@ -352,7 +352,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 			Limit: 1,
 			Page:  2,
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId:   1,
 				OrgRole: models.ROLE_EDITOR,
 				Permissions: map[int64]map[string][]string{
@@ -377,7 +377,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 			Type:  "dash-db",
 			Tags:  []string{"prod"},
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId:   1,
 				OrgRole: models.ROLE_EDITOR,
 				Permissions: map[int64]map[string][]string{
@@ -398,7 +398,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			OrgId:     1,
 			FolderIds: []int64{savedFolder.Id},
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId:   1,
 				OrgRole: models.ROLE_EDITOR,
 				Permissions: map[int64]map[string][]string{
@@ -424,7 +424,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{savedDash.Id, savedDash2.Id},
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId:   1,
 				OrgRole: models.ROLE_EDITOR,
 				Permissions: map[int64]map[string][]string{
@@ -461,7 +461,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.FindPersistedDashboardsQuery{
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				UserId:  10,
 				OrgId:   1,
 				OrgRole: models.ROLE_EDITOR,
@@ -513,7 +513,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	assert.NotZero(t, dashA.Id)
 	assert.Less(t, dashB.Id, dashA.Id)
 	qNoSort := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			OrgId:   1,
 			UserId:  1,
 			OrgRole: models.ROLE_ADMIN,
@@ -529,7 +529,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	assert.Equal(t, dashB.Id, results[1].ID)
 
 	qSort := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			OrgId:   1,
 			UserId:  1,
 			OrgRole: models.ROLE_ADMIN,
@@ -559,7 +559,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			OrgId:   1,
 			UserId:  1,
 			OrgRole: models.ROLE_ADMIN,
@@ -573,7 +573,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	require.Len(t, results, 2)
 
 	qFilter := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			OrgId:   1,
 			UserId:  1,
 			OrgRole: models.ROLE_ADMIN,

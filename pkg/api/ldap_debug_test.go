@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -107,7 +108,7 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
 		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN, 2: models.ROLE_VIEWER},
+		OrgRoles:       map[int64]org.RoleType{1: org.ROLE_ADMIN, 2: org.ROLE_VIEWER},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -121,13 +122,13 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgId:   1,
-				OrgRole: models.ROLE_ADMIN,
+				OrgId:   org.ROLE
+				OrgRole: org.ROLE_ADMIN,
 			},
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgId:   2,
-				OrgRole: models.ROLE_VIEWER,
+				OrgId:   org.ROLE
+				OrgRole: org.ROLE_VIEWER,
 			},
 		},
 	}
@@ -161,8 +162,8 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org", "another-group-not-matched"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
+		Groups:         []string{"cn=admins,ou=groupsorg.ROLE,dc=org", "another-group-not-matched"},
+		OrgRoles:       map[int64]org.RoleType{1: org.ROLE_ADMIN},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -176,13 +177,13 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgId:   1,
-				OrgRole: models.ROLE_ADMIN,
+				OrgId:   org.ROLE
+				OrgRole: org.ROLE_ADMIN,
 			},
 			{
 				GroupDN: "cn=admins2,ou=groups,dc=grafana,dc=org",
-				OrgId:   1,
-				OrgRole: models.ROLE_ADMIN,
+				OrgId:   org.ROLE
+				OrgRole: org.ROLE_ADMIN,
 			},
 		},
 	}
@@ -236,8 +237,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
-		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
-		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
+		Groups:         []string{"cn=admins,ou=groupsorg.ROLE,dc=org"},
+		OrgRoles:       map[int64]org.RoleType{1: org.ROLE_ADMIN},
 		IsGrafanaAdmin: &isAdmin,
 	}
 
@@ -251,8 +252,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgId:   1,
-				OrgRole: models.ROLE_ADMIN,
+				OrgId:   org.ROLE
+				OrgRole: org.ROLE_ADMIN,
 			},
 		},
 	}
