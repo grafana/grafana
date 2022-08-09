@@ -304,7 +304,7 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 		}, sqlmock)
 
 	loggedInUserScenarioWithRole(t,
-		"DELETE /snapshots/{key} should return 404 when the snapshot does not does not exist", "DELETE",
+		"DELETE /snapshots/{key} should return 404 when the snapshot does not exist", "DELETE",
 		"/api/snapshots/12345", "/api/snapshots/:key", org.RoleEditor, func(sc *scenarioContext) {
 			d := setUpSnapshotTest(t)
 			hs := &HTTPServer{dashboardsnapshotsService: d}
