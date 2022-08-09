@@ -53,11 +53,18 @@ slots: DSOptions: {
   SecureOptions: {...}
 }
 
-// slotsByPluginType indicates which slots are expected to be implemented
-// by which plugin types.
-slotsByPluginType: {
-	// Panel plugins are expected to provide a Panel lineage.
-	panel: [slots.Panel]
-	// Datasource plugins are expected to provide a Query and a DSOptions lineage.
-	datasource: [slots.Query, slots.DSOptions]
+// pluginTypeMetaSchema defines which plugin types should use which metaschemas
+// as joinSchema for the lineages declared at which paths.
+pluginTypeMetaSchema: [string]: {...} & {
+	// Panel plugins are expected to provide a lineage at path Panel conforming to
+	// the Panel joinSchema.
+	panel: {
+		Panel: slots.Panel
+	}
+	// Datasource plugins are expected to provide lineages at paths Query and
+	// DSOptions, conforming to those joinSchemas respectively.
+	datasource: {
+		Query: slots.Query
+		DSOptions: slots.DSOptions
+	}
 }
