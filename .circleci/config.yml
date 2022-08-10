@@ -1,0 +1,107 @@
+version: 2.1
+
+orbs:
+  gcp-gcr: circleci/gcp-gcr@0.13.0
+
+executors:
+  base-cimg-executor:
+    docker:
+      - image: cimg/base:2022.07
+
+jobs:
+  build-push-add-tag:
+    parameters:
+      attach-workspace:
+        type: boolean
+        description: Boolean for whether or not to attach to an existing workspace
+        default: false
+      docker-context:
+        type: string
+        description: Path to the directory containing your build context, defaults to .
+        default: .
+      dockerfile:
+        type: string
+        description: Name of dockerfile to use, defaults to Dockerfile
+        default: Dockerfile
+      executor:
+        type: executor
+        description: executor to use for this job
+        default: base-cimg-executor
+      extra_build_args:
+        type: string
+        description: Extra flags to pass to docker build
+        default: ""
+      image:
+        type: string
+        description: A name for your Docker image
+      path:
+        type: string
+        description: Path to the directory containing your Dockerfile, defaults to .
+        default: .
+      remote-docker-version:
+        type: string
+        description: Specify the remote docker version
+        default: 20.10.14
+      setup-remote-docker:
+        type: boolean
+        description: Setup and use CircleCI's remote Docker environment
+        default: true
+      tag:
+        type: string
+        description: A Docker image tag
+        default: ${CIRCLE_SHA1:0:8}
+      target-tag:
+        type: string
+        description: Additional image tag applied when job runs on main branch
+        default: latest
+      use-docker-layer-caching:
+        type: boolean
+        description: Setup docker layer caching for optimized build
+        default: false
+      workspace-root:
+        type: string
+        description: >
+          Workspace root path that is either an absolute path or a path relative
+          to the working directory. Defaults to '.' (the working directory)
+        default: .
+    executor: <<parameters.executor>>
+    environment:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - checkout
+      - when:
+          condition: <<parameters.setup-remote-docker>>
+          steps:
+            - setup_remote_docker:
+                docker_layer_caching: <<parameters.use-docker-layer-caching>>
+                version: <<parameters.remote-docker-version>>
+      - gcp-gcr/gcr-auth
+      - gcp-gcr/build-image:
+          attach-workspace: <<parameters.attach-workspace>>
+          docker-context: <<parameters.docker-context>>
+          dockerfile: <<parameters.dockerfile>>
+          extra_build_args: <<parameters.extra_build_args>>
+          image: <<parameters.image>>
+          path: <<parameters.path>>
+          tag: <<parameters.tag>>
+          workspace-root: <<parameters.workspace-root>>
+      - gcp-gcr/push-image:
+          image: <<parameters.image>>
+          tag: <<parameters.tag>>
+      - when:
+          condition:
+            equal: [main, << pipeline.git.branch >>]
+          steps:
+            - gcp-gcr/tag-image:
+                image: <<parameters.image>>
+                source-tag: <<parameters.tag>>
+                target-tag: <<parameters.target-tag>>
+
+workflows:
+  version: 2
+  build-alpine:
+    jobs:
+      - build-push-add-tag:
+          name: image-build-grafana-alpine
+          image: cf-fn/grafana
+
