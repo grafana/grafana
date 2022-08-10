@@ -299,7 +299,13 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID int64) []*dashboardResponse {
 	t.Helper()
 
-	builder := &SQLBuilder{}
+	old := sqlStore.Cfg.RBACEnabled
+	sqlStore.Cfg.RBACEnabled = false
+	defer func() {
+		sqlStore.Cfg.RBACEnabled = old
+	}()
+
+	builder := NewSqlBuilder(sqlStore.Cfg)
 	signedInUser := &models.SignedInUser{
 		UserId: 9999999999,
 	}
