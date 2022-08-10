@@ -1,22 +1,22 @@
 import { css } from '@emotion/css';
 import React, { MouseEvent, memo } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { NodesMarker } from './types';
 
 const nodeR = 40;
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   mainGroup: css`
     cursor: pointer;
     font-size: 10px;
   `,
 
   mainCircle: css`
-    fill: ${theme.colors.panelBg};
-    stroke: ${theme.colors.border3};
+    fill: ${theme.components.panel.background};
+    stroke: ${theme.colors.border.strong};
   `,
   text: css`
     width: 50px;
@@ -26,7 +26,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     align-items: center;
     justify-content: center;
   `,
-}));
+});
 
 export const Marker = memo(function Marker(props: {
   marker: NodesMarker;
@@ -34,7 +34,7 @@ export const Marker = memo(function Marker(props: {
 }) {
   const { marker, onClick } = props;
   const { node } = marker;
-  const styles = getStyles(useTheme());
+  const styles = useStyles2(getStyles);
 
   if (!(node.x !== undefined && node.y !== undefined)) {
     return null;

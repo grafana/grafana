@@ -11,9 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,10 +25,10 @@ const (
 )
 
 func TestBuilder_EqualResults_Basic(t *testing.T) {
-	user := &models.SignedInUser{
+	user := &user.SignedInUser{
 		UserId:  1,
 		OrgId:   1,
-		OrgRole: models.ROLE_EDITOR,
+		OrgRole: org.RoleEditor,
 	}
 
 	db := setupTestEnvironment(t)
@@ -65,10 +67,10 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 }
 
 func TestBuilder_Pagination(t *testing.T) {
-	user := &models.SignedInUser{
+	user := &user.SignedInUser{
 		UserId:  1,
 		OrgId:   1,
-		OrgRole: models.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 	}
 
 	db := setupTestEnvironment(t)
@@ -111,10 +113,10 @@ func TestBuilder_Pagination(t *testing.T) {
 }
 
 func TestBuilder_Permissions(t *testing.T) {
-	user := &models.SignedInUser{
+	user := &user.SignedInUser{
 		UserId:  1,
 		OrgId:   1,
-		OrgRole: models.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 	}
 
 	db := setupTestEnvironment(t)

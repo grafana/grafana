@@ -60,6 +60,7 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
             key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
             namespace={namespace}
             expandAll={expandAll}
+            viewMode={'grouped'}
           />
         );
       })}

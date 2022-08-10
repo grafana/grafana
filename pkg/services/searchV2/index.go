@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -33,7 +32,6 @@ type dashboardLoader interface {
 }
 
 type eventStore interface {
-	OnEvent(handler store.EventHandler)
 	GetLastEvent(ctx context.Context) (*store.EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*store.EntityEvent, error)
 }
@@ -357,7 +355,7 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	defer cancel()
 
 	// create a temp directory to store the index
-	tmpDir, err := ioutil.TempDir("", "grafana.dashboard_index")
+	tmpDir, err := os.MkdirTemp("", "grafana.dashboard_index")
 	if err != nil {
 		i.logger.Error("can't create temp dir", "error", err)
 		return

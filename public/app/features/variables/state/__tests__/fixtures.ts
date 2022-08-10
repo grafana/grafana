@@ -15,9 +15,10 @@ import {
   VariableOption,
   VariableRefresh,
   VariableSort,
+  VariableType,
 } from '@grafana/data';
 
-export function createBaseVariableModel(): Omit<BaseVariableModel, 'type'> {
+function createBaseVariableModel<T extends VariableType>(type: T): BaseVariableModel & { type: T } {
   return {
     name: 'myVariableName',
     id: '0',
@@ -29,21 +30,21 @@ export function createBaseVariableModel(): Omit<BaseVariableModel, 'type'> {
     state: LoadingState.NotStarted,
     error: null,
     description: null,
+    type,
   };
 }
 
-export function createVariableOption(value: string, text?: string, selected = false): VariableOption {
+export function createVariableOption(value: string, rest: Partial<Omit<VariableOption, 'value'>> = {}): VariableOption {
   return {
     value,
-    text: text ?? value,
-    selected,
+    text: rest.text ?? value,
+    selected: rest.selected ?? false,
   };
 }
 
 export function createQueryVariable(input: Partial<QueryVariableModel> = {}): QueryVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'query',
+    ...createBaseVariableModel('query'),
     label: 'DefaultLabel',
     datasource: {
       uid: 'abc-123',
@@ -56,16 +57,18 @@ export function createQueryVariable(input: Partial<QueryVariableModel> = {}): Qu
     refresh: VariableRefresh.onDashboardLoad,
     multi: false,
     includeAll: false,
-    current: createVariableOption('prom-prod', 'Prometheus (main)', true),
-    options: [createVariableOption('prom-prod', 'Prometheus (main)', true), createVariableOption('prom-dev')],
+    current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
+    options: [
+      createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
+      createVariableOption('prom-dev'),
+    ],
     ...input,
   };
 }
 
 export function createAdhocVariable(input?: Partial<AdHocVariableModel>): AdHocVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'adhoc',
+    ...createBaseVariableModel('adhoc'),
     datasource: {
       uid: 'abc-123',
       type: 'prometheus',
@@ -77,8 +80,7 @@ export function createAdhocVariable(input?: Partial<AdHocVariableModel>): AdHocV
 
 export function createConstantVariable(input: Partial<ConstantVariableModel> = {}): ConstantVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'constant',
+    ...createBaseVariableModel('constant'),
     query: '',
     current: createVariableOption('database'),
     options: [],
@@ -89,23 +91,24 @@ export function createConstantVariable(input: Partial<ConstantVariableModel> = {
 
 export function createDatasourceVariable(input: Partial<DataSourceVariableModel> = {}): DataSourceVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'datasource',
+    ...createBaseVariableModel('datasource'),
     regex: '',
     refresh: VariableRefresh.onDashboardLoad,
     multi: false,
     includeAll: false,
     query: '',
-    current: createVariableOption('prom-prod', 'Prometheus (main)', true),
-    options: [createVariableOption('prom-prod', 'Prometheus (main)', true), createVariableOption('prom-dev')],
+    current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
+    options: [
+      createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
+      createVariableOption('prom-dev'),
+    ],
     ...input,
   };
 }
 
 export function createIntervalVariable(input: Partial<IntervalVariableModel> = {}): IntervalVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'interval',
+    ...createBaseVariableModel('interval'),
     auto: false,
     auto_count: 30,
     auto_min: '10s',
@@ -119,8 +122,7 @@ export function createIntervalVariable(input: Partial<IntervalVariableModel> = {
 
 export function createTextBoxVariable(input: Partial<TextBoxVariableModel> = {}): TextBoxVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'textbox',
+    ...createBaseVariableModel('textbox'),
     originalQuery: null,
     query: '',
     current: createVariableOption('prom-prod'),
@@ -131,8 +133,7 @@ export function createTextBoxVariable(input: Partial<TextBoxVariableModel> = {})
 
 export function createUserVariable(input: Partial<UserVariableModel> = {}): UserVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'system',
+    ...createBaseVariableModel('system'),
     current: {
       value: {
         login: 'biggus-chungus',
@@ -146,8 +147,7 @@ export function createUserVariable(input: Partial<UserVariableModel> = {}): User
 
 export function createOrgVariable(input: Partial<OrgVariableModel> = {}): OrgVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'system',
+    ...createBaseVariableModel('system'),
     current: {
       value: {
         name: 'Big Chungus Corp.',
@@ -160,8 +160,7 @@ export function createOrgVariable(input: Partial<OrgVariableModel> = {}): OrgVar
 
 export function createDashboardVariable(input: Partial<DashboardVariableModel> = {}): DashboardVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'system',
+    ...createBaseVariableModel('system'),
     current: {
       value: {
         name: 'Chungus Monitoring',
@@ -174,11 +173,10 @@ export function createDashboardVariable(input: Partial<DashboardVariableModel> =
 
 export function createCustomVariable(input: Partial<CustomVariableModel> = {}): CustomVariableModel {
   return {
-    ...createBaseVariableModel(),
-    type: 'custom',
+    ...createBaseVariableModel('custom'),
     multi: false,
     includeAll: false,
-    current: createVariableOption('prom-prod', 'Prometheus (main)', true),
+    current: createVariableOption('prom-prod', { text: 'Prometheus (main)', selected: true }),
     options: [],
     query: '',
     ...input,

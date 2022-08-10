@@ -15,7 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -814,7 +816,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 
 	t.Run(desc, func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := database.ProvideDashboardStore(sqlStore)
+		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		service := ProvideDashboardService(
 			&setting.Cfg{}, dashboardStore, &dummyDashAlertExtractor{},
 			featuremgmt.WithFeatures(),
@@ -868,7 +870,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
@@ -886,7 +888,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
@@ -916,13 +918,13 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
-		User: &models.SignedInUser{
+		User: &user.SignedInUser{
 			UserId:  1,
-			OrgRole: models.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
@@ -953,13 +955,13 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 	dto := dashboards.SaveDashboardDTO{
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
-		User: &models.SignedInUser{
+		User: &user.SignedInUser{
 			UserId:  1,
-			OrgRole: models.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 	}
 
-	dashboardStore := database.ProvideDashboardStore(sqlStore)
+	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	service := ProvideDashboardService(
@@ -982,7 +984,7 @@ func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashboards.SaveDashboar
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     cmd.OrgId,
-		User:      &models.SignedInUser{UserId: cmd.UserId},
+		User:      &user.SignedInUser{UserId: cmd.UserId},
 		Overwrite: cmd.Overwrite,
 	}
 }

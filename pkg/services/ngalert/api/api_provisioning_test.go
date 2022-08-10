@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -372,7 +373,7 @@ func createTestRequestCtx() gfcore.ReqContext {
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser: &gfcore.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			OrgId: 1,
 		},
 	}

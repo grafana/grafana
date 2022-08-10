@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -25,7 +26,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 	}
 }
 
-func authorize(c *models.ReqContext, ac AccessControl, user *models.SignedInUser, evaluator Evaluator) {
+func authorize(c *models.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
 	injected, err := evaluator.MutateScopes(c.Req.Context(), ScopeInjector(ScopeParams{
 		OrgID:     c.OrgId,
 		URLParams: web.Params(c.Req),

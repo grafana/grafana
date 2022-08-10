@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var sqlIDAcceptList = map[string]struct{}{
@@ -33,7 +33,7 @@ type SQLFilter struct {
 // Filter creates a where clause to restrict the view of a query based on a users permissions
 // Scopes that exists for all actions will be parsed and compared against the supplied sqlID
 // Prefix parameter is the prefix of the scope that we support (e.g. "users:id:")
-func Filter(user *models.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
+func Filter(user *user.SignedInUser, sqlID, prefix string, actions ...string) (SQLFilter, error) {
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
 	}

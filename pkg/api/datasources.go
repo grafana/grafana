@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -318,7 +319,8 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Resp
 
 func validateURL(cmdType string, url string) response.Response {
 	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
-		return response.Error(400, fmt.Sprintf("Validation error, invalid URL: %q", url), err)
+		datasourcesLogger.Error("Failed to validate URL", "url", url)
+		return response.Error(http.StatusBadRequest, "Validation error, invalid URL", err)
 	}
 
 	return nil
@@ -832,7 +834,7 @@ func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *data
 	}
 }
 
-func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, user *models.SignedInUser, ds []*datasources.DataSource) ([]*datasources.DataSource, error) {
+func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, user *user.SignedInUser, ds []*datasources.DataSource) ([]*datasources.DataSource, error) {
 	query := datasources.DatasourcesPermissionFilterQuery{
 		User:        user,
 		Datasources: ds,

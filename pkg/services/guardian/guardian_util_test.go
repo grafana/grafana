@@ -12,7 +12,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type scenarioContext struct {
@@ -20,7 +22,7 @@ type scenarioContext struct {
 	orgRoleScenario    string
 	permissionScenario string
 	g                  DashboardGuardian
-	givenUser          *models.SignedInUser
+	givenUser          *user.SignedInUser
 	givenDashboardID   int64
 	givenPermissions   []*models.DashboardACLInfoDTO
 	givenTeams         []*models.TeamDTO
@@ -32,9 +34,9 @@ type scenarioContext struct {
 
 type scenarioFunc func(c *scenarioContext)
 
-func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenarioFunc) {
+func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		user := &models.SignedInUser{
+		user := &user.SignedInUser{
 			UserId:  userID,
 			OrgId:   orgID,
 			OrgRole: role,
@@ -53,9 +55,9 @@ func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenari
 	})
 }
 
-func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenarioFunc) {
+func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		user := &models.SignedInUser{
+		user := &user.SignedInUser{
 			UserId:   0,
 			OrgId:    orgID,
 			OrgRole:  role,

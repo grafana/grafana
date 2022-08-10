@@ -9,6 +9,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func (hs *HTTPServer) populateDashboardsByID(ctx context.Context, dashboardByIDs []int64, dashboardIDOrder map[int64]int) (dtos.PlaylistDashboardsSlice, error) {
@@ -35,7 +36,7 @@ func (hs *HTTPServer) populateDashboardsByID(ctx context.Context, dashboardByIDs
 	return result, nil
 }
 
-func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
+func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
 	for _, tag := range dashboardByTag {
@@ -65,7 +66,7 @@ func (hs *HTTPServer) populateDashboardsByTag(ctx context.Context, orgID int64, 
 	return result
 }
 
-func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
+func (hs *HTTPServer) LoadPlaylistDashboards(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, playlistUID string) (dtos.PlaylistDashboardsSlice, error) {
 	playlistItems, _ := hs.LoadPlaylistItems(ctx, playlistUID, orgID)
 
 	dashboardByIDs := make([]int64, 0)

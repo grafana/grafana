@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var ErrNotImplemented = errors.New("not implemented")
 
 type DatasourcePermissionsService interface {
 	FilterDatasourcesBasedOnQueryPermissions(ctx context.Context, cmd *datasources.DatasourcesPermissionFilterQuery) error
-	FilterDatasourceUidsBasedOnQueryPermissions(ctx context.Context, user *models.SignedInUser, datasourceUids []string) ([]string, error)
+	FilterDatasourceUidsBasedOnQueryPermissions(ctx context.Context, user *user.SignedInUser, datasourceUids []string) ([]string, error)
 }
 
 // dummy method
@@ -20,7 +20,7 @@ func (hs *OSSDatasourcePermissionsService) FilterDatasourcesBasedOnQueryPermissi
 	return ErrNotImplemented
 }
 
-func (hs *OSSDatasourcePermissionsService) FilterDatasourceUidsBasedOnQueryPermissions(ctx context.Context, user *models.SignedInUser, datasourceUids []string) ([]string, error) {
+func (hs *OSSDatasourcePermissionsService) FilterDatasourceUidsBasedOnQueryPermissions(ctx context.Context, user *user.SignedInUser, datasourceUids []string) ([]string, error) {
 	return nil, ErrNotImplemented
 }
 

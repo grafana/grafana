@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -28,7 +29,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	accessControlEnabled := !hs.AccessControl.IsDisabled()
-	if !accessControlEnabled && c.OrgRole == models.ROLE_VIEWER {
+	if !accessControlEnabled && c.OrgRole == org.RoleViewer {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
@@ -40,7 +41,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to create Team", err)
 	}
 
-	if accessControlEnabled || (c.OrgRole == models.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin) {
+	if accessControlEnabled || (c.OrgRole == org.RoleEditor && hs.Cfg.EditorsCanAdmin) {
 		// if the request is authenticated using API tokens
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
@@ -194,7 +195,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 // 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
 func userFilter(c *models.ReqContext) int64 {
 	userIdFilter := c.SignedInUser.UserId
-	if c.OrgRole == models.ROLE_ADMIN {
+	if c.OrgRole == org.RoleAdmin {
 		userIdFilter = models.FilterIgnoreUser
 	}
 	return userIdFilter

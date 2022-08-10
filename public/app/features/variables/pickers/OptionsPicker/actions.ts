@@ -3,12 +3,12 @@ import { debounce, trim } from 'lodash';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { variableAdapters } from '../../adapters';
-import { hasOptions, isMulti } from '../../guard';
+import { hasOptions } from '../../guard';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../../state/selectors';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../../state/types';
-import { VariableOption, VariableWithMultiSupport } from '../../types';
+import { VariableOption, VariableWithOptions } from '../../types';
 import { containsSearchFilter, getCurrentValue, toVariablePayload } from '../../utils';
 import { NavigationKey } from '../types';
 
@@ -77,7 +77,7 @@ export const filterOrSearchOptions = (
   };
 };
 
-const setVariable = async (updated: VariableWithMultiSupport) => {
+const setVariable = async (updated: VariableWithOptions) => {
   const adapter = variableAdapters.get(updated.type);
   await adapter.setValue(updated, updated.current, true);
   return;
@@ -88,7 +88,7 @@ export const commitChangesToVariable = (key: string, callback?: (updated: any) =
     const picker = getVariablesState(key, getState()).optionsPicker;
     const identifier: KeyedVariableIdentifier = { id: picker.id, rootStateKey: key, type: 'query' };
     const existing = getVariable(identifier, getState());
-    if (!isMulti(existing)) {
+    if (!hasOptions(existing)) {
       return;
     }
 
@@ -99,7 +99,7 @@ export const commitChangesToVariable = (key: string, callback?: (updated: any) =
     dispatch(toKeyedAction(key, changeVariableProp(toVariablePayload(existing, searchQueryPayload))));
 
     const updated = getVariable(identifier, getState());
-    if (!isMulti(updated)) {
+    if (!hasOptions(updated)) {
       return;
     }
 
@@ -128,7 +128,7 @@ export const openOptions =
     }
 
     const variable = getVariable(identifier, getState());
-    if (!isMulti(variable)) {
+    if (!hasOptions(variable)) {
       return;
     }
 

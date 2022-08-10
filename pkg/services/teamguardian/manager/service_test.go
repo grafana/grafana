@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -15,15 +17,15 @@ func TestUpdateTeam(t *testing.T) {
 	teamGuardianService := ProvideService(store)
 
 	t.Run("Updating a team", func(t *testing.T) {
-		admin := models.SignedInUser{
+		admin := user.SignedInUser{
 			UserId:  1,
 			OrgId:   1,
-			OrgRole: models.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		}
-		editor := models.SignedInUser{
+		editor := user.SignedInUser{
 			UserId:  2,
 			OrgId:   1,
-			OrgRole: models.ROLE_EDITOR,
+			OrgRole: org.RoleEditor,
 		}
 		testTeam := models.Team{
 			Id:    1,

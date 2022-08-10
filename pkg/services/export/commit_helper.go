@@ -3,7 +3,6 @@ package export
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -108,7 +107,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 			}
 		}
 
-		err = ioutil.WriteFile(b.fpath, body, 0644)
+		err = os.WriteFile(b.fpath, body, 0644)
 		if err != nil {
 			return err
 		}

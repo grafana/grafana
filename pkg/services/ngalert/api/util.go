@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -35,19 +36,25 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
+func getDatasourceByUID(ctx *models.ReqContext, cache datasources.CacheService, expectedType apimodels.Backend) (*datasources.DataSource, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
-	if ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache); err == nil {
-		switch ds.Type {
-		case "loki", "prometheus":
-			return apimodels.LoTexRulerBackend, nil
-		case "alertmanager":
-			return apimodels.AlertmanagerBackend, nil
-		default:
-			return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
-		}
+	ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
+	if err != nil {
+		return nil, err
 	}
-	return 0, fmt.Errorf("unexpected backend type (%v)", datasourceUID)
+	switch expectedType {
+	case apimodels.AlertmanagerBackend:
+		if ds.Type != "alertmanager" {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "alertmanager")
+		}
+	case apimodels.LoTexRulerBackend:
+		if ds.Type != "loki" && ds.Type != "prometheus" {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus")
+		}
+	default:
+		return nil, unexpectedDatasourceTypeError(ds.Type, expectedType.String())
+	}
+	return ds, nil
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
@@ -182,7 +189,7 @@ func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
 }
 
-func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+func validateCondition(ctx context.Context, c ngmodels.Condition, user *user.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
 	if len(c.Data) == 0 {
 		return nil
 	}
@@ -209,7 +216,7 @@ func conditionValidator(c *models.ReqContext, cache datasources.CacheService) fu
 	}
 }
 
-func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *user.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {
 		return nil, nil
