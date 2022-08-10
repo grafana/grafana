@@ -87,7 +87,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
 
 ButtonSelectComponent.displayName = 'ButtonSelect';
 
-export const ButtonSelect = React.memo(ButtonSelectComponent) as typeof ButtonSelectComponent;
+export const ButtonSelect = React.memo(ButtonSelectComponent);
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
