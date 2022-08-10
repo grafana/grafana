@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -221,7 +222,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		return response.Error(500, "Failed to get user", err)
 	}
 
-	authModuleQuery := &models.GetAuthInfoQuery{UserId: usr.ID, AuthModule: models.AuthModuleLDAP}
+	authModuleQuery := &models.GetAuthInfoQuery{UserId: usr.ID, AuthModule: login.LDAPAuthModule}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
@@ -332,6 +333,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		unmappedUserGroups[strings.ToLower(userGroup)] = struct{}{}
 	}
 
+	orgIDs := []int64{} // IDs of the orgs the user is a member of
 	orgRolesMap := map[int64]org.RoleType{}
 	for _, group := range serverConfig.Groups {
 		// only use the first match for each org
@@ -344,6 +346,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 			u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: group.GroupDN,
 				OrgId: group.OrgId, OrgRole: group.OrgRole})
 			delete(unmappedUserGroups, strings.ToLower(group.GroupDN))
+			orgIDs = append(orgIDs, group.OrgId)
 		}
 	}
 
@@ -356,7 +359,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
-	u.Teams, err = hs.ldapGroups.GetTeams(user.Groups)
+	u.Teams, err = hs.ldapGroups.GetTeams(user.Groups, orgIDs)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}

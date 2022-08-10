@@ -21,6 +21,11 @@ import (
 	"net/http"
 )
 
+var (
+	_ http.ResponseWriter = &responseWriter{}
+	_ http.Hijacker       = &responseWriter{}
+)
+
 // ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about
 // the response. It is recommended that middleware handlers use this construct to wrap a responsewriter
 // if the functionality calls for it.
@@ -106,12 +111,20 @@ func (rw *responseWriter) Before(before BeforeFunc) {
 	rw.beforeFuncs = append(rw.beforeFuncs, before)
 }
 
+const StatusHijacked = -1
+
 func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hijacker, ok := rw.ResponseWriter.(http.Hijacker)
 	if !ok {
 		return nil, nil, errors.New("the ResponseWriter doesn't support the Hijacker interface")
 	}
-	return hijacker.Hijack()
+
+	conn, brw, err := hijacker.Hijack()
+	if err == nil {
+		rw.status = StatusHijacked
+	}
+
+	return conn, brw, err
 }
 
 func (rw *responseWriter) callBefore() {

@@ -65,7 +65,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *mode
 
 	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query, a.loginService)
 	if ldapEnabled {
-		query.AuthModule = models.AuthModuleLDAP
+		query.AuthModule = login.LDAPAuthModule
 		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
 			return ldapErr
 		}

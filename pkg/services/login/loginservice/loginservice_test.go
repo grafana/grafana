@@ -9,6 +9,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -145,7 +146,7 @@ func createUserOrgDTO() []*models.UserOrgDTO {
 
 func createSimpleExternalUser() models.ExternalUserInfo {
 	externalUser := models.ExternalUserInfo{
-		AuthModule: "ldap",
+		AuthModule: login.LDAPAuthModule,
 		OrgRoles: map[int64]org.RoleType{
 			1: org.RoleViewer,
 		},
