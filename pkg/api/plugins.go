@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -466,7 +465,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

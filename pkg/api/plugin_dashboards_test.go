@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -89,7 +89,7 @@ func TestGetPluginDashboards(t *testing.T) {
 			resp, err := sendGetPluginDashboardsRequestForSignedInUser(t, s, existingPluginID, user)
 			require.NoError(t, err)
 			require.Equal(t, http.StatusOK, resp.StatusCode)
-			bytes, err := ioutil.ReadAll(resp.Body)
+			bytes, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			var listResp []*plugindashboards.PluginDashboard

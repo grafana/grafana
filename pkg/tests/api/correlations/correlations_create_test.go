@@ -3,7 +3,7 @@ package correlations
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -64,7 +64,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -84,7 +84,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -104,7 +104,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusBadRequest, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -126,7 +126,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -149,7 +149,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -172,7 +172,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response errorResponseBody
@@ -195,7 +195,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response correlations.CreateCorrelationResponseBody
@@ -225,7 +225,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
 
-		responseBody, err := ioutil.ReadAll(res.Body)
+		responseBody, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 
 		var response correlations.CreateCorrelationResponseBody

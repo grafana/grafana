@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -103,7 +102,7 @@ func shortenBuildID(buildID string) string {
 func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 	pkgJSONPath := filepath.Join(grafanaDir, "package.json")
 	//nolint:gosec
-	pkgJSONB, err := ioutil.ReadFile(pkgJSONPath)
+	pkgJSONB, err := os.ReadFile(pkgJSONPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read %q: %w", pkgJSONPath, err)
 	}

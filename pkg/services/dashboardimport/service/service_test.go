@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -144,7 +144,7 @@ func TestImportDashboardService(t *testing.T) {
 func loadTestDashboard(ctx context.Context, req *plugindashboards.LoadPluginDashboardRequest) (*plugindashboards.LoadPluginDashboardResponse, error) {
 	// It's safe to ignore gosec warning G304 since this is a test and arguments comes from test configuration.
 	// nolint:gosec
-	bytes, err := ioutil.ReadFile(filepath.Join("testdata", req.Reference))
+	bytes, err := os.ReadFile(filepath.Join("testdata", req.Reference))
 	if err != nil {
 		return nil, err
 	}

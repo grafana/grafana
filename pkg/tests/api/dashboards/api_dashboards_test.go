@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -62,7 +62,7 @@ func TestDashboardQuota(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		dashboardDTO := &plugindashboards.PluginDashboard{}
 		err = json.Unmarshal(b, dashboardDTO)
@@ -87,7 +87,7 @@ func TestDashboardQuota(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		require.JSONEq(t, `{"message":"Quota reached"}`, string(b))
@@ -124,10 +124,10 @@ providers:
    path: %s`, provDashboardsDir))
 	err := os.WriteFile(provDashboardsCfg, blob, 0644)
 	require.NoError(t, err)
-	input, err := ioutil.ReadFile(filepath.Join("./home.json"))
+	input, err := os.ReadFile(filepath.Join("./home.json"))
 	require.NoError(t, err)
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
-	err = ioutil.WriteFile(provDashboardFile, input, 0644)
+	err = os.WriteFile(provDashboardFile, input, 0644)
 	require.NoError(t, err)
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 	// Create user
@@ -152,7 +152,7 @@ providers:
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		dashboardList := &models.HitList{}
 		err = json.Unmarshal(b, dashboardList)
@@ -219,7 +219,7 @@ providers:
 				if tc.expErrReason == "" {
 					return
 				}
-				b, err := ioutil.ReadAll(resp.Body)
+				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 				dashboardErr := &errorResponseBody{}
 				err = json.Unmarshal(b, dashboardErr)
@@ -245,7 +245,7 @@ providers:
 			})
 			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			dashboardErr := &errorResponseBody{}
 			err = json.Unmarshal(b, dashboardErr)

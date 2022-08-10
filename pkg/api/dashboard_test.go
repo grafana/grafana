@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -77,7 +77,7 @@ func TestGetHomeDashboard(t *testing.T) {
 			dash.Meta.IsHome = true
 			dash.Meta.FolderTitle = "General"
 
-			homeDashJSON, err := ioutil.ReadFile(tc.expectedDashboardPath)
+			homeDashJSON, err := os.ReadFile(tc.expectedDashboardPath)
 			require.NoError(t, err, "must be able to read expected dashboard file")
 			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
 			bytes, err := simplejson.NewJson(homeDashJSON)

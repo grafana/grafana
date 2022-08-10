@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -176,7 +177,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			proxy.matchedRoute = routes[5]
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.matchedRoute, dsInfo, cfg)
 
-			content, err := ioutil.ReadAll(req.Body)
+			content, err := io.ReadAll(req.Body)
 			require.NoError(t, err)
 			require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 		})
@@ -275,7 +276,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			var authorizationHeaderCall2 string
 
 			t.Run("first call should add authorization header with access token", func(t *testing.T) {
-				json, err := ioutil.ReadFile("./test-data/access-token-1.json")
+				json, err := os.ReadFile("./test-data/access-token-1.json")
 				require.NoError(t, err)
 
 				originalClient := client
@@ -303,7 +304,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				assert.True(t, strings.HasPrefix(authorizationHeaderCall1, "Bearer eyJ0e"))
 
 				t.Run("second call to another route should add a different access token", func(t *testing.T) {
-					json2, err := ioutil.ReadFile("./test-data/access-token-2.json")
+					json2, err := os.ReadFile("./test-data/access-token-2.json")
 					require.NoError(t, err)
 
 					req, err := http.NewRequest("GET", "http://localhost/asd", nil)
@@ -887,7 +888,7 @@ func (c *httpClientStub) Do(req *http.Request) (*http.Response, error) {
 	body, err := bodyJSON.MarshalJSON()
 	require.NoError(c.t, err)
 	resp := &http.Response{
-		Body: ioutil.NopCloser(bytes.NewReader(body)),
+		Body: io.NopCloser(bytes.NewReader(body)),
 	}
 
 	return resp, nil

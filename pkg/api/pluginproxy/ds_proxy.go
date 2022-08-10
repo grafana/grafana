@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -106,7 +106,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	modifyResponse := func(resp *http.Response) error {
 		if resp.StatusCode == 401 {
 			// The data source rejected the request as unauthorized, convert to 400 (bad request)
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return fmt.Errorf("failed to read data source response body: %w", err)
 			}
@@ -118,7 +118,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 			*resp = http.Response{
 				StatusCode:    400,
 				Status:        "Bad Request",
-				Body:          ioutil.NopCloser(strings.NewReader(msg)),
+				Body:          io.NopCloser(strings.NewReader(msg)),
 				ContentLength: int64(len(msg)),
 				Header:        http.Header{},
 			}
@@ -324,9 +324,9 @@ func (proxy *DataSourceProxy) logRequest() {
 
 	var body string
 	if proxy.ctx.Req.Body != nil {
-		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Body)
+		buffer, err := io.ReadAll(proxy.ctx.Req.Body)
 		if err == nil {
-			proxy.ctx.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			proxy.ctx.Req.Body = io.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
 	}

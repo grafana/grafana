@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -101,9 +100,9 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 func Test_GetPluginAssets(t *testing.T) {
 	pluginID := "test-plugin"
 	pluginDir := "."
-	tmpFile, err := ioutil.TempFile(pluginDir, "")
+	tmpFile, err := os.CreateTemp(pluginDir, "")
 	require.NoError(t, err)
-	tmpFileInParentDir, err := ioutil.TempFile("..", "")
+	tmpFileInParentDir, err := os.CreateTemp("..", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(tmpFile.Name())

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -1124,7 +1124,7 @@ func (s *DryRunRuleStorage) ListChannelRules(_ context.Context, _ int64) ([]pipe
 
 // HandlePipelineConvertTestHTTP ...
 func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) response.Response {
-	body, err := ioutil.ReadAll(c.Req.Body)
+	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
@@ -1169,7 +1169,7 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 
 // HandleChannelRulesPostHTTP ...
 func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.Response {
-	body, err := ioutil.ReadAll(c.Req.Body)
+	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
@@ -1189,7 +1189,7 @@ func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.
 
 // HandleChannelRulesPutHTTP ...
 func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.Response {
-	body, err := ioutil.ReadAll(c.Req.Body)
+	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
@@ -1212,7 +1212,7 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.R
 
 // HandleChannelRulesDeleteHTTP ...
 func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) response.Response {
-	body, err := ioutil.ReadAll(c.Req.Body)
+	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
@@ -1259,7 +1259,7 @@ func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *models.ReqContext) response.
 
 // HandleWriteConfigsPostHTTP ...
 func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *models.ReqContext) response.Response {
-	body, err := ioutil.ReadAll(c.Req.Body)
+	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
@@ -1279,7 +1279,7 @@ func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *models.ReqContext) response.
 
 // HandleWriteConfigsPutHTTP ...
 func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *models.ReqContext) response.Response {
-	body, err := ioutil.ReadAll(c.Req.Body)
+	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}
@@ -1323,7 +1323,7 @@ func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *models.ReqContext) response.R
 
 // HandleWriteConfigsDeleteHTTP ...
 func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *models.ReqContext) response.Response {
-	body, err := ioutil.ReadAll(c.Req.Body)
+	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
 	}

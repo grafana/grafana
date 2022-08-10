@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -388,7 +387,7 @@ func (hs *thumbService) SetImage(c *models.ReqContext) {
 	hs.log.Info("File Size: %+v\n", handler.Size)
 	hs.log.Info("MIME Header: %+v\n", handler.Header)
 
-	fileBytes, err := ioutil.ReadAll(file)
+	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(400, map[string]string{"error": "error reading file"})
