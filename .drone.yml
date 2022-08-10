@@ -705,7 +705,7 @@ trigger:
     include:
     - '*.md'
     - docs/**
-    - packages/**
+    - packages/**/*.md
     - latest.json
 type: docker
 volumes:
@@ -805,7 +805,7 @@ trigger:
     include:
     - '*.md'
     - docs/**
-    - packages/**
+    - packages/**/*.md
     - latest.json
 type: docker
 volumes:
@@ -1086,6 +1086,7 @@ steps:
     paths:
       include:
       - .drone.yml
+      - pkg/build/**
     repo:
     - grafana/grafana
 - image: grafana/drone-downstream
@@ -5145,6 +5146,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 000a4fa4dc0c88d9ee3d5096a9ded360037e23f4ba91896c02419cd4ccce38c3
+hmac: a6fff8b3e3e8664ef3e98e3acb2c68aaecdd2eb44fa40bd73ded8322564fb2fa
 
 ...

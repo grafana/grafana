@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func commentsToDto(items []*commentmodel.Comment, userMap map[int64]*commentmodel.CommentUser) []*commentmodel.CommentDto {
@@ -86,7 +87,7 @@ type CreateCmd struct {
 
 var ErrPermissionDenied = errors.New("permission denied")
 
-func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, cmd CreateCmd) (*commentmodel.CommentDto, error) {
+func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, cmd CreateCmd) (*commentmodel.CommentDto, error) {
 	ok, err := s.permissions.CheckWritePermissions(ctx, orgID, signedInUser, cmd.ObjectType, cmd.ObjectID)
 	if err != nil {
 		return nil, err
@@ -120,7 +121,7 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *models.
 	return mDto, nil
 }
 
-func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *models.SignedInUser, cmd GetCmd) ([]*commentmodel.CommentDto, error) {
+func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, cmd GetCmd) ([]*commentmodel.CommentDto, error) {
 	ok, err := s.permissions.CheckReadPermissions(ctx, orgID, signedInUser, cmd.ObjectType, cmd.ObjectID)
 	if err != nil {
 		return nil, err

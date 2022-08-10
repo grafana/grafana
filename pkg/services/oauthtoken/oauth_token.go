@@ -24,7 +24,7 @@ type Service struct {
 }
 
 type OAuthTokenService interface {
-	GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token
+	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 }
 
@@ -36,7 +36,7 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *models.SignedInUser) *oauth2.Token {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUser) *oauth2.Token {
 	if usr == nil {
 		// No user, therefore no token
 		return nil

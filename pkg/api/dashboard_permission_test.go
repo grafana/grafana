@@ -18,6 +18,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -53,7 +54,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				"/api/dashboards/id/:dashboardId/permissions", org.RoleEditor, func(sc *scenarioContext) {
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
@@ -96,7 +97,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+				"/api/dashboards/id/:dashboardId/permissions", org.RoleAdmin, func(sc *scenarioContext) {
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 200, sc.resp.Code)
 
@@ -189,7 +190,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+			role := org.RoleEditor
 			cmds := []dtos.UpdateDashboardACLCommand{
 				{
 					Items: []dtos.DashboardACLUpdateItem{
@@ -264,7 +265,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			mockSQLStore := mockstore.NewSQLStoreMock()
 			var resp []*models.DashboardACLInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:dashboardId/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+				"/api/dashboards/id/:dashboardId/permissions", org.RoleAdmin, func(sc *scenarioContext) {
 					setUp()
 					guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 						CanAdminValue:                    true,

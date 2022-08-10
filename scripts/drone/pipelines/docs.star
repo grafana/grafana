@@ -30,7 +30,7 @@ docs_paths = {
     'include': [
         '*.md',
         'docs/**',
-        'packages/**',
+        'packages/**/*.md',
         'latest.json',
     ],
 }

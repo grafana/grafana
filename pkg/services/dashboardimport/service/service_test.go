@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,11 +44,11 @@ func TestImportDashboardService(t *testing.T) {
 		importLibraryPanelsForDashboard := false
 		connectLibraryPanelsForDashboardCalled := false
 		libraryPanelService := &libraryPanelServiceMock{
-			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 				importLibraryPanelsForDashboard = true
 				return nil
 			},
-			connectLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+			connectLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {
 				connectLibraryPanelsForDashboardCalled = true
 				return nil
 			},
@@ -63,7 +65,7 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:     &models.SignedInUser{UserId: 2, OrgRole: models.ROLE_ADMIN, OrgId: 3},
+			User:     &user.SignedInUser{UserId: 2, OrgRole: org.RoleAdmin, OrgId: 3},
 			FolderId: 5,
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
@@ -120,7 +122,7 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:     &models.SignedInUser{UserId: 2, OrgRole: models.ROLE_ADMIN, OrgId: 3},
+			User:     &user.SignedInUser{UserId: 2, OrgRole: org.RoleAdmin, OrgId: 3},
 			FolderId: 5,
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
@@ -185,11 +187,11 @@ func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboa
 
 type libraryPanelServiceMock struct {
 	librarypanels.Service
-	connectLibraryPanelsForDashboardFunc func(c context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error
-	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error
+	connectLibraryPanelsForDashboardFunc func(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error
+	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error
 }
 
-func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.Context, signedInUser *models.SignedInUser, dash *models.Dashboard) error {
+func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {
 	if s.connectLibraryPanelsForDashboardFunc != nil {
 		return s.connectLibraryPanelsForDashboardFunc(ctx, signedInUser, dash)
 	}
@@ -197,7 +199,7 @@ func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.C
 	return nil
 }
 
-func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser *models.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
 	if s.importLibraryPanelsForDashboardFunc != nil {
 		return s.importLibraryPanelsForDashboardFunc(ctx, signedInUser, libraryPanels, panels, folderID)
 	}
