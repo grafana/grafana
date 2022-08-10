@@ -246,11 +246,15 @@ export class DatasourceSrv implements DataSourceService {
 
     if (filters.variables) {
       for (const variable of this.templateSrv.getVariables()) {
-        if (!isDataSource(variable) || variable.multi || variable.includeAll) {
+        if (!isDataSource(variable)) {
           continue;
         }
-        const dsName = variable.current.value === 'default' ? this.defaultName : variable.current.value;
-        const dsSettings = !Array.isArray(dsName) && this.settingsMapByName[dsName];
+        let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
+        if (Array.isArray(dsValue) && dsValue.length === 1) {
+          // Support for multi-value variables with only one selected datasource
+          dsValue = dsValue[0];
+        }
+        const dsSettings = !Array.isArray(dsValue) && this.settingsMapByName[dsValue];
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;
