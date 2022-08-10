@@ -17,10 +17,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -82,6 +84,7 @@ func replacedResponseWriter(ctx *models.ReqContext) (*models.ReqContext, *respon
 
 type AlertingProxy struct {
 	DataProxy *datasourceproxy.DataSourceProxyService
+	ac        accesscontrol.AccessControl
 }
 
 // withReq proxies a different request
@@ -102,6 +105,16 @@ func (p *AlertingProxy) withReq(
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req = req
+
+	// If RBAC is enabled, the actions are checked upstream and if the user gets here then it is allowed to do an action against a datasource.
+	// Some data sources require legacy Editor role in order to perform mutating operations. In this case, we elevate permissions for the context that we
+	// will provide downstream.
+	// TODO (yuri) remove this after RBAC for plugins is implemented
+	if !p.ac.IsDisabled() && !newCtx.SignedInUser.HasRole(org.RoleEditor) {
+		newUser := *ctx.SignedInUser
+		newUser.OrgRole = org.RoleEditor
+		newCtx.SignedInUser = &newUser
+	}
 
 	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
 	if datasourceID != "" {
