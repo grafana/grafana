@@ -1395,10 +1395,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOption.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-ui/src/components/Dropdown/ButtonSelect.story.internal.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "packages/grafana-ui/src/components/Dropdown/ButtonSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
