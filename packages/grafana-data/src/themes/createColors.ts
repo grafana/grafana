@@ -172,7 +172,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   text = {
     primary: '#2D333E',
-    secondary: 'rgba(45, 51, 62, 0.6)',
+    secondary: '#2d333e',
     disabled: '#9DA7B8',
     link: this.primary.text,
     maxContrast: palette.black,
@@ -186,7 +186,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   secondary = {
     main: '#FC9A69',
-    shade: '#FC9A6955',
+    shade: '#FC9A6990',
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
     border: this.border.strong,

@@ -7,6 +7,7 @@ window.__grafana_public_path__ =
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import { toggleTheme } from 'app/core/services/toggleTheme';
 import fn_app from 'app/fn_app';
 
 class createMfe {
@@ -30,6 +31,7 @@ class createMfe {
   static mountFnApp(component: React.Component) {
     // eslint-disable-next-line
     return async function mount(props: any) {
+      toggleTheme(props.theme);
       ReactDOM.render(
         React.createElement(component, { ...props }),
         props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
