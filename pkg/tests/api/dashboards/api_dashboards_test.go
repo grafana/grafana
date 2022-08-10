@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -62,7 +63,7 @@ func TestDashboardQuota(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		dashboardDTO := &plugindashboards.PluginDashboard{}
 		err = json.Unmarshal(b, dashboardDTO)
@@ -87,7 +88,7 @@ func TestDashboardQuota(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 		require.JSONEq(t, `{"message":"Quota reached"}`, string(b))
@@ -152,7 +153,7 @@ providers:
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		dashboardList := &models.HitList{}
 		err = json.Unmarshal(b, dashboardList)
@@ -219,7 +220,7 @@ providers:
 				if tc.expErrReason == "" {
 					return
 				}
-				b, err := ioutil.ReadAll(resp.Body)
+				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 				dashboardErr := &errorResponseBody{}
 				err = json.Unmarshal(b, dashboardErr)
@@ -245,7 +246,7 @@ providers:
 			})
 			assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			dashboardErr := &errorResponseBody{}
 			err = json.Unmarshal(b, dashboardErr)

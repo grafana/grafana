@@ -288,7 +288,7 @@ func (i *Installer) sendRequestGetBytes(URL string, subPaths ...string) ([]byte,
 			i.log.Warn("Failed to close stream", "err", err)
 		}
 	}()
-	return ioutil.ReadAll(bodyReader)
+	return io.ReadAll(bodyReader)
 }
 
 func (i *Installer) sendRequest(URL string, subPaths ...string) (io.ReadCloser, error) {
@@ -342,7 +342,7 @@ func (i *Installer) createRequest(URL string, subPaths ...string) (*http.Request
 
 func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		defer func() {
 			if err := res.Body.Close(); err != nil {
 				i.log.Warn("Failed to close response body", "err", err)

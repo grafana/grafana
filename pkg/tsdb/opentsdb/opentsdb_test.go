@@ -2,6 +2,7 @@ package opentsdb
 
 import (
 	"context"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -27,7 +28,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		testBody := "{\"start\":0,\"end\":0,\"queries\":null}"

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -86,7 +86,7 @@ func (u *WebdavUploader) Upload(ctx context.Context, imgToUpload string) (string
 	}()
 
 	if res.StatusCode != http.StatusCreated {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return "", fmt.Errorf("failed to read response body: %w", err)
 		}

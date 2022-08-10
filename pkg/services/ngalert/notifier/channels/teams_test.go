@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -268,7 +269,7 @@ func TestTeamsNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			body, err := ioutil.ReadAll(clientStub.lastRequest.Body)
+			body, err := io.ReadAll(clientStub.lastRequest.Body)
 			require.NoError(t, err)
 			require.JSONEq(t, string(expBody), string(body))
 		})

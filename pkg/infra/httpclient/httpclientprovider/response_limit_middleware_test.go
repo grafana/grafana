@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -46,7 +47,7 @@ func TestResponseLimitMiddleware(t *testing.T) {
 			require.NotNil(t, res.Body)
 			require.NoError(t, res.Body.Close())
 
-			bodyBytes, err := ioutil.ReadAll(res.Body)
+			bodyBytes, err := io.ReadAll(res.Body)
 			if err != nil {
 				require.EqualError(t, tc.err, err.Error())
 			} else {

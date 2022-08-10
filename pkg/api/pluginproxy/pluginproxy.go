@@ -3,6 +3,7 @@ package pluginproxy
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -107,7 +108,7 @@ func logAppPluginProxyRequest(appID string, cfg *setting.Cfg, c *models.ReqConte
 
 	var body string
 	if c.Req.Body != nil {
-		buffer, err := ioutil.ReadAll(c.Req.Body)
+		buffer, err := io.ReadAll(c.Req.Body)
 		if err == nil {
 			c.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)

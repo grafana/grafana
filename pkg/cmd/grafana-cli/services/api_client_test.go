@@ -19,7 +19,7 @@ func TestHandleResponse(t *testing.T) {
 		resp := makeResponse(t, 200, "test")
 		bodyReader, err := handleResponse(resp)
 		require.NoError(t, err)
-		body, err := ioutil.ReadAll(bodyReader)
+		body, err := io.ReadAll(bodyReader)
 		require.NoError(t, err)
 		assert.Equal(t, "test", string(body))
 	})

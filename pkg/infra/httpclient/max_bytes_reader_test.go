@@ -3,6 +3,7 @@ package httpclient
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -26,7 +27,7 @@ func TestMaxBytesReader(t *testing.T) {
 			body := ioutil.NopCloser(strings.NewReader("dummy"))
 			readCloser := MaxBytesReader(body, tc.limit)
 
-			bodyBytes, err := ioutil.ReadAll(readCloser)
+			bodyBytes, err := io.ReadAll(readCloser)
 			if err != nil {
 				require.EqualError(t, tc.err, err.Error())
 			} else {

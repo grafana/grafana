@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -87,7 +88,7 @@ func TestPlugins(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, tc.expStatus, resp.StatusCode)
-				b, err := ioutil.ReadAll(resp.Body)
+				b, err := io.ReadAll(resp.Body)
 				require.NoError(t, err)
 
 				expResp := expectedResp(t, tc.expRespPath)
@@ -129,7 +130,7 @@ func makePostRequest(t *testing.T, URL string) (int, map[string]interface{}) {
 		_ = resp.Body.Close()
 		fmt.Printf("Failed to close response body err: %s", err)
 	})
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
 	var body = make(map[string]interface{})
