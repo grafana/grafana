@@ -5,9 +5,8 @@ import { GrafanaTheme2 } from '../themes';
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
-import { GrafanaTheme } from './theme';
 
-import { NavLinkDTO, OrgRole } from '.';
+import { GrafanaTheme, NavLinkDTO, OrgRole } from '.';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -192,6 +191,7 @@ export interface GrafanaConfig {
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   liveEnabled: boolean;
+  /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[];

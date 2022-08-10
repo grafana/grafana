@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -20,8 +21,8 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *ShortURLService {
 }
 
 type Service interface {
-	GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error)
-	CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error)
+	GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*models.ShortUrl, error)
+	CreateShortURL(ctx context.Context, user *user.SignedInUser, path string) (*models.ShortUrl, error)
 	UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error
 	DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error
 }
@@ -30,7 +31,7 @@ type ShortURLService struct {
 	SQLStore *sqlstore.SQLStore
 }
 
-func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error) {
+func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*models.ShortUrl, error) {
 	var shortURL models.ShortUrl
 	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		exists, err := dbSession.Where("org_id=? AND uid=?", user.OrgId, uid).Get(&shortURL)
@@ -62,7 +63,7 @@ func (s ShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *models.
 	})
 }
 
-func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, relPath string) (*models.ShortUrl, error) {
+func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedInUser, relPath string) (*models.ShortUrl, error) {
 	relPath = strings.TrimSpace(relPath)
 
 	if path.IsAbs(relPath) {

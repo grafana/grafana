@@ -3,26 +3,14 @@ package store_test
 import (
 	"context"
 	"testing"
-	"time"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
 
 const baseIntervalSeconds = 10
-
-// Every time this is called, time advances by 1 second.
-func mockTimeNow() {
-	var timeSeed int64
-	store.TimeNow = func() time.Time {
-		fakeNow := time.Unix(timeSeed, 0).UTC()
-		timeSeed++
-		return fakeNow
-	}
-}
 
 func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	if testing.Short() {

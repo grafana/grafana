@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/require"
 )
@@ -50,7 +51,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				UserId: 1,
 			})
 			resp, err := s.SendJSON(req)
@@ -66,7 +67,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				UserId: 1,
 			})
 			resp, err := s.SendJSON(req)
@@ -83,7 +84,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				UserId: 1,
 			})
 			resp, err := s.SendJSON(req)
@@ -115,7 +116,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				UserId: 1,
 			})
 			resp, err := s.SendJSON(req)
@@ -141,7 +142,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			jsonBytes, err := json.Marshal(cmd)
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				UserId: 1,
 			})
 			resp, err := s.SendJSON(req)

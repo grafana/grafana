@@ -10,12 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type getUserPermissionsTestCase struct {
 	desc               string
+	anonymousUser      bool
 	orgID              int64
 	role               string
 	userPermissions    []string
@@ -74,6 +76,16 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			expected:           0,
 			actions:            []string{},
 		},
+		{
+			desc:               "should only get br permissions for anonymous user",
+			anonymousUser:      true,
+			orgID:              1,
+			role:               "Admin",
+			userPermissions:    []string{"1", "2", "10"},
+			teamPermissions:    []string{"100", "2"},
+			builtinPermissions: []string{"5", "6"},
+			expected:           2,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -109,7 +121,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			var roles []string
-			role := models.RoleType(tt.role)
+			role := org.RoleType(tt.role)
 
 			if role.IsValid() {
 				roles = append(roles, string(role))
@@ -118,9 +130,13 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 				}
 			}
 
+			userID := user.ID
+			if tt.anonymousUser {
+				userID = 0
+			}
 			permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
 				OrgID:   tt.orgID,
-				UserID:  user.ID,
+				UserID:  userID,
 				Roles:   roles,
 				Actions: tt.actions,
 			})

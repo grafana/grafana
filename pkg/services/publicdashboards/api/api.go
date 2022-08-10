@@ -79,6 +79,11 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
 	}
 
+	pubDash, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), dash.OrgId, dash.Uid)
+	if err != nil {
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard config", err)
+	}
+
 	meta := dtos.DashboardMeta{
 		Slug:                       dash.Slug,
 		Type:                       models.DashTypeDB,
@@ -93,6 +98,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		IsFolder:                   false,
 		FolderId:                   dash.FolderId,
 		PublicDashboardAccessToken: accessToken,
+		PublicDashboardUID:         pubDash.Uid,
 	}
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}

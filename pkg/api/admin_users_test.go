@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,7 +31,7 @@ const (
 )
 
 func TestAdminAPIEndpoint(t *testing.T) {
-	const role = models.ROLE_ADMIN
+	const role = org.RoleAdmin
 	userService := usertest.NewUserServiceFake()
 	t.Run("Given a server admin attempts to remove themselves as an admin", func(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
@@ -236,7 +237,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	})
 }
 
-func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
+func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
 	cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := &HTTPServer{
@@ -277,7 +278,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminLogoutUser(c)
 		})
@@ -305,7 +306,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminRevokeUserAuthToken(c)
 		})
@@ -331,7 +332,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.AdminGetUserAuthTokens(c)
 		})

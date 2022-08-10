@@ -129,6 +129,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
+	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -156,6 +157,7 @@ var wireSet = wire.NewSet(
 	hooks.ProvideService,
 	legacydataservice.ProvideService,
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
+	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	api.ProvideHTTPServer,
@@ -307,7 +309,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
@@ -318,6 +319,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
+	opentsdb.ProvideService,
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {

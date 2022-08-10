@@ -23,8 +23,10 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -167,7 +169,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId: 12,
 			},
 		}
@@ -184,7 +186,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId: 1,
 			},
 		}
@@ -201,7 +203,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				OrgId: 3, // Org 3 was initialized with broken config.
 			},
 		}
@@ -331,8 +333,8 @@ func TestSilenceCreate(t *testing.T) {
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
-				SignedInUser: &models.SignedInUser{
-					OrgRole: models.ROLE_EDITOR,
+				SignedInUser: &user.SignedInUser{
+					OrgRole: org.RoleEditor,
 					OrgId:   1,
 				},
 			}
@@ -353,7 +355,7 @@ func TestRouteCreateSilence(t *testing.T) {
 		name           string
 		silence        func() apimodels.PostableSilence
 		accessControl  func() accesscontrol.AccessControl
-		role           models.RoleType
+		role           org.RoleType
 		expectedStatus int
 	}{
 		{
@@ -380,7 +382,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_VIEWER,
+			role:           org.RoleViewer,
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
@@ -389,7 +391,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_EDITOR,
+			role:           org.RoleEditor,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -398,7 +400,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_ADMIN,
+			role:           org.RoleAdmin,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -425,7 +427,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_VIEWER,
+			role:           org.RoleViewer,
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
@@ -434,7 +436,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_EDITOR,
+			role:           org.RoleEditor,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -443,7 +445,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_ADMIN,
+			role:           org.RoleAdmin,
 			expectedStatus: http.StatusAccepted,
 		},
 	}
@@ -457,7 +459,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					OrgRole: tesCase.role,
 					OrgId:   1,
 				},
@@ -624,7 +626,7 @@ func createRequestCtxInOrg(org int64) *models.ReqContext {
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser: &models.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			OrgId: org,
 		},
 	}

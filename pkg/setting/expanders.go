@@ -2,7 +2,6 @@ package setting
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"sort"
@@ -145,7 +144,7 @@ func (e fileExpander) Expand(s string) (string, error) {
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `s` comes from configuration section keys
-	f, err := ioutil.ReadFile(s)
+	f, err := os.ReadFile(s)
 	if err != nil {
 		return "", err
 	}
