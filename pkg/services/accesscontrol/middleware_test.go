@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -87,7 +88,7 @@ func contextProvider() web.Handler {
 		reqCtx := &models.ReqContext{
 			Context:      c,
 			Logger:       log.New(""),
-			SignedInUser: &models.SignedInUser{},
+			SignedInUser: &user.SignedInUser{},
 			IsSignedIn:   true,
 			SkipCache:    true,
 		}

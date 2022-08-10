@@ -15,10 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -33,7 +35,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		mock := &mockstore.SQLStoreMock{}
 
 		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
-			models.ROLE_ADMIN, func(sc *scenarioContext) {
+			org.RoleAdmin, func(sc *scenarioContext) {
 				_, err := hs.SQLStore.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
 				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
@@ -117,10 +119,10 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			logger := &logtest.Fake{}
 			c := &models.ReqContext{
 				Context:      &web.Context{Req: req},
-				SignedInUser: &models.SignedInUser{},
+				SignedInUser: &user.SignedInUser{},
 				Logger:       logger,
 			}
-			c.OrgRole = models.ROLE_EDITOR
+			c.OrgRole = org.RoleEditor
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
@@ -134,10 +136,10 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			logger := &logtest.Fake{}
 			c := &models.ReqContext{
 				Context:      &web.Context{Req: req},
-				SignedInUser: &models.SignedInUser{UserId: 42},
+				SignedInUser: &user.SignedInUser{UserId: 42},
 				Logger:       logger,
 			}
-			c.OrgRole = models.ROLE_EDITOR
+			c.OrgRole = org.RoleEditor
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)

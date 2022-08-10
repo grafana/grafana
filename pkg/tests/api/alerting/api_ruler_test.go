@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
@@ -36,7 +36,7 @@ func TestAlertRulePermissions(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -176,7 +176,7 @@ func TestAlertRulePermissions(t *testing.T) {
 		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 
 		// remove permissions from folder2
-		removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
+		removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
 		apiClient.ReloadCachedPermissions(t)
 
 		// make sure that folder2 is not included in the response
@@ -250,7 +250,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	}
 
 	// Remove permissions from folder1.
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
 	apiClient.ReloadCachedPermissions(t)
 	{
 		u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
@@ -326,7 +326,7 @@ func TestAlertRuleConflictingTitle(t *testing.T) {
 
 	// Create user
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
 	})
@@ -393,7 +393,7 @@ func TestRulerRulesFilterByDashboard(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -731,7 +731,7 @@ func TestRuleGroupSequence(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -827,7 +827,7 @@ func TestRuleUpdate(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})

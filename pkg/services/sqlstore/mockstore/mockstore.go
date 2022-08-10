@@ -39,7 +39,7 @@ type SQLStoreMock struct {
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedPersistedDashboards    models.HitList
-	ExpectedSignedInUser           *models.SignedInUser
+	ExpectedSignedInUser           *user.SignedInUser
 	ExpectedUserStars              map[int64]bool
 	ExpectedLoginAttempts          int64
 
