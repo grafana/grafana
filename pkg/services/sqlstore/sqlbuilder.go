@@ -3,11 +3,10 @@ package sqlstore
 import (
 	"bytes"
 
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func NewSqlBuilder(cfg *setting.Cfg) SQLBuilder {
