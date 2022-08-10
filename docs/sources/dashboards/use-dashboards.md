@@ -52,7 +52,7 @@ The main building block of dashboard is the panel. You add new panels via the `A
 
 A dashboard row is a logical divider within a dashboard. It is used to group panels together. Rows can be collapsed or expanded allowing you to hide parts of the dashboard. Panels inside a collapsed row will not issue any queries.
 
-Use the [repeating rows]({{< relref "../panels/add-panels-dynamically/configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
+Use the [repeating rows]({{< relref "../panels/configure-panel-options/#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
 
