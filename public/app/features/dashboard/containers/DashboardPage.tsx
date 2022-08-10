@@ -387,12 +387,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
           dashboard={dashboard}
-          //  title={dashboard.title}
+          title={!this.props.isFNDashboard ? dashboard.title : ''}
           folderTitle={dashboard.meta.folderTitle}
           isFullscreen={!!viewPanel}
           onAddPanel={this.onAddPanel}
           kioskMode={kioskMode}
-          // hideTimePicker={dashboard.timepicker.hidden}
+          hideTimePicker={dashboard.timepicker.hidden}
         />
       </header>
     );
