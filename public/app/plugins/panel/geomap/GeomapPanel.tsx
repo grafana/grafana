@@ -24,9 +24,11 @@ import {
   GrafanaTheme,
   MapLayerHandler,
   MapLayerOptions,
+  NumericRange,
   PanelData,
   PanelProps,
 } from '@grafana/data';
+import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
 import { PanelEditExitedEvent } from 'app/types/events';
@@ -107,16 +109,14 @@ export class GeomapPanel extends Component<Props, State> {
         if (layer.options.type === MARKERS_LAYER_ID) {
           const colorField = layer.options.config.style.color.field;
           const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === colorField);
-          // initialize (not override) Standard Options min/max value with color field calc min/max
+          // override Standard Options min/max value with color field calc min/max
           if (colorFieldData) {
-            this.props.onFieldConfigChange({
-              ...this.props.fieldConfig,
-              defaults: {
-                min: colorFieldData.state?.calcs?.min,
-                max: colorFieldData.state?.calcs?.max,
-                ...this.props.fieldConfig.defaults,
-              },
-            });
+            const calcRange: NumericRange = {
+              min: colorFieldData.state?.calcs?.min,
+              max: colorFieldData.state?.calcs?.max,
+              delta: colorFieldData.state?.calcs?.delta,
+            };
+            this.setFieldConfig(calcRange);
             break;
           }
         }
@@ -281,7 +281,7 @@ export class GeomapPanel extends Component<Props, State> {
     // TODO: Clean this approach up / potentially support multiple marker layers?
     // See https://github.com/grafana/grafana/issues/51185 for more details.
     for (const layer of options.layers) {
-      if (layer.type === MARKERS_LAYER_ID) {
+      if (this.props.options.layers && layer.type === MARKERS_LAYER_ID) {
         const oldLayer = this.props.options.layers.find((lyr) => lyr.name === layer.name);
         const newLayerColorField = layer.config.style.color.field;
         const oldLayerColorField = oldLayer?.config.style.color.field;
@@ -289,14 +289,12 @@ export class GeomapPanel extends Component<Props, State> {
           const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === newLayerColorField);
           if (colorFieldData) {
             // override Standard Options min/max value with color field calc min/max
-            this.props.onFieldConfigChange({
-              ...this.props.fieldConfig,
-              defaults: {
-                ...this.props.fieldConfig.defaults,
-                min: colorFieldData.state?.calcs?.min,
-                max: colorFieldData.state?.calcs?.max,
-              },
-            });
+            const calcRange: NumericRange = {
+              min: colorFieldData.state?.calcs?.min,
+              max: colorFieldData.state?.calcs?.max,
+              delta: colorFieldData.state?.calcs?.delta,
+            };
+            this.setFieldConfig(calcRange);
             break;
           }
         }
@@ -313,7 +311,44 @@ export class GeomapPanel extends Component<Props, State> {
       for (const state of this.layers) {
         this.applyLayerFilter(state.handler, state.options);
       }
+
+      // TODO: Clean this approach up / potentially support multiple marker layers?
+      // See https://github.com/grafana/grafana/issues/51185 for more details.
+      if (this.props.options.layers) {
+        for (const layer of this.props.options.layers) {
+          if (data.series[0] && layer.type === MARKERS_LAYER_ID) {
+            const colorField = layer.config.style.color.field;
+            const colorFieldData = data.series[0].fields.find((field) => field.name === colorField);
+            if (colorFieldData) {
+              colorFieldData.config.min = undefined;
+              colorFieldData.config.max = undefined;
+              const calcRange = getMinMaxAndDelta(colorFieldData);
+              const shouldUpdate =
+                calcRange.min !== undefined &&
+                calcRange.max !== undefined &&
+                (this.props.fieldConfig.defaults.min !== calcRange.min ||
+                  this.props.fieldConfig.defaults.max !== calcRange.max);
+              // override Standard Options min/max value with color field calc min/max
+              if (shouldUpdate) {
+                this.setFieldConfig(calcRange);
+              }
+              break;
+            }
+          }
+        }
+      }
     }
+  }
+
+  private setFieldConfig(range: NumericRange) {
+    this.props.onFieldConfigChange({
+      ...this.props.fieldConfig,
+      defaults: {
+        ...this.props.fieldConfig.defaults,
+        min: range.min,
+        max: range.max,
+      },
+    });
   }
 
   initMapRef = async (div: HTMLDivElement) => {
