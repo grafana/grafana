@@ -34,8 +34,11 @@ jobs:
     - name: Build packages
       run: yarn packages:build
 
-    - name: Zip built packages
-      run: zip -r ./pr_built_packages.zip ./packages/**/dist
+    - name: Pack packages
+      run: yarn packages:pack --out ./%s.tgz 
+
+    - name: Zip built tarballed packages
+      run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
 
     - name: Upload build output as artifact
       uses: actions/upload-artifact@v3
@@ -75,8 +78,11 @@ jobs:
     - name: Build packages
       run: yarn packages:build
 
-    - name: Zip built packages
-      run: zip -r ./base_built_packages.zip ./packages/**/dist
+    - name: Pack packages
+      run: yarn packages:pack --out ./%s.tgz
+
+    - name: Zip built tarballed packages
+      run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
 
     - name: Upload build output as artifact
       uses: actions/upload-artifact@v3
@@ -105,10 +111,10 @@ jobs:
           name: buildBase
       
       - name: Unzip artifact from pr
-        run: unzip pr_built_packages.zip -d ./pr && rm pr_built_packages.zip
+        run: unzip -j pr_built_packages.zip -d ./pr && rm pr_built_packages.zip
 
       - name: Unzip artifact from base
-        run: unzip base_built_packages.zip -d ./base && rm base_built_packages.zip
+        run: unzip -j base_built_packages.zip -d ./base && rm base_built_packages.zip
 
       - name: Get link for the Github Action job
         id: job
