@@ -1,2 +1,2 @@
-// Package slot exposes Grafana's coremodel composition slot definitions for use in Go.
+// Package Slot exposes Grafana's coremodel composition Slot definitions for use in Go.
 package slot
