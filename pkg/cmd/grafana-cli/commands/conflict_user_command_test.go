@@ -13,11 +13,10 @@ import (
 
 func TestGetConflictingUsers(t *testing.T) {
 	type testListConflictingUsers struct {
-		desc         string
-		users        []user.User
-		want         int
-		wantConflict string
-		wantErr      error
+		desc    string
+		users   []user.User
+		want    int
+		wantErr error
 	}
 	testOrgID := 1
 	testCases := []testListConflictingUsers{
@@ -35,8 +34,7 @@ func TestGetConflictingUsers(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
-			want:         2,
-			wantConflict: "conflict_login",
+			want: 2,
 		},
 		{
 			desc: "should get email conflicting users",
@@ -52,8 +50,7 @@ func TestGetConflictingUsers(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
-			want:         2,
-			wantConflict: "conflict_email",
+			want: 2,
 		},
 		// TODO:
 		// refactor the sql to get 3 users from this test
@@ -179,7 +176,8 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 	type testListConflictingUsers struct {
 		desc  string
 		users []user.User
-		want  string
+		//nolint
+		want string
 	}
 	testOrgID := 1
 	testCases := []testListConflictingUsers{
