@@ -2,6 +2,7 @@ package kvstore
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -62,23 +63,28 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 		namespacedKVStore := GetNamespacedKVStore(s.kvstore)
 		wasFatal, err := isPluginStartupErrorFatal(ctx, namespacedKVStore)
 		if err != nil {
-			s.logger.Warn("unabled to determine whether plugin startup failures are fatal - continuing migration anyway.")
+			s.logger.Warn("unable to determine whether plugin startup failures are fatal - continuing migration anyway.")
 		}
 
 		allSec, err := secretsSql.GetAll(ctx)
 		if err != nil {
 			return nil
 		}
+		totalSec := len(allSec)
 		// We just set it again as the current secret store should be the plugin secret
-		for _, sec := range allSec {
+		s.logger.Debug(fmt.Sprintf("Total amount of secrets to migrate: %d", totalSec))
+		for i, sec := range allSec {
+			s.logger.Debug(fmt.Sprintf("Migrating secret %d of %d", i+1, totalSec), "current", i+1, "secretCount", totalSec)
 			err = s.secretsStore.Set(ctx, *sec.OrgId, *sec.Namespace, *sec.Type, sec.Value)
 			if err != nil {
 				return err
 			}
 		}
-		s.logger.Debug("migrated unified secrets to plugin", "number of secrets", len(allSec))
+		s.logger.Debug("migrated unified secrets to plugin", "number of secrets", totalSec)
 		// as no err was returned, when we delete all the secrets from the sql store
 		for index, sec := range allSec {
+			s.logger.Debug(fmt.Sprintf("Cleaning secret %d of %d", index+1, totalSec), "current", index+1, "secretCount", totalSec)
+
 			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
 			if err != nil {
 				s.logger.Error("plugin migrator encountered error while deleting unified secrets")
@@ -94,7 +100,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 				return err
 			}
 		}
-		s.logger.Debug("deleted unified secrets after migration", "number of secrets", len(allSec))
+		s.logger.Debug("deleted unified secrets after migration", "number of secrets", totalSec)
 	}
 	return nil
 }
