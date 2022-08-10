@@ -58,14 +58,25 @@ export const UserRolePicker: FC<Props> = ({
     }
   }, [orgId, getUserRoles, pendingRoles]);
 
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) ||
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+
+  // if a user cannot update roles of another user mark every role as non delegatable
+  if (!canUpdateRoles) {
+    roleOptions.map((r) => (r.delegatable = false));
+  }
+
   const onRolesChange = async (roles: Role[]) => {
+    if (!canUpdateRoles) {
+      return;
+    }
+
     if (!updateDisabled) {
       await updateUserRoles(roles, userId, orgId);
       await getUserRoles();
-    } else {
-      if (onApplyRoles) {
-        onApplyRoles(roles, userId, orgId);
-      }
+    } else if (onApplyRoles) {
+      onApplyRoles(roles, userId, orgId);
     }
   };
 
