@@ -26,91 +26,15 @@ import { SettingsPage, SettingsPageProps } from './types';
 
 export interface Props {
   dashboard: DashboardModel;
+  sectionNav: NavModel;
   pageNav: NavModelItem;
   editview: string;
 }
 
 const onClose = () => locationService.partial({ editview: null, editIndex: null });
 
-export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
-  const pages = useMemo((): SettingsPage[] => {
-    const pages: SettingsPage[] = [];
-
-    if (dashboard.meta.canEdit) {
-      pages.push({
-        title: 'Settings',
-        id: 'settings',
-        icon: 'sliders-v-alt',
-        component: GeneralSettings,
-      });
-
-      pages.push({
-        title: 'Annotations',
-        id: 'annotations',
-        icon: 'comment-alt',
-        component: AnnotationsSettings,
-      });
-
-      pages.push({
-        title: 'Variables',
-        id: 'templating',
-        icon: 'calculator-alt',
-        component: VariableEditorContainer,
-      });
-
-      pages.push({
-        title: 'Links',
-        id: 'links',
-        icon: 'link',
-        component: LinksSettings,
-      });
-    }
-
-    if (dashboard.meta.canMakeEditable) {
-      pages.push({
-        title: 'General',
-        icon: 'sliders-v-alt',
-        id: 'settings',
-        component: MakeEditable,
-      });
-    }
-
-    if (dashboard.id && dashboard.meta.canSave) {
-      pages.push({
-        title: 'Versions',
-        id: 'versions',
-        icon: 'history',
-        component: VersionsSettings,
-      });
-    }
-
-    if (dashboard.id && dashboard.meta.canAdmin) {
-      if (!config.rbacEnabled) {
-        pages.push({
-          title: 'Permissions',
-          id: 'permissions',
-          icon: 'lock',
-          component: DashboardPermissions,
-        });
-      } else if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
-        pages.push({
-          title: 'Permissions',
-          id: 'permissions',
-          icon: 'lock',
-          component: AccessControlDashboardPermissions,
-        });
-      }
-    }
-
-    pages.push({
-      title: 'JSON Model',
-      id: 'dashboard_json',
-      icon: 'arrow',
-      component: JsonEditorSettings,
-    });
-
-    return pages;
-  }, [dashboard]);
+export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: Props) {
+  const pages = useMemo(() => getSettingsPages(dashboard), [dashboard]);
 
   const onPostSave = () => {
     dashboard.meta.hasUnsavedFolderChange = false;
@@ -122,7 +46,7 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
   const canSave = dashboard.meta.canSave;
   const location = useLocation();
   const editIndex = getEditIndex(location);
-  const sectionNav = getSectionNav(pageNav, pages, currentPage, location);
+  const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location);
   const subPageNav = getSubPageNav(dashboard, currentPage, editIndex, location);
 
   const actions = [
@@ -139,15 +63,95 @@ export function DashboardSettings({ dashboard, editview, pageNav }: Props) {
       ) : (
         <AppChromeUpdate actions={actions} />
       )}
-      <Page navModel={sectionNav} pageNav={subPageNav}>
+      <Page navModel={subSectionNav} pageNav={subPageNav}>
         <currentPage.component dashboard={dashboard} editIndex={editIndex} />
       </Page>
     </>
   );
 }
 
+function getSettingsPages(dashboard: DashboardModel) {
+  const pages: SettingsPage[] = [];
+
+  if (dashboard.meta.canEdit) {
+    pages.push({
+      title: 'Settings',
+      id: 'settings',
+      icon: 'sliders-v-alt',
+      component: GeneralSettings,
+    });
+
+    pages.push({
+      title: 'Annotations',
+      id: 'annotations',
+      icon: 'comment-alt',
+      component: AnnotationsSettings,
+    });
+
+    pages.push({
+      title: 'Variables',
+      id: 'templating',
+      icon: 'calculator-alt',
+      component: VariableEditorContainer,
+    });
+
+    pages.push({
+      title: 'Links',
+      id: 'links',
+      icon: 'link',
+      component: LinksSettings,
+    });
+  }
+
+  if (dashboard.meta.canMakeEditable) {
+    pages.push({
+      title: 'General',
+      icon: 'sliders-v-alt',
+      id: 'settings',
+      component: MakeEditable,
+    });
+  }
+
+  if (dashboard.id && dashboard.meta.canSave) {
+    pages.push({
+      title: 'Versions',
+      id: 'versions',
+      icon: 'history',
+      component: VersionsSettings,
+    });
+  }
+
+  if (dashboard.id && dashboard.meta.canAdmin) {
+    if (!config.rbacEnabled) {
+      pages.push({
+        title: 'Permissions',
+        id: 'permissions',
+        icon: 'lock',
+        component: DashboardPermissions,
+      });
+    } else if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
+      pages.push({
+        title: 'Permissions',
+        id: 'permissions',
+        icon: 'lock',
+        component: AccessControlDashboardPermissions,
+      });
+    }
+  }
+
+  pages.push({
+    title: 'JSON Model',
+    id: 'dashboard_json',
+    icon: 'arrow',
+    component: JsonEditorSettings,
+  });
+
+  return pages;
+}
+
 function getSectionNav(
   pageNav: NavModelItem,
+  sectionNav: NavModel,
   pages: SettingsPage[],
   currentPage: SettingsPage,
   location: H.Location
@@ -166,6 +170,21 @@ function getSectionNav(
     url: locationUtil.getUrlForPartial(location, { editview: page.id }),
     active: page === currentPage,
   }));
+
+  if (pageNav.parentItem) {
+    pageNav = {
+      ...pageNav,
+      parentItem: {
+        ...pageNav.parentItem,
+        parentItem: sectionNav.node,
+      },
+    };
+  } else {
+    pageNav = {
+      ...pageNav,
+      parentItem: sectionNav.node,
+    };
+  }
 
   main.parentItem = pageNav;
 
