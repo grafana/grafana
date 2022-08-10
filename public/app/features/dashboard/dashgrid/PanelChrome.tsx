@@ -506,13 +506,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    // TODO: Optimize for panels without query runner
-    // 1.- Check if the panel is using a datasource variable
-    // 2.- Check if the datasource variable has more than one value
-    // 3.- Check if we are not repeating the panel by that datasource variable
-    // Plan: Look in VariableEditorContainer.tsx 
-    
-
     const alertState = data.alertState?.state;
 
     const containerClassNames = classNames({
