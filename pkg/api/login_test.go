@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -658,9 +659,9 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		{
 			desc:       "valid LDAP user",
 			authUser:   testUser,
-			authModule: "ldap",
+			authModule: loginservice.LDAPAuthModule,
 			info: models.LoginInfo{
-				AuthModule: "ldap",
+				AuthModule: loginservice.LDAPAuthModule,
 				User:       testUser,
 				HTTPStatus: 200,
 			},

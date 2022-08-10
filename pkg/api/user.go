@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -60,7 +61,7 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
 	query.Result.AuthLabels = []string{}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
+		authLabel := login.GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
 		query.Result.IsExternal = true
 	}
@@ -394,7 +395,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 	getAuthQuery := models.GetAuthInfoQuery{UserId: user.ID}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authModule := getAuthQuery.Result.AuthModule
-		if authModule == models.AuthModuleLDAP || authModule == models.AuthModuleProxy {
+		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
 			return response.Error(400, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
 		}
 	}
@@ -480,29 +481,6 @@ func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
-}
-
-func GetAuthProviderLabel(authModule string) string {
-	switch authModule {
-	case "oauth_github":
-		return "GitHub"
-	case "oauth_google":
-		return "Google"
-	case "oauth_azuread":
-		return "AzureAD"
-	case "oauth_gitlab":
-		return "GitLab"
-	case "oauth_grafana_com", "oauth_grafananet":
-		return "grafana.com"
-	case "auth.saml":
-		return "SAML"
-	case "authproxy":
-		return "Auth Proxy"
-	case "ldap", "":
-		return "LDAP"
-	default:
-		return "OAuth"
-	}
 }
 
 // swagger:parameters searchUsers
