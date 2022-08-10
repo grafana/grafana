@@ -211,6 +211,10 @@ func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context
 	return pd.store.PublicDashboardEnabled(ctx, dashboardUid)
 }
 
+func (pd *PublicDashboardServiceImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+	return pd.store.AccessTokenExists(ctx, accessToken)
+}
+
 // generates a uuid formatted without dashes to use as access token
 func GenerateAccessToken() (string, error) {
 	token, err := uuid.NewRandom()
