@@ -6,7 +6,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/ioutil" // nolint:depguard
 	"os"
 	"path/filepath"
 	"sort"
