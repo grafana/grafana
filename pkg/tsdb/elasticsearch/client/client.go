@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -231,7 +230,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
 			copy(bodyBytes, tmpBytes)
-			res.Body = ioutil.NopCloser(bytes.NewBuffer(tmpBytes))
+			res.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
 		}
 	}
 

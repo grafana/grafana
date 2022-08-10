@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -889,7 +888,7 @@ func (c *httpClientStub) Do(req *http.Request) (*http.Response, error) {
 	body, err := bodyJSON.MarshalJSON()
 	require.NoError(c.t, err)
 	resp := &http.Response{
-		Body: ioutil.NopCloser(bytes.NewReader(body)),
+		Body: io.NopCloser(bytes.NewReader(body)),
 	}
 
 	return resp, nil

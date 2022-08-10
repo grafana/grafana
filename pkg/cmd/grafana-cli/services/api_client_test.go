@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -81,7 +80,7 @@ func makeResponse(t *testing.T, status int, body string) *http.Response {
 func makeBody(t *testing.T, body string) io.ReadCloser {
 	t.Helper()
 
-	reader := ioutil.NopCloser(bytes.NewReader([]byte(body)))
+	reader := io.NopCloser(bytes.NewReader([]byte(body)))
 	t.Cleanup(func() {
 		err := reader.Close()
 		assert.NoError(t, err)

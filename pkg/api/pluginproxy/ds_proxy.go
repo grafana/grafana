@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -119,7 +118,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 			*resp = http.Response{
 				StatusCode:    400,
 				Status:        "Bad Request",
-				Body:          ioutil.NopCloser(strings.NewReader(msg)),
+				Body:          io.NopCloser(strings.NewReader(msg)),
 				ContentLength: int64(len(msg)),
 				Header:        http.Header{},
 			}
@@ -327,7 +326,7 @@ func (proxy *DataSourceProxy) logRequest() {
 	if proxy.ctx.Req.Body != nil {
 		buffer, err := io.ReadAll(proxy.ctx.Req.Body)
 		if err == nil {
-			proxy.ctx.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			proxy.ctx.Req.Body = io.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
 	}

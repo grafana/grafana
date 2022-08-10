@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -312,6 +311,6 @@ func newMockClient(resp *mockResponse) *mockClient {
 func makeResponse(status int, body string) *http.Response {
 	return &http.Response{
 		StatusCode: status,
-		Body:       ioutil.NopCloser(strings.NewReader(body)),
+		Body:       io.NopCloser(strings.NewReader(body)),
 	}
 }

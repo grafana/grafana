@@ -3,7 +3,6 @@ package httpclient
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -21,7 +20,7 @@ func TestCountBytesReader(t *testing.T) {
 
 	for index, tc := range tcs {
 		t.Run(fmt.Sprintf("Test CountBytesReader %d", index), func(t *testing.T) {
-			body := ioutil.NopCloser(strings.NewReader(tc.body))
+			body := io.NopCloser(strings.NewReader(tc.body))
 			var actualBytesRead int64
 
 			readCloser := CountBytesReader(body, func(bytesRead int64) {

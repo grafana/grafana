@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -24,7 +23,7 @@ func TestMaxBytesReader(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Test MaxBytesReader with limit: %d", tc.limit), func(t *testing.T) {
-			body := ioutil.NopCloser(strings.NewReader("dummy"))
+			body := io.NopCloser(strings.NewReader("dummy"))
 			readCloser := MaxBytesReader(body, tc.limit)
 
 			bodyBytes, err := io.ReadAll(readCloser)
