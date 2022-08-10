@@ -15,15 +15,18 @@ export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureD
 getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
   DashboardLoadedEvent,
   ({ payload: { dashboardId, orgId, userId, grafanaVersion, queries } }) => {
-    reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
-      grafana_version: grafanaVersion,
-      dashboard_id: dashboardId,
-      org_id: orgId,
-      user_id: userId,
-      queries: queries[id].map((query: AzureMonitorQuery) => ({
-        hidden: !!query.hide,
-        query_type: query.queryType,
-      })),
-    });
+    const azureQueries = queries[id];
+    if (azureQueries && azureQueries.length > 0) {
+      reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
+        grafana_version: grafanaVersion,
+        dashboard_id: dashboardId,
+        org_id: orgId,
+        user_id: userId,
+        queries: azureQueries.map((query: AzureMonitorQuery) => ({
+          hidden: !!query.hide,
+          query_type: query.queryType,
+        })),
+      });
+    }
   }
 );

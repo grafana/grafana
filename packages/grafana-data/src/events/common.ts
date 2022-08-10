@@ -49,6 +49,8 @@ export type DashboardLoadedEventPayload<T> = {
   grafanaVersion?: string;
   queries: Record<string, T[]>;
 };
+
+/** @alpha */
 export class DashboardLoadedEvent<T> extends BusEventWithPayload<DashboardLoadedEventPayload<T>> {
   static type = 'dashboard-loaded';
 }

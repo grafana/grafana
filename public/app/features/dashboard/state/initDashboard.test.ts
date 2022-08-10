@@ -3,6 +3,7 @@ import thunk from 'redux-thunk';
 import { Subject } from 'rxjs';
 
 import { FetchError, locationService, setEchoSrv } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -42,14 +43,6 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
-const mockOnTrackQuery = jest.fn();
-const mockGetDS = jest.fn().mockImplementation((uid: string): Promise<{ onTrackQuery?: Function }> => {
-  if (uid === 'DSwithQueriesOnInitDashboard') {
-    return Promise.resolve({ onTrackQuery: mockOnTrackQuery });
-  } else {
-    return Promise.resolve({});
-  }
-});
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
   return {
@@ -57,7 +50,15 @@ jest.mock('@grafana/runtime', () => {
     getDataSourceSrv: jest.fn().mockImplementation(() => ({
       ...original.getDataSourceSrv(),
       getInstanceSettings: jest.fn(),
-      get: mockGetDS,
+    })),
+  };
+});
+jest.mock('@grafana/data', () => {
+  const original = jest.requireActual('@grafana/data');
+  return {
+    ...original,
+    EventBusSrv: jest.fn().mockImplementation(() => ({
+      publish: jest.fn(),
     })),
   };
 });
@@ -326,35 +327,58 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
     ctx.storeState.explore.left.queries = mockQueries;
   });
 
-  it('should log dashboard_loaded event', () => {
-    expect(mockGetDS).toBeCalledTimes(3);
-    expect(mockOnTrackQuery).toBeCalledTimes(1);
-    expect(mockOnTrackQuery).toHaveBeenCalledWith({
-      queries: [
-        {
-          datasource: {
-            name: 'azMonitor',
-            type: 'grafana-azure-monitor-datasource',
-            uid: 'DSwithQueriesOnInitDashboard',
-          },
-          expr: 'old expr',
-          queryType: 'Azure Log Analytics',
-          refId: 'A',
+  it('should send dashboard_loaded event', () => {
+    expect(appEvents.publish).toHaveBeenCalledWith({
+      payload: {
+        queries: {
+          cloudwatch: [
+            {
+              datasource: {
+                name: 'Cloud Watch',
+                type: 'cloudwatch',
+                uid: '1234',
+              },
+              refId: 'B',
+            },
+          ],
+          'grafana-azure-monitor-datasource': [
+            {
+              datasource: {
+                name: 'azMonitor',
+                type: 'grafana-azure-monitor-datasource',
+                uid: 'DSwithQueriesOnInitDashboard',
+              },
+              expr: 'old expr',
+              queryType: 'Azure Log Analytics',
+              refId: 'A',
+            },
+            {
+              datasource: {
+                name: 'azMonitor',
+                type: 'grafana-azure-monitor-datasource',
+                uid: 'DSwithQueriesOnInitDashboard',
+              },
+              queryType: 'Azure Monitor',
+              refId: 'B',
+            },
+          ],
+          'grafana-redshift-datasource': [
+            {
+              datasource: {
+                type: 'grafana-redshift-datasource',
+                uid: 'V6_lLJf7k',
+              },
+              rawSQL: '',
+              refId: 'A',
+            },
+          ],
         },
-        {
-          datasource: {
-            name: 'azMonitor',
-            type: 'grafana-azure-monitor-datasource',
-            uid: 'DSwithQueriesOnInitDashboard',
-          },
-          queryType: 'Azure Monitor',
-          refId: 'B',
-        },
-      ],
-      dashboardId: 'DGmvKKxZz',
-      orgId: 12,
-      userId: 34,
-      grafanaVersion: '1.0',
+        dashboardId: 'DGmvKKxZz',
+        orgId: 12,
+        userId: 34,
+        grafanaVersion: '1.0',
+      },
+      type: 'dashboard-loaded',
     });
   });
 
