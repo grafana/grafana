@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var logger = log.New("secret.migration")
@@ -24,6 +25,7 @@ type SecretMigrationServiceImpl struct {
 }
 
 func ProvideSecretMigrationService(
+	cfg *setting.Cfg,
 	serverLockService *serverlock.ServerLockService,
 	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
 	migrateToPluginService *kvstore.MigrateToPluginService,
@@ -31,9 +33,12 @@ func ProvideSecretMigrationService(
 ) *SecretMigrationServiceImpl {
 	services := make([]SecretMigrationService, 0)
 	services = append(services, dataSourceSecretMigrationService)
-	services = append(services, migrateFromPluginService)
-	// pluginMigrationService should always be the last one
-	services = append(services, migrateToPluginService)
+	// plugin migration should always be last; should either migrate to or from, not both
+	if cfg.SectionWithEnvOverrides("secrets").Key("migrate_from_plugin").MustBool(false) {
+		services = append(services, migrateFromPluginService)
+	} else {
+		services = append(services, migrateToPluginService)
+	}
 
 	return &SecretMigrationServiceImpl{
 		ServerLockService: serverLockService,
