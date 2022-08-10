@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/jmoiron/sqlx"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
 type DB interface {
@@ -13,7 +13,5 @@ type DB interface {
 	WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error
 	NewSession(ctx context.Context) *sqlstore.DBSession
 	GetDialect() migrator.Dialect
-	GetDB() *sqlx.DB
-	WithTransaction(ctx context.Context, callback func(*sqlx.Tx) error) error
-	BuildInsertWithReturningId(query string) (string, bool)
+	GetSqlxSession() *session.SessionDB
 }

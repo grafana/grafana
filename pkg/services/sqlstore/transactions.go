@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 
@@ -19,22 +18,6 @@ var tsclogger = log.New("sqlstore.transactions")
 // WithTransactionalDbSession calls the callback with a session within a transaction.
 func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, ss.bus, callback, 0)
-}
-
-func (ss *SQLStore) WithTransaction(ctx context.Context, fn func(*sqlx.Tx) error) error {
-	db := ss.GetDB()
-	tx, err := db.Beginx()
-	if err != nil {
-		return err
-	}
-	err = fn(tx)
-	if err != nil {
-		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf("tx err: %v, rb err: %v", err, rbErr)
-		}
-		return err
-	}
-	return tx.Commit()
 }
 
 func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {

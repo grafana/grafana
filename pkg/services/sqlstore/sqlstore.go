@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +46,7 @@ type ContextSessionKey struct{}
 
 type SQLStore struct {
 	Cfg          *setting.Cfg
-	sqlxdb       *sqlx.DB
+	sqlxsession  *session.SessionDB
 	CacheService *localcache.CacheService
 
 	bus                         bus.Bus
@@ -183,6 +184,13 @@ func (ss *SQLStore) GetDialect() migrator.Dialect {
 
 func (ss *SQLStore) Bus() bus.Bus {
 	return ss.bus
+}
+
+func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
+	if ss.sqlxsession == nil {
+		ss.sqlxsession = session.GetSession(sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName()))
+	}
+	return ss.sqlxsession
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {

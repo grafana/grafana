@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/jmoiron/sqlx"
 )
 
 var timeNow = time.Now
@@ -82,7 +82,5 @@ type Store interface {
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error
-	GetDB() *sqlx.DB
-	WithTransaction(ctx context.Context, callback func(*sqlx.Tx) error) error
-	BuildInsertWithReturningId(query string) (string, bool)
+	GetSqlxSession() *session.SessionDB
 }

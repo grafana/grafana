@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/jmoiron/sqlx"
 )
 
 type OrgListResponse []struct {
@@ -479,14 +479,6 @@ func (m *SQLStoreMock) GetAPIKeyByHash(ctx context.Context, hash string) (*apike
 	return nil, m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetDB() *sqlx.DB {
+func (m *SQLStoreMock) GetSqlxSession() *session.SessionDB {
 	return nil
-}
-
-func (m *SQLStoreMock) WithTransaction(ctx context.Context, callback func(*sqlx.Tx) error) error {
-	return nil
-}
-
-func (m *SQLStoreMock) BuildInsertWithReturningId(query string) (string, bool) {
-	return query, false
 }
