@@ -1185,6 +1185,7 @@ def trigger_test_release():
             'paths': {
                 'include': [
                     '.drone.yml',
+                    'pkg/build/**',
                 ]
             },
             'repo': [
