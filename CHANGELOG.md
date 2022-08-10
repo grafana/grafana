@@ -1,3 +1,16 @@
+<!-- 9.0.7 START -->
+
+# 9.0.7 (2022-08-10)
+
+### Features and enhancements
+
+- **CloudMonitoring:** Remove link setting for SLO queries. [#53031](https://github.com/grafana/grafana/pull/53031), [@andresmgot](https://github.com/andresmgot)
+
+### Bug fixes
+
+- **GrafanaUI:** Render PageToolbar's leftItems regardless of title's presence. [#53285](https://github.com/grafana/grafana/pull/53285), [@Elfo404](https://github.com/Elfo404)
+
+<!-- 9.0.7 END -->
 <!-- 9.0.6 START -->
 
 # 9.0.6 (2022-08-01)
