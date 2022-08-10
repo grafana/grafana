@@ -273,7 +273,7 @@ func (s *standardStorageService) list(c *models.ReqContext) response.Response {
 
 func (s *standardStorageService) getConfig(c *models.ReqContext) response.Response {
 	roots := make([]RootStorageMeta, 0)
-	orgId := c.OrgId
+	orgId := c.OrgID
 	t := s.tree
 	t.assureOrgIsInitialized(orgId)
 

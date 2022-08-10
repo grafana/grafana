@@ -100,26 +100,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		return true
 	}
 
-	ctx.SignedInUser = &models.SignedInUser{
-		UserId:             signedInUser.UserID,
-		OrgId:              signedInUser.OrgID,
-		OrgName:            signedInUser.OrgName,
-		OrgRole:            models.RoleType(signedInUser.OrgRole),
-		ExternalAuthModule: signedInUser.ExternalAuthModule,
-		ExternalAuthId:     signedInUser.ExternalAuthID,
-		Name:               signedInUser.Name,
-		Email:              signedInUser.Email,
-		Login:              signedInUser.Login,
-		ApiKeyId:           signedInUser.ApiKeyID,
-		OrgCount:           signedInUser.OrgCount,
-		IsGrafanaAdmin:     signedInUser.IsGrafanaAdmin,
-		IsDisabled:         signedInUser.IsDisabled,
-		IsAnonymous:        signedInUser.IsAnonymous,
-		HelpFlags1:         models.HelpFlags1(signedInUser.HelpFlags1),
-		LastSeenAt:         signedInUser.LastSeenAt,
-		Teams:              signedInUser.Teams,
-		Permissions:        signedInUser.Permissions,
-	}
+	ctx.SignedInUser = signedInUser
 	ctx.IsSignedIn = true
 
 	return true

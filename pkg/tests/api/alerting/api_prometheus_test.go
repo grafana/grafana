@@ -15,12 +15,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -37,7 +37,7 @@ func TestPrometheusRules(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -331,7 +331,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -625,7 +625,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -673,8 +673,8 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "folder2", body.Data.Groups[1].File)
 	}
 
-	// remove permissions from folder2
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
+	// remove permissions from folder2org.ROLE
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
 	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that folder2 is not included in the response
@@ -698,8 +698,8 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "folder1", body.Data.Groups[0].File)
 	}
 
-	// remove permissions from folder1
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
+	// remove permissions from folder1org.ROLE
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
 	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that no folders are included in the response
@@ -726,7 +726,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }
 
-func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role models.RoleType, uid string) {
+func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role org.RoleType, uid string) {
 	t.Helper()
 	// remove user permissions on folder
 	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, types.SetResourcePermissionCommand{

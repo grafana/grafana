@@ -8,7 +8,7 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -62,7 +62,7 @@ type GroupToOrgRole struct {
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
 
-	OrgRole models.RoleType `toml:"org_role"`
+	OrgRole org.RoleType `toml:"org_role"`
 }
 
 // logger for all LDAP stuff

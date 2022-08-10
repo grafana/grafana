@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func isGeneralFolder(folderID int64) bool {
@@ -24,20 +26,20 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 	}
 }
 
-func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
-	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_EDITOR) {
+func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user *user.SignedInUser, folderID int64) error {
+	if isGeneralFolder(folderID) && user.HasRole(org.RoleEditor) {
 		return nil
 	}
 
-	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_VIEWER) {
+	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return dashboards.ErrFolderAccessDenied
 	}
-	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
+	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgID)
 	if err != nil {
 		return err
 	}
 
-	g := guardian.New(ctx, folder.Id, user.OrgId, user)
+	g := guardian.New(ctx, folder.Id, user.OrgID, user)
 
 	canEdit, err := g.CanEdit()
 	if err != nil {
@@ -50,17 +52,17 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 	return nil
 }
 
-func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user *models.SignedInUser, folderID int64) error {
-	if isGeneralFolder(folderID) && user.HasRole(models.ROLE_VIEWER) {
+func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user *user.SignedInUser, folderID int64) error {
+	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return nil
 	}
 
-	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
+	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgID)
 	if err != nil {
 		return err
 	}
 
-	g := guardian.New(ctx, folder.Id, user.OrgId, user)
+	g := guardian.New(ctx, folder.Id, user.OrgID, user)
 
 	canView, err := g.CanView()
 	if err != nil {

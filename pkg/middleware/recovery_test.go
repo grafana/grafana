@@ -59,7 +59,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		require.NoError(t, err)
 
 		sc.m = web.New()
-		sc.m.Use(Recovery(cfg))
+		sc.m.UseMiddleware(Recovery(cfg))
 
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))

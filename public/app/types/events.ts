@@ -111,7 +111,7 @@ export class PanelTransformationsChangedEvent extends BusEventBase {
 }
 
 /**
- * Used by panel editor to know when panel plugin it'self trigger option updates
+ * Used by panel editor to know when panel plugin itself trigger option updates
  */
 export class PanelOptionsChangedEvent extends BusEventBase {
   static type = 'panels-options-changed';

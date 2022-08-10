@@ -141,7 +141,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		orgUser := org.OrgUser{
 			OrgID:   orgID,
 			UserID:  usr.ID,
-			Role:    org.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
@@ -319,25 +319,5 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	if err != nil {
 		return nil, err
 	}
-	signedInUser := &user.SignedInUser{
-		UserID:             q.Result.UserId,
-		OrgID:              q.Result.OrgId,
-		OrgName:            q.Result.OrgName,
-		OrgRole:            user.RoleType(q.Result.OrgRole),
-		ExternalAuthModule: q.Result.ExternalAuthModule,
-		ExternalAuthID:     q.Result.ExternalAuthId,
-		Login:              q.Result.Login,
-		Email:              q.Result.Email,
-		ApiKeyID:           q.Result.ApiKeyId,
-		Name:               q.Result.Name,
-		OrgCount:           q.Result.OrgCount,
-		IsGrafanaAdmin:     q.Result.IsGrafanaAdmin,
-		IsAnonymous:        q.Result.IsAnonymous,
-		IsDisabled:         q.Result.IsDisabled,
-		HelpFlags1:         user.HelpFlags1(q.Result.HelpFlags1),
-		LastSeenAt:         q.Result.LastSeenAt,
-		Teams:              q.Result.Teams,
-		Permissions:        q.Result.Permissions,
-	}
-	return signedInUser, nil
+	return q.Result, nil
 }

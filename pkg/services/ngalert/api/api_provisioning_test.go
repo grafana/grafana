@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -75,7 +76,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("GET returns 404", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgId = 2
+				rc.SignedInUser.OrgID = 2
 
 				response := sut.RouteGetPolicyTree(&rc)
 
@@ -85,7 +86,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("POST returns 404", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgId = 2
+				rc.SignedInUser.OrgID = 2
 
 				response := sut.RouteGetPolicyTree(&rc)
 
@@ -372,8 +373,8 @@ func createTestRequestCtx() gfcore.ReqContext {
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser: &gfcore.SignedInUser{
-			OrgId: 1,
+		SignedInUser: &user.SignedInUser{
+			OrgID: 1,
 		},
 	}
 }

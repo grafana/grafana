@@ -1,4 +1,10 @@
-import { addLabelFormatToQuery, addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
+import {
+  addLabelFormatToQuery,
+  addLabelToQuery,
+  addNoPipelineErrorToQuery,
+  addParserToQuery,
+  removeCommentsFromQuery,
+} from './modifyQuery';
 
 describe('addLabelToQuery()', () => {
   it('should add label to simple query', () => {
@@ -231,5 +237,43 @@ describe('addLabelFormatToQuery', () => {
     ).toBe(
       'rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m]) + rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m])'
     );
+  });
+});
+
+describe('removeCommentsFromQuery', () => {
+  it.each`
+    query                                                                             | expectedResult
+    ${'{job="grafana"}#hello'}                                                        | ${'{job="grafana"}'}
+    ${'{job="grafana"} | logfmt #hello'}                                              | ${'{job="grafana"} | logfmt '}
+    ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl '}
+  `('strips comments in log query:  {$query}', ({ query, expectedResult }) => {
+    expect(removeCommentsFromQuery(query)).toBe(expectedResult);
+  });
+
+  it.each`
+    query                                                                      | expectedResult
+    ${'{job="grafana"}'}                                                       | ${'{job="grafana"}'}
+    ${'{job="grafana"} | logfmt'}                                              | ${'{job="grafana"} | logfmt'}
+    ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl'}
+  `('returns original query if no comments in log query:  {$query}', ({ query, expectedResult }) => {
+    expect(removeCommentsFromQuery(query)).toBe(expectedResult);
+  });
+
+  it.each`
+    query                                                       | expectedResult
+    ${'count_over_time({job="grafana"}[10m])#hello'}            | ${'count_over_time({job="grafana"}[10m])'}
+    ${'count_over_time({job="grafana"} | logfmt[10m])#hello'}   | ${'count_over_time({job="grafana"} | logfmt[10m])'}
+    ${'rate({job="grafana"} | logfmt | foo="bar" [10m])#hello'} | ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}
+  `('strips comments in metrics query:  {$query}', ({ query, expectedResult }) => {
+    expect(removeCommentsFromQuery(query)).toBe(expectedResult);
+  });
+
+  it.each`
+    query                                                     | expectedResult
+    ${'count_over_time({job="grafana"}[10m])#hello'}          | ${'count_over_time({job="grafana"}[10m])'}
+    ${'count_over_time({job="grafana"} | logfmt[10m])#hello'} | ${'count_over_time({job="grafana"} | logfmt[10m])'}
+    ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}     | ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}
+  `('returns original query if no comments in metrics query:  {$query}', ({ query, expectedResult }) => {
+    expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });
 });

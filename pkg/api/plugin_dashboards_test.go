@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/require"
 )
@@ -52,9 +53,9 @@ func TestGetPluginDashboards(t *testing.T) {
 	})
 
 	t.Run("Signed in and not org admin should return 403 Forbidden", func(t *testing.T) {
-		user := &models.SignedInUser{
-			UserId:  1,
-			OrgRole: models.ROLE_EDITOR,
+		user := &user.SignedInUser{
+			UserID:  1,
+			OrgRole: org.RoleEditor,
 		}
 
 		resp, err := sendGetPluginDashboardsRequestForSignedInUser(t, s, existingPluginID, user)
@@ -64,10 +65,10 @@ func TestGetPluginDashboards(t *testing.T) {
 	})
 
 	t.Run("Signed in and org admin", func(t *testing.T) {
-		user := &models.SignedInUser{
-			UserId:  1,
-			OrgId:   1,
-			OrgRole: models.ROLE_ADMIN,
+		user := &user.SignedInUser{
+			UserID:  1,
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
 		}
 
 		t.Run("When plugin doesn't exist should return 404 Not Found", func(t *testing.T) {
@@ -101,7 +102,7 @@ func TestGetPluginDashboards(t *testing.T) {
 	})
 }
 
-func sendGetPluginDashboardsRequestForSignedInUser(t *testing.T, s *webtest.Server, pluginID string, user *models.SignedInUser) (*http.Response, error) {
+func sendGetPluginDashboardsRequestForSignedInUser(t *testing.T, s *webtest.Server, pluginID string, user *user.SignedInUser) (*http.Response, error) {
 	t.Helper()
 
 	req := s.NewGetRequest(fmt.Sprintf("/api/plugins/%s/dashboards", pluginID))

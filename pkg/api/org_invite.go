@@ -29,7 +29,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Response {
-	query := models.GetTempUsersQuery{OrgId: c.OrgId, Status: models.TmpUserInvitePending}
+	query := models.GetTempUsersQuery{OrgId: c.OrgID, Status: models.TmpUserInvitePending}
 
 	if err := hs.SQLStore.GetTempUsersQuery(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to get invites from db", err)
@@ -90,11 +90,11 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	}
 
 	cmd := models.CreateTempUserCommand{}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	cmd.Email = inviteDto.LoginOrEmail
 	cmd.Name = inviteDto.Name
 	cmd.Status = models.TmpUserInvitePending
-	cmd.InvitedByUserId = c.UserId
+	cmd.InvitedByUserId = c.UserID
 	cmd.Code, err = util.GetRandomString(30)
 	if err != nil {
 		return response.Error(500, "Could not generate random string", err)
@@ -141,7 +141,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.User, inviteDto *dtos.AddInviteForm) response.Response {
 	// user exists, add org role
-	createOrgUserCmd := models.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.ID, Role: inviteDto.Role}
+	createOrgUserCmd := models.AddOrgUserCommand{OrgId: c.OrgID, UserId: user.ID, Role: inviteDto.Role}
 	if err := hs.SQLStore.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return response.Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)

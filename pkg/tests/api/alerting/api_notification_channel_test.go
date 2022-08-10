@@ -26,6 +26,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -43,7 +44,7 @@ func TestTestReceivers(t *testing.T) {
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 		createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -77,7 +78,7 @@ func TestTestReceivers(t *testing.T) {
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 		createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -159,7 +160,7 @@ func TestTestReceivers(t *testing.T) {
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 		createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -236,7 +237,7 @@ func TestTestReceivers(t *testing.T) {
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 		createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -323,7 +324,7 @@ func TestTestReceivers(t *testing.T) {
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 		createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -436,7 +437,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 		createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -529,7 +530,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 		createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -617,7 +618,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 		createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -740,7 +741,7 @@ func TestNotificationChannels(t *testing.T) {
 
 	// Create a user to make authenticated requests
 	createUser(t, env.SQLStore, user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})

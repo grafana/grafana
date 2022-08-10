@@ -28,11 +28,11 @@ func OrgRedirect(cfg *setting.Cfg, userService user.Service) web.Handler {
 			return
 		}
 
-		if orgId == ctx.OrgId {
+		if orgId == ctx.OrgID {
 			return
 		}
 
-		cmd := user.SetUsingOrgCommand{UserID: ctx.UserId, OrgID: orgId}
+		cmd := user.SetUsingOrgCommand{UserID: ctx.UserID, OrgID: orgId}
 		if err := userService.SetUsingOrg(ctx.Req.Context(), &cmd); err != nil {
 			if ctx.IsApiRequest() {
 				ctx.JsonApiErr(404, "Not found", nil)

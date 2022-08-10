@@ -79,7 +79,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("AccessControl allows getting org preferences with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesRead}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesRead}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -89,7 +89,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents getting org preferences with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -125,7 +125,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 
 	input := strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl allows updating org preferences with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesWrite}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsPreferencesWrite}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -139,7 +139,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 
 	input = strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl prevents updating org preferences with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
