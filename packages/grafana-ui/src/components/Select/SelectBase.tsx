@@ -1,5 +1,5 @@
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
-import { ContainerProps, default as ReactSelect, DropdownIndicatorProps } from 'react-select';
+import { default as ReactSelect } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
@@ -330,15 +330,13 @@ export function SelectBase<T>({
               </div>
             );
           },
-          DropdownIndicator(props: DropdownIndicatorProps) {
+          DropdownIndicator(props) {
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
             return <SingleValue {...props} disabled={disabled} />;
           },
-          SelectContainer(props: ContainerProps) {
-            return <SelectContainer {...props} invalid={Boolean(invalid)} />;
-          },
+          SelectContainer,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
           ...components,

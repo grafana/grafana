@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
-import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
+import { components, ContainerProps as BaseContainerProps, GroupBase, Props } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -14,13 +14,18 @@ import { getInputStyles } from '../Input/Input';
 export interface SelectContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>>
   extends BaseContainerProps<Option, isMulti, Group> {
   isFocused: boolean;
-  invalid: boolean;
 }
 
 export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
   props: SelectContainerProps<Option, isMulti, Group>
 ) => {
-  const { isDisabled, isFocused, children, invalid } = props;
+  const {
+    isDisabled,
+    isFocused,
+    children,
+    // @ts-expect-error i'm not able to get this type right without causing a bunch of other issues
+    selectProps: { invalid = false },
+  } = props;
 
   const theme = useTheme2();
   const styles = getSelectContainerStyles(theme, isFocused, isDisabled, invalid);
