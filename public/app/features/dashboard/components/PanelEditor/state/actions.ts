@@ -117,7 +117,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       dashboard.exitPanelEditor();
     }
 
-    if (!shouldDiscardChanges && hasPanelChangedInPanelEdit(sourcePanel, panel)) {
+    if (hasPanelChangedInPanelEdit(sourcePanel, panel) && !shouldDiscardChanges) {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
