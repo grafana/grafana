@@ -223,7 +223,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 func getLibraryElements(c context.Context, store *sqlstore.SQLStore, signedInUser *models.SignedInUser, params []Pair) ([]LibraryElementDTO, error) {
 	libraryElements := make([]LibraryElementWithMeta, 0)
 	err := store.WithDbSession(c, func(session *sqlstore.DBSession) error {
-		builder := sqlstore.SQLBuilder{}
+		builder := sqlstore.NewSqlBuilder(store.Cfg)
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", 'General' as folder_name ")
 		builder.Write(", '' as folder_uid ")
@@ -327,7 +327,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		return LibraryElementSearchResult{}, folderFilter.parseError
 	}
 	err := l.SQLStore.WithDbSession(c, func(session *sqlstore.DBSession) error {
-		builder := sqlstore.SQLBuilder{}
+		builder := sqlstore.NewSqlBuilder(l.Cfg)
 		if folderFilter.includeGeneralFolder {
 			builder.Write(selectLibraryElementDTOWithMeta)
 			builder.Write(", 'General' as folder_name ")
@@ -561,7 +561,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 			return err
 		}
 		var libraryElementConnections []libraryElementConnectionWithMeta
-		builder := sqlstore.SQLBuilder{}
+		builder := sqlstore.NewSqlBuilder(l.Cfg)
 		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
 		builder.Write(" FROM " + models.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.Dialect.Quote("user") + " AS u1 ON lec.created_by = u1.id")

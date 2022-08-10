@@ -403,21 +403,21 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		features := featuremgmt.WithFeatures()
-		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		ac := acmock.New()
+		// TODO: Update tests to work with rbac
+		sqlStore.Cfg.RBACEnabled = false
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		dashboardService := dashboardservice.ProvideDashboardService(
-			cfg, dashboardStore, nil,
+			sqlStore.Cfg, dashboardStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
 		)
 		guardian.InitLegacyGuardian(sqlStore, dashboardService)
 		service := LibraryElementService{
-			Cfg:      cfg,
+			Cfg:      sqlStore.Cfg,
 			SQLStore: sqlStore,
 			folderService: dashboardservice.ProvideFolderService(
-				cfg, dashboardService, dashboardStore, nil,
+				sqlStore.Cfg, dashboardService, dashboardStore, nil,
 				features, folderPermissions, ac, busmock.New(),
 			),
 		}
