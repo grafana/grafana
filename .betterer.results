@@ -5386,27 +5386,8 @@ exports[`better eslint`] = {
       [112, 31, 3, "Unexpected any. Specify a different type.", "193409811"],
       [112, 39, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
-    "public/app/features/datasources/DataSourceDashboards.test.tsx:4128546737": [
-      [14, 16, 23, "Do not use any type assertions.", "860279322"],
-      [15, 16, 24, "Do not use any type assertions.", "3405802617"],
-      [21, 11, 21, "Do not use any type assertions.", "3218407483"]
-    ],
-    "public/app/features/datasources/DataSourceDashboards.tsx:3932611556": [
-      [49, 16, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/datasources/DataSourcesListPage.test.tsx:368182366": [
-      [19, 17, 26, "Do not use any type assertions.", "3994646623"],
-      [22, 14, 126, "Do not use any type assertions.", "1409469672"]
-    ],
-    "public/app/features/datasources/DataSourcesListPage.tsx:247845505": [
-      [44, 14, 22, "Do not use any type assertions.", "2167463294"]
-    ],
     "public/app/features/datasources/__mocks__/dataSourcesMocks.ts:1217473343": [
       [23, 9, 35, "Do not use any type assertions.", "2095437639"]
-    ],
-    "public/app/features/datasources/settings/ButtonRow.tsx:1416418772": [
-      [12, 20, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [13, 18, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/datasources/state/actions.test.ts:1968543990": [
       [29, 6, 59, "Do not use any type assertions.", "3685154675"],
@@ -5459,12 +5440,6 @@ exports[`better eslint`] = {
     "public/app/features/datasources/state/selectors.ts:3231915692": [
       [24, 9, 24, "Do not use any type assertions.", "3405802617"],
       [32, 9, 26, "Do not use any type assertions.", "1093089864"]
-    ],
-    "public/app/features/datasources/utils/passwordHandlers.test.ts:3967809989": [
-      [4, 19, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/datasources/utils/passwordHandlers.ts:2199254032": [
-      [39, 9, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/dimensions/color.ts:2334926885": [
       [36, 29, 3, "Unexpected any. Specify a different type.", "193409811"]
@@ -6497,20 +6472,6 @@ exports[`better eslint`] = {
       [153, 82, 3, "Unexpected any. Specify a different type.", "193409811"],
       [173, 23, 47, "Do not use any type assertions.", "3309878203"],
       [195, 43, 45, "Do not use any type assertions.", "15355460"]
-    ],
-    "public/app/features/plugins/sql/components/visual-query-builder/AwesomeQueryBuilder.tsx:760854115": [
-      [175, 24, 63, "Do not use any type assertions.", "2252455532"],
-      [198, 13, 47, "Do not use any type assertions.", "2763495851"],
-      [253, 30, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/features/plugins/sql/datasource/SqlDatasource.ts:178321817": [
-      [124, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [159, 56, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [177, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [182, 57, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [184, 18, 135, "Do not use any type assertions.", "3270957200"],
-      [194, 28, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [225, 33, 3, "Unexpected any. Specify a different type.", "193409811"]
     ],
     "public/app/features/plugins/tests/datasource_srv.test.ts:2399414445": [
       [10, 19, 3, "Unexpected any. Specify a different type.", "193409811"],
@@ -10853,10 +10814,6 @@ exports[`better eslint`] = {
       [26, 23, 3, "Unexpected any. Specify a different type.", "193409811"],
       [41, 64, 3, "Unexpected any. Specify a different type.", "193409811"],
       [41, 69, 3, "Unexpected any. Specify a different type.", "193409811"]
-    ],
-    "public/app/plugins/panel/canvas/editor/LayerElementListEditor.tsx:2123096129": [
-      [21, 33, 3, "Unexpected any. Specify a different type.", "193409811"],
-      [40, 30, 44, "Do not use any type assertions.", "712744497"]
     ],
     "public/app/plugins/panel/canvas/editor/PlacementEditor.tsx:1494111960": [
       [33, 53, 3, "Unexpected any. Specify a different type.", "193409811"]
