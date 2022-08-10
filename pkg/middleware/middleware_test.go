@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -153,7 +154,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -161,12 +162,12 @@ func TestMiddlewareContext(t *testing.T) {
 
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgId)
-		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
+		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 	})
 
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -181,7 +182,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 
 		expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash, Expires: &expires}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: org.RoleEditor, Key: keyhash, Expires: &expires}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -194,7 +195,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 2, UserId: userID}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: 2, UserId: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -218,7 +219,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 2, UserId: userID}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: 2, UserId: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -316,18 +317,18 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
 		sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
-		org, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
+		orga, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
 		require.NoError(t, err)
 		sc.fakeReq("GET", "/").exec()
 
 		assert.Equal(t, int64(0), sc.context.UserId)
-		assert.Equal(t, org.Id, sc.context.OrgId)
-		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
+		assert.Equal(t, orga.Id, sc.context.OrgId)
+		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 		assert.False(t, sc.context.IsSignedIn)
 	}, func(cfg *setting.Cfg) {
 		cfg.AnonymousEnabled = true
 		cfg.AnonymousOrgName = "test"
-		cfg.AnonymousOrgRole = string(models.ROLE_EDITOR)
+		cfg.AnonymousOrgRole = string(org.RoleEditor)
 	})
 
 	t.Run("auth_proxy", func(t *testing.T) {
@@ -349,7 +350,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const group = "grafana-core-team"
 
 		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID}
 
 			h, err := authproxy.HashCacheKey(hdrName + "-" + group)
 			require.NoError(t, err)
@@ -389,7 +390,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
@@ -406,10 +407,10 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should assign role from header to default org", func(t *testing.T, sc *scenarioContext) {
-			var storedRoleInfo map[int64]models.RoleType = nil
+			var storedRoleInfo map[int64]org.RoleType = nil
 			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: defaultOrgId, UserId: userID, OrgRole: storedRoleInfo[defaultOrgId]}
+				sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: defaultOrgId, UserId: userID, OrgRole: storedRoleInfo[defaultOrgId]}
 				return &user.User{ID: userID}
 			}
 
@@ -429,10 +430,10 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should NOT assign role from header to non-default org", func(t *testing.T, sc *scenarioContext) {
-			var storedRoleInfo map[int64]models.RoleType = nil
+			var storedRoleInfo map[int64]org.RoleType = nil
 			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID, OrgRole: storedRoleInfo[orgID]}
+				sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID, OrgRole: storedRoleInfo[orgID]}
 				return &user.User{ID: userID}
 			}
 
@@ -456,7 +457,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should use organisation specified by targetOrgId parameter", func(t *testing.T, sc *scenarioContext) {
 			var targetOrgID int64 = 123
-			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: targetOrgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: targetOrgID, UserId: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", fmt.Sprintf("/?targetOrgId=%d", targetOrgID))
@@ -530,7 +531,7 @@ func TestMiddlewareContext(t *testing.T) {
 			const userID int64 = 12
 			const orgID int64 = 2
 
-			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
@@ -546,7 +547,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")

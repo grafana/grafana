@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -30,12 +30,12 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	}
 
 	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       editorUser.password,
 		Login:          editorUser.username,
 	})
 	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       adminUser.password,
 		Login:          adminUser.username,
 	})

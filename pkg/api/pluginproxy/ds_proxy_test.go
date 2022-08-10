@@ -28,10 +28,12 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -46,7 +48,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			{
 				Path:    "api/v4/",
 				URL:     "https://www.google.com",
-				ReqRole: models.ROLE_EDITOR,
+				ReqRole: org.RoleEditor,
 				Headers: []plugins.Header{
 					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
@@ -54,7 +56,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			{
 				Path:    "api/admin",
 				URL:     "https://www.google.com",
-				ReqRole: models.ROLE_ADMIN,
+				ReqRole: org.RoleAdmin,
 				Headers: []plugins.Header{
 					{Name: "x-header", Content: "my secret {{.SecureJsonData.key}}"},
 				},
@@ -78,7 +80,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			},
 			{
 				Path:    "api/restricted",
-				ReqRole: models.ROLE_ADMIN,
+				ReqRole: org.RoleAdmin,
 			},
 			{
 				Path: "api/body",
@@ -125,7 +127,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			require.NoError(t, err)
 			ctx := &models.ReqContext{
 				Context:      &web.Context{Req: req},
-				SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 			}
 			return ctx, req
 		}
@@ -200,7 +202,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 			t.Run("plugin route with admin role and user is admin", func(t *testing.T) {
 				ctx, _ := setUp()
-				ctx.SignedInUser.OrgRole = models.ROLE_ADMIN
+				ctx.SignedInUser.OrgRole = org.RoleAdmin
 				dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 				proxy, err := NewDataSourceProxy(ds, routes, ctx, "api/admin", cfg, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 				require.NoError(t, err)
@@ -265,7 +267,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
 			Context:      &web.Context{Req: req},
-			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 		}
 
 		t.Run("When creating and caching access tokens", func(t *testing.T) {
@@ -479,7 +481,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
-			SignedInUser: &models.SignedInUser{UserId: 1},
+			SignedInUser: &user.SignedInUser{UserId: 1},
 			Context:      &web.Context{Req: req},
 		}
 
@@ -517,7 +519,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req := getDatasourceProxiedRequest(
 			t,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
 			},
@@ -530,7 +532,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req := getDatasourceProxiedRequest(
 			t,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
 			},
@@ -544,7 +546,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req := getDatasourceProxiedRequest(
 			t,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{IsAnonymous: true},
+				SignedInUser: &user.SignedInUser{IsAnonymous: true},
 			},
 			&setting.Cfg{SendUserHeader: true},
 		)
@@ -621,7 +623,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		}
 
 		return &models.ReqContext{
-			SignedInUser: &models.SignedInUser{},
+			SignedInUser: &user.SignedInUser{},
 			Context: &web.Context{
 				Req:  httptest.NewRequest("GET", "/render", nil),
 				Resp: responseWriter,
@@ -758,7 +760,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	ctx := models.ReqContext{
 		Context:      &web.Context{},
-		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+		SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 	}
 	ds := datasources.DataSource{
 		Type: "test",
@@ -778,7 +780,7 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	ctx := models.ReqContext{
 		Context:      &web.Context{},
-		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+		SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 	}
 	ds := datasources.DataSource{
 		Type: "test",
@@ -800,7 +802,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	ctx := models.ReqContext{
 		Context:      &web.Context{},
-		SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_EDITOR},
+		SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 	}
 	tracer := tracing.InitializeTracerForTest()
 
@@ -996,13 +998,13 @@ func Test_PathCheck(t *testing.T) {
 		{
 			Path:    "a",
 			URL:     "https://www.google.com",
-			ReqRole: models.ROLE_EDITOR,
+			ReqRole: org.RoleEditor,
 			Method:  http.MethodGet,
 		},
 		{
 			Path:    "b",
 			URL:     "https://www.google.com",
-			ReqRole: models.ROLE_VIEWER,
+			ReqRole: org.RoleViewer,
 			Method:  http.MethodGet,
 		},
 	}
@@ -1013,7 +1015,7 @@ func Test_PathCheck(t *testing.T) {
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
 			Context:      &web.Context{Req: req},
-			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_VIEWER},
+			SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
 		}
 		return ctx, req
 	}
@@ -1033,7 +1035,7 @@ type mockOAuthTokenService struct {
 	oAuthEnabled bool
 }
 
-func (m *mockOAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
+func (m *mockOAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *user.SignedInUser) *oauth2.Token {
 	return m.token
 }
 

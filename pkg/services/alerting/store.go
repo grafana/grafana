@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
@@ -154,7 +155,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 			builder.Write(")")
 		}
 
-		if query.User.OrgRole != models.ROLE_ADMIN {
+		if query.User.OrgRole != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
 		}
 

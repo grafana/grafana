@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -188,7 +189,7 @@ func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
 }
 
-func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+func validateCondition(ctx context.Context, c ngmodels.Condition, user *user.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
 	if len(c.Data) == 0 {
 		return nil
 	}
@@ -215,7 +216,7 @@ func conditionValidator(c *models.ReqContext, cache datasources.CacheService) fu
 	}
 }
 
-func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *user.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {
 		return nil, nil

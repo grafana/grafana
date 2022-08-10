@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -97,7 +98,7 @@ func (a *api) getPermissions(c *models.ReqContext) response.Response {
 		permissions = append(permissions, accesscontrol.ResourcePermission{
 			Actions:     a.service.actions,
 			Scope:       "*",
-			BuiltInRole: string(models.ROLE_ADMIN),
+			BuiltInRole: string(org.RoleAdmin),
 		})
 	}
 

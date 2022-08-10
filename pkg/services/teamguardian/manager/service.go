@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Service struct {
@@ -15,8 +17,8 @@ func ProvideService(store teamguardian.Store) teamguardian.TeamGuardian {
 	return &Service{store: store}
 }
 
-func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *models.SignedInUser) error {
-	if user.OrgRole == models.ROLE_ADMIN {
+func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *user.SignedInUser) error {
+	if user.OrgRole == org.RoleAdmin {
 		return nil
 	}
 

@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -96,7 +97,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 
 	reqContext := &models.ReqContext{
 		Context:        mContext,
-		SignedInUser:   &models.SignedInUser{},
+		SignedInUser:   &user.SignedInUser{},
 		IsSignedIn:     false,
 		AllowAnonymous: false,
 		SkipCache:      false,
@@ -177,7 +178,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
 	defer span.End()
 
-	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
+	orga, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
 		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
@@ -185,10 +186,10 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 
 	reqContext.IsSignedIn = false
 	reqContext.AllowAnonymous = true
-	reqContext.SignedInUser = &models.SignedInUser{IsAnonymous: true}
-	reqContext.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
-	reqContext.OrgId = org.Id
-	reqContext.OrgName = org.Name
+	reqContext.SignedInUser = &user.SignedInUser{IsAnonymous: true}
+	reqContext.OrgRole = org.RoleType(h.Cfg.AnonymousOrgRole)
+	reqContext.OrgId = orga.Id
+	reqContext.OrgName = orga.Name
 	return true
 }
 
@@ -288,7 +289,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		//Use the old APIkey method.  This provides backwards compatibility.
-		reqContext.SignedInUser = &models.SignedInUser{}
+		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apikey.Role
 		reqContext.ApiKeyId = apikey.Id
 		reqContext.OrgId = apikey.OrgId
@@ -466,10 +467,10 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return true
 	}
 
-	reqContext.SignedInUser = &models.SignedInUser{
+	reqContext.SignedInUser = &user.SignedInUser{
 		OrgId:   renderUser.OrgID,
 		UserId:  renderUser.UserID,
-		OrgRole: models.RoleType(renderUser.OrgRole),
+		OrgRole: org.RoleType(renderUser.OrgRole),
 	}
 
 	// UserID can be 0 for background tasks and, in this case, there is no user info to retrieve

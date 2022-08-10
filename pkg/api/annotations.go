@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -504,7 +506,7 @@ func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annota
 		return canEditDashboard(c, annotation.DashboardId)
 	} else {
 		if hs.AccessControl.IsDisabled() {
-			return c.SignedInUser.HasRole(models.ROLE_EDITOR), nil
+			return c.SignedInUser.HasRole(org.RoleEditor), nil
 		}
 		return true, nil
 	}
@@ -519,7 +521,7 @@ func canEditDashboard(c *models.ReqContext, dashboardID int64) (bool, error) {
 	return true, nil
 }
 
-func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *models.SignedInUser) (*annotations.ItemDTO, response.Response) {
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *user.SignedInUser) (*annotations.ItemDTO, response.Response) {
 	query := &annotations.ItemQuery{
 		AnnotationId: annotationID,
 		OrgId:        user.OrgId,
@@ -583,7 +585,7 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.ScopeAttributeResolver
 
 		// tempUser is used to resolve annotation type.
 		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
-		tempUser := &models.SignedInUser{
+		tempUser := &user.SignedInUser{
 			OrgId: orgID,
 			Permissions: map[int64]map[string][]string{
 				orgID: {
@@ -620,7 +622,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int6
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 			return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 		} else {
-			return c.SignedInUser.HasRole(models.ROLE_EDITOR), nil
+			return c.SignedInUser.HasRole(org.RoleEditor), nil
 		}
 	}
 }

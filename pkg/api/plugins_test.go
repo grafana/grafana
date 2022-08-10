@@ -21,7 +21,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -60,7 +62,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/install", strings.NewReader("{ \"version\": \"1.0.2\" }"))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_EDITOR, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
@@ -78,7 +80,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/uninstall", strings.NewReader("{}"))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 

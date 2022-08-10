@@ -6,10 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -77,7 +77,7 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 // Evaluate evaluates access to the given resources
-func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
 	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()
@@ -103,7 +103,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
-func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
@@ -132,7 +132,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	return permissions, nil
 }
 
-func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *models.SignedInUser) []accesscontrol.Permission {
+func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *user.SignedInUser) []accesscontrol.Permission {
 	permissions := make([]accesscontrol.Permission, 0)
 
 	for _, builtin := range accesscontrol.GetOrgRoles(ac.cfg, user) {
