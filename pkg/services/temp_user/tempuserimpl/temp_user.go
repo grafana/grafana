@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 )
 
 type Service struct {
@@ -14,54 +14,57 @@ type Service struct {
 }
 
 func ProvideService(
-	db db.DB,
 	ss *sqlstore.SQLStore,
-) tempUserImpl.Service {
+) tempuser.Service {
 	return &Service{
-		store: &sqlStore{
-			db:      db,
-			dialect: db.GetDialect(),
-		},
 		sqlStore: ss,
 	}
 }
 
-func (ss *SQLStore) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
+func (s *Service) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
 	err := s.sqlStore.UpdateTempUserStatus(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return q.Result, nil
+	return nil
 }
 
-func (ss *SQLStore) CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error {
+func (s *Service) CreateTempUser(ctx context.Context, cmd *models.CreateTempUserCommand) error {
 	err := s.sqlStore.CreateTempUser(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return q.Result, nil
+	return nil
 }
 
-func (ss *SQLStore) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.CreateTempUserCommand) error {
+func (s *Service) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error {
 	err := s.sqlStore.UpdateTempUserWithEmailSent(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return q.Result, nil
+	return nil
 }
 
-func (ss *SQLStore) GetTempUsersQuery(ctx context.Context, cmd *models.CreateTempUserCommand) error {
+func (s *Service) GetTempUsersQuery(ctx context.Context, cmd *models.GetTempUsersQuery) error {
 	err := s.sqlStore.GetTempUsersQuery(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return q.Result, nil
+	return nil
 }
 
-func (ss *SQLStore) ExpireOldUserInvites(ctx context.Context, cmd *models.CreateTempUserCommand) error {
+func (s *Service) GetTempUserByCode(ctx context.Context, cmd *models.GetTempUserByCodeQuery) error {
+	err := s.sqlStore.GetTempUserByCode(ctx, cmd)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) ExpireOldUserInvites(ctx context.Context, cmd *models.ExpireTempUsersCommand) error {
 	err := s.sqlStore.ExpireOldUserInvites(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return q.Result, nil
+	return nil
 }
