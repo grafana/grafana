@@ -1378,6 +1378,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *user.Signe
 	dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	ac := acmock.New()
 	service := dashboardservice.ProvideDashboardService(
@@ -1396,6 +1397,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 
 	ac := acmock.New()
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	features := featuremgmt.WithFeatures()
 	folderPermissions := acmock.NewMockedPermissionsService()
@@ -1489,6 +1491,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
+		cfg.RBACEnabled = false
 		orgID := int64(1)
 		role := org.RoleAdmin
 		sqlStore := sqlstore.InitTestDB(t)
