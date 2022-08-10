@@ -7,10 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-const (
-	TypeDashboard = "dashboard"
-)
-
 var (
 	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
 	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
@@ -85,7 +81,7 @@ type Dependencies struct {
 type Includes struct {
 	Name       string       `json:"name"`
 	Path       string       `json:"path"`
-	Type       string       `json:"type"`
+	Type       IncludeType  `json:"type"`
 	Component  string       `json:"component"`
 	Role       org.RoleType `json:"role"`
 	AddToNav   bool         `json:"addToNav"`
@@ -97,11 +93,28 @@ type Includes struct {
 	ID string `json:"-"`
 }
 
-func (e Includes) DashboardURLPath() string {
-	if e.Type != "dashboard" || len(e.UID) == 0 {
+type IncludeType string
+
+const (
+	DashboardIncludeType  IncludeType = "dashboard"
+	PageIncludeType       IncludeType = "page"
+	PanelIncludeType      IncludeType = "panel"
+	DataSourceIncludeType IncludeType = "datasource"
+)
+
+func (i Includes) DashboardURLPath() string {
+	if i.Type != DashboardIncludeType || len(i.UID) == 0 {
 		return ""
 	}
-	return "/d/" + e.UID
+	return "/d/" + i.UID
+}
+
+func (i Includes) IsDashboard() bool {
+	return i.Type == DashboardIncludeType
+}
+
+func (i Includes) IsPage() bool {
+	return i.Type == PageIncludeType
 }
 
 type Dependency struct {

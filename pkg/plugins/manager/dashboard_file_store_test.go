@@ -196,7 +196,7 @@ func setupPluginDashboardsForTest(t *testing.T) *PluginManager {
 					JSONData: plugins.JSONData{
 						Includes: []*plugins.Includes{
 							{
-								Type: "page",
+								Type: plugins.PageIncludeType,
 							},
 						},
 					},
@@ -206,14 +206,14 @@ func setupPluginDashboardsForTest(t *testing.T) *PluginManager {
 					JSONData: plugins.JSONData{
 						Includes: []*plugins.Includes{
 							{
-								Type: "page",
+								Type: plugins.PageIncludeType,
 							},
 							{
-								Type: "dashboard",
+								Type: plugins.DashboardIncludeType,
 								Path: "dashboards/dash1.json",
 							},
 							{
-								Type: "dashboard",
+								Type: plugins.DashboardIncludeType,
 								Path: "dashboards/dash2.json",
 							},
 						},

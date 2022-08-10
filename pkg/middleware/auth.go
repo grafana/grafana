@@ -3,12 +3,14 @@ package middleware
 import (
 	"errors"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -218,5 +220,51 @@ func OrgAdminDashOrFolderAdminOrTeamAdmin(ss sqlstore.Store, ds dashboards.Dashb
 		}
 
 		accessForbidden(c)
+	}
+}
+
+func ReqRoleForAppRoute(ps plugins.Store, preCond web.Handler) func(c *models.ReqContext) {
+	return func(c *models.ReqContext) {
+		if f, ok := preCond.(func(c *models.ReqContext)); ok {
+			f(c)
+		}
+
+		pluginID := web.Params(c.Req)[":id"]
+
+		p, exists := ps.Plugin(c.Req.Context(), pluginID)
+		if !exists {
+			c.JsonApiErr(404, "Plugin not found", nil)
+			return
+		}
+
+		normalizePath := func(p string) string {
+			return filepath.Clean(strings.TrimPrefix(p, "/"))
+		}
+
+		found := false
+		allowed := false
+		path := normalizePath(web.Params(c.Req)["*"])
+		for _, i := range p.Includes {
+			if i.Type != plugins.PageIncludeType {
+				continue
+			}
+
+			if normalizePath(i.Path) == path {
+				found = true
+				if c.HasRole(i.Role) {
+					allowed = true
+				}
+				break
+			}
+		}
+
+		if !found {
+			c.JsonApiErr(404, "Plugin page not found", nil)
+			return
+		}
+		if !allowed {
+			c.JsonApiErr(403, "Plugin page access denied", nil)
+			return
+		}
 	}
 }

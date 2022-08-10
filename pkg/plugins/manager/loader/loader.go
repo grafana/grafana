@@ -268,10 +268,10 @@ func setDefaultNavURL(p *plugins.Plugin) {
 			continue
 		}
 
-		if include.Type == "page" {
+		if include.IsPage() {
 			p.DefaultNavURL = path.Join("/plugins/", p.ID, "/page/", include.Slug)
 		}
-		if include.Type == "dashboard" {
+		if include.IsDashboard() {
 			dboardURL := include.DashboardURLPath()
 			if dboardURL == "" {
 				p.Logger().Warn("Included dashboard is missing a UID field")

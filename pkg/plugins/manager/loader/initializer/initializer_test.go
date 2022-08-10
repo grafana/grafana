@@ -24,7 +24,7 @@ func TestInitializer_Initialize(t *testing.T) {
 				Includes: []*plugins.Includes{
 					{
 						Name: "Example dashboard",
-						Type: plugins.TypeDashboard,
+						Type: plugins.DashboardIncludeType,
 					},
 				},
 				Backend: true,

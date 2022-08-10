@@ -145,7 +145,7 @@ type JSONData struct {
 func (d JSONData) DashboardIncludes() []*Includes {
 	result := []*Includes{}
 	for _, include := range d.Includes {
-		if include.Type == TypeDashboard {
+		if include.Type == DashboardIncludeType {
 			result = append(result, include)
 		}
 	}

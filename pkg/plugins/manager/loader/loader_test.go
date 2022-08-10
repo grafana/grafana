@@ -7,14 +7,12 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/services/org"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -22,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -72,11 +71,11 @@ func TestLoader_Load(t *testing.T) {
 							},
 						},
 						Includes: []*plugins.Includes{
-							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
-							{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard", Role: "Viewer"},
-							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard", Role: "Viewer"},
-							{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard", Role: "Viewer"},
-							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard", Role: "Viewer"},
+							{Name: "EC2", Path: "dashboards/ec2.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer},
+							{Name: "EBS", Path: "dashboards/EBS.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer},
+							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer},
+							{Name: "Logs", Path: "dashboards/Logs.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer},
+							{Name: "RDS", Path: "dashboards/RDS.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer},
 						},
 						Dependencies: plugins.Dependencies{
 							GrafanaVersion: "*",
@@ -185,26 +184,26 @@ func TestLoader_Load(t *testing.T) {
 							{
 								Name: "Nginx Connections",
 								Path: "dashboards/connections.json",
-								Type: "dashboard",
-								Role: "Viewer",
+								Type: plugins.DashboardIncludeType,
+								Role: org.RoleViewer,
 								Slug: "nginx-connections",
 							},
 							{
 								Name: "Nginx Memory",
 								Path: "dashboards/memory.json",
-								Type: "dashboard",
-								Role: "Viewer",
+								Type: plugins.DashboardIncludeType,
+								Role: org.RoleViewer,
 								Slug: "nginx-memory",
 							},
 							{
 								Name: "Nginx Panel",
-								Type: "panel",
-								Role: "Viewer",
+								Type: plugins.PanelIncludeType,
+								Role: org.RoleViewer,
 								Slug: "nginx-panel"},
 							{
 								Name: "Nginx Datasource",
-								Type: "datasource",
-								Role: "Viewer",
+								Type: plugins.DataSourceIncludeType,
+								Role: org.RoleViewer,
 								Slug: "nginx-datasource",
 							},
 						},
@@ -411,8 +410,8 @@ func TestLoader_Load(t *testing.T) {
 						Plugins:           []plugins.Dependency{},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
-						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer, Slug: "nginx-memory"},
+						{Name: "Root Page (react)", Type: plugins.PageIncludeType, Role: org.RoleViewer, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 					},
 					Backend: false,
 				},
@@ -449,7 +448,7 @@ func TestLoader_setDefaultNavURL(t *testing.T) {
 		pluginWithDashboard := &plugins.Plugin{
 			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
 				{
-					Type:       "dashboard",
+					Type:       plugins.DashboardIncludeType,
 					DefaultNav: true,
 					UID:        "",
 				},
@@ -477,7 +476,7 @@ func TestLoader_setDefaultNavURL(t *testing.T) {
 		pluginWithPage := &plugins.Plugin{
 			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
 				{
-					Type:       "page",
+					Type:       plugins.PageIncludeType,
 					DefaultNav: true,
 					Slug:       "testPage",
 				},
@@ -700,10 +699,10 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 						},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
-						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
-						{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Slug: "nginx-datasource"},
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer, Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer, Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: plugins.PanelIncludeType, Role: org.RoleViewer, Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: plugins.DataSourceIncludeType, Role: org.RoleViewer, Slug: "nginx-datasource"},
 					},
 					Backend: false,
 				},
@@ -879,8 +878,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 					{
 						Name:       "Root Page (react)",
 						Path:       "/a/myorgid-simple-app",
-						Type:       "page",
-						Role:       "Viewer",
+						Type:       plugins.PageIncludeType,
+						Role:       org.RoleViewer,
 						AddToNav:   true,
 						DefaultNav: true,
 						Slug:       "root-page-react",
@@ -888,31 +887,31 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 					{
 						Name:     "Root Page (Tab B)",
 						Path:     "/a/myorgid-simple-app/?tab=b",
-						Type:     "page",
-						Role:     "Viewer",
+						Type:     plugins.PageIncludeType,
+						Role:     org.RoleViewer,
 						AddToNav: true,
 						Slug:     "root-page-tab-b",
 					},
 					{
 						Name:     "React Config",
 						Path:     "/plugins/myorgid-simple-app/?page=page2",
-						Type:     "page",
-						Role:     "Admin",
+						Type:     plugins.PageIncludeType,
+						Role:     org.RoleAdmin,
 						AddToNav: true,
 						Slug:     "react-config",
 					},
 					{
 						Name: "Streaming Example",
 						Path: "dashboards/streaming.json",
-						Type: "dashboard",
-						Role: "Viewer",
+						Type: plugins.DashboardIncludeType,
+						Role: org.RoleViewer,
 						Slug: "streaming-example",
 					},
 					{
 						Name: "Lots of Stats",
 						Path: "dashboards/stats.json",
-						Type: "dashboard",
-						Role: "Viewer",
+						Type: plugins.DashboardIncludeType,
+						Role: org.RoleViewer,
 						Slug: "lots-of-stats",
 					},
 				},
@@ -1064,10 +1063,10 @@ func TestLoader_readPluginJSON(t *testing.T) {
 					},
 				},
 				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
-					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: plugins.DashboardIncludeType, Role: org.RoleViewer},
+					{Name: "Nginx Panel", Type: plugins.PanelIncludeType, Role: org.RoleViewer},
+					{Name: "Nginx Datasource", Type: plugins.DataSourceIncludeType, Role: org.RoleViewer},
 				},
 				Backend: false,
 			},

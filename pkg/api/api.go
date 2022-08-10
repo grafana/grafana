@@ -67,6 +67,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqCanAccessTeams := middleware.AdminOrEditorAndFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
+	reqRoleForAppRoute := middleware.ReqRoleForAppRoute(hs.pluginStore, reqSignedIn)
 	authorize := ac.Middleware(hs.AccessControl)
 	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.SQLStore)
 	quota := middleware.Quota(hs.QuotaService)
@@ -124,8 +125,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
 	// App Root Page
 	appPluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
-	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
-	r.Get("/a/:id", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
+	r.Get("/a/:id/*", authorize(reqRoleForAppRoute, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
+	r.Get("/a/:id", authorize(reqRoleForAppRoute, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
