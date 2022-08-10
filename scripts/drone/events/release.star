@@ -369,17 +369,6 @@ def publish_artifacts_step(mode):
         'depends_on': ['grabpl'],
     }
 
-def publish_packages_step(edition):
-    return {
-        'name': 'publish-packages-{}'.format(edition),
-        'image': publish_image,
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-        },
-        'commands': ['./bin/grabpl store-packages {}'.format(edition)],
-        'depends_on': ['grabpl'],
-    }
-
 def publish_artifacts_pipelines(mode):
     trigger = {
         'event': ['promote'],
