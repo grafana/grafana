@@ -29,10 +29,10 @@ A panel editor includes a query builder and a series of options that you can use
 
 This topic describes how to:
 
-- open a panel for editing
-- add a panel title and description
-- view a panel JSON model
-- add repeating rows and panels
+- Open a panel for editing
+- Add a panel title and description
+- View a panel JSON model
+- Add repeating rows and panels
 
 ## Edit a panel
 
@@ -40,9 +40,7 @@ After you add a panel to a dashboard, you can open it at any time to change chan
 
 1. Open the dashboard that contains the panel you want to edit.
 
-1. Click in the panel title and select **Edit**.
-
-   To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
+1. Click in the panel title and select **Edit**. To use a keyboard shortcut to open the panel, hover over the panel and press `e`.
 
    The panel opens in edit mode.
 
