@@ -1432,12 +1432,7 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Select/Select.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Select/SelectOption.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
