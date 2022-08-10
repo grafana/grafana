@@ -32,7 +32,7 @@ const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\
 
 /**
  * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at
- * the same time we can get the variable and it's format back from it.
+ * the same time we can get the variable and its format back from it.
  * @param expr
  */
 export function replaceVariables(expr: string) {
@@ -113,10 +113,11 @@ export function makeBinOp(
  * not be safe is it would also find arguments of nested functions.
  * @param expr
  * @param cur
- * @param type
+ * @param type - can be string or number, some data-sources (loki) haven't migrated over to using numeric constants defined in the lezer parsing library (e.g. lezer-promql).
+ * @todo Remove string type definition when all data-sources have migrated to numeric constants
  */
-export function getAllByType(expr: string, cur: SyntaxNode, type: string): string[] {
-  if (cur.name === type) {
+export function getAllByType(expr: string, cur: SyntaxNode, type: number | string): string[] {
+  if (cur.type.id === type || cur.name === type) {
     return [getString(expr, cur)];
   }
   const values: string[] = [];

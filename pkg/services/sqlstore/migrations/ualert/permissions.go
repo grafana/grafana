@@ -45,6 +45,8 @@ type dashboardACL struct {
 	Updated time.Time
 }
 
+func (p dashboardACL) TableName() string { return "dashboard_acl" }
+
 type folderHelper struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator

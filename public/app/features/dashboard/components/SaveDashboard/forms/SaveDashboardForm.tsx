@@ -10,7 +10,7 @@ interface FormDTO {
   message: string;
 }
 
-type Props = {
+export type SaveProps = {
   dashboard: DashboardModel; // original
   saveModel: SaveDashboardData; // already cloned
   onCancel: () => void;
@@ -28,7 +28,7 @@ export const SaveDashboardForm = ({
   onCancel,
   onSuccess,
   onOptionsChange,
-}: Props) => {
+}: SaveProps) => {
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 

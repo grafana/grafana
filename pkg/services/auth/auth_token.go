@@ -42,14 +42,26 @@ type UserAuthTokenService struct {
 	log               log.Logger
 }
 
-func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {
+type ActiveAuthTokenService struct {
+	cfg      *setting.Cfg
+	sqlStore sqlstore.Store
+}
+
+func ProvideActiveAuthTokenService(cfg *setting.Cfg, sqlStore sqlstore.Store) *ActiveAuthTokenService {
+	return &ActiveAuthTokenService{
+		cfg:      cfg,
+		sqlStore: sqlStore,
+	}
+}
+
+func (a *ActiveAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, error) {
 	var count int64
 	var err error
-	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err = a.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var model userAuthToken
 		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
-			s.createdAfterParam(),
-			s.rotatedAfterParam()).
+			getTime().Add(-a.cfg.LoginMaxLifetime).Unix(),
+			getTime().Add(-a.cfg.LoginMaxInactiveLifetime).Unix()).
 			Count(&model)
 
 		return err

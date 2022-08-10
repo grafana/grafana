@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -8,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // API related actions
@@ -96,6 +99,27 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			},
 		},
 		Grants: []string{string(models.ROLE_ADMIN)},
+	}
+
+	builtInDatasourceReader := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:datasources.builtin:reader",
+			DisplayName: "Built in data source reader",
+			Description: "Read and query Grafana's built in test data sources.",
+			Group:       "Data sources",
+			Permissions: []ac.Permission{
+				{
+					Action: datasources.ActionRead,
+					Scope:  fmt.Sprintf("%s%s", datasources.ScopePrefix, grafanads.DatasourceUID),
+				},
+				{
+					Action: datasources.ActionQuery,
+					Scope:  fmt.Sprintf("%s%s", datasources.ScopePrefix, grafanads.DatasourceUID),
+				},
+			},
+			Hidden: true,
+		},
+		Grants: []string{string(models.ROLE_VIEWER)},
 	}
 
 	// when running oss or enterprise without a license all users should be able to query data sources
@@ -230,12 +254,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams and read organisation users and service accounts (required to manage the created teams).",
+			Description: "Create teams and read organisation users (required to manage the created teams).",
 			Group:       "Teams",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionTeamsCreate},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
-				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
 			},
 		},
 		Grants: teamCreatorGrants,
@@ -396,7 +419,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	return hs.AccessControl.DeclareFixedRoles(
-		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole,
+		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
@@ -428,13 +451,6 @@ var orgsAccessEvaluator = ac.EvalPermission(ActionOrgsRead)
 var orgsCreateAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionOrgsRead),
 	ac.EvalPermission(ActionOrgsCreate),
-)
-
-// usersInviteEvaluator is used to protect the "Configuration > Users > Invite" page access
-// accessible to org admins and server admins by default
-var usersInviteEvaluator = ac.EvalAny(
-	ac.EvalPermission(ac.ActionUsersCreate),
-	ac.EvalPermission(ac.ActionOrgUsersAdd),
 )
 
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access

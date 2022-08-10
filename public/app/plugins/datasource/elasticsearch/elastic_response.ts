@@ -8,7 +8,7 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import TableModel from 'app/core/table_model';
+import TableModel from 'app/core/TableModel';
 import flatten from 'app/core/utils/flatten';
 
 import {

@@ -108,7 +108,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   spinner: css({
     display: 'flex',
     alignItems: 'center',
-    width: theme.v1.spacing.md,
+    width: theme.spacing(2),
   }),
   label: css({
     display: 'flex',
