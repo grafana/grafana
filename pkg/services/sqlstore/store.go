@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -31,12 +30,6 @@ type Store interface {
 	GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error
 	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
-	GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error
-	GetUserByLogin(ctx context.Context, query *models.GetUserByLoginQuery) error
-	GetUserByEmail(ctx context.Context, query *models.GetUserByEmailQuery) error
-	UpdateUser(ctx context.Context, cmd *models.UpdateUserCommand) error
-	ChangeUserPassword(ctx context.Context, cmd *models.ChangeUserPasswordCommand) error
-	UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtCommand) error
 	SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
@@ -62,10 +55,6 @@ type Store interface {
 	GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
 	NewSession(ctx context.Context) *DBSession
 	WithDbSession(ctx context.Context, callback DBTransactionFunc) error
-	GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error)
-	GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error
-	UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error
-	UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error
 	GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error
 	GetOrgQuotas(ctx context.Context, query *models.GetOrgQuotasQuery) error
 	UpdateOrgQuota(ctx context.Context, cmd *models.UpdateOrgQuotaCmd) error
@@ -75,30 +64,11 @@ type Store interface {
 	GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error
 	WithTransactionalDbSession(ctx context.Context, callback DBTransactionFunc) error
 	InTransaction(ctx context.Context, fn func(ctx context.Context) error) error
-	// deprecated
-	CreatePlaylist(ctx context.Context, cmd *models.CreatePlaylistCommand) error
-	// deprecated
-	UpdatePlaylist(ctx context.Context, cmd *models.UpdatePlaylistCommand) error
-	// deprecated
-	GetPlaylist(ctx context.Context, query *models.GetPlaylistByUidQuery) error
-	// deprecated
-	DeletePlaylist(ctx context.Context, cmd *models.DeletePlaylistCommand) error
-	// deprecated
-	SearchPlaylists(ctx context.Context, query *models.GetPlaylistsQuery) error
-	// deprecated
-	GetPlaylistItem(ctx context.Context, query *models.GetPlaylistItemsByUidQuery) error
 	AddOrgUser(ctx context.Context, cmd *models.AddOrgUserCommand) error
 	UpdateOrgUser(ctx context.Context, cmd *models.UpdateOrgUserCommand) error
 	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
-	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
-	GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error
-	GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error
-	GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error
-	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
-	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error
-	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error
 	Migrate(bool) error
 	Sync() error
 	Reset() error

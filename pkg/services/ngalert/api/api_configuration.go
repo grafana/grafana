@@ -13,6 +13,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -43,7 +44,7 @@ func (srv ConfigSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Respon
 }
 
 func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Response {
-	if c.OrgRole != models.ROLE_ADMIN {
+	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 
@@ -66,7 +67,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respon
 }
 
 func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
-	if c.OrgRole != models.ROLE_ADMIN {
+	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 
@@ -108,7 +109,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 }
 
 func (srv ConfigSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
-	if c.OrgRole != models.ROLE_ADMIN {
+	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 

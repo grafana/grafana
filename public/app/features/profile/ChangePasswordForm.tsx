@@ -16,11 +16,11 @@ export interface Props {
 }
 
 export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving }) => {
-  const { ldapEnabled, authProxyEnabled, disableLoginForm } = config;
+  const { disableLoginForm } = config;
   const authSource = user.authLabels?.length && user.authLabels[0];
 
-  if (ldapEnabled || authProxyEnabled) {
-    return <p>You cannot change password when LDAP or auth proxy authentication is enabled.</p>;
+  if (authSource === 'LDAP' || authSource === 'Auth Proxy') {
+    return <p>You cannot change password when signed in with LDAP or auth proxy.</p>;
   }
   if (authSource && disableLoginForm) {
     return <p>Password cannot be changed here.</p>;

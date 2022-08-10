@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // ResourceFilter checks if a given a uid (resource identifier) check if we have the requested permission
@@ -15,7 +16,7 @@ type ResourceFilter func(uid string) bool
 
 // FutureAuthService eventually implemented by the security service
 type FutureAuthService interface {
-	GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error)
+	GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error)
 }
 
 var _ FutureAuthService = (*simpleSQLAuthService)(nil)
@@ -29,7 +30,7 @@ type dashIdQueryResult struct {
 	UID string `xorm:"uid"`
 }
 
-func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *models.SignedInUser) searchstore.FilterWhere {
+func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *user.SignedInUser) searchstore.FilterWhere {
 	if a.ac.IsDisabled() {
 		return permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,
@@ -43,7 +44,7 @@ func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *models.SignedIn
 	return permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard)
 }
 
-func (a *simpleSQLAuthService) GetDashboardReadFilter(user *models.SignedInUser) (ResourceFilter, error) {
+func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error) {
 	filter := a.getDashboardTableAuthFilter(user)
 	rows := make([]*dashIdQueryResult, 0)
 

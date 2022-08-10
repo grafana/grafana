@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -238,7 +239,7 @@ func (s *NamespaceStream) GetHandlerForPath(_ string) (models.ChannelHandler, er
 	return s, nil
 }
 
-func (s *NamespaceStream) OnSubscribe(ctx context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *NamespaceStream) OnSubscribe(ctx context.Context, u *user.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{}
 	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.OrgId, e.Channel)
 	if err != nil {
@@ -250,6 +251,6 @@ func (s *NamespaceStream) OnSubscribe(ctx context.Context, u *models.SignedInUse
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
-func (s *NamespaceStream) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (s *NamespaceStream) OnPublish(_ context.Context, _ *user.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }

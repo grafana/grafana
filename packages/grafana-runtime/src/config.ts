@@ -71,6 +71,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
   liveEnabled = true;
+  /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[] = [];

@@ -33,6 +33,8 @@ These options are available whether you are graphing your time series as lines, 
 
 Choose which of the [standard calculations]({{< relref "../../panels/calculation-types/" >}}) to show in the legend. You can have more than one.
 
+For more information about the legend, refer to [Configure a legend](../configure-legend/).
+
 ## Graph styles
 
 Use these options to choose how to display your time series data.
