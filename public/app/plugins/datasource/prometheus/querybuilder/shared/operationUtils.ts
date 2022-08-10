@@ -311,7 +311,7 @@ function getOnLabelAddedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
     // Check if we actually have the label param. As it's optional the aggregation can have one less, which is the
     // case of just simple aggregation without label. When user adds the label it now has the same number of params
-    // as it's definition, and now we can change it to it's `_by` variant.
+    // as its definition, and now we can change it to its `_by` variant.
     if (op.params.length === def.params.length) {
       return {
         ...op,
