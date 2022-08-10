@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -22,12 +22,14 @@ import (
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkJson(b *testing.B) {
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
-	tCtx := setup()
+	tCtx, err := setup(true)
+	require.NoError(b, err)
+
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		res := http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader(body)),
+			Body:       io.NopCloser(bytes.NewReader(body)),
 		}
 		tCtx.httpProvider.setResponse(&res)
 		_, err := tCtx.queryData.Execute(context.Background(), q)
@@ -56,6 +58,10 @@ func makeJsonTestValue(r *rand.Rand) string {
 func makeJsonTestSeries(start int64, step int64, timestampCount int, r *rand.Rand, seriesIndex int) string {
 	var values []string
 	for i := 0; i < timestampCount; i++ {
+		// create out of order timestamps to test sorting
+		if seriesIndex == 0 && i%2 == 0 {
+			continue
+		}
 		value := fmt.Sprintf(`[%d,"%v"]`, start+(int64(i)*step), makeJsonTestValue(r))
 		values = append(values, value)
 	}

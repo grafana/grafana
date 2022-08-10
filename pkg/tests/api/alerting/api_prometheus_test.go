@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"testing"
@@ -15,20 +15,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 func TestPrometheusRules(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -39,16 +36,16 @@ func TestPrometheusRules(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
 
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "default", grafanaListedAddr, "grafana", "password")
-	require.NoError(t, err)
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	apiClient.CreateFolder(t, "default", "default")
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -77,7 +74,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
 		require.JSONEq(t, `{"status": "success", "data": {"groups": []}}`, string(b))
@@ -90,7 +87,7 @@ func TestPrometheusRules(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{"label1": "val1"},
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
@@ -152,7 +149,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
@@ -166,7 +163,7 @@ func TestPrometheusRules(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         interval,
+						For:         &interval,
 						Labels:      map[string]string{},
 						Annotations: map[string]string{"__panelId__": "1"},
 					},
@@ -206,7 +203,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, 400, resp.StatusCode)
@@ -225,7 +222,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -278,7 +275,7 @@ func TestPrometheusRules(t *testing.T) {
 				err := resp.Body.Close()
 				require.NoError(t, err)
 			})
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.StatusCode)
 			require.JSONEq(t, `
@@ -324,8 +321,6 @@ func TestPrometheusRules(t *testing.T) {
 }
 
 func TestPrometheusRulesFilterByDashboard(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
@@ -335,17 +330,16 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, models.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
 
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	// Create the namespace we'll save our alerts to.
 	dashboardUID := "default"
-	err = createFolder(t, dashboardUID, grafanaListedAddr, "grafana", "password")
-	require.NoError(t, err)
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	apiClient.CreateFolder(t, dashboardUID, dashboardUID)
 
 	interval, err := model.ParseDuration("10s")
 	require.NoError(t, err)
@@ -357,7 +351,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:    interval,
+						For:    &interval,
 						Labels: map[string]string{},
 						Annotations: map[string]string{
 							"__dashboardUid__": dashboardUID,
@@ -420,7 +414,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
@@ -507,7 +501,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -524,7 +518,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -541,7 +535,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -558,7 +552,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -575,7 +569,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -593,7 +587,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			require.NoError(t, err)
 		})
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		require.NoError(t, json.Unmarshal(b, &res))
@@ -611,7 +605,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			require.NoError(t, err)
 		})
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		require.NoError(t, json.Unmarshal(b, &res))
@@ -620,9 +614,6 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 }
 
 func TestPrometheusRulesPermissions(t *testing.T) {
-	_, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
-
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -633,30 +624,28 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, models.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+	userID := createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
 	permissionsStore := acdb.ProvideService(store)
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "folder1", grafanaListedAddr, "grafana", "password")
-	require.NoError(t, err)
+	apiClient.CreateFolder(t, "folder1", "folder1")
 
 	// Create the namespace we'll save our alerts to.
-	err = createFolder(t, "folder2", grafanaListedAddr, "grafana", "password")
-	require.NoError(t, err)
-
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	apiClient.CreateFolder(t, "folder2", "folder2")
 
 	// Create rule under folder1
-	createRule(t, grafanaListedAddr, "folder1", "grafana", "password")
+	createRule(t, apiClient, "folder1")
 
 	// Create rule under folder2
-	createRule(t, grafanaListedAddr, "folder2", "grafana", "password")
+	createRule(t, apiClient, "folder2")
 
 	// Now, let's see how this looks like.
 	{
@@ -668,7 +657,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -684,9 +673,9 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "folder2", body.Data.Groups[1].File)
 	}
 
-	// remove permissions from folder2
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder2")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	// remove permissions from folder2org.ROLE
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder2")
+	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that folder2 is not included in the response
 	{
@@ -698,7 +687,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -709,9 +698,9 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 		require.Equal(t, "folder1", body.Data.Groups[0].File)
 	}
 
-	// remove permissions from folder1
-	removeFolderPermission(t, permissionsStore, 1, userID, models.ROLE_EDITOR, "folder1")
-	reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
+	// remove permissions from folder1org.ROLE
+	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
+	apiClient.ReloadCachedPermissions(t)
 
 	// make sure that no folders are included in the response
 	{
@@ -723,7 +712,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -737,20 +726,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }
 
-func reloadCachedPermissions(t *testing.T, addr, login, password string) {
-	t.Helper()
-
-	u := fmt.Sprintf("http://%s:%s@%s/api/access-control/user/permissions?reloadcache=true", login, password, addr)
-	// nolint:gosec
-	resp, err := http.Get(u)
-	t.Cleanup(func() {
-		require.NoError(t, resp.Body.Close())
-	})
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-}
-
-func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role models.RoleType, uid string) {
+func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role org.RoleType, uid string) {
 	t.Helper()
 	// remove user permissions on folder
 	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, types.SetResourcePermissionCommand{

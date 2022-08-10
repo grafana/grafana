@@ -1,5 +1,5 @@
 import { within } from '@testing-library/dom';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -12,9 +12,9 @@ jest.mock('../../core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
+function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
   const onSubmitMock = jest.fn();
-  const playlist = { name, items, interval } as unknown as Playlist;
+  const playlist = { name, items, interval, uid } as unknown as Playlist;
   const { rerender } = render(<PlaylistForm onSubmit={onSubmitMock} playlist={playlist} />);
 
   return { onSubmitMock, playlist, rerender };
@@ -28,6 +28,7 @@ const playlist: Playlist = {
     { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
     { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
   ],
+  uid: 'foo',
 };
 
 function rows() {
@@ -133,17 +134,25 @@ describe('PlaylistForm', () => {
     it('then the correct item should be submitted', async () => {
       const { onSubmitMock } = getTestContext(playlist);
 
-      fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-      await waitFor(() => expect(onSubmitMock).toHaveBeenCalledTimes(1));
-      expect(onSubmitMock).toHaveBeenCalledWith(playlist);
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock).toHaveBeenCalledTimes(1);
+      expect(onSubmitMock).toHaveBeenCalledWith({
+        name: 'A test playlist',
+        interval: '10m',
+        items: [
+          { title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' },
+          { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
+          { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
+        ],
+      });
     });
 
     describe('and name is missing', () => {
       it('then an alert should appear and nothing should be submitted', async () => {
         const { onSubmitMock } = getTestContext({ ...playlist, name: undefined });
 
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-        expect(await screen.findAllByRole('alert')).toHaveLength(1);
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+        expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();
       });
     });
@@ -153,8 +162,8 @@ describe('PlaylistForm', () => {
         const { onSubmitMock } = getTestContext(playlist);
 
         await userEvent.clear(screen.getByRole('textbox', { name: /playlist interval/i }));
-        fireEvent.submit(screen.getByRole('button', { name: /save/i }));
-        expect(await screen.findAllByRole('alert')).toHaveLength(1);
+        await userEvent.click(screen.getByRole('button', { name: /save/i }));
+        expect(screen.getAllByRole('alert')).toHaveLength(1);
         expect(onSubmitMock).not.toHaveBeenCalled();
       });
     });

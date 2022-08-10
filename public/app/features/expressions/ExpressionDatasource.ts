@@ -43,7 +43,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
         return query;
       }
 
-      return ds?.interpolateVariablesInQueries([query], {})[0] as ExpressionQuery;
+      return ds?.interpolateVariablesInQueries([query], request.scopedVars)[0] as ExpressionQuery;
     });
 
     let sub = from(Promise.all(targets));
@@ -53,9 +53,9 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
   newQuery(query?: Partial<ExpressionQuery>): ExpressionQuery {
     return {
       refId: '--', // Replaced with query
-      type: query?.type ?? ExpressionQueryType.math,
       datasource: ExpressionDatasourceRef,
-      conditions: query?.conditions ?? undefined,
+      type: query?.type ?? ExpressionQueryType.math,
+      ...query,
     };
   }
 }

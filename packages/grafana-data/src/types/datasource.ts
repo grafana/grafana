@@ -8,7 +8,6 @@ import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotatio
 import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
-import { LogRowModel } from './logs';
 import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
@@ -95,9 +94,9 @@ export class DataSourcePlugin<
     return this.setQueryEditorHelp(ExploreStartPage);
   }
 
-  /*
+  /**
    * @deprecated -- prefer using {@link StandardVariableSupport} or {@link CustomVariableSupport} or {@link DataSourceVariableSupport} in data source instead
-   * */
+   */
   setVariableQueryEditor(VariableQueryEditor: any) {
     this.components.VariableQueryEditor = VariableQueryEditor;
     return this;
@@ -267,29 +266,6 @@ abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
-   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
-   *
-   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
-   * the same signature in DataSourceWithLogsContextSupport).
-   * This method will be removed from DataSourceApi in the future. Some editors may still show
-   * a deprecation warning which can be ignored for time being.
-   */
-  getLogRowContext?: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions
-  ) => Promise<DataQueryResponse>;
-
-  /**
-   * @deprecated getLogRowContext and showContextToggle in `DataSourceApi` is deprecated.
-   *
-   * DataSourceWithLogsContextSupport should be implemented instead (these methods have exactly
-   * the same signature in DataSourceWithLogsContextSupport).
-   * This method will be removed from DataSourceApi in the future. Some editors may still show
-   * a deprecation warning which can be ignored for time being.
-   */
-  showContextToggle?(row?: LogRowModel): boolean;
-
-  /**
    * Variable query action.
    */
   metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
@@ -369,6 +345,12 @@ abstract class DataSourceApi<
     | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
     | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
     | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
+
+  /*
+   * Optionally, use this method to set default values for a query
+   * @alpha -- experimental
+   */
+  getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 }
 
 export interface MetadataInspectorProps<
@@ -500,7 +482,10 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
+  /** @deprecate */
   dashboardId?: number;
+  dashboardUID?: string;
+  publicDashboardAccessToken?: string;
 
   // Request Timing
   startTime: number;
@@ -523,6 +508,7 @@ export interface QueryFixAction {
   type: string;
   query?: string;
   preventSubmit?: boolean;
+  options?: KeyValue<string>;
 }
 
 export interface QueryHint {
@@ -560,11 +546,9 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   typeName: string;
   access: string;
   url: string;
-  password: string;
   user: string;
   database: string;
   basicAuth: boolean;
-  basicAuthPassword: string;
   basicAuthUser: string;
   isDefault: boolean;
   jsonData: T;

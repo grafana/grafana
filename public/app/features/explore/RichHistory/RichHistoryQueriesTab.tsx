@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
+import { Button, FilterInput, MultiSelect, RangeSlider, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   createDatasourcesList,
   mapNumbertoTimeInSlider,
@@ -19,10 +19,12 @@ import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
+  totalQueries: number;
   loading: boolean;
   activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate?: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
+  loadMoreRichHistory: () => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
   exploreId: ExploreId;
@@ -32,38 +34,36 @@ export interface Props {
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
   const bgColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark4;
 
-  /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
-  const cardWidth = '100% - 134px';
-  const sliderHeight = `${height - 180}px`;
   return {
     container: css`
       display: flex;
-      .label-slider {
-        font-size: ${theme.typography.size.sm};
-        &:last-of-type {
-          margin-top: ${theme.spacing.lg};
-        }
-        &:first-of-type {
-          font-weight: ${theme.typography.weight.semibold};
-          margin-bottom: ${theme.spacing.md};
-        }
+    `,
+    labelSlider: css`
+      font-size: ${theme.typography.size.sm};
+      &:last-of-type {
+        margin-top: ${theme.spacing.lg};
+      }
+      &:first-of-type {
+        font-weight: ${theme.typography.weight.semibold};
+        margin-bottom: ${theme.spacing.md};
       }
     `,
     containerContent: css`
-      width: calc(${cardWidth});
+      /* 134px is based on the width of the Query history tabs bar, so the content is aligned to right side of the tab */
+      width: calc(100% - 134px);
     `,
     containerSlider: css`
       width: 129px;
       margin-right: ${theme.spacing.sm};
-      .slider {
-        bottom: 10px;
-        height: ${sliderHeight};
-        width: 129px;
-        padding: ${theme.spacing.sm} 0;
-      }
+    `,
+    fixedSlider: css`
+      position: fixed;
     `,
     slider: css`
-      position: fixed;
+      bottom: 10px;
+      height: ${height - 180}px;
+      width: 129px;
+      padding: ${theme.spacing.sm} 0;
     `,
     selectors: css`
       display: flex;
@@ -121,10 +121,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
 export function RichHistoryQueriesTab(props: Props) {
   const {
     queries,
+    totalQueries,
     loading,
     richHistorySearchFilters,
     updateFilters,
     clearRichHistoryResults,
+    loadMoreRichHistory,
     richHistorySettings,
     exploreId,
     height,
@@ -166,14 +168,15 @@ export function RichHistoryQueriesTab(props: Props) {
    */
   const mappedQueriesToHeadings = mapQueriesToHeadings(queries, richHistorySearchFilters.sortOrder);
   const sortOrderOptions = getSortOrderOptions();
+  const partialResults = queries.length && queries.length !== totalQueries;
 
   return (
     <div className={styles.container}>
       <div className={styles.containerSlider}>
-        <div className={styles.slider}>
-          <div className="label-slider">Filter history</div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
-          <div className="slider">
+        <div className={styles.fixedSlider}>
+          <div className={styles.labelSlider}>Filter history</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.from)}</div>
+          <div className={styles.slider}>
             <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
@@ -187,7 +190,7 @@ export function RichHistoryQueriesTab(props: Props) {
               }}
             />
           </div>
-          <div className="label-slider">{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
+          <div className={styles.labelSlider}>{mapNumbertoTimeInSlider(richHistorySearchFilters.to)}</div>
         </div>
       </div>
 
@@ -231,10 +234,14 @@ export function RichHistoryQueriesTab(props: Props) {
             return (
               <div key={heading}>
                 <div className={styles.heading}>
-                  {heading} <span className={styles.queries}>{mappedQueriesToHeadings[heading].length} queries</span>
+                  {heading}{' '}
+                  <span className={styles.queries}>
+                    {partialResults ? 'Displaying ' : ''}
+                    {mappedQueriesToHeadings[heading].length} queries
+                  </span>
                 </div>
                 {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
-                  const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
+                  const idx = listOfDatasources.findIndex((d) => d.uid === q.datasourceUid);
                   return (
                     <RichHistoryCard
                       query={q}
@@ -248,6 +255,11 @@ export function RichHistoryQueriesTab(props: Props) {
               </div>
             );
           })}
+        {partialResults ? (
+          <div>
+            Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
+          </div>
+        ) : null}
         <div className={styles.footer}>
           {!config.queryHistoryEnabled ? 'The history is local to your browser and is not shared with others.' : ''}
         </div>

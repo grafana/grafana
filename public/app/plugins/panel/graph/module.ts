@@ -5,10 +5,11 @@ import './time_regions_form';
 import './annotation_tooltip';
 import './event_editor';
 
+import { t } from '@lingui/macro';
 import { auto } from 'angular';
 import { defaults, find, without } from 'lodash';
 
-import { DataFrame, FieldConfigProperty, getColorForTheme, PanelEvents, PanelPlugin } from '@grafana/data';
+import { DataFrame, FieldConfigProperty, PanelEvents, PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
 import config from 'app/core/config';
@@ -183,7 +184,11 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions: any[]) {
-    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
+    const toggleTextTranslation = t({
+      id: 'panel.header-menu.more-toggle',
+      message: `Toggle legend`,
+    });
+    actions.push({ text: toggleTextTranslation, click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
   zoomOut(evt: any) {
@@ -297,7 +302,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onColorChange = (series: any, color: string) => {
-    series.setColor(getColorForTheme(color, config.theme));
+    series.setColor(config.theme.visualization.getColorByName(color));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };

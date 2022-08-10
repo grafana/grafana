@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -38,7 +38,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	// When using access control anyone that can create a data source should be able to list all data sources installed
 	// Fallback to only letting admins list non-core plugins
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(models.ROLE_ADMIN) {
+	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(org.RoleAdmin) {
 		coreFilter = "1"
 	}
 
@@ -119,7 +119,17 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
-		return response.Error(404, "Plugin not found, no installed plugin with that id", nil)
+		return response.Error(http.StatusNotFound, "Plugin not found, no installed plugin with that id", nil)
+	}
+
+	// In a first iteration, we only have one permission for app plugins.
+	// We will need a different permission to allow users to configure the plugin without needing access to it.
+	if plugin.IsApp() {
+		hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
+		if !hasAccess(accesscontrol.ReqSignedIn,
+			accesscontrol.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
+			return response.Error(http.StatusForbidden, "Access Denied", nil)
+		}
 	}
 
 	dto := &dtos.PluginSetting{
@@ -318,6 +328,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
 		PluginContext: pCtx,
+		Headers:       map[string]string{},
 	})
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
@@ -357,7 +368,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Add(c.Req.Context(), pluginID, dto.Version)
+	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
@@ -388,7 +399,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginStore.Remove(c.Req.Context(), pluginID)
+	err := hs.pluginManager.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)
@@ -454,7 +465,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

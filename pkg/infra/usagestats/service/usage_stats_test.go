@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
@@ -84,7 +84,7 @@ func TestMetrics(t *testing.T) {
 		ch := make(chan httpResp)
 		ticker := time.NewTicker(2 * time.Second)
 		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			buf, err := ioutil.ReadAll(r.Body)
+			buf, err := io.ReadAll(r.Body)
 			if err != nil {
 				t.Logf("Fake HTTP handler received an error: %s", err.Error())
 				ch <- httpResp{
@@ -178,6 +178,7 @@ func TestRegisterMetrics(t *testing.T) {
 
 	uss.gatherMetrics(context.Background(), metrics)
 	assert.Equal(t, 1, metrics[goodMetricName])
+	metricsCount := len(metrics)
 
 	t.Run("do not add metrics that return an error when fetched", func(t *testing.T) {
 		const badMetricName = "stats.test_external_metric_error.count"
@@ -192,7 +193,8 @@ func TestRegisterMetrics(t *testing.T) {
 
 		require.Nil(t, extErrorMetric, "Invalid metric should not be added")
 		assert.Equal(t, 1, extMetric)
-		assert.Len(t, metrics, 3, "Expected only one available metric")
+		assert.Len(t, metrics, metricsCount, "Expected same number of metrics before and after collecting bad metric")
+		assert.EqualValues(t, 1, metrics["stats.usagestats.debug.collect.error.count"])
 	})
 }
 

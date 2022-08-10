@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
-import { useAsync } from 'react-use';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
 
@@ -13,78 +14,185 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
+import {
+  reportDashboardListViewed,
+  reportSearchResultInteraction,
+  reportSearchQueryInteraction,
+  reportSearchFailedQueryInteraction,
+} from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
 import { FolderSection } from './FolderSection';
 import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
+import { SearchResultsCards } from './SearchResultsCards';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
-type SearchViewProps = {
+export type SearchViewProps = {
   queryText: string; // odd that it is not from query.query
   showManage: boolean;
   folderDTO?: FolderDTO;
+  hidePseudoFolders?: boolean; // Recent + starred
+  onQueryTextChange: (newQueryText: string) => void;
+  includePanels: boolean;
+  setIncludePanels: (v: boolean) => void;
+  keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
-export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps) => {
+export const SearchView = ({
+  showManage,
+  folderDTO,
+  queryText,
+  onQueryTextChange,
+  hidePseudoFolders,
+  includePanels,
+  setIncludePanels,
+  keyboardEvents,
+}: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  const { query, onQueryChange, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } =
-    useSearchQuery({});
+  const {
+    query,
+    onTagFilterChange,
+    onStarredFilterChange,
+    onTagAdd,
+    onDatasourceChange,
+    onSortChange,
+    onLayoutChange,
+    onClearStarred,
+  } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
   const isFolders = layout === SearchLayout.Folders;
 
-  const results = useAsync(() => {
-    let qstr = queryText;
-    if (!qstr?.length) {
-      qstr = '*';
-    }
+  const [listKey, setListKey] = useState(Date.now());
+  const eventTrackingNamespace = folderDTO ? 'manage_dashboards' : 'dashboard_search';
+
+  const searchQuery = useMemo(() => {
     const q: SearchQuery = {
-      query: qstr,
+      query: queryText,
       tags: query.tag as string[],
       ds_uid: query.datasource as string,
       location: folderDTO?.uid, // This will scope all results to the prefix
+      sort: query.sort?.value,
+      explain: query.explain,
+      withAllowedActions: query.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
+      starred: query.starred,
     };
-    return getGrafanaSearcher().search(q);
-  }, [query, layout, queryText, folderDTO]);
+
+    // Only dashboards have additional properties
+    if (q.sort?.length && !q.sort.includes('name')) {
+      q.kind = ['dashboard', 'folder']; // skip panels
+    }
+
+    if (!q.query?.length) {
+      q.query = '*';
+      if (!q.location) {
+        q.kind = ['dashboard', 'folder']; // skip panels
+      }
+    }
+
+    if (!includePanels && !q.kind) {
+      q.kind = ['dashboard', 'folder']; // skip panels
+    }
+
+    if (q.query === '*' && !q.sort?.length) {
+      q.sort = 'name_sort';
+    }
+    return q;
+  }, [query, queryText, folderDTO, includePanels]);
+
+  // Search usage reporting
+  useDebounce(
+    () => {
+      reportDashboardListViewed(eventTrackingNamespace, {
+        layout: query.layout,
+        starred: query.starred,
+        sortValue: query.sort?.value,
+        query: query.query,
+        tagCount: query.tag?.length,
+        includePanels,
+      });
+    },
+    1000,
+    []
+  );
+
+  const onClickItem = () => {
+    reportSearchResultInteraction(eventTrackingNamespace, {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels,
+    });
+  };
+
+  const results = useAsync(() => {
+    const trackingInfo = {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels,
+    };
+
+    reportSearchQueryInteraction(eventTrackingNamespace, trackingInfo);
+
+    if (searchQuery.starred) {
+      return getGrafanaSearcher()
+        .starred(searchQuery)
+        .catch((error) =>
+          reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+        );
+    }
+
+    return getGrafanaSearcher()
+      .search(searchQuery)
+      .catch((error) =>
+        reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+      );
+  }, [searchQuery]);
+
+  const clearSelection = useCallback(() => {
+    searchSelection.items.clear();
+    setSearchSelection({ ...searchSelection });
+  }, [searchSelection]);
 
   const toggleSelection = useCallback(
     (kind: string, uid: string) => {
       const current = searchSelection.isSelected(kind, uid);
-      if (kind === 'folder') {
-        // ??? also select all children?
-      }
       setSearchSelection(updateSearchSelection(searchSelection, !current, kind, [uid]));
     },
     [searchSelection]
   );
 
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
-  }
-
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
-    const q: SearchQuery = {
-      query: query.query?.length ? query.query : '*',
-      tags: query.tag,
-      ds_uid: query.datasource,
-    };
-    return getGrafanaSearcher().tags(q);
+    return getGrafanaSearcher().tags(searchQuery);
   };
 
   // function to update items when dashboards or folders are moved or deleted
   const onChangeItemsList = async () => {
     // clean up search selection
-    setSearchSelection(newSearchSelection());
+    clearSelection();
+    setListKey(Date.now());
     // trigger again the search to the backend
-    onQueryChange(query.query);
+    onQueryTextChange(query.query);
   };
+
+  const getStarredItems = useCallback(
+    (e) => {
+      onStarredFilterChange(e);
+    },
+    [onStarredFilterChange]
+  );
 
   const renderResults = () => {
     const value = results.value;
@@ -102,7 +210,7 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
             variant="secondary"
             onClick={() => {
               if (query.query) {
-                onQueryChange('');
+                onQueryTextChange('');
               }
               if (query.tag?.length) {
                 onTagFilterChange([]);
@@ -112,7 +220,7 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
               }
             }}
           >
-            Remove search constraints
+            Clear search and filters
           </Button>
         </div>
       );
@@ -128,11 +236,22 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
             selectionToggle={toggleSelection}
             onTagSelected={onTagAdd}
             renderStandaloneBody={true}
+            tags={query.tag}
+            key={listKey}
+            onClickItem={onClickItem}
           />
         );
       }
       return (
-        <FolderView selection={selection} selectionToggle={toggleSelection} tags={query.tag} onTagSelected={onTagAdd} />
+        <FolderView
+          key={listKey}
+          selection={selection}
+          selectionToggle={toggleSelection}
+          tags={query.tag}
+          onTagSelected={onTagAdd}
+          hidePseudoFolders={hidePseudoFolders}
+          onClickItem={onClickItem}
+        />
       );
     }
 
@@ -144,14 +263,21 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
               response: value!,
               selection,
               selectionToggle: toggleSelection,
+              clearSelection,
               width: width,
               height: height,
               onTagSelected: onTagAdd,
+              keyboardEvents,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
+              onClickItem: onClickItem,
             };
 
             if (layout === SearchLayout.Grid) {
               return <SearchResultsGrid {...props} />;
+            }
+
+            if (width < 800) {
+              return <SearchResultsCards {...props} />;
             }
 
             return <SearchResultsTable {...props} />;
@@ -161,29 +287,48 @@ export const SearchView = ({ showManage, folderDTO, queryText }: SearchViewProps
     );
   };
 
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
+  if (folderDTO && !results.loading && !results.value?.totalRows && !queryText.length) {
+    return (
+      <EmptyListCTA
+        title="This folder doesn't have any dashboards yet"
+        buttonIcon="plus"
+        buttonTitle="Create Dashboard"
+        buttonLink={`dashboard/new?folderId=${folderDTO.id}`}
+        proTip="Add/move dashboards to your folder at ->"
+        proTipLink="dashboards"
+        proTipLinkTitle="Manage dashboards"
+        proTipTarget=""
+      />
+    );
   }
 
   return (
     <>
       {Boolean(searchSelection.items.size > 0) ? (
-        <ManageActions items={searchSelection.items} onChange={onChangeItemsList} />
+        <ManageActions items={searchSelection.items} onChange={onChangeItemsList} clearSelection={clearSelection} />
       ) : (
         <ActionRow
           onLayoutChange={(v) => {
             if (v === SearchLayout.Folders) {
               if (query.query) {
-                onQueryChange(''); // parent will clear the sort
+                onQueryTextChange(''); // parent will clear the sort
+              }
+              if (query.starred) {
+                onClearStarred();
               }
             }
             onLayoutChange(v);
           }}
+          showStarredFilter={hidePseudoFolders}
+          onStarredFilterChange={!hidePseudoFolders ? undefined : getStarredItems}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}
+          getSortOptions={getGrafanaSearcher().getSortOptions}
           onDatasourceChange={onDatasourceChange}
           query={query}
+          includePanels={includePanels!}
+          setIncludePanels={setIncludePanels}
         />
       )}
 

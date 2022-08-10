@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type setUserResourcePermissionTest struct {
@@ -337,7 +337,7 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 
 type getResourcePermissionsTest struct {
 	desc              string
-	user              *models.SignedInUser
+	user              *user.SignedInUser
 	numUsers          int
 	actions           []string
 	resource          string
@@ -350,7 +350,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
-			user: &models.SignedInUser{
+			user: &user.SignedInUser{
 				OrgId: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
@@ -363,7 +363,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 		},
 		{
 			desc: "should return manage permissions for all resource ids",
-			user: &models.SignedInUser{
+			user: &user.SignedInUser{
 				OrgId: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
@@ -448,13 +448,13 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 			org = &addedOrg
 		}
 
-		u, err := sql.CreateUser(context.Background(), models.CreateUserCommand{
+		u, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
 			Login: fmt.Sprintf("user:%s%d", resourceID, i),
-			OrgId: org.Id,
+			OrgID: org.Id,
 		})
 		require.NoError(t, err)
 
-		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.Id}, types.SetResourcePermissionCommand{
+		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.ID}, types.SetResourcePermissionCommand{
 			Actions:           actions,
 			Resource:          resource,
 			ResourceID:        resourceID,

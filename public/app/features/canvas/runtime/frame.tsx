@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import React from 'react';
 
-import { CanvasFrameOptions, canvasElementRegistry } from 'app/features/canvas';
+import { canvasElementRegistry, CanvasFrameOptions } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
 import { LayerActionID } from 'app/plugins/panel/canvas/types';
@@ -74,10 +74,35 @@ export class FrameState extends ElementState {
     this.reinitializeMoveable();
   }
 
+  // used for tree view
+  reorderTree(src: ElementState, dest: ElementState, firstPosition = false) {
+    const result = Array.from(this.elements);
+    const srcIndex = this.elements.indexOf(src);
+    const destIndex = firstPosition ? this.elements.length - 1 : this.elements.indexOf(dest);
+
+    const [removed] = result.splice(srcIndex, 1);
+    result.splice(destIndex, 0, removed);
+    this.elements = result;
+
+    this.reinitializeMoveable();
+  }
+
+  doMove(child: ElementState, action: LayerActionID) {
+    const vals = this.elements.filter((v) => v !== child);
+    if (action === LayerActionID.MoveBottom) {
+      vals.unshift(child);
+    } else {
+      vals.push(child);
+    }
+    this.elements = vals;
+    this.scene.save();
+    this.reinitializeMoveable();
+  }
+
   reinitializeMoveable() {
     // Need to first clear current selection and then re-init moveable with slight delay
     this.scene.clearCurrentSelection();
-    setTimeout(() => this.scene.initMoveable(true, this.scene.isEditingEnabled), 100);
+    setTimeout(() => this.scene.initMoveable(true, this.scene.isEditingEnabled));
   }
 
   // ??? or should this be on the element directly?
@@ -151,6 +176,11 @@ export class FrameState extends ElementState {
         this.scene.save();
         this.reinitializeMoveable();
         break;
+      case LayerActionID.MoveTop:
+      case LayerActionID.MoveBottom:
+        element.parent?.doMove(element, action);
+        break;
+
       default:
         console.log('DO action', action, element);
         return;
@@ -159,7 +189,7 @@ export class FrameState extends ElementState {
 
   render() {
     return (
-      <div key={this.UID} ref={this.initElement} style={{ overflow: 'hidden' }}>
+      <div key={this.UID} ref={this.initElement}>
         {this.elements.map((v) => v.render())}
       </div>
     );

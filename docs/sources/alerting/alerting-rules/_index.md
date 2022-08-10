@@ -1,10 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/alerting/alerting-rules/", "/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/"]
-title = "Create and manage rules"
-weight = 130
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/alerting-rules/
+  - /docs/grafana/latest/alerting/old-alerting/create-alerts/
+  - /docs/grafana/latest/alerting/rules/
+  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/
+title: Create and manage rules
+weight: 130
+---
 
-# Create and manage Grafana alerting rules
+# Create and manage Grafana Alerting rules
 
 An alerting rule is a set of evaluation criteria that determines whether an alert will fire. The rule consists of one or more queries and expressions, a condition, the frequency of evaluation, and optionally, the duration over which the condition is met.
 
@@ -12,9 +16,9 @@ While queries and expressions select the data set to evaluate, a condition sets 
 
 You can:
 
-- [Create Grafana Mimir or Loki managed alert rule]({{< relref "./create-mimir-loki-managed-rule.md" >}})
-- [Create Grafana Mimir or Loki managed recording rule]({{< relref "./create-mimir-loki-managed-recording-rule.md" >}})
-- [Edit Grafana Mimir or Loki rule groups and namespaces]({{< relref "./edit-mimir-loki-namespace-group.md" >}})
-- [Create Grafana managed alert rule]({{< relref "./create-grafana-managed-rule.md" >}})
-- [State and health of alerting rules]({{< relref "../fundamentals/state-and-health.md" >}})
-- [Manage alerting rules]({{< relref "./rule-list.md" >}})
+- [Create Grafana Mimir or Loki managed alert rule]({{< relref "create-mimir-loki-managed-rule/" >}})
+- [Create Grafana Mimir or Loki managed recording rule]({{< relref "create-mimir-loki-managed-recording-rule/" >}})
+- [Edit Grafana Mimir or Loki rule groups and namespaces]({{< relref "edit-mimir-loki-namespace-group/" >}})
+- [Create Grafana managed alert rule]({{< relref "create-grafana-managed-rule/" >}})
+- [State and health of alerting rules]({{< relref "../fundamentals/state-and-health/" >}})
+- [Manage alerting rules]({{< relref "rule-list/" >}})

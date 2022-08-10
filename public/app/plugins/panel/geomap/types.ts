@@ -26,6 +26,18 @@ export interface ControlsOptions {
 
   // Show debug
   showDebug?: boolean;
+
+  // Show measure
+  showMeasure?: boolean;
+}
+
+export enum TooltipMode {
+  None = 'none',
+  Details = 'details',
+}
+
+export interface TooltipOptions {
+  mode: TooltipMode;
 }
 
 export interface MapViewConfig {
@@ -55,6 +67,7 @@ export interface GeomapPanelOptions {
   controls: ControlsOptions;
   basemap: MapLayerOptions;
   layers: MapLayerOptions[];
+  tooltip: TooltipOptions;
 }
 export interface FeatureStyleConfig {
   style?: StyleConfig;

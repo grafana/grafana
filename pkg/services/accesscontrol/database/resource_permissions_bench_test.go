@@ -10,10 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -56,7 +57,7 @@ func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int
 	dsId := dataSources[0]
 
 	permissions, err := store.GetResourcePermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcePermissionsQuery{
-		User:              &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}, "teams:read": {"teams:*"}}}},
+		User:              &user.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}, "teams:read": {"teams:*"}}}},
 		Actions:           []string{dsAction},
 		Resource:          dsResource,
 		ResourceID:        strconv.Itoa(int(dsId)),
@@ -75,11 +76,11 @@ func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*AccessControlSt
 func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *AccessControlStore, dsNum, usersNum, permissionsPerDs int) []int64 {
 	dataSources := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
-		addDSCommand := &models.AddDataSourceCommand{
+		addDSCommand := &datasources.AddDataSourceCommand{
 			OrgId:  0,
 			Name:   fmt.Sprintf("ds_%d", i),
-			Type:   models.DS_GRAPHITE,
-			Access: models.DS_ACCESS_DIRECT,
+			Type:   datasources.DS_GRAPHITE,
+			Access: datasources.DS_ACCESS_DIRECT,
 			Url:    "http://test",
 		}
 
@@ -149,11 +150,11 @@ func generateTeamsAndUsers(b *testing.B, db *sqlstore.SQLStore, users int) ([]in
 		for u := 0; u < UsersPerTeam; u++ {
 			userName := fmt.Sprintf("%s%v", "user", globalUserId)
 			userEmail := fmt.Sprintf("%s@example.org", userName)
-			createUserCmd := models.CreateUserCommand{Email: userEmail, Name: userName, Login: userName, OrgId: 1}
+			createUserCmd := user.CreateUserCommand{Email: userEmail, Name: userName, Login: userName, OrgID: 1}
 
 			user, err := db.CreateUser(context.Background(), createUserCmd)
 			require.NoError(b, err)
-			userId := user.Id
+			userId := user.ID
 			globalUserId++
 			userIds = append(userIds, userId)
 

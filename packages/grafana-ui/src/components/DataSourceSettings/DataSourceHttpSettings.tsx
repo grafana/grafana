@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { InlineField } from '../Forms/InlineField';
@@ -17,7 +17,6 @@ import { TagsInput } from '../TagsInput/TagsInput';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { CustomHeadersSettings } from './CustomHeadersSettings';
 import { HttpProxySettings } from './HttpProxySettings';
-import { SigV4AuthSettings } from './SigV4AuthSettings';
 import { TLSAuthSettings } from './TLSAuthSettings';
 import { HttpSettingsProps } from './types';
 
@@ -71,10 +70,11 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
     sigV4AuthToggleEnabled,
     showForwardOAuthIdentityOption,
     azureAuthSettings,
+    renderSigV4Editor,
   } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
-  const theme = useTheme();
+  const theme = useTheme2();
 
   const onSettingsChange = useCallback(
     (change: Partial<DataSourceSettings<any, any>>) => {
@@ -121,7 +121,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
   );
 
   const notValidStyle = css`
-    box-shadow: inset 0 0px 5px ${theme.palette.red};
+    box-shadow: inset 0 0px 5px ${theme.v1.palette.red};
   `;
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
@@ -292,8 +292,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           <azureAuthSettings.azureSettingsUI dataSourceConfig={dataSourceConfig} onChange={onChange} />
         )}
 
-        {dataSourceConfig.jsonData.sigV4Auth && sigV4AuthToggleEnabled && <SigV4AuthSettings {...props} />}
-
+        {dataSourceConfig.jsonData.sigV4Auth && sigV4AuthToggleEnabled && renderSigV4Editor}
         {(dataSourceConfig.jsonData.tlsAuth || dataSourceConfig.jsonData.tlsAuthWithCACert) && (
           <TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
         )}

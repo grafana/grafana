@@ -1,14 +1,22 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/mssql/", "/docs/grafana/latest/features/datasources/mssql/"]
-description = "Guide for using Microsoft SQL Server in Grafana"
-keywords = ["grafana", "MSSQL", "Microsoft", "SQL", "guide", "Azure SQL Database"]
-title = "Microsoft SQL Server"
-weight = 900
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/mssql/
+  - /docs/grafana/latest/features/datasources/mssql/
+description: Guide for using Microsoft SQL Server in Grafana
+keywords:
+  - grafana
+  - MSSQL
+  - Microsoft
+  - SQL
+  - guide
+  - Azure SQL Database
+title: Microsoft SQL Server
+weight: 900
+---
 
 # Using Microsoft SQL Server in Grafana
 
-Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic explains options, variables, querying, and other options specific to the MS SQL data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic explains options, variables, querying, and other options specific to the MS SQL data source. Refer to [Add a data source]({{< relref "add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Data source options
 
@@ -170,11 +178,11 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames/#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard field definitions]({{< relref "../panels/standard-field-definitions.md#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -218,7 +226,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard field definition]({{< relref "../panels/standard-field-definitions.md#display-name" >}}) display name value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}) display name value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -263,7 +271,7 @@ Data frame result:
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -333,11 +341,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../variables/variable-types/_index.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../variables/variable-types/#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Columns:**
 

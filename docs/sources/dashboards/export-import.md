@@ -1,13 +1,20 @@
-+++
-aliases = ["/docs/grafana/latest/dashboards/export-import/", "/docs/grafana/latest/reference/export_import/"]
-keywords = ["grafana", "dashboard", "documentation", "export", "import"]
-title = "Export and import"
-weight = 800
-+++
+---
+aliases:
+  - /docs/grafana/latest/dashboards/export-import/
+  - /docs/grafana/latest/reference/export_import/
+keywords:
+  - grafana
+  - dashboard
+  - documentation
+  - export
+  - import
+title: Export and import
+weight: 800
+---
 
 # Export and import
 
-Grafana Dashboards can easily be exported and imported, either from the UI or from the [HTTP API]({{< relref "../http_api/dashboard.md#create-update-dashboard" >}}).
+Grafana Dashboards can easily be exported and imported, either from the UI or from the [HTTP API]({{< relref "../developers/http_api/dashboard/#create-update-dashboard" >}}).
 
 ## Exporting a dashboard
 
@@ -27,7 +34,7 @@ the dashboard, and will also be added as a required input when the dashboard is 
 
 ## Import dashboard
 
-To import a dashboard click the + icon in the side menu, and then click **Import**.
+To import a dashboard click **Import** under the **Dashboards** icon in the side menu.
 
 {{< figure src="/static/img/docs/v70/import_step1.png" max-width="700px" >}}
 

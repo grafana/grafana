@@ -1,3 +1,4 @@
+// Using '*' for uid will return true if anything is selected
 export type SelectionChecker = (kind: string, uid: string) => boolean;
 export type SelectionToggle = (kind: string, uid: string) => void;
 
@@ -52,6 +53,17 @@ export function updateSearchSelection(
   return {
     items,
     isSelected: (kind: string, uid: string) => {
+      if (uid === '*') {
+        if (kind === '*') {
+          for (const k of items.keys()) {
+            if (items.get(k)?.size) {
+              return true;
+            }
+          }
+          return false;
+        }
+        return Boolean(items.get(kind)?.size);
+      }
       return Boolean(items.get(kind)?.has(uid));
     },
   };

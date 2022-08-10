@@ -2,7 +2,7 @@ import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { Subject } from 'rxjs';
 
-import { locationService, setEchoSrv } from '@grafana/runtime';
+import { FetchError, locationService, setEchoSrv } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -208,7 +208,15 @@ describeInitScenario('Initializing home dashboard', (ctx) => {
 describeInitScenario('Initializing home dashboard cancelled', (ctx) => {
   ctx.setup(() => {
     ctx.args.routeName = DashboardRoutes.Home;
-    ctx.backendSrv.get.mockRejectedValue({ cancelled: true });
+    const fetchError: FetchError = {
+      cancelled: true,
+      config: {
+        url: '/api/dashboards/home',
+      },
+      data: 'foo',
+      status: 500,
+    };
+    ctx.backendSrv.get.mockRejectedValue(fetchError);
   });
 
   it('Should abort init process', () => {

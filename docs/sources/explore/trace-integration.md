@@ -1,10 +1,13 @@
-+++
-aliases = ["/docs/grafana/latest/explore/trace-integration/"]
-description = "Tracing in Explore"
-keywords = ["explore", "trace"]
-title = "Tracing in Explore"
-weight = 20
-+++
+---
+aliases:
+  - /docs/grafana/latest/explore/trace-integration/
+description: Tracing in Explore
+keywords:
+  - explore
+  - trace
+title: Tracing in Explore
+weight: 20
+---
 
 # Tracing in Explore
 
@@ -12,10 +15,10 @@ Explore allows you to visualize traces from tracing data sources. This is availa
 
 Supported data sources are:
 
-- [Jaeger]({{< relref "../datasources/jaeger.md" >}})
-- [Tempo]({{< relref "../datasources/tempo.md" >}})
+- [Jaeger]({{< relref "../datasources/jaeger/" >}})
+- [Tempo]({{< relref "../datasources/tempo/" >}})
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
-- [Zipkin]({{< relref "../datasources/zipkin.md" >}})
+- [Zipkin]({{< relref "../datasources/zipkin/" >}})
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 

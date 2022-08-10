@@ -34,7 +34,7 @@ func shaDir(dir string) error {
 }
 
 func shaFile(file string) error {
-	// Can ignore gosec G304 because this function is not used in Grafana, only in the build process.
+	// Ignore gosec G304 as this function is only used in the build process.
 	//nolint:gosec
 	r, err := os.Open(file)
 	if err != nil {
@@ -49,6 +49,8 @@ func shaFile(file string) error {
 		return err
 	}
 
+	// Ignore gosec G304 as this function is only used in the build process.
+	//nolint:gosec
 	out, err := os.Create(file + ".sha256")
 	if err != nil {
 		return err
@@ -63,7 +65,7 @@ func shaFile(file string) error {
 }
 
 func md5File(file string) error {
-	// Can ignore gosec G304 because this function is not used in Grafana, only in the build process.
+	// Ignore gosec G304 as this function is only used in the build process.
 	//nolint:gosec
 	fd, err := os.Open(file)
 	if err != nil {
@@ -77,6 +79,8 @@ func md5File(file string) error {
 		return err
 	}
 
+	// Ignore gosec G304 as this function is only used in the build process.
+	//nolint:gosec
 	out, err := os.Create(file + ".md5")
 	if err != nil {
 		return err

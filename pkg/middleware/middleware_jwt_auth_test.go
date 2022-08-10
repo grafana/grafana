@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -45,7 +46,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-username": myUsername,
 			}, nil
 		}
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Login: myUsername}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserId: id, OrgId: orgID, Login: myUsername}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
@@ -66,7 +67,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
@@ -88,7 +89,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		sc.mockSQLStore.ExpectedError = models.ErrUserNotFound
+		sc.mockSQLStore.ExpectedError = user.ErrUserNotFound
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
@@ -107,7 +108,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)

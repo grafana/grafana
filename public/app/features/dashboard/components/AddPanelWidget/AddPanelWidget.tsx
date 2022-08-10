@@ -212,7 +212,7 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, o
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} surface="header" size="xl" />
+          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} size="xl" />
         </div>
       )}
       {!onBack && (
@@ -222,7 +222,7 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, o
       )}
       {children && <span>{children}</span>}
       <div className="flex-grow-1" />
-      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} surface="header" />
+      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} />
     </div>
   );
 };

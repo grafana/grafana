@@ -14,6 +14,8 @@ import './dropdown_typeahead';
 import './autofill_event_fix';
 import './metric_segment';
 import './misc';
+import './bsTooltip';
+import './bsTypeahead';
 import './ng_model_on_blur';
 import './tags';
 import './rebuild_on_change';

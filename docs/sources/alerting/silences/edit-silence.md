@@ -1,10 +1,16 @@
-+++
-title = "Edit silences"
-description = "Edit alerting silences"
-keywords = ["grafana", "alerting", "silence", "mute"]
-weight = 450
-aliases = ["/docs/grafana/latest/alerting/unified-alerting/silences/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/alerting/silences/edit-silence/
+  - /docs/grafana/latest/alerting/unified-alerting/silences/
+description: Edit alerting silences
+keywords:
+  - grafana
+  - alerting
+  - silence
+  - mute
+title: Edit silences
+weight: 450
+---
 
 # Edit silences
 

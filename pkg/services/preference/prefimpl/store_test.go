@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package prefimpl
 
 import (
@@ -9,13 +6,16 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/models"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
-func TestPreferencesDataAccess(t *testing.T) {
+func TestIntegrationPreferencesDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	ss := sqlstore.InitTestDB(t)
 	prefStore := sqlStore{db: ss}
 	orgNavbarPreferences := pref.NavbarPreference{
@@ -117,7 +117,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 		ss := sqlstore.InitTestDB(t)
 		prefStore := sqlStore{db: ss}
 		id, err := prefStore.Insert(context.Background(), &pref.Preference{
-			UserID:          models.SignedInUser{}.UserId,
+			UserID:          user.SignedInUser{}.UserId,
 			Theme:           "dark",
 			Timezone:        "browser",
 			HomeDashboardID: 5,
@@ -160,7 +160,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 	t.Run("insert preference that does not exist", func(t *testing.T) {
 		_, err := prefStore.Insert(context.Background(),
 			&pref.Preference{
-				UserID:   models.SignedInUser{}.UserId,
+				UserID:   user.SignedInUser{}.UserId,
 				Created:  time.Now(),
 				Updated:  time.Now(),
 				JSONData: &pref.PreferenceJSONData{},

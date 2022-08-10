@@ -25,6 +25,7 @@ const queryTypes: Array<{ value: string; label: string }> = [
   { value: VariableQueryType.EC2InstanceAttributes, label: 'EC2 Instance Attributes' },
   { value: VariableQueryType.ResourceArns, label: 'Resource ARNs' },
   { value: VariableQueryType.Statistics, label: 'Statistics' },
+  { value: VariableQueryType.LogGroups, label: 'Log Groups' },
 ];
 
 export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
@@ -88,6 +89,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.EBSVolumeIDs,
     VariableQueryType.EC2InstanceAttributes,
     VariableQueryType.ResourceArns,
+    VariableQueryType.LogGroups,
   ].includes(parsedQuery.queryType);
   const hasNamespaceField = [
     VariableQueryType.Metrics,
@@ -100,7 +102,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         value={parsedQuery.queryType}
         options={queryTypes}
         onChange={(value: VariableQueryType) => onQueryChange({ ...parsedQuery, queryType: value })}
-        label="Query Type"
+        label="Query type"
         inputId={`variable-query-type-${query.refId}`}
       />
       {hasRegionField && (
@@ -120,6 +122,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           onChange={(value: string) => onNamespaceChange(value)}
           label="Namespace"
           inputId={`variable-query-namespace-${query.refId}`}
+          allowCustomValue
         />
       )}
       {parsedQuery.queryType === VariableQueryType.DimensionValues && (
@@ -130,13 +133,15 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onChange={(value: string) => onQueryChange({ ...parsedQuery, metricName: value })}
             label="Metric"
             inputId={`variable-query-metric-${query.refId}`}
+            allowCustomValue
           />
           <VariableQueryField
             value={dimensionKey || null}
             options={dimensionKeys}
             onChange={(value: string) => onQueryChange({ ...parsedQuery, dimensionKey: value })}
-            label="Dimension Key"
+            label="Dimension key"
             inputId={`variable-query-dimension-key-${query.refId}`}
+            allowCustomValue
           />
           <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
             <Dimensions
@@ -163,9 +168,8 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         <>
           <VariableTextField
             value={parsedQuery.attributeName}
-            placeholder="attribute name"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, attributeName: value })}
-            label="Attribute Name"
+            label="Attribute name"
             interactive={true}
             tooltip={
               <>
@@ -210,9 +214,8 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         <>
           <VariableTextField
             value={parsedQuery.resourceType}
-            placeholder="resource type"
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
-            label="Resource Type"
+            label="Resource type"
           />
           <InlineField label="Tags" labelWidth={20} tooltip="Tags to filter the returned values on.">
             <MultiFilter
@@ -224,6 +227,13 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             />
           </InlineField>
         </>
+      )}
+      {parsedQuery.queryType === VariableQueryType.LogGroups && (
+        <VariableTextField
+          value={query.logGroupPrefix ?? ''}
+          onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}
+          label="Log group prefix"
+        />
       )}
     </>
   );

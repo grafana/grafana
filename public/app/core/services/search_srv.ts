@@ -13,6 +13,7 @@ interface Sections {
   [key: string]: Partial<DashboardSection>;
 }
 
+/** @deprecated */
 export class SearchSrv {
   private getRecentDashboards(sections: DashboardSection[] | any) {
     return this.queryForRecentDashboards().then((result: any[]) => {
@@ -30,15 +31,21 @@ export class SearchSrv {
   }
 
   private queryForRecentDashboards(): Promise<DashboardSearchHit[]> {
-    const dashIds: number[] = take(impressionSrv.getDashboardOpened(), 30);
-    if (dashIds.length === 0) {
-      return Promise.resolve([]);
-    }
+    return new Promise((resolve) => {
+      impressionSrv.getDashboardOpened().then((uids) => {
+        const dashUIDs: string[] = take(uids, 30);
+        if (dashUIDs.length === 0) {
+          return resolve([]);
+        }
 
-    return backendSrv.search({ dashboardIds: dashIds }).then((result) => {
-      return dashIds
-        .map((orderId) => result.find((result) => result.id === orderId))
-        .filter((hit) => hit && !hit.isStarred) as DashboardSearchHit[];
+        backendSrv.search({ dashboardUIDs: dashUIDs }).then((result) => {
+          return resolve(
+            dashUIDs
+              .map((orderId) => result.find((result) => result.uid === orderId))
+              .filter((hit) => hit && !hit.isStarred) as DashboardSearchHit[]
+          );
+        });
+      });
     });
   }
 

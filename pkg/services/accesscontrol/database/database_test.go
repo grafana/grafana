@@ -10,11 +10,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type getUserPermissionsTestCase struct {
 	desc               string
+	anonymousUser      bool
 	orgID              int64
 	role               string
 	userPermissions    []string
@@ -73,6 +76,16 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			expected:           0,
 			actions:            []string{},
 		},
+		{
+			desc:               "should only get br permissions for anonymous user",
+			anonymousUser:      true,
+			orgID:              1,
+			role:               "Admin",
+			userPermissions:    []string{"1", "2", "10"},
+			teamPermissions:    []string{"100", "2"},
+			builtinPermissions: []string{"5", "6"},
+			expected:           2,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -81,7 +94,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {
-				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.Id}, types.SetResourcePermissionCommand{
+				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:write"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -108,7 +121,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			var roles []string
-			role := models.RoleType(tt.role)
+			role := org.RoleType(tt.role)
 
 			if role.IsValid() {
 				roles = append(roles, string(role))
@@ -117,9 +130,13 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 				}
 			}
 
+			userID := user.ID
+			if tt.anonymousUser {
+				userID = 0
+			}
 			permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
 				OrgID:   tt.orgID,
-				UserID:  user.Id,
+				UserID:  userID,
 				Roles:   roles,
 				Actions: tt.actions,
 			})
@@ -130,19 +147,44 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 }
 
-func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*models.User, models.Team) {
+func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
+	store, sql := setupTestEnv(t)
+
+	user, _ := createUserAndTeam(t, sql, 1)
+
+	_, err := store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+		Actions:    []string{"dashboards:write"},
+		Resource:   "dashboards",
+		ResourceID: "1",
+	}, nil)
+	require.NoError(t, err)
+
+	err = store.DeleteUserPermissions(context.Background(), user.ID)
+	require.NoError(t, err)
+
+	permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+		OrgID:   1,
+		UserID:  user.ID,
+		Roles:   []string{"Admin"},
+		Actions: []string{"dashboards:write"},
+	})
+	require.NoError(t, err)
+	assert.Len(t, permissions, 0)
+}
+
+func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*user.User, models.Team) {
 	t.Helper()
 
-	user, err := sql.CreateUser(context.Background(), models.CreateUserCommand{
+	user, err := sql.CreateUser(context.Background(), user.CreateUserCommand{
 		Login: "user",
-		OrgId: orgID,
+		OrgID: orgID,
 	})
 	require.NoError(t, err)
 
 	team, err := sql.CreateTeam("team", "", orgID)
 	require.NoError(t, err)
 
-	err = sql.AddTeamMember(user.Id, orgID, team.Id, false, models.PERMISSION_VIEW)
+	err = sql.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
 	require.NoError(t, err)
 
 	return user, team

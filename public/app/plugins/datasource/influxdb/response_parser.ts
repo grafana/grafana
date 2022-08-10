@@ -2,7 +2,7 @@ import { each, flatten, groupBy, isArray } from 'lodash';
 
 import { AnnotationEvent, DataFrame, DataQuery, FieldType, QueryResultMeta } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
-import TableModel from 'app/core/table_model';
+import TableModel from 'app/core/TableModel';
 
 import { InfluxQuery } from './types';
 
@@ -157,7 +157,7 @@ export default class ResponseParser {
 
 function colContainsTag(colText: string, tagsColumn: string): boolean {
   const tags = (tagsColumn || '').replace(' ', '').split(',');
-  for (var tag of tags) {
+  for (const tag of tags) {
     if (colText.includes(tag)) {
       return true;
     }

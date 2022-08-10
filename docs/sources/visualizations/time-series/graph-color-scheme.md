@@ -1,15 +1,22 @@
-+++
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-color-scheme/", "/docs/grafana/latest/visualizations/time-series/graph-color-scheme/"]
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-title = "Graph and color schemes "
-weight = 400
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/time-series/graph-color-scheme/
+  - /docs/grafana/latest/visualizations/time-series/graph-color-scheme/
+keywords:
+  - grafana
+  - time series panel
+  - documentation
+  - guide
+  - graph
+title: 'Graph and color schemes '
+weight: 400
+---
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" class="pull-right" >}}
 
 # Graph and color schemes
 
-To set the graph and color schemes, refer to [Apply color to series and fields]({{< relref "../../panels/working-with-panels/apply-color-to-series.md" >}}).
+To set the graph and color schemes, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}).
 
 ## Classic palette
 

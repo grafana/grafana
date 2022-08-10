@@ -26,13 +26,19 @@ class InviteeRow extends PureComponent<Props> {
         <td>{invitee.email}</td>
         <td>{invitee.name}</td>
         <td className="text-right">
-          <ClipboardButton variant="secondary" size="sm" getText={() => invitee.url}>
+          <ClipboardButton icon="copy" variant="secondary" size="sm" getText={() => invitee.url}>
             Copy Invite
           </ClipboardButton>
           &nbsp;
         </td>
         <td>
-          <Button variant="destructive" size="sm" icon="times" onClick={() => revokeInvite(invitee.code)} />
+          <Button
+            variant="destructive"
+            size="sm"
+            icon="times"
+            onClick={() => revokeInvite(invitee.code)}
+            aria-label="Revoke Invite"
+          />
         </td>
       </tr>
     );

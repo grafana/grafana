@@ -38,7 +38,18 @@ const MuteTimings = () => {
 
   const getMuteTimingByName = useCallback(
     (id: string): MuteTimeInterval | undefined => {
-      return config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
+      const timing = config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
+
+      if (timing) {
+        const provenance = (config?.muteTimeProvenances ?? {})[timing.name];
+
+        return {
+          ...timing,
+          provenance,
+        };
+      }
+
+      return timing;
     },
     [config]
   );
@@ -60,7 +71,9 @@ const MuteTimings = () => {
             {() => {
               if (queryParams['muteName']) {
                 const muteTiming = getMuteTimingByName(String(queryParams['muteName']));
-                return <MuteTimingForm muteTiming={muteTiming} showError={!muteTiming} />;
+                const provenance = muteTiming?.provenance;
+
+                return <MuteTimingForm muteTiming={muteTiming} showError={!muteTiming} provenance={provenance} />;
               }
               return <Redirect to="/alerting/routes" />;
             }}

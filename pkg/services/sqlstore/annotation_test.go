@@ -1,12 +1,12 @@
-//go:build integration
-// +build integration
-
 package sqlstore_test
 
 import (
 	"context"
 	"fmt"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,11 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func TestAnnotations(t *testing.T) {
+func TestIntegrationAnnotations(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sql := sqlstore.InitTestDB(t)
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 
-	testUser := &models.SignedInUser{
+	testUser := &user.SignedInUser{
 		OrgId: 1,
 		Permissions: map[int64]map[string][]string{
 			1: {
@@ -47,7 +50,7 @@ func TestAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboardStore := dashboardstore.ProvideDashboardStore(sql)
+		dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 		testDashboard1 := models.SaveDashboardCommand{
 			UserId: 1,
@@ -382,10 +385,13 @@ func TestAnnotations(t *testing.T) {
 	})
 }
 
-func TestAnnotationListingWithRBAC(t *testing.T) {
+func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
-	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
+	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 	testDashboard1 := models.SaveDashboardCommand{
 		UserId: 1,
@@ -431,7 +437,7 @@ func TestAnnotationListingWithRBAC(t *testing.T) {
 	err = repo.Save(organizationAnnotation)
 	require.NoError(t, err)
 
-	user := &models.SignedInUser{
+	user := &user.SignedInUser{
 		UserId: 1,
 		OrgId:  1,
 	}

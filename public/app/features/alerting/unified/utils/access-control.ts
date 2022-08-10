@@ -1,7 +1,7 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
-import { isGrafanaRulesSource } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 
 type RulesSourceType = 'grafana' | 'external';
 
@@ -34,15 +34,15 @@ export const notificationsPermissions = {
     external: AccessControlAction.AlertingNotificationsExternalRead,
   },
   create: {
-    grafana: AccessControlAction.AlertingNotificationsCreate,
+    grafana: AccessControlAction.AlertingNotificationsWrite,
     external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
   update: {
-    grafana: AccessControlAction.AlertingNotificationsUpdate,
+    grafana: AccessControlAction.AlertingNotificationsWrite,
     external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
   delete: {
-    grafana: AccessControlAction.AlertingNotificationsDelete,
+    grafana: AccessControlAction.AlertingNotificationsWrite,
     external: AccessControlAction.AlertingNotificationsExternalWrite,
   },
 };
@@ -108,12 +108,15 @@ export function evaluateAccess(actions: AccessControlAction[], fallBackUserRoles
 export function getRulesAccess() {
   return {
     canCreateGrafanaRules:
-      contextSrv.hasAccess(AccessControlAction.FoldersRead, contextSrv.isEditor) &&
-      contextSrv.hasAccess(rulesPermissions.create.grafana, contextSrv.isEditor),
+      contextSrv.hasAccess(AccessControlAction.FoldersRead, contextSrv.hasEditPermissionInFolders) &&
+      contextSrv.hasAccess(rulesPermissions.create.grafana, contextSrv.hasEditPermissionInFolders),
     canCreateCloudRules:
       contextSrv.hasAccess(AccessControlAction.DataSourcesRead, contextSrv.isEditor) &&
       contextSrv.hasAccess(rulesPermissions.create.external, contextSrv.isEditor),
-    canEditRules: (rulesSourceName: string) =>
-      contextSrv.hasAccess(getRulesPermissions(rulesSourceName).update, contextSrv.isEditor),
+    canEditRules: (rulesSourceName: string) => {
+      const permissionFallback =
+        rulesSourceName === GRAFANA_RULES_SOURCE_NAME ? contextSrv.hasEditPermissionInFolders : contextSrv.isEditor;
+      return contextSrv.hasAccess(getRulesPermissions(rulesSourceName).update, permissionFallback);
+    },
   };
 }

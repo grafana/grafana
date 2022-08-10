@@ -16,6 +16,8 @@ import {
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
+  GrafanaAlertStateWithReason,
+  mapStateWithReasonToBaseState,
   PromAlertingRuleState,
   PromRuleType,
   RulerAlertingRuleDTO,
@@ -69,7 +71,7 @@ export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifi
   return 'ruleHash' in identifier;
 }
 
-export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertState | AlertState): string {
+export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
   if (state === PromAlertingRuleState.Inactive) {
     return 'Normal';
   }
@@ -89,7 +91,18 @@ export const flattenRules = (rules: RuleNamespace[]) => {
   }, []);
 };
 
-export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState | AlertState, State> = {
+export function alertStateToState(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): State {
+  let key: PromAlertingRuleState | GrafanaAlertState | AlertState;
+  if (Object.values(AlertState).includes(state as AlertState)) {
+    key = state as AlertState;
+  } else {
+    key = mapStateWithReasonToBaseState(state as GrafanaAlertStateWithReason | PromAlertingRuleState);
+  }
+
+  return alertStateToStateMap[key];
+}
+
+const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | AlertState, State> = {
   [PromAlertingRuleState.Inactive]: 'good',
   [PromAlertingRuleState.Firing]: 'bad',
   [PromAlertingRuleState.Pending]: 'warning',
@@ -111,7 +124,9 @@ export function getFirstActiveAt(promRule: AlertingRule) {
     return null;
   }
   return promRule.alerts.reduce((prev, alert) => {
-    if (alert.activeAt && alert.state !== GrafanaAlertState.Normal) {
+    const isNotNormal =
+      mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) !== GrafanaAlertState.Normal;
+    if (alert.activeAt && isNotNormal) {
       const activeAt = new Date(alert.activeAt);
       if (prev === null || prev.getTime() > activeAt.getTime()) {
         return activeAt;

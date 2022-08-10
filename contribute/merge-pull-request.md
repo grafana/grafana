@@ -27,9 +27,14 @@ Before you can merge a pull request, it must have a review approval, and all the
 
 ### Format the pull request title
 
-The pull request title should be formatted according to `<Area>: <Summary>`. Keep the summary short and understandable for the community as a whole.
+The pull request title should be formatted according to `<Area>: <Summary>` (Both "Area" and "Summary" should start with a capital letter).
+
+Keep the summary short and understandable for the community as a whole.
 
 All commits in a pull request are squashed when merged and the pull request title will be the default subject line of the squashed commit message. It's also used for [changelog/release notes](#include-in-changelog-and-release-notes).
+
+**Example:**
+`Docs: Change url to URL in all documentation files`
 
 See [formatting guidelines](create-pull-request.md#formatting-guidelines) for more information.
 

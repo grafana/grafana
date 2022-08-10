@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/variables/formatting-multi-value-variables/"]
-title = "Multi-value variables"
-weight = 600
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/formatting-multi-value-variables/
+title: Multi-value variables
+weight: 600
+---
 
 # Multi-value variables
 
@@ -29,4 +30,4 @@ Automatic escaping and formatting can cause problems and it can be tricky to gra
 If you do not want Grafana to do this automatic regex escaping and formatting, then you must do one of the following:
 
 - Turn off the **Multi-value** or **Include All option** options.
-- Use the [raw variable format]({{< relref "advanced-variable-format-options.md#raw" >}}).
+- Use the [raw variable format]({{< relref "advanced-variable-format-options/#raw" >}}).

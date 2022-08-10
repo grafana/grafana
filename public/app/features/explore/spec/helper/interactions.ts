@@ -62,8 +62,25 @@ export const starQueryHistory = (queryIndex: number, exploreId: ExploreId = Expl
   invokeAction(queryIndex, 'Star query', exploreId);
 };
 
+export const commentQueryHistory = async (
+  queryIndex: number,
+  comment: string,
+  exploreId: ExploreId = ExploreId.left
+) => {
+  await invokeAction(queryIndex, 'Add comment', exploreId);
+  const input = withinExplore(exploreId).getByPlaceholderText('An optional description of what the query does.');
+  await userEvent.clear(input);
+  await userEvent.type(input, comment);
+  await invokeAction(queryIndex, 'Submit button', exploreId);
+};
+
 export const deleteQueryHistory = (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
   invokeAction(queryIndex, 'Delete query', exploreId);
+};
+
+export const loadMoreQueryHistory = async (exploreId: ExploreId = ExploreId.left) => {
+  const button = withinExplore(exploreId).getByRole('button', { name: 'Load more' });
+  await userEvent.click(button);
 };
 
 const invokeAction = async (queryIndex: number, actionAccessibleName: string, exploreId: ExploreId) => {

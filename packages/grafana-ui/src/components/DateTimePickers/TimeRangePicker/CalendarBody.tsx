@@ -32,7 +32,7 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
 
 Body.displayName = 'Body';
 
-export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): Date[] {
+export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): [Date, Date] {
   const fromAsDate = from.toDate();
   const toAsDate = to.toDate();
   const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
@@ -67,7 +67,7 @@ function dateInfo(date: Date): number[] {
 export const getBodyStyles = (theme: GrafanaTheme2) => {
   return {
     title: css`
-      color: ${theme.colors.text};
+      color: ${theme.colors.text.primary};
       background-color: ${theme.colors.background.primary};
       font-size: ${theme.typography.size.md};
       border: 1px solid transparent;
@@ -90,7 +90,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
       .react-calendar__navigation {
         padding-top: 4px;
         background-color: inherit;
-        color: ${theme.colors.text};
+        color: ${theme.colors.text.primary};
         border: 0;
         font-weight: ${theme.typography.fontWeightMedium};
       }

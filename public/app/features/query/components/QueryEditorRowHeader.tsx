@@ -140,7 +140,7 @@ const renderDataSource = <TQuery extends DataQuery>(
 
   return (
     <div className={styles.itemWrapper}>
-      <DataSourcePicker alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />
+      <DataSourcePicker variables={true} alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />
     </div>
   );
 };

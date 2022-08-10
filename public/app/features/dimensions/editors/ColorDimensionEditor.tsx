@@ -3,11 +3,8 @@ import React, { FC, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { Select, ColorPicker, useStyles2 } from '@grafana/ui';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
-import {
-  useFieldDisplayNames,
-  useSelectOptions,
-} from '../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
 import { ColorDimensionConfig } from '../types';
 
 const fixedColorOption: SelectableValue<string> = {

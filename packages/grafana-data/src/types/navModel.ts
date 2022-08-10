@@ -16,6 +16,7 @@ export interface NavLinkDTO {
   hideFromTabs?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
+  emptyMessageId?: string;
 }
 
 export interface NavModelItem extends NavLinkDTO {
@@ -29,7 +30,6 @@ export interface NavModelItem extends NavLinkDTO {
   highlightText?: string;
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
-  hideFromNavbar?: boolean;
   showIconInNavbar?: boolean;
 }
 
@@ -56,10 +56,6 @@ export interface NavModel {
    *   This is the current active tab/navigation.
    */
   node: NavModelItem;
-  /**
-   *  Describes breadcrumbs that are used in places such as data source settings., folder page and plugins page.
-   */
-  breadcrumbs?: NavModelItem[];
 }
 
 export interface NavModelBreadcrumb {

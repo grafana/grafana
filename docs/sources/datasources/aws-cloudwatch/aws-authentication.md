@@ -1,10 +1,15 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/", "/docs/grafana/latest/datasources/cloudwatch/"]
-description = "AWS authentication"
-keywords = ["grafana", "aws", "authentication"]
-title = "Authentication"
-weight = 5
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication/
+  - /docs/grafana/latest/datasources/cloudwatch/
+description: AWS authentication
+keywords:
+  - grafana
+  - aws
+  - authentication
+title: Authentication
+weight: 5
+---
 
 # AWS authentication
 
@@ -22,7 +27,7 @@ This topic has the following sections:
 
 ## Authentication methods
 
-You can use one of the following authentication methods. Currently, `AWS SDK Default`, `Credentials file` and `Access and secret key` are enabled by default in open source Grafana. You can enable/disable them if necessary if you have server configuration access. For more information, refer to [allowed_auth_providers]({{< relref "../../administration/configuration.md#allowed_auth_providers" >}}) documentation.
+You can use one of the following authentication methods. Currently, `AWS SDK Default`, `Credentials file` and `Access and secret key` are enabled by default in open source Grafana. You can enable/disable them if necessary if you have server configuration access. For more information, refer to [allowed_auth_providers]({{< relref "../../setup-grafana/configure-grafana/#allowed_auth_providers" >}}) documentation.
 
 - `AWS SDK Default` performs no custom configuration and instead uses the [default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the AWS SDK for Go. It requires you to configure your AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html), or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
 
@@ -36,7 +41,7 @@ You can use one of the following authentication methods. Currently, `AWS SDK Def
 
 The `Assume Role ARN` field allows you to specify which IAM role to assume. When left blank, the provided credentials are used directly and the associated role or user should have the required permissions. If this field is non-blank, on the other hand, the provided credentials are used to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
 
-You can disable this feature in the Grafana configuration. For more information, refer to [assume_role_enabled]({{< relref "../../administration/configuration.md#assume_role_enabled" >}}) documentation.
+You can disable this feature in the Grafana configuration. For more information, refer to [assume_role_enabled]({{< relref "../../setup-grafana/configure-grafana/#assume_role_enabled" >}}) documentation.
 
 ### External ID
 

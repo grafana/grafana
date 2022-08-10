@@ -3,11 +3,11 @@ package statscollector
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 const promFlavorCacheLifetime = time.Hour
@@ -18,13 +18,26 @@ type memoPrometheusFlavor struct {
 	memoized time.Time
 }
 
+func (s *Service) collectPrometheusFlavors(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+	variants, err := s.detectPrometheusVariants(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for variant, count := range variants {
+		m["stats.ds.prometheus.flavor."+variant+".count"] = count
+	}
+	return m, nil
+}
+
 func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int64, error) {
 	if s.promFlavorCache.memoized.Add(promFlavorCacheLifetime).After(time.Now()) &&
 		s.promFlavorCache.variants != nil {
 		return s.promFlavorCache.variants, nil
 	}
 
-	dsProm := &models.GetDataSourcesByTypeQuery{Type: "prometheus"}
+	dsProm := &datasources.GetDataSourcesByTypeQuery{Type: "prometheus"}
 	err := s.datasources.GetDataSourcesByType(ctx, dsProm)
 	if err != nil {
 		s.log.Error("Failed to read all Prometheus data sources", "error", err)
@@ -52,7 +65,7 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 	return variants, nil
 }
 
-func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSource) (string, error) {
+func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	type buildInfo struct {
 		Data struct {
 			Application *string                `json:"application"`
@@ -77,7 +90,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSo
 		// Possibly configuration error, the risk of a false positive is
 		// too high.
 		s.log.Debug("Failed to send Prometheus build info request", "error", err)
-		return "", nil
+		return "unreachable", nil
 	}
 	defer func() {
 		err := resp.Body.Close()
@@ -94,7 +107,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSo
 		return "unknown", nil
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		s.log.Error("Failed to read Prometheus build info", "error", err)
 		return "", err

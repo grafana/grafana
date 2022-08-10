@@ -25,5 +25,5 @@ func (i IoUtilImp) ReadFile(filename string) ([]byte, error) {
 	// from command line flag "pluginsDir". If the user shouldn't be reading from this directory, they shouldn't have
 	// the permission in the file system.
 	// nolint:gosec
-	return ioutil.ReadFile(filename)
+	return os.ReadFile(filename)
 }

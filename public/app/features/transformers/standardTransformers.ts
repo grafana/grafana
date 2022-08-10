@@ -21,6 +21,7 @@ import { seriesToFieldsTransformerRegistryItem } from './editors/SeriesToFieldsT
 import { seriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTransformerEditor';
 import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
+import { joinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTransformerEditor';
 import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupTransformerEditor';
 import { prepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/PrepareTimeSeriesEditor';
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
@@ -53,5 +54,6 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     heatmapTransformRegistryItem,
     groupingToMatrixTransformRegistryItem,
     limitTransformRegistryItem,
+    joinByLabelsTransformRegistryItem,
   ];
 };

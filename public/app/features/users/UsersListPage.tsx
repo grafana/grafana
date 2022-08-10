@@ -3,8 +3,8 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { renderMarkdown } from '@grafana/data';
 import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { Page } from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
 import { OrgUser, OrgRole, StoreState } from 'app/types';
 
 import InviteesTable from '../invites/InviteesTable';
@@ -20,7 +20,6 @@ import { getUsers, getUsersSearchQuery, getUsersSearchPage } from './state/selec
 function mapStateToProps(state: StoreState) {
   const searchQuery = getUsersSearchQuery(state.users);
   return {
-    navModel: getNavModel(state.navIndex, 'users'),
     users: getUsers(state.users),
     searchQuery: getUsersSearchQuery(state.users),
     searchPage: getUsersSearchPage(state.users),
@@ -106,6 +105,7 @@ export class UsersListPage extends PureComponent<Props, State> {
         <VerticalGroup spacing="md">
           <UsersTable
             users={paginatedUsers}
+            orgId={contextSrv.user.orgId}
             onRoleChange={(role, user) => this.onRoleChange(role, user)}
             onRemoveUser={(user) => this.props.removeUser(user.userId)}
           />
@@ -123,11 +123,11 @@ export class UsersListPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { navModel, hasFetched } = this.props;
+    const { hasFetched } = this.props;
     const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="users">
         <Page.Contents isLoading={!hasFetched}>
           <>
             <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />

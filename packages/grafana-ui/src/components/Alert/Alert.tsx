@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useId } from '@react-aria/utils';
 import React, { HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -56,19 +57,24 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
   ) => {
     const theme = useTheme2();
     const styles = getStyles(theme, severity, elevated, bottomSpacing, topSpacing);
+    const titleId = useId();
 
     return (
       <div
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
+        role="alert"
+        aria-labelledby={titleId}
         {...restProps}
       >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
-        <div className={styles.body} role="alert">
-          <div className={styles.title}>{title}</div>
+        <div className={styles.body}>
+          <div id={titleId} className={styles.title}>
+            {title}
+          </div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}

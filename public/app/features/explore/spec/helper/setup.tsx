@@ -4,14 +4,17 @@ import { fromPairs } from 'lodash';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourceApi, DataSourceInstanceSettings, DataSourceRef, QueryEditorProps, ScopedVars } from '@grafana/data';
 import { locationService, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
 
 import { RICH_HISTORY_KEY, RichHistoryLocalStorageDTO } from '../../../../core/history/RichHistoryLocalStorage';
+import { RICH_HISTORY_SETTING_KEYS } from '../../../../core/history/richHistoryLocalStorageUtils';
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreId } from '../../../../types';
@@ -55,9 +58,14 @@ export function setupExplore(options?: SetupOptions): {
     getInstanceSettings(ref: DataSourceRef) {
       return dsSettings.map((d) => d.settings).find((x) => x.name === ref || x.uid === ref || x.uid === ref.uid);
     },
-    get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+    get(datasource?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+      const datasourceStr = typeof datasource === 'string';
       return Promise.resolve(
-        (name ? dsSettings.find((d) => d.api.name === name || d.api.uid === name) : dsSettings[0])!.api
+        (datasource
+          ? dsSettings.find((d) =>
+              datasourceStr ? d.api.name === datasource || d.api.uid === datasource : d.api.uid === datasource?.uid
+            )
+          : dsSettings[0])!.api
       );
     },
   } as any);
@@ -91,9 +99,11 @@ export function setupExplore(options?: SetupOptions): {
 
   const { unmount, container } = render(
     <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Route path="/explore" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
-      </Router>
+      <GrafanaContext.Provider value={getGrafanaContextMock()}>
+        <Router history={locationService.getHistory()}>
+          <Route path="/explore" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+        </Router>
+      </GrafanaContext.Provider>
     </Provider>
   );
 
@@ -156,6 +166,10 @@ export const tearDown = () => {
 export const withinExplore = (exploreId: ExploreId) => {
   const container = screen.getAllByTestId('data-testid Explore');
   return within(container[exploreId === ExploreId.left ? 0 : 1]);
+};
+
+export const localStorageHasAlreadyBeenMigrated = () => {
+  window.localStorage.setItem(RICH_HISTORY_SETTING_KEYS.migrated, 'true');
 };
 
 export const setupLocalStorageRichHistory = (dsName: string) => {

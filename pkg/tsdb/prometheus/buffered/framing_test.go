@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,7 +22,7 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
-var update = false
+var update = true
 
 func TestMatrixResponses(t *testing.T) {
 	tt := []struct {
@@ -40,7 +39,7 @@ func TestMatrixResponses(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			queryFileName := filepath.Join("../testdata", test.filepath+".query.json")
 			responseFileName := filepath.Join("../testdata", test.filepath+".result.json")
-			goldenFileName := filepath.Join("../testdata", test.filepath+".result.golden")
+			goldenFileName := test.filepath + ".result.golden"
 
 			query, err := loadStoredPrometheusQuery(queryFileName)
 			require.NoError(t, err)
@@ -54,21 +53,7 @@ func TestMatrixResponses(t *testing.T) {
 
 			dr, found := result.Responses["A"]
 			require.True(t, found)
-
-			actual, err := json.MarshalIndent(&dr, "", "  ")
-			require.NoError(t, err)
-
-			// nolint:gosec
-			// We can ignore the gosec G304 because this is a test with static defined paths
-			expected, err := ioutil.ReadFile(goldenFileName + ".json")
-			if err != nil || update {
-				err = os.WriteFile(goldenFileName+".json", actual, 0600)
-				require.NoError(t, err)
-			}
-
-			require.JSONEq(t, string(expected), string(actual))
-
-			require.NoError(t, experimental.CheckGoldenDataResponse(goldenFileName+".txt", &dr, update))
+			experimental.CheckGoldenJSONResponse(t, "../testdata", goldenFileName, &dr, update)
 		})
 	}
 }
@@ -144,18 +129,16 @@ func runQuery(response []byte, query PrometheusQuery) (*backend.QueryDataRespons
 		return nil, err
 	}
 
-	tracer, err := tracing.InitializeTracerForTest()
-	if err != nil {
-		return nil, err
-	}
+	tracer := tracing.InitializeTracerForTest()
 
 	s := Buffered{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracer,
 		TimeInterval:       "15s",
 		log:                &fakeLogger{},
+		client:             api,
 	}
-	return s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+	return s.runQueries(context.Background(), []*PrometheusQuery{&query})
 }
 
 type fakeLogger struct {

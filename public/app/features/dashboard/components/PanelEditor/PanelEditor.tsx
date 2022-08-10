@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   HorizontalGroup,
   InlineSwitch,
@@ -163,7 +163,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
         this.props.notifyApp(createPanelLibrarySuccessNotification('Library panel saved'));
       } catch (err) {
-        this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
+        if (isFetchError(err)) {
+          this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
+        }
       }
       return;
     }
@@ -441,7 +443,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.onGoBackToDashboard}>
+        <PageToolbar title={dashboard.title} section="Edit Panel" onGoBack={this.onGoBackToDashboard}>
           {this.renderEditorActions()}
         </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>

@@ -1,8 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/panels/transform-data/", "/docs/grafana/latest/panels/transformations/", "/docs/grafana/latest/panels/transformations/apply-transformations/", "/docs/grafana/latest/panels/transformations/config-from-query/", "/docs/grafana/latest/panels/transformations/rows-to-fields/", "/docs/sources/panels/transform-data/"]
-title = "Transform data"
-weight = 500
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/transform-data/
+  - /docs/grafana/latest/panels/transformations/
+  - /docs/grafana/latest/panels/transformations/apply-transformations/
+  - /docs/grafana/latest/panels/transformations/config-from-query/
+  - /docs/grafana/latest/panels/transformations/rows-to-fields/
+  - /docs/sources/panels/transform-data/
+title: Transform data
+weight: 500
+---
 
 # Transform data
 

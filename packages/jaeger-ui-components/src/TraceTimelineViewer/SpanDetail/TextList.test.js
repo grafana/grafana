@@ -12,30 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import TextList from './TextList';
 
 describe('<TextList>', () => {
-  let wrapper;
-
-  const data = [
-    { key: 'span.kind', value: 'client' },
-    { key: 'omg', value: 'mos-def' },
-  ];
-
-  beforeEach(() => {
-    wrapper = shallow(<TextList data={data} />);
-  });
+  const data = ['client', 'mos-def'];
 
   it('renders without exploding', () => {
-    expect(wrapper).toBeDefined();
-    expect(wrapper.find('[data-test-id="TextList"]').length).toBe(1);
+    expect(() => render(<TextList data={data} />)).not.toThrow();
   });
 
   it('renders a table row for each data element', () => {
-    const trs = wrapper.find('li');
-    expect(trs.length).toBe(data.length);
+    render(<TextList data={data} />);
+    expect(screen.getAllByRole('listitem')).toHaveLength(data.length);
   });
 });

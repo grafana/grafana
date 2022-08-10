@@ -113,7 +113,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/routes/mute-timing/new',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsCreate, AccessControlAction.AlertingNotificationsExternalWrite],
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
     ),
     component: SafeDynamicImport(
@@ -123,7 +123,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/routes/mute-timing/edit',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsExternalWrite],
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
     ),
     component: SafeDynamicImport(
@@ -173,7 +173,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/notifications/templates/new',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsCreate, AccessControlAction.AlertingNotificationsExternalWrite],
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
     ),
     component: SafeDynamicImport(
@@ -183,7 +183,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/notifications/templates/:id/edit',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsExternalWrite],
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
     ),
     component: SafeDynamicImport(
@@ -193,7 +193,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/notifications/receivers/new',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsCreate, AccessControlAction.AlertingNotificationsExternalWrite],
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
     ),
     component: SafeDynamicImport(
@@ -203,7 +203,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/notifications/receivers/:id/edit',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsExternalWrite],
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
     ),
     component: SafeDynamicImport(
@@ -213,7 +213,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting/notifications/global-config',
     roles: evaluateAccess(
-      [AccessControlAction.AlertingNotificationsUpdate, AccessControlAction.AlertingNotificationsExternalWrite],
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']
     ),
     component: SafeDynamicImport(
@@ -235,7 +235,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     pageClass: 'page-alerting',
     roles: evaluateAccess(
       [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite],
-      [OrgRole.Editor, OrgRole.Admin]
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin] // Needs to include viewer because there may be Viewers with Edit permissions in folders
     ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
@@ -246,7 +246,7 @@ const unifiedRoutes: RouteDescriptor[] = [
     pageClass: 'page-alerting',
     roles: evaluateAccess(
       [AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleExternalWrite],
-      [OrgRole.Editor, OrgRole.Admin]
+      [OrgRole.Viewer, OrgRole.Editor, OrgRole.Admin] // Needs to include viewer because there may be Viewers with Edit permissions in folders
     ),
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')

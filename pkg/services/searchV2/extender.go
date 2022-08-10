@@ -6,7 +6,7 @@ import (
 )
 
 type ExtendDashboardFunc func(uid string, doc *bluge.Document) error
-type FramerFunc func(field string, value []byte) bool
+type FramerFunc func(field string, value []byte)
 
 type QueryExtender interface {
 	GetFramer(frame *data.Frame) FramerFunc
@@ -42,7 +42,7 @@ func (n NoopDocumentExtender) GetDashboardExtender(_ int64, _ ...string) ExtendD
 type NoopQueryExtender struct{}
 
 func (n NoopQueryExtender) GetFramer(_ *data.Frame) FramerFunc {
-	return func(field string, value []byte) bool {
-		return true
+	return func(field string, value []byte) {
+		// really noop
 	}
 }

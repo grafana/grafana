@@ -1,17 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/panels/override-field-values/edit-field-override/", "/docs/sources/panels/override-field-values/edit-field-override/"]
-title = "Edit a field overrides"
-weight = 40
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/override-field-values/edit-field-override/
+  - /docs/sources/panels/override-field-values/edit-field-override/
+title: Edit a field overrides
+weight: 40
+---
 
 # Edit a field override
 
 Edit a field override when you want to make changes to an override setting.
-
-## Before you begin
-
-- [Add a panel to a dashboard]({{< relref "../working-with-panels/add-panel.md" >}}).
-- [Add a field override]({{< relref "../override-field-values/add-a-field-override.md" >}}).
 
 **To edit a field override**:
 

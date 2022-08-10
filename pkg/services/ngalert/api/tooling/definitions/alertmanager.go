@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -37,6 +38,7 @@ import (
 //     Responses:
 //       201: Ack
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route GET /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteGetGrafanaAlertingConfig
 //
@@ -53,6 +55,7 @@ import (
 //     Responses:
 //       200: GettableUserConfig
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route DELETE /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteDeleteGrafanaAlertingConfig
 //
@@ -69,6 +72,7 @@ import (
 //     Responses:
 //       200: Ack
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route GET /api/alertmanager/grafana/api/v2/status alertmanager RouteGetGrafanaAMStatus
 //
@@ -85,6 +89,7 @@ import (
 //     Responses:
 //       200: GettableStatus
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route GET /api/alertmanager/grafana/api/v2/alerts alertmanager RouteGetGrafanaAMAlerts
 //
@@ -101,6 +106,7 @@ import (
 //     Responses:
 //       200: gettableAlerts
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route POST /api/alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAMAlerts
 //
@@ -117,6 +123,7 @@ import (
 //     Responses:
 //       200: Ack
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route GET /api/alertmanager/grafana/api/v2/alerts/groups alertmanager RouteGetGrafanaAMAlertGroups
 //
@@ -133,6 +140,7 @@ import (
 //     Responses:
 //       200: alertGroups
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
 //
@@ -144,7 +152,7 @@ import (
 //       207: MultiStatus
 //       400: ValidationError
 //       403: PermissionDenied
-//       404: AlertManagerNotFound
+//       404: NotFound
 //       408: Failure
 //       409: AlertManagerNotReady
 
@@ -158,7 +166,7 @@ import (
 //       207: MultiStatus
 //       400: ValidationError
 //       403: PermissionDenied
-//       404: AlertManagerNotFound
+//       404: NotFound
 //       408: Failure
 //       409: AlertManagerNotReady
 
@@ -177,6 +185,7 @@ import (
 //     Responses:
 //       200: gettableSilences
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route POST /api/alertmanager/grafana/api/v2/silences alertmanager RouteCreateGrafanaSilence
 //
@@ -193,6 +202,7 @@ import (
 //     Responses:
 //       201: gettableSilence
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route GET /api/alertmanager/grafana/api/v2/silence/{SilenceId} alertmanager RouteGetGrafanaSilence
 //
@@ -209,6 +219,7 @@ import (
 //     Responses:
 //       200: gettableSilence
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:route DELETE /api/alertmanager/grafana/api/v2/silence/{SilenceId} alertmanager RouteDeleteGrafanaSilence
 //
@@ -225,12 +236,10 @@ import (
 //     Responses:
 //       200: Ack
 //       400: ValidationError
+//       404: NotFound
 
 // swagger:model
 type PermissionDenied struct{}
-
-// swagger:model
-type AlertManagerNotFound struct{}
 
 // swagger:model
 type AlertManagerNotReady struct{}
@@ -626,8 +635,8 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 }
 
 type GettableApiAlertingConfig struct {
-	Config `yaml:",inline"`
-
+	Config              `yaml:",inline"`
+	MuteTimeProvenances map[string]models.Provenance `yaml:"muteTimeProvenances,omitempty" json:"muteTimeProvenances,omitempty"`
 	// Override with our superset receiver type
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
@@ -727,7 +736,7 @@ func (r *Route) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return r.validateChild()
 }
 
-// Return an alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.
+// AsAMRoute returns an Alertmanager route from a Grafana route. The ObjectMatchers are converted to Matchers.
 func (r *Route) AsAMRoute() *config.Route {
 	amRoute := &config.Route{
 		Receiver:          r.Receiver,
@@ -753,7 +762,7 @@ func (r *Route) AsAMRoute() *config.Route {
 	return amRoute
 }
 
-// Return a Grafana route from an alertmanager route. The Matchers are converted to ObjectMatchers.
+// AsGrafanaRoute returns a Grafana route from an Alertmanager route. The Matchers are converted to ObjectMatchers.
 func AsGrafanaRoute(r *config.Route) *Route {
 	gRoute := &Route{
 		Receiver:          r.Receiver,
@@ -1000,29 +1009,6 @@ func (r ReceiverType) String() string {
 // are valid in all backends.
 func (r ReceiverType) Can(other ReceiverType) bool { return r&other != 0 }
 
-// MatchesBackend determines if a config payload can be sent to a particular backend type
-func (r ReceiverType) MatchesBackend(backend Backend) error {
-	msg := func(backend Backend, receiver ReceiverType) error {
-		return fmt.Errorf(
-			"unexpected backend type (%s) for receiver type (%s)",
-			backend.String(),
-			receiver.String(),
-		)
-	}
-	var ok bool
-	switch backend {
-	case GrafanaBackend:
-		ok = r.Can(GrafanaReceiverType)
-	case AlertmanagerBackend:
-		ok = r.Can(AlertmanagerReceiverType)
-	default:
-	}
-	if !ok {
-		return msg(backend, r)
-	}
-	return nil
-}
-
 type GettableApiReceiver struct {
 	config.Receiver          `yaml:",inline"`
 	GettableGrafanaReceivers `yaml:",inline"`
@@ -1212,6 +1198,22 @@ func (m *ObjectMatchers) UnmarshalYAML(unmarshal func(interface{}) error) error 
 			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
 		}
 
+		// When Prometheus serializes a matcher, the value gets wrapped in quotes:
+		// https://github.com/prometheus/alertmanager/blob/main/pkg/labels/matcher.go#L77
+		// Remove these quotes so that we are matching against the right value.
+		//
+		// This is a stop-gap solution which will be superceded by https://github.com/grafana/grafana/issues/50040.
+		//
+		// The ngalert migration converts matchers into the Prom-style, quotes included.
+		// The UI then stores the quotes into ObjectMatchers without removing them.
+		// This approach allows these extra quotes to be stored in the database, and fixes them at read time.
+		// This works because the database stores matchers as JSON text.
+		//
+		// There is a subtle bug here, where users might intentionally add quotes to matchers. This method can remove such quotes.
+		// Since ObjectMatchers will be deprecated entirely, this bug will go away naturally with time.
+		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
+		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
+
 		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
 		if err != nil {
 			return err
@@ -1242,6 +1244,9 @@ func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
 		default:
 			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
 		}
+
+		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
+		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
 
 		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
 		if err != nil {

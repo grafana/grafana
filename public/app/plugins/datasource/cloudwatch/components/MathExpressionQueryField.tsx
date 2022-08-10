@@ -37,7 +37,7 @@ export function MathExpressionQueryField({
       const updateElementHeight = () => {
         const containerDiv = containerRef.current;
         if (containerDiv !== null && editor.getContentHeight() < 200) {
-          const pixelHeight = editor.getContentHeight();
+          const pixelHeight = Math.max(32, editor.getContentHeight());
           containerDiv.style.height = `${pixelHeight}px`;
           containerDiv.style.width = '100%';
           const pixelWidth = containerDiv.clientWidth;
@@ -68,6 +68,9 @@ export function MathExpressionQueryField({
           },
           suggestFontSize: 12,
           wordWrap: 'on',
+          padding: {
+            top: 6,
+          },
         }}
         language={language.id}
         value={query}

@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { stylesFactory, useTheme, Select, MultiSelect, FilterInput } from '@grafana/ui';
+import { stylesFactory, useTheme, Select, MultiSelect, FilterInput, Button } from '@grafana/ui';
 import {
   createDatasourcesList,
   SortOrder,
@@ -17,10 +17,12 @@ import RichHistoryCard from './RichHistoryCard';
 
 export interface Props {
   queries: RichHistoryQuery[];
+  totalQueries: number;
   loading: boolean;
   activeDatasourceInstance: string;
   updateFilters: (filtersToUpdate: Partial<RichHistorySearchFilters>) => void;
   clearRichHistoryResults: () => void;
+  loadMoreRichHistory: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
   exploreId: ExploreId;
@@ -74,9 +76,11 @@ export function RichHistoryStarredTab(props: Props) {
   const {
     updateFilters,
     clearRichHistoryResults,
+    loadMoreRichHistory,
     activeDatasourceInstance,
     richHistorySettings,
     queries,
+    totalQueries,
     loading,
     richHistorySearchFilters,
     exploreId,
@@ -150,7 +154,7 @@ export function RichHistoryStarredTab(props: Props) {
         {loading && <span>Loading results...</span>}
         {!loading &&
           queries.map((q) => {
-            const idx = listOfDatasources.findIndex((d) => d.name === q.datasourceName);
+            const idx = listOfDatasources.findIndex((d) => d.uid === q.datasourceUid);
             return (
               <RichHistoryCard
                 query={q}
@@ -161,6 +165,11 @@ export function RichHistoryStarredTab(props: Props) {
               />
             );
           })}
+        {queries.length && queries.length !== totalQueries ? (
+          <div>
+            Showing {queries.length} of {totalQueries} <Button onClick={loadMoreRichHistory}>Load more</Button>
+          </div>
+        ) : null}
         <div className={styles.footer}>
           {!config.queryHistoryEnabled ? 'The history is local to your browser and is not shared with others.' : ''}
         </div>

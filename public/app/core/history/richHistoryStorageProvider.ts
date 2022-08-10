@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 
 import { SortOrder } from '../utils/richHistoryTypes';
 
@@ -16,6 +17,10 @@ export const getRichHistoryStorage = (): RichHistoryStorage => {
 interface RichHistorySupportedFeatures {
   availableFilters: SortOrder[];
   lastUsedDataSourcesAvailable: boolean;
+  clearHistory: boolean;
+  onlyActiveDataSource: boolean;
+  changeRetention: boolean;
+  queryHistoryAvailable: boolean;
 }
 
 export const supportedFeatures = (): RichHistorySupportedFeatures => {
@@ -23,9 +28,17 @@ export const supportedFeatures = (): RichHistorySupportedFeatures => {
     ? {
         availableFilters: [SortOrder.Descending, SortOrder.Ascending],
         lastUsedDataSourcesAvailable: false,
+        clearHistory: false,
+        onlyActiveDataSource: false,
+        changeRetention: false,
+        queryHistoryAvailable: contextSrv.isSignedIn,
       }
     : {
         availableFilters: [SortOrder.Descending, SortOrder.Ascending, SortOrder.DatasourceAZ, SortOrder.DatasourceZA],
         lastUsedDataSourcesAvailable: true,
+        clearHistory: true,
+        onlyActiveDataSource: true,
+        changeRetention: true,
+        queryHistoryAvailable: true,
       };
 };

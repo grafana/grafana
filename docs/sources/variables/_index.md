@@ -1,8 +1,9 @@
-+++
-aliases = ["/docs/grafana/latest/variables/"]
-title = "Templates and variables"
-weight = 130
-+++
+---
+aliases:
+  - /docs/grafana/latest/variables/
+title: Templates and variables
+weight: 130
+---
 
 # Templates and variables
 
@@ -32,7 +33,7 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 
 ## Examples of templates and variables
 
-To see variable and template examples, go to any of the dashboards listed in [Variable examples]({{< relref "variable-examples.md" >}}).
+To see variable and template examples, go to any of the dashboards listed in [Variable examples]({{< relref "variable-examples/" >}}).
 
 Variables are listed in drop-down lists across the top of the screen. Select different variables to see how the visualizations change.
 

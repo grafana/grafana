@@ -1,12 +1,14 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/", "/docs/grafana/latest/datasources/overview/"]
-title = "Data sources"
-weight = 60
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/
+  - /docs/grafana/latest/datasources/overview/
+title: Data sources
+weight: 60
+---
 
 # Data sources
 
-Grafana supports many different storage backends for your time series data (data source). Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana supports many different storage backends for your time series data (data source). Refer to [Add a data source]({{< relref "../administration/data-source-management/#add-a-data-source/" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Querying
 
@@ -16,23 +18,23 @@ Each data source has a specific Query Editor that is customized for the features
 
 The following data sources are officially supported:
 
-- [Alertmanager]({{< relref "alertmanager.md" >}})
-- [AWS CloudWatch]({{< relref "aws-cloudwatch/_index.md" >}})
-- [Azure Monitor]({{< relref "azuremonitor/_index.md" >}})
-- [Elasticsearch]({{< relref "elasticsearch.md" >}})
-- [Google Cloud Monitoring]({{< relref "google-cloud-monitoring/_index.md" >}})
-- [Graphite]({{< relref "graphite.md" >}})
-- [InfluxDB]({{< relref "influxdb/_index.md" >}})
-- [Loki]({{< relref "loki.md" >}})
-- [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
-- [MySQL]({{< relref "mysql.md" >}})
-- [OpenTSDB]({{< relref "opentsdb.md" >}})
-- [PostgreSQL]({{< relref "postgres.md" >}})
-- [Prometheus]({{< relref "prometheus.md" >}})
-- [Jaeger]({{< relref "jaeger.md" >}})
-- [Zipkin]({{< relref "zipkin.md" >}})
-- [Tempo]({{< relref "tempo.md" >}})
-- [Testdata]({{< relref "testdata.md" >}})
+- [Alertmanager]({{< relref "./alertmanager/" >}})
+- [AWS CloudWatch]({{< relref "./aws-cloudwatch/" >}})
+- [Azure Monitor]({{< relref "./azuremonitor/" >}})
+- [Elasticsearch]({{< relref "./elasticsearch/" >}})
+- [Google Cloud Monitoring]({{< relref "./google-cloud-monitoring/" >}})
+- [Graphite]({{< relref "./graphite/" >}})
+- [InfluxDB]({{< relref "./influxdb/" >}})
+- [Loki]({{< relref "./loki/" >}})
+- [Microsoft SQL Server (MSSQL)]({{< relref "./mssql/" >}})
+- [MySQL]({{< relref "./mysql/" >}})
+- [OpenTSDB]({{< relref "./opentsdb/" >}})
+- [PostgreSQL]({{< relref "./postgres/" >}})
+- [Prometheus]({{< relref "./prometheus/" >}})
+- [Jaeger]({{< relref "./jaeger/" >}})
+- [Zipkin]({{< relref "./zipkin/" >}})
+- [Tempo]({{< relref "./tempo/" >}})
+- [Testdata]({{< relref "./testdata/" >}})
 
 In addition to the data sources that you have configured in your Grafana, there are three special data sources available:
 

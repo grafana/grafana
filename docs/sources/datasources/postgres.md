@@ -1,14 +1,19 @@
-+++
-aliases = ["/docs/grafana/latest/datasources/postgres/", "/docs/grafana/latest/features/datasources/postgres/"]
-description = "Guide for using PostgreSQL in Grafana"
-keywords = ["grafana", "postgresql", "guide"]
-title = "PostgreSQL"
-weight = 1200
-+++
+---
+aliases:
+  - /docs/grafana/latest/datasources/postgres/
+  - /docs/grafana/latest/features/datasources/postgres/
+description: Guide for using PostgreSQL in Grafana
+keywords:
+  - grafana
+  - postgresql
+  - guide
+title: PostgreSQL
+weight: 1200
+---
 
 # PostgreSQL data source
 
-Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database. This topic explains options, variables, querying, and other options specific to this data source. For instructions about how to add a data source to Grafana, refer to [Add a data source]({{< relref "add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
+Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database. This topic explains options, variables, querying, and other options specific to this data source. For instructions about how to add a data source to Grafana, refer to [Add a data source]({{< relref "add-a-data-source/" >}}). Only users with the organization admin role can add data sources.
 
 ## PostgreSQL settings
 
@@ -187,11 +192,11 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format]({{< relref "../developers/plugins/data-frames/#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard field definitions]({{< relref "../panels/standard-field-definitions.md#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}).
 
 **Example with `metric` column:**
 
@@ -233,7 +238,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard field definition]({{< relref "../panels/standard-field-definitions.md#display-name" >}}) display value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../panels/configure-standard-options/#display-name" >}}) display value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -278,7 +283,7 @@ Data frame result:
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Refer to [Templates and variables]({{< relref "../variables/_index.md" >}}) for an introduction to the templating feature and the different types of template variables.
+Refer to [Templates and variables]({{< relref "../variables/" >}}) for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -371,11 +376,11 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../variables/_index.md#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../variables/#advanced-formatting-options" >}}) documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "../dashboards/annotations/" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 
@@ -457,7 +462,7 @@ datasources:
       timescaledb: false
 ```
 
-> **Note:** In the above code, the `postgresVersion` value of `10` refers to version PotgreSQL 10 and above.
+> **Note:** In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
 
 If you encounter metric request errors or other issues:
 
