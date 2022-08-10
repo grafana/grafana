@@ -38,7 +38,7 @@ jobs:
       run: yarn packages:pack --out ./%s.tgz 
 
     - name: Zip built tarballed packages
-      run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
+      run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
 
     - name: Upload build output as artifact
       uses: actions/upload-artifact@v3
