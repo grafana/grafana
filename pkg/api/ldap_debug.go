@@ -331,6 +331,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		unmappedUserGroups[strings.ToLower(userGroup)] = struct{}{}
 	}
 
+	orgIDs := []int64{} // IDs of the orgs the user is a member of
 	orgRolesMap := map[int64]models.RoleType{}
 	for _, group := range serverConfig.Groups {
 		// only use the first match for each org
@@ -343,6 +344,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 			u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: group.GroupDN,
 				OrgId: group.OrgId, OrgRole: group.OrgRole})
 			delete(unmappedUserGroups, strings.ToLower(group.GroupDN))
+			orgIDs = append(orgIDs, group.OrgId)
 		}
 	}
 
@@ -355,7 +357,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
-	u.Teams, err = hs.ldapGroups.GetTeams(user.Groups)
+	u.Teams, err = hs.ldapGroups.GetTeams(user.Groups, orgIDs)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
 	}
