@@ -26,6 +26,7 @@ describe('InfluxDataSource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
+    ctx.instanceSettings.access = 'proxy';
     ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
   });
 
@@ -119,6 +120,27 @@ describe('InfluxDataSource', () => {
       } catch (err) {
         if (err instanceof Error) {
           expect(err.message).toBe('InfluxDB Error: Query timeout');
+        }
+      }
+    });
+  });
+
+  describe('When getting a request after issuing a query using outdated Browser Mode', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      ctx.instanceSettings.url = '/api/datasources/proxy/1';
+      ctx.instanceSettings.access = 'direct';
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
+    });
+
+    it('throws an error', async () => {
+      try {
+        await lastValueFrom(ctx.ds.query({}));
+      } catch (err) {
+        if (err instanceof Error) {
+          expect(err.message).toBe(
+            'Browser access mode in the InfluxDB datasource is no longer available. Switch to server access mode.'
+          );
         }
       }
     });

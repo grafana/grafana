@@ -270,6 +270,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   render() {
     const { options, onOptionsChange } = this.props;
+    const isDirectAccess = options.access === 'direct';
 
     return (
       <>
@@ -301,14 +302,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </InfoBox>
         )}
 
-        {options.access === 'direct' && (
-          <Alert title="Deprecation Notice" severity="warning">
-            Browser access mode in the InfluxDB datasource is deprecated and will be removed in a future release.
+        {isDirectAccess && (
+          <Alert title="Error" severity="error">
+            Browser access mode in the InfluxDB datasource is no longer available. Switch to server access mode.
           </Alert>
         )}
 
         <DataSourceHttpSettings
-          showAccessOptions={true}
+          showAccessOptions={isDirectAccess}
           dataSourceConfig={options}
           defaultUrl="http://localhost:8086"
           onChange={onOptionsChange}

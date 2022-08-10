@@ -123,6 +123,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   responseParser: any;
   httpMode: string;
   isFlux: boolean;
+  isProxyAccess: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -147,6 +148,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
+    this.isProxyAccess = instanceSettings.access === 'proxy';
 
     if (this.isFlux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
@@ -157,6 +159,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
+    if (!this.isProxyAccess) {
+      const error = new Error(
+        'Browser access mode in the InfluxDB datasource is no longer available. Switch to server access mode.'
+      );
+      return throwError(() => error);
+    }
     // for not-flux queries we call `this.classicQuery`, and that
     // handles the is-hidden situation.
     // for the flux-case, we do the filtering here
