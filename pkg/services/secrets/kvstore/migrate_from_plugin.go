@@ -67,16 +67,27 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 		v, exists, err := s.secretsStore.Get(ctx, k.OrgId, k.Namespace, k.Type)
 		if err != nil {
 			s.logger.Error("Error retrieving secret from plugin", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
-			continue
+			return err
 		}
 		if !exists {
 			s.logger.Warn("Secret not found on plugin", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
 			continue
 		}
 		// Add to sql store
-		secretsSql.Set(ctx, k.OrgId, k.Namespace, k.Type, v)
+		err = secretsSql.Set(ctx, k.OrgId, k.Namespace, k.Type, v)
+		if err != nil {
+			s.logger.Error("Error adding secret to unified secrets", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
+			return err
+		}
+	}
+
+	for _, k := range res.Keys {
 		// Delete from the plugin
-		s.secretsStore.Del(ctx, k.OrgId, k.Namespace, k.Type)
+		err := s.secretsStore.Del(ctx, k.OrgId, k.Namespace, k.Type)
+		if err != nil {
+			s.logger.Error("Error deleting secret from plugin after migration", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
+			continue
+		}
 	}
 
 	return nil
