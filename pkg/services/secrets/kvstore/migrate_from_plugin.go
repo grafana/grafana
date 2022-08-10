@@ -23,14 +23,12 @@ type MigrateFromPluginService struct {
 
 func ProvideMigrateFromPluginService(
 	secretsStore SecretsKVStore,
-	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	manager plugins.SecretsPluginManager,
 ) *MigrateFromPluginService {
 	return &MigrateFromPluginService{
 		secretsStore:   secretsStore,
-		cfg:            cfg,
 		logger:         log.New("sec-plugin-mig"),
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
@@ -39,10 +37,6 @@ func ProvideMigrateFromPluginService(
 }
 
 func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
-	if !s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_from_plugin").MustBool(false) {
-		return nil
-	}
-
 	s.logger.Debug("starting migration of plugin secrets to unified secrets")
 	// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
 	// the secrets store would be the plugin.
