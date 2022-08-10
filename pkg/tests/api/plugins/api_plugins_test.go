@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -155,7 +154,7 @@ func expectedResp(t *testing.T, filename string) string {
 }
 
 func updateRespSnapshot(t *testing.T, filename string, body string) {
-	err := ioutil.WriteFile(filepath.Join("data", filename), []byte(body), 0600)
+	err := os.WriteFile(filepath.Join("data", filename), []byte(body), 0600)
 	if err != nil {
 		t.Errorf("error writing snapshot %s: %v", filename, err)
 	}

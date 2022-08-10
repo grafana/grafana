@@ -3,7 +3,6 @@ package store
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -96,7 +95,7 @@ func (c *GlobalStorageConfig) save() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(c.filepath, out, 0600)
+	return os.WriteFile(c.filepath, out, 0600)
 }
 
 type RootStorageConfig struct {

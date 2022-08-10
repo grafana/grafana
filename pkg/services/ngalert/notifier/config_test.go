@@ -72,7 +72,7 @@ func TestPersistTemplates(t *testing.T) {
 			dir := t.TempDir()
 			// Write "existing files"
 			for name, content := range tt.existingTemplates {
-				err := ioutil.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
+				err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
 				require.NoError(t, err)
 			}
 			c := &api.PostableUserConfig{TemplateFiles: tt.templates}

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -144,7 +143,7 @@ func TestConverter_Convert_NumFrameFields(t *testing.T) {
 	frameJSON, err := json.MarshalIndent(frame, "", "  ")
 	require.NoError(t, err)
 	if *update {
-		if err := ioutil.WriteFile(goldenFile, frameJSON, 0600); err != nil {
+		if err := os.WriteFile(goldenFile, frameJSON, 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -224,7 +223,7 @@ func TestConverter_Convert_NumFrameFields_LabelsColumn(t *testing.T) {
 	frameJSON, err := json.MarshalIndent(frame, "", "  ")
 	require.NoError(t, err)
 	if *update {
-		if err := ioutil.WriteFile(goldenFile, frameJSON, 0600); err != nil {
+		if err := os.WriteFile(goldenFile, frameJSON, 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
