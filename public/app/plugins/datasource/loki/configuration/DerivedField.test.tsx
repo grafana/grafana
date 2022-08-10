@@ -1,7 +1,7 @@
 import { shallow } from 'enzyme';
 import React from 'react';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 
 import { DerivedField } from './DerivedField';
@@ -17,8 +17,8 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
             name: 'metrics_ds',
             meta: {
               tracing: false,
-            } as any,
-          } as any,
+            } as DataSourcePluginMeta,
+          } as DataSourceInstanceSettings,
 
           {
             id: 2,
@@ -26,8 +26,8 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
             name: 'tracing_ds',
             meta: {
               tracing: true,
-            } as any,
-          } as any,
+            } as DataSourcePluginMeta,
+          } as DataSourceInstanceSettings,
         ];
       },
     };
