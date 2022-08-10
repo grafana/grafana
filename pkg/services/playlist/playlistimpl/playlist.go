@@ -16,7 +16,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg) playlist.Service {
 	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
 		return &Service{
 			store: &sqlxStore{
-				db: db,
+				sess: db.GetSqlxSession(),
 			},
 		}
 	}

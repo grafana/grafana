@@ -7,41 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
-	"github.com/jmoiron/sqlx"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
 type sqlxStore struct {
-	db db.DB
-}
-
-func (s *sqlxStore) insertWithReturningId(ctx context.Context, tx *sqlx.Tx, p *playlist.Playlist) error {
-	query := `INSERT INTO playlist (name, "interval", org_id, uid) VALUES (?, ?, ?, ?)`
-	query, supported := s.db.BuildInsertWithReturningId(query)
-	if supported {
-		var id int64
-		err := tx.GetContext(ctx, &id, tx.Rebind(query), p.Name, p.Interval, p.OrgId, p.UID)
-		if err != nil {
-			return err
-		}
-		p.Id = id
-	} else {
-		res, err := tx.ExecContext(ctx, tx.Rebind(query), p.Name, p.Interval, p.OrgId, p.UID)
-		if err != nil {
-			return err
-		}
-		p.Id, err = res.LastInsertId()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	sess *session.SessionDB
 }
 
 func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	p := playlist.Playlist{}
 	var err error
-	uid, err := newGenerateAndValidateNewPlaylistUid(ctx, s.db.GetDB(), cmd.OrgId)
+	uid, err := newGenerateAndValidateNewPlaylistUid(ctx, s.sess, cmd.OrgId)
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +29,10 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 		UID:      uid,
 	}
 
-	err = s.db.WithTransaction(ctx, func(tx *sqlx.Tx) error {
-		err = s.insertWithReturningId(ctx, tx, &p)
+	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
+		query := `INSERT INTO playlist (name, "interval", org_id, uid) VALUES (?, ?, ?, ?)`
+		var err error
+		p.Id, err = session.ExecWithReturningId(ctx, query, tx, p.Name, p.Interval, p.OrgId, p.UID)
 		if err != nil {
 			return err
 		}
@@ -71,7 +49,7 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 				})
 			}
 			query := `INSERT INTO playlist_item (playlist_id, type, value, title, "order") VALUES (:playlist_id, :type, :value, :title, :order)`
-			_, err = tx.NamedExecContext(ctx, query, playlistItems)
+			_, err = tx.NamedExec(ctx, query, playlistItems)
 			if err != nil {
 				return err
 			}
@@ -100,14 +78,14 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 		Interval: cmd.Interval,
 	}
 
-	err = s.db.WithTransaction(ctx, func(tx *sqlx.Tx) error {
+	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		query := `UPDATE playlist SET uid=:uid, org_id=:org_id, name=:name, "interval"=:interval WHERE id=:id`
-		_, err = tx.NamedExecContext(ctx, query, p)
+		_, err = tx.NamedExec(ctx, query, p)
 		if err != nil {
 			return err
 		}
 
-		if _, err = tx.ExecContext(ctx, tx.Rebind("DELETE FROM playlist_item WHERE playlist_id = ?"), p.Id); err != nil {
+		if _, err = tx.Exec(ctx, "DELETE FROM playlist_item WHERE playlist_id = ?", p.Id); err != nil {
 			return err
 		}
 
@@ -123,7 +101,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 			})
 		}
 		query = `INSERT INTO playlist_item (playlist_id, type, value, title, "order") VALUES (:playlist_id, :type, :value, :title, :order)`
-		_, err = tx.NamedExecContext(ctx, query, playlistItems)
+		_, err = tx.NamedExec(ctx, query, playlistItems)
 		return err
 	})
 
@@ -136,7 +114,7 @@ func (s *sqlxStore) Get(ctx context.Context, query *playlist.GetPlaylistByUidQue
 	}
 
 	p := playlist.Playlist{}
-	err := s.db.GetDB().GetContext(ctx, &p, s.db.GetDB().Rebind("SELECT * FROM playlist WHERE uid=? AND org_id=?"), query.UID, query.OrgId)
+	err := s.sess.Get(ctx, &p, "SELECT * FROM playlist WHERE uid=? AND org_id=?", query.UID, query.OrgId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, playlist.ErrPlaylistNotFound
@@ -152,19 +130,19 @@ func (s *sqlxStore) Delete(ctx context.Context, cmd *playlist.DeletePlaylistComm
 	}
 
 	p := playlist.Playlist{}
-	if err := s.db.GetDB().GetContext(ctx, &p, s.db.GetDB().Rebind("SELECT * FROM playlist WHERE uid=? AND org_id=?"), cmd.UID, cmd.OrgId); err != nil {
+	if err := s.sess.Get(ctx, &p, "SELECT * FROM playlist WHERE uid=? AND org_id=?", cmd.UID, cmd.OrgId); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
 		return err
 	}
 
-	err := s.db.WithTransaction(ctx, func(tx *sqlx.Tx) error {
-		if _, err := tx.ExecContext(ctx, tx.Rebind("DELETE FROM playlist WHERE uid = ? and org_id = ?"), cmd.UID, cmd.OrgId); err != nil {
+	err := s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
+		if _, err := tx.Exec(ctx, "DELETE FROM playlist WHERE uid = ? and org_id = ?", cmd.UID, cmd.OrgId); err != nil {
 			return err
 		}
 
-		if _, err := tx.ExecContext(ctx, tx.Rebind("DELETE FROM playlist_item WHERE playlist_id = ?"), p.Id); err != nil {
+		if _, err := tx.Exec(ctx, "DELETE FROM playlist_item WHERE playlist_id = ?", p.Id); err != nil {
 			return err
 		}
 		return nil
@@ -181,11 +159,11 @@ func (s *sqlxStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery)
 
 	var err error
 	if query.Name == "" {
-		err = s.db.GetDB().SelectContext(
-			ctx, &playlists, s.db.GetDB().Rebind("SELECT * FROM playlist WHERE org_id = ? LIMIT ?"), query.OrgId, query.Limit)
+		err = s.sess.Select(
+			ctx, &playlists, "SELECT * FROM playlist WHERE org_id = ? LIMIT ?", query.OrgId, query.Limit)
 	} else {
-		err = s.db.GetDB().SelectContext(
-			ctx, &playlists, s.db.GetDB().Rebind("SELECT * FROM playlist WHERE org_id = ? AND name LIKE ? LIMIT ?"), query.OrgId, "%"+query.Name+"%", query.Limit)
+		err = s.sess.Select(
+			ctx, &playlists, "SELECT * FROM playlist WHERE org_id = ? AND name LIKE ? LIMIT ?", query.OrgId, "%"+query.Name+"%", query.Limit)
 	}
 	return playlists, err
 }
@@ -197,20 +175,20 @@ func (s *sqlxStore) GetItems(ctx context.Context, query *playlist.GetPlaylistIte
 	}
 
 	var p = playlist.Playlist{}
-	err := s.db.GetDB().GetContext(ctx, &p, s.db.GetDB().Rebind("SELECT * FROM playlist WHERE uid=? AND org_id=?"), query.PlaylistUID, query.OrgId)
+	err := s.sess.Get(ctx, &p, "SELECT * FROM playlist WHERE uid=? AND org_id=?", query.PlaylistUID, query.OrgId)
 	if err != nil {
 		return playlistItems, err
 	}
 
-	err = s.db.GetDB().SelectContext(ctx, &playlistItems, s.db.GetDB().Rebind("SELECT * FROM playlist_item WHERE playlist_id=?"), p.Id)
+	err = s.sess.Select(ctx, &playlistItems, "SELECT * FROM playlist_item WHERE playlist_id=?", p.Id)
 	return playlistItems, err
 }
 
-func newGenerateAndValidateNewPlaylistUid(ctx context.Context, db *sqlx.DB, orgId int64) (string, error) {
+func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *session.SessionDB, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := generateNewUid()
 		p := playlist.Playlist{}
-		err := db.GetContext(ctx, &p, db.Rebind("SELECT * FROM playlist WHERE uid=? AND org_id=?"), uid, orgId)
+		err := sess.Get(ctx, &p, "SELECT * FROM playlist WHERE uid=? AND org_id=?", uid, orgId)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				return uid, nil
