@@ -108,7 +108,7 @@ func setupTestMigratorServiceWithDeletionError(
 	secretskv SecretsKVStore,
 	sqlStore sqlstore.Store,
 	kvstore kvstore.KVStore,
-) *PluginSecretMigrationService {
+) *MigrateToPluginService {
 	t.Helper()
 	fatalFlagOnce = sync.Once{}
 	startupOnce = sync.Once{}
@@ -128,7 +128,7 @@ func setupTestMigratorServiceWithDeletionError(
 		return items, nil
 	}
 	manager := NewFakeSecretsPluginManager(t, false)
-	migratorService := ProvidePluginSecretMigrationService(
+	migratorService := ProvideMigrateToPluginService(
 		secretskv,
 		cfg,
 		sqlStore,

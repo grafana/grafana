@@ -64,7 +64,7 @@ func validateSecretWasStoreInPlugin(t *testing.T, secretsStore SecretsKVStore, c
 }
 
 //
-func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, SecretsKVStore, *secretsKVStoreSQL) {
+func setupTestMigratorService(t *testing.T) (*MigrateToPluginService, SecretsKVStore, *secretsKVStoreSQL) {
 	t.Helper()
 
 	rawCfg := `
@@ -82,7 +82,7 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	manager := NewFakeSecretsPluginManager(t, false)
-	migratorService := ProvidePluginSecretMigrationService(
+	migratorService := ProvideMigrateToPluginService(
 		secretsStoreForPlugin,
 		cfg,
 		sqlStore,

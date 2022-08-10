@@ -26,12 +26,14 @@ type SecretMigrationServiceImpl struct {
 func ProvideSecretMigrationService(
 	serverLockService *serverlock.ServerLockService,
 	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
-	pluginSecretMigrationService *kvstore.PluginSecretMigrationService,
+	migrateToPluginService *kvstore.MigrateToPluginService,
+	migrateFromPluginService *kvstore.MigrateFromPluginService,
 ) *SecretMigrationServiceImpl {
 	services := make([]SecretMigrationService, 0)
 	services = append(services, dataSourceSecretMigrationService)
+	services = append(services, migrateFromPluginService)
 	// pluginMigrationService should always be the last one
-	services = append(services, pluginSecretMigrationService)
+	services = append(services, migrateToPluginService)
 
 	return &SecretMigrationServiceImpl{
 		ServerLockService: serverLockService,

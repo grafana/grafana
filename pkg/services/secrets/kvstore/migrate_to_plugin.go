@@ -12,9 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// PluginSecretMigrationService This migrator will handle migration of datasource secrets (aka Unified secrets)
+// MigrateToPluginService This migrator will handle migration of datasource secrets (aka Unified secrets)
 // into the plugin secrets configured
-type PluginSecretMigrationService struct {
+type MigrateToPluginService struct {
 	secretsStore   SecretsKVStore
 	cfg            *setting.Cfg
 	logger         log.Logger
@@ -25,15 +25,15 @@ type PluginSecretMigrationService struct {
 	getAllFunc     func(ctx context.Context) ([]Item, error)
 }
 
-func ProvidePluginSecretMigrationService(
+func ProvideMigrateToPluginService(
 	secretsStore SecretsKVStore,
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	kvstore kvstore.KVStore,
 	manager plugins.SecretsPluginManager,
-) *PluginSecretMigrationService {
-	return &PluginSecretMigrationService{
+) *MigrateToPluginService {
+	return &MigrateToPluginService{
 		secretsStore:   secretsStore,
 		cfg:            cfg,
 		logger:         log.New("sec-plugin-mig"),
@@ -44,8 +44,7 @@ func ProvidePluginSecretMigrationService(
 	}
 }
 
-func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
-	// Check if we should migrate to plugin - default false
+func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 	if err := EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		s.logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
@@ -109,6 +108,6 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 // This is here to support testing and should normally not be called
 // An edge case we are unit testing requires the GetAll function to return a value, but the Del function to return an error.
 // This is not possible with the code as written, so this override function is a workaround. Should be refactored.
-func (s *PluginSecretMigrationService) overrideGetAllFunc(getAllFunc func(ctx context.Context) ([]Item, error)) {
+func (s *MigrateToPluginService) overrideGetAllFunc(getAllFunc func(ctx context.Context) ([]Item, error)) {
 	s.getAllFunc = getAllFunc
 }

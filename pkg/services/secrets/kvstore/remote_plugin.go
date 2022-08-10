@@ -99,7 +99,7 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 // organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
 func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
 	var req *smp.ListSecretsRequest
-	if orgId == -1 && namespace == AllKeys && typ == AllKeys {
+	if orgId == AllOrganizations && namespace == AllKeys && typ == AllKeys {
 		req = &smp.ListSecretsRequest{
 			AllKeys: true,
 		}
