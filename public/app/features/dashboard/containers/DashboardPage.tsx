@@ -370,7 +370,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   render() {
     const { dashboard, initError, queryParams, isPublic, isFNDashboard } = this.props;
     const { editPanel, viewPanel, updateScrollTop } = this.state;
-    const kioskMode = !isPublic && !isFNDashboard ? getKioskMode() : isFNDashboard ? KioskMode.FN : KioskMode.Full;
+    const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
+
+    // isFNDashboard ? KioskMode.FN :
 
     if (!dashboard) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -380,20 +382,22 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const containerClassNames = classnames({ 'panel-in-fullscreen': viewPanel });
 
     const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
+    console.log(dashboard, '====>dashboard', kioskMode, '===>>> kioskMode');
     const toolbar = kioskMode !== KioskMode.Full && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
           dashboard={dashboard}
-          title={dashboard.title}
+          //  title={dashboard.title}
           folderTitle={dashboard.meta.folderTitle}
           isFullscreen={!!viewPanel}
           onAddPanel={this.onAddPanel}
           kioskMode={kioskMode}
-          hideTimePicker={dashboard.timepicker.hidden}
+          // hideTimePicker={dashboard.timepicker.hidden}
         />
       </header>
     );
 
+    console.log(showSubMenu);
     return (
       <Page
         {...this.getPageProps()}

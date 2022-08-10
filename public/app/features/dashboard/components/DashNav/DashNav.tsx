@@ -1,10 +1,10 @@
 import { t, Trans } from '@lingui/macro';
 import React, { FC, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-//import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
-//import { locationUtil, textUtil } from '@grafana/data';
-import { textUtil } from '@grafana/data';
+import { locationUtil, textUtil } from '@grafana/data';
+// import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate, Tag } from '@grafana/ui';
@@ -311,15 +311,16 @@ export const DashNav = React.memo<Props>((props) => {
 
   const { isFullscreen, title, folderTitle, kioskMode } = props;
 
-  let titleHref = '';
-  let parentHref = '';
+  // let titleHref = '';
+  // let parentHref = '';
 
-  if (kioskMode !== KioskMode.FN) {
-    // this ensures the component rerenders when the location changes
-    //const location = useLocation();
-    //titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
-    //parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
-  }
+  // if (kioskMode !== KioskMode.FN && location !== undefined) {
+  //   console.log( location, "inside location" )
+  // this ensures the component rerenders when the location changes
+  //   const location = useLocation()
+  //   titleHref = locationUtil.getUrlForPartial(location, { search: 'open' });
+  //   parentHref = locationUtil.getUrlForPartial(location, { search: 'open', folder: 'current' });
+  // }
 
   const onGoBack = isFullscreen ? onClose : undefined;
 
@@ -340,11 +341,11 @@ export const DashNav = React.memo<Props>((props) => {
 
   return (
     <PageToolbar
-      pageIcon={isFullscreen ? undefined : 'apps'}
+      //  pageIcon={isFullscreen ? undefined : 'apps'}
       title={title}
       parent={folderTitle}
-      titleHref={titleHref}
-      parentHref={parentHref}
+      // titleHref={titleHref}
+      // parentHref={parentHref}
       onGoBack={onGoBack}
       leftItems={renderLeftActions()}
     >
