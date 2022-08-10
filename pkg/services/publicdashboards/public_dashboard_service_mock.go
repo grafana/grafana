@@ -9,6 +9,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 
 	models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	publicdashboardsmodels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 
@@ -21,15 +22,15 @@ type FakePublicDashboardService struct {
 }
 
 // BuildAnonymousUser provides a mock function with given fields: ctx, dashboard
-func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*models.SignedInUser, error) {
+func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
 	ret := _m.Called(ctx, dashboard)
 
-	var r0 *models.SignedInUser
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Dashboard) *models.SignedInUser); ok {
+	var r0 *user.SignedInUser
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Dashboard) *user.SignedInUser); ok {
 		r0 = rf(ctx, dashboard)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.SignedInUser)
+			r0 = ret.Get(0).(*user.SignedInUser)
 		}
 	}
 

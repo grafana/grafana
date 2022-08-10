@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -114,7 +113,7 @@ func (s *standardStorageService) doUpload(c *models.ReqContext) response.Respons
 			if err != nil {
 				return response.Error(500, "Internal Server Error", err)
 			}
-			data, err := ioutil.ReadAll(file)
+			data, err := io.ReadAll(file)
 			if err != nil {
 				return response.Error(500, "Internal Server Error", err)
 			}

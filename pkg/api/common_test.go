@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -48,19 +49,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func loggedInUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc, sqlStore sqlstore.Store) {
-	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, models.ROLE_EDITOR, fn, sqlStore)
+	loggedInUserScenarioWithRole(t, desc, "GET", url, routePattern, org.RoleEditor, fn, sqlStore)
 }
 
-func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc, sqlStore sqlstore.Store) {
+func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role org.RoleType, fn scenarioFunc, sqlStore sqlstore.Store) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
+		sc.userService = usertest.NewUserServiceFake()
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
@@ -202,7 +205,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
 	authenticator := &logintest.AuthenticatorFake{}
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator)
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator, usertest.NewUserServiceFake())
 
 	return ctxHdlr
 }
@@ -293,7 +296,7 @@ type accessControlScenarioContext struct {
 
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
 	acmock.GetUserPermissionsFunc =
-		func(_ context.Context, u *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+		func(_ context.Context, u *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 			if u.OrgId == org {
 				return perms, nil
 			}
@@ -302,24 +305,24 @@ func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accessc
 }
 
 // setInitCtxSignedInUser sets a copy of the user in initCtx
-func setInitCtxSignedInUser(initCtx *models.ReqContext, user models.SignedInUser) {
+func setInitCtxSignedInUser(initCtx *models.ReqContext, user user.SignedInUser) {
 	initCtx.IsSignedIn = true
 	initCtx.SignedInUser = &user
 }
 
 func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_VIEWER, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleViewer, Login: testUserLogin}
 }
 
 func setInitCtxSignedInEditor(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_EDITOR, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleEditor, Login: testUserLogin}
 }
 
 func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &models.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleAdmin, Login: testUserLogin}
 }
 
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
@@ -381,6 +384,8 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server
+	userMock := usertest.NewUserServiceFake()
+	userMock.ExpectedUser = &user.User{ID: 1}
 	hs := &HTTPServer{
 		Cfg:                    cfg,
 		Features:               features,
@@ -397,6 +402,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
+		userService:       userMock,
 	}
 
 	require.NoError(t, hs.declareFixedRoles())
@@ -474,8 +480,8 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 }
 
 var (
-	viewerRole = models.ROLE_VIEWER
-	editorRole = models.ROLE_EDITOR
+	viewerRole = org.RoleViewer
+	editorRole = org.RoleEditor
 )
 
 type setUpConf struct {

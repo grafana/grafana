@@ -51,7 +51,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.12.0
-	github.com/grafana/cuetsy v0.0.3
+	github.com/grafana/cuetsy v0.0.4-0.20220714174355-ebd987fdab27
 	github.com/grafana/grafana-aws-sdk v0.10.8
 	github.com/grafana/grafana-azure-sdk-go v1.3.0
 	github.com/grafana/grafana-plugin-sdk-go v0.139.0
@@ -244,7 +244,9 @@ require (
 	github.com/blugelabs/bluge v0.1.9
 	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/getkin/kin-openapi v0.94.0
+	github.com/go-git/go-git v4.7.0+incompatible
 	github.com/golang-migrate/migrate/v4 v4.7.0
+	github.com/google/go-github/v31 v31.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/grafana/thema v0.0.0-20220726124731-b8017e278cc1

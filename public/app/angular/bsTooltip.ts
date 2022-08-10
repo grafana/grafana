@@ -11,7 +11,7 @@ coreModule.directive('bsTooltip', [
       restrict: 'A',
       scope: true,
       link: function postLink(scope: any, element: any, attrs: any) {
-        var getter = $parse(attrs.bsTooltip),
+        let getter = $parse(attrs.bsTooltip),
           value = getter(scope);
         scope.$watch(attrs.bsTooltip, function (newValue: any, oldValue: any) {
           if (newValue !== oldValue) {
@@ -22,7 +22,7 @@ coreModule.directive('bsTooltip', [
         if (true) {
           element.on('show', function (ev: any) {
             $('.tooltip.in').each(function () {
-              var $this = $(this),
+              const $this = $(this),
                 tooltip = $this.data('tooltip');
               if (tooltip && !tooltip.$element.is(element)) {
                 $this.tooltip('hide');
@@ -37,9 +37,9 @@ coreModule.directive('bsTooltip', [
           html: true,
           container: 'body', // Grafana change
         });
-        var tooltip = element.data('tooltip');
+        const tooltip = element.data('tooltip');
         tooltip.show = function () {
-          var r = $.fn.tooltip.Constructor.prototype.show.apply(this, arguments);
+          const r = $.fn.tooltip.Constructor.prototype.show.apply(this, arguments);
           this.tip().data('tooltip', this);
           return r;
         };

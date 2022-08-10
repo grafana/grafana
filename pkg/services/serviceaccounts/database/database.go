@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -39,7 +40,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	generatedLogin := "sa-" + strings.ToLower(saForm.Name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
 	isDisabled := false
-	role := models.ROLE_VIEWER
+	role := org.RoleViewer
 	if saForm.IsDisabled != nil {
 		isDisabled = *saForm.IsDisabled
 	}
@@ -276,7 +277,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 
 func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 	ctx context.Context, orgId int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
-	signedInUser *models.SignedInUser,
+	signedInUser *user.SignedInUser,
 ) (*serviceaccounts.SearchServiceAccountsResult, error) {
 	searchResult := &serviceaccounts.SearchServiceAccountsResult{
 		TotalCount:      0,
@@ -438,7 +439,7 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int6
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *models.ApiKey) error {
+func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Context, key *apikey.APIKey) error {
 	prefix := "sa-autogen"
 	cmd := user.CreateUserCommand{
 		Login:            fmt.Sprintf("%v-%v-%v", prefix, key.OrgId, key.Name),
@@ -467,7 +468,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 
 // RevertApiKey converts service account token to old API key
 func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
-	query := models.GetApiKeyByIdQuery{ApiKeyId: keyId}
+	query := apikey.GetByIDQuery{ApiKeyId: keyId}
 	if err := s.apiKeyService.GetApiKeyById(ctx, &query); err != nil {
 		return err
 	}

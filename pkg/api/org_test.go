@@ -186,7 +186,7 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 // `/api/orgs/` endpoints test
 
 // setupOrgsDBForAccessControlTests stores users and create specified number of orgs
-func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, usr models.SignedInUser, orgsCount int) {
+func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, usr user.SignedInUser, orgsCount int) {
 	t.Helper()
 
 	_, err := db.CreateUser(context.Background(), user.CreateUserCommand{Email: usr.Email, SkipOrgSetup: true, Login: usr.Login})

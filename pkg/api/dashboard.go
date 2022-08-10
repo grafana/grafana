@@ -26,6 +26,7 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -538,7 +539,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
-	dash.Meta.CanEdit = c.SignedInUser.HasRole(models.ROLE_EDITOR)
+	dash.Meta.CanEdit = c.SignedInUser.HasRole(org.RoleEditor)
 	dash.Meta.FolderTitle = "General"
 	dash.Dashboard = simplejson.New()
 
@@ -555,8 +556,8 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
 	// We only add this getting started panel for Admins who have not dismissed it,
 	// and if a custom default home dashboard hasn't been configured
-	if !c.HasUserRole(models.ROLE_ADMIN) ||
-		c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) ||
+	if !c.HasUserRole(org.RoleAdmin) ||
+		c.HasHelpFlag(user.HelpFlagGettingStartedPanelDismissed) ||
 		hs.Cfg.DefaultHomeDashboardPath != "" {
 		return
 	}

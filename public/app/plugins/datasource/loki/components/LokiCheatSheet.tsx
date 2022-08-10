@@ -16,7 +16,7 @@ const LOGQL_EXAMPLES = [
     title: 'Log pipeline',
     expression: '{job="mysql"} |= "metrics" | logfmt | duration > 10s',
     label:
-      'This query targets the MySQL job, filters out logs that don’t contain the word "metrics" and parses each log line to extract more labels and filters with them.',
+      'This query targets the MySQL job, keeps logs that contain the substring "metrics", and then parses and filters the logs further.',
   },
   {
     title: 'Count over time',

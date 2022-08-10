@@ -46,7 +46,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-username": myUsername,
 			}, nil
 		}
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Login: myUsername}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserId: id, OrgId: orgID, Login: myUsername}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
@@ -67,7 +67,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
@@ -108,7 +108,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserId: id, OrgId: orgID, Email: myEmail}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)

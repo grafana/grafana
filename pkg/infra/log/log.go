@@ -7,7 +7,6 @@ package log
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -46,7 +45,7 @@ func init() {
 
 	// Use discard by default
 	format := func(w io.Writer) gokitlog.Logger {
-		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(ioutil.Discard))
+		return gokitlog.NewLogfmtLogger(gokitlog.NewSyncWriter(io.Discard))
 	}
 	logger := level.NewFilter(format(os.Stderr), level.AllowInfo())
 	root = newManager(logger)
@@ -205,9 +204,12 @@ func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
 // name plus additional contextual information, you must use the
 // Logger interface New method for it to work as expected.
 // Example creating a shared logger:
-//   requestLogger := log.New("request-logger")
+//
+//	requestLogger := log.New("request-logger")
+//
 // Example creating a contextual logger:
-//   contextualLogger := requestLogger.New("username", "user123")
+//
+//	contextualLogger := requestLogger.New("username", "user123")
 func New(ctx ...interface{}) *ConcreteLogger {
 	if len(ctx) == 0 {
 		return root.New()

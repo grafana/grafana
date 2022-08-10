@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
@@ -627,7 +626,7 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 }
 
 func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}

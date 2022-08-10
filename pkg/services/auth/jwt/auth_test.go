@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -66,7 +65,7 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 	configure := func(t *testing.T, cfg *setting.Cfg) {
 		t.Helper()
 
-		file, err := ioutil.TempFile(os.TempDir(), "jwk-*.json")
+		file, err := os.CreateTemp(os.TempDir(), "jwk-*.json")
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			if err := os.Remove(file.Name()); err != nil {
@@ -402,7 +401,7 @@ func scenarioRunner(fn scenarioFunc, cbs ...configureFunc) func(t *testing.T) {
 func configurePKIXPublicKeyFile(t *testing.T, cfg *setting.Cfg) {
 	t.Helper()
 
-	file, err := ioutil.TempFile(os.TempDir(), "public-key-*.pem")
+	file, err := os.CreateTemp(os.TempDir(), "public-key-*.pem")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		if err := os.Remove(file.Name()); err != nil {
