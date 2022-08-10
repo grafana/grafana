@@ -97,7 +97,7 @@ export class GrafanaApp {
       backendSrv.setGrafanaPrefix(true);
       setBackendSrv(backendSrv);
       let settings: Settings = await backendSrv.get('/api/frontend/settings');
-      merge(config, settings, config);
+      // merge(config, settings, config);
       config.panels = settings.panels;
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;

@@ -385,7 +385,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
           dashboard={dashboard}
-          title={!this.props.isFNDashboard ? dashboard.title : ''}
+          title={!isFNDashboard ? dashboard.title : ''}
           folderTitle={dashboard.meta.folderTitle}
           isFullscreen={!!viewPanel}
           onAddPanel={this.onAddPanel}

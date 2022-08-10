@@ -152,14 +152,14 @@ const getStyles = (theme: GrafanaTheme2) => {
   const { spacing, typography } = theme;
 
   const focusStyle = getFocusStyles(theme);
-
+  // ${theme.colors.background.canvas};
   return {
     pre: css`
       white-space: pre;
     `,
     toolbar: css`
       align-items: center;
-      background: ${theme.colors.background.canvas};
+      background: #ffffff00;
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;

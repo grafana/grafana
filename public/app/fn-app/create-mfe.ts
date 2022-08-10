@@ -7,6 +7,10 @@ window.__grafana_public_path__ =
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import { createTheme } from '@grafana/data';
+import { ThemeChangedEvent } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 import { toggleTheme } from 'app/core/services/toggleTheme';
 import fn_app from 'app/fn_app';
 
@@ -31,12 +35,19 @@ class createMfe {
   static mountFnApp(component: React.Component) {
     // eslint-disable-next-line
     return async function mount(props: any) {
-      toggleTheme(props.theme);
+      config.theme2 = createTheme({
+        colors: {
+          mode: props.theme,
+        },
+      });
+      config.theme = config.theme2.v1;
+      appEvents.publish(new ThemeChangedEvent(config.theme2));
+      console.log('mounting grafana app ======>', props);
+      console.log('grafana theme', config.theme2.colors.background);
       ReactDOM.render(
         React.createElement(component, { ...props }),
         props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
       );
-      console.log('mounting grafana app', props);
     };
   }
 
