@@ -89,7 +89,7 @@ func TestServerClient(t *testing.T) {
 		req := s.NewRequest(http.MethodGet, "/test", nil)
 		req = RequestWithWebContext(req, &models.ReqContext{
 			SignedInUser: &user.SignedInUser{
-				UserId: 1,
+				UserID: 1,
 			},
 		})
 		resp, err := s.Send(req)
@@ -104,14 +104,14 @@ func TestServerClient(t *testing.T) {
 		err = json.Unmarshal(bytes, &user)
 		require.NoError(t, err)
 		require.NotNil(t, user)
-		require.Equal(t, int64(1), user.UserId)
+		require.Equal(t, int64(1), user.UserID)
 	})
 
 	t.Run("Making a request with user 2 should return user 2 as signed in user", func(t *testing.T) {
 		req := s.NewRequest(http.MethodGet, "/test", nil)
 		req = RequestWithWebContext(req, &models.ReqContext{
 			SignedInUser: &user.SignedInUser{
-				UserId: 2,
+				UserID: 2,
 			},
 		})
 		resp, err := s.Send(req)
@@ -126,6 +126,6 @@ func TestServerClient(t *testing.T) {
 		err = json.Unmarshal(bytes, &user)
 		require.NoError(t, err)
 		require.NotNil(t, user)
-		require.Equal(t, int64(2), user.UserId)
+		require.Equal(t, int64(2), user.UserID)
 	})
 }
