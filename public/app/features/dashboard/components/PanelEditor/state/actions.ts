@@ -111,12 +111,13 @@ export function exitPanelEditor(): ThunkResult<void> {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
     const panel = getPanel();
+    const sourcePanel = getSourcePanel();
 
     if (dashboard) {
       dashboard.exitPanelEditor();
     }
 
-    if (panel.hasChanged && !shouldDiscardChanges) {
+    if (!shouldDiscardChanges && hasPanelChangedInPanelEdit(sourcePanel, panel)) {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
@@ -146,6 +147,13 @@ export function exitPanelEditor(): ThunkResult<void> {
     dispatch(cleanUpPanelState(panel.key));
     dispatch(closeEditor());
   };
+}
+
+function hasPanelChangedInPanelEdit(sourcePanel: PanelModel, panel: PanelModel) {
+  const libPanelReplaced = panel.libraryPanel?.uid !== sourcePanel.libraryPanel?.uid;
+  const libPanelUpdated = panel.libraryPanel?.version !== sourcePanel.libraryPanel?.version;
+
+  return panel.hasChanged || libPanelReplaced || libPanelUpdated;
 }
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {

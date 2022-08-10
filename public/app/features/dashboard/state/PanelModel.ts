@@ -161,7 +161,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   links?: DataLink[];
   declare transparent: boolean;
 
-  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
+  libraryPanel?: { uid: undefined; name: string; version?: number } | PanelModelLibraryPanel;
 
   autoMigrateFrom?: string;
 
