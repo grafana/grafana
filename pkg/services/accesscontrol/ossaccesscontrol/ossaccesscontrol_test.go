@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,7 +54,7 @@ type evaluatingPermissionsTestCase struct {
 
 type userTestCase struct {
 	name           string
-	orgRole        models.RoleType
+	orgRole        org.RoleType
 	isGrafanaAdmin bool
 }
 
@@ -66,7 +68,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should successfully evaluate access to the endpoint",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        models.ROLE_VIEWER,
+				orgRole:        org.RoleViewer,
 				isGrafanaAdmin: true,
 			},
 			endpoints: []endpointTestCase{
@@ -79,7 +81,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should restrict access to the unauthorized endpoints",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        models.ROLE_VIEWER,
+				orgRole:        org.RoleViewer,
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
@@ -99,7 +101,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			errRegisterRoles := ac.RegisterFixedRoles(context.Background())
 			require.NoError(t, errRegisterRoles)
 
-			user := &models.SignedInUser{
+			user := &user.SignedInUser{
 				UserId:         1,
 				OrgId:          1,
 				Name:           tc.user.name,
@@ -357,11 +359,11 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 }
 
 func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
-	testUser := models.SignedInUser{
+	testUser := user.SignedInUser{
 		UserId:  2,
 		OrgId:   3,
 		OrgName: "TestOrg",
-		OrgRole: models.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 		Login:   "testUser",
 		Name:    "Test User",
 		Email:   "testuser@example.org",
@@ -377,7 +379,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	}
 	tests := []struct {
 		name     string
-		user     models.SignedInUser
+		user     user.SignedInUser
 		rawPerm  accesscontrol.Permission
 		wantPerm accesscontrol.Permission
 		wantErr  bool
@@ -419,11 +421,11 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 }
 
 func TestOSSAccessControlService_Evaluate(t *testing.T) {
-	testUser := models.SignedInUser{
+	testUser := user.SignedInUser{
 		UserId:  2,
 		OrgId:   3,
 		OrgName: "TestOrg",
-		OrgRole: models.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 		Login:   "testUser",
 		Name:    "Test User",
 		Email:   "testuser@example.org",
@@ -446,7 +448,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		user       models.SignedInUser
+		user       user.SignedInUser
 		rawPerm    accesscontrol.Permission
 		evaluator  accesscontrol.Evaluator
 		wantAccess bool

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
@@ -234,7 +235,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 	})
 }
 
-func (api *ServiceAccountsAPI) validateRole(r *models.RoleType, orgRole *models.RoleType) error {
+func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole *org.RoleType) error {
 	if r != nil && !r.IsValid() {
 		return serviceaccounts.ErrServiceAccountInvalidRole
 	}

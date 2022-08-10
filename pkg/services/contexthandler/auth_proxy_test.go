@@ -99,7 +99,7 @@ func (f *FakeGetSignUserStore) GetSignedInUser(ctx context.Context, query *model
 		return user.ErrUserNotFound
 	}
 
-	query.Result = &models.SignedInUser{
+	query.Result = &user.SignedInUser{
 		UserId: userID,
 		OrgId:  orgID,
 	}

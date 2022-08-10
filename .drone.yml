@@ -706,7 +706,7 @@ trigger:
     include:
     - '*.md'
     - docs/**
-    - packages/**
+    - packages/**/*.md
     - latest.json
 type: docker
 volumes:
@@ -806,7 +806,7 @@ trigger:
     include:
     - '*.md'
     - docs/**
-    - packages/**
+    - packages/**/*.md
     - latest.json
 type: docker
 volumes:
@@ -5152,6 +5152,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: b74106c3d177947303d919a5475870ffd66b733ddd63602c4d7d6d0830ae52be
+hmac: eac88e68cfaee99bc5569b7af5d8c7ebeeac691e5ea3b9f3b9b18e4327d87b21
 
 ...

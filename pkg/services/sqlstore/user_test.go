@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
@@ -84,7 +85,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	ss := InitTestDB(t)
-	usr := &models.SignedInUser{
+	usr := &user.SignedInUser{
 		OrgId:       1,
 		Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
 	}
@@ -352,7 +353,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
 			OrgId: users[0].OrgID, UserId: users[1].ID,
 		})
 		require.Nil(t, err)
@@ -391,7 +392,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
 			OrgId: users[0].OrgID, UserId: users[1].ID,
 		})
 		require.Nil(t, err)
@@ -464,7 +465,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 
-		testUser := &models.SignedInUser{
+		testUser := &user.SignedInUser{
 			OrgId:       1,
 			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
 		}

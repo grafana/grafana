@@ -7,7 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,7 +22,7 @@ var permissionMap = map[string]models.PermissionType{
 var _ DashboardGuardian = new(AccessControlDashboardGuardian)
 
 func NewAccessControlDashboardGuardian(
-	ctx context.Context, dashboardId int64, user *models.SignedInUser,
+	ctx context.Context, dashboardId int64, user *user.SignedInUser,
 	store sqlstore.Store, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
@@ -44,7 +46,7 @@ type AccessControlDashboardGuardian struct {
 	log                         log.Logger
 	dashboardID                 int64
 	dashboard                   *models.Dashboard
-	user                        *models.SignedInUser
+	user                        *user.SignedInUser
 	store                       sqlstore.Store
 	ac                          accesscontrol.AccessControl
 	folderPermissionsService    accesscontrol.FolderPermissionsService
@@ -182,9 +184,9 @@ func (a *AccessControlDashboardGuardian) GetACL() ([]*models.DashboardACLInfoDTO
 			continue
 		}
 
-		var role *models.RoleType
+		var role *org.RoleType
 		if p.BuiltInRole != "" {
-			tmp := models.RoleType(p.BuiltInRole)
+			tmp := org.RoleType(p.BuiltInRole)
 			role = &tmp
 		}
 

@@ -124,7 +124,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			}
 		}
 
-		if extUser.AuthModule == models.AuthModuleLDAP && usr.IsDisabled {
+		if extUser.AuthModule == login.LDAPAuthModule && usr.IsDisabled {
 			// Re-enable user when it found in LDAP
 			if errDisableUser := ls.SQLStore.DisableUser(ctx,
 				&models.DisableUserCommand{

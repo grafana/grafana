@@ -10,8 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/require"
@@ -46,6 +49,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		store = &sqlStore{
 			db:  sqlstore.InitTestDB(t),
 			log: log.New(),
+			cfg: setting.NewCfg(),
 		}
 
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
@@ -72,7 +76,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		setup(t)
 
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
@@ -129,7 +133,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Can read properties", func(t *testing.T) {
 		setup(t)
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
 		alert := alertQuery.Result[0]
@@ -150,7 +154,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Viewer can read alerts", func(t *testing.T) {
 		setup(t)
-		viewerUser := &models.SignedInUser{OrgRole: models.ROLE_VIEWER, OrgId: 1}
+		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgId: 1}
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
@@ -170,7 +174,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		})
 
 		t.Run("Alerts should be updated", func(t *testing.T) {
-			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
@@ -219,7 +223,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		t.Run("Should save 3 dashboards", func(t *testing.T) {
 			require.Nil(t, err)
 
-			queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+			queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &queryForDashboard)
 
 			require.Nil(t, err2)
@@ -232,7 +236,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			err = store.SaveAlerts(context.Background(), testDash.Id, missingOneAlert)
 
 			t.Run("should delete the missing alert", func(t *testing.T) {
-				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 				err2 := store.HandleAlertsQuery(context.Background(), &query)
 				require.Nil(t, err2)
 				require.Equal(t, 2, len(query.Result))
@@ -262,7 +266,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		t.Run("Alerts should be removed", func(t *testing.T) {
-			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
@@ -289,7 +293,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 		stateDateAfterPause := stateDateBeforePause
 
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
