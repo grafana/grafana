@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -27,7 +28,7 @@ var _ plugins.RendererManager = (*PluginManager)(nil)
 var _ plugins.SecretsPluginManager = (*PluginManager)(nil)
 
 type PluginManager struct {
-	cfg             *plugins.Cfg
+	cfg             *config.Cfg
 	pluginRegistry  registry.Service
 	pluginInstaller installer.Service
 	pluginLoader    loader.Service
@@ -42,10 +43,11 @@ type PluginSource struct {
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
+	pCfg := config.FromGrafanaCfg(grafanaCfg)
+	pm := New(pCfg, pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
+		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(pCfg)...)},
 	}, pluginLoader)
 	if err := pm.Init(); err != nil {
 		return nil, err
@@ -53,7 +55,7 @@ func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pl
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service) *PluginManager {
+func New(cfg *config.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service) *PluginManager {
 	return &PluginManager{
 		cfg:             cfg,
 		pluginLoader:    pluginLoader,
@@ -265,7 +267,7 @@ func corePluginPaths(cfg *setting.Cfg) []string {
 }
 
 // pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
-func pluginSettingPaths(cfg *setting.Cfg) []string {
+func pluginSettingPaths(cfg *config.Cfg) []string {
 	var pluginSettingDirs []string
 	for _, settings := range cfg.PluginSettings {
 		path, exists := settings["path"]

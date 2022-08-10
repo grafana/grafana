@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -25,7 +26,7 @@ const (
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakeLoader{}
-		pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []PluginSource{
+		pm := New(&config.Cfg{}, newFakePluginRegistry(), []PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
@@ -310,7 +311,7 @@ func TestPluginManager_registeredPlugins(t *testing.T) {
 		)
 		require.True(t, decommissionedPlugin.IsDecommissioned())
 
-		pm := New(&plugins.Cfg{}, &fakePluginRegistry{
+		pm := New(&config.Cfg{}, &fakePluginRegistry{
 			store: map[string]*plugins.Plugin{
 				testPluginID: decommissionedPlugin,
 				"test-app":   {},
@@ -523,7 +524,7 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), nil, &fakeLoader{})
+	pm := New(&config.Cfg{}, newFakePluginRegistry(), nil, &fakeLoader{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -574,7 +575,7 @@ type managerScenarioCtx struct {
 
 func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerScenarioCtx)) {
 	t.Helper()
-	cfg := &plugins.Cfg{}
+	cfg := &config.Cfg{}
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
 	cfg.AWSAssumeRoleEnabled = true
 	cfg.Azure = &azsettings.AzureSettings{

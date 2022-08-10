@@ -2,21 +2,21 @@ package signature
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
-func NewUnsignedAuthorizer(cfg *plugins.Cfg) *UnsignedPluginAuthorizer {
+func ProvideOSSAuthorizer(cfg *config.Cfg) *UnsignedPluginAuthorizer {
+	return NewUnsignedAuthorizer(cfg)
+}
+
+func NewUnsignedAuthorizer(cfg *config.Cfg) *UnsignedPluginAuthorizer {
 	return &UnsignedPluginAuthorizer{
 		cfg: cfg,
 	}
 }
 
-func ProvideOSSAuthorizer(cfg *setting.Cfg) *UnsignedPluginAuthorizer {
-	return NewUnsignedAuthorizer(plugins.FromGrafanaCfg(cfg))
-}
-
 type UnsignedPluginAuthorizer struct {
-	cfg *plugins.Cfg
+	cfg *config.Cfg
 }
 
 func (u *UnsignedPluginAuthorizer) CanLoadPlugin(p *plugins.Plugin) bool {
