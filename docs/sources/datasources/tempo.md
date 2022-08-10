@@ -210,14 +210,14 @@ For more information, refer to the [APM dashboard documentation](https://grafana
 
 To display the APM table:
 
-1. Activate the `tempoApmTable` feature flag in your Grafana `ini` file.
+1. Activate the `tempoApmTable` feature flag in your `grafana.ini` file.
 1. Link a Prometheus data source in the Tempo data source settings.
 1. Navigate to [Explore]({{< relref "../explore/_index.md" >}}).
 1. Select the Tempo data source.
 1. Select the **Service Graph** query type and run the query.
 1. (Optional): Filter your results.
 
-> Note: The metric `traces_spanmetrics_calls_total` is used to display the name, rate, and error rate columns and `traces_spanmetrics_latency_bucket` is used to display the duration column. These metrics need to exist in your Prometheus data source.
+> **Note:** The metric `traces_spanmetrics_calls_total` is used to display the name, rate, and error rate columns and `traces_spanmetrics_latency_bucket` is used to display the duration column. These metrics need to exist in your Prometheus data source.
 
 Click a row in the rate, error rate, or duration columns to open a query in Prometheus with the span name of that row automatically set in the query.
 Click a row in the links column to open a query in Tempo with the span name of that row automatically set in the query.
