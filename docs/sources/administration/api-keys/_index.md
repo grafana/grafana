@@ -14,23 +14,17 @@ weight: 700
 
 # API keys
 
-API keys can be used to interact with Grafana HTTP APIs.
-
-We recommend using service accounts instead of API keys if you are on Grafana 8.5+, for more information refer to [About service accounts]({{< relref "../service-accounts/about-service-accounts/#" >}}).
-
-{{< section >}}
-
-## About API keys
-
 An API key is a randomly generated string that external systems use to interact with Grafana HTTP APIs.
 
-When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources. For more information about creating API keys, refer to [Create an API key]({{< relref "create-api-key/#" >}}).
+When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources.
+
+> **Note:** If you use Grafana v8.5 or newer, use service accounts instead of API keys. For more information, refer to [Service accounts]({{< relref "../service-accounts/" >}}).
+
+{{< section >}}
 
 ## Create an API key
 
 Create an API key when you want to manage your computed workload with a user.
-
-For more information about API keys, refer to [About API keys in Grafana]({{< relref "about-api-keys/" >}}).
 
 This topic shows you how to create an API key using the Grafana UI. You can also create an API key using the Grafana HTTP API. For more information about creating API keys via the API, refer to [Create API key via API]({{< relref "../../developers/http_api/create-api-tokens-for-org/#how-to-create-a-new-organization-and-an-api-token" >}}).
 

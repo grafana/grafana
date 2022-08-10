@@ -25,7 +25,7 @@ import (
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
-
+var errInvalidRecipientFormat = errors.New("invalid recipient (datasource) identifier format. Only integer is expected")
 var NotImplementedResp = ErrResp(http.StatusNotImplemented, errors.New("endpoint not implemented"), "")
 
 func toMacaronPath(path string) string {
@@ -37,7 +37,8 @@ func toMacaronPath(path string) string {
 
 func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
-	if ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache); err == nil {
+	ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
+	if err == nil {
 		switch ds.Type {
 		case "loki", "prometheus":
 			return apimodels.LoTexRulerBackend, nil
@@ -47,7 +48,7 @@ func backendTypeByUID(ctx *models.ReqContext, cache datasources.CacheService) (a
 			return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
 		}
 	}
-	return 0, fmt.Errorf("unexpected backend type (%v)", datasourceUID)
+	return 0, errors.New("no datasource was found matching the given UID")
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
@@ -100,7 +101,7 @@ func (p *AlertingProxy) withReq(
 	if datasourceID != "" {
 		recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
 		if err != nil {
-			return ErrResp(http.StatusBadRequest, err, "DatasourceID is invalid")
+			return ErrResp(http.StatusBadRequest, errInvalidRecipientFormat, "")
 		}
 
 		p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)

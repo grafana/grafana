@@ -131,7 +131,7 @@ export const RolePicker = ({
   }
 
   return (
-    <div data-testid="role-picker" style={{ position: 'relative' }} ref={ref}>
+    <div data-testid="role-picker" style={{ position: 'relative', width: ROLE_PICKER_WIDTH }} ref={ref}>
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
           builtInRole={selectedBuiltInRole}
