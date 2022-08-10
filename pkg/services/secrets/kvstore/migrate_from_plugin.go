@@ -38,9 +38,7 @@ func ProvideMigrateFromPluginService(
 
 func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	s.logger.Debug("starting migration of plugin secrets to unified secrets")
-	// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
-	// the secrets store would be the plugin.
-
+	// access the plugin directly
 	plugin, err := startAndReturnPlugin(s.manager, context.Background())
 	if err != nil {
 		s.logger.Error("Error retrieiving plugin", "error", err.Error())
@@ -54,8 +52,8 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 		s.logger.Error("Failed to retrieve all secrets from plugin")
 		return err
 	}
-	keys := res.Keys
-	s.logger.Debug("retrieved all secrets from plugin", "num secrets", len(keys))
+	s.logger.Debug("retrieved all secrets from plugin", "num secrets", len(res.Keys))
+	// create a secret sql store manually
 	secretsSql := &secretsKVStoreSQL{
 		sqlStore:       s.sqlStore,
 		secretsService: s.secretsService,
@@ -64,7 +62,7 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 			cache: make(map[int64]cachedDecrypted),
 		},
 	}
-	for _, k := range keys {
+	for _, k := range res.Keys {
 		// Get each secret description from plugin and handle errors
 		v, exists, err := s.secretsStore.Get(ctx, k.OrgId, k.Namespace, k.Type)
 		if err != nil {
@@ -77,7 +75,8 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 		}
 		// Add to sql store
 		secretsSql.Set(ctx, k.OrgId, k.Namespace, k.Type, v)
-
+		// Delete from the plugin
+		s.secretsStore.Del(ctx, k.OrgId, k.Namespace, k.Type)
 	}
 
 	return nil
