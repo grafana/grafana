@@ -187,7 +187,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
           value={value ?? null}
-          invalid={!!error || !!this.props.invalid}
+          invalid={Boolean(error) || Boolean(this.props.invalid)}
           getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
               return (

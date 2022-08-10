@@ -337,7 +337,7 @@ export function SelectBase<T>({
             return <SingleValue {...props} disabled={disabled} />;
           },
           SelectContainer(props: ContainerProps) {
-            return <SelectContainer {...props} invalid={!!invalid} />;
+            return <SelectContainer {...props} invalid={Boolean(invalid)} />;
           },
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
