@@ -32,7 +32,7 @@ func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 	if _, err := os.Stat(fpath); err == nil {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning since the path is hardcoded above
-		body, err := ioutil.ReadFile(fpath)
+		body, err := os.ReadFile(fpath)
 		if err != nil {
 			return g, err
 		}

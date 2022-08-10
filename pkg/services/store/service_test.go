@@ -3,7 +3,7 @@ package store
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -24,9 +24,9 @@ var (
 			AllowUnsanitizedSvgUpload: true,
 		},
 	}
-	htmlBytes, _        = ioutil.ReadFile("testdata/page.html")
-	jpgBytes, _         = ioutil.ReadFile("testdata/image.jpg")
-	svgBytes, _         = ioutil.ReadFile("testdata/image.svg")
+	htmlBytes, _        = os.ReadFile("testdata/page.html")
+	jpgBytes, _         = os.ReadFile("testdata/image.jpg")
+	svgBytes, _         = os.ReadFile("testdata/image.svg")
 	dummyUser           = &user.SignedInUser{OrgId: 1}
 	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		return map[string]filestorage.PathFilter{

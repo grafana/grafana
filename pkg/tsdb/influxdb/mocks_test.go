@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -96,7 +97,7 @@ func (rt *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 		res.Body = ioutil.NopCloser(bytes.NewBufferString(rt.Body))
 	}
 	if rt.FileName != "" {
-		b, err := ioutil.ReadFile(rt.FileName)
+		b, err := os.ReadFile(rt.FileName)
 		if err != nil {
 			return res, fmt.Errorf("error reading testdata file %s", rt.FileName)
 		}

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -18,7 +19,7 @@ func loadTestData(tb testing.TB, file string) []byte {
 	tb.Helper()
 	// Safe to disable, this is a test.
 	// nolint:gosec
-	content, err := ioutil.ReadFile(filepath.Join("testdata", file+".txt"))
+	content, err := os.ReadFile(filepath.Join("testdata", file+".txt"))
 	require.NoError(tb, err, "expected to be able to read file")
 	require.True(tb, len(content) > 0)
 	return content
@@ -28,7 +29,7 @@ func checkTestData(t *testing.T, file string) *backend.DataResponse {
 	t.Helper()
 	// Safe to disable, this is a test.
 	// nolint:gosec
-	content, err := ioutil.ReadFile(filepath.Join("testdata", file+".txt"))
+	content, err := os.ReadFile(filepath.Join("testdata", file+".txt"))
 	require.NoError(t, err, "expected to be able to read file")
 	require.True(t, len(content) > 0)
 
@@ -149,7 +150,7 @@ func TestConverter_Convert_NumFrameFields(t *testing.T) {
 	}
 	// Safe to disable, this is a test.
 	// nolint:gosec
-	want, err := ioutil.ReadFile(goldenFile)
+	want, err := os.ReadFile(goldenFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +230,7 @@ func TestConverter_Convert_NumFrameFields_LabelsColumn(t *testing.T) {
 	}
 	// Safe to disable, this is a test.
 	// nolint:gosec
-	want, err := ioutil.ReadFile(goldenFile)
+	want, err := os.ReadFile(goldenFile)
 	if err != nil {
 		t.Fatal(err)
 	}

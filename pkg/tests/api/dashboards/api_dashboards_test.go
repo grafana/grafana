@@ -124,7 +124,7 @@ providers:
    path: %s`, provDashboardsDir))
 	err := os.WriteFile(provDashboardsCfg, blob, 0644)
 	require.NoError(t, err)
-	input, err := ioutil.ReadFile(filepath.Join("./home.json"))
+	input, err := os.ReadFile(filepath.Join("./home.json"))
 	require.NoError(t, err)
 	provDashboardFile := filepath.Join(provDashboardsDir, "home.json")
 	err = ioutil.WriteFile(provDashboardFile, input, 0644)

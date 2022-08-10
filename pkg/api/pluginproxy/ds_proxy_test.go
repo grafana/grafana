@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -275,7 +276,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			var authorizationHeaderCall2 string
 
 			t.Run("first call should add authorization header with access token", func(t *testing.T) {
-				json, err := ioutil.ReadFile("./test-data/access-token-1.json")
+				json, err := os.ReadFile("./test-data/access-token-1.json")
 				require.NoError(t, err)
 
 				originalClient := client
@@ -303,7 +304,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				assert.True(t, strings.HasPrefix(authorizationHeaderCall1, "Bearer eyJ0e"))
 
 				t.Run("second call to another route should add a different access token", func(t *testing.T) {
-					json2, err := ioutil.ReadFile("./test-data/access-token-2.json")
+					json2, err := os.ReadFile("./test-data/access-token-2.json")
 					require.NoError(t, err)
 
 					req, err := http.NewRequest("GET", "http://localhost/asd", nil)

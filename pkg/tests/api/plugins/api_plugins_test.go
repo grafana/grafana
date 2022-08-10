@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -144,7 +145,7 @@ func grafanaAPIURL(username string, grafanaListedAddr string, path string) strin
 
 func expectedResp(t *testing.T, filename string) string {
 	//nolint:GOSEC
-	contents, err := ioutil.ReadFile(filepath.Join("data", filename))
+	contents, err := os.ReadFile(filepath.Join("data", filename))
 	if err != nil {
 		t.Errorf("failed to load %s: %v", filename, err)
 	}

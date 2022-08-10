@@ -676,12 +676,12 @@ func toPluginDTO(pluginDir, pluginID string) (InstalledPlugin, error) {
 
 	// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 	// nolint:gosec
-	data, err := ioutil.ReadFile(distPluginDataPath)
+	data, err := os.ReadFile(distPluginDataPath)
 	if err != nil {
 		pluginDataPath := filepath.Join(pluginDir, pluginID, "plugin.json")
 		// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 		// nolint:gosec
-		data, err = ioutil.ReadFile(pluginDataPath)
+		data, err = os.ReadFile(pluginDataPath)
 		if err != nil {
 			return InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginID + " in " + pluginDir)
 		}

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -22,7 +23,7 @@ func main() {
 	}
 
 	//nolint
-	b, err := ioutil.ReadFile(input)
+	b, err := os.ReadFile(input)
 	if err != nil {
 		log.Fatal(err)
 	}

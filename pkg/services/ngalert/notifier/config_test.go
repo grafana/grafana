@@ -3,6 +3,7 @@ package notifier
 import (
 	"errors"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -87,7 +88,7 @@ func TestPersistTemplates(t *testing.T) {
 				}
 				// Safe to disable, this is a test.
 				// nolint:gosec
-				content, err := ioutil.ReadFile(filepath.Join(dir, f.Name()))
+				content, err := os.ReadFile(filepath.Join(dir, f.Name()))
 				// nolint:gosec
 				require.NoError(t, err)
 				files[f.Name()] = string(content)
