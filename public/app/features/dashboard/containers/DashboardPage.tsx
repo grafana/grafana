@@ -372,8 +372,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const { editPanel, viewPanel, updateScrollTop } = this.state;
     const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
 
-    // isFNDashboard ? KioskMode.FN :
-
     if (!dashboard) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
     }
@@ -407,6 +405,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         scrollRef={this.setScrollRef}
         scrollTop={updateScrollTop}
       >
+        {!isFNDashboard && <DashboardPrompt dashboard={dashboard} />}
         {initError && <DashboardFailed />}
         {showSubMenu && (
           <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
