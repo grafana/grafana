@@ -45,9 +45,15 @@ func runListConflictUsers() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-		logger.Infof("---------- Conflicts --------\n")
-		logger.Infof(conflicts.String())
-		logger.Infof("---------------------------\n")
+		resolver := ConflictResolver{Users: conflicts}
+		logger.Infof("\n\nShowing Conflicts\n\n")
+		logger.Infof(resolver.String())
+		logger.Infof("\n")
+		// TODO: remove line when finished
+		// this is only for debugging
+		if len(resolver.DiscardedUsers) != 0 {
+			logDiscardedUsers(resolver.DiscardedUsers)
+		}
 		return nil
 	}
 }
@@ -66,29 +72,66 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-		tmpFile, err := generateConflictUsersFile(&conflicts)
+		resolver := ConflictResolver{Users: conflicts}
+		tmpFile, err := generateConflictUsersFile(&resolver)
 		if err != nil {
 			return fmt.Errorf("generating file return error: %w", err)
 		}
-		logger.Infof("edit the file \nvim %s\n\n", tmpFile.Name())
-		logger.Infof("once edited the file, you can either validate or ingest the file\n\n")
+		logger.Infof("\n\ngenerated file\n")
+		logger.Infof("%s\n\n", tmpFile.Name())
+		logger.Infof("once the file is edited and resolved conflicts, you can either validate or ingest the file\n\n")
+		if len(resolver.DiscardedUsers) != 0 {
+			logDiscardedUsers(resolver.DiscardedUsers)
+		}
 		return nil
 	}
 }
 
-func generateConflictUsersFile(conflicts *ConflictingUsers) (*os.File, error) {
+func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "conflicting_user_*.diff")
 	if err != nil {
 		return nil, err
 	}
-	if _, err := tmpFile.Write([]byte(conflicts.ToStringFileRepresentation())); err != nil {
+	if _, err := tmpFile.Write([]byte(r.ToFileRepresentation())); err != nil {
 		return nil, err
 	}
-	fmt.Printf("%s", conflicts.ToStringFileRepresentation())
 	return tmpFile, nil
 }
 
-func (c *ConflictingUsers) String() string {
+// Formatter make it possible for us to write to terminal and to a file
+// with different formats depending on the usecase
+type Formatter func(format string, a ...interface{}) string
+
+func BoldFormatter(format string, a ...interface{}) string {
+	white := color.New(color.FgWhite)
+	whiteBold := white.Add(color.Bold)
+	return whiteBold.Sprintf(format, a...)
+}
+
+func (c *ConflictingUsers) GetConflictBlocks(f Formatter) map[string]ConflictingUsers {
+	blocks := make(map[string]ConflictingUsers)
+	for _, user := range *c {
+		// conflict blocks is how we identify a conflict in the user base.
+		var conflictBlock string
+		if user.ConflictEmail != "" {
+			conflictBlock = f("conflict: %s", strings.ToLower(user.Email))
+		} else if user.ConflictLogin != "" {
+			conflictBlock = f("conflict: %s", strings.ToLower(user.Login))
+		} else if user.ConflictEmail != "" && user.ConflictLogin != "" {
+			// both conflicts
+			// should not be here unless changed in sql
+			conflictBlock = f("conflict: %s%s", strings.ToLower(user.Email), strings.ToLower(user.Login))
+		}
+		if _, ok := blocks[conflictBlock]; !ok {
+			blocks[conflictBlock] = []ConflictingUser{user}
+			continue
+		}
+		blocks[conflictBlock] = append(blocks[conflictBlock], user)
+	}
+	return blocks
+}
+
+func (r *ConflictResolver) String() string {
 	/*
 		hej@test.com+hej@test.com
 		id: 1, email: hej@test.com, login: hej@test.com
@@ -96,19 +139,70 @@ func (c *ConflictingUsers) String() string {
 		id: 3, email: hej@TEST.com, login: hej@TEST.com
 	*/
 	userIdentifiersSeen := make(map[string]bool)
+	seenUsers := make(map[string]bool)
+	discardConflictBlockToUserId := make(map[string]string)
 	str := ""
-	for _, user := range *c {
-		// print
-		if !userIdentifiersSeen[user.UserIdentifier] {
-			str += fmt.Sprintf("%s\n", user.UserIdentifier)
-			userIdentifiersSeen[user.UserIdentifier] = true
+	blocks := r.Users.GetConflictBlocks(BoldFormatter)
+	for block, users := range blocks {
+		for _, user := range users {
+			// we have some more tricky scenarios where we have more than two users that can have conflicts with each other
+			// we have made the approach to discard any users that we have seen
+			if seenUsers[user.Id] {
+				// Improvement: for now we make it easier for us by discarding if any users passes through again
+				discardConflictBlockToUserId[block] = user.Id
+				continue
+			}
+			seenUsers[user.Id] = true
+			// we already have a user with that has another conflict
+			// with the same user id
+			// once the users solve the first conflict
+			// this conflict will pass through on running the command again
+			if _, ok := discardConflictBlockToUserId[block]; ok {
+				continue
+			}
+
+			if !userIdentifiersSeen[block] {
+				str += fmt.Sprintf("%s\n", block)
+				userIdentifiersSeen[block] = true
+				str += fmt.Sprintf("+ id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+				continue
+			}
+			// mergable users
+			str += fmt.Sprintf("- id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 		}
-		str += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 	}
+	// set disgarded users
+	r.DiscardedUsers = discardConflictBlockToUserId
 	return str
 }
 
-func (c *ConflictingUsers) ToStringFileRepresentation() string {
+func logDiscardedUsers(discarded map[string]string) {
+	keys := make([]string, 0, len(discarded))
+	for _, v := range discarded {
+		keys = append(keys, v)
+	}
+	warn := color.YellowString("Note: We discarded some conflicts that have multiple conflicting types involved.")
+	logger.Infof(`
+%s
+
+users discarded with more than one conflict:
+ids: %s
+
+Solve conflicts and run the command again to see other conflicts.
+`, warn, keys)
+}
+
+// handling tricky cases::
+// if we have seen a user already
+// note the conflict of that user
+// discard that conflict for next time that the user runs the command
+
+// only present one conflict per user
+// go through each conflict email/login
+// if any has ids that have already been seen
+// discard that conflict
+// make note to the user to run again after fixing these conflicts
+func (r *ConflictResolver) ToFileRepresentation() string {
 	/*
 		hej@test.com+hej@test.com
 		+ id: 1, email: hej@test.com, login: hej@test.com
@@ -116,33 +210,53 @@ func (c *ConflictingUsers) ToStringFileRepresentation() string {
 		- id: 3, email: hej@TEST.com, login: hej@TEST.com
 	*/
 	userIdentifiersSeen := make(map[string]bool)
-	str := ""
-	for _, user := range *c {
-		// print
-		if !userIdentifiersSeen[user.UserIdentifier] {
-			str += fmt.Sprintf("%s\n", user.UserIdentifier)
-			userIdentifiersSeen[user.UserIdentifier] = true
-			str += fmt.Sprintf("+ id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
-			continue
+	seenUsers := make(map[string]bool)
+	discardConflictBlockToUserId := make(map[string]string)
+	fileString := ""
+
+	blocks := r.Users.GetConflictBlocks(fmt.Sprintf)
+	for block, users := range blocks {
+		for _, user := range users {
+			// we have some more tricky scenarios where we have more than two users that can have conflicts with each other
+			// we have made the approach to discard any users that we have seen
+			if seenUsers[user.Id] {
+				// Improvement: for now we make it easier for us by discarding if any users passes through again
+				discardConflictBlockToUserId[block] = user.Id
+				continue
+			}
+			seenUsers[user.Id] = true
+			// we already have a user with that has another conflict
+			// with the same user id
+			// once the users solve the first conflict
+			// this conflict will pass through on running the command again
+			if _, ok := discardConflictBlockToUserId[block]; ok {
+				continue
+			}
+
+			if !userIdentifiersSeen[block] {
+				fileString += fmt.Sprintf("%s\n", block)
+				userIdentifiersSeen[block] = true
+				fileString += fmt.Sprintf("+ id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+				continue
+			}
+			// mergable users
+			fileString += fmt.Sprintf("- id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 		}
-		// mergable users
-		str += fmt.Sprintf("- id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 	}
-	return str
+	// set disgarded users
+	r.DiscardedUsers = discardConflictBlockToUserId
+	return fileString
 }
 
-type conflictType string
-
-const (
-	Merge              conflictType = "merge"
-	SameIdentification conflictType = "same_identification"
-)
+type ConflictResolver struct {
+	Users          ConflictingUsers
+	DiscardedUsers map[string]string
+}
 
 type ConflictingUser struct {
 	// IDENTIFIER
-	// userIdentifier = login+email
-	Direction      string `xorm:"direction"`
-	UserIdentifier string `xorm:"user_identification"`
+	// TODO: should have conflict block in sql for performance and stability
+	Direction string `xorm:"direction"`
 	// FIXME: refactor change to correct type int64
 	Id    string `xorm:"id"`
 	Email string `xorm:"email"`
@@ -151,8 +265,8 @@ type ConflictingUser struct {
 	LastSeenAt string `xorm:"last_seen_at"`
 	AuthModule string `xorm:"auth_module"`
 	// currently not really used for anything
-	ConflictLoginEmail string `xorm:"conflict_login_email"`
-	ConflictId         bool   `xorm:"conflict_id"`
+	ConflictEmail string `xorm:"conflict_email"`
+	ConflictLogin string `xorm:"conflict_login"`
 }
 
 // always better to have a slice of the object
@@ -195,16 +309,16 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 }
 
 func GetUsersWithConflictingEmailsOrLogins(ctx *cli.Context, s *sqlstore.SQLStore) (ConflictingUsers, error) {
-	users := make([]ConflictingUser, 0)
+	queryUsers := make([]ConflictingUser, 0)
 	outerErr := s.WithDbSession(ctx.Context, func(dbSession *sqlstore.DBSession) error {
 		rawSQL := conflictingUserEntriesSQL(s)
-		err := dbSession.SQL(rawSQL).Find(&users)
+		err := dbSession.SQL(rawSQL).Find(&queryUsers)
 		return err
 	})
 	if outerErr != nil {
-		return users, outerErr
+		return queryUsers, outerErr
 	}
-	return users, nil
+	return queryUsers, nil
 }
 
 // conflictingUserEntriesSQL orders conflicting users by their user_identification
@@ -212,31 +326,33 @@ func GetUsersWithConflictingEmailsOrLogins(ctx *cli.Context, s *sqlstore.SQLStor
 func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	userDialect := db.DB.GetDialect(s).Quote("user")
 	sqlQuery := `
-	SELECT
-	LOWER(u1.login || '+' ||  u1.email) AS user_identification,
+	SELECT DISTINCT
 	u1.id,
 	u1.email,
 	u1.login,
 	u1.last_seen_at,
 	user_auth.auth_module,
 		( SELECT
-			u1.email
+			'conflict_email'
 		FROM
 			` + userDialect + `
 		WHERE (LOWER(u1.email) = LOWER(u2.email)) AND(u1.email != u2.email)) AS conflict_email,
 		( SELECT
-			u1.login
+			'conflict_login'
 		FROM
 			` + userDialect + `
-		WHERE (LOWER(u1.login) = LOWER(u2.login) AND(u1.login != u2.login))) AS conflict_login,
-		( SELECT u1.id
-			FROM ` + userDialect + `
-		WHERE ((u1.login = u2.login) AND(u1.email = u2.email) AND(u1.id != u2.id))) AS conflict_id
+		WHERE (LOWER(u1.login) = LOWER(u2.login) AND(u1.login != u2.login))) AS conflict_login
 	FROM
 		 ` + userDialect + ` AS u1, ` + userDialect + ` AS u2
 	LEFT JOIN user_auth on user_auth.user_id = u1.id
 	WHERE (conflict_email IS NOT NULL
-		OR conflict_login IS NOT NULL OR conflict_id IS NOT NULL)
-	ORDER BY user_identification, u1.id`
+		OR conflict_login IS NOT NULL)
+		AND (u1.` + notServiceAccount(s) + `)
+	ORDER BY conflict_email, conflict_login, u1.id`
 	return sqlQuery
+}
+
+func notServiceAccount(ss *sqlstore.SQLStore) string {
+	return fmt.Sprintf("is_service_account = %s",
+		ss.Dialect.BooleanStr(false))
 }

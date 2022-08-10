@@ -2,7 +2,7 @@ package commands
 
 import (
 	"context"
-	"fmt"
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -11,45 +11,254 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func TestUserManagerListConflictingUsers(t *testing.T) {
-	t.Run("should get conflicting users", func(t *testing.T) {
-		// Restore after destructive operation
-		sqlStore := sqlstore.InitTestDB(t)
-
-		for i := 0; i < 5; i++ {
-			cmd := user.CreateUserCommand{
-				Email: fmt.Sprint("user", i, "@test.com"),
-				Name:  fmt.Sprint("user", i),
-				Login: fmt.Sprint("loginuser", i),
-				OrgID: 1,
+func TestGetConflictingUsers(t *testing.T) {
+	type testListConflictingUsers struct {
+		desc         string
+		users        []user.User
+		want         int
+		wantConflict string
+		wantErr      error
+	}
+	testOrgID := 1
+	testCases := []testListConflictingUsers{
+		{
+			desc: "should get login conflicting users",
+			users: []user.User{
+				{
+					Email: "xo",
+					Login: "ldap-admin",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "ldap-admin",
+					Login: "LDAP-ADMIN",
+					OrgID: int64(testOrgID),
+				},
+			},
+			want:         2,
+			wantConflict: "conflict_login",
+		},
+		{
+			desc: "should get email conflicting users",
+			users: []user.User{
+				{
+					Email: "oauth-admin@example.org",
+					Login: "No confli",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "oauth-admin@EXAMPLE.ORG",
+					Login: "oauth-admin",
+					OrgID: int64(testOrgID),
+				},
+			},
+			want:         2,
+			wantConflict: "conflict_email",
+		},
+		// TODO:
+		// refactor the sql to get 3 users from this test
+		// if this is changed, one needs to correct the filerepresentation
+		{
+			desc: "should be 5 conflicting users, each conflict gets 2 users",
+			users: []user.User{
+				{
+					Email: "user1",
+					Login: "USER_DUPLICATE_TEST_LOGIN",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "user2",
+					Login: "user_duplicate_test_login",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "USER2",
+					Login: "no-conflict-login",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "no-conflict",
+					Login: "user_DUPLICATE_test_login",
+					OrgID: int64(testOrgID),
+				},
+			},
+			want: 5,
+		},
+		{
+			desc: "should be 8 conflicting users, each conflict gets 2 users",
+			users: []user.User{
+				{
+					Email: "user1",
+					Login: "USER_DUPLICATE_TEST_LOGIN",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "user2",
+					Login: "user_duplicate_test_login",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "USER2",
+					Login: "no-conflict-login",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "xo",
+					Login: "ldap-admin",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "ldap-admin",
+					Login: "LDAP-ADMIN",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "oauth-admin@example.org",
+					Login: "No confli",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "oauth-admin@EXAMPLE.ORG",
+					Login: "oauth-admin",
+					OrgID: int64(testOrgID),
+				},
+			},
+			want: 8,
+		},
+		{
+			desc: "should not get service accounts",
+			users: []user.User{
+				{
+					Email:            "sa-x",
+					Login:            "sa-x",
+					OrgID:            int64(testOrgID),
+					IsServiceAccount: true,
+				},
+				{
+					Email:            "sa-X",
+					Login:            "sa-X",
+					OrgID:            int64(testOrgID),
+					IsServiceAccount: true,
+				},
+			},
+			want: 0,
+		},
+		{
+			desc:    "should get nil when no users in database",
+			users:   []user.User{},
+			want:    0,
+			wantErr: nil,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Restore after destructive operation
+			sqlStore := sqlstore.InitTestDB(t)
+			for _, u := range tc.users {
+				cmd := user.CreateUserCommand{
+					Email:            u.Email,
+					Name:             u.Name,
+					Login:            u.Login,
+					OrgID:            int64(testOrgID),
+					IsServiceAccount: u.IsServiceAccount,
+				}
+				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				require.NoError(t, err)
 			}
-			_, err := sqlStore.CreateUser(context.Background(), cmd)
-			require.Nil(t, err)
-		}
-
-		// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-		if sqlStore.GetDialect().DriverName() != "mysql" {
-			dupUserEmailcmd := user.CreateUserCommand{
-				Email: "USERDUPLICATETEST1@TEST.COM",
-				Name:  "user name 1",
-				Login: "USER_DUPLICATE_TEST_1_LOGIN",
-			}
-			_, err := sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
-			require.NoError(t, err)
-
-			// add additional user with conflicting login where DOMAIN is upper case
-			dupUserLogincmd := user.CreateUserCommand{
-				Email: "userduplicatetest1@test.com",
-				Name:  "user name 1",
-				Login: "user_duplicate_test_1_login",
-			}
-			_, err = sqlStore.CreateUser(context.Background(), dupUserLogincmd)
-			require.NoError(t, err)
 			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
-			require.Equal(t, 2, len(m))
-		}
-	})
+			require.Equal(t, tc.want, len(m))
+			if tc.wantErr != nil {
+				require.EqualError(t, err, tc.wantErr.Error())
+			}
+		})
+	}
+}
+
+func TestGenerateConflictingUsersFile(t *testing.T) {
+	type testListConflictingUsers struct {
+		desc  string
+		users []user.User
+		want  string
+	}
+	testOrgID := 1
+	testCases := []testListConflictingUsers{
+		{
+			desc: "should get conflicting users",
+			users: []user.User{
+				{
+					Email: "user1",
+					Login: "USER_DUPLICATE_TEST_LOGIN",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "user2",
+					Login: "user_duplicate_test_login",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "USER2",
+					Login: "no-conflict-login",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "xo",
+					Login: "ldap-admin",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "ldap-admin",
+					Login: "LDAP-ADMIN",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "oauth-admin@example.org",
+					Login: "No confli",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "oauth-admin@EXAMPLE.ORG",
+					Login: "oauth-admin",
+					OrgID: int64(testOrgID),
+				},
+			},
+			want: `conflict: user_duplicate_test_login
+			+ id: 1, email: user1, login: USER_DUPLICATE_TEST_LOGIN
+			- id: 2, email: user2, login: user_duplicate_test_login
+			conflict: ldap-admin
+			+ id: 4, email: xo, login: ldap-admin
+			- id: 5, email: ldap-admin, login: LDAP-ADMIN
+			conflict: oauth-admin@example.org
+			+ id: 6, email: oauth-admin@example.org, login: No confli
+			- id: 7, email: oauth-admin@EXAMPLE.ORG, login: oauth-admin`,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Restore after destructive operation
+			sqlStore := sqlstore.InitTestDB(t)
+			for _, u := range tc.users {
+				cmd := user.CreateUserCommand{
+					Email:            u.Email,
+					Name:             u.Name,
+					Login:            u.Login,
+					OrgID:            int64(testOrgID),
+					IsServiceAccount: u.IsServiceAccount,
+				}
+				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				require.NoError(t, err)
+			}
+			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
+			require.NoError(t, err)
+			r := ConflictResolver{Users: m}
+			file, genErr := generateConflictUsersFile(&r)
+			require.NoError(t, genErr)
+			_, readErr := os.ReadFile(file.Name())
+			require.NoError(t, readErr)
+			// TODO: once implementation is finished make sure to write a test to make the file output the same as expected
+			// require.Equal(t, tc.want, string(b))
+		})
+	}
 }
 
 func TestMarshalConflictUser(t *testing.T) {
