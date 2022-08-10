@@ -1,8 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/add-panels-dynamically/about-repeating-panels-rows/
-  - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-rows/
-  - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-panels/
   - /docs/grafana/latest/panels/add-panels-dynamically/
   - /docs/grafana/latest/panels/repeat-panels-or-rows/
   - /docs/grafana/latest/panels/working-with-panels/add-title-and-description/
@@ -14,7 +11,6 @@ weight: 150
 keywords:
   - panel
   - dynamic
-  - rows
   - add
   - title
   - description
@@ -80,45 +76,13 @@ Explore and export panel, panel data, and data frame JSON models.
 
 1. To explore the JSON, click `>` to expand or collapse portions of the JSON model.
 
-## Configure repeating rows or panels
+## Configure repeating panels
 
-You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel (or row) is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard.
-
-> **Note:** Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
-
-Refer to the following links for examples of repeating panels and rows:
-
-- [Prometheus dashboard with repeating panels](https://play.grafana.org/d/000000036/prometheus-repeat)
-- [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows)
-
-The examples show that you can also repeat rows if you have variables set with `Multi-value` or
-`Include all values` selection option.
-
-### Configure repeating rows
-
-Complete the following steps to add repeating rows to a dashboard.
-
-**Before you begin:**
-
-- Ensure that the query includes a multi-value variable.
-
-**To configure repeating rows:**
-
-1. On the dashboard home page, click **Add panel**.
-
-1. On the **Add a panel** dialog box, click **Add a new row**.
-
-1. Hover over the row title and click the cog icon.
-
-1. On the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
-
-> **Note:** To provide context to dashboard users, add the variable to the row title.
-
-### Configure repeating panels
-
-For queries that return multiple values for a variable, you can configure Grafana to dynamically add panels based on those values.
+You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows](../../dashboards/add-organize-panels/#configure-repeating-rows).
 
 > **Note:** Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
+
+To see an example of repeating panels, refer to [Prometheus dashboard with repeating panels](https://play.grafana.org/d/000000036/prometheus-repeat).
 
 **Before you begin:**
 
