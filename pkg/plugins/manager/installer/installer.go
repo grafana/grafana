@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -125,7 +124,7 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 	i.log.Debugf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, pluginsDir)
 
 	// Create temp file for downloading zip file
-	tmpFile, err := ioutil.TempFile("", "*.zip")
+	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to create temporary file", err)
 	}

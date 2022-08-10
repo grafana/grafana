@@ -12,7 +12,7 @@ import (
 )
 
 func TestCopyFile(t *testing.T) {
-	src, err := ioutil.TempFile("", "")
+	src, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(src.Name())
@@ -21,7 +21,7 @@ func TestCopyFile(t *testing.T) {
 	err = ioutil.WriteFile(src.Name(), []byte("Contents"), 0600)
 	require.NoError(t, err)
 
-	dst, err := ioutil.TempFile("", "")
+	dst, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(dst.Name())
@@ -35,7 +35,7 @@ func TestCopyFile(t *testing.T) {
 func TestCopyFile_Permissions(t *testing.T) {
 	const perms = os.FileMode(0700)
 
-	src, err := ioutil.TempFile("", "")
+	src, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(src.Name())
@@ -46,7 +46,7 @@ func TestCopyFile_Permissions(t *testing.T) {
 	err = os.Chmod(src.Name(), perms)
 	require.NoError(t, err)
 
-	dst, err := ioutil.TempFile("", "")
+	dst, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(dst.Name())
@@ -65,7 +65,7 @@ func TestCopyFile_Permissions(t *testing.T) {
 // Test case where destination directory doesn't exist.
 func TestCopyFile_NonExistentDestDir(t *testing.T) {
 	// nolint:gosec
-	src, err := ioutil.TempFile("", "")
+	src, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(src.Name())
