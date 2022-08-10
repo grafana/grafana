@@ -4,13 +4,13 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 
-import { Breadcrumb as BreadcrumbType } from './types';
+import { Breadcrumb } from './types';
 
-type Props = BreadcrumbType & {
+type Props = Breadcrumb & {
   isCurrent: boolean;
 };
 
-export function Breadcrumb(props: Props) {
+export function BreadcrumbItem(props: Props) {
   const styles = useStyles2(getStyles);
   return (
     <li className={styles.breadcrumbWrapper}>

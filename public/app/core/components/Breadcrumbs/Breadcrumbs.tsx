@@ -4,11 +4,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { Breadcrumb } from './Breadcrumb';
-import { Breadcrumb as BreadcrumbType } from './types';
+import { BreadcrumbItem } from './BreadcrumbItem';
+import { Breadcrumb } from './types';
 
 export interface Props {
-  breadcrumbs: BreadcrumbType[];
+  breadcrumbs: Breadcrumb[];
 }
 
 export function Breadcrumbs({ breadcrumbs }: Props) {
@@ -18,7 +18,7 @@ export function Breadcrumbs({ breadcrumbs }: Props) {
     <nav aria-label="Breadcrumbs">
       <ol className={styles.breadcrumbs}>
         {breadcrumbs.map((breadcrumb, index) => (
-          <Breadcrumb {...breadcrumb} isCurrent={index === breadcrumbs.length - 1} key={index} />
+          <BreadcrumbItem {...breadcrumb} isCurrent={index === breadcrumbs.length - 1} key={index} />
         ))}
       </ol>
     </nav>
