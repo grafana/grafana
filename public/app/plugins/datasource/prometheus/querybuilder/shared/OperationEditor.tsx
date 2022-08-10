@@ -6,17 +6,16 @@ import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { OperationHeader } from './OperationHeader';
+import { getOperationParamEditor } from './OperationParamEditor';
+import { getOperationParamId } from './operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
   QueryBuilderOperationParamValue,
   VisualQueryModeller,
-} from '../shared/types';
-
-import { OperationHeader } from './OperationHeader';
-import { getOperationParamEditor } from './OperationParamEditor';
-import { getOperationParamId } from './operationUtils';
+} from './types';
 
 export interface Props {
   operation: QueryBuilderOperation;
