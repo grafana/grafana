@@ -42,7 +42,7 @@ func ProvideSecretMigrationService(
 // Migrate Run migration services. This will block until all services have exited.
 func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
 	// Start migration services.
-	return s.ServerLockService.LockAndExecute(ctx, "migrate secrets to unified secrets", time.Minute*10, func(context.Context) {
+	return s.ServerLockService.LockExecuteAndRelease(ctx, "migrate secrets job", time.Minute*10, func(context.Context) {
 		for _, service := range s.Services {
 			serviceName := reflect.TypeOf(service).String()
 			logger.Debug("Starting secret migration service", "service", serviceName)
