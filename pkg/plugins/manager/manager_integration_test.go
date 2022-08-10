@@ -56,14 +56,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	cfg := &setting.Cfg{
 		Raw:                    ini.Empty(),
 		Env:                    setting.Prod,
-		StaticRootPath:         staticRootPath,
-		BundledPluginsPath:     bundledPluginsPath,
 		IsFeatureToggleEnabled: features.IsEnabled,
-		PluginSettings: map[string]map[string]string{
-			"plugin.datasource-id": {
-				"path": "testdata/test-app",
-			},
-		},
 	}
 
 	tracer := &fakeTracer{}
@@ -92,8 +85,17 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf)
 
-	pmCfg := config.FromGrafanaCfg(cfg)
-	pm, err := ProvideService(cfg, registry.NewInMemory(), loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+	pCfg := &config.Cfg{
+		DevMode:            false,
+		StaticRootPath:     staticRootPath,
+		BundledPluginsPath: bundledPluginsPath,
+		PluginSettings: map[string]map[string]string{
+			"plugin.datasource-id": {
+				"path": "testdata/test-app",
+			},
+		},
+	}
+	pm, err := ProvideService(pCfg, registry.NewInMemory(), loader.New(pCfg, license, signature.NewUnsignedAuthorizer(pCfg),
 		provider.ProvideService(coreRegistry)))
 	require.NoError(t, err)
 

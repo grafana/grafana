@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/installer"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -42,12 +41,11 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
-	pCfg := config.FromGrafanaCfg(grafanaCfg)
-	pm := New(pCfg, pluginRegistry, []PluginSource{
-		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
-		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(pCfg)...)},
+func ProvideService(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
+	pm := New(cfg, pluginRegistry, []PluginSource{
+		{Class: plugins.Core, Paths: corePluginPaths(cfg.StaticRootPath)},
+		{Class: plugins.Bundled, Paths: []string{cfg.BundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg)...)},
 	}, pluginLoader)
 	if err := pm.Init(); err != nil {
 		return nil, err
@@ -259,10 +257,9 @@ func (m *PluginManager) shutdown(ctx context.Context) {
 }
 
 // corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()
-func corePluginPaths(cfg *setting.Cfg) []string {
-	datasourcePaths := filepath.Join(cfg.StaticRootPath, "app/plugins/datasource")
-	panelsPath := filepath.Join(cfg.StaticRootPath, "app/plugins/panel")
-
+func corePluginPaths(staticRootPath string) []string {
+	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
+	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
 	return []string{datasourcePaths, panelsPath}
 }
 

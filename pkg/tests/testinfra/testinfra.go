@@ -189,6 +189,8 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = serverSect.NewKey("port", "0")
 	require.NoError(t, err)
+	_, err = serverSect.NewKey("static_root_path", publicDir)
+	require.NoError(t, err)
 
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
