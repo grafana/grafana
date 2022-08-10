@@ -2,7 +2,7 @@ package webtest
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -61,7 +61,7 @@ func verifyRequest(t *testing.T, s *Server, req *http.Request, expectedBody stri
 	} else {
 		require.Equal(t, http.MethodPost, req.Method)
 		require.NotNil(t, req.Body)
-		bytes, err := ioutil.ReadAll(req.Body)
+		bytes, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		require.Equal(t, expectedBody, string(bytes))
 	}
@@ -96,7 +96,7 @@ func TestServerClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 
@@ -118,7 +118,7 @@ func TestServerClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 

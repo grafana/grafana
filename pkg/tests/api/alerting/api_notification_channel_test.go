@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -59,7 +58,7 @@ func TestTestReceivers(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		res := Response{}
 		err = json.Unmarshal(b, &res)
@@ -110,7 +109,7 @@ func TestTestReceivers(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -189,7 +188,7 @@ func TestTestReceivers(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -276,7 +275,7 @@ func TestTestReceivers(t *testing.T) {
 		})
 		require.Equal(t, http.StatusRequestTimeout, resp.StatusCode)
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -375,7 +374,7 @@ func TestTestReceivers(t *testing.T) {
 		})
 		require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -478,7 +477,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -568,7 +567,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -655,7 +654,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -752,7 +751,7 @@ func TestNotificationChannels(t *testing.T) {
 		// There are no notification channel config initially - so it returns the default configuration.
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, string(b))
 	}
@@ -812,14 +811,14 @@ func TestNotificationChannels(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 202, resp.StatusCode)
 		require.JSONEq(t, `{"message":"configuration deleted; the default is applied"}`, string(b))
 
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 		resp = getRequest(t, alertsURL, http.StatusOK) // nolint
-		b, err = ioutil.ReadAll(resp.Body)
+		b, err = io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, string(b))
 	}
