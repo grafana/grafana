@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -51,7 +50,6 @@ func TestApi_getUsageStats(t *testing.T) {
 
 	sqlStore.ExpectedSystemStats = &models.SystemStats{}
 	sqlStore.ExpectedDataSourceStats = []*models.DataSourceStats{}
-	sqlStore.ExpectedDataSources = []*datasources.DataSource{}
 	sqlStore.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{}
 	sqlStore.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{}
 

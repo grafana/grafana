@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -70,13 +69,6 @@ type Store interface {
 	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
-	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
-	GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error
-	GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error
-	GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error
-	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
-	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error
-	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error
 	Migrate(bool) error
 	Sync() error
 	Reset() error
