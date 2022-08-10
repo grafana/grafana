@@ -77,7 +77,7 @@ export const language: monacoType.languages.IMonarchLanguage = {
       [/{{-?/, TokenType.Delimiter],
       [/-?}}/, TokenType.Delimiter],
       // variables
-      // [/\.([A-Za-z]+)?/, TokenType.Variable],
+      [/\.([A-Za-z]+)?/, TokenType.Variable],
       // identifiers and keywords
       [
         /[a-zA-Z_]\w*/,
