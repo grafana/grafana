@@ -92,7 +92,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:146069464": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:3658171175": [
+    "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:2659566901": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:1551927716": [
@@ -7311,9 +7311,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
