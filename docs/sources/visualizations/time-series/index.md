@@ -36,7 +36,7 @@ Time series visualization is the default and primary way to visualize time serie
 
 > **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and then select the **Time series** visualization. Grafana transfers all applicable settings.
 
-# Tooltip options
+## Tooltip options
 
 Tooltip options control the small info overlay that appears when you hover over data points in the graph.
 
@@ -47,12 +47,6 @@ Tooltip options control the small info overlay that appears when you hover over 
 Legend options control the series names and stats that can be shown under or the the right of the graph.
 
 {{< docs/shared "visualizations/legend-mode.md" >}}
-
-### Legend calculations
-
-Choose which of the [standard calculations]({{< relref "../../panels/calculation-types/" >}}) to show in the legend. You can have more than one.
-
-For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
 ## Graph styles
 
@@ -145,22 +139,6 @@ Choose how null values (gaps in the data) are displayed on the graph. Null value
 - **Always** - Time series data points with gaps in the the data are always connected.
 - **Threshold** - A threshold can be set above which gaps in the data should no longer be connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range and gaps outside this range should no longer be connected.
 
-### Fill below to
-
-This option is only available as series / field an override.
-
-Fill the area between two series. On the Overrides tab:
-
-1. Select the fields to fill below.
-1. In **Add override property**, select **Fill below to**.
-1. Select the series that you want the fill to stop at.
-
-This example below shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
-
-{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
-
-{{< docs/shared "visualizations/change-axis-link.md" >}}
-
 ### Stack series
 
 _Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. You can read more on why stacking may be not the best approach here: [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html).
@@ -181,9 +159,23 @@ Stack series in the same group. In the Overrides section:
 1. Click on **Normal** stacking mode.
 1. Name the stacking group you want the series to appear in. The stacking group name option is only available when creating an override.
 
+### Fill below to
+
+This option is only available as series / field an override.
+
+Fill the area between two series. On the Overrides tab:
+
+1. Select the fields to fill below.
+1. In **Add override property**, select **Fill below to**.
+1. Select the series that you want the fill to stop at.
+
+This example below shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
+
+{{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
+
 ## Axis options
 
-Use the following field settings to refine how your axes display. Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
+Under the axis cateogry you find options that change how the y and x axis are rendered. Some options will not take affect until you click outside of the field option box you are editing or press Enter.
 
 ### Placement
 
