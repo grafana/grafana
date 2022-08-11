@@ -46,6 +46,7 @@ const datasource = new LokiDatasource(
     url: '',
     jsonData: {},
     meta: {} as DataSourcePluginMeta,
+    readOnly: false,
   },
   undefined,
   undefined

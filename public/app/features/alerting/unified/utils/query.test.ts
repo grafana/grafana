@@ -55,6 +55,7 @@ describe('alertRuleToQueries', () => {
           access: 'proxy',
           meta: {} as PluginMeta,
           jsonData: {} as DataSourceJsonData,
+          readOnly: false,
         },
       },
     };

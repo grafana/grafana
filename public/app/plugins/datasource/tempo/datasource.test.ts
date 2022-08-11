@@ -691,6 +691,7 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
       enabled: true,
     },
   },
+  readOnly: false,
 };
 
 const rateMetric = new MutableDataFrame({

@@ -128,6 +128,7 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
       meta,
       access: 'proxy',
       jsonData: {},
+      readOnly: false,
     },
     api: {
       components: {
