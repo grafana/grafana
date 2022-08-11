@@ -6266,6 +6266,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
+    "public/app/plugins/datasource/cloud-monitoring/__mocks__/instanceSettings.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/datasource/cloud-monitoring/__mocks__/utils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/plugins/datasource/cloud-monitoring/annotationSupport.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
