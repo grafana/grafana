@@ -1,5 +1,9 @@
 import { AlignmentTypes, CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery } from '../types';
 
+type Subset<K> = {
+  [attr in keyof K]?: K[attr] extends object ? Subset<K[attr]> : K[attr];
+};
+
 export const createMockMetricQuery: (overrides?: Partial<MetricQuery>) => MetricQuery = (
   overrides?: Partial<MetricQuery>
 ) => {
@@ -31,7 +35,7 @@ export const createMockSLOQuery: (overrides?: Partial<SLOQuery>) => SLOQuery = (
   };
 };
 
-export const createMockQuery: (overrides?: Partial<CloudMonitoringQuery>) => CloudMonitoringQuery = (overrides) => {
+export const createMockQuery: (overrides?: Subset<CloudMonitoringQuery>) => CloudMonitoringQuery = (overrides) => {
   return {
     datasource: {
       type: 'stackdriver',

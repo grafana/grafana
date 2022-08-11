@@ -1,20 +1,11 @@
-import { get, set } from 'lodash';
-
-import * as ts from 'app/features/templating/template_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createMockQuery } from './__mocks__/cloudMonitoringQuery';
 import { createMockInstanceSetttings } from './__mocks__/instanceSettings';
-import { createTemplateVariables } from './__mocks__/utils';
 import Datasource from './datasource';
-
-const templateSrv = new ts.TemplateSrv();
 
 describe('Cloud Monitoring Datasource', () => {
   describe('interpolateVariablesInQueries', () => {
-    beforeEach(() => {
-      templateSrv.init([]);
-    });
-
     it('should leave a query unchanged if there are no template variables', () => {
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings);
@@ -24,19 +15,14 @@ describe('Cloud Monitoring Datasource', () => {
     });
 
     it('should correctly apply template variables', () => {
-      const templateVariables = createTemplateVariables(['metricQuery.projectName']);
-      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const templateSrv = new TemplateSrv();
+      templateSrv.replace = jest.fn().mockReturnValue('project-variable');
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings, templateSrv);
-      const query = createMockQuery({ hide: false });
-      for (const [path, templateVariable] of templateVariables.entries()) {
-        set(query, path, `$${templateVariable.variableName}`);
-      }
+      const query = createMockQuery({ hide: false, metricQuery: { projectName: '$testVar' } });
       const templatedQuery = ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
-      for (const [path, templateVariable] of templateVariables.entries()) {
-        expect(get(templatedQuery[0], path)).toEqual(templateVariable.templateVariable.current.value);
-      }
+      expect(templatedQuery[0].metricQuery.projectName).toEqual('project-variable');
     });
   });
 });
