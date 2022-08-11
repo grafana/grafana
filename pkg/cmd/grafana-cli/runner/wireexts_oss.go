@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/thumbs"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -48,8 +49,6 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
-	// ossencryption.ProvideService,
-	// wire.Bind(new(encryption.Internal), new(*ossencryption.Service)),
 	auth.ProvideUserAuthTokenService,
 	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
 	wire.Bind(new(models.UserTokenBackgroundService), new(*auth.UserAuthTokenService)),
@@ -69,7 +68,7 @@ var wireExtsSet = wire.NewSet(
 	authinfoservice.ProvideOSSUserProtectionService,
 	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
 	filters.ProvideOSSSearchUserFilter,
-	wire.Bind(new(models.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
+	wire.Bind(new(user.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	signature.ProvideOSSAuthorizer,

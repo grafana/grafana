@@ -14,11 +14,11 @@ import (
 // createQuery adds a query into query history
 func (s QueryHistoryService) createQuery(ctx context.Context, user *user.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error) {
 	queryHistory := QueryHistory{
-		OrgID:         user.OrgId,
+		OrgID:         user.OrgID,
 		UID:           util.GenerateShortUID(),
 		Queries:       cmd.Queries,
 		DatasourceUID: cmd.DatasourceUID,
-		CreatedBy:     user.UserId,
+		CreatedBy:     user.UserID,
 		CreatedAt:     time.Now().Unix(),
 		Comment:       "",
 	}
@@ -113,13 +113,13 @@ func (s QueryHistoryService) deleteQuery(ctx context.Context, user *user.SignedI
 	var queryID int64
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
 		// Try to unstar the query first
-		_, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserId, UID).Delete(QueryHistoryStar{})
+		_, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserID, UID).Delete(QueryHistoryStar{})
 		if err != nil {
-			s.log.Error("Failed to unstar query while deleting it from query history", "query", UID, "user", user.UserId, "error", err)
+			s.log.Error("Failed to unstar query while deleting it from query history", "query", UID, "user", user.UserID, "error", err)
 		}
 
 		// Then delete it
-		id, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Delete(QueryHistory{})
+		id, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Delete(QueryHistory{})
 		if err != nil {
 			return err
 		}
@@ -140,7 +140,7 @@ func (s QueryHistoryService) patchQueryComment(ctx context.Context, user *user.S
 	var isStarred bool
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
-		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Get(&queryHistory)
+		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (s QueryHistoryService) patchQueryComment(ctx context.Context, user *user.S
 			return err
 		}
 
-		starred, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserId, UID).Exist()
+		starred, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserID, UID).Exist()
 		if err != nil {
 			return err
 		}
@@ -186,7 +186,7 @@ func (s QueryHistoryService) starQuery(ctx context.Context, user *user.SignedInU
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
 		// Check if query exists as we want to star only existing queries
-		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Get(&queryHistory)
+		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
 			return err
 		}
@@ -196,7 +196,7 @@ func (s QueryHistoryService) starQuery(ctx context.Context, user *user.SignedInU
 
 		// If query exists then star it
 		queryHistoryStar := QueryHistoryStar{
-			UserID:   user.UserId,
+			UserID:   user.UserID,
 			QueryUID: UID,
 		}
 
@@ -235,7 +235,7 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *user.SignedI
 	var isStarred bool
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
-		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgId, user.UserId, UID).Get(&queryHistory)
+		exists, err := session.Table("query_history").Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, UID).Get(&queryHistory)
 		if err != nil {
 			return err
 		}
@@ -243,7 +243,7 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *user.SignedI
 			return ErrQueryNotFound
 		}
 
-		id, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserId, UID).Delete(QueryHistoryStar{})
+		id, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserID, UID).Delete(QueryHistoryStar{})
 		if id == 0 {
 			return ErrStarredQueryNotFound
 		}
@@ -273,7 +273,7 @@ func (s QueryHistoryService) unstarQuery(ctx context.Context, user *user.SignedI
 }
 
 // migrateQueries adds multiple queries into query history
-func (s QueryHistoryService) migrateQueries(ctx context.Context, user *user.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error) {
+func (s QueryHistoryService) migrateQueries(ctx context.Context, usr *user.SignedInUser, cmd MigrateQueriesToQueryHistoryCommand) (int, int, error) {
 	queryHistories := make([]*QueryHistory, 0, len(cmd.Queries))
 	starredQueries := make([]*QueryHistoryStar, 0)
 
@@ -281,18 +281,18 @@ func (s QueryHistoryService) migrateQueries(ctx context.Context, user *user.Sign
 		for _, query := range cmd.Queries {
 			uid := util.GenerateShortUID()
 			queryHistories = append(queryHistories, &QueryHistory{
-				OrgID:         user.OrgId,
+				OrgID:         usr.OrgID,
 				UID:           uid,
 				Queries:       query.Queries,
 				DatasourceUID: query.DatasourceUID,
-				CreatedBy:     user.UserId,
+				CreatedBy:     usr.UserID,
 				CreatedAt:     query.CreatedAt,
 				Comment:       query.Comment,
 			})
 
 			if query.Starred {
 				starredQueries = append(starredQueries, &QueryHistoryStar{
-					UserID:   user.UserId,
+					UserID:   usr.UserID,
 					QueryUID: uid,
 				})
 			}

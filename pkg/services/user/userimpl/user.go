@@ -297,3 +297,27 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 	}
 	return s.sqlStore.UpdateUserLastSeenAt(ctx, q)
 }
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
+	q := &models.SetUsingOrgCommand{
+		UserId: cmd.UserID,
+		OrgId:  cmd.OrgID,
+	}
+	return s.sqlStore.SetUsingOrg(ctx, q)
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	q := &models.GetSignedInUserQuery{
+		UserId: query.UserID,
+		Login:  query.Login,
+		Email:  query.Email,
+		OrgId:  query.OrgID,
+	}
+	err := s.sqlStore.GetSignedInUserWithCacheCtx(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return q.Result, nil
+}

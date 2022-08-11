@@ -672,7 +672,7 @@ func createRequestContext(orgID int64, role org.RoleType, params map[string]stri
 		IsSignedIn: true,
 		SignedInUser: &user.SignedInUser{
 			OrgRole: role,
-			OrgId:   orgID,
+			OrgID:   orgID,
 		},
 		Context: &ctx,
 	}

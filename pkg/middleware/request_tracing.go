@@ -72,7 +72,7 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			rw := web.Rw(w, req)
 
 			wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
-			ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
+			ctx, span := tracer.Start(wireContext, fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
 
 			req = req.WithContext(ctx)
 			next.ServeHTTP(w, req)

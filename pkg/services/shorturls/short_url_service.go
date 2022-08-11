@@ -34,7 +34,7 @@ type ShortURLService struct {
 func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*models.ShortUrl, error) {
 	var shortURL models.ShortUrl
 	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		exists, err := dbSession.Where("org_id=? AND uid=?", user.OrgId, uid).Get(&shortURL)
+		exists, err := dbSession.Where("org_id=? AND uid=?", user.OrgID, uid).Get(&shortURL)
 		if err != nil {
 			return err
 		}
@@ -75,10 +75,10 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *user.SignedIn
 
 	now := time.Now().Unix()
 	shortURL := models.ShortUrl{
-		OrgId:     user.OrgId,
+		OrgId:     user.OrgID,
 		Uid:       util.GenerateShortUID(),
 		Path:      relPath,
-		CreatedBy: user.UserId,
+		CreatedBy: user.UserID,
 		CreatedAt: now,
 	}
 

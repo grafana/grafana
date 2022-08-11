@@ -42,7 +42,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		coreFilter = "1"
 	}
 
-	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgId)
+	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(500, "Failed to get list of plugins", err)
 	}
@@ -155,7 +155,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
 		PluginID: pluginID,
-		OrgID:    c.OrgId,
+		OrgID:    c.OrgID,
 	})
 	if err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
@@ -187,7 +187,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 		return response.Error(404, "Plugin not installed", nil)
 	}
 
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	cmd.PluginId = pluginID
 	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &pluginsettings.UpdateArgs{
 		Enabled:                 cmd.Enabled,

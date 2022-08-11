@@ -470,9 +470,9 @@ func (sch *schedule) getRuleExtraLabels(ctx context.Context, alertRule *ngmodels
 	extraLabels[ngmodels.RuleUIDLabel] = alertRule.UID
 
 	user := &user.SignedInUser{
-		UserId:  0,
+		UserID:  0,
 		OrgRole: org.RoleAdmin,
-		OrgId:   alertRule.OrgID,
+		OrgID:   alertRule.OrgID,
 	}
 
 	if !sch.disableGrafanaFolder {

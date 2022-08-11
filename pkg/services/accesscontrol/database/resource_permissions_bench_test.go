@@ -57,7 +57,7 @@ func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int
 	dsId := dataSources[0]
 
 	permissions, err := store.GetResourcePermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcePermissionsQuery{
-		User:              &user.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}, "teams:read": {"teams:*"}}}},
+		User:              &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}, "teams:read": {"teams:*"}}}},
 		Actions:           []string{dsAction},
 		Resource:          dsResource,
 		ResourceID:        strconv.Itoa(int(dsId)),

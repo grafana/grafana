@@ -241,7 +241,7 @@ func (s *NamespaceStream) GetHandlerForPath(_ string) (models.ChannelHandler, er
 
 func (s *NamespaceStream) OnSubscribe(ctx context.Context, u *user.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{}
-	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.OrgId, e.Channel)
+	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.OrgID, e.Channel)
 	if err != nil {
 		return reply, 0, err
 	}

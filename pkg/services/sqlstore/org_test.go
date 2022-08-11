@@ -119,7 +119,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 			ac2cmd := user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
 
 			ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
-			testUser.OrgId = ac1.OrgID
+			testUser.OrgID = ac1.OrgID
 			require.NoError(t, err)
 			_, err = sqlStore.CreateUser(context.Background(), ac2cmd)
 			require.NoError(t, err)
@@ -177,7 +177,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 			t.Run("Can search users", func(t *testing.T) {
 				query := models.SearchUsersQuery{Query: "", SignedInUser: &user.SignedInUser{
-					OrgId: 1,
+					OrgID: 1,
 					Permissions: map[int64]map[string][]string{
 						1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
 					},
@@ -210,7 +210,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					orgUsersQuery := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
 						User: &user.SignedInUser{
-							OrgId:       ac1.OrgID,
+							OrgID:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
 					}
@@ -226,7 +226,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 					require.NoError(t, err)
 					require.Equal(t, query.Result.Email, "ac2@test.com")
-					require.Equal(t, query.Result.OrgId, ac2.OrgID)
+					require.Equal(t, query.Result.OrgID, ac2.OrgID)
 					require.Equal(t, query.Result.Name, "ac2 name")
 					require.Equal(t, query.Result.Login, "ac2")
 					require.EqualValues(t, query.Result.OrgRole, "Admin")
@@ -246,7 +246,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
 						User: &user.SignedInUser{
-							OrgId:       ac1.OrgID,
+							OrgID:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
 					}
@@ -262,7 +262,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						OrgId: ac1.OrgID,
 						Query: "ac1",
 						User: &user.SignedInUser{
-							OrgId:       ac1.OrgID,
+							OrgID:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
 					}
@@ -279,7 +279,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						Query: "ac",
 						Limit: 1,
 						User: &user.SignedInUser{
-							OrgId:       ac1.OrgID,
+							OrgID:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
 					}
@@ -300,7 +300,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						err := sqlStore.GetSignedInUser(context.Background(), &query)
 
 						require.NoError(t, err)
-						require.Equal(t, query.Result.OrgId, ac1.OrgID)
+						require.Equal(t, query.Result.OrgID, ac1.OrgID)
 						require.Equal(t, query.Result.Email, "ac2@test.com")
 						require.Equal(t, query.Result.Name, "ac2 name")
 						require.Equal(t, query.Result.Login, "ac2")
@@ -316,7 +316,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						err = sqlStore.GetSignedInUser(context.Background(), &query)
 
 						require.NoError(t, err)
-						require.Equal(t, query.Result.OrgId, ac2.OrgID)
+						require.Equal(t, query.Result.OrgID, ac2.OrgID)
 					})
 				})
 
@@ -364,7 +364,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
 						User: &user.SignedInUser{
-							OrgId:       ac1.OrgID,
+							OrgID:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
 					}

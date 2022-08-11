@@ -1034,7 +1034,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: cmd.OrgId, UserID: cmd.UserId}
 
 			return hs.PostDashboard(c)
 		})
@@ -1068,8 +1068,8 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.SignedInUser = &user.SignedInUser{
-				OrgId:  testOrgID,
-				UserId: testUserID,
+				OrgID:  testOrgID,
+				UserID: testUserID,
 			}
 			sc.context.OrgRole = role
 
@@ -1109,8 +1109,8 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
 			sc.context.SignedInUser = &user.SignedInUser{
-				OrgId:  testOrgID,
-				UserId: testUserID,
+				OrgID:  testOrgID,
+				UserID: testUserID,
 			}
 			sc.context.OrgRole = org.RoleAdmin
 
