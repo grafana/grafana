@@ -121,6 +121,32 @@ describe('createSpanLinkFactory', () => {
       );
     });
 
+    it('with time range less than 1s', () => {
+      const createLink = setupSpanLinkFactory({
+        spanStartTimeShift: '0s',
+        spanEndTimeShift: '0s',
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'hostname', value: 'hostname1' },
+              { key: 'ip', value: '192.168.0.1' },
+            ],
+          },
+        })
+      );
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{hostname=\\"hostname1\\"}","refId":""}],"panelsState":{}}'
+        )}`
+      );
+    });
+
     it('filters by trace and span ID', () => {
       const createLink = setupSpanLinkFactory({
         filterBySpanID: true,
