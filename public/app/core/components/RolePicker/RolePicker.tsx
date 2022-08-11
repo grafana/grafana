@@ -107,11 +107,6 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
-  // if roles cannot be updated mark every role as non delegatable
-  if (!canUpdateRoles) {
-    roleOptions.map((r) => (r.delegatable = false));
-  }
-
   const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
     if (onBuiltinRoleChange && newBuiltInRole && newBuiltInRole !== builtInRole) {
       onBuiltinRoleChange(newBuiltInRole);
@@ -124,10 +119,13 @@ export const RolePicker = ({
   };
 
   const getOptions = () => {
+    // if roles cannot be updated mark every role as non delegatable
+    const options = roleOptions.map((r) => ({ ...r, delegatable: canUpdateRoles && r.delegatable }));
+
     if (query && query.trim() !== '') {
-      return roleOptions.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
+      return options.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
     }
-    return roleOptions;
+    return options;
   };
 
   if (isLoading) {
