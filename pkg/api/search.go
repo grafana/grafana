@@ -71,7 +71,7 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 		Limit:         limit,
 		Page:          page,
 		IsStarred:     starred == "true",
-		OrgId:         c.OrgId,
+		OrgId:         c.OrgID,
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
 		Type:          dashboardType,
@@ -107,8 +107,8 @@ func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.H
 		}
 	}
 
-	folderMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, folderUIDs)
-	dashboardMeta := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeDashboardsPrefix, dashboardUIDs)
+	folderMeta := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folderUIDs)
+	dashboardMeta := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeDashboardsPrefix, dashboardUIDs)
 
 	// search hit with access control metadata attached
 	type hitWithMeta struct {

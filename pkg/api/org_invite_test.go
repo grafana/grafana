@@ -67,13 +67,13 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			sc := setupHTTPServer(t, true, true)
+			sc := setupHTTPServer(t, true)
 			userService := usertest.NewUserServiceFake()
 			userService.ExpectedUser = &user.User{ID: 2}
 			sc.hs.userService = userService
 			setInitCtxSignedInViewer(sc.initCtx)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
-			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
 
 			input := strings.NewReader(test.input)
 			response := callAPI(sc.server, test.method, test.url, input, t)

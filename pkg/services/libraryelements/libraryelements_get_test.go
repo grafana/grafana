@@ -183,7 +183,7 @@ func TestGetLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get a library panel that exists in an other org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			sc.reqContext.SignedInUser.OrgId = 2
+			sc.reqContext.SignedInUser.OrgID = 2
 			sc.reqContext.SignedInUser.OrgRole = org.RoleAdmin
 
 			// by uid

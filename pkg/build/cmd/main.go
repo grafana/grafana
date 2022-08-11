@@ -26,6 +26,17 @@ func main() {
 			},
 		},
 		{
+			Name:      "build-frontend",
+			Usage:     "Build front-end artifacts",
+			ArgsUsage: "[version]",
+			Action:    ArgCountWrapper(1, BuildFrontend),
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+				&buildIDFlag,
+			},
+		},
+		{
 			Name:   "build-docker",
 			Usage:  "Build Grafana Docker images",
 			Action: ArgCountWrapper(1, BuildDocker),

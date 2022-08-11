@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sort"
 	"testing"
@@ -74,7 +74,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		assert.Equal(t, 200, resp.StatusCode)
 		require.JSONEq(t, `{"status": "success", "data": {"groups": []}}`, string(b))
@@ -149,7 +149,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
@@ -203,7 +203,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, 400, resp.StatusCode)
@@ -222,7 +222,7 @@ func TestPrometheusRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -275,7 +275,7 @@ func TestPrometheusRules(t *testing.T) {
 				err := resp.Body.Close()
 				require.NoError(t, err)
 			})
-			b, err := ioutil.ReadAll(resp.Body)
+			b, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, 200, resp.StatusCode)
 			require.JSONEq(t, `
@@ -414,7 +414,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
@@ -501,7 +501,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -518,7 +518,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -535,7 +535,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -552,7 +552,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -569,7 +569,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -587,7 +587,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			require.NoError(t, err)
 		})
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		require.NoError(t, json.Unmarshal(b, &res))
@@ -605,7 +605,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			require.NoError(t, err)
 		})
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		var res map[string]interface{}
 		require.NoError(t, json.Unmarshal(b, &res))
@@ -657,7 +657,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -687,7 +687,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 
@@ -712,7 +712,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 

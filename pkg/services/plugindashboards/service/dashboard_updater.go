@@ -172,7 +172,7 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
 	_, err = du.dashboardImportService.ImportDashboard(ctx, &dashboardimport.ImportDashboardRequest{
 		PluginId:  pluginDashInfo.PluginId,
-		User:      &user.SignedInUser{UserId: 0, OrgRole: org.RoleAdmin, OrgId: orgID},
+		User:      &user.SignedInUser{UserID: 0, OrgRole: org.RoleAdmin, OrgID: orgID},
 		Path:      pluginDashInfo.Reference,
 		FolderId:  0,
 		Dashboard: resp.Dashboard.Data,

@@ -151,7 +151,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) Provision
 //     - application/json
 //
 //     Responses:
-//       200: AlertRuleGroupMetadata
+//       200: AlertRuleGroup
 //       400: ValidationError
 
 // swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
@@ -169,7 +169,7 @@ type RuleGroupPathParam struct {
 // swagger:parameters RoutePutAlertRuleGroup
 type AlertRuleGroupPayload struct {
 	// in:body
-	Body AlertRuleGroupMetadata
+	Body AlertRuleGroup
 }
 
 // swagger:model
