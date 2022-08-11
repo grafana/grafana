@@ -44,7 +44,9 @@ var (
 // `/api/org` endpoints test
 
 func TestAPIEndpoint_GetCurrentOrg_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
@@ -63,7 +65,7 @@ func TestAPIEndpoint_GetCurrentOrg_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetCurrentOrg_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
@@ -87,7 +89,9 @@ func TestAPIEndpoint_GetCurrentOrg_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutCurrentOrg_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -108,7 +112,7 @@ func TestAPIEndpoint_PutCurrentOrg_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", sc.initCtx.UserID)
@@ -135,7 +139,9 @@ func TestAPIEndpoint_PutCurrentOrg_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutCurrentOrgAddress_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -156,7 +162,7 @@ func TestAPIEndpoint_PutCurrentOrgAddress_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
@@ -202,7 +208,9 @@ func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, usr user.
 }
 
 func TestAPIEndpoint_CreateOrgs_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setting.AllowUserOrgCreate = false
@@ -229,7 +237,7 @@ func TestAPIEndpoint_CreateOrgs_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_CreateOrgs_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 0)
@@ -250,7 +258,9 @@ func TestAPIEndpoint_CreateOrgs_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_DeleteOrgs_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
@@ -268,7 +278,7 @@ func TestAPIEndpoint_DeleteOrgs_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_DeleteOrgs_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
@@ -291,7 +301,9 @@ func TestAPIEndpoint_DeleteOrgs_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_SearchOrgs_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	t.Run("Viewer cannot list Orgs", func(t *testing.T) {
@@ -307,7 +319,7 @@ func TestAPIEndpoint_SearchOrgs_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_SearchOrgs_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	t.Run("AccessControl allows listing Orgs with correct permissions", func(t *testing.T) {
@@ -328,7 +340,9 @@ func TestAPIEndpoint_SearchOrgs_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetOrg_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to fetch another one than the logged in one
@@ -347,7 +361,7 @@ func TestAPIEndpoint_GetOrg_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetOrg_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to fetch another one than the logged in one
@@ -371,7 +385,9 @@ func TestAPIEndpoint_GetOrg_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetOrgByName_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to fetch another one than the logged in one
@@ -390,7 +406,7 @@ func TestAPIEndpoint_GetOrgByName_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetOrgByName_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to fetch another one than the logged in one
@@ -409,7 +425,9 @@ func TestAPIEndpoint_GetOrgByName_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to update another one than the logged in one
@@ -430,7 +448,7 @@ func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrg_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to update another one than the logged in one
@@ -457,7 +475,9 @@ func TestAPIEndpoint_PutOrg_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrgAddress_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to update another one than the logged in one
@@ -478,7 +498,7 @@ func TestAPIEndpoint_PutOrgAddress_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrgAddress_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to update another one than the logged in one
