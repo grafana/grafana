@@ -3080,14 +3080,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/core/navigation/__mocks__/routeProps.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/core/navigation/hooks.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3163,11 +3159,6 @@ exports[`better eslint`] = {
     "public/app/core/services/ResponseQueue.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/core/services/__mocks__/backend_srv.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/core/services/__mocks__/search_srv.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5216,19 +5207,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/plugins/__mocks__/pluginMocks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
-    "public/app/features/plugins/admin/__mocks__/catalogPlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/plugins/admin/__mocks__/localPlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/plugins/admin/__mocks__/remotePlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/plugins/admin/components/AppConfigWrapper.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5833,11 +5813,6 @@ exports[`better eslint`] = {
     "public/app/features/transformers/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/users/__mocks__/userMocks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
     "public/app/features/users/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -6252,11 +6227,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
-    "public/app/plugins/datasource/cloud-monitoring/__mocks__/cloudMonitoringDatasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
     "public/app/plugins/datasource/cloud-monitoring/annotationSupport.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -6366,58 +6336,13 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloudwatch/__mocks__/CloudWatchDataSource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/multiLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/multiLineIncompleteQueryWithoutNamespace.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/singleLineEmptyQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/singleLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/singleLineTwoQueries.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/dynamic-label-test-data/afterLabelValue.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/dynamic-label-test-data/insideLabelValue.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/afterFunctionQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/secondArgAfterSearchQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/secondArgQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/singleLineEmptyQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/thirdArgAfterSearchQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/withinStringQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/plugins/datasource/cloudwatch/__mocks__/monarch/Monaco.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6793,27 +6718,12 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/elasticsearch/test-helpers/render.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/instanceSettings.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/panelData.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
     "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/query_ctrl.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/__mocks__/schema.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
