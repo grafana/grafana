@@ -53,6 +53,7 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
         <div className={styles.wrapper}>
           {isOpen && (
             <RgbaStringColorPicker
+              data-testid={'color-popover'}
               color={currentColor}
               onChange={setColor}
               className={cx(paletteStyles.root, styles.picker)}
