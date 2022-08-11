@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -53,7 +54,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 		},
 		res: &http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(`{}`))),
+			Body:       io.NopCloser(bytes.NewReader([]byte(`{}`))),
 		},
 		rt: f.fakeRoundTripper,
 	}
@@ -90,17 +91,17 @@ func (rt *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	res := &http.Response{
 		StatusCode: http.StatusOK,
 		Status:     "200 OK",
-		Body:       ioutil.NopCloser(bytes.NewBufferString("{}")),
+		Body:       io.NopCloser(bytes.NewBufferString("{}")),
 	}
 	if rt.Body != "" {
-		res.Body = ioutil.NopCloser(bytes.NewBufferString(rt.Body))
+		res.Body = io.NopCloser(bytes.NewBufferString(rt.Body))
 	}
 	if rt.FileName != "" {
-		b, err := ioutil.ReadFile(rt.FileName)
+		b, err := os.ReadFile(rt.FileName)
 		if err != nil {
 			return res, fmt.Errorf("error reading testdata file %s", rt.FileName)
 		}
-		reader := ioutil.NopCloser(bytes.NewReader(b))
+		reader := io.NopCloser(bytes.NewReader(b))
 		res.Body = reader
 	}
 	if res.Body != nil {

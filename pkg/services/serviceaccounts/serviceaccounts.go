@@ -3,8 +3,8 @@ package serviceaccounts
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // this should reflect the api
@@ -17,7 +17,7 @@ type Service interface {
 type Store interface {
 	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
 	SearchOrgServiceAccounts(ctx context.Context, orgID int64, query string, filter ServiceAccountFilter, page int, limit int,
-		signedInUser *models.SignedInUser) (*SearchServiceAccountsResult, error)
+		signedInUser *user.SignedInUser) (*SearchServiceAccountsResult, error)
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,
 		saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*ServiceAccountProfileDTO, error)

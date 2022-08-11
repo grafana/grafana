@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -118,7 +119,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		}, mock)
 
 		loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
-			"api/org/users/lookup", models.ROLE_ADMIN, func(sc *scenarioContext) {
+			"api/org/users/lookup", org.RoleAdmin, func(sc *scenarioContext) {
 				setUpGetOrgUsersDB(t, sqlStore)
 
 				sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
@@ -225,7 +226,7 @@ func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			sc := setupHTTPServer(t, true, true)
 			setInitCtxSignedInViewer(sc.initCtx)
-			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
 
 			response := callAPI(sc.server, http.MethodGet, test.url, nil, t)
 			assert.Equal(t, test.expectedCode, response.Code)
@@ -234,11 +235,11 @@ func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 }
 
 var (
-	testServerAdminViewer = models.SignedInUser{
-		UserId:         1,
-		OrgId:          1,
+	testServerAdminViewer = user.SignedInUser{
+		UserID:         1,
+		OrgID:          1,
 		OrgName:        "TestOrg1",
-		OrgRole:        models.ROLE_VIEWER,
+		OrgRole:        org.RoleViewer,
 		Login:          "testServerAdmin",
 		Name:           "testServerAdmin",
 		Email:          "testServerAdmin@example.org",
@@ -247,11 +248,11 @@ var (
 		IsAnonymous:    false,
 	}
 
-	testAdminOrg2 = models.SignedInUser{
-		UserId:         2,
-		OrgId:          2,
+	testAdminOrg2 = user.SignedInUser{
+		UserID:         2,
+		OrgID:          2,
 		OrgName:        "TestOrg2",
-		OrgRole:        models.ROLE_ADMIN,
+		OrgRole:        org.RoleAdmin,
 		Login:          "testAdmin",
 		Name:           "testAdmin",
 		Email:          "testAdmin@example.org",
@@ -260,11 +261,11 @@ var (
 		IsAnonymous:    false,
 	}
 
-	testEditorOrg1 = models.SignedInUser{
-		UserId:         3,
-		OrgId:          1,
+	testEditorOrg1 = user.SignedInUser{
+		UserID:         3,
+		OrgID:          1,
 		OrgName:        "TestOrg1",
-		OrgRole:        models.ROLE_EDITOR,
+		OrgRole:        org.RoleEditor,
 		Login:          "testEditor",
 		Name:           "testEditor",
 		Email:          "testEditor@example.org",
@@ -290,14 +291,14 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db sqlstore.Store) {
 	require.NoError(t, err)
 
 	// Create both orgs with server admin
-	_, err = db.CreateOrgWithMember(testServerAdminViewer.OrgName, testServerAdminViewer.UserId)
+	_, err = db.CreateOrgWithMember(testServerAdminViewer.OrgName, testServerAdminViewer.UserID)
 	require.NoError(t, err)
-	_, err = db.CreateOrgWithMember(testAdminOrg2.OrgName, testServerAdminViewer.UserId)
+	_, err = db.CreateOrgWithMember(testAdminOrg2.OrgName, testServerAdminViewer.UserID)
 	require.NoError(t, err)
 
-	err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: testAdminOrg2.Login, Role: testAdminOrg2.OrgRole, OrgId: testAdminOrg2.OrgId, UserId: testAdminOrg2.UserId})
+	err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: testAdminOrg2.Login, Role: testAdminOrg2.OrgRole, OrgId: testAdminOrg2.OrgID, UserId: testAdminOrg2.UserID})
 	require.NoError(t, err)
-	err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: testEditorOrg1.Login, Role: testEditorOrg1.OrgRole, OrgId: testEditorOrg1.OrgId, UserId: testEditorOrg1.UserId})
+	err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: testEditorOrg1.Login, Role: testEditorOrg1.OrgRole, OrgId: testEditorOrg1.OrgID, UserId: testEditorOrg1.UserID})
 	require.NoError(t, err)
 }
 
@@ -308,7 +309,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 		enableAccessControl bool
 		expectedCode        int
 		expectedMetadata    map[string]bool
-		user                models.SignedInUser
+		user                user.SignedInUser
 		targetOrg           int64
 	}
 
@@ -319,7 +320,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 			expectedCode:        http.StatusOK,
 			expectedMetadata:    nil,
 			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetOrg:           testServerAdminViewer.OrgID,
 		},
 		{
 			name:                "access control metadata requested",
@@ -331,7 +332,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 				"org.users:read":   true,
 				"org.users:remove": true},
 			user:      testServerAdminViewer,
-			targetOrg: testServerAdminViewer.OrgId,
+			targetOrg: testServerAdminViewer.OrgID,
 		},
 	}
 
@@ -365,7 +366,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		enableAccessControl bool
 		expectedCode        int
 		expectedUserCount   int
-		user                models.SignedInUser
+		user                user.SignedInUser
 		targetOrg           int64
 	}
 
@@ -376,7 +377,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			expectedCode:        http.StatusOK,
 			expectedUserCount:   2,
 			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetOrg:           testServerAdminViewer.OrgID,
 		},
 		{
 			name:                "server admin can get users in another org (legacy)",
@@ -391,7 +392,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			enableAccessControl: false,
 			expectedCode:        http.StatusForbidden,
 			user:                testAdminOrg2,
-			targetOrg:           testAdminOrg2.OrgId,
+			targetOrg:           testAdminOrg2.OrgID,
 		},
 		{
 			name:                "org admin cannot get users in another org (legacy)",
@@ -406,7 +407,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			expectedCode:        http.StatusOK,
 			expectedUserCount:   2,
 			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetOrg:           testServerAdminViewer.OrgID,
 		},
 		{
 			name:                "server admin can get users in another org",
@@ -422,7 +423,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			expectedCode:        http.StatusOK,
 			expectedUserCount:   2,
 			user:                testAdminOrg2,
-			targetOrg:           testAdminOrg2.OrgId,
+			targetOrg:           testAdminOrg2.OrgID,
 		},
 		{
 			name:                "org admin cannot get users in another org",
@@ -458,7 +459,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	type testCase struct {
 		name                string
 		enableAccessControl bool
-		user                models.SignedInUser
+		user                user.SignedInUser
 		targetOrg           int64
 		input               string
 		expectedCode        int
@@ -469,7 +470,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "server admin can add users to his org (legacy)",
 			enableAccessControl: false,
 			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetOrg:           testServerAdminViewer.OrgID,
 			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
 			expectedCode:        http.StatusOK,
 		},
@@ -486,7 +487,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			enableAccessControl: false,
 			expectedCode:        http.StatusForbidden,
 			user:                testAdminOrg2,
-			targetOrg:           testAdminOrg2.OrgId,
+			targetOrg:           testAdminOrg2.OrgID,
 			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
 		},
 		{
@@ -501,7 +502,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "server admin can add users to his org",
 			enableAccessControl: true,
 			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetOrg:           testServerAdminViewer.OrgID,
 			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
 			expectedCode:        http.StatusOK,
 		},
@@ -517,7 +518,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "org admin can add users to his org",
 			enableAccessControl: true,
 			user:                testAdminOrg2,
-			targetOrg:           testAdminOrg2.OrgId,
+			targetOrg:           testAdminOrg2.OrgID,
 			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
 			expectedCode:        http.StatusOK,
 		},
@@ -553,8 +554,8 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				err := json.NewDecoder(response.Body).Decode(&message)
 				require.NoError(t, err)
 
-				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg, User: &models.SignedInUser{
-					OrgId:       tc.targetOrg,
+				getUsersQuery := models.GetOrgUsersQuery{OrgId: tc.targetOrg, User: &user.SignedInUser{
+					OrgID:       tc.targetOrg,
 					Permissions: map[int64]map[string][]string{tc.targetOrg: {"org.users:read": {"users:*"}}},
 				}}
 				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
@@ -580,7 +581,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			url:          "/api/org/users",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
@@ -588,7 +589,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			url:          "/api/org/users",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_EDITOR) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleEditor) + `"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
@@ -596,7 +597,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			url:          "/api/orgs/1/users",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
@@ -604,39 +605,39 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			url:          "/api/orgs/1/users",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_EDITOR) + `"}`,
+			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleEditor) + `"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
 			desc:         "org viewer with the correct permissions can update a user's role to a viewer in his org",
-			url:          fmt.Sprintf("/api/org/users/%d", testEditorOrg1.UserId),
+			url:          fmt.Sprintf("/api/org/users/%d", testEditorOrg1.UserID),
 			method:       http.MethodPatch,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
 			desc:         "org viewer with the correct permissions cannot update a user's role to a viewer in his org",
-			url:          fmt.Sprintf("/api/org/users/%d", testEditorOrg1.UserId),
+			url:          fmt.Sprintf("/api/org/users/%d", testEditorOrg1.UserID),
 			method:       http.MethodPatch,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"role": "` + string(models.ROLE_EDITOR) + `"}`,
+			input:        `{"role": "` + string(org.RoleEditor) + `"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
 			desc:         "org viewer with the correct permissions can update a user's role to a viewer in his org",
-			url:          fmt.Sprintf("/api/orgs/1/users/%d", testEditorOrg1.UserId),
+			url:          fmt.Sprintf("/api/orgs/1/users/%d", testEditorOrg1.UserID),
 			method:       http.MethodPatch,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
 			desc:         "org viewer with the correct permissions cannot update a user's role to a viewer in his org",
-			url:          fmt.Sprintf("/api/orgs/1/users/%d", testEditorOrg1.UserId),
+			url:          fmt.Sprintf("/api/orgs/1/users/%d", testEditorOrg1.UserID),
 			method:       http.MethodPatch,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"role": "` + string(models.ROLE_EDITOR) + `"}`,
+			input:        `{"role": "` + string(org.RoleEditor) + `"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
@@ -644,7 +645,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(models.ROLE_VIEWER) + `"}`,
+			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
@@ -652,7 +653,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionUsersCreate}},
-			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(models.ROLE_EDITOR) + `"}`,
+			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(org.RoleEditor) + `"}`,
 		},
 	}
 
@@ -664,7 +665,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			sc.hs.userService = userService
 			setInitCtxSignedInViewer(sc.initCtx)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
-			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
 
 			input := strings.NewReader(test.input)
 			response := callAPI(sc.server, test.method, test.url, input, t)
@@ -678,13 +679,13 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	type testCase struct {
 		name                string
 		enableAccessControl bool
-		user                models.SignedInUser
+		user                user.SignedInUser
 		targetUserId        int64
 		targetOrg           int64
 		input               string
 		expectedCode        int
 		expectedMessage     util.DynMap
-		expectedUserRole    models.RoleType
+		expectedUserRole    org.RoleType
 	}
 
 	tests := []testCase{
@@ -692,30 +693,30 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "server admin can update users in his org (legacy)",
 			enableAccessControl: false,
 			user:                testServerAdminViewer,
-			targetUserId:        testEditorOrg1.UserId,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetUserId:        testEditorOrg1.UserID,
+			targetOrg:           testServerAdminViewer.OrgID,
 			input:               `{"role": "Viewer"}`,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "Organization user updated"},
-			expectedUserRole:    models.ROLE_VIEWER,
+			expectedUserRole:    org.RoleViewer,
 		},
 		{
 			name:                "server admin can update users in another org (legacy)",
 			enableAccessControl: false,
 			user:                testServerAdminViewer,
-			targetUserId:        testServerAdminViewer.UserId,
+			targetUserId:        testServerAdminViewer.UserID,
 			targetOrg:           2,
 			input:               `{"role": "Editor"}`,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "Organization user updated"},
-			expectedUserRole:    models.ROLE_EDITOR,
+			expectedUserRole:    org.RoleEditor,
 		},
 		{
 			name:                "org admin cannot update users in his org (legacy)",
 			enableAccessControl: false,
 			user:                testAdminOrg2,
-			targetUserId:        testServerAdminViewer.UserId,
-			targetOrg:           testAdminOrg2.OrgId,
+			targetUserId:        testServerAdminViewer.UserID,
+			targetOrg:           testAdminOrg2.OrgID,
 			input:               `{"role": "Editor"}`,
 			expectedCode:        http.StatusForbidden,
 		},
@@ -723,7 +724,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "org admin cannot update users in another org (legacy)",
 			enableAccessControl: false,
 			user:                testAdminOrg2,
-			targetUserId:        testServerAdminViewer.UserId,
+			targetUserId:        testServerAdminViewer.UserID,
 			targetOrg:           1,
 			input:               `{"role": "Editor"}`,
 			expectedCode:        http.StatusForbidden,
@@ -732,40 +733,40 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "server admin can update users in his org",
 			enableAccessControl: true,
 			user:                testServerAdminViewer,
-			targetUserId:        testEditorOrg1.UserId,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetUserId:        testEditorOrg1.UserID,
+			targetOrg:           testServerAdminViewer.OrgID,
 			input:               `{"role": "Viewer"}`,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "Organization user updated"},
-			expectedUserRole:    models.ROLE_VIEWER,
+			expectedUserRole:    org.RoleViewer,
 		},
 		{
 			name:                "server admin can update users in another org",
 			enableAccessControl: true,
 			user:                testServerAdminViewer,
-			targetUserId:        testServerAdminViewer.UserId,
+			targetUserId:        testServerAdminViewer.UserID,
 			targetOrg:           2,
 			input:               `{"role": "Editor"}`,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "Organization user updated"},
-			expectedUserRole:    models.ROLE_EDITOR,
+			expectedUserRole:    org.RoleEditor,
 		},
 		{
 			name:                "org admin can update users in his org",
 			enableAccessControl: true,
 			user:                testAdminOrg2,
-			targetUserId:        testServerAdminViewer.UserId,
-			targetOrg:           testAdminOrg2.OrgId,
+			targetUserId:        testServerAdminViewer.UserID,
+			targetOrg:           testAdminOrg2.OrgID,
 			input:               `{"role": "Editor"}`,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "Organization user updated"},
-			expectedUserRole:    models.ROLE_EDITOR,
+			expectedUserRole:    org.RoleEditor,
 		},
 		{
 			name:                "org admin cannot update users in another org",
 			enableAccessControl: true,
 			user:                testAdminOrg2,
-			targetUserId:        testServerAdminViewer.UserId,
+			targetUserId:        testServerAdminViewer.UserID,
 			targetOrg:           1,
 			input:               `{"role": "Editor"}`,
 			expectedCode:        http.StatusForbidden,
@@ -807,7 +808,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	type testCase struct {
 		name                string
 		enableAccessControl bool
-		user                models.SignedInUser
+		user                user.SignedInUser
 		targetUserId        int64
 		targetOrg           int64
 		expectedCode        int
@@ -820,8 +821,8 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "server admin can delete users from his org (legacy)",
 			enableAccessControl: false,
 			user:                testServerAdminViewer,
-			targetUserId:        testEditorOrg1.UserId,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetUserId:        testEditorOrg1.UserID,
+			targetOrg:           testServerAdminViewer.OrgID,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "User removed from organization"},
 			expectedUserCount:   1,
@@ -830,7 +831,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "server admin can delete users from another org (legacy)",
 			enableAccessControl: false,
 			user:                testServerAdminViewer,
-			targetUserId:        testServerAdminViewer.UserId,
+			targetUserId:        testServerAdminViewer.UserID,
 			targetOrg:           2,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "User removed from organization"},
@@ -840,15 +841,15 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "org admin can delete users from his org (legacy)",
 			enableAccessControl: false,
 			user:                testAdminOrg2,
-			targetUserId:        testServerAdminViewer.UserId,
-			targetOrg:           testAdminOrg2.OrgId,
+			targetUserId:        testServerAdminViewer.UserID,
+			targetOrg:           testAdminOrg2.OrgID,
 			expectedCode:        http.StatusForbidden,
 		},
 		{
 			name:                "org admin cannot delete users from another org (legacy)",
 			enableAccessControl: false,
 			user:                testAdminOrg2,
-			targetUserId:        testEditorOrg1.UserId,
+			targetUserId:        testEditorOrg1.UserID,
 			targetOrg:           1,
 			expectedCode:        http.StatusForbidden,
 		},
@@ -856,8 +857,8 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "server admin can delete users from his org",
 			enableAccessControl: true,
 			user:                testServerAdminViewer,
-			targetUserId:        testEditorOrg1.UserId,
-			targetOrg:           testServerAdminViewer.OrgId,
+			targetUserId:        testEditorOrg1.UserID,
+			targetOrg:           testServerAdminViewer.OrgID,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "User removed from organization"},
 			expectedUserCount:   1,
@@ -866,7 +867,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "server admin can delete users from another org",
 			enableAccessControl: true,
 			user:                testServerAdminViewer,
-			targetUserId:        testServerAdminViewer.UserId,
+			targetUserId:        testServerAdminViewer.UserID,
 			targetOrg:           2,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "User removed from organization"},
@@ -876,8 +877,8 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "org admin can delete users from his org",
 			enableAccessControl: true,
 			user:                testAdminOrg2,
-			targetUserId:        testServerAdminViewer.UserId,
-			targetOrg:           testAdminOrg2.OrgId,
+			targetUserId:        testServerAdminViewer.UserID,
+			targetOrg:           testAdminOrg2.OrgID,
 			expectedCode:        http.StatusOK,
 			expectedMessage:     util.DynMap{"message": "User removed from organization"},
 			expectedUserCount:   1,
@@ -886,7 +887,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			name:                "org admin cannot delete users from another org",
 			enableAccessControl: true,
 			user:                testAdminOrg2,
-			targetUserId:        testEditorOrg1.UserId,
+			targetUserId:        testEditorOrg1.UserID,
 			targetOrg:           1,
 			expectedCode:        http.StatusForbidden,
 		},
@@ -909,8 +910,8 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 
 				getUsersQuery := models.GetOrgUsersQuery{
 					OrgId: tc.targetOrg,
-					User: &models.SignedInUser{
-						OrgId:       tc.targetOrg,
+					User: &user.SignedInUser{
+						OrgID:       tc.targetOrg,
 						Permissions: map[int64]map[string][]string{tc.targetOrg: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 					},
 				}

@@ -12,12 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,8 +41,8 @@ const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
 
 var (
-	SystemBrandingReader = &models.SignedInUser{OrgId: ac.GlobalOrgID}
-	SystemBrandingAdmin  = &models.SignedInUser{OrgId: ac.GlobalOrgID}
+	SystemBrandingReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
+	SystemBrandingAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
@@ -63,23 +63,23 @@ type StorageService interface {
 	RegisterHTTPRoutes(routing.RouteRegister)
 
 	// List folder contents
-	List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error)
+	List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error)
 
 	// Read raw file contents out of the store
-	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
+	Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error)
 
-	Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error
+	Upload(ctx context.Context, user *user.SignedInUser, req *UploadRequest) error
 
-	Delete(ctx context.Context, user *models.SignedInUser, path string) error
+	Delete(ctx context.Context, user *user.SignedInUser, path string) error
 
-	DeleteFolder(ctx context.Context, user *models.SignedInUser, cmd *DeleteFolderCmd) error
+	DeleteFolder(ctx context.Context, user *user.SignedInUser, cmd *DeleteFolderCmd) error
 
-	CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error
+	CreateFolder(ctx context.Context, user *user.SignedInUser, cmd *CreateFolderCmd) error
 
-	validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) validationResult
+	validateUploadRequest(ctx context.Context, user *user.SignedInUser, req *UploadRequest, storagePath string) validationResult
 
 	// sanitizeUploadRequest sanitizes the upload request and converts it into a command accepted by the FileStorage API
-	sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error)
+	sanitizeUploadRequest(ctx context.Context, user *user.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error)
 }
 
 type standardStorageService struct {
@@ -182,7 +182,7 @@ func ProvideService(
 
 	globalRoots = append(globalRoots, initializeOrgStorages(ac.GlobalOrgID)...)
 
-	authService := newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+	authService := newStaticStorageAuthService(func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		// Public is OK to read regardless of user settings
 		if storageName == RootPublicStatic {
 			return map[string]filestorage.PathFilter{
@@ -268,20 +268,20 @@ func (s *standardStorageService) Run(ctx context.Context) error {
 	return nil
 }
 
-func getOrgId(user *models.SignedInUser) int64 {
+func getOrgId(user *user.SignedInUser) int64 {
 	if user == nil {
 		return ac.GlobalOrgID
 	}
 
-	return user.OrgId
+	return user.OrgID
 }
 
-func (s *standardStorageService) List(ctx context.Context, user *models.SignedInUser, path string) (*StorageListFrame, error) {
+func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error) {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
 	return s.tree.ListFolder(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
 }
 
-func (s *standardStorageService) Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error) {
+func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error) {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
 	if !guardian.canView(path) {
 		return nil, ErrAccessDenied
@@ -300,7 +300,7 @@ type UploadRequest struct {
 	OverwriteExistingFile bool
 }
 
-func (s *standardStorageService) Upload(ctx context.Context, user *models.SignedInUser, req *UploadRequest) error {
+func (s *standardStorageService) Upload(ctx context.Context, user *user.SignedInUser, req *UploadRequest) error {
 	if err := s.checkFileQuota(ctx, req.Path); err != nil {
 		return err
 	}
@@ -369,7 +369,7 @@ func (s *standardStorageService) checkFileQuota(ctx context.Context, path string
 	return nil
 }
 
-func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.SignedInUser, cmd *DeleteFolderCmd) error {
+func (s *standardStorageService) DeleteFolder(ctx context.Context, user *user.SignedInUser, cmd *DeleteFolderCmd) error {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(cmd.Path))
 	if !guardian.canDelete(cmd.Path) {
 		return ErrAccessDenied
@@ -390,7 +390,7 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *models.
 	return root.Store().DeleteFolder(ctx, storagePath, &filestorage.DeleteFolderOptions{Force: cmd.Force, AccessFilter: guardian.getPathFilter(ActionFilesDelete)})
 }
 
-func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.SignedInUser, cmd *CreateFolderCmd) error {
+func (s *standardStorageService) CreateFolder(ctx context.Context, user *user.SignedInUser, cmd *CreateFolderCmd) error {
 	if err := s.checkFileQuota(ctx, cmd.Path); err != nil {
 		return err
 	}
@@ -416,7 +416,7 @@ func (s *standardStorageService) CreateFolder(ctx context.Context, user *models.
 	return nil
 }
 
-func (s *standardStorageService) Delete(ctx context.Context, user *models.SignedInUser, path string) error {
+func (s *standardStorageService) Delete(ctx context.Context, user *user.SignedInUser, path string) error {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
 	if !guardian.canDelete(path) {
 		return ErrAccessDenied
@@ -438,7 +438,7 @@ func (s *standardStorageService) Delete(ctx context.Context, user *models.Signed
 	return nil
 }
 
-func (s *standardStorageService) write(ctx context.Context, user *models.SignedInUser, req *WriteValueRequest) (*WriteValueResponse, error) {
+func (s *standardStorageService) write(ctx context.Context, user *user.SignedInUser, req *WriteValueRequest) (*WriteValueResponse, error) {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(req.Path))
 	if !guardian.canWrite(req.Path) {
 		return nil, ErrAccessDenied
@@ -481,14 +481,14 @@ type optionInfo struct {
 	Workflows []workflowInfo `json:"workflows"`
 }
 
-func (s *standardStorageService) getWorkflowOptions(ctx context.Context, user *models.SignedInUser, path string) (optionInfo, error) {
+func (s *standardStorageService) getWorkflowOptions(ctx context.Context, user *user.SignedInUser, path string) (optionInfo, error) {
 	options := optionInfo{
 		Path:      path,
 		Workflows: make([]workflowInfo, 0),
 	}
 
 	scope, _ := splitFirstSegment(path)
-	root, _ := s.tree.getRoot(user.OrgId, scope)
+	root, _ := s.tree.getRoot(user.OrgID, scope)
 	if root == nil {
 		return options, fmt.Errorf("can not read")
 	}

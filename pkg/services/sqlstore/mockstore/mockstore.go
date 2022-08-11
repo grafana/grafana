@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -21,7 +20,6 @@ type SQLStoreMock struct {
 	LatestUserId            int64
 
 	ExpectedUser                   *user.User
-	ExpectedDatasource             *datasources.DataSource
 	ExpectedAlert                  *models.Alert
 	ExpectedPluginSetting          *models.PluginSetting
 	ExpectedDashboards             []*models.Dashboard
@@ -31,15 +29,13 @@ type SQLStoreMock struct {
 	ExpectedTeamsByUser            []*models.TeamDTO
 	ExpectedSearchOrgList          []*models.OrgDTO
 	ExpectedSearchUsers            models.SearchUserQueryResult
-	ExpectedDatasources            []*datasources.DataSource
 	ExpectedOrg                    *models.Org
 	ExpectedSystemStats            *models.SystemStats
 	ExpectedDataSourceStats        []*models.DataSourceStats
-	ExpectedDataSources            []*datasources.DataSource
 	ExpectedDataSourcesAccessStats []*models.DataSourceAccessStats
 	ExpectedNotifierUsageStats     []*models.NotifierUsageStats
 	ExpectedPersistedDashboards    models.HitList
-	ExpectedSignedInUser           *models.SignedInUser
+	ExpectedSignedInUser           *user.SignedInUser
 	ExpectedUserStars              map[int64]bool
 	ExpectedLoginAttempts          int64
 
@@ -248,23 +244,6 @@ func (m *SQLStoreMock) WithDbSession(ctx context.Context, callback sqlstore.DBTr
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetPluginSettings(ctx context.Context, orgID int64) ([]*models.PluginSetting, error) {
-	return nil, m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetPluginSettingById(ctx context.Context, query *models.GetPluginSettingByIdQuery) error {
-	query.Result = m.ExpectedPluginSetting
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdatePluginSetting(ctx context.Context, cmd *models.UpdatePluginSettingCmd) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdatePluginSettingVersion(ctx context.Context, cmd *models.UpdatePluginSettingVersionCmd) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetOrgQuotaByTarget(ctx context.Context, query *models.GetOrgQuotaByTargetQuery) error {
 	return m.ExpectedError
 }
@@ -388,40 +367,6 @@ func (m *SQLStoreMock) GetDashboardTags(ctx context.Context, query *models.GetDa
 
 func (m *SQLStoreMock) GetDashboards(ctx context.Context, query *models.GetDashboardsQuery) error {
 	query.Result = m.ExpectedDashboards
-	return m.ExpectedError
-}
-
-func (m SQLStoreMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	query.Result = m.ExpectedDatasource
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
-	query.Result = m.ExpectedDataSources
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
-	query.Result = m.ExpectedDataSources
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
-	query.Result = m.ExpectedDatasource
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	cmd.Result = m.ExpectedDatasource
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	cmd.Result = m.ExpectedDatasource
 	return m.ExpectedError
 }
 

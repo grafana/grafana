@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (
@@ -83,16 +83,16 @@ type Dependencies struct {
 }
 
 type Includes struct {
-	Name       string          `json:"name"`
-	Path       string          `json:"path"`
-	Type       string          `json:"type"`
-	Component  string          `json:"component"`
-	Role       models.RoleType `json:"role"`
-	AddToNav   bool            `json:"addToNav"`
-	DefaultNav bool            `json:"defaultNav"`
-	Slug       string          `json:"slug"`
-	Icon       string          `json:"icon"`
-	UID        string          `json:"uid"`
+	Name       string       `json:"name"`
+	Path       string       `json:"path"`
+	Type       string       `json:"type"`
+	Component  string       `json:"component"`
+	Role       org.RoleType `json:"role"`
+	AddToNav   bool         `json:"addToNav"`
+	DefaultNav bool         `json:"defaultNav"`
+	Slug       string       `json:"slug"`
+	Icon       string       `json:"icon"`
+	UID        string       `json:"uid"`
 
 	ID string `json:"-"`
 }

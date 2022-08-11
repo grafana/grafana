@@ -2,7 +2,7 @@ package tempo
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -17,7 +17,7 @@ func TestTraceToFrame(t *testing.T) {
 		// https://github.com/grafana/tempo/tree/master/pkg/tempopb to create the protobuf structs from something like
 		// json. At the moment just saving some real tempo proto response into file and loading was the easiest and
 		// as my patience was diminished trying to figure this out, I say it's good enough.
-		proto, err := ioutil.ReadFile("testData/tempo_proto_response")
+		proto, err := os.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
 		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
