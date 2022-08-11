@@ -280,6 +280,7 @@ export const getAllStandardFieldConfigs = () => {
     id: 'decimals',
     path: 'decimals',
     name: 'Decimals',
+    description: 'Leave empty to calculate based on the value',
 
     editor: standardEditorsRegistry.get('number').editor as any,
     override: standardEditorsRegistry.get('number').editor as any,
