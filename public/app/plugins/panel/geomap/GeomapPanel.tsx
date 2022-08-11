@@ -281,7 +281,7 @@ export class GeomapPanel extends Component<Props, State> {
     // TODO: Clean this approach up / potentially support multiple marker layers?
     // See https://github.com/grafana/grafana/issues/51185 for more details.
     for (const layer of options.layers) {
-      if (layer.type === MARKERS_LAYER_ID) {
+      if (this.props.options.layers && layer.type === MARKERS_LAYER_ID) {
         const oldLayer = this.props.options.layers.find((lyr) => lyr.name === layer.name);
         const newLayerColorField = layer.config.style.color.field;
         const oldLayerColorField = oldLayer?.config.style.color.field;
