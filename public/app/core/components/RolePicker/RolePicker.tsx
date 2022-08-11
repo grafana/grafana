@@ -19,6 +19,7 @@ export interface Props {
   onRolesChange: (newRoles: Role[]) => void;
   onBuiltinRoleChange?: (newRole: OrgRole) => void;
   updateDisabled?: boolean;
+  canUpdateRoles?: boolean;
 }
 
 export const RolePicker = ({
@@ -32,6 +33,7 @@ export const RolePicker = ({
   onRolesChange,
   onBuiltinRoleChange,
   updateDisabled,
+  canUpdateRoles = true,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
@@ -105,13 +107,20 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
+  // if roles cannot be updated mark every role as non delegatable
+  if (!canUpdateRoles) {
+    roleOptions.map((r) => (r.delegatable = false));
+  }
+
   const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
     if (onBuiltinRoleChange && newBuiltInRole && newBuiltInRole !== builtInRole) {
       onBuiltinRoleChange(newBuiltInRole);
     }
-    onRolesChange(newRoles);
-    setOpen(false);
-    setQuery('');
+    if (canUpdateRoles) {
+      onRolesChange(newRoles);
+      setOpen(false);
+      setQuery('');
+    }
   };
 
   const getOptions = () => {
