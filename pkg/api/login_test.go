@@ -7,12 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -60,7 +60,7 @@ func fakeViewIndex(t *testing.T) {
 }
 
 func getBody(resp *httptest.ResponseRecorder) (string, error) {
-	responseData, err := ioutil.ReadAll(resp.Body)
+	responseData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -153,7 +153,7 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
-		c.SignedInUser = &models.SignedInUser{
+		c.SignedInUser = &user.SignedInUser{
 			UserId: 10,
 		}
 		hs.LoginView(c)
@@ -570,7 +570,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
-		c.SignedInUser = &models.SignedInUser{
+		c.SignedInUser = &user.SignedInUser{
 			UserId: 10,
 		}
 		hs.LoginView(c)
@@ -658,9 +658,9 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		{
 			desc:       "valid LDAP user",
 			authUser:   testUser,
-			authModule: "ldap",
+			authModule: loginservice.LDAPAuthModule,
 			info: models.LoginInfo{
-				AuthModule: "ldap",
+				AuthModule: loginservice.LDAPAuthModule,
 				User:       testUser,
 				HTTPStatus: 200,
 			},

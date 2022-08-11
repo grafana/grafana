@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -142,7 +141,7 @@ func sendRequestGetBytes(client http.Client, repoUrl string, subPaths ...string)
 			logger.Warn("Failed to close stream", "err", err)
 		}
 	}()
-	return ioutil.ReadAll(bodyReader)
+	return io.ReadAll(bodyReader)
 }
 
 func sendRequest(client http.Client, repoUrl string, subPaths ...string) (io.ReadCloser, error) {
@@ -191,7 +190,7 @@ func handleResponse(res *http.Response) (io.ReadCloser, error) {
 	}
 
 	if res.StatusCode/100 == 4 {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		defer func() {
 			if err := res.Body.Close(); err != nil {
 				logger.Warn("Failed to close response body", "err", err)

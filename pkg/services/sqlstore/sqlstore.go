@@ -179,6 +179,10 @@ func (ss *SQLStore) GetDialect() migrator.Dialect {
 	return ss.Dialect
 }
 
+func (ss *SQLStore) Bus() bus.Bus {
+	return ss.bus
+}
+
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
@@ -279,6 +283,10 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
 			val := url.QueryEscape(fmt.Sprintf("'%s'", isolation))
 			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
+		}
+
+		if ss.Cfg.IsFeatureToggleEnabled("mysqlAnsiQuotes") {
+			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')

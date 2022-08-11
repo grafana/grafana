@@ -64,6 +64,11 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     updateLocation({ starred: starred || null });
   }, []);
 
+  const onClearStarred = useCallback(() => {
+    dispatch({ type: TOGGLE_STARRED, payload: false });
+    updateLocation({ starred: null });
+  }, []);
+
   const onSortChange = useCallback((sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
     updateLocation({ sort: sort?.value, layout: SearchLayout.List });
@@ -85,6 +90,7 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     onClearFilters,
     onTagFilterChange,
     onStarredFilterChange,
+    onClearStarred,
     onTagAdd,
     onSortChange,
     onLayoutChange,

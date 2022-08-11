@@ -33,22 +33,25 @@
     image: docker.io/bitnami/oauth2-proxy:7.3.0
     container_name: oauthproxy
     command: [
-    "--cookie-secret=yI-CWT5s4sBR2Zd0DDJJlTYc0aQ3jwGH15jYA18ZAQA=",
-    "--upstream=http://localhost:3000",
-    "--provider=keycloak",
-    "--client-id=grafana-oauth",
-    "--client-secret=d17b9ea9-bcb1-43d2-b132-d339e55872a8",
-    "--login-url=http://127.0.0.1:8087/auth/realms/grafana/protocol/openid-connect/auth",
-    "--redeem-url=http://127.0.0.1:8087/auth/realms/grafana/protocol/openid-connect/token",
-    "--profile-url=http://127.0.0.1:8087/auth/realms/grafana/protocol/openid-connect/userinfo",
-    "--validate-url=http://127.0.0.1:8087/auth/realms/grafana/protocol/openid-connect/userinfo",
-    "--cookie-secure=false",
-    "--http-address=0.0.0.0:8088",
-    "--redirect-url=http://127.0.0.1:8088/oauth2/callback",
-    "--pass-access-token=true",
-    "--email-domain=*",
+      "--cookie-secret=yI-CWT5s4sBR2Zd0DDJJlTYc0aQ3jwGH15jYA18ZAQA=",
+      "--upstream=http://env.grafana.local:3000",
+      "--provider=keycloak",
+      "--client-id=grafana-oauth",
+      "--client-secret=d17b9ea9-bcb1-43d2-b132-d339e55872a8",
+      "--login-url=http://env.grafana.local:8087/auth/realms/grafana/protocol/openid-connect/auth",
+      "--redeem-url=http://env.grafana.local:8087/auth/realms/grafana/protocol/openid-connect/token",
+      "--profile-url=http://env.grafana.local:8087/auth/realms/grafana/protocol/openid-connect/userinfo",
+      "--validate-url=http://env.grafana.local:8087/auth/realms/grafana/protocol/openid-connect/userinfo",
+      "--cookie-secure=false",
+      "--http-address=0.0.0.0:8088",
+      "--redirect-url=http://env.grafana.local:8088/oauth2/callback",
+      "--pass-access-token=true",
+      "--email-domain=*",
     ]
-    network_mode: "host"
     depends_on:
       - oauthkeycloak
+    extra_hosts:
+      - "env.grafana.local:host-gateway"
+    ports:
+      - 8088:8088
     restart: unless-stopped

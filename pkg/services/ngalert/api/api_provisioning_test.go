@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -298,6 +299,37 @@ func TestProvisioningApi(t *testing.T) {
 
 			require.Equal(t, 404, response.Status())
 		})
+
+		t.Run("are invalid at group level", func(t *testing.T) {
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+				group := createInvalidAlertRuleGroup()
+				group.Interval = 0
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+			})
+		})
+
+		t.Run("are invalid at rule level", func(t *testing.T) {
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+				group := createInvalidAlertRuleGroup()
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+			})
+		})
 	})
 }
 
@@ -372,7 +404,7 @@ func createTestRequestCtx() gfcore.ReqContext {
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser: &gfcore.SignedInUser{
+		SignedInUser: &user.SignedInUser{
 			OrgId: 1,
 		},
 	}
@@ -474,6 +506,14 @@ func createInvalidMuteTiming() definitions.MuteTimeInterval {
 
 func createInvalidAlertRule() definitions.ProvisionedAlertRule {
 	return definitions.ProvisionedAlertRule{}
+}
+
+func createInvalidAlertRuleGroup() definitions.AlertRuleGroup {
+	return definitions.AlertRuleGroup{
+		Title:    "invalid",
+		Interval: 10,
+		Rules:    []models.AlertRule{{}},
+	}
 }
 
 func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlertRule {

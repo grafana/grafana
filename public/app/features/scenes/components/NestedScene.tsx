@@ -29,7 +29,7 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
     });
   };
 
-  /** Removes itself from it's parent's children array */
+  /** Removes itself from its parent's children array */
   onRemove = () => {
     const parent = this.parent!;
     if ('children' in parent.state) {

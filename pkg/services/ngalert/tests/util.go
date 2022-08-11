@@ -44,7 +44,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
+	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
