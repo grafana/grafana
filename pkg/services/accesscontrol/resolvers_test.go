@@ -52,8 +52,8 @@ func TestResolveKeywordScope(t *testing.T) {
 }
 
 var testUser = &user.SignedInUser{
-	UserId:  2,
-	OrgId:   3,
+	UserID:  2,
+	OrgID:   3,
 	OrgName: "TestOrg",
 	OrgRole: org.RoleViewer,
 	Login:   "testUser",

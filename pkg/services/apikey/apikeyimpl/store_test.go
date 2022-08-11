@@ -142,7 +142,7 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 			timeNow()
 
 			testUser := &user.SignedInUser{
-				OrgId: 1,
+				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
 				},
@@ -219,21 +219,21 @@ func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
 	tests := []getApiKeysTestCase{
 		{
 			desc: "expect all keys for wildcard scope",
-			user: &user.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 				1: {"apikeys:read": {"apikeys:*"}},
 			}},
 			expectedNumKeys: 10,
 		},
 		{
 			desc: "expect only api keys that user have scopes for",
-			user: &user.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 				1: {"apikeys:read": {"apikeys:id:1", "apikeys:id:3"}},
 			}},
 			expectedNumKeys: 2,
 		},
 		{
 			desc: "expect no keys when user have no scopes",
-			user: &user.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 				1: {"apikeys:read": {}},
 			}},
 			expectedNumKeys: 0,

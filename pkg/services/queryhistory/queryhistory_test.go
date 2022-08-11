@@ -54,11 +54,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		service.Cfg.QueryHistoryEnabled = true
 
 		usr := user.SignedInUser{
-			UserId:     testUserID,
+			UserID:     testUserID,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
 			Email:      "signed.in.user@test.com",
-			OrgId:      testOrgID,
+			OrgID:      testOrgID,
 			OrgRole:    org.RoleViewer,
 			LastSeenAt: time.Now(),
 		}

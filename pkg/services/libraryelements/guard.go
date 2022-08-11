@@ -34,12 +34,12 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return dashboards.ErrFolderAccessDenied
 	}
-	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
+	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgID)
 	if err != nil {
 		return err
 	}
 
-	g := guardian.New(ctx, folder.Id, user.OrgId, user)
+	g := guardian.New(ctx, folder.Id, user.OrgID, user)
 
 	canEdit, err := g.CanEdit()
 	if err != nil {
@@ -57,12 +57,12 @@ func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Conte
 		return nil
 	}
 
-	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgId)
+	folder, err := l.folderService.GetFolderByID(ctx, user, folderID, user.OrgID)
 	if err != nil {
 		return err
 	}
 
-	g := guardian.New(ctx, folder.Id, user.OrgId, user)
+	g := guardian.New(ctx, folder.Id, user.OrgID, user)
 
 	canView, err := g.CanView()
 	if err != nil {

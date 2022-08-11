@@ -66,8 +66,8 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 		sc.userService = usertest.NewUserServiceFake()
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.Login = testUserLogin
 			sc.context.OrgRole = role
 			if sc.handlerFunc != nil {
@@ -297,7 +297,7 @@ type accessControlScenarioContext struct {
 func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
 	acmock.GetUserPermissionsFunc =
 		func(_ context.Context, u *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-			if u.OrgId == org {
+			if u.OrgID == org {
 				return perms, nil
 			}
 			return nil, nil
@@ -312,17 +312,17 @@ func setInitCtxSignedInUser(initCtx *models.ReqContext, user user.SignedInUser) 
 
 func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleViewer, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleViewer, Login: testUserLogin}
 }
 
 func setInitCtxSignedInEditor(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleEditor, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleEditor, Login: testUserLogin}
 }
 
 func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &user.SignedInUser{UserId: testUserID, OrgId: 1, OrgRole: org.RoleAdmin, Login: testUserLogin}
+	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleAdmin, Login: testUserLogin}
 }
 
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
@@ -330,6 +330,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		features = featuremgmt.WithFeatures()
 	}
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
@@ -340,25 +341,19 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	}
 }
 
-func setupHTTPServer(t *testing.T, useFakeAccessControl bool, enableAccessControl bool) accessControlScenarioContext {
-	return setupHTTPServerWithCfg(t, useFakeAccessControl, enableAccessControl, setting.NewCfg())
+func setupHTTPServer(t *testing.T, useFakeAccessControl bool) accessControlScenarioContext {
+	return setupHTTPServerWithCfg(t, useFakeAccessControl, setting.NewCfg())
 }
 
-func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
+func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
 	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, enableAccessControl, cfg, db, db, featuremgmt.WithFeatures())
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, featuremgmt.WithFeatures())
 }
 
-func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
+func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
 	t.Helper()
 
-	if enableAccessControl {
-		cfg.RBACEnabled = true
-		db.Cfg.RBACEnabled = true
-	} else {
-		cfg.RBACEnabled = false
-		db.Cfg.RBACEnabled = false
-	}
+	db.Cfg.RBACEnabled = cfg.RBACEnabled
 
 	license := &licensing.OSSLicensingService{}
 	routeRegister := routing.NewRouteRegister()
@@ -370,7 +365,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl, enableAccessCo
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
 		acmock = accesscontrolmock.New()
-		if !enableAccessControl {
+		if !cfg.RBACEnabled {
 			acmock = acmock.WithDisabled()
 		}
 		ac = acmock

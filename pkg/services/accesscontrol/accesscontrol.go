@@ -103,7 +103,7 @@ func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(
 		}
 
 		userCopy := *c.SignedInUser
-		userCopy.OrgId = GlobalOrgID
+		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""
 		userCopy.OrgName = ""
 		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)

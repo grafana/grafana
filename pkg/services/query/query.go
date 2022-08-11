@@ -114,7 +114,7 @@ func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.Signe
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	exprReq := expr.Request{
-		OrgId:   user.OrgId,
+		OrgId:   user.OrgID,
 		Queries: []expr.Query{},
 	}
 
@@ -320,7 +320,7 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedI
 	}
 
 	if uid == grafanads.DatasourceUID {
-		return grafanads.DataSourceModel(user.OrgId), nil
+		return grafanads.DataSourceModel(user.OrgID), nil
 	}
 
 	// use datasourceId if it exists

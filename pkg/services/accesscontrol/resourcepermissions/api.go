@@ -146,7 +146,7 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetUserPermission(c.Req.Context(), c.OrgId, accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
+	_, err = a.service.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set user permission", err)
 	}
@@ -166,7 +166,7 @@ func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err = a.service.SetTeamPermission(c.Req.Context(), c.OrgId, teamID, resourceID, cmd.Permission)
+	_, err = a.service.SetTeamPermission(c.Req.Context(), c.OrgID, teamID, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set team permission", err)
 	}
@@ -183,7 +183,7 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgId, builtInRole, resourceID, cmd.Permission)
+	_, err := a.service.SetBuiltInRolePermission(c.Req.Context(), c.OrgID, builtInRole, resourceID, cmd.Permission)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "failed to set role permission", err)
 	}

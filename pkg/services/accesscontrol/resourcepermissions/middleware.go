@@ -15,7 +15,7 @@ func solveInheritedScopes(solve InheritedScopesSolver) web.Handler {
 	return func(c *models.ReqContext) {
 		if solve != nil && util.IsValidShortUID(web.Params(c.Req)[":resourceID"]) {
 			params := web.Params(c.Req)
-			scopes, err := solve(c.Req.Context(), c.OrgId, params[":resourceID"])
+			scopes, err := solve(c.Req.Context(), c.OrgID, params[":resourceID"])
 			if err != nil {
 				c.JsonApiErr(http.StatusNotFound, "Resource not found", err)
 				return
