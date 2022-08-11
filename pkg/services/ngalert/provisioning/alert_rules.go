@@ -277,6 +277,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
 	rule.IntervalSeconds = storedRule.IntervalSeconds
+	err = rule.SetDashboardAndPanel()
+	if err != nil {
+		return models.AlertRule{}, err
+	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
 			{
