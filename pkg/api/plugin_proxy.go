@@ -40,7 +40,7 @@ func (hs *HTTPServer) ProxyPluginRequest(c *models.ReqContext) {
 		return
 	}
 
-	query := pluginsettings.GetByPluginIDArgs{OrgID: c.OrgId, PluginID: plugin.ID}
+	query := pluginsettings.GetByPluginIDArgs{OrgID: c.OrgID, PluginID: plugin.ID}
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to fetch plugin settings", err)
