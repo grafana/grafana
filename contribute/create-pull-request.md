@@ -55,6 +55,8 @@ Pull requests that create new UI components or modify existing ones must adhere 
 - Use the [Grafana theme palette](/contribute/style-guides/themes.md) for styling. It contains colors with good contrast which aids accessibility.
 - Use [RTL](https://testing-library.com/docs/dom-testing-library/api-accessibility/) for writing unit tests. It helps to create accessible components.
 
+### Accessibility-specific guidelines
+
 Pull requests that introduce accessibility(a11y) errors - please refer to the [accessibility guidelines](/contribute/style-guides/accessibility.md).
 
 ### Backend-specific guidelines
