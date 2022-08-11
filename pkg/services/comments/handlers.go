@@ -53,20 +53,20 @@ type UserIDFilter struct {
 	userIDs []int64
 }
 
-func NewIDFilter(userIDs []int64) models.Filter {
+func NewIDFilter(userIDs []int64) user.Filter {
 	return &UserIDFilter{userIDs: userIDs}
 }
 
-func (a *UserIDFilter) WhereCondition() *models.WhereCondition {
+func (a *UserIDFilter) WhereCondition() *user.WhereCondition {
 	return nil
 }
 
-func (a *UserIDFilter) JoinCondition() *models.JoinCondition {
+func (a *UserIDFilter) JoinCondition() *user.JoinCondition {
 	return nil
 }
 
-func (a *UserIDFilter) InCondition() *models.InCondition {
-	return &models.InCondition{
+func (a *UserIDFilter) InCondition() *user.InCondition {
+	return &user.InCondition{
 		Condition: "u.id",
 		Params:    a.userIDs,
 	}
@@ -152,7 +152,7 @@ func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *user.Signe
 		Page:         0,
 		Limit:        len(userIds),
 		SignedInUser: signedInUser,
-		Filters:      []models.Filter{NewIDFilter(userIds)},
+		Filters:      []user.Filter{NewIDFilter(userIds)},
 	}
 	if err := s.sqlStore.SearchUsers(ctx, query); err != nil {
 		return nil, err
