@@ -79,6 +79,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       ...state,
       cfg: { ...state.cfg, subTitle },
       datasources: getItemWithNewSubTitle(state.datasources, subTitle),
+      correlations: getItemWithNewSubTitle(state.correlations, subTitle),
       users: getItemWithNewSubTitle(state.users, subTitle),
       teams: getItemWithNewSubTitle(state.teams, subTitle),
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),
