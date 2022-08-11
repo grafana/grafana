@@ -69,7 +69,6 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
 
-
 	t.Run("if a folder was renamed the interval should be fetched from the renamed folder", func(t *testing.T) {
 		var orgID int64 = 2
 		rule := dummyRule("test#1", orgID)
@@ -81,8 +80,8 @@ func TestAlertRuleService(t *testing.T) {
 		_, err = ruleService.UpdateAlertRule(context.Background(),
 			rule, models.ProvenanceNone)
 		require.NoError(t, err)
-  })
-  
+	})
+
 	t.Run("group creation should propagate group title correctly", func(t *testing.T) {
 		var orgID int64 = 1
 		group := createDummyGroup("group-test-3", orgID)
