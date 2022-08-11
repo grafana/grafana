@@ -54,296 +54,82 @@ For more information about the legend, refer to [Configure a legend](../configur
 
 Use these options to choose how to display your time series data.
 
-- [Graph time series as lines]({{< relref "#graph-time-series-as-lines" >}})
-- [Graph time series as bars]({{< relref "#graph-time-series-as-bars" >}})
-- [Graph time series as points]({{< relref "#graph-time-series-as-points" >}})
-- [Graph stacked time series]({{< relref "#graph-time-series-stacking" >}})
-- [Graph and color schemes]({{< relref "#graph-color-scheme" >}})
+- Lines
+- Bars
+- Points
 
-### Transform
-
-Use this option to transform the series values without affecting the values shown in the tooltip, context menu, and legend.
-
-- **Negative Y transform:** Flip the results to negative values on the Y axis.
-- **Constant:** Show first value as a constant line.
-
-> **Note:** The transform option is only available as an override.
-
-## Axis
-
-For more information about adjusting your time series axes, refer to [Change axis display]({{< relref "#change-axis-display" >}}).
-
-## Graph time series as bars
-
-This section explains how to use Time series field options to visualize time series data as bars and illustrates what the options do.
-
-For more information about the time series visualization, refer to [Time series]({{< relref "_index.md" >}}).
-
-1. [Create a dashboard and add a panel]({{< relref "../../dashboards/add-organize-panels/#create-a-dashboard-and-add-a-panel" >}}).
-1. Select the **Time series** visualization.
-1. In the Panel editor side pane, click **Graph styles** to expand it.
-1. In Style, click **Bars**.
-
-### Style the bars
-
-Use the following field settings to refine your visualization.
-
-Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
+![Style modes](http://localhost:3002//static/img/docs/time-series-panel/style-modes-v9.png)
 
 #### Bar alignment
 
 Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** to make it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
 
-##### Before
-
-![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-icon-before-7-4.png)
-
-The bar is drawn before the point. The point is placed on the trailing corner of the bar.
-
-![Bar alignment before example](/static/img/docs/time-series-panel/bar-alignment-before-7-4.png)
-
-##### Center
-
-![Bar alignment center icon](/static/img/docs/time-series-panel/bar-alignment-icon-center-7-4.png)
-
-The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
-
-![Bar alignment center](/static/img/docs/time-series-panel/bar-alignment-center-7-4.png)
-
-##### After
-
-![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-icon-after-7-4.png)
-
-The bar is drawn after the point. The point is placed on the leading corner of the bar.
-
-![Bar alignment after](/static/img/docs/time-series-panel/bar-alignment-after-7-4.png)
+- **Before** ![Bar alignment before icon](http://localhost:3002/static/img/docs/time-series-panel/bar-alignment-before.png)
+  The bar is drawn before the point. The point is placed on the trailing corner of the bar.
+- **Center** ![Bar alignment center icon](http://localhost:3002/static/img/docs/time-series-panel/bar-alignment-center.png)
+  The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
+- **After** ![Bar alignment after icon](http://localhost:3002/static/img/docs/time-series-panel/bar-alignment-after.png)
+  The bar is drawn after the point. The point is placed on the leading corner of the bar.
 
 #### Line width
 
-Set the thickness of the lines bar outlines, from 0 to 10 pixels. **Fill opacity** is set to 10 in the examples below.
+Line width is a slider that controls the thickness for series lines or the outline for bars.
 
-Line thickness set to 1:
-
-![Line thickness 1 example](/static/img/docs/time-series-panel/bar-graph-thickness-1-7-4.png)
-
-Line thickness set to 7:
-
-![Line thickness 7 example](/static/img/docs/time-series-panel/bar-graph-thickness-7-7-4.png)
+![Line thickness 5 example](http://localhost:3002//static/img/docs/time-series-panel/line-width-5.png)
 
 #### Fill opacity
 
-Set the opacity of the bar fill, from 0 to 100 percent. In the examples below, the **Line width** is set to 1.
+Set the opacity series area fill color.
 
-Fill opacity set to 20:
-
-![Fill opacity 20 example](/static/img/docs/time-series-panel/bar-graph-opacity-20-7-4.png)
-
-Fill opacity set to 95:
-
-![Fill opacity 95 example](/static/img/docs/time-series-panel/bar-graph-opacity-95-7-4.png)
+![Fill opacity examples](http://localhost:3002/static/img/docs/time-series-panel/fill-opacity.png)
 
 #### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}).
+Sets the mode of the gradient fill. Fill gradient is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}).
+
+- **None** - No gradient fill. This is the default setting.
+- **Opacity** - An opacity gradient where the opacity of the fill is increasing with the values on the Y-axis.
+- **Hue** - A subtle gradient that based on the hue of the series color.
+- **Scheme** - A color gradient defined by your [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}). This will be used for both the fill area and line. There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme/" >}}).
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
-##### None
-
-No gradient fill. This is the default setting.
-
-![Gradient mode none example](/static/img/docs/time-series-panel/bar-graph-gradient-none-7-4.png)
-
-##### Opacity
-
-Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
-
-![Gradient mode opacity example](/static/img/docs/time-series-panel/bar-graph-gradient-opacity-7-4.png)
-
-##### Hue
-
-Gradient color is generated based on the hue of the line color.
-
-![Gradient mode hue example](/static/img/docs/time-series-panel/bar-graph-gradient-hue-7-4.png)
-
-##### Scheme
-
-In this mode the whole bar will use a color gradient defined by your color scheme. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}). There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme/" >}}).
-
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Gradient color scheme mode" >}}
+![Gradient mode examples](http://localhost:3002/static/img/docs/time-series-panel/gradient-modes-v9.png)
 
 #### Show points
 
-Choose when the points should be shown on the graph
+When rendering lines or bars you can still configure the visualization to render points.
 
-##### Auto
-
-Grafana automatically decides whether or not to show the points depending on the density of the data. If the density is low, then points are shown.
-
-##### Always
-
-Show the points no matter how dense the data set is. This example uses a **Line width** of 1. If the line width is thicker than the point size, then the line obscures the points.
+- **Auto** - Will automatically decide whether or not to show the points depending on the density of the data. If the density is low, then points are shown.
+- **Always** - Show the points no matter how dense the data set is.
+- **Never** - Will never show the points.
 
 ###### Point size
 
 Set the size of the points, from 1 to 40 pixels in diameter.
 
-Point size set to 6:
-
-![Show points point size 6 example](/static/img/docs/time-series-panel/bar-graph-show-points-6-7-4.png)
-
-Point size set to 20:
-
-![Show points point size 20 example](/static/img/docs/time-series-panel/bar-graph-show-points-20-7-4.png)
-
-##### Never
-
-Never show the points.
-
-## Graph time series as lines
-
-This section explains how to use Time series field options to visualize time series data as lines and illustrates what the options do.
-
-1. [Create a dashboard and add a panel]({{< relref "../../dashboards/add-organize-panels/#create-a-dashboard-and-add-a-panel" >}}).
-1. Select the [Time series]({{< relref "_index.md" >}}) visualization.
-1. In the Panel editor side pane, click **Graph styles** to expand it.
-1. In Style, click **Lines**.
-
-### Style the lines
-
-Use the following field settings to refine your visualization.
-
-Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
-
 #### Line interpolation
 
-Choose how Grafana interpolates the series line. The screenshots below show the same data displayed with different line interpolations.
+This option controls how the graph should interpolates the series line.
 
-##### Linear
+![Line interpolation option](http://localhost:3002/static/img/docs/time-series-panel/line-interpolation-option.png)
 
-![Linear interpolation icon](/static/img/docs/time-series-panel/interpolation-icon-linear-7-4.png)
-
-Points are joined by straight lines.
-
-![Linear interpolation example](/static/img/docs/time-series-panel/interpolation-linear-7-4.png)
-
-##### Smooth
-
-![Smooth interpolation icon](/static/img/docs/time-series-panel/interpolation-icon-smooth-7-4.png)
-
-Points are joined by curved lines resulting in smooth transitions between points.
-
-![Smooth interpolation example](/static/img/docs/time-series-panel/interpolation-smooth-7-4.png)
-
-##### Step before
-
-![Step before interpolation icon](/static/img/docs/time-series-panel/interpolation-icon-step-before-7-4.png)
-
-The line is displayed as steps between points. Points are rendered at the end of the step.
-
-![Step before interpolation example](/static/img/docs/time-series-panel/interpolation-step-before-7-4.png)
-
-##### Step after
-
-![Step after interpolation icon](/static/img/docs/time-series-panel/interpolation-icon-step-after-7-4.png)
-
-Line is displayed as steps between points. Points are rendered at the beginning of the step.
-
-![Step after interpolation example](/static/img/docs/time-series-panel/interpolation-step-after-7-4.png)
-
-#### Line width
-
-Set the thickness of the series line, from 0 to 10 pixels.
-
-Line thickness set to 1:
-
-![Line thickness 1 example](/static/img/docs/time-series-panel/line-graph-thickness-1-7-4.png)
-
-Line thickness set to 7:
-
-![Line thickness 7 example](/static/img/docs/time-series-panel/line-graph-thickness-7-7-4.png)
-
-#### Fill opacity
-
-Set the opacity of the series fill, from 0 to 100 percent.
-
-Fill opacity set to 20:
-
-![Fill opacity 20 example](/static/img/docs/time-series-panel/line-graph-opacity-20-7-4.png)
-
-Fill opacity set to 95:
-
-![Fill opacity 95 example](/static/img/docs/time-series-panel/line-graph-opacity-95-7-4.png)
-
-#### Gradient mode
-
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}).
-
-Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
-
-##### None
-
-No gradient fill. This is the default setting.
-
-![Gradient mode none example](/static/img/docs/time-series-panel/line-graph-gradient-none-7-4.png)
-
-##### Opacity
-
-Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
-
-![Gradient mode opacity example](/static/img/docs/time-series-panel/line-graph-gradient-opacity-7-4.png)
-
-##### Hue
-
-Gradient color is generated based on the hue of the line color.
-
-![Gradient mode hue example](/static/img/docs/time-series-panel/line-graph-gradient-hue-7-4.png)
-
-##### Scheme
-
-In this mode the whole line will use a color gradient defined by your Color scheme. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}). There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme/" >}}).
-
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Gradient mode scheme" >}}
+- **Linear** - Points are joined by straight lines.
+- **Smooth** - Points are joined by curved lines resulting in smooth transitions between points.
+- **Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.
+- **Step after** - Line is displayed as steps between points. Points are rendered at the beginning of the step.
 
 #### Line style
 
-Set the style of the line. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}).
+Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}) field option.
 
-Line style appearance is influenced by the **Line width** and **Fill opacity** settings. In the screenshots below, **Line width** is set to 3 and **Fill opacity** is set to 20.
+![Line style option](http://localhost:3002/static/img/docs/time-series-panel/line-style-option-v9.png)
 
-##### Solid
+- **Solid** - Display solid line. This is the default setting.
+- **Dash** - Display a dashed line. When you choose this option, a list appears so that you can select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
+- **Dots** - Display dotted lines. When you choose this option, a list appears so that you can select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
 
-Display solid line. This is the default setting.
-
-![Line style solid example](/static/img/docs/time-series-panel/line-graph-line-style-solid-7-4.png)
-
-##### Dash
-
-Display a dashed line. When you choose this option, a list appears so that you can select the length and gap (length, gap) for the line dashes.
-
-Dash spacing set to 10, 10 (default):
-
-![Line style dashed 10, 10 example](/static/img/docs/time-series-panel/line-graph-line-style-dashed-10-10-7-4.png)
-
-Dash spacing set to 10, 30:
-
-![Line style dashed 10, 30 example](/static/img/docs/time-series-panel/line-graph-line-style-dashed-10-30-7-4.png)
-
-Dash spacing set to 40, 10:
-
-![Line style dashed 40, 10 example](/static/img/docs/time-series-panel/line-graph-line-style-dashed-40-10-7-4.png)
-
-##### Dots
-
-Display dotted lines. When you choose this option, a list appears so that you can select the gap (length = 0, gap) for the dot spacing.
-
-Dot spacing set to 0, 10 (default):
-
-![Line style dots 0, 10 example](/static/img/docs/time-series-panel/line-graph-line-style-dots-0-10-7-4.png)
-
-Dot spacing set to 0, 30:
-
-![Line style dots 0, 30 example](/static/img/docs/time-series-panel/line-graph-line-style-dots-0-30-7-4.png)
+![Line styles examples](http://localhost:3002/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
 #### Connect null values
 
@@ -688,3 +474,12 @@ If you have a selected a **Color scheme** like **Green-Yellow-Red (by value)** t
 If you have enabled bars mode it would look like this:
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+
+### Transform
+
+Use this option to transform the series values without affecting the values shown in the tooltip, context menu, and legend.
+
+- **Negative Y transform:** Flip the results to negative values on the Y axis.
+- **Constant:** Show first value as a constant line.
+
+> **Note:** The transform option is only available as an override.
