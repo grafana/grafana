@@ -90,7 +90,6 @@ function legacyCreateSpanLinkFactory(
   if (traceToLogsOptions?.datasourceUid) {
     logsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToLogsOptions.datasourceUid);
   }
-  const isSplunkDS = logsDataSourceSettings?.type === 'grafana-splunk-datasource';
 
   let metricsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
   if (traceToMetricsOptions?.datasourceUid) {
@@ -121,18 +120,14 @@ function legacyCreateSpanLinkFactory(
           link: dataLink,
           internalLink: dataLink.internal!,
           scopedVars: {},
-          range: getTimeRangeFromSpan(
-            span,
-            {
-              startMs: traceToLogsOptions.spanStartTimeShift
-                ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-                : 0,
-              endMs: traceToLogsOptions.spanEndTimeShift
-                ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-                : 0,
-            },
-            isSplunkDS
-          ),
+          range: getTimeRangeFromSpan(span, {
+            startMs: traceToLogsOptions.spanStartTimeShift
+              ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+              : 0,
+            endMs: traceToLogsOptions.spanEndTimeShift
+              ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
+              : 0,
+          }),
           field: {} as Field,
           onClickFn: splitOpenFn,
           replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
@@ -332,21 +327,15 @@ function getLinkForSplunk(
  */
 function getTimeRangeFromSpan(
   span: TraceSpan,
-  timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 },
-  isSplunkDS = false
+  timeShift: { startMs: number; endMs: number } = { startMs: 0, endMs: 0 }
 ): TimeRange {
   const adjustedStartTime = Math.floor(span.startTime / 1000 + timeShift.startMs);
   const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
   let adjustedEndTime = Math.floor(spanEndMs + timeShift.endMs);
 
-  // Splunk requires a time interval of >= 1s, rather than >=1ms like Loki timerange in below elseif block
-  if (isSplunkDS && adjustedEndTime - adjustedStartTime < 1000) {
+  if (adjustedEndTime - adjustedStartTime < 1000) {
     adjustedEndTime = adjustedStartTime + 1000;
-  } else if (adjustedStartTime === adjustedEndTime) {
-    // Because we can only pass milliseconds in the url we need to check if they equal.
-    // We need end time to be later than start time
-    adjustedEndTime++;
   }
 
   const to = dateTime(adjustedEndTime);
