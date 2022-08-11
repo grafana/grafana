@@ -1,23 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Badge, useStyles2 } from '@grafana/ui';
-
-const useInitHasAlertingEnabled = (dataSourceName: string) => {
-  const [hasAlertingEnabled, setHasAlertingEnabled] = useState(false);
-
-  useEffect(() => {
-    const initDataSourceAlertingEnabled = async () => {
-      const ds = await getDataSourceSrv()?.get(dataSourceName);
-      setHasAlertingEnabled(Boolean(ds?.meta?.alerting ?? false));
-    };
-    dataSourceName && initDataSourceAlertingEnabled();
-  }, [dataSourceName]);
-  return hasAlertingEnabled;
-};
 
 export interface Props {
   dataSourceName: string;
@@ -27,7 +14,8 @@ export interface Props {
 }
 
 export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange }: Props) {
-  const hasAlertingEnabled = useInitHasAlertingEnabled(dataSourceName);
+  const ds = getDataSourceSrv()?.getInstanceSettings(dataSourceName);
+  const hasAlertingEnabled = Boolean(ds?.meta?.alerting ?? false);
 
   return (
     <>
