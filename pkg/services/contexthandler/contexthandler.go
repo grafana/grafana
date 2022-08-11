@@ -136,6 +136,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 			reqContext.Logger.Error("Invalid target organization ID", "error", err)
 		}
 	}
+
 	// the order in which these are tested are important
 	// look for api key in Authorization header first
 	// then init session and look for userId in session
@@ -299,13 +300,13 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
-	signedInUser, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
+	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
+	err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
 	if err != nil {
 		reqContext.Logger.Error(
 			"Failed to link API key to service account in",
-			"id", querySignedInUser.UserID,
-			"org", querySignedInUser.OrgID,
+			"id", querySignedInUser.UserId,
+			"org", querySignedInUser.OrgId,
 			"err", err,
 		)
 		reqContext.JsonApiErr(http.StatusInternalServerError, "Unable to link API key to service account", err)
@@ -313,13 +314,13 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	}
 
 	// disabled service accounts are not allowed to access the API
-	if signedInUser.IsDisabled {
+	if querySignedInUser.Result.IsDisabled {
 		reqContext.JsonApiErr(http.StatusUnauthorized, "Service account is disabled", nil)
 		return true
 	}
 
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = signedInUser
+	reqContext.SignedInUser = querySignedInUser.Result
 
 	return true
 }
@@ -364,8 +365,8 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 
 	usr := authQuery.User
 
-	query := user.GetSignedInUserQuery{UserID: usr.ID, OrgID: orgID}
-	signedInUser, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
+	query := models.GetSignedInUserQuery{UserId: usr.ID, OrgId: orgID}
+	err = h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query)
 	if err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
@@ -376,7 +377,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return true
 	}
 
-	reqContext.SignedInUser = signedInUser
+	reqContext.SignedInUser = query.Result
 	reqContext.IsSignedIn = true
 	return true
 }
@@ -401,14 +402,14 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 		return false
 	}
 
-	query := user.GetSignedInUserQuery{UserID: token.UserId, OrgID: orgID}
-	signedInUser, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
+	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
+	err = h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query)
 	if err != nil {
 		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}
 
-	reqContext.SignedInUser = signedInUser
+	reqContext.SignedInUser = query.Result
 	reqContext.IsSignedIn = true
 	reqContext.UserToken = token
 
@@ -477,10 +478,10 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 
 	// UserID can be 0 for background tasks and, in this case, there is no user info to retrieve
 	if renderUser.UserID != 0 {
-		query := user.GetSignedInUserQuery{UserID: renderUser.UserID, OrgID: renderUser.OrgID}
-		signedInUser, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
+		query := models.GetSignedInUserQuery{UserId: renderUser.UserID, OrgId: renderUser.OrgID}
+		err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query)
 		if err == nil {
-			reqContext.SignedInUser = signedInUser
+			reqContext.SignedInUser = query.Result
 		}
 	}
 
