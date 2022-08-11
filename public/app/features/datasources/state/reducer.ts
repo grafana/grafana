@@ -38,7 +38,7 @@ const slice = createSlice({
       })
       // Create
       .addCase(create.fulfilled, (state, action) => {
-        entityAdapter.updateOne(state.items, action.payload);
+        entityAdapter.upsertOne(state.items, action.payload);
       })
       // Update
       .addCase(update.fulfilled, (state, action) => {
