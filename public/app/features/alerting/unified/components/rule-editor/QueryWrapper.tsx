@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { FC, ReactNode, useState } from 'react';
+import React, { FC, useState } from 'react';
 
 import {
   CoreApp,
@@ -13,7 +13,7 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
 } from '@grafana/data';
-import { RelativeTimeRangePicker, useStyles2 } from '@grafana/ui';
+import { RelativeTimeRangePicker, useStyles2, Tooltip, Icon } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -58,18 +58,34 @@ export const QueryWrapper: FC<Props> = ({
   const isExpression = isExpressionQuery(query.model);
   const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
 
-  const renderTimePicker = (query: AlertQuery, index: number): ReactNode => {
-    if (isExpressionQuery(query.model) || !onChangeTimeRange) {
+  function SelectingDataSourceTooltip() {
+    const styles = useStyles2(getStyles);
+    return (
+      <div className={styles.dsTooltip}>
+        <Tooltip content={<>Not finding the data source you want? Some data sources are not supported for alerting.</>}>
+          <Icon name="info-circle" />
+        </Tooltip>
+      </div>
+    );
+  }
+
+  function HeaderExtras({ query, index }: { query: AlertQuery; index: number }) {
+    if (!isExpressionQuery(query.model)) {
+      return (
+        <>
+          <SelectingDataSourceTooltip />
+          {onChangeTimeRange && (
+            <RelativeTimeRangePicker
+              timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+              onChange={(range) => onChangeTimeRange(range, index)}
+            />
+          )}
+        </>
+      );
+    } else {
       return null;
     }
-
-    return (
-      <RelativeTimeRangePicker
-        timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-        onChange={(range) => onChangeTimeRange(range, index)}
-      />
-    );
-  };
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -87,7 +103,7 @@ export const QueryWrapper: FC<Props> = ({
         onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
         onRunQuery={onRunQueries}
         queries={queries}
-        renderHeaderExtras={() => renderTimePicker(query, index)}
+        renderHeaderExtras={() => <HeaderExtras query={query} index={index} />}
         app={CoreApp.UnifiedAlerting}
         visualization={
           data.state !== LoadingState.NotStarted ? (
@@ -117,5 +133,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.medium};
     border-radius: ${theme.shape.borderRadius(1)};
+  `,
+  dsTooltip: css`
+    display: flex;
+    align-items: center;
+    margin-right: ${theme.spacing(2)};
   `,
 });
