@@ -385,6 +385,11 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		store: publicdashboardStore,
 	}
 
+	publicDashboardQueryDTO := &PublicDashboardQueryDTO{
+		IntervalMs:    int64(100000),
+		MaxDataPoints: int64(200),
+	}
+
 	dto := &SavePublicDashboardConfigDTO{
 		DashboardUid: publicDashboard.Uid,
 		OrgId:        publicDashboard.OrgId,
@@ -419,32 +424,45 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			publicDashboard,
 			publicDashboardPD,
 			1,
+			publicDashboardQueryDTO,
 		)
 		require.NoError(t, err)
 
 		require.Equal(t, timeSettings.Get("from").MustString(), reqDTO.From)
 		require.Equal(t, timeSettings.Get("to").MustString(), reqDTO.To)
+
+		for i := range reqDTO.Queries {
+			require.Equal(t, publicDashboardQueryDTO.IntervalMs, reqDTO.Queries[i].Get("intervalMs").MustInt64())
+			require.Equal(t, publicDashboardQueryDTO.MaxDataPoints, reqDTO.Queries[i].Get("maxDataPoints").MustInt64())
+		}
+
 		require.Len(t, reqDTO.Queries, 2)
+
 		require.Equal(
 			t,
-			simplejson.MustJson([]byte(`{
-				"datasource": {
+			simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]interface{}{
 					"type": "mysql",
-					"uid": "ds1"
+					"uid":  "ds1",
 				},
-				"refId": "A"
-			}`)),
+				"intervalMs":    int64(100000),
+				"maxDataPoints": int64(200),
+				"refId":         "A",
+			}),
 			reqDTO.Queries[0],
 		)
+
 		require.Equal(
 			t,
-			simplejson.MustJson([]byte(`{
-				"datasource": {
+			simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]interface{}{
 					"type": "prometheus",
-					"uid": "ds2"
+					"uid":  "ds2",
 				},
-				"refId": "B"
-			}`)),
+				"intervalMs":    int64(100000),
+				"maxDataPoints": int64(200),
+				"refId":         "B",
+			}),
 			reqDTO.Queries[1],
 		)
 	})
@@ -455,6 +473,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			publicDashboard,
 			publicDashboardPD,
 			49,
+			publicDashboardQueryDTO,
 		)
 
 		require.ErrorContains(t, err, "Panel not found")
@@ -466,6 +485,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 			nonPublicDashboard,
 			nonPublicDashboardPD,
 			2,
+			publicDashboardQueryDTO,
 		)
 		require.ErrorContains(t, err, "Public dashboard not found")
 	})

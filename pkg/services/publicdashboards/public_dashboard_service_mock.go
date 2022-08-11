@@ -65,8 +65,8 @@ func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, da
 	return r0, r1
 }
 
-// BuildPublicDashboardMetricRequest provides a mock function with given fields: ctx, dashboard, publicDashboard, panelId
-func (_m *FakePublicDashboardService) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *publicdashboardsmodels.PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
+// BuildPublicDashboardMetricRequest provides a mock function with given fields: ctx, dashboard, publicDashboard, panelId, reqDTO
+func (_m *FakePublicDashboardService) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *publicdashboardsmodels.PublicDashboard, panelId int64, reqDTO *publicdashboardsmodels.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	ret := _m.Called(ctx, dashboard, publicDashboard, panelId)
 
 	var r0 dtos.MetricRequest

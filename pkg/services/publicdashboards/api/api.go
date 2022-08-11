@@ -149,6 +149,11 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "invalid panel ID", err)
 	}
 
+	reqDTO := &PublicDashboardQueryDTO{}
+	if err = web.Bind(c.Req, reqDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
 	dashboard, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":accessToken"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not fetch dashboard", err)
@@ -159,11 +164,12 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "could not fetch public dashboard", err)
 	}
 
-	reqDTO, err := api.PublicDashboardService.BuildPublicDashboardMetricRequest(
+	builtReqDTO, err := api.PublicDashboardService.BuildPublicDashboardMetricRequest(
 		c.Req.Context(),
 		dashboard,
 		publicDashboard,
 		panelId,
+		reqDTO,
 	)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get queries for public dashboard", err)
@@ -175,7 +181,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "could not create anonymous user", err)
 	}
 
-	resp, err := api.QueryDataService.QueryDataMultipleSources(c.Req.Context(), anonymousUser, c.SkipCache, reqDTO, true)
+	resp, err := api.QueryDataService.QueryDataMultipleSources(c.Req.Context(), anonymousUser, c.SkipCache, builtReqDTO, true)
 
 	if err != nil {
 		return handleQueryMetricsError(err)

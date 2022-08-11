@@ -167,23 +167,29 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 
 // BuildPublicDashboardMetricRequest merges public dashboard parameters with
 // dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO *PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	if !publicDashboard.IsEnabled {
 		return dtos.MetricRequest{}, ErrPublicDashboardNotFound
 	}
 
 	queriesByPanel := models.GroupQueriesByPanelId(dashboard.Data)
 
-	if _, ok := queriesByPanel[panelId]; !ok {
+	queries, ok := queriesByPanel[panelId]
+	if !ok {
 		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
 	}
 
 	ts := publicDashboard.BuildTimeSettings(dashboard)
 
+	for i := range queries {
+		queries[i].Set("intervalMs", reqDTO.IntervalMs)
+		queries[i].Set("maxDataPoints", reqDTO.MaxDataPoints)
+	}
+
 	return dtos.MetricRequest{
 		From:    ts.From,
 		To:      ts.To,
-		Queries: queriesByPanel[panelId],
+		Queries: queries,
 	}, nil
 }
 

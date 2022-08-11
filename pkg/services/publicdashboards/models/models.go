@@ -108,6 +108,11 @@ type SavePublicDashboardConfigDTO struct {
 	PublicDashboard *PublicDashboard
 }
 
+type PublicDashboardQueryDTO struct {
+	IntervalMs    int64
+	MaxDataPoints int64
+}
+
 //
 // COMMANDS
 //
