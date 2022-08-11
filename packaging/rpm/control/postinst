@@ -18,10 +18,10 @@ startGrafana() {
 stopGrafana() {
 	if [ -x /bin/systemctl ] ; then
 		/bin/systemctl stop grafana-server.service > /dev/null 2>&1 || :
-	elif [ -x /etc/init.d/grafana-service ] ; then
-		/etc/init.d/grafana-service stop
-	elif [ -x /etc/rc.d/init.d/grafana-service ] ; then
-		/etc/rc.d/init.d/grafana-service stop
+	elif [ -x /etc/init.d/grafana-server ] ; then
+		/etc/init.d/grafana-server stop
+	elif [ -x /etc/rc.d/init.d/grafana-server ] ; then
+		/etc/rc.d/init.d/grafana-server stop
 	fi
 }
 
