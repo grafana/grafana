@@ -1,8 +1,7 @@
-package slot
+package coremodel
 
 import (
 	"cuelang.org/go/cue"
-	"github.com/grafana/grafana/pkg/framework/coremodel"
 )
 
 // Slot represents one of Grafana's named Thema composition slot definitions.
@@ -31,21 +30,14 @@ func (s Slot) ForPlugin(plugintype string) (accepted, required bool) {
 	return
 }
 
-type Slots struct {
-	fw    cue.Value
-	slots map[string]*Slot
-}
-
-func All() *Slots {
-	r := &Slots{
-		fw:    coremodel.CUEFramework(),
-		slots: make(map[string]*Slot),
-	}
+func AllSlots() map[string]*Slot {
+	fw := CUEFramework()
+	slots := make(map[string]*Slot)
 
 	// Ignore err, can only happen if we change structure of fw files, and all we'd
 	// do is panic and that's what the next line will do anyway. Same for similar ignored
 	// errors later in this func
-	iter, _ := r.fw.LookupPath(cue.ParsePath("pluginTypeMetaSchema")).Fields(cue.Optional(true))
+	iter, _ := fw.LookupPath(cue.ParsePath("pluginTypeMetaSchema")).Fields(cue.Optional(true))
 	type nameopt struct {
 		name string
 		req  bool
@@ -62,7 +54,7 @@ func All() *Slots {
 		}
 	}
 
-	iter, _ = r.fw.LookupPath(cue.ParsePath("slots")).Fields(cue.Optional(true))
+	iter, _ = fw.LookupPath(cue.ParsePath("slots")).Fields(cue.Optional(true))
 	for iter.Next() {
 		n := iter.Selector().String()
 		sl := Slot{
@@ -75,20 +67,8 @@ func All() *Slots {
 			sl.plugins[no.name] = no.req
 		}
 
-		r.slots[n] = &sl
+		slots[n] = &sl
 	}
 
-	return r
-}
-
-func (r *Slots) List() []*Slot {
-	sl := make([]*Slot, 0, len(r.slots))
-	for _, s := range r.slots {
-		sl = append(sl, s)
-	}
-	return sl
-}
-
-func (r *Slots) ByName(slotname string) *Slot {
-	return r.slots[slotname]
+	return slots
 }

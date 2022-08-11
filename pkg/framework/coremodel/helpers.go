@@ -30,6 +30,7 @@ func init() {
 
 var prefix = filepath.Join("pkg", "framework", "coremodel")
 
+//nolint:nakedret
 func doLoadFrameworkCUE(ctx *cue.Context) (v cue.Value, err error) {
 	m := make(fstest.MapFS)
 
