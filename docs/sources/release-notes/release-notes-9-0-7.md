@@ -14,3 +14,6 @@ hide_menu = true
 ### Bug fixes
 
 - **GrafanaUI:** Render PageToolbar's leftItems regardless of title's presence. [#53285](https://github.com/grafana/grafana/pull/53285), [@Elfo404](https://github.com/Elfo404)
+- **Reports:** Fix inconsistency reports. (Enterprise)
+- **Reports:** Set uid when we don't receive it in the query. (Enterprise)
+- **Reports:** Save and update in reports should be transactional. (Enterprise)
