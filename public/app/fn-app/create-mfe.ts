@@ -15,6 +15,9 @@ import { toggleTheme } from 'app/core/services/toggleTheme';
 import fn_app from 'app/fn_app';
 
 class createMfe {
+  constructor(public theme: string) {
+    this.theme = theme;
+  }
   static create(component: React.Component) {
     return {
       bootstrap: this.boot(),
@@ -32,18 +35,41 @@ class createMfe {
     };
   }
 
+  loadFnTheme() {
+    const theme = this.theme;
+    config.theme2 = createTheme({
+      colors: {
+        mode: theme,
+      },
+    });
+    config.theme = config.theme2.v1;
+    config.bootData.user.lightTheme = theme === 'light' ? true : false;
+    appEvents.publish(new ThemeChangedEvent(config.theme2));
+    const other = theme === 'dark' ? 'light' : 'dark';
+    const newCssLink = document.createElement('link');
+    newCssLink.rel = 'stylesheet';
+    newCssLink.href = config.bootData.themePaths[theme];
+    document.body.appendChild(newCssLink);
+    const bodyLinks = document.getElementsByTagName('link');
+    for (let i = 0; i < bodyLinks.length; i++) {
+      const link = bodyLinks[i];
+      if (link.href) {
+        console.log(link.href, 'href');
+      }
+      if (link.href && link.href.indexOf(`build/grafana.${other}`) > 0) {
+        // Remove existing link after a 500ms to allow new css to load to avoid flickering
+        // If we add new css at the same time we remove current one the page will be rendered without css
+        // As the new css file is loading
+        setTimeout(() => link.remove(), 500);
+      }
+    }
+  }
+
   static mountFnApp(component: React.Component) {
     // eslint-disable-next-line
     return async function mount(props: any) {
-      config.theme2 = createTheme({
-        colors: {
-          mode: props.theme,
-        },
-      });
-      config.theme = config.theme2.v1;
-      appEvents.publish(new ThemeChangedEvent(config.theme2));
-      console.log('mounting grafana app ======>', props);
-      console.log('grafana theme', config.theme2.colors.background);
+      const mfe = new createMfe(props.theme);
+      mfe.loadFnTheme();
       ReactDOM.render(
         React.createElement(component, { ...props }),
         props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
