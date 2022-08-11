@@ -171,9 +171,9 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *models.ReqContext) response.Respons
 		return response.Error(401, "Not a valid organization", nil)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
+	cmd := models.SetUsingOrgCommand{UserId: userID, OrgId: orgID}
 
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change active organization", err)
 	}
 
@@ -334,9 +334,9 @@ func (hs *HTTPServer) UserSetUsingOrg(c *models.ReqContext) response.Response {
 		return response.Error(401, "Not a valid organization", nil)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: c.UserID, OrgID: orgID}
+	cmd := models.SetUsingOrgCommand{UserId: c.UserID, OrgId: orgID}
 
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change active organization", err)
 	}
 
@@ -355,9 +355,9 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
 		hs.NotFoundHandler(c)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: c.UserID, OrgID: orgID}
+	cmd := models.SetUsingOrgCommand{UserId: c.UserID, OrgId: orgID}
 
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.SQLStore.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
 		hs.NotFoundHandler(c)
 	}
 

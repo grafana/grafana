@@ -323,9 +323,9 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 			break
 		}
 
-		return ls.userService.SetUsingOrg(ctx, &user.SetUsingOrgCommand{
-			UserID: usr.ID,
-			OrgID:  usr.OrgID,
+		return ls.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{
+			UserId: usr.ID,
+			OrgId:  usr.OrgID,
 		})
 	}
 

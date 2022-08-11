@@ -637,7 +637,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
 		sc.userService = usertest.NewUserServiceFake()
-		sc.m.Use(OrgRedirect(sc.cfg, sc.userService))
+		sc.m.Use(OrgRedirect(sc.cfg, sc.mockSQLStore))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
 		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
