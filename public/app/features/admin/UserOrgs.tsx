@@ -328,7 +328,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     this.props.onOrgAdd(selectedOrg!.id, role);
     // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.OrgUsersWrite)) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
         if (this.state.pendingUserId) {
           await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
           // clear pending state
