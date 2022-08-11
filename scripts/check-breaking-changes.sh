@@ -12,13 +12,19 @@ while IFS=" " read -r -a package; do
     PACKAGE_PATH=$(basename "$package")
 
     # Calculate current and previous package paths / names
-    PREV="./base/packages/$PACKAGE_PATH/dist/"
-    CURRENT="./pr/packages/$PACKAGE_PATH/dist/"
+    PREV="./base/$PACKAGE_PATH"
+    CURRENT="./pr/$PACKAGE_PATH"
 
     # Temporarily skipping these packages as they don't have any exposed static typing
     if [[ "$PACKAGE_PATH" == 'grafana-toolkit' || "$PACKAGE_PATH" == 'jaeger-ui-components' ]]; then
         continue
     fi
+
+    # Extract the npm package tarballs into separate directories e.g. ./base/@grafana-data.tgz -> ./base/grafana-data/
+    mkdir $PREV
+    tar -xf ./base/@$PACKAGE_PATH.tgz --strip-components=1 -C $PREV
+    mkdir $CURRENT
+    tar -xf ./pr/@$PACKAGE_PATH.tgz --strip-components=1 -C $CURRENT
 
     # Run the comparison and record the exit code
     echo ""
