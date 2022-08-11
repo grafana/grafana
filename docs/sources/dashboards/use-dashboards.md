@@ -103,7 +103,7 @@ For more information about enabling panel title search, refer to [Enable the pan
 
 The following image shows the search results when you search using panel title.
 
-{{< figure src="/static/img/docs/v91/dashboard-features/search_by_panel_title.png" width="700px" >}}
+{{< figure src="/static/img/docs/v91/dashboard-features/search-by-panel-title.png" width="700px" >}}
 
 #### Enable the panelTitleSearch feature toggle
 
