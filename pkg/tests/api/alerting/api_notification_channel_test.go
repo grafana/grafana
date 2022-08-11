@@ -2196,30 +2196,40 @@ var expNonEmailNotifications = map[string][]string{
 	},
 	"teams_recv/teams_test": {
 		`{
-		  "@context": "http://schema.org/extensions",
-		  "@type": "MessageCard",
-		  "potentialAction": [
+		  "attachments": [
 			{
-			  "@context": "http://schema.org",
-			  "@type": "OpenUri",
-			  "name": "View Rule",
-			  "targets": [
-				{
-				  "os": "default",
-				  "uri": "http://localhost:3000/alerting/list"
-				}
-			  ]
-			}
+			  "content": {
+			    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+				"body": [
+				  {
+				    "color": "attention",
+				    "size": "large",
+				    "text": "[FIRING:1] TeamsAlert (default)",
+				    "type": "TextBlock",
+				    "weight": "bolder",
+				    "wrap": true
+				  }, {
+				  	"text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = TeamsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TeamsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3DTeamsAlert\u0026matcher=grafana_folder%3Ddefault\n",
+				  	"type": "TextBlock",
+				  	"wrap": true
+				  }, {
+				  	"actions": [
+				  	  {
+				  	  	"title": "View URL",
+				  	  	"type": "Action.OpenUrl",
+				  	  	"url": "http://localhost:3000/alerting/list"
+				  	  }
+				  	],
+				  	"type": "ActionSet"
+				  }
+				],
+				"type": "AdaptiveCard",
+				"version": "1.4"
+			  },
+			  "contentType": "application/vnd.microsoft.card.adaptive"
+		    }
 		  ],
-		  "sections": [
-			{
-			  "text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = TeamsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TeamsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTeamsAlert&matcher=grafana_folder%3Ddefault\n",
-			  "title": ""
-			}
-		  ],
-		  "summary": "[FIRING:1] TeamsAlert (default)",
-		  "themeColor": "#D63232",
-		  "title": "[FIRING:1] TeamsAlert (default)"
+		  "type": "message"
 		}`,
 	},
 	"webhook_recv/webhook_test": {
