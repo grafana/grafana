@@ -319,7 +319,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const panels: React.ReactNode[] = [];
 
     for (const key of Object.keys(frames)) {
-      // ley is basically a visualisationType that the dataFrame expects to be shown in.
+      // key is basically a visualisationType that the dataFrame expects to be shown in.
       const Panel = getPanelForVisType(key)
 
       panels.push(

@@ -12,7 +12,8 @@ import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
  * Based on visulastionType search existing registered panels and return matching one.
  */
 export async function getPanelForVisType(visType: string): Promise<React.ComponentType<ExplorePanelProps>> {
-  // For some visualisation we still may have hardcoded values/components
+  // For some visualisation we still may have hardcoded values/components for some time. Later we may try to figure
+  // out a good way to override them with custom panels.
   switch (visType) {
     case 'graph': {
       return GraphPanel;
@@ -55,13 +56,13 @@ export async function getPanelForVisType(visType: string): Promise<React.Compone
 }
 
 /**
- * Wrap panel adding a transform so we can use dashboard panels here.
+ * Wrap panel adding a transform so we can use dashboard panels Explore without modification.
  * @param Panel
  */
 function makePanelExploreCompatible(Panel: ComponentType<PanelProps<TOptions>>) {
   return function CompatibilityWrapper(props: ExplorePanelProps) {
     // This transform may not be 100% perfect so we may need to use some sensible zero/empty/noop values. We will have
-    // to see how much impact that will have but I would think even if that makes some panels loose some functionlity
+    // to see how much impact that will have but I would think even if that makes some panels loose some functionality
     // it may be still ok. If there are bugs we will have to fix them somehow.
     const dashboardProps = transformToDasboardProps(props)
     return <Panel {...dashboardProps}/>
