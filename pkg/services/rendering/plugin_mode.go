@@ -41,6 +41,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey strin
 		Timezone:          isoTimeOffsetToPosixTz(opts.Timezone),
 		Domain:            rs.domain,
 		Headers:           headers,
+		AuthToken:         rs.Cfg.RendererAuthToken,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
 
@@ -84,6 +85,7 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 		Timeout:   int32(opts.Timeout.Seconds()),
 		Timezone:  isoTimeOffsetToPosixTz(opts.Timezone),
 		Headers:   headers,
+		AuthToken: rs.Cfg.RendererAuthToken,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
 
