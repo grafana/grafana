@@ -314,6 +314,30 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  renderPanels(width: number) {
+    const {queryResponse, frames} = this.props;
+    const panels: React.ReactNode[] = [];
+
+    for (const key of Object.keys(frames)) {
+      // ley is basically a visualisationType that the dataFrame expects to be shown in.
+      const Panel = getPanelForVisType(key)
+
+      panels.push(
+        <ErrorBoundaryAlert key={key}>
+          <Panel
+            onChangeGraphStyle={this.onChangeGraphStyle}
+            data={frames[key]}
+            absoluteRange={this.props.absoluteRange}
+            range={this.props.range}
+            timeZone={this.props.timeZone}
+            // And more props here
+          />
+        </ErrorBoundaryAlert>
+      );
+    }
+    return panels;
+  }
+
   render() {
     const {
       datasourceInstance,
@@ -381,18 +405,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 return (
                   <main className={cx(styles.exploreMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
-                      {showPanels && (
-                        <>
-                          {showMetrics && graphResult && (
-                            <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
-                          )}
-                          {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
-                          {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
-                          {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                          {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
-                        </>
-                      )}
+                      {showPanels && this.renderPanels()}
                       {showRichHistory && (
                         <RichHistoryContainer
                           width={width}

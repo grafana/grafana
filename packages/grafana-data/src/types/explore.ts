@@ -27,3 +27,17 @@ export interface ExploreTracePanelState {
 export type SplitOpen = <T extends DataQuery = any>(
   options?: { datasourceUid: string; query: T; range?: TimeRange; panelsState?: ExplorePanelsState } | undefined
 ) => void;
+
+export type ExplorePanelProps = {
+  graphStyle: ExploreGraphStyle;
+  onChangeGraphStyle: (style: ExploreGraphStyle) => void;
+  data: DataFrame[];
+  absoluteRange: AbsoluteTimeRange;
+  range: TimeRange;
+  timeZone: TimeZone;
+  splitOpen: SplitOpen;
+  annotations?: DataFrame[];
+  loadingState: LoadingState;
+  // ...
+  // And some more
+}

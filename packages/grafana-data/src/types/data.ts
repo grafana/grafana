@@ -42,8 +42,12 @@ export interface QueryResultMeta {
   /** Used to track transformation ids that where part of the processing */
   transformations?: string[];
 
-  /** Currently used to show results in Explore only in preferred visualisation option */
-  preferredVisualisationType?: PreferredVisualisationType;
+  /**
+   * Used in Explore to match what data source prefers as a visualisation for the data with existing panels.
+   * It is possible to define custom values for example to create data source and a visualisation to only match each
+   * other and providing a custom experience for a datasource.
+   */
+  preferredVisualisationType?: string;
 
   /** The path for live stream updates for this frame */
   channel?: string;

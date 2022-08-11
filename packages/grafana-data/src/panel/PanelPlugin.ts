@@ -123,6 +123,7 @@ export class PanelPlugin<
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
    */
   angularPanelCtrl?: any;
+  explorePanel?: ComponentType<ExplorePanelProps>;
 
   constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
@@ -378,5 +379,13 @@ export class PanelPlugin<
 
   hasPluginId(pluginId: string) {
     return this.meta.id === pluginId;
+  }
+
+  /**
+   * Use more specific component in explore to take advantage of some Explore specific features and props.
+   * @param panel
+   */
+  setExplorePanel(panel: ComponentType<ExplorePanelProps>) {
+    this.explorePanel = panel;
   }
 }
