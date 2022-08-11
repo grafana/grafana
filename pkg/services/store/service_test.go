@@ -24,10 +24,11 @@ var (
 			AllowUnsanitizedSvgUpload: true,
 		},
 	}
+
 	htmlBytes, _        = os.ReadFile("testdata/page.html")
 	jpgBytes, _         = os.ReadFile("testdata/image.jpg")
 	svgBytes, _         = os.ReadFile("testdata/image.svg")
-	dummyUser           = &user.SignedInUser{OrgId: 1}
+	dummyUser           = &user.SignedInUser{OrgID: 1}
 	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		return map[string]filestorage.PathFilter{
 			ActionFilesDelete: allowAllPathFilter,

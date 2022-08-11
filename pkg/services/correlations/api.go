@@ -42,7 +42,7 @@ func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	correlation, err := s.CreateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
@@ -90,7 +90,7 @@ func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Respo
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.OrgId,
+		OrgId:     c.OrgID,
 	}
 
 	err := s.DeleteCorrelation(c.Req.Context(), cmd)
@@ -148,7 +148,7 @@ func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Respo
 
 	cmd.UID = web.Params(c.Req)[":correlationUID"]
 	cmd.SourceUID = web.Params(c.Req)[":uid"]
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {

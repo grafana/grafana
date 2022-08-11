@@ -702,8 +702,8 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 
 		t.Run("Should get hidden acl", func(t *testing.T) {
 			user := &user.SignedInUser{
-				OrgId:  orgID,
-				UserId: 1,
+				OrgID:  orgID,
+				UserID: 1,
 				Login:  "user1",
 			}
 			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc)
@@ -717,8 +717,8 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 
 		t.Run("Grafana admin should not get hidden acl", func(t *testing.T) {
 			user := &user.SignedInUser{
-				OrgId:          orgID,
-				UserId:         1,
+				OrgID:          orgID,
+				UserID:         1,
 				Login:          "user1",
 				IsGrafanaAdmin: true,
 			}
@@ -752,8 +752,8 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 
 		t.Run("Should get acl without duplicates", func(t *testing.T) {
 			user := &user.SignedInUser{
-				OrgId:  orgID,
-				UserId: 1,
+				OrgID:  orgID,
+				UserID: 1,
 				Login:  "user1",
 			}
 			g := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc)

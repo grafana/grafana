@@ -3,7 +3,7 @@ package notifiers
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,7 +29,7 @@ func (cr *configReader) readConfig(ctx context.Context, path string) ([]*notific
 	var notifications []*notificationsAsConfig
 	cr.log.Debug("Looking for alert notification provisioning files", "path", path)
 
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		cr.log.Error("Can't read alert notification provisioning files from directory", "path", path, "error", err)
 		return notifications, nil
@@ -65,7 +65,7 @@ func (cr *configReader) readConfig(ctx context.Context, path string) ([]*notific
 	return notifications, nil
 }
 
-func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (*notificationsAsConfig, error) {
+func (cr *configReader) parseNotificationConfig(path string, file fs.DirEntry) (*notificationsAsConfig, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
 
 	// nolint:gosec

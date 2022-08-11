@@ -22,7 +22,7 @@ import (
 )
 
 var orgID = int64(1)
-var usr = &user.SignedInUser{UserId: 1}
+var usr = &user.SignedInUser{UserID: 1}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {

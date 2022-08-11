@@ -3381,6 +3381,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3568,7 +3569,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3624,7 +3624,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3735,7 +3734,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5923,15 +5921,15 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroupMetadata"
+       "$ref": "#/definitions/AlertRuleGroup"
       }
      }
     ],
     "responses": {
      "200": {
-      "description": "AlertRuleGroupMetadata",
+      "description": "AlertRuleGroup",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroupMetadata"
+       "$ref": "#/definitions/AlertRuleGroup"
       }
      },
      "400": {

@@ -175,7 +175,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Team members cannot add team members", func(t *testing.T) {
@@ -184,7 +184,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 
 	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,
@@ -309,7 +309,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	input = strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, 0))
 	t.Run("Team members cannot update team members", func(t *testing.T) {
@@ -318,7 +318,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 
 	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,
@@ -385,7 +385,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	t.Run("Team members cannot remove team members", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
@@ -393,7 +393,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 
 	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,

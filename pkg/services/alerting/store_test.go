@@ -154,7 +154,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Viewer can read alerts", func(t *testing.T) {
 		setup(t)
-		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgId: 1}
+		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgID: 1}
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
