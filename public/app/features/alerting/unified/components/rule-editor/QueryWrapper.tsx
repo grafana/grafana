@@ -62,8 +62,23 @@ export const QueryWrapper: FC<Props> = ({
     const styles = useStyles2(getStyles);
     return (
       <div className={styles.dsTooltip}>
-        <Tooltip content={<>Not finding the data source you want? Some data sources are not supported for alerting.</>}>
-          <Icon name="info-circle" />
+        <Tooltip
+          content={
+            <>
+              Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon
+              for more information.
+            </>
+          }
+        >
+          <Icon
+            name="info-circle"
+            onClick={() =>
+              window.open(
+                ' https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/',
+                '_blank'
+              )
+            }
+          />
         </Tooltip>
       </div>
     );
@@ -138,5 +153,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     margin-right: ${theme.spacing(2)};
+    &:hover {
+      opacity: 0.85;
+      cursor: pointer;
+    }
   `,
 });
