@@ -82,7 +82,7 @@ const ServiceAccountListItem = memo(
                 onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 builtInRoles={builtInRoles}
-                builtinRolesDisabled={canUpdateRole}
+                builtinRolesDisabled={!canUpdateRole}
                 disabled={serviceAccount.isDisabled}
               />
             )}
