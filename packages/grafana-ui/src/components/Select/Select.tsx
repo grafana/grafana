@@ -35,4 +35,4 @@ export function AsyncMultiSelect<T>(props: AsyncMultiSelectProps<T>) {
   return <SelectBase {...props} isMulti />;
 }
 
-export { SelectContainer, SelectContainerProps };
+export { SelectContainer, type SelectContainerProps };

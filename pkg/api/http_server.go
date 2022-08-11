@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -73,7 +74,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	secretsKV "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -139,7 +139,7 @@ type HTTPServer struct {
 	Listener                     net.Listener
 	EncryptionService            encryption.Internal
 	SecretsService               secrets.Service
-	remoteSecretsCheck           secretsKV.UseRemoteSecretsPluginCheck
+	secretsPluginManager         plugins.SecretsPluginManager
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
@@ -170,9 +170,9 @@ type HTTPServer struct {
 	dashboardVersionService      dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
 	starService                  star.Service
+	Coremodels                   *registry.Base
 	playlistService              playlist.Service
-	CoremodelRegistry            *registry.Generic
-	CoremodelStaticRegistry      *registry.Static
+	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
 	userService                  user.Service
@@ -209,8 +209,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, coremodelRegistry *registry.Generic, coremodelStaticRegistry *registry.Static,
-	playlistService playlist.Service, kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, remoteSecretsCheck secretsKV.UseRemoteSecretsPluginCheck,
+	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
+	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -266,7 +267,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SocialService:                socialService,
 		EncryptionService:            encryptionService,
 		SecretsService:               secretsService,
-		remoteSecretsCheck:           remoteSecretsCheck,
+		secretsPluginManager:         secretsPluginManager,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,
@@ -292,9 +293,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
+		Coremodels:                   coremodels,
 		playlistService:              playlistService,
-		CoremodelRegistry:            coremodelRegistry,
-		CoremodelStaticRegistry:      coremodelStaticRegistry,
+		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
 		secretsMigrator:              secretsMigrator,
@@ -525,7 +526,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.UseMiddleware(middleware.Gziper())
 	}
 
-	m.Use(middleware.Recovery(hs.Cfg))
+	m.UseMiddleware(middleware.Recovery(hs.Cfg))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")

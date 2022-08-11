@@ -14,12 +14,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/query"
 )
@@ -57,7 +58,7 @@ type fakeOAuthTokenService struct {
 	token           *oauth2.Token
 }
 
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token {
+func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
 	return ts.token
 }
 
@@ -98,7 +99,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 
 	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
 		req := serverFeatureDisabled.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
-		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER})
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := serverFeatureDisabled.SendJSON(req)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
@@ -107,7 +108,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 
 	t.Run("Status code is 207 when data source response has an error and feature toggle is enabled", func(t *testing.T) {
 		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
-		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER})
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := serverFeatureEnabled.SendJSON(req)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
@@ -141,7 +142,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 
 	t.Run("Status code is 500 and a secrets plugin error is returned if there is a problem getting secrets from the remote plugin", func(t *testing.T) {
 		req := httpServer.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
-		webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER})
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := httpServer.SendJSON(req)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)

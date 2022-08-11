@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
@@ -84,8 +85,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	ss := InitTestDB(t)
-	usr := &models.SignedInUser{
-		OrgId:       1,
+	usr := &user.SignedInUser{
+		OrgID:       1,
 		Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
 	}
 
@@ -352,7 +353,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
 			OrgId: users[0].OrgID, UserId: users[1].ID,
 		})
 		require.Nil(t, err)
@@ -391,7 +392,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 		err = ss.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
-			LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER,
+			LoginOrEmail: users[1].Login, Role: org.RoleViewer,
 			OrgId: users[0].OrgID, UserId: users[1].ID,
 		})
 		require.Nil(t, err)
@@ -415,9 +416,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
 		require.Nil(t, err)
 		require.NotNil(t, query4.Result)
-		require.Equal(t, query4.Result.OrgId, users[0].OrgID)
+		require.Equal(t, query4.Result.OrgID, users[0].OrgID)
 
-		cacheKey := newSignedInUserCacheKey(query4.Result.OrgId, query4.UserId)
+		cacheKey := newSignedInUserCacheKey(query4.Result.OrgID, query4.UserId)
 		_, found := ss.CacheService.Get(cacheKey)
 		require.True(t, found)
 
@@ -464,8 +465,8 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			}
 		})
 
-		testUser := &models.SignedInUser{
-			OrgId:       1,
+		testUser := &user.SignedInUser{
+			OrgID:       1,
 			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
 		}
 		query := models.SearchUsersQuery{SignedInUser: testUser}

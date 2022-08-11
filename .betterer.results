@@ -8,7 +8,7 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Graph/Graph.test.tsx:1664091255": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/Logs/LogRowContextProvider.test.tsx:2719724375": [
+    "packages/grafana-ui/src/components/Logs/LogRowContextProvider.test.tsx:943686035": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:375894800": [
@@ -74,14 +74,8 @@ exports[`no enzyme tests`] = {
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3716733755": [
       [0, 35, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:2723773538": [
-      [0, 35, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:4164297658": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/features/folders/FolderSettingsPage.test.tsx:1208063654": [
-      [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:4057721851": [
       [1, 19, 13, "RegExp match", "2409514259"]
@@ -98,7 +92,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:146069464": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:3658171175": [
+    "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:2659566901": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DebugSection.test.tsx:1551927716": [
@@ -1267,9 +1261,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "packages/grafana-toolkit/src/cli/tasks/toolkit.build.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-toolkit/src/cli/utils/githubRelease.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1401,20 +1392,8 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/DateTimePickers/TimeOfDayPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangeInput.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOption.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Drawer/Drawer.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/components/Dropdown/ButtonSelect.story.internal.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/Dropdown/ButtonSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1453,12 +1432,7 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Select/Select.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Select/SelectOption.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1571,8 +1545,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "packages/grafana-ui/src/components/Logs/LogRowContextProvider.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2150,10 +2123,6 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/utils/storybook/ThemedDocsContainer.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/utils/storybook/UseState.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/utils/storybook/withTheme.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2818,6 +2787,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
     ],
+    "public/app/core/TableModel.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Do not use any type assertions.", "7"],
+      [0, 0, 0, "Do not use any type assertions.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
+      [0, 0, 0, "Do not use any type assertions.", "10"]
+    ],
     "public/app/core/components/ColorScale/ColorScale.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -3017,8 +2999,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/core/components/SharedPreferences/SharedPreferences.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/core/components/TagFilter/TagBadge.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3095,14 +3076,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/core/navigation/__mocks__/routeProps.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/core/navigation/hooks.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3178,11 +3155,6 @@ exports[`better eslint`] = {
     "public/app/core/services/ResponseQueue.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/core/services/__mocks__/backend_srv.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/core/services/__mocks__/search_srv.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3279,6 +3251,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/core/specs/TableModel.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "public/app/core/specs/backend_srv.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -3305,9 +3280,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
-    "public/app/core/specs/table_model.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/core/specs/ticks.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -3322,19 +3294,6 @@ exports[`better eslint`] = {
     ],
     "public/app/core/store.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/core/table_model.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Do not use any type assertions.", "10"]
     ],
     "public/app/core/time_series2.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4293,8 +4252,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4330,8 +4288,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
     "public/app/features/dashboard/services/DashboardSrv.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5246,19 +5203,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/plugins/__mocks__/pluginMocks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
-    "public/app/features/plugins/admin/__mocks__/catalogPlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/plugins/admin/__mocks__/localPlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/plugins/admin/__mocks__/remotePlugin.mock.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/plugins/admin/components/AppConfigWrapper.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5382,36 +5328,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "7"],
       [0, 0, 0, "Do not use any type assertions.", "8"]
     ],
-    "public/app/features/plugins/sql/components/query-editor-raw/SQLEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"]
-    ],
     "public/app/features/plugins/sql/components/visual-query-builder/AwesomeQueryBuilder.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "public/app/features/plugins/sql/mocks/Monaco.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/plugins/sql/mocks/queries/singleLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/plugins/sql/standardSql/definition.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/plugins/sql/test-utils/statementPosition.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
-    "public/app/features/plugins/sql/utils/debugger.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
@@ -5891,11 +5809,6 @@ exports[`better eslint`] = {
     "public/app/features/transformers/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/users/__mocks__/userMocks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
     "public/app/features/users/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -6233,12 +6146,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/features/variables/state/selectors.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
-    ],
     "public/app/features/variables/state/sharedReducer.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -6261,9 +6168,6 @@ exports[`better eslint`] = {
     "public/app/features/variables/state/upgradeLegacyQueries.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/features/variables/state/variablesReducer.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/variables/system/adapter.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6318,11 +6222,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "public/app/plugins/datasource/cloud-monitoring/__mocks__/cloudMonitoringDatasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/plugins/datasource/cloud-monitoring/annotationSupport.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -6433,58 +6332,13 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloudwatch/__mocks__/CloudWatchDataSource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/multiLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/multiLineIncompleteQueryWithoutNamespace.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/singleLineEmptyQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/singleLineFullQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/cloudwatch-sql-test-data/singleLineTwoQueries.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/dynamic-label-test-data/afterLabelValue.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/dynamic-label-test-data/insideLabelValue.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/afterFunctionQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/secondArgAfterSearchQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/secondArgQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/singleLineEmptyQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/thirdArgAfterSearchQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/metric-math-test-data/withinStringQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/plugins/datasource/cloudwatch/__mocks__/monarch/Monaco.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6793,9 +6647,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "46"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "47"]
     ],
-    "public/app/plugins/datasource/elasticsearch/hooks/useNextId.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/elasticsearch/hooks/useStatelessReducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -6863,27 +6714,12 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/elasticsearch/test-helpers/render.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/instanceSettings.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/panelData.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
     "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/query_ctrl.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "public/app/plugins/datasource/grafana-azure-monitor-datasource/__mocks__/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/__mocks__/schema.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7467,17 +7303,10 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiQueryField.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/loki/components/LokiQueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7513,14 +7342,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
     "public/app/plugins/datasource/loki/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7567,32 +7389,16 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/querybuilder/binaryScalarOperations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilderContainer.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilderContainer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryEditorSelector.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/datasource/loki/querybuilder/parsing.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/loki/querybuilder/state.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/loki/querybuilder/state.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -8168,10 +7974,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
-    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilder.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -8700,6 +8502,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"]
+    ],
+    "public/app/plugins/panel/geomap/components/MeasureVectorLayer.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/plugins/panel/geomap/editor/FrameSelectionEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

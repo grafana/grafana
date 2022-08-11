@@ -7,8 +7,10 @@ import (
 )
 
 type FakeUserService struct {
-	ExpectedUser  *user.User
-	ExpectedError error
+	ExpectedUser             *user.User
+	ExpectedSignedInUser     *user.SignedInUser
+	ExpectedError            error
+	ExpectedSetUsingOrgError error
 }
 
 func NewUserServiceFake() *FakeUserService {
@@ -21,4 +23,36 @@ func (f *FakeUserService) Create(ctx context.Context, cmd *user.CreateUserComman
 
 func (f *FakeUserService) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error {
 	return f.ExpectedError
+}
+
+func (f *FakeUserService) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserService) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserService) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+	return f.ExpectedUser, f.ExpectedError
+}
+
+func (f *FakeUserService) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
+	return f.ExpectedSetUsingOrgError
+}
+
+func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	return f.ExpectedSignedInUser, f.ExpectedError
 }

@@ -9,8 +9,8 @@ var (
 	ErrSourceDataSourceDoesNotExists      = errors.New("source data source does not exist")
 	ErrTargetDataSourceDoesNotExists      = errors.New("target data source does not exist")
 	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
-	ErrCorrelationIdentifierNotSet        = errors.New("source identifier and org id are needed to be able to edit correlations")
 	ErrCorrelationNotFound                = errors.New("correlation not found")
+	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
 )
 
 // Correlation is the model for correlations definitions
@@ -70,6 +70,48 @@ type DeleteCorrelationCommand struct {
 	UID       string
 	SourceUID string
 	OrgId     int64
+}
+
+// swagger:model
+type UpdateCorrelationResponseBody struct {
+	Result Correlation `json:"result"`
+	// example: Correlation updated
+	Message string `json:"message"`
+}
+
+// UpdateCorrelationCommand is the command for updating a correlation
+type UpdateCorrelationCommand struct {
+	// UID of the correlation to be deleted.
+	UID       string `json:"-"`
+	SourceUID string `json:"-"`
+	OrgId     int64  `json:"-"`
+
+	// Optional label identifying the correlation
+	// example: My label
+	Label *string `json:"label"`
+	// Optional description of the correlation
+	// example: Logs to Traces
+	Description *string `json:"description"`
+}
+
+// GetCorrelationQuery is the query to retrieve a single correlation
+type GetCorrelationQuery struct {
+	// UID of the correlation
+	UID string `json:"-"`
+	// UID of the source data source
+	SourceUID string `json:"-"`
+	OrgId     int64  `json:"-"`
+}
+
+// GetCorrelationsBySourceUIDQuery is the query to retrieve all correlations originating by the given Data Source
+type GetCorrelationsBySourceUIDQuery struct {
+	SourceUID string `json:"-"`
+	OrgId     int64  `json:"-"`
+}
+
+// GetCorrelationsQuery is the query to retrieve all correlations
+type GetCorrelationsQuery struct {
+	OrgId int64 `json:"-"`
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {
