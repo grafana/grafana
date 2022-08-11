@@ -74,6 +74,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	spm "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -175,6 +176,7 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
+	secretsPluginMigrator        spm.SecretMigrationServiceImpl
 	userService                  user.Service
 }
 
@@ -211,7 +213,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
-	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager,
+	secretsMigrator secrets.Migrator, secretsPluginMigrator spm.SecretMigrationServiceImpl, secretsPluginManager plugins.SecretsPluginManager,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -299,6 +301,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
 		secretsMigrator:              secretsMigrator,
+		secretsPluginMigrator:        secretsPluginMigrator,
 		userService:                  userService,
 	}
 	if hs.Listener != nil {
