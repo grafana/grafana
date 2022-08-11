@@ -70,7 +70,9 @@ export const QueryWrapper: FC<Props> = ({
   }
 
   function HeaderExtras({ query, index }: { query: AlertQuery; index: number }) {
-    if (!isExpressionQuery(query.model)) {
+    if (isExpressionQuery(query.model)) {
+      return null;
+    } else {
       return (
         <>
           <SelectingDataSourceTooltip />
@@ -82,8 +84,6 @@ export const QueryWrapper: FC<Props> = ({
           )}
         </>
       );
-    } else {
-      return null;
     }
   }
 
