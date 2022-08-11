@@ -260,7 +260,7 @@ func (u *SignedInUser) IsRealUser() bool {
 }
 
 func (u *SignedInUser) IsApiKeyUser() bool {
-	return u.ApiKeyId != 0
+	return u.ApiKeyID != 0
 }
 
 func (u *SignedInUser) HasUniqueId() bool {
@@ -269,10 +269,10 @@ func (u *SignedInUser) HasUniqueId() bool {
 
 func (u *SignedInUser) GetCacheKey() (string, error) {
 	if u.IsRealUser() {
-		return fmt.Sprintf("%d-user-%d", u.OrgId, u.UserId), nil
+		return fmt.Sprintf("%d-user-%d", u.OrgID, u.UserID), nil
 	}
 	if u.IsApiKeyUser() {
-		return fmt.Sprintf("%d-apikey-%d", u.OrgId, u.ApiKeyId), nil
+		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
 	}
 	return "", ErrNoUniqueID
 }
