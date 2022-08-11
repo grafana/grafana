@@ -26,7 +26,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 
 	userQuery := user.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	usr, err := hs.UserService.GetByLogin(c.Req.Context(), &userQuery)
 	if err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return response.Error(http.StatusOK, "Email sent", err)
@@ -62,7 +62,7 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 
 	getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
 		userQuery := user.GetUserByLoginQuery{LoginOrEmail: login}
-		usr, err := hs.userService.GetByLogin(ctx, &userQuery)
+		usr, err := hs.UserService.GetByLogin(ctx, &userQuery)
 		return usr, err
 	}
 
@@ -90,7 +90,7 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
+	if err := hs.UserService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 

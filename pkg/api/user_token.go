@@ -53,7 +53,7 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext) response.Respons
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {
 	userQuery := user.GetUserByIDQuery{ID: userID}
 
-	_, err := hs.userService.GetByID(ctx, &userQuery)
+	_, err := hs.UserService.GetByID(ctx, &userQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)
@@ -74,7 +74,7 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int64) response.Response {
 	userQuery := user.GetUserByIDQuery{ID: userID}
 
-	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	_, err := hs.UserService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(http.StatusNotFound, "User not found", err)
@@ -145,7 +145,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 
 func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID int64, cmd models.RevokeAuthTokenCmd) response.Response {
 	userQuery := user.GetUserByIDQuery{ID: userID}
-	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	_, err := hs.UserService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, "User not found", err)

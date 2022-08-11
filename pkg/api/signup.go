@@ -35,7 +35,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	}
 
 	existing := user.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	_, err := hs.userService.GetByLogin(c.Req.Context(), &existing)
+	_, err := hs.UserService.GetByLogin(c.Req.Context(), &existing)
 	if err == nil {
 		return response.Error(422, "User with same email address already exists", nil)
 	}

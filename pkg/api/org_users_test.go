@@ -551,7 +551,7 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			sc := setupHTTPServerWithCfg(t, false, cfg)
 			userService := usertest.NewUserServiceFake()
 			userService.ExpectedUser = &user.User{ID: 2}
-			sc.hs.userService = userService
+			sc.hs.UserService = userService
 			mockStore := mockstore.NewSQLStoreMock()
 			mockStore.ExpectedUser = &user.User{ID: 2}
 			sc.hs.SQLStore = mockStore
@@ -677,7 +677,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			sc := setupHTTPServer(t, true)
 			userService := usertest.NewUserServiceFake()
 			userService.ExpectedUser = &user.User{ID: 2}
-			sc.hs.userService = userService
+			sc.hs.UserService = userService
 			setInitCtxSignedInViewer(sc.initCtx)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)

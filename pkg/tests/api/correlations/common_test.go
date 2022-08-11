@@ -134,7 +134,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) {
 	c.env.SQLStore.Cfg.AutoAssignOrg = true
 	c.env.SQLStore.Cfg.AutoAssignOrgId = 1
 
-	_, err := c.env.SQLStore.CreateUser(context.Background(), cmd)
+	_, err := c.env.Server.HTTPServer.UserService.Create(context.Background(), &cmd)
 	require.NoError(c.t, err)
 }
 

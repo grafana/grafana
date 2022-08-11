@@ -111,7 +111,7 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Res
 
 	userQuery := user.GetUserByIDQuery{ID: userID}
 
-	usr, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	usr, err := hs.UserService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
@@ -126,7 +126,7 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Res
 		NewPassword: passwordHashed,
 	}
 
-	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
+	if err := hs.UserService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to update user password", err)
 	}
 

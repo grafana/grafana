@@ -75,7 +75,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 	}
 
 	userQuery := user.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
-	userToAdd, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
+	userToAdd, err := hs.UserService.GetByLogin(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(404, "User not found", nil)
 	}

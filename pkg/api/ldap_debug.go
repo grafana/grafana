@@ -213,7 +213,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	query := user.GetUserByIDQuery{ID: userId}
 
-	usr, err := hs.userService.GetByID(c.Req.Context(), &query)
+	usr, err := hs.UserService.GetByID(c.Req.Context(), &query)
 	if err != nil { // validate the userId exists
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)

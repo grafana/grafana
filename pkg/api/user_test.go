@@ -128,7 +128,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		userMock := usertest.NewUserServiceFake()
 		userMock.ExpectedUser = &user.User{ID: 2}
 		sc.userService = userMock
-		hs.userService = userMock
+		hs.UserService = userMock
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
 		var resp models.UserProfileDTO

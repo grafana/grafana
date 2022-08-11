@@ -84,7 +84,7 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 // 500: internalServerError
 func (hs *HTTPServer) GetUserByLoginOrEmail(c *models.ReqContext) response.Response {
 	query := user.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
-	usr, err := hs.userService.GetByLogin(c.Req.Context(), &query)
+	usr, err := hs.UserService.GetByLogin(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
@@ -188,7 +188,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 		}
 	}
 
-	if err := hs.userService.Update(ctx, &cmd); err != nil {
+	if err := hs.UserService.Update(ctx, &cmd); err != nil {
 		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
 		}
@@ -387,7 +387,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 
 	userQuery := user.GetUserByIDQuery{ID: c.UserID}
 
-	user, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	user, err := hs.UserService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
@@ -419,7 +419,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 		return response.Error(500, "Failed to encode password", err)
 	}
 
-	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
+	if err := hs.UserService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
 	}
 

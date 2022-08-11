@@ -175,7 +175,7 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
-	userService                  user.Service
+	UserService                  user.Service
 }
 
 type ServerOptions struct {
@@ -299,7 +299,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
 		secretsMigrator:              secretsMigrator,
-		userService:                  userService,
+		UserService:                  userService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

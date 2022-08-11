@@ -253,7 +253,7 @@ func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, acti
 
 func (hs *HTTPServer) getUserLogin(ctx context.Context, userID int64) string {
 	query := user.GetUserByIDQuery{ID: userID}
-	user, err := hs.userService.GetByID(ctx, &query)
+	user, err := hs.UserService.GetByID(ctx, &query)
 	if err != nil {
 		return anonString
 	}

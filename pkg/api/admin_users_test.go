@@ -378,7 +378,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
 	hs := HTTPServer{
 		SQLStore:    mockstore.NewSQLStoreMock(),
-		userService: usertest.NewUserServiceFake(),
+		UserService: usertest.NewUserServiceFake(),
 	}
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		sc := setupScenarioContext(t, url)
@@ -390,7 +390,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 
 			return hs.AdminDeleteUser(c)
 		})
-		sc.userService = hs.userService
+		sc.userService = hs.UserService
 
 		sc.m.Delete(routePattern, sc.defaultHandler)
 
