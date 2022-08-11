@@ -5,8 +5,8 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"context"
@@ -388,7 +388,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	}
 
 	if info.TlsClientCa != "" {
-		caCert, err := ioutil.ReadFile(info.TlsClientCa)
+		caCert, err := os.ReadFile(info.TlsClientCa)
 		if err != nil {
 			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCa: %w", err)

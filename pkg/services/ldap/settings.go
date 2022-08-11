@@ -2,7 +2,7 @@ package ldap
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -123,7 +123,7 @@ func readConfig(configFile string) (*Config, error) {
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from grafana configuration file
-	fileBytes, err := ioutil.ReadFile(configFile)
+	fileBytes, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Failed to load LDAP config file", err)
 	}

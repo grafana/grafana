@@ -5,9 +5,7 @@ type VersionMode string
 
 const (
 	MainMode          VersionMode = "main"
-	ReleaseMode       VersionMode = "release"
-	BetaReleaseMode   VersionMode = "beta"
-	TestReleaseMode   VersionMode = "test"
+	TagMode           VersionMode = "release"
 	ReleaseBranchMode VersionMode = "branch"
 	PullRequestMode   VersionMode = "pull_request"
 )

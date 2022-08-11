@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +36,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 		assert.Equal(t, 200, sc.resp.Code)
 		assert.True(t, sc.context.IsSignedIn)
-		assert.Equal(t, orgID, sc.context.OrgId)
+		assert.Equal(t, orgID, sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 	}, configure)
 
@@ -45,14 +44,14 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const password = "MyPass"
 		const orgID int64 = 2
 
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: id}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: id}
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 
 		assert.True(t, sc.context.IsSignedIn)
-		assert.Equal(t, orgID, sc.context.OrgId)
-		assert.Equal(t, id, sc.context.UserId)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, id, sc.context.UserID)
 	}, configure)
 
 	middlewareScenario(t, "Auth sequence", func(t *testing.T, sc *scenarioContext) {
@@ -63,15 +62,15 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		require.NoError(t, err)
 
 		sc.mockSQLStore.ExpectedUser = &user.User{Password: encoded, ID: id, Salt: salt}
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserId: id}
-		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, usertest.NewUserServiceFake())
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserID: id}
+		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, sc.userService)
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 		require.NotNil(t, sc.context)
 
 		assert.True(t, sc.context.IsSignedIn)
-		assert.Equal(t, id, sc.context.UserId)
+		assert.Equal(t, id, sc.context.UserID)
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {

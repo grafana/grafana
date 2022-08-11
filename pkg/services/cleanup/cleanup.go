@@ -3,7 +3,7 @@ package cleanup
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path"
 	"time"
@@ -107,17 +107,23 @@ func (srv *CleanUpService) cleanUpTmpFolder(folder string) {
 		return
 	}
 
-	files, err := ioutil.ReadDir(folder)
+	files, err := os.ReadDir(folder)
 	if err != nil {
 		srv.log.Error("Problem reading dir", "folder", folder, "error", err)
 		return
 	}
 
-	var toDelete []os.FileInfo
+	var toDelete []fs.DirEntry
 	var now = time.Now()
 
 	for _, file := range files {
-		if srv.shouldCleanupTempFile(file.ModTime(), now) {
+		info, err := file.Info()
+		if err != nil {
+			srv.log.Error("Problem reading file", "folder", folder, "file", file, "error", err)
+			continue
+		}
+
+		if srv.shouldCleanupTempFile(info.ModTime(), now) {
 			toDelete = append(toDelete, file)
 		}
 	}

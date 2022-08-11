@@ -27,7 +27,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetUserAuthTokens(c *models.ReqContext) response.Response {
-	return hs.getUserAuthTokensInternal(c, c.UserId)
+	return hs.getUserAuthTokensInternal(c, c.UserID)
 }
 
 // swagger:route POST /user/revoke-auth-token signed_in_user revokeUserAuthToken
@@ -47,7 +47,7 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *models.ReqContext) response.Respons
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.revokeUserAuthTokenInternal(c, c.UserId, cmd)
+	return hs.revokeUserAuthTokenInternal(c, c.UserID, cmd)
 }
 
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {

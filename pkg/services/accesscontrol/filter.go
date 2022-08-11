@@ -37,14 +37,14 @@ func Filter(user *user.SignedInUser, sqlID, prefix string, actions ...string) (S
 	if _, ok := sqlIDAcceptList[sqlID]; !ok {
 		return denyQuery, errors.New("sqlID is not in the accept list")
 	}
-	if user == nil || user.Permissions == nil || user.Permissions[user.OrgId] == nil {
+	if user == nil || user.Permissions == nil || user.Permissions[user.OrgID] == nil {
 		return denyQuery, errors.New("missing permissions")
 	}
 
 	wildcards := 0
 	result := make(map[interface{}]int)
 	for _, a := range actions {
-		ids, hasWildcard := ParseScopes(prefix, user.Permissions[user.OrgId][a])
+		ids, hasWildcard := ParseScopes(prefix, user.Permissions[user.OrgID][a])
 		if hasWildcard {
 			wildcards += 1
 			continue

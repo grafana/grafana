@@ -8,7 +8,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -79,7 +79,7 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 		return nil, fmt.Errorf("could not open lineage file at %s: %w", path, err)
 	}
 
-	byt, err := ioutil.ReadAll(f)
+	byt, err := io.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}

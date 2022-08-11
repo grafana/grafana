@@ -85,7 +85,7 @@ type SearchUsersQuery struct {
 	Page         int
 	Limit        int
 	AuthModule   string
-	Filters      []Filter
+	Filters      []user.Filter
 
 	IsDisabled *bool
 

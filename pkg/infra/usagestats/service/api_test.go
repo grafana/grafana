@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,14 +51,13 @@ func TestApi_getUsageStats(t *testing.T) {
 
 	sqlStore.ExpectedSystemStats = &models.SystemStats{}
 	sqlStore.ExpectedDataSourceStats = []*models.DataSourceStats{}
-	sqlStore.ExpectedDataSources = []*datasources.DataSource{}
 	sqlStore.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{}
 	sqlStore.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			uss.Cfg.ReportingEnabled = tt.enabled
-			server := setupTestServer(t, &user.SignedInUser{OrgId: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
 
 			usageStats, recorder := getUsageStats(t, server)
 			require.Equal(t, tt.expectedStatus, recorder.Code)

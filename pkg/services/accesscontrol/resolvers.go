@@ -136,5 +136,5 @@ func ScopeInjector(params ScopeParams) ScopeAttributeMutator {
 }
 
 var userSelfResolver = ScopeKeywordResolverFunc(func(ctx context.Context, user *user.SignedInUser) (string, error) {
-	return Scope("users", "id", fmt.Sprintf("%v", user.UserId)), nil
+	return Scope("users", "id", fmt.Sprintf("%v", user.UserID)), nil
 })
