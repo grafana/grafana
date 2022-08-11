@@ -16,9 +16,13 @@ weight: 400
 
 A map from a collaborative free geographic world database.
 
+{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="1200px" caption="Geomap panel Open Street Map" >}}
+
 ## Options
 
 - **Opacity** from 0 (transparent) to 1 (opaque)
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-osm-options-9-1-0.png" max-width="1200px" caption="Geomap panel Open Street Map options" >}}
 
 ## More Information
 

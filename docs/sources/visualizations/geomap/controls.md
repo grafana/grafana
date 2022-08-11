@@ -14,11 +14,16 @@ weight: 500
 
 # Map Controls
 
+The map controls section allows toggling of which controls and information panels are overlayed over the map.
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-9-1-0.png" max-width="1200px" caption="Geomap panel map controls" >}}
+
 ## Zoom
 
 ### Show zoom control
 
 Displays zoom controls in the upper left corner. This control can be useful when using systems that don't have a mouse.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-zoom-9-1-0.png" max-width="1200px" caption="Geomap panel zoom" >}}
 
 ### Mouse wheel zoom
 
@@ -26,17 +31,23 @@ Enables the mouse wheel to be used for zooming in or out.
 
 ## Show Attribution
 
-Displays attribution for the basemap layer.
+Displays attribution for basemap layers.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="1200px" caption="Geomap panel attribution" >}}
 
 ## Show Scale
 
 Displays scale information in the bottom left corner.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-scale-9-1-0.png" max-width="1200px" caption="Geomap panel scale" >}}
 
 > **Note:** Currently only displays units in [m]/[km].
 
 ## Show Measure Tools
 
 Display measure tools in the upper right corner. Measurements will only be displayed when this control is open.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-9-1-0.png" max-width="1200px" caption="Geomap panel measure" >}}
 
 - **Click** to start measuring
 - **Continue clicking** to continue measurement
@@ -53,6 +64,8 @@ Get the spherical length of a geometry. This length is the sum of the great circ
 - **Miles (mi)**
 - **Nautical miles (nmi)**
 
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-length-9-1-0.png" max-width="1200px" caption="Geomap panel measure length" >}}
+
 ### Area
 
 Get the spherical area of a geometry. This is the area assuming that polygon edges are segments of great circles on a sphere. Geometries are assumed to be in 'EPSG:3857'.
@@ -64,12 +77,16 @@ Get the spherical area of a geometry. This is the area assuming that polygon edg
 - **Acres (acre)**
 - **Hectare (ha)**
 
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="1200px" caption="Geomap panel measure area" >}}
+
 ## Show Debug
 
 Displays debug information in the upper right corner. This can be useful for debugging or validating a data source.
 
 - **Zoom** displays current zoom level of the map.
 - **Center** displays the current **longitude**, **latitude** of the map center.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-debug-9-1-0.png" max-width="1200px" caption="Geomap panel debug" >}}
 
 ## Tooltip
 

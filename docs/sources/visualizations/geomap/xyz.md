@@ -16,6 +16,8 @@ weight: 400
 
 A map from a generic tile layer.
 
+{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" caption="Geomap panel xyz example" >}}
+
 ## Options
 
 - **URL template**
@@ -24,6 +26,8 @@ A map from a generic tile layer.
 
 - **Attribution** sets the reference string for the layer if displayed in [map controls]({{< relref "controls/#show-attribution" >}})
 - **Opacity** from 0 (transparent) to 1 (opaque)
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-options-9-1-0.png" max-width="1200px" caption="Geomap panel xyz options" >}}
 
 ## More Information
 
