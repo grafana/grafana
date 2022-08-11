@@ -24,7 +24,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 127,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -214,7 +213,7 @@
         }
       },
       "pluginVersion": "9.2.0-pre",
-      "title": "Day / Night Layer",
+      "title": "Day / night layer",
       "type": "geomap"
     },
     {
@@ -355,6 +354,6 @@
   "timezone": "",
   "title": "Panel Tests - Geomap 9.1",
   "uid": "KVxZKdmVz",
-  "version": 9,
+  "version": 10,
   "weekStart": ""
 }
