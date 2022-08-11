@@ -49,8 +49,8 @@ func (t *Tree) RootPlugin() PluginInfo {
 	return t.rootinfo
 }
 
-// PluginInfo represents everything we can know about a plugin from
-// static analysis of its contents.
+// PluginInfo represents everything knowable about a single plugin from static
+// analysis of its filesystem tree contents.
 type PluginInfo struct {
 	meta      pluginmeta.Model
 	slotimpls map[string]thema.Lineage
@@ -131,7 +131,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 					// If it's not accepted for the type, but is declared, error out. This keeps a
 					// precise boundary on what's actually expected for plugins to do, which makes
 					// for clearer docs and guarantees for users.
-					return nil, fmt.Errorf("%s: %s plugins must not provide a %s slot implementations in models.cue", r.meta.Id, r.meta.Type, s.Name())
+					return nil, fmt.Errorf("%s: %s plugins may not provide a %s slot implementations in models.cue", r.meta.Id, r.meta.Type, s.Name())
 				}
 				continue
 			}
