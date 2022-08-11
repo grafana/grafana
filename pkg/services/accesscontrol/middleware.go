@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -123,7 +122,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 				}
 				userCopy.OrgID = signedInUser.OrgID
 				userCopy.OrgName = signedInUser.OrgName
-				userCopy.OrgRole = org.RoleType(signedInUser.OrgRole)
+				userCopy.OrgRole = signedInUser.OrgRole
 			}
 
 			authorize(c, ac, &userCopy, evaluator)

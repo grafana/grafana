@@ -24,6 +24,7 @@ var (
 			AllowUnsanitizedSvgUpload: true,
 		},
 	}
+
 	htmlBytes, _        = os.ReadFile("testdata/page.html")
 	jpgBytes, _         = os.ReadFile("testdata/image.jpg")
 	svgBytes, _         = os.ReadFile("testdata/image.svg")
