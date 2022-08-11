@@ -997,21 +997,21 @@ def upload_packages_step(edition, ver_mode, trigger=None):
     return step
 
 
-def store_packages_step(edition, ver_mode):
+def publish_packages_step(edition, ver_mode):
     if ver_mode == 'release':
-        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+        cmd = './bin/grabpl publish packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,
         )
     elif ver_mode == 'main':
         build_no = '${DRONE_BUILD_NUMBER}'
-        cmd = './bin/grabpl store-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+        cmd = './bin/grabpl publish packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
             edition, build_no,
         )
     else:
         fail('Unexpected version mode {}'.format(ver_mode))
 
     return {
-        'name': 'store-packages-{}'.format(edition),
+        'name': 'publish-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
             'gen-version',
@@ -1022,6 +1022,33 @@ def store_packages_step(edition, ver_mode):
             'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
             'GPG_PUB_KEY': from_secret('gpg_pub_key'),
             'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
+        },
+        'commands': [
+            cmd,
+        ],
+    }
+
+def publish_grafanacom_step(edition, ver_mode):
+    if ver_mode == 'release':
+        cmd = './bin/grabpl publish grafana-com --edition {} ${{DRONE_TAG}}'.format(
+            edition,
+        )
+    elif ver_mode == 'main':
+        build_no = '${DRONE_BUILD_NUMBER}'
+        cmd = './bin/grabpl publish grafana-com --edition {} --build-id {}'.format(
+            edition, build_no,
+        )
+    else:
+        fail('Unexpected version mode {}'.format(ver_mode))
+
+    return {
+        'name': 'publish-grafanacom-{}'.format(edition),
+        'image': publish_image,
+        'depends_on': [
+            'publish-packages-{}'.format(edition),
+        ],
+        'environment': {
+            'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
         },
         'commands': [
             cmd,
