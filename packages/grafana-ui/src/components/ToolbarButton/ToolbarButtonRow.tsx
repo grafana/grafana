@@ -113,21 +113,24 @@ ToolbarButtonRow.displayName = 'ToolbarButtonRow';
 const getStyles = (theme: GrafanaTheme2) => ({
   overflowItems: css`
     align-items: center;
+    background-color: ${theme.colors.background.primary};
     border-radius: ${theme.shape.borderRadius()};
     box-shadow: ${theme.shadows.z3};
     display: flex;
     gap: ${theme.spacing(1)};
     margin: ${theme.spacing(0, 0.5)};
-    padding: ${theme.spacing(1)};
+    padding: ${theme.spacing(0.5, 1)};
   `,
   visibleItems: css`
-    display: inline-flex;
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
     gap: ${theme.spacing(1)};
-    max-width: 100%;
   `,
   wrapper: css`
     display: flex;
     flex: 1;
     max-width: 100%;
+    overflow: hidden;
   `,
 });
