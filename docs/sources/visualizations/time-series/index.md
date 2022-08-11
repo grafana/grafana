@@ -145,7 +145,7 @@ _Stacking_ allows Grafana to display series on top of each other. Be cautious wh
 
 ![Stack option](http://localhost:3002/static/img/docs/time-series-panel/stack-option-v9.png)
 
-- **Off:** Turns off series stacking. When **Off**, a series shares the same space in the visualization.
+- **Off:** Turns off series stacking. When **Off**, all series shares the same space in the visualization.
 - **Normal:** Stacks series on top of each other.
 - **100%:** Stack by percentage where all series add up to 100%.
 
