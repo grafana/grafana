@@ -10,6 +10,7 @@ import { groupByTransformer } from './transformers/groupBy';
 import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
 import { histogramTransformer } from './transformers/histogram';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
+import { limitTransformer } from './transformers/limit';
 import { mergeTransformer } from './transformers/merge';
 import { noopTransformer } from './transformers/noop';
 import { orderFieldsTransformer } from './transformers/order';
@@ -45,4 +46,5 @@ export const standardTransformers = {
   histogramTransformer,
   convertFieldTypeTransformer,
   groupingToMatrixTransformer,
+  limitTransformer,
 };

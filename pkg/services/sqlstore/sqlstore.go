@@ -179,6 +179,10 @@ func (ss *SQLStore) GetDialect() migrator.Dialect {
 	return ss.Dialect
 }
 
+func (ss *SQLStore) Bus() bus.Bus {
+	return ss.bus
+}
+
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	ctx := context.Background()
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {

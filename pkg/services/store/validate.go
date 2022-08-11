@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
 	issvg "github.com/grafana/grafana/pkg/services/store/go-is-svg"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -50,7 +50,7 @@ func fail(reason string) validationResult {
 	}
 }
 
-func (s *standardStorageService) detectMimeType(ctx context.Context, user *models.SignedInUser, uploadRequest *UploadRequest) string {
+func (s *standardStorageService) detectMimeType(ctx context.Context, user *user.SignedInUser, uploadRequest *UploadRequest) string {
 	if strings.HasSuffix(uploadRequest.Path, ".svg") {
 		if issvg.IsSVG(uploadRequest.Contents) {
 			return "image/svg+xml"
@@ -60,7 +60,7 @@ func (s *standardStorageService) detectMimeType(ctx context.Context, user *model
 	return http.DetectContentType(uploadRequest.Contents)
 }
 
-func (s *standardStorageService) validateImage(ctx context.Context, user *models.SignedInUser, uploadRequest *UploadRequest) validationResult {
+func (s *standardStorageService) validateImage(ctx context.Context, user *user.SignedInUser, uploadRequest *UploadRequest) validationResult {
 	ext := filepath.Ext(uploadRequest.Path)
 	if !allowedImageExtensions[ext] {
 		return fail(fmt.Sprintf("unsupported extension: %s", ext))
@@ -74,7 +74,7 @@ func (s *standardStorageService) validateImage(ctx context.Context, user *models
 	return success()
 }
 
-func (s *standardStorageService) validateUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) validationResult {
+func (s *standardStorageService) validateUploadRequest(ctx context.Context, user *user.SignedInUser, req *UploadRequest, storagePath string) validationResult {
 	// TODO: validateSize
 	// TODO: validateProperties
 

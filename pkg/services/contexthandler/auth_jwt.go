@@ -83,7 +83,8 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		}
 	}
 
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query); err != nil {
+	err = h.SQLStore.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query)
+	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			ctx.Logger.Debug(
 				"Failed to find user using JWT claims",

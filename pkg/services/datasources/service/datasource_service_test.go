@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -449,7 +449,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 			err := res.Body.Close()
 			require.NoError(t, err)
 		})
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		require.NoError(t, err)
 		bodyStr := string(body)
 		require.Equal(t, "Ok", bodyStr)

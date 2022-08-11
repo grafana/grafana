@@ -4,7 +4,9 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { Breadcrumbs, buildBreadcrumbs } from './Breadcrumbs';
+import { Breadcrumbs } from '../Breadcrumbs/Breadcrumbs';
+import { buildBreadcrumbs } from '../Breadcrumbs/utils';
+
 import { NavToolbarSeparator } from './NavToolbarSeparator';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 

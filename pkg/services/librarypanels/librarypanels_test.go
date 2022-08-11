@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -1279,14 +1280,14 @@ type scenarioContext struct {
 	ctx            context.Context
 	service        Service
 	elementService libraryelements.Service
-	user           *models.SignedInUser
+	user           *user.SignedInUser
 	folder         *models.Folder
 	initialResult  libraryPanelResult
 	sqlStore       *sqlstore.SQLStore
 }
 
 type folderACLItem struct {
-	roleType   models.RoleType
+	roleType   org.RoleType
 	permission models.PermissionType
 }
 
@@ -1364,12 +1365,12 @@ func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
+func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *user.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
 	dash.FolderId = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
-		OrgId:     user.OrgId,
+		OrgId:     user.OrgID,
 		User:      user,
 		Overwrite: false,
 	}
@@ -1389,7 +1390,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user *models.Sig
 	return dashboard
 }
 
-func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *models.SignedInUser,
+func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user *user.SignedInUser,
 	items []folderACLItem) *models.Folder {
 	t.Helper()
 
@@ -1404,7 +1405,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	s := dashboardservice.ProvideFolderService(cfg, d, dashboardStore, nil, features, folderPermissions, ac, busmock.New())
 
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(context.Background(), user, user.OrgId, title, title)
+	folder, err := s.CreateFolder(context.Background(), user, user.OrgID, title, title)
 	require.NoError(t, err)
 
 	updateFolderACL(t, dashboardStore, folder.Id, items)
@@ -1489,7 +1490,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
 		orgID := int64(1)
-		role := models.ROLE_ADMIN
+		role := org.RoleAdmin
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 
@@ -1514,12 +1515,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LibraryElementService: elementService,
 		}
 
-		usr := &models.SignedInUser{
-			UserId:     1,
+		usr := &user.SignedInUser{
+			UserID:     1,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
 			Email:      "signed.in.user@test.com",
-			OrgId:      orgID,
+			OrgID:      orgID,
 			OrgRole:    role,
 			LastSeenAt: time.Now(),
 		}

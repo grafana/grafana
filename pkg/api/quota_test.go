@@ -66,7 +66,7 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
 
 	t.Run("AccessControl allows viewing CurrentOrgQuotas with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsQuotasRead}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsQuotasRead}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
@@ -76,7 +76,7 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 	t.Run("AccessControl prevents viewing CurrentOrgQuotas with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
 		response := callAPI(sc.server, http.MethodGet, getCurrentOrgQuotasURL, nil, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})

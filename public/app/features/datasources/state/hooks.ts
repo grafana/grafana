@@ -115,8 +115,8 @@ export const useDataSourceExploreUrl = (uid: string) => {
   return exploreUrl;
 };
 
-export const useDataSourceMeta = (uid: string): DataSourcePluginMeta => {
-  return useSelector((state: StoreState) => getDataSourceMeta(state.dataSources, uid));
+export const useDataSourceMeta = (pluginType: string): DataSourcePluginMeta => {
+  return useSelector((state: StoreState) => getDataSourceMeta(state.dataSources, pluginType));
 };
 
 export const useDataSourceSettings = () => {
