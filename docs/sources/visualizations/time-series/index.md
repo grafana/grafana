@@ -50,7 +50,7 @@ Legend options control the series names and statistics that appear under or to t
 
 ## Graph styles
 
-Use this option to define how to display your time series data. Using overrides you can mix styles in the same graph.
+Use this option to define how to display your time series data. You can use overrides to combine multiple styles in the same graph.
 
 - Lines
 - Bars
@@ -60,7 +60,7 @@ Use this option to define how to display your time series data. Using overrides 
 
 ### Bar alignment
 
-Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** to make it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
+Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
 
 - **Before** ![Bar alignment before icon](http://localhost:3002/static/img/docs/time-series-panel/bar-alignment-before.png)
   The bar is drawn before the point. The point is placed on the trailing corner of the bar.
@@ -77,30 +77,30 @@ Line width is a slider that controls the thickness for series lines or the outli
 
 ### Fill opacity
 
-Set the opacity series area fill color.
+Use opacity to specify the series area fill color.
 
 ![Fill opacity examples](http://localhost:3002/static/img/docs/time-series-panel/fill-opacity.png)
 
 ### Gradient mode
 
-Sets the mode of the gradient fill. Fill gradient is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}).
+Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}).
 
-- **None** - No gradient fill. This is the default setting.
-- **Opacity** - An opacity gradient where the opacity of the fill is increasing with the values on the Y-axis.
-- **Hue** - A subtle gradient that based on the hue of the series color.
-- **Scheme** - A color gradient defined by your [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}). This will be used for both the fill area and line. There is more information on this option in [Scheme gradient mode]({{< relref "#cheme-gradient-mode"  >}}).
+- **None:** No gradient fill. This is the default setting.
+- **Opacity:** An opacity gradient where the opacity of the fill increases as Y-axis values increase.
+- **Hue:** A subtle gradient that is based on the hue of the series color.
+- **Scheme:** A color gradient defined by your [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode]({{< relref "#cheme-gradient-mode"  >}}).
 
-Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
+Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
 
 ![Gradient mode examples](http://localhost:3002/static/img/docs/time-series-panel/gradient-modes-v9.png)
 
 ### Show points
 
-When rendering lines or bars you can still configure the visualization to render points.
+You can configure your visualization to add points to lines or bars.
 
-- **Auto** - Will automatically decide whether or not to show the points depending on the density of the data. If the density is low, then points are shown.
-- **Always** - Show the points no matter how dense the data set is.
-- **Never** - Will never show the points.
+- **Auto:** Grafana determines to show or not to show points based on the density of the data. If the density is low, then points appear.
+- **Always:** Show the points regardless of how dense the data set is.
+- **Never:** Do not show points.
 
 ### Point size
 
@@ -108,14 +108,14 @@ Set the size of the points, from 1 to 40 pixels in diameter.
 
 ### Line interpolation
 
-This option controls how the graph should interpolates the series line.
+This option controls how the graph interpolates the series line.
 
 ![Line interpolation option](http://localhost:3002/static/img/docs/time-series-panel/line-interpolation-option.png)
 
-- **Linear** - Points are joined by straight lines.
-- **Smooth** - Points are joined by curved lines resulting in smooth transitions between points.
-- **Step before** - The line is displayed as steps between points. Points are rendered at the end of the step.
-- **Step after** - Line is displayed as steps between points. Points are rendered at the beginning of the step.
+- **Linear:** Points are joined by straight lines.
+- **Smooth:** Points are joined by curved lines that smooths transitions between points.
+- **Step before:** The line is displayed as steps between points. Points are rendered at the end of the step.
+- **Step after:** The line is displayed as steps between points. Points are rendered at the beginning of the step.
 
 ### Line style
 
@@ -123,144 +123,144 @@ Set the style of the line. To change the color, use the standard [color scheme](
 
 ![Line style option](http://localhost:3002/static/img/docs/time-series-panel/line-style-option-v9.png)
 
-- **Solid** - Display solid line. This is the default setting.
-- **Dash** - Display a dashed line. When you choose this option, a list appears so that you can select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
-- **Dots** - Display dotted lines. When you choose this option, a list appears so that you can select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
+- **Solid:** Display a solid line. This is the default setting.
+- **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
+- **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
 
 ![Line styles examples](http://localhost:3002/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
 ### Connect null values
 
-Choose how null values (gaps in the data) are displayed on the graph. Null values can be connected to form a continuous line or, optionally, set a threshold above which gaps in the data should no longer be connected.
+Choose how null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected.
 
 ![Connect null values option](http://localhost:3002/static/img/docs/time-series-panel/connect-null-values-option-v9.png)
 
-- **Never** - Time series data points with gaps in the the data are never connected.
-- **Always** - Time series data points with gaps in the the data are always connected.
-- **Threshold** - A threshold can be set above which gaps in the data should no longer be connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range and gaps outside this range should no longer be connected.
+- **Never:** Time series data points with gaps in the the data are never connected.
+- **Always:** Time series data points with gaps in the the data are always connected.
+- **Threshold:** Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range, and gaps outside this range should no longer be connected.
 
 ### Stack series
 
-_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. You can read more on why stacking may be not the best approach here: [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html).
+_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html).
 
 ![Stack option](http://localhost:3002/static/img/docs/time-series-panel/stack-option-v9.png)
 
-- **Off** - Turn off series stacking. A series will share the same space in the visualization.
-- **Normal** - Enable stacking series on top of each other.
-- **100%** - Stack by percentage where all series will always add up to 100%.
+- **Off:** Turns off series stacking. When **Off**, a series shares the same space in the visualization.
+- **Normal:** Stacks series on top of each other.
+- **100%:** Stack by percentage where all series add up to 100%.
 
 #### Stack series in groups
 
-The stacking group option is only available as an override. For more information about creating an overrides, refer to [About field overrides]({{< relref "../../panels/override-field-values/about-field-overrides/" >}}).
+The stacking group option is only available as an override. For more information about creating an override, refer to [About field overrides]({{< relref "../../panels/override-field-values/about-field-overrides/" >}}).
 
-Stack series in the same group. In the Overrides section:
+1. Edit the panel and click **Overrides**.
+1. Create a field override for the **Stack series** option.
+1. In stacking mode, click **Normal**.
+1. Name the stacking group in which you want the series to appear.
 
-1. Create a field override for **Stack series** option.
-1. Click on **Normal** stacking mode.
-1. Name the stacking group you want the series to appear in. The stacking group name option is only available when creating an override.
+   The stacking group name option is only available when you create an override.
 
 ### Fill below to
 
-This option is only available as series / field an override.
+The **Fill below to** option fills the area between two series. This option is only available as a series/field override.
 
-Fill the area between two series. On the Overrides tab:
-
+1. Edit the panel and click **Overrides**.
 1. Select the fields to fill below.
 1. In **Add override property**, select **Fill below to**.
-1. Select the series that you want the fill to stop at.
+1. Select the series for which you want the fill to stop.
 
-This example below shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
+The following example shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
 
 {{< figure src="/static/img/docs/time-series-panel/fill-below-to-7-4.png" max-width="600px" caption="Fill below to example" >}}
 
 ## Axis options
 
-Under the axis category you find options that change how the y and x axis are rendered. Some options will not take affect until you click outside of the field option box you are editing or press Enter.
+Options under the axis category change how the X and Y axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
 ### Placement
 
 Select the placement of the Y-axis.
 
-- **Auto** - Automatically assigns Y-axis to the series. When there are two or more series with different units, then Grafana assigns the left axis to the first unit and right to the following units.
-- **Left** - Display all Y-axes on the left side.
-- **Right** - Display all Y-axes on the right side.
-- **Hidden** Hide all axes.
+- **Auto:** Automatically assigns the Y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
+- **Left:** Display all Y-axes on the left side.
+- **Right:** Display all Y-axes on the right side.
+- **Hidden:** Hide all axes.
 
-To selectively hide axes, [add an override]({{< relref "../../panels/override-field-values/add-a-field-override/" >}}) targeting specific fields.
+To selectively hide axes, [add an override]({{< relref "../../panels/override-field-values/add-a-field-override/" >}}) that targets specific fields.
 
 ### Label
 
-Set a Y-axis text label. If you have more than one Y-axis, then you can give assign different labels using an override.
+Set a Y-axis text label. If you have more than one Y-axis, then you can assign different labels using an override.
 
 ### Width
 
 Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.
 
-By setting the width of the axis, data whose axes types are different can share the same display proportions. This makes it easier to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity of each other.
+By setting the width of the axis, data with different axes types can share the same display proportions. This setting makes it easier for you to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity to each other.
 
 ### Soft min and soft max
 
 Set a **Soft min** or **soft max** option for better control of Y-axis limits. By default, Grafana sets the range for the Y-axis automatically based on the dataset.
 
-**Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a defined point.
+**Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a specific point.
 
-You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Configure standard options]({{< relref "../../panels/configure-standard-options/#max" >}}).
+To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options]({{< relref "../../panels/configure-standard-options/#max" >}}).
 
 ![Label example](http://localhost:3002/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
 ### Scale
 
-Set the scale to use for the Y-axis values.
+Set the Y-axis values scale.
 
-- **Linear** - Use scale divided into equal parts.
-- **Logarithmic** - Use a logarithmic scale. When this option is chosen, a list appears where you can choose binary (base 2) or common (base 10) logarithmic scale.
+- **Linear:** Divides the scale into equal parts.
+- **Logarithmic:** Use a logarithmic scale. When you select this option, a list appears for you to choose a binary (base 2) or common (base 10) logarithmic scale.
 
 ### Transform
 
-Use this option to transform the series values without affecting the values shown in the tooltip, context menu, and legend.
+Use this option to transform the series values without affecting the values shown in the tooltip, context menu, or legend.
 
 - **Negative Y transform:** Flip the results to negative values on the Y axis.
-- **Constant:** Show first value as a constant line.
+- **Constant:** Show the first value as a constant line.
 
 > **Note:** The transform option is only available as an override.
 
 ## Color options
 
-By default the graph will use the standard [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}} option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
-color this way will automatically create an override rule that set's a specific color for a specific series.
+By default, the graph uses the standard [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}} option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
+color this way automatically creates an override rule that set's a specific color for a specific series.
 
 ### Classic palette
 
-The most common setup is to use the **Classic palette** for graphs. This scheme will automatically assign a color for each field or series based on it's order. So if the order of a field change in your query the color will also change. You can manually configure a color for a specific field using an override rule.
+The most common setup is to use the **Classic palette** for graphs. This scheme automatically assigns a color for each field or series based on its order. If the order of a field changes in your query, the color also changes. You can manually configure a color for a specific field using an override rule.
 
 ### Single color
 
-Use this mode to set a specific color. You can also click the colored line icon next to each series in the Legend to open the color picker. This will automatically create new override that sets the color scheme to single color and the selected color.
+Use this mode to specify a color. You can also click the colored line icon next to each series in the Legend to open the color picker. This automatically creates a new override that sets the color scheme to single color and the selected color.
 
 ### By value color schemes
 
-If you select a by value color scheme like **From thresholds (by value)** or **Green-Yellow-Red (by value)** another option named **Color series by** will show up. This option control what value (Last, Min, Max) to use to assign the series its color.
+If you select a by value color scheme like **From thresholds (by value)** or **Green-Yellow-Red (by value)**, the **Color series by** option appears. This option controls which value (Last, Min, Max) to use to assign the series its color.
 
 ### Scheme gradient mode
 
-The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When this mode is enabled the whole line or bar gets a gradient color defined from the selected **Color scheme**.
+The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the line or bar receives a gradient color defined from the selected **Color scheme**.
 
 #### From thresholds
 
-If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme** then the line or bar color will change as they cross the thresholds defined.
+If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as they cross the defined thresholds.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
 
-If you have enabled bars mode it would look like this:
+The following image shows bars mode enabled.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
 
 #### Gradient color schemes
 
-If you have a selected a **Color scheme** like **Green-Yellow-Red (by value)** then it would look like this:
+The following image shows a line chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
-If you have enabled bars mode it would look like this:
+The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
