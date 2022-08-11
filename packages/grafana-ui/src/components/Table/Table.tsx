@@ -1,4 +1,4 @@
-import React, { FC, memo, useCallback, useEffect, useMemo } from 'react';
+import React, { FC, memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Cell,
   Column,
@@ -131,6 +131,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     enablePagination,
   } = props;
 
+  const listRef = useRef<FixedSizeList>(null);
   const tableStyles = useStyles2(getTableStyles);
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
 
@@ -206,14 +207,12 @@ export const Table: FC<Props> = memo((props: Props) => {
     pageOptions,
   } = useTable(options, useFilters, useSortBy, usePagination, useAbsoluteLayout, useResizeColumns);
 
-  let windowListHeight = height - (headerHeight + footerHeight);
-  let entireListHeight = rows.length * tableStyles.cellHeight;
+  let listHeight = height - (headerHeight + footerHeight);
 
   if (enablePagination) {
-    windowListHeight -= tableStyles.cellHeight;
-    entireListHeight /= pageOptions.length;
+    listHeight -= tableStyles.cellHeight;
   }
-  const pageSize = Math.round(windowListHeight / tableStyles.cellHeight) - 1;
+  const pageSize = Math.round(listHeight / tableStyles.cellHeight) - 1;
   useEffect(() => {
     // Don't update the page size if it is less than 1
     if (pageSize <= 0) {
@@ -282,24 +281,28 @@ export const Table: FC<Props> = memo((props: Props) => {
       </div>
     );
   }
+
+  const handleScroll: React.UIEventHandler = (event) => {
+    const { scrollTop } = event.target as HTMLDivElement;
+
+    if (listRef.current !== null) {
+      listRef.current.scrollTo(scrollTop);
+    }
+  };
+
   return (
-    <div
-      {...getTableProps()}
-      className={tableStyles.table}
-      aria-label={ariaLabel}
-      role="table"
-      style={{ height: height }}
-    >
-      <CustomScrollbar>
+    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
+      <CustomScrollbar onCustomScroll={handleScroll}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
             <FixedSizeList
-              height={entireListHeight < windowListHeight ? windowListHeight : entireListHeight}
+              height={listHeight}
               itemCount={itemCount}
               itemSize={tableStyles.rowHeight}
               width={'100%'}
-              style={{ overflow: 'hidden' }}
+              ref={listRef}
+              style={{ overflow: undefined }}
             >
               {RenderRow}
             </FixedSizeList>

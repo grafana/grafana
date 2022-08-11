@@ -23,6 +23,7 @@ interface Props {
   setScrollTop?: (position: ScrollbarPosition) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
+  onCustomScroll?: React.UIEventHandler;
 }
 
 /**
@@ -42,6 +43,7 @@ export const CustomScrollbar: FC<Props> = ({
   scrollRefCallback,
   updateAfterMountMs,
   scrollTop,
+  onCustomScroll,
   children,
 }) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
@@ -132,6 +134,7 @@ export const CustomScrollbar: FC<Props> = ({
       renderThumbHorizontal={renderThumbHorizontal}
       renderThumbVertical={renderThumbVertical}
       renderView={renderView}
+      onScroll={onCustomScroll}
     >
       {children}
     </Scrollbars>
