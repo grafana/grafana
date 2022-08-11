@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/comments"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -23,7 +24,7 @@ func (hs *HTTPServer) commentsGet(c *models.ReqContext) response.Response {
 		}
 		return response.Error(http.StatusInternalServerError, "internal error", err)
 	}
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"comments": items,
 	})
 }
@@ -33,7 +34,7 @@ func (hs *HTTPServer) commentsCreate(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if c.SignedInUser.UserId == 0 && !c.SignedInUser.HasRole(models.ROLE_ADMIN) {
+	if c.SignedInUser.UserId == 0 && !c.SignedInUser.HasRole(org.RoleAdmin) {
 		return response.Error(http.StatusForbidden, "admin role required", nil)
 	}
 	comment, err := hs.commentsService.Create(c.Req.Context(), c.OrgId, c.SignedInUser, cmd)
@@ -43,7 +44,7 @@ func (hs *HTTPServer) commentsCreate(c *models.ReqContext) response.Response {
 		}
 		return response.Error(http.StatusInternalServerError, "internal error", err)
 	}
-	return response.JSON(200, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"comment": comment,
 	})
 }

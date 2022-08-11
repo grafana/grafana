@@ -9,6 +9,7 @@ import {
   getMetricTypesByService,
   labelsToGroupedOptions,
   stringArrayToFilters,
+  alignmentPeriodLabel,
 } from './functions';
 import { newMockDatasource } from './specs/testData';
 import { AlignmentTypes, MetricDescriptor, MetricKind, ValueTypes } from './types';
@@ -127,7 +128,7 @@ describe('functions', () => {
       });
 
       it('should return all alignment options except two', () => {
-        expect(result.length).toBe(9);
+        expect(result.length).toBe(10);
         expect(result.map((o: any) => o.value)).toEqual(
           expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
         );
@@ -173,7 +174,7 @@ describe('functions', () => {
   describe('getAlignmentPickerData', () => {
     it('should return default data', () => {
       const res = getAlignmentPickerData();
-      expect(res.alignOptions).toHaveLength(9);
+      expect(res.alignOptions).toHaveLength(10);
       expect(res.perSeriesAligner).toEqual(AlignmentTypes.ALIGN_MEAN);
     });
 
@@ -224,6 +225,15 @@ describe('functions', () => {
           value: 'value',
         },
       ]);
+    });
+  });
+
+  describe('alignmentPeriodLabel', () => {
+    it('returns period label if alignment period and per series aligner is set', () => {
+      const datasource = newMockDatasource();
+
+      const label = alignmentPeriodLabel({ perSeriesAligner: 'ALIGN_DELTA', alignmentPeriod: '10' }, datasource);
+      expect(label).toBe('10s interval (delta)');
     });
   });
 });

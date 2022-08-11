@@ -4,18 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,6 +33,7 @@ type FileReader struct {
 	Path                         string
 	log                          log.Logger
 	dashboardProvisioningService dashboards.DashboardProvisioningService
+	dashboardStore               utils.DashboardStore
 	FoldersFromFilesStructure    bool
 
 	mux                     sync.RWMutex
@@ -40,7 +42,7 @@ type FileReader struct {
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.DashboardProvisioningService, dashboardStore utils.DashboardStore) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -62,6 +64,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, service dashboards.Dash
 		Path:                         path,
 		log:                          log,
 		dashboardProvisioningService: service,
+		dashboardStore:               dashboardStore,
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 		usageTracker:                 newUsageTracker(),
 	}, nil
@@ -297,20 +300,23 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 	}
 
 	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: cfg.OrgID}
-	err := bus.Dispatch(ctx, cmd)
+	err := fr.dashboardStore.GetDashboard(ctx, cmd)
 
-	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
+	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return 0, err
 	}
 
 	// dashboard folder not found. create one.
-	if errors.Is(err, models.ErrDashboardNotFound) {
+	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
 		dash.Dashboard = models.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
 		dash.OrgId = cfg.OrgID
 		// set dashboard folderUid if given
+		if cfg.FolderUID == accesscontrol.GeneralFolderUID {
+			return 0, dashboards.ErrFolderInvalidUID
+		}
 		dash.Dashboard.SetUid(cfg.FolderUID)
 		dbDash, err := service.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
@@ -391,7 +397,7 @@ func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time,
 		}
 	}()
 
-	all, err := ioutil.ReadAll(reader)
+	all, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}

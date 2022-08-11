@@ -5,10 +5,11 @@ import (
 	"net"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type FakeUserAuthTokenService struct {
-	CreateTokenProvider          func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error)
+	CreateTokenProvider          func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*models.UserToken, error)
 	TryRotateTokenProvider       func(ctx context.Context, token *models.UserToken, clientIP net.IP, userAgent string) (bool, error)
 	LookupTokenProvider          func(ctx context.Context, unhashedToken string) (*models.UserToken, error)
 	RevokeTokenProvider          func(ctx context.Context, token *models.UserToken, soft bool) error
@@ -22,7 +23,7 @@ type FakeUserAuthTokenService struct {
 
 func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 	return &FakeUserAuthTokenService{
-		CreateTokenProvider: func(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
+		CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
 			return &models.UserToken{
 				UserId:        0,
 				UnhashedToken: "",
@@ -64,7 +65,7 @@ func (s *FakeUserAuthTokenService) Init() error {
 	return nil
 }
 
-func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
+func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
 	return s.CreateTokenProvider(context.Background(), user, clientIP, userAgent)
 }
 

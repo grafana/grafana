@@ -1,42 +1,16 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
-
-type FakeAlertingStore struct {
-	orgsWithConfig map[int64]bool
-}
-
-func newFakeAlertingStore(t *testing.T) FakeAlertingStore {
-	t.Helper()
-
-	return FakeAlertingStore{
-		orgsWithConfig: map[int64]bool{},
-	}
-}
-
-func (f FakeAlertingStore) Setup(orgID int64) {
-	f.orgsWithConfig[orgID] = true
-}
-
-func (f FakeAlertingStore) GetLatestAlertmanagerConfiguration(_ context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error {
-	if _, ok := f.orgsWithConfig[query.OrgID]; ok {
-		return nil
-	}
-	return store.ErrNoAlertmanagerConfiguration
-}
 
 type fakeAlertInstanceManager struct {
 	mtx sync.Mutex

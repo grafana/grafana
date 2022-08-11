@@ -1,5 +1,6 @@
-import { CollectedData, DataCollectorName } from './DataCollector';
 import { fromPairs } from 'lodash';
+
+import { CollectedData, DataCollectorName } from './DataCollector';
 
 type Stats = {
   sum: number;

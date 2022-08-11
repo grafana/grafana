@@ -3,7 +3,9 @@ package comments
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -18,7 +20,9 @@ type Service struct {
 	permissions *commentmodel.PermissionChecker
 }
 
-func ProvideService(cfg *setting.Cfg, store *sqlstore.SQLStore, live *live.GrafanaLive, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(cfg *setting.Cfg, store *sqlstore.SQLStore, live *live.GrafanaLive,
+	features featuremgmt.FeatureToggles, accessControl accesscontrol.AccessControl,
+	dashboardService dashboards.DashboardService) *Service {
 	s := &Service{
 		cfg:      cfg,
 		live:     live,
@@ -26,7 +30,7 @@ func ProvideService(cfg *setting.Cfg, store *sqlstore.SQLStore, live *live.Grafa
 		storage: &sqlStorage{
 			sql: store,
 		},
-		permissions: commentmodel.NewPermissionChecker(store, features),
+		permissions: commentmodel.NewPermissionChecker(store, features, accessControl, dashboardService),
 	}
 	return s
 }

@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
-import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
-import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
+import * as React from 'react';
+import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
+
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import SpanGraph from './SpanGraph';
-import TracePageSearchBar from './TracePageSearchBar';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '..';
+import ExternalLinks from '../common/ExternalLinks';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
+import { getTraceLinks } from '../model/link-patterns';
 import { getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types/trace';
-import { formatDuration } from '../utils/date';
-import { getTraceLinks } from '../model/link-patterns';
-
-import ExternalLinks from '../common/ExternalLinks';
 import { uTxMuted } from '../uberUtilityStyles';
+import { formatDuration } from '../utils/date';
+
+import SpanGraph from './SpanGraph';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -138,22 +138,15 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 type TracePageHeaderEmbedProps = {
   canCollapse: boolean;
-  clearSearch: () => void;
-  focusUiFindMatches: () => void;
   hideMap: boolean;
   hideSummary: boolean;
-  nextResult: () => void;
   onSlimViewClicked: () => void;
   onTraceGraphViewClicked: () => void;
-  prevResult: () => void;
-  resultCount: number;
   slimView: boolean;
   trace: Trace;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
   viewRange: ViewRange;
-  searchValue: string;
-  onSearchValueChange: (value: string) => void;
   timeZone: TimeZone;
 };
 
@@ -200,21 +193,14 @@ export const HEADER_ITEMS = [
 export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   const {
     canCollapse,
-    clearSearch,
-    focusUiFindMatches,
     hideMap,
     hideSummary,
-    nextResult,
     onSlimViewClicked,
-    prevResult,
-    resultCount,
     slimView,
     trace,
     updateNextViewRangeTime,
     updateViewRangeTime,
     viewRange,
-    searchValue,
-    onSearchValueChange,
     timeZone,
   } = props;
 
@@ -267,17 +253,6 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
         ) : (
           title
         )}
-        <TracePageSearchBar
-          clearSearch={clearSearch}
-          focusUiFindMatches={focusUiFindMatches}
-          nextResult={nextResult}
-          prevResult={prevResult}
-          resultCount={resultCount}
-          // TODO: we can change this when we have scroll to span functionality
-          navigable={false}
-          searchValue={searchValue}
-          onSearchValueChange={onSearchValueChange}
-        />
       </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
       {!hideMap && !slimView && (

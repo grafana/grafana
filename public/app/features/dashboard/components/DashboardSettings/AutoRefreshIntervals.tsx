@@ -1,4 +1,5 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+
 import { Input, defaultIntervals, Field } from '@grafana/ui';
 
 import { getTimeSrv } from '../../services/TimeSrv';
@@ -81,7 +82,7 @@ export const validateIntervals = (
     getValidIntervals(intervals, dependencies);
     return null;
   } catch (err) {
-    return err.message;
+    return err instanceof Error ? err.message : 'Invalid intervals';
   }
 };
 

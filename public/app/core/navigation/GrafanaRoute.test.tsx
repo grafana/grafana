@@ -1,8 +1,13 @@
-import React from 'react';
 import { render } from '@testing-library/react';
-import { GrafanaRoute } from './GrafanaRoute';
+import React from 'react';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+
 import { setEchoSrv } from '@grafana/runtime';
+
+import { GrafanaContext } from '../context/GrafanaContext';
 import { Echo } from '../services/echo/Echo';
+
+import { GrafanaRoute } from './GrafanaRoute';
 
 describe('GrafanaRoute', () => {
   beforeEach(() => {
@@ -21,7 +26,9 @@ describe('GrafanaRoute', () => {
     const match = {} as any;
 
     render(
-      <GrafanaRoute location={location} history={history} match={match} route={{ component: PageComponent } as any} />
+      <GrafanaContext.Provider value={getGrafanaContextMock()}>
+        <GrafanaRoute location={location} history={history} match={match} route={{ component: PageComponent } as any} />
+      </GrafanaContext.Provider>
     );
 
     expect(capturedProps.queryParams.query).toBe('hello');

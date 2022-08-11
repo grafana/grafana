@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -20,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type DatasourceInfo struct {
@@ -161,9 +159,9 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 
 	var req *http.Request
 	if method == http.MethodPost {
-		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(body))
+		req, err = http.NewRequestWithContext(c.ctx, http.MethodPost, u.String(), bytes.NewBuffer(body))
 	} else {
-		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+		req, err = http.NewRequestWithContext(c.ctx, http.MethodGet, u.String(), nil)
 	}
 	if err != nil {
 		return nil, err
@@ -193,7 +191,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		clientLog.Debug("Executed request", "took", elapsed)
 	}()
 	//nolint:bodyclose
-	resp, err := ctxhttp.Do(c.ctx, httpClient, req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -226,13 +224,13 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 
 	var bodyBytes []byte
 	if c.debugEnabled {
-		tmpBytes, err := ioutil.ReadAll(res.Body)
+		tmpBytes, err := io.ReadAll(res.Body)
 		if err != nil {
 			clientLog.Error("failed to read http response bytes", "error", err)
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
 			copy(bodyBytes, tmpBytes)
-			res.Body = ioutil.NopCloser(bytes.NewBuffer(tmpBytes))
+			res.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
 		}
 	}
 

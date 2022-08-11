@@ -11,7 +11,7 @@ jobs:
         working-directory: './pr'
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with: 
         path: './pr'
 
@@ -38,7 +38,7 @@ jobs:
       run: zip -r ./pr_built_packages.zip ./packages/**/dist
 
     - name: Upload build output as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: buildPr
         path: './pr/pr_built_packages.zip'
@@ -51,7 +51,7 @@ jobs:
         working-directory: './base'
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with: 
         path: './base'
         ref: ${{ github.event.pull_request.base.ref }}
@@ -79,7 +79,7 @@ jobs:
       run: zip -r ./base_built_packages.zip ./packages/**/dist
 
     - name: Upload build output as artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: buildBase
         path: './base/base_built_packages.zip'
@@ -92,15 +92,15 @@ jobs:
       GITHUB_STEP_NUMBER: 7
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: buildBase
       
@@ -131,7 +131,7 @@ jobs:
             echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
 
       - name: Upload check output as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: levitate
           path: levitate/

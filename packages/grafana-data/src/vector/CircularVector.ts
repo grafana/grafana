@@ -1,6 +1,7 @@
 import { MutableVector } from '../types/vector';
-import { vectorToArray } from './vectorToArray';
+
 import { FunctionalVector } from './FunctionalVector';
+import { vectorToArray } from './vectorToArray';
 
 interface CircularOptions<T> {
   buffer?: T[];

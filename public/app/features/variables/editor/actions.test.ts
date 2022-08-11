@@ -1,14 +1,15 @@
+import { initialState } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';
+import { createConstantVariableAdapter } from '../constant/adapter';
 import { initialConstantVariableModelState } from '../constant/reducer';
+import * as inspectUtils from '../inspect/utils';
 import { constantBuilder, customBuilder } from '../shared/testing/builders';
 import { initialKeyedVariablesState, toKeyedAction } from '../state/keyedVariablesReducer';
 import * as selectors from '../state/selectors';
-import * as inspectUtils from '../inspect/utils';
 import { addVariable } from '../state/sharedReducer';
-import { createConstantVariableAdapter } from '../constant/adapter';
+
 import { getNextAvailableId, switchToListMode, switchToNewMode } from './actions';
 import { setIdInEditor } from './reducer';
-import { initialState } from '../../dashboard/state/reducers';
 
 describe('getNextAvailableId', () => {
   describe('when called with a custom type and there is already 2 variables', () => {
@@ -56,8 +57,15 @@ describe('switchToListMode', () => {
     const mockDispatch = jest.fn();
 
     switchToListMode(null)(mockDispatch, mockGetState, undefined);
+    const keyedAction = {
+      type: expect.any(String),
+      payload: {
+        key: 'null',
+        action: expect.any(Object),
+      },
+    };
     expect(mockDispatch).toHaveBeenCalledTimes(2);
-    expect(mockDispatch.mock.calls[0][0]).toEqual(toKeyedAction('null', expect.any(Object)));
-    expect(mockDispatch.mock.calls[1][0]).toEqual(toKeyedAction('null', expect.any(Object)));
+    expect(mockDispatch.mock.calls[0][0]).toMatchObject(keyedAction);
+    expect(mockDispatch.mock.calls[1][0]).toMatchObject(keyedAction);
   });
 });

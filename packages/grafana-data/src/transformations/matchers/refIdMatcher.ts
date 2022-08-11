@@ -1,7 +1,8 @@
-import { DataFrame } from '../../types/dataFrame';
-import { FrameMatcherID } from './ids';
-import { FrameMatcherInfo } from '../../types/transformations';
 import { stringToJsRegex } from '../../text';
+import { DataFrame } from '../../types/dataFrame';
+import { FrameMatcherInfo } from '../../types/transformations';
+
+import { FrameMatcherID } from './ids';
 
 // General Field matcher
 const refIdMacher: FrameMatcherInfo<string> = {

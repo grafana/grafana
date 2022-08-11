@@ -6,6 +6,10 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Options struct {
@@ -13,14 +17,13 @@ type Options struct {
 }
 
 type AccessControl interface {
+	registry.ProvidesUsageStats
+
 	// Evaluate evaluates access to the given resources.
-	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
+	Evaluate(ctx context.Context, user *user.SignedInUser, evaluator Evaluator) (bool, error)
 
-	// GetUserPermissions returns user permissions.
-	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]*Permission, error)
-
-	// GetUserRoles returns user roles.
-	GetUserRoles(ctx context.Context, user *models.SignedInUser) ([]*RoleDTO, error)
+	// GetUserPermissions returns user permissions with only action and scope fields set.
+	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
 
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
@@ -29,25 +32,48 @@ type AccessControl interface {
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(...RoleRegistration) error
 
-	// RegisterAttributeScopeResolver allows the caller to register a scope resolver for a
+	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
-	RegisterAttributeScopeResolver(scopePrefix string, resolver AttributeScopeResolveFunc)
+	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
+
+	DeleteUserPermissions(ctx context.Context, userID int64) error
 }
 
-type PermissionsProvider interface {
-	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
+type RoleRegistry interface {
+	// RegisterFixedRoles registers all roles declared to AccessControl
+	RegisterFixedRoles(ctx context.Context) error
 }
 
-type PermissionsServices interface {
-	GetTeamService() PermissionsService
-	GetFolderService() PermissionsService
-	GetDashboardService() PermissionsService
-	GetDataSourceService() PermissionsService
+type PermissionsStore interface {
+	// GetUserPermissions returns user permissions with only action and scope fields set.
+	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
+	DeleteUserPermissions(ctx context.Context, userID int64) error
+}
+
+type TeamPermissionsService interface {
+	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
+}
+
+type FolderPermissionsService interface {
+	PermissionsService
+}
+
+type DashboardPermissionsService interface {
+	PermissionsService
+}
+
+type DatasourcePermissionsService interface {
+	PermissionsService
+}
+
+type ServiceAccountPermissionsService interface {
+	PermissionsService
 }
 
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
-	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
@@ -114,15 +140,20 @@ var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
+// ReqViewer returns true if the current user has org.RoleViewer. Note: this can be anonymous user as well
+var ReqViewer = func(c *models.ReqContext) bool {
+	return c.OrgRole.Includes(org.RoleViewer)
+}
+
 var ReqOrgAdmin = func(c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN
+	return c.OrgRole == org.RoleAdmin
 }
 
 var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR
+	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
 }
 
-func BuildPermissionsMap(permissions []*Permission) map[string]bool {
+func BuildPermissionsMap(permissions []Permission) map[string]bool {
 	permissionsMap := make(map[string]bool)
 	for _, p := range permissions {
 		permissionsMap[p.Action] = true
@@ -132,7 +163,7 @@ func BuildPermissionsMap(permissions []*Permission) map[string]bool {
 }
 
 // GroupScopesByAction will group scopes on action
-func GroupScopesByAction(permissions []*Permission) map[string][]string {
+func GroupScopesByAction(permissions []Permission) map[string][]string {
 	m := make(map[string][]string)
 	for _, p := range permissions {
 		m[p.Action] = append(m[p.Action], p.Scope)
@@ -198,6 +229,20 @@ func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, 
 	return result
 }
 
+// MergeMeta will merge actions matching prefix of second metadata into first
+func MergeMeta(prefix string, first Metadata, second Metadata) Metadata {
+	if first == nil {
+		first = Metadata{}
+	}
+
+	for key := range second {
+		if strings.HasPrefix(key, prefix) {
+			first[key] = true
+		}
+	}
+	return first
+}
+
 func ManagedUserRoleName(userID int64) string {
 	return fmt.Sprintf("managed:users:%d:permissions", userID)
 }
@@ -218,4 +263,26 @@ func extractPrefixes(prefix string) (string, string, bool) {
 	rootPrefix := parts[0] + ":"
 	attributePrefix := rootPrefix + parts[1] + ":"
 	return rootPrefix, attributePrefix, true
+}
+
+func IsDisabled(cfg *setting.Cfg) bool {
+	return !cfg.RBACEnabled
+}
+
+// GetOrgRoles returns legacy org roles for a user
+func GetOrgRoles(cfg *setting.Cfg, user *user.SignedInUser) []string {
+	roles := []string{string(user.OrgRole)}
+
+	// With built-in role simplifying, inheritance is performed upon role registration.
+	if cfg.RBACBuiltInRoleAssignmentEnabled {
+		for _, br := range user.OrgRole.Children() {
+			roles = append(roles, string(br))
+		}
+	}
+
+	if user.IsGrafanaAdmin {
+		roles = append(roles, RoleGrafanaAdmin)
+	}
+
+	return roles
 }

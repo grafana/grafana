@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -19,10 +22,17 @@
     ]
   },
   "editable": true,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 75,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -39,7 +49,10 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -65,6 +78,7 @@
       },
       "id": 9,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
@@ -81,7 +95,9 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
       "targets": [
         {
@@ -94,6 +110,10 @@
       "type": "barchart"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "description": "Should be smaller given the longer value",
       "fieldConfig": {
         "defaults": {
@@ -111,7 +131,10 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "decimals": 2,
           "mappings": [],
@@ -138,6 +161,7 @@
       },
       "id": 15,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
@@ -154,7 +178,9 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
       "targets": [
         {
@@ -167,6 +193,10 @@
       "type": "barchart"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -183,7 +213,10 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -209,6 +242,7 @@
       },
       "id": 16,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
@@ -225,7 +259,9 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
       "targets": [
         {
@@ -238,6 +274,10 @@
       "type": "barchart"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -254,7 +294,10 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -280,6 +323,7 @@
       },
       "id": 17,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
@@ -296,7 +340,9 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
       "targets": [
         {
@@ -329,7 +375,10 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -355,6 +404,7 @@
       },
       "id": 10,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 1,
         "legend": {
@@ -372,7 +422,9 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
       "targets": [
         {
@@ -384,6 +436,10 @@
       "type": "barchart"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -400,7 +456,10 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "decimals": 7,
           "mappings": [],
@@ -427,6 +486,7 @@
       },
       "id": 18,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.82,
         "legend": {
@@ -443,7 +503,9 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
       "targets": [
         {
@@ -456,6 +518,10 @@
       "type": "barchart"
     },
     {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -473,7 +539,10 @@
               "tooltip": false,
               "viz": false
             },
-            "lineWidth": 0
+            "lineWidth": 0,
+            "scaleDistribution": {
+              "type": "linear"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -499,6 +568,7 @@
       },
       "id": 19,
       "options": {
+        "barRadius": 0,
         "barWidth": 1,
         "groupWidth": 0.89,
         "legend": {
@@ -515,7 +585,9 @@
         "tooltip": {
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
       "targets": [
         {
@@ -529,7 +601,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 33,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [
     "gdev",
@@ -548,5 +620,6 @@
   "timezone": "",
   "title": "BarChart - Panel Tests - Value sizing",
   "uid": "WFlOM-jM1",
-  "version": 9
+  "version": 6,
+  "weekStart": ""
 }

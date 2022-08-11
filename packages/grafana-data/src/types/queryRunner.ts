@@ -1,8 +1,9 @@
 import { Observable } from 'rxjs';
-import { DataQuery, DataSourceRef } from './query';
+
+import { ScopedVars } from './ScopedVars';
 import { DataSourceApi } from './datasource';
 import { PanelData } from './panel';
-import { ScopedVars } from './ScopedVars';
+import { DataQuery, DataSourceRef } from './query';
 import { TimeRange, TimeZone } from './time';
 
 /**

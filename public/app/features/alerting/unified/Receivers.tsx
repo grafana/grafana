@@ -1,9 +1,12 @@
-import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+
+import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+
 import { AlertManagerPicker } from './components/AlertManagerPicker';
+import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
 import { GlobalConfigForm } from './components/receivers/GlobalConfigForm';
@@ -11,13 +14,15 @@ import { NewReceiverView } from './components/receivers/NewReceiverView';
 import { NewTemplateView } from './components/receivers/NewTemplateView';
 import { ReceiversAndTemplatesView } from './components/receivers/ReceiversAndTemplatesView';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from './state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { initialAsyncRequestState } from './utils/redux';
 
 const Receivers: FC = () => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
 
   const location = useLocation();
@@ -41,7 +46,10 @@ const Receivers: FC = () => {
   }, [alertManagerSourceName, dispatch, shouldLoadConfig]);
 
   useEffect(() => {
-    if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && !(receiverTypes.result || receiverTypes.loading)) {
+    if (
+      alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+      !(receiverTypes.result || receiverTypes.loading || receiverTypes.error)
+    ) {
       dispatch(fetchGrafanaNotifiersAction());
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
@@ -49,7 +57,13 @@ const Receivers: FC = () => {
   const disableAmSelect = !isRoot;
 
   if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/notifications" />;
+    return isRoot ? (
+      <AlertingPageWrapper pageId="receivers">
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
+      </AlertingPageWrapper>
+    ) : (
+      <Redirect to="/alerting/notifications" />
+    );
   }
 
   return (
@@ -58,6 +72,7 @@ const Receivers: FC = () => {
         current={alertManagerSourceName}
         disabled={disableAmSelect}
         onChange={setAlertManagerSourceName}
+        dataSources={alertManagers}
       />
       {error && !loading && (
         <Alert severity="error" title="Error loading Alertmanager config">

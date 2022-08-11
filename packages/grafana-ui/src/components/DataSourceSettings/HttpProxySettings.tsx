@@ -1,6 +1,11 @@
 import React from 'react';
+
+import { InlineField } from '../Forms/InlineField';
+import { InlineSwitch } from '../Switch/Switch';
+
 import { HttpSettingsBaseProps } from './types';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
+
+const LABEL_WIDTH = 26;
 
 export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
   dataSourceConfig,
@@ -10,42 +15,49 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
   return (
     <>
       <div className="gf-form-inline">
-        <Switch
-          label="TLS Client Auth"
-          labelClass="width-13"
-          checked={dataSourceConfig.jsonData.tlsAuth || false}
-          onChange={(event) => onChange({ ...dataSourceConfig.jsonData, tlsAuth: event!.currentTarget.checked })}
-        />
-
-        <Switch
-          label="With CA Cert"
-          labelClass="width-13"
-          checked={dataSourceConfig.jsonData.tlsAuthWithCACert || false}
-          onChange={(event) =>
-            onChange({ ...dataSourceConfig.jsonData, tlsAuthWithCACert: event!.currentTarget.checked })
-          }
-          tooltip="Needed for verifying self-signed TLS Certs"
-        />
+        <InlineField label="TLS Client Auth" labelWidth={LABEL_WIDTH}>
+          <InlineSwitch
+            id="http-settings-tls-client-auth"
+            value={dataSourceConfig.jsonData.tlsAuth || false}
+            onChange={(event) => onChange({ ...dataSourceConfig.jsonData, tlsAuth: event!.currentTarget.checked })}
+          />
+        </InlineField>
+        <InlineField label="With CA Cert" tooltip="Needed for verifying self-signed TLS Certs" labelWidth={LABEL_WIDTH}>
+          <InlineSwitch
+            id="http-settings-ca-cert"
+            value={dataSourceConfig.jsonData.tlsAuthWithCACert || false}
+            onChange={(event) =>
+              onChange({ ...dataSourceConfig.jsonData, tlsAuthWithCACert: event!.currentTarget.checked })
+            }
+          />
+        </InlineField>
       </div>
       <div className="gf-form-inline">
-        <Switch
-          label="Skip TLS Verify"
-          labelClass="width-13"
-          checked={dataSourceConfig.jsonData.tlsSkipVerify || false}
-          onChange={(event) => onChange({ ...dataSourceConfig.jsonData, tlsSkipVerify: event!.currentTarget.checked })}
-        />
+        <InlineField label="Skip TLS Verify" labelWidth={LABEL_WIDTH}>
+          <InlineSwitch
+            id="http-settings-skip-tls-verify"
+            value={dataSourceConfig.jsonData.tlsSkipVerify || false}
+            onChange={(event) =>
+              onChange({ ...dataSourceConfig.jsonData, tlsSkipVerify: event!.currentTarget.checked })
+            }
+          />
+        </InlineField>
       </div>
       {showForwardOAuthIdentityOption && (
         <div className="gf-form-inline">
-          <Switch
+          <InlineField
             label="Forward OAuth Identity"
-            labelClass="width-13"
-            checked={dataSourceConfig.jsonData.oauthPassThru || false}
-            onChange={(event) =>
-              onChange({ ...dataSourceConfig.jsonData, oauthPassThru: event!.currentTarget.checked })
-            }
             tooltip="Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
-          />
+            labelWidth={LABEL_WIDTH}
+          >
+            <InlineSwitch
+              id="http-settings-forward-oauth"
+              value={dataSourceConfig.jsonData.oauthPassThru || false}
+              onChange={(event) =>
+                onChange({ ...dataSourceConfig.jsonData, oauthPassThru: event!.currentTarget.checked })
+              }
+            />
+          </InlineField>
         </div>
       )}
     </>

@@ -1,6 +1,7 @@
-import { restore, versions } from './__mocks__/dashboardHistoryMocks';
-import { HistorySrv } from './HistorySrv';
 import { DashboardModel } from '../../state/DashboardModel';
+
+import { HistorySrv } from './HistorySrv';
+import { restore, versions } from './__mocks__/dashboardHistoryMocks';
 
 const getMock = jest.fn().mockResolvedValue({});
 const postMock = jest.fn().mockResolvedValue({});
@@ -24,7 +25,7 @@ describe('historySrv', () => {
 
   let historySrv = new HistorySrv();
 
-  const dash = new DashboardModel({ id: 1 });
+  const dash = new DashboardModel({ uid: '_U4zObQMz' });
   const emptyDash = new DashboardModel({});
   const historyListOpts = { limit: 10, start: 0 };
 

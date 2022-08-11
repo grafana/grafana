@@ -1,32 +1,17 @@
-import React from 'react';
 import { render, screen, within } from '@testing-library/react';
+import React from 'react';
+
 import { Field, GrafanaTheme2, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
+import { createLogRow } from './__mocks__/logRow';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const props: Props = {
     theme: {} as GrafanaTheme2,
     showDuplicates: false,
     wrapLogMessage: false,
-    row: {
-      dataFrame: new MutableDataFrame(),
-      entryFieldIndex: 0,
-      rowIndex: 0,
-      logLevel: 'error' as LogLevel,
-      timeFromNow: '',
-      timeEpochMs: 1546297200000,
-      timeEpochNs: '1546297200000000000',
-      timeLocal: '',
-      timeUtc: '',
-      hasAnsi: false,
-      hasUnescapedContent: false,
-      entry: '',
-      raw: '',
-      uid: '0',
-      labels: {},
-      ...(rowOverrides || {}),
-    },
+    row: createLogRow({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides }),
     getRows: () => [],
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},

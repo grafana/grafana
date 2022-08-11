@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
   MatcherOperator,
@@ -7,11 +8,11 @@ import {
   TimeRange,
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
+
 import { MatcherFieldValue } from '../types/silence-form';
-import { SelectableValue } from '@grafana/data';
+
 import { getAllDataSources } from './config';
 import { DataSourceType } from './datasource';
-import { FetchError } from '@grafana/runtime';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -143,8 +144,8 @@ export function parseMatcher(matcher: string): Matcher {
     throw new Error(`Invalid matcher: ${trimmed}`);
   }
   const [operator, idx] = operatorsFound[0];
-  const name = trimmed.substr(0, idx).trim();
-  const value = trimmed.substr(idx + operator.length).trim();
+  const name = trimmed.slice(0, idx).trim();
+  const value = trimmed.slice(idx + operator.length).trim();
   if (!name) {
     throw new Error(`Invalid matcher: ${trimmed}`);
   }
@@ -235,12 +236,12 @@ export function getWeekdayString(weekdays?: string[]): string {
             .split(':')
             .map((d) => {
               const abbreviated = d.slice(0, 3);
-              return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
+              return abbreviated[0].toLocaleUpperCase() + abbreviated.slice(1);
             })
             .join('-');
         } else {
           const abbreviated = day.slice(0, 3);
-          return abbreviated[0].toLocaleUpperCase() + abbreviated.substr(1);
+          return abbreviated[0].toLocaleUpperCase() + abbreviated.slice(1);
         }
       })
       .join(', ') ?? 'All')
@@ -257,8 +258,4 @@ export function getMonthsString(months?: string[]): string {
 
 export function getYearsString(years?: string[]): string {
   return 'Years: ' + (years?.join(', ') ?? 'All');
-}
-
-export function isFetchError(e: unknown): e is FetchError {
-  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }

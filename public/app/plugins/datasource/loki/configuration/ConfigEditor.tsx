@@ -1,10 +1,13 @@
 import React from 'react';
+
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
-import { LokiOptions } from '../types';
-import { MaxLinesField } from './MaxLinesField';
-import { DerivedFields } from './DerivedFields';
 import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/utils/alertmanager';
+
+import { LokiOptions } from '../types';
+
+import { DerivedFields } from './DerivedFields';
+import { MaxLinesField } from './MaxLinesField';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 

@@ -1,6 +1,7 @@
-import { PanelModel } from '../dashboard/state';
-import { Dispatch } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
+import { Dispatch } from 'react';
+
+import { PanelModel } from '../dashboard/state';
 
 export enum LibraryElementKind {
   Panel = 1,
@@ -16,6 +17,7 @@ export interface LibraryElementConnectionDTO {
   kind: LibraryElementConnectionKind;
   elementId: number;
   connectionId: number;
+  connectionUid: string;
   created: string;
   createdBy: LibraryElementDTOMetaUser;
 }

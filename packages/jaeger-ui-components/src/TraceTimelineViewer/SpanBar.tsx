@@ -12,18 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import cx from 'classnames';
 import { css } from '@emotion/css';
+import cx from 'classnames';
 import { groupBy as _groupBy } from 'lodash';
 import React, { useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
+
 import { autoColor } from '../Theme';
-import { TraceSpan } from '../types/trace';
+import { Popover } from '../common/Popover';
 import { TNil } from '../types';
+import { TraceSpan } from '../types/trace';
+
 import AccordianLogs from './SpanDetail/AccordianLogs';
 import { ViewedBoundsFunctionType } from './utils';
-import { Popover } from '../common/Popover';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -147,7 +151,7 @@ function SpanBar({
       onMouseLeave={setShortLabel}
       onMouseOver={setLongLabel}
       aria-hidden
-      data-test-id="SpanBar--wrapper"
+      data-testid={selectors.components.TraceViewer.spanBar}
     >
       <div
         aria-label={label}
@@ -158,7 +162,7 @@ function SpanBar({
           width: toPercent(viewEnd - viewStart),
         }}
       >
-        <div className={cx(styles.label, labelClassName)} data-test-id="SpanBar--label">
+        <div className={cx(styles.label, labelClassName)} data-testid="SpanBar--label">
           {label}
         </div>
       </div>
@@ -170,7 +174,7 @@ function SpanBar({
               <AccordianLogs interactive={false} isOpen logs={logGroups[positionKey]} timestamp={traceStartTime} />
             }
           >
-            <div className={styles.logMarker} style={{ left: positionKey }} />
+            <div data-testid="SpanBar--logMarker" className={styles.logMarker} style={{ left: positionKey }} />
           </Popover>
         ))}
       </div>

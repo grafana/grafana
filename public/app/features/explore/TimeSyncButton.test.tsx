@@ -1,19 +1,20 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
+
 import { TimeSyncButton } from './TimeSyncButton';
-import { mount } from 'enzyme';
 
 const setup = (isSynced: boolean) => {
   const onClick = () => {};
-  return mount(<TimeSyncButton onClick={onClick} isSynced={isSynced} />);
+  return render(<TimeSyncButton onClick={onClick} isSynced={isSynced} />);
 };
 
 describe('TimeSyncButton', () => {
-  it('should change style when synced', () => {
-    const wrapper = setup(true);
-    expect(wrapper.find('button').props()['aria-label']).toEqual('Synced times');
+  it('should have the right name when isSynced = true', () => {
+    setup(true);
+    expect(screen.getByRole('button', { name: /synced times/i })).toBeInTheDocument();
   });
-  it('should not change style when not synced', () => {
-    const wrapper = setup(false);
-    expect(wrapper.find('button').props()['aria-label']).toEqual('Unsynced times');
+  it('should have the right name when isSynced = false', () => {
+    setup(false);
+    expect(screen.getByRole('button', { name: /unsynced times/i })).toBeInTheDocument();
   });
 });

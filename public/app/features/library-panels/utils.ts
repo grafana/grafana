@@ -1,8 +1,9 @@
-import { LibraryElementDTO, PanelModelLibraryPanel } from './types';
-import { PanelModel } from '../dashboard/state';
-import { addLibraryPanel, updateLibraryPanel } from './state/api';
 import { createErrorNotification, createSuccessNotification } from '../../core/copy/appNotification';
 import { AppNotification } from '../../types';
+import { PanelModel } from '../dashboard/state';
+
+import { addLibraryPanel, updateLibraryPanel } from './state/api';
+import { LibraryElementDTO, PanelModelLibraryPanel } from './types';
 
 export function createPanelLibraryErrorNotification(message: string): AppNotification {
   return createErrorNotification(message);

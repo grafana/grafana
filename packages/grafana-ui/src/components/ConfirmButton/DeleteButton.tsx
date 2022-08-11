@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
-import { ConfirmButton } from './ConfirmButton';
+
 import { ComponentSize } from '../../types/size';
 import { Button } from '../Button';
+
+import { ConfirmButton } from './ConfirmButton';
 
 export interface Props {
   /** Confirm action callback */

@@ -14,10 +14,97 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestQuery_GetLogEvents(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var cli fakeCWLogsClient
+
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return &cli
+	}
+	const refID = "A"
+
+	testCases := map[string]struct {
+		query         string
+		expectedInput []*cloudwatchlogs.GetLogEventsInput
+	}{
+		"Nil startTime": {
+			query: `{
+				"type":         "logAction",
+				"subtype":       "GetLogEvents",
+				"logGroupName":  "foo",
+				"logStreamName": "bar",
+				"endTime":       1,
+				"startFromHead": false
+			}`,
+			expectedInput: []*cloudwatchlogs.GetLogEventsInput{
+				{
+					EndTime:       aws.Int64(1),
+					Limit:         aws.Int64(10),
+					LogGroupName:  aws.String("foo"),
+					LogStreamName: aws.String("bar"),
+					StartFromHead: aws.Bool(false),
+				},
+			},
+		},
+		"Nil endTime": {
+			query: `{
+				"type":         "logAction",
+				"subtype":       "GetLogEvents",
+				"logGroupName":  "foo",
+				"logStreamName": "bar",
+				"startTime":       1,
+				"startFromHead": true
+			}`,
+			expectedInput: []*cloudwatchlogs.GetLogEventsInput{
+				{
+					StartTime:     aws.Int64(1),
+					Limit:         aws.Int64(10),
+					LogGroupName:  aws.String("foo"),
+					LogStreamName: aws.String("bar"),
+					StartFromHead: aws.Bool(true),
+				},
+			},
+		},
+	}
+
+	for name, test := range testCases {
+		t.Run(name, func(t *testing.T) {
+			cli = fakeCWLogsClient{}
+
+			im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+				return datasourceInfo{}, nil
+			})
+
+			executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+			_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+				},
+				Queries: []backend.DataQuery{
+					{
+						RefID:     refID,
+						TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+						JSON:      json.RawMessage(test.query),
+					},
+				},
+			})
+
+			require.NoError(t, err)
+			require.Len(t, cli.calls.getEventsWithContext, 1)
+			assert.Equal(t, test.expectedInput, cli.calls.getEventsWithContext)
+		})
+	}
+}
 
 func TestQuery_DescribeLogGroups(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
@@ -52,7 +139,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -108,7 +195,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -183,7 +270,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 		return datasourceInfo{}, nil
 	})
 
-	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -264,7 +351,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -317,7 +404,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -374,7 +461,7 @@ func Test_executeStartQuery(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -405,39 +492,12 @@ func Test_executeStartQuery(t *testing.T) {
 		}, cli.calls.startQueryWithContext)
 	})
 
-	t.Run("cannot parse limit as float", func(t *testing.T) {
-		cli = fakeCWLogsClient{}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return datasourceInfo{}, nil
-		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
-
-		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
-			Queries: []backend.DataQuery{
-				{
-					RefID:     "A",
-					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
-					JSON: json.RawMessage(`{
-						"type":    "logAction",
-						"subtype": "StartQuery",
-						"limit":   12.0
-					}`),
-				},
-			},
-		})
-
-		assert.NoError(t, err)
-		require.Len(t, cli.calls.startQueryWithContext, 1)
-		assert.Nil(t, cli.calls.startQueryWithContext[0].Limit)
-	})
-
 	t.Run("does not populate StartQueryInput.limit when no limit provided", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -499,7 +559,7 @@ func TestQuery_StopQuery(t *testing.T) {
 		To:   time.Unix(1584700643, 0),
 	}
 
-	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -589,7 +649,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		return datasourceInfo{}, nil
 	})
 
-	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},

@@ -1,6 +1,7 @@
-import { mapFuncDefsToSelectables, mapFuncInstanceToParams } from './helpers';
 import { FuncDef, FuncDefs, FuncInstance } from '../gfunc';
+
 import { EditableParam } from './FunctionParamEditor';
+import { mapFuncDefsToSelectables, mapFuncInstanceToParams } from './helpers';
 
 function createFunctionInstance(funcDef: FuncDef, currentParams: string[]): FuncInstance {
   let funcInstance: FuncInstance = new FuncInstance(funcDef);

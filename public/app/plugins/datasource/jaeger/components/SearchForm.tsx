@@ -1,14 +1,18 @@
 import { css } from '@emotion/css';
-import { SelectableValue } from '@grafana/data';
-import { AsyncSelect, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
+
+import { SelectableValue, toOption } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
+
 import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
 import { transformToLogfmt } from '../util';
+
 import { AdvancedOptions } from './AdvancedOptions';
-import { dispatch } from 'app/store/store';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
 
 type Props = {
   datasource: JaegerDatasource;
@@ -33,8 +37,8 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     operations: false,
   });
 
-  const loadServices = useCallback(
-    async (url: string, loaderOfType: string): Promise<Array<SelectableValue<string>>> => {
+  const loadOptions = useCallback(
+    async (url: string, loaderOfType: string, query = ''): Promise<Array<SelectableValue<string>>> => {
       setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: true }));
 
       try {
@@ -43,13 +47,17 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           return [{ label: `No ${loaderOfType} found`, value: `No ${loaderOfType} found` }];
         }
 
-        const serviceOptions: SelectableValue[] = values.sort().map((service) => ({
-          label: service,
-          value: service,
+        const options: SelectableValue[] = values.sort().map((option) => ({
+          label: option,
+          value: option,
         }));
-        return serviceOptions;
+
+        const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
+        return filteredOptions;
       } catch (error) {
-        dispatch(notifyApp(createErrorNotification('Error', error)));
+        if (error instanceof Error) {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
         return [];
       } finally {
         setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
@@ -60,35 +68,39 @@ export function SearchForm({ datasource, query, onChange }: Props) {
 
   useEffect(() => {
     const getServices = async () => {
-      const services = await loadServices('/api/services', 'services');
+      const services = await loadOptions('/api/services', 'services');
+      if (query.service && getTemplateSrv().containsTemplate(query.service)) {
+        services.push(toOption(query.service));
+      }
       setServiceOptions(services);
     };
     getServices();
-  }, [datasource, loadServices]);
+  }, [datasource, loadOptions, query.service]);
 
   useEffect(() => {
     const getOperations = async () => {
-      const operations = await loadServices(
-        `/api/services/${encodeURIComponent(query.service!)}/operations`,
+      const operations = await loadOptions(
+        `/api/services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
         'operations'
       );
+      if (query.operation && getTemplateSrv().containsTemplate(query.operation)) {
+        operations.push(toOption(query.operation));
+      }
       setOperationOptions([allOperationsOption, ...operations]);
     };
     if (query.service) {
       getOperations();
     }
-  }, [datasource, query.service, loadServices]);
+  }, [datasource, query.service, loadOptions, query.operation]);
 
   return (
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
         <InlineField label="Service" labelWidth={14} grow>
-          <AsyncSelect
+          <Select
             inputId="service"
-            menuShouldPortal
-            cacheOptions={false}
-            loadOptions={() => loadServices('/api/services', 'services')}
-            onOpenMenu={() => loadServices('/api/services', 'services')}
+            options={serviceOptions}
+            onOpenMenu={() => loadOptions('/api/services', 'services')}
             isLoading={isLoading.services}
             value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
             onChange={(v) =>
@@ -100,22 +112,21 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             }
             menuPlacement="bottom"
             isClearable
-            defaultOptions
             aria-label={'select-service-name'}
+            allowCustomValue={true}
           />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Operation" labelWidth={14} grow disabled={!query.service}>
-          <AsyncSelect
+          <Select
             inputId="operation"
-            menuShouldPortal
-            cacheOptions={false}
-            loadOptions={() =>
-              loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
-            }
+            options={operationOptions}
             onOpenMenu={() =>
-              loadServices(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
+              loadOptions(
+                `/api/services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
+                'operations'
+              )
             }
             isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
@@ -127,8 +138,8 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             }
             menuPlacement="bottom"
             isClearable
-            defaultOptions
             aria-label={'select-operation-name'}
+            allowCustomValue={true}
           />
         </InlineField>
       </InlineFieldRow>

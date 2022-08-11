@@ -9,7 +9,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"net/url"
@@ -77,7 +76,7 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	}()
 
 	if resp.StatusCode > 400 && resp.StatusCode < 600 {
-		body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 		if err != nil {
 			return "", err
 		}
@@ -256,14 +255,15 @@ func tryget(headers map[string][]string, key string) string {
 
 /*
 Based on Azure docs:
-  Link: http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx#Constructing_Element
 
-  1) Retrieve all headers for the resource that begin with x-ms-, including the x-ms-date header.
-  2) Convert each HTTP header name to lowercase.
-  3) Sort the headers lexicographically by header name, in ascending order. Note that each header may appear only once in the string.
-  4) Unfold the string by replacing any breaking white space with a single space.
-  5) Trim any white space around the colon in the header.
-  6) Finally, append a new line character to each canonicalized header in the resulting list. Construct the CanonicalizedHeaders string by concatenating all headers in this list into a single string.
+	Link: http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx#Constructing_Element
+
+	1) Retrieve all headers for the resource that begin with x-ms-, including the x-ms-date header.
+	2) Convert each HTTP header name to lowercase.
+	3) Sort the headers lexicographically by header name, in ascending order. Note that each header may appear only once in the string.
+	4) Unfold the string by replacing any breaking white space with a single space.
+	5) Trim any white space around the colon in the header.
+	6) Finally, append a new line character to each canonicalized header in the resulting list. Construct the CanonicalizedHeaders string by concatenating all headers in this list into a single string.
 */
 func (a *Auth) canonicalizedHeaders(req *http.Request) string {
 	var buffer bytes.Buffer
@@ -288,25 +288,26 @@ func (a *Auth) canonicalizedHeaders(req *http.Request) string {
 
 /*
 Based on Azure docs
-  Link: http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx#Constructing_Element
 
-1) Beginning with an empty string (""), append a forward slash (/), followed by the name of the account that owns the resource being accessed.
-2) Append the resource's encoded URI path, without any query parameters.
-3) Retrieve all query parameters on the resource URI, including the comp parameter if it exists.
-4) Convert all parameter names to lowercase.
-5) Sort the query parameters lexicographically by parameter name, in ascending order.
-6) URL-decode each query parameter name and value.
-7) Append each query parameter name and value to the string in the following format, making sure to include the colon (:) between the name and the value:
-    parameter-name:parameter-value
+		Link: http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx#Constructing_Element
 
-8) If a query parameter has more than one value, sort all values lexicographically, then include them in a comma-separated list:
-    parameter-name:parameter-value-1,parameter-value-2,parameter-value-n
+	 1. Beginning with an empty string (""), append a forward slash (/), followed by the name of the account that owns the resource being accessed.
+	 2. Append the resource's encoded URI path, without any query parameters.
+	 3. Retrieve all query parameters on the resource URI, including the comp parameter if it exists.
+	 4. Convert all parameter names to lowercase.
+	 5. Sort the query parameters lexicographically by parameter name, in ascending order.
+	 6. URL-decode each query parameter name and value.
+	 7. Append each query parameter name and value to the string in the following format, making sure to include the colon (:) between the name and the value:
+	    parameter-name:parameter-value
+
+	 8. If a query parameter has more than one value, sort all values lexicographically, then include them in a comma-separated list:
+	    parameter-name:parameter-value-1,parameter-value-2,parameter-value-n
 
 9) Append a new line character (\n) after each name-value pair.
 
 Rules:
-  1) Avoid using the new line character (\n) in values for query parameters. If it must be used, ensure that it does not affect the format of the canonicalized resource string.
-  2) Avoid using commas in query parameter values.
+ 1. Avoid using the new line character (\n) in values for query parameters. If it must be used, ensure that it does not affect the format of the canonicalized resource string.
+ 2. Avoid using commas in query parameter values.
 */
 func (a *Auth) canonicalizedResource(req *http.Request) string {
 	var buffer bytes.Buffer

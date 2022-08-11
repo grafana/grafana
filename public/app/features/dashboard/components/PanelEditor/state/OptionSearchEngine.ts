@@ -1,5 +1,5 @@
-import { OptionsPaneItemDescriptor } from '../OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from '../OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemDescriptor } from '../OptionsPaneItemDescriptor';
 
 export interface OptionSearchResults {
   optionHits: OptionsPaneItemDescriptor[];
@@ -56,7 +56,7 @@ export class OptionSearchEngine {
   }
 
   getAllOptionsCount(categories: OptionsPaneCategoryDescriptor[]) {
-    var total = 0;
+    let total = 0;
 
     for (const category of categories) {
       total += category.items.length;

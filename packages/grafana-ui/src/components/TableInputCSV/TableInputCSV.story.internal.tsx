@@ -1,18 +1,20 @@
+import { action } from '@storybook/addon-actions';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { TableInputCSV } from './TableInputCSV';
-import { Meta } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
 import { DataFrame } from '@grafana/data';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-export default {
+import { TableInputCSV } from './TableInputCSV';
+
+const meta: ComponentMeta<typeof TableInputCSV> = {
   title: 'Forms/TableInputCSV',
   component: TableInputCSV,
   decorators: [withCenteredStory],
-} as Meta;
+};
 
-export const basic = () => {
+export const basic: ComponentStory<typeof TableInputCSV> = () => {
   return (
     <TableInputCSV
       width={400}
@@ -24,3 +26,5 @@ export const basic = () => {
     />
   );
 };
+
+export default meta;

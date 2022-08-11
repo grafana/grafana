@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
@@ -114,7 +115,7 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 				azlog.Warn("Unable to parse model from query", "JSON", m.query.JSON)
 				it = defaultInterval
 			} else {
-				it, err = interval.GetIntervalFrom(&models.DataSource{
+				it, err = interval.GetIntervalFrom(&datasources.DataSource{
 					JsonData: simplejson.NewFromAny(dsInfo.JSONData),
 				}, model, defaultInterval)
 				if err != nil {

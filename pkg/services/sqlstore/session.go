@@ -23,6 +23,10 @@ func (sess *DBSession) publishAfterCommit(msg interface{}) {
 	sess.events = append(sess.events, msg)
 }
 
+func (sess *DBSession) PublishAfterCommit(msg interface{}) {
+	sess.events = append(sess.events, msg)
+}
+
 // NewSession returns a new DBSession
 func (ss *SQLStore) NewSession(ctx context.Context) *DBSession {
 	sess := &DBSession{Session: ss.engine.NewSession()}
@@ -30,8 +34,8 @@ func (ss *SQLStore) NewSession(ctx context.Context) *DBSession {
 	return sess
 }
 
-func newSession(ctx context.Context) *DBSession {
-	sess := &DBSession{Session: x.NewSession()}
+func (ss *SQLStore) newSession(ctx context.Context) *DBSession {
+	sess := &DBSession{Session: ss.engine.NewSession()}
 	sess.Session = sess.Session.Context(ctx)
 
 	return sess

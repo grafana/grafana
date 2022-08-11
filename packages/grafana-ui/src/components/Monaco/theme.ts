@@ -1,4 +1,5 @@
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { Monaco, monacoTypes } from './types';
 
 function getColors(theme?: GrafanaTheme2): monacoTypes.editor.IColors {

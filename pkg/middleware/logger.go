@@ -17,56 +17,86 @@ package middleware
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	cw "github.com/weaveworks/common/tracing"
 )
 
-func Logger(cfg *setting.Cfg) web.Handler {
-	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-		start := time.Now()
+func Logger(cfg *setting.Cfg) web.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
 
-		rw := res.(web.ResponseWriter)
-		c.Next()
+			rw := web.Rw(w, r)
+			next.ServeHTTP(rw, r)
 
-		timeTaken := time.Since(start) / time.Millisecond
-
-		ctx := contexthandler.FromContext(c.Req.Context())
-		if ctx != nil && ctx.PerfmonTimer != nil {
-			ctx.PerfmonTimer.Observe(float64(timeTaken))
-		}
-
-		status := rw.Status()
-		if status == 200 || status == 304 {
-			if !cfg.RouterLogging {
-				return
-			}
-		}
-
-		if ctx != nil {
-			logParams := []interface{}{
-				"method", req.Method,
-				"path", req.URL.Path,
-				"status", status,
-				"remote_addr", c.RemoteAddr(),
-				"time_ms", int64(timeTaken),
-				"size", rw.Size(),
-				"referer", req.Referer(),
+			timeTaken := time.Since(start) / time.Millisecond
+			duration := time.Since(start).String()
+			ctx := contexthandler.FromContext(r.Context())
+			if ctx != nil && ctx.PerfmonTimer != nil {
+				ctx.PerfmonTimer.Observe(float64(timeTaken))
 			}
 
-			traceID, exist := cw.ExtractTraceID(ctx.Req.Context())
-			if exist {
-				logParams = append(logParams, "traceID", traceID)
+			status := rw.Status()
+			if status == 200 || status == 304 {
+				if !cfg.RouterLogging {
+					return
+				}
 			}
 
-			if status >= 500 {
-				ctx.Logger.Error("Request Completed", logParams...)
-			} else {
-				ctx.Logger.Info("Request Completed", logParams...)
+			if ctx != nil {
+				logParams := []interface{}{
+					"method", r.Method,
+					"path", r.URL.Path,
+					"status", status,
+					"remote_addr", ctx.RemoteAddr(),
+					"time_ms", int64(timeTaken),
+					"duration", duration,
+					"size", rw.Size(),
+					"referer", SanitizeURL(ctx, r.Referer()),
+				}
+
+				traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
+				if traceID != "" {
+					logParams = append(logParams, "traceID", traceID)
+				}
+
+				if status >= 500 {
+					ctx.Logger.Error("Request Completed", logParams...)
+				} else {
+					ctx.Logger.Info("Request Completed", logParams...)
+				}
 			}
-		}
+		})
 	}
+}
+
+var sensitiveQueryStrings = [...]string{
+	"auth_token",
+}
+
+func SanitizeURL(ctx *models.ReqContext, s string) string {
+	if s == "" {
+		return s
+	}
+
+	u, err := url.ParseRequestURI(s)
+	if err != nil {
+		ctx.Logger.Warn("Received invalid referer in request headers, removed for log forgery prevention")
+		return ""
+	}
+
+	// strip out sensitive query strings
+	values := u.Query()
+	for _, query := range sensitiveQueryStrings {
+		values.Del(query)
+	}
+	u.RawQuery = values.Encode()
+
+	return u.String()
 }

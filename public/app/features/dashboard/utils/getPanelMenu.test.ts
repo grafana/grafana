@@ -1,10 +1,11 @@
 import { PanelMenuItem } from '@grafana/data';
-import { DashboardModel, PanelModel } from '../state';
-import { getPanelMenu } from './getPanelMenu';
-import { describe } from '../../../../test/lib/common';
-import { setStore } from 'app/store/store';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
+import { setStore } from 'app/store/store';
+
+import { DashboardModel, PanelModel } from '../state';
+
+import { getPanelMenu } from './getPanelMenu';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -43,6 +44,12 @@ describe('getPanelMenu', () => {
           "onClick": [Function],
           "shortcut": "x",
           "text": "Explore",
+        },
+        Object {
+          "iconClassName": "exchange-alt",
+          "onClick": [Function],
+          "shortcut": "p l",
+          "text": "Show legend",
         },
         Object {
           "iconClassName": "info-circle",
@@ -127,6 +134,12 @@ describe('getPanelMenu', () => {
             "onClick": [Function],
             "shortcut": "x",
             "text": "Explore",
+          },
+          Object {
+            "iconClassName": "exchange-alt",
+            "onClick": [Function],
+            "shortcut": "p l",
+            "text": "Show legend",
           },
           Object {
             "iconClassName": "info-circle",

@@ -1,23 +1,19 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
-import { checkIfLotexSupportsEditingRulesAction } from '../state/actions';
-import { getRulesDataSources } from '../utils/datasource';
+import { PromBasedDataSource } from 'app/types/unified-alerting';
+
+import { getDataSourceByName } from '../utils/datasource';
+
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useRulesSourcesWithRuler(): DataSourceInstanceSettings[] {
-  const checkEditingRequests = useUnifiedAlertingSelector((state) => state.lotexSupportsRuleEditing);
-  const dispatch = useDispatch();
+  const dataSources = useUnifiedAlertingSelector((state) => state.dataSources);
 
+  const dataSourcesWithRuler = Object.values(dataSources)
+    .map((ds) => ds.result)
+    .filter((ds): ds is PromBasedDataSource => Boolean(ds?.rulerConfig));
   // try fetching rules for each prometheus to see if it has ruler
-  useEffect(() => {
-    getRulesDataSources()
-      .filter((ds) => checkEditingRequests[ds.name] === undefined)
-      .forEach((ds) => dispatch(checkIfLotexSupportsEditingRulesAction(ds.name)));
-  }, [dispatch, checkEditingRequests]);
 
-  return useMemo(
-    () => getRulesDataSources().filter((ds) => checkEditingRequests[ds.name]?.result),
-    [checkEditingRequests]
-  );
+  return dataSourcesWithRuler
+    .map((ds) => getDataSourceByName(ds.name))
+    .filter((dsConfig): dsConfig is DataSourceInstanceSettings => Boolean(dsConfig));
 }

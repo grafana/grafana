@@ -1,0 +1,72 @@
+[
+  {
+    "Messages": null,
+    "MetricDataResults": [
+      {
+        "Id": "a",
+        "Label": "label1",
+        "Messages": null,
+        "StatusCode": "PartialData",
+        "Timestamps": [
+          "2021-01-15T19:44:00Z",
+          "2021-01-15T19:59:00Z",
+          "2021-01-15T20:14:00Z",
+          "2021-01-15T20:29:00Z",
+          "2021-01-15T20:44:00Z"
+        ],
+        "Values": [
+          0.1333395078879982,
+          0.244268469636633,
+          0.15574387947267768,
+          0.14447563659125626,
+          0.15519743138527173
+        ]
+      },
+      {
+        "Id": "a",
+        "Label": "label2",
+        "Messages": null,
+        "StatusCode": "Complete",
+        "Timestamps": [
+          "2021-01-15T19:44:00Z"
+        ],
+        "Values": [
+          0.1333395078879982
+        ]
+      }
+    ],
+    "NextToken": null
+  },
+  {
+    "Messages": [
+      { "Code": "", "Value": null },
+      { "Code": "MaxMetricsExceeded", "Value": null },
+      { "Code": "MaxQueryTimeRangeExceeded", "Value": null },
+      { "Code": "MaxQueryResultsExceeded", "Value": null },
+      { "Code": "MaxMatchingResultsExceeded", "Value": null }
+    ],
+    "MetricDataResults": [
+      {
+        "Id": "a",
+        "Label": "label1",
+        "Messages": null,
+        "StatusCode": "Complete",
+        "Timestamps": [
+          "2021-01-15T19:44:00Z",
+          "2021-01-15T19:59:00Z",
+          "2021-01-15T20:14:00Z",
+          "2021-01-15T20:29:00Z",
+          "2021-01-15T20:44:00Z"
+        ],
+        "Values": [
+          0.1333395078879982,
+          0.244268469636633,
+          0.15574387947267768,
+          0.14447563659125626,
+          0.15519743138527173
+        ]
+      }
+    ],
+    "NextToken": null
+  }
+]

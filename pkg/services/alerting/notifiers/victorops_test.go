@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/require"
@@ -24,6 +25,8 @@ func presenceComparerInt(a, b int64) bool {
 	return a == b
 }
 func TestVictoropsNotifier(t *testing.T) {
+	encryptionService := encryptionservice.SetupTestService(t)
+
 	t.Run("Parsing alert notification from settings", func(t *testing.T) {
 		t.Run("empty settings should return error", func(t *testing.T) {
 			json := `{ }`
@@ -35,7 +38,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			_, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -52,7 +55,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
 			victoropsNotifier := not.(*VictoropsNotifier)
 
 			require.Nil(t, err)
@@ -76,7 +79,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Nil(t, err)
 
 			victoropsNotifier := not.(*VictoropsNotifier)
@@ -90,7 +93,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
 				},
-			}, &validations.OSSPluginRequestValidator{}, nil)
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 			evalContext.IsTestRun = true
 
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)
@@ -124,7 +127,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Nil(t, err)
 
 			victoropsNotifier := not.(*VictoropsNotifier)
@@ -138,7 +141,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
 				},
-			}, &validations.OSSPluginRequestValidator{}, nil)
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 			evalContext.IsTestRun = true
 
 			payload, err := victoropsNotifier.buildEventPayload(evalContext)

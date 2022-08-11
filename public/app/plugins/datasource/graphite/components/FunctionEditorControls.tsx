@@ -1,5 +1,7 @@
 import React, { Suspense } from 'react';
+
 import { Icon, Tooltip } from '@grafana/ui';
+
 import { FuncInstance } from '../gfunc';
 
 export interface FunctionEditorControlsProps {

@@ -1,13 +1,20 @@
-import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FormEvent, useCallback, useState } from 'react';
+
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
+
 import { useStyles2 } from '../../../themes';
 import { Button } from '../../Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
+import { Field } from '../../Forms/Field';
+import { Icon } from '../../Icon/Icon';
+import { getInputStyles, Input } from '../../Input/Input';
+import { Tooltip } from '../../Tooltip/Tooltip';
+import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
 import { quickOptions } from '../options';
-import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
-import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
+
 import {
   isRangeValid,
   isRelativeFormat,
@@ -15,10 +22,6 @@ import {
   mapRelativeTimeRangeToOption,
   RangeValidation,
 } from './utils';
-import { Field } from '../../Forms/Field';
-import { getInputStyles, Input } from '../../Input/Input';
-import { Icon } from '../../Icon/Icon';
-import { Tooltip } from '../../Tooltip/Tooltip';
 
 /**
  * @internal
@@ -38,7 +41,7 @@ const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
 /**
  * @internal
  */
-export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
+export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   const { timeRange, onChange } = props;
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
@@ -204,21 +207,21 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
         cursor: pointer;
         padding-right: 0;
         padding-left: 0;
-        line-height: ${theme.v1.spacing.formInputHeight - 2}px;
+        line-height: ${theme.spacing.gridSize * theme.components.height.md - 2}px;
       `
     ),
     caretIcon: cx(
       inputStyles.suffix,
       css`
         position: relative;
-        margin-left: ${theme.v1.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       `
     ),
     clockIcon: cx(
       inputStyles.prefix,
       css`
         position: relative;
-        margin-right: ${theme.v1.spacing.xs};
+        margin-right: ${theme.spacing(0.5)};
       `
     ),
     content: css`

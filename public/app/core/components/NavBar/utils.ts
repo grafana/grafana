@@ -1,13 +1,19 @@
 import { Location } from 'history';
-import { NavModelItem, NavSection } from '@grafana/data';
+
+import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
+
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 
 export const SEARCH_ITEM_ID = 'search';
+export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
+
+export const getNavMenuPortalContainer = () => document.getElementById(NAV_MENU_PORTAL_CONTAINER_ID) ?? document.body;
 
 export const getForcedLoginUrl = (url: string) => {
   const queryParams = new URLSearchParams(url.split('?')[1]);
@@ -54,6 +60,7 @@ export const enrichConfigItems = (
       link.children = [
         ...getFooterLinks(),
         {
+          id: 'keyboard-shortcuts',
           text: 'Keyboard shortcuts',
           icon: 'keyboard',
           onClick: onOpenShortcuts,
@@ -65,6 +72,7 @@ export const enrichConfigItems = (
       link.children = [
         ...menuItems,
         {
+          id: 'switch-organization',
           text: 'Switch organization',
           icon: 'arrow-random',
           onClick: toggleOrgSwitcher,
@@ -73,6 +81,21 @@ export const enrichConfigItems = (
     }
   });
   return items;
+};
+
+export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
+  const onClick = item.onClick;
+  item.onClick = () => {
+    reportInteraction('grafana_navigation_item_clicked', {
+      path: item.url ?? item.id,
+      state: expandedState ? 'expanded' : 'collapsed',
+    });
+    onClick?.();
+  };
+  if (item.children) {
+    item.children = item.children.map((item) => enrichWithInteractionTracking(item, expandedState));
+  }
+  return item;
 };
 
 export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
@@ -94,11 +117,11 @@ export const getActiveItem = (
   pathname: string,
   currentBestMatch?: NavModelItem
 ): NavModelItem | undefined => {
-  const newNavigationEnabled = getConfig().featureToggles.newNavigation;
-  const dashboardLinkMatch = newNavigationEnabled ? '/dashboards' : '/';
+  const dashboardLinkMatch = '/dashboards';
 
   for (const link of navTree) {
-    const linkPathname = stripQueryParams(link.url);
+    const linkWithoutParams = stripQueryParams(link.url);
+    const linkPathname = locationUtil.stripBaseFromUrl(linkWithoutParams);
     if (linkPathname) {
       if (linkPathname === pathname) {
         // exact match

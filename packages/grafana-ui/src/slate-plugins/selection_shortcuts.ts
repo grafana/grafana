@@ -1,7 +1,7 @@
-import { Plugin } from '@grafana/slate-react';
+import { isKeyHotkey } from 'is-hotkey';
 import { Editor as CoreEditor } from 'slate';
 
-import { isKeyHotkey } from 'is-hotkey';
+import { Plugin } from '@grafana/slate-react';
 
 const isSelectLineHotkey = isKeyHotkey('mod+l');
 

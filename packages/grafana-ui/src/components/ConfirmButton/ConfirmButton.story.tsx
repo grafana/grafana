@@ -1,14 +1,17 @@
-import React from 'react';
-import { Meta, Story } from '@storybook/react';
-import { ConfirmButton } from '@grafana/ui';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { action } from '@storybook/addon-actions';
+import { Meta, Story } from '@storybook/react';
+import React from 'react';
+
+import { ConfirmButton } from '@grafana/ui';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
-import { DeleteButton } from './DeleteButton';
+
 import { Props } from './ConfirmButton';
 import mdx from './ConfirmButton.mdx';
+import { DeleteButton } from './DeleteButton';
 
-export default {
+const meta: Meta = {
   title: 'Buttons/ConfirmButton',
   component: ConfirmButton,
   decorators: [withCenteredStory],
@@ -38,7 +41,7 @@ export default {
     },
     size: { control: { type: 'select' }, options: ['xs', 'sm', 'md', 'lg'] },
   },
-} as Meta;
+};
 
 interface StoryProps extends Partial<Props> {
   buttonText: string;
@@ -91,3 +94,5 @@ export const Delete: Story<StoryProps> = (args) => {
     />
   );
 };
+
+export default meta;

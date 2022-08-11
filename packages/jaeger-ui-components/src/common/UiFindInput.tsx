@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { IconButton, Input } from '@grafana/ui';
 import * as React from 'react';
+
+import { IconButton, Input } from '@grafana/ui';
 
 import { TNil } from '../types/index';
 

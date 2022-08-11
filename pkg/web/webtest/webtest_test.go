@@ -2,7 +2,7 @@ package webtest
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,7 +61,7 @@ func verifyRequest(t *testing.T, s *Server, req *http.Request, expectedBody stri
 	} else {
 		require.Equal(t, http.MethodPost, req.Method)
 		require.NotNil(t, req.Body)
-		bytes, err := ioutil.ReadAll(req.Body)
+		bytes, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		require.Equal(t, expectedBody, string(bytes))
 	}
@@ -87,7 +88,7 @@ func TestServerClient(t *testing.T) {
 	t.Run("Making a request with user 1 should return user 1 as signed in user", func(t *testing.T) {
 		req := s.NewRequest(http.MethodGet, "/test", nil)
 		req = RequestWithWebContext(req, &models.ReqContext{
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				UserId: 1,
 			},
 		})
@@ -95,11 +96,11 @@ func TestServerClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 
-		var user *models.SignedInUser
+		var user user.SignedInUser
 		err = json.Unmarshal(bytes, &user)
 		require.NoError(t, err)
 		require.NotNil(t, user)
@@ -109,7 +110,7 @@ func TestServerClient(t *testing.T) {
 	t.Run("Making a request with user 2 should return user 2 as signed in user", func(t *testing.T) {
 		req := s.NewRequest(http.MethodGet, "/test", nil)
 		req = RequestWithWebContext(req, &models.ReqContext{
-			SignedInUser: &models.SignedInUser{
+			SignedInUser: &user.SignedInUser{
 				UserId: 2,
 			},
 		})
@@ -117,11 +118,11 @@ func TestServerClient(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.NoError(t, resp.Body.Close())
 
-		var user *models.SignedInUser
+		var user user.SignedInUser
 		err = json.Unmarshal(bytes, &user)
 		require.NoError(t, err)
 		require.NotNil(t, user)

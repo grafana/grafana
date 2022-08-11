@@ -1,5 +1,6 @@
-import { importDashboard, Dashboard } from './importDashboard';
 import { e2e } from '../index';
+
+import { importDashboard, Dashboard } from './importDashboard';
 
 /**
  * Smoke test several dashboard json files from a test directory

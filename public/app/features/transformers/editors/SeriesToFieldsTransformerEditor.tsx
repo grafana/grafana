@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+
 import {
   DataTransformerID,
   SelectableValue,
@@ -6,9 +7,9 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
+import { SeriesToColumnsOptions } from '@grafana/data/src/transformations/transformers/seriesToColumns';
 import { Select } from '@grafana/ui';
 
-import { SeriesToColumnsOptions } from '@grafana/data/src/transformations/transformers/seriesToColumns';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<SeriesToColumnsOptions>> = ({
@@ -32,7 +33,7 @@ export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<Series
     <div className="gf-form-inline">
       <div className="gf-form gf-form--grow">
         <div className="gf-form-label width-8">Field name</div>
-        <Select menuShouldPortal options={fieldNames} value={options.byField} onChange={onSelectField} isClearable />
+        <Select options={fieldNames} value={options.byField} onChange={onSelectField} isClearable />
       </div>
     </div>
   );

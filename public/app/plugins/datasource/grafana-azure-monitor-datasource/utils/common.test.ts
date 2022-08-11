@@ -1,4 +1,5 @@
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
+
 import { hasOption, interpolateVariable } from './common';
 
 describe('AzureMonitor: hasOption', () => {
@@ -78,6 +79,16 @@ describe('When interpolating variables', () => {
   describe('and variable allows all and value is a string', () => {
     it('should return a quoted value', () => {
       const variable = { ...initialCustomVariableModelState, includeAll: true };
+      expect(interpolateVariable('abc', variable)).toEqual("'abc'");
+    });
+
+    it('should not return a quoted value if the all value is modified', () => {
+      const variable = { ...initialCustomVariableModelState, includeAll: true, allValue: 'All' };
+      expect(interpolateVariable('abc', variable)).toEqual('abc');
+    });
+
+    it('should return a quoted value if multi is selected even if the allValue is set', () => {
+      const variable = { ...initialCustomVariableModelState, includeAll: true, multi: true, allValue: 'All' };
       expect(interpolateVariable('abc', variable)).toEqual("'abc'");
     });
   });

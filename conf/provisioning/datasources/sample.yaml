@@ -19,8 +19,6 @@ apiVersion: 1
 #   orgId: 1
 #   # <string> url
 #   url: http://localhost:8080
-#   # <string> database password, if used
-#   password:
 #   # <string> database user, if used
 #   user:
 #   # <string> database name, if used
@@ -29,8 +27,6 @@ apiVersion: 1
 #   basicAuth:
 #   # <string> basic auth username
 #   basicAuthUser:
-#   # <string> basic auth password
-#   basicAuthPassword:
 #   # <bool> enable/disable with credentials headers
 #   withCredentials:
 #   # <bool> mark as default datasource. Max one per org

@@ -1,11 +1,12 @@
+import { omit } from 'lodash';
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame, Field } from '../../types/dataFrame';
-import { omit } from 'lodash';
-import { ArrayVector } from '../../vector/ArrayVector';
 import { MutableDataFrame } from '../../dataframe';
+import { DataFrame, Field } from '../../types/dataFrame';
+import { DataTransformerInfo } from '../../types/transformations';
+import { ArrayVector } from '../../vector/ArrayVector';
+
+import { DataTransformerID } from './ids';
 
 interface ValuePointer {
   key: string;

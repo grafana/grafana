@@ -31,6 +31,9 @@ type RawSQLMigration struct {
 	sql map[string]string
 }
 
+// NewRawSQLMigration should be used carefully, the usage
+// of SQL statements that cause breaking changes like renaming
+// a table or a column, or changing a column type should not be used.
 func NewRawSQLMigration(sql string) *RawSQLMigration {
 	m := &RawSQLMigration{}
 	if sql != "" {
@@ -106,6 +109,38 @@ func (m *AddColumnMigration) Column(col *Column) *AddColumnMigration {
 
 func (m *AddColumnMigration) SQL(dialect Dialect) string {
 	return dialect.AddColumnSQL(m.tableName, m.column)
+}
+
+type RenameColumnMigration struct {
+	MigrationBase
+	table   Table
+	column  *Column
+	newName string
+}
+
+// NewRenameColumnMigration may cause breaking changes.
+// DEPRECATED: It should no longer be used. Kept only for legacy reasons.
+func NewRenameColumnMigration(table Table, column *Column, newName string) *RenameColumnMigration {
+	return &RenameColumnMigration{table: table, column: column, newName: newName}
+}
+
+func (m *RenameColumnMigration) Table(table Table) *RenameColumnMigration {
+	m.table = table
+	return m
+}
+
+func (m *RenameColumnMigration) Column(column *Column) *RenameColumnMigration {
+	m.column = column
+	return m
+}
+
+func (m *RenameColumnMigration) Rename(newName string) *RenameColumnMigration {
+	m.newName = newName
+	return m
+}
+
+func (m *RenameColumnMigration) SQL(d Dialect) string {
+	return d.RenameColumn(m.table, m.column, m.newName)
 }
 
 type AddIndexMigration struct {
@@ -185,6 +220,8 @@ type RenameTableMigration struct {
 	newName string
 }
 
+// NewRenameTableMigration may cause breaking changes.
+// DEPRECATED: It should no longer be used. Kept only for legacy reasons.
 func NewRenameTableMigration(oldName string, newName string) *RenameTableMigration {
 	return &RenameTableMigration{oldName: oldName, newName: newName}
 }

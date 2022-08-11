@@ -12,22 +12,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -42,21 +36,25 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
-	recipient := web.Params(ctx.Req)[":Recipient"]
-	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
-		if ds, err := cache.GetDatasource(ctx.Req.Context(), datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
-			switch ds.Type {
-			case "loki", "prometheus":
-				return apimodels.LoTexRulerBackend, nil
-			case "alertmanager":
-				return apimodels.AlertmanagerBackend, nil
-			default:
-				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
-			}
-		}
+func getDatasourceByUID(ctx *models.ReqContext, cache datasources.CacheService, expectedType apimodels.Backend) (*datasources.DataSource, error) {
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
+	if err != nil {
+		return nil, err
 	}
-	return 0, fmt.Errorf("unexpected backend type (%v)", recipient)
+	switch expectedType {
+	case apimodels.AlertmanagerBackend:
+		if ds.Type != "alertmanager" {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "alertmanager")
+		}
+	case apimodels.LoTexRulerBackend:
+		if ds.Type != "loki" && ds.Type != "prometheus" {
+			return nil, unexpectedDatasourceTypeError(ds.Type, "loki, prometheus")
+		}
+	default:
+		return nil, unexpectedDatasourceTypeError(ds.Type, expectedType.String())
+	}
+	return ds, nil
 }
 
 // macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
@@ -105,12 +103,21 @@ func (p *AlertingProxy) withReq(
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req = req
 
-	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Recipient is invalid")
-	}
+	datasourceID := web.Params(ctx.Req)[":DatasourceID"]
+	if datasourceID != "" {
+		recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":DatasourceID"], 10, 64)
+		if err != nil {
+			return ErrResp(http.StatusBadRequest, err, "DatasourceID is invalid")
+		}
 
-	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
+		p.DataProxy.ProxyDatasourceRequestWithID(newCtx, recipient)
+	} else {
+		datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+		if datasourceUID == "" {
+			return ErrResp(http.StatusBadRequest, err, "DatasourceUID is empty")
+		}
+		p.DataProxy.ProxyDatasourceRequestWithUID(newCtx, datasourceUID)
+	}
 
 	status := resp.Status()
 	if status >= 400 {
@@ -182,7 +189,7 @@ func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
 }
 
-func validateCondition(ctx context.Context, c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+func validateCondition(ctx context.Context, c ngmodels.Condition, user *user.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
 	if len(c.Data) == 0 {
 		return nil
 	}
@@ -209,7 +216,7 @@ func conditionValidator(c *models.ReqContext, cache datasources.CacheService) fu
 	}
 }
 
-func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQuery, user *user.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
 	refIDs := make(map[string]struct{})
 	if len(data) == 0 {
 		return nil, nil
@@ -237,33 +244,6 @@ func validateQueriesAndExpressions(ctx context.Context, data []ngmodels.AlertQue
 		refIDs[query.RefID] = struct{}{}
 	}
 	return refIDs, nil
-}
-
-func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, expressionService *expr.Service, secretsService secrets.Service, cfg *setting.Cfg, log log.Logger) response.Response {
-	evalCond := ngmodels.Condition{
-		Condition: cmd.Condition,
-		OrgID:     c.SignedInUser.OrgId,
-		Data:      cmd.Data,
-	}
-	if err := validateCondition(c.Req.Context(), evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid condition")
-	}
-
-	now := cmd.Now
-	if now.IsZero() {
-		now = timeNow()
-	}
-
-	evaluator := eval.NewEvaluator(cfg, log, datasourceCache, secretsService)
-	evalResults, err := evaluator.ConditionEval(&evalCond, now, expressionService)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
-	}
-
-	frame := evalResults.AsDataFrame()
-	return response.JSONStreaming(http.StatusOK, util.DynMap{
-		"instances": []*data.Frame{&frame},
-	})
 }
 
 // ErrorResp creates a response with a visible error

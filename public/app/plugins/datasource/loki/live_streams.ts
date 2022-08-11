@@ -1,9 +1,11 @@
-import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
 import { Observable, throwError, timer } from 'rxjs';
-import { webSocket } from 'rxjs/webSocket';
-import { LokiTailResponse } from './types';
 import { finalize, map, retryWhen, mergeMap } from 'rxjs/operators';
-import { appendResponseToBufferedData } from './result_transformer';
+import { webSocket } from 'rxjs/webSocket';
+
+import { DataFrame, FieldType, KeyValue, CircularDataFrame } from '@grafana/data';
+
+import { appendResponseToBufferedData } from './live_streams_result_transformer';
+import { LokiTailResponse } from './types';
 
 /**
  * Maps directly to a query in the UI (refId is key)
@@ -30,10 +32,8 @@ export class LiveStreams {
     }
 
     const data = new CircularDataFrame({ capacity: target.size });
-    data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
-    data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
-    data.addField({ name: 'line', type: FieldType.string }).labels = parseLabels(target.query);
-    data.addField({ name: 'labels', type: FieldType.other }); // The labels for each line
+    data.addField({ name: 'Time', type: FieldType.time, config: {} });
+    data.addField({ name: 'Line', type: FieldType.string });
     data.addField({ name: 'id', type: FieldType.string });
     data.meta = { ...data.meta, preferredVisualisationType: 'logs' };
     data.refId = target.refId;

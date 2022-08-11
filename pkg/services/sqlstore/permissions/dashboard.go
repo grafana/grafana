@@ -6,12 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type DashboardPermissionFilter struct {
-	OrgRole         models.RoleType
+	OrgRole         org.RoleType
 	Dialect         migrator.Dialect
 	UserId          int64
 	OrgId           int64
@@ -19,13 +21,13 @@ type DashboardPermissionFilter struct {
 }
 
 func (d DashboardPermissionFilter) Where() (string, []interface{}) {
-	if d.OrgRole == models.ROLE_ADMIN {
+	if d.OrgRole == org.RoleAdmin {
 		return "", nil
 	}
 
 	okRoles := []interface{}{d.OrgRole}
-	if d.OrgRole == models.ROLE_EDITOR {
-		okRoles = append(okRoles, models.ROLE_VIEWER)
+	if d.OrgRole == org.RoleEditor {
+		okRoles = append(okRoles, org.RoleViewer)
 	}
 
 	falseStr := d.Dialect.BooleanStr(false)
@@ -78,26 +80,26 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 }
 
 type AccessControlDashboardPermissionFilter struct {
-	User             *models.SignedInUser
+	User             *user.SignedInUser
 	dashboardActions []string
 	folderActions    []string
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the models.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
 	needEdit := permissionLevel > models.PERMISSION_VIEW
 	folderActions := []string{dashboards.ActionFoldersRead}
 	var dashboardActions []string
 	if queryType == searchstore.TypeAlertFolder {
 		folderActions = append(folderActions, accesscontrol.ActionAlertingRuleRead)
 		if needEdit {
-			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleUpdate)
+			folderActions = append(folderActions, accesscontrol.ActionAlertingRuleCreate)
 		}
 	} else {
-		dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsRead)
+		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)
 		if needEdit {
-			folderActions = append(folderActions, accesscontrol.ActionDashboardsCreate)
-			dashboardActions = append(dashboardActions, accesscontrol.ActionDashboardsWrite)
+			folderActions = append(folderActions, dashboards.ActionDashboardsCreate)
+			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
 		}
 	}
 	return AccessControlDashboardPermissionFilter{User: user, folderActions: folderActions, dashboardActions: dashboardActions}
@@ -110,15 +112,16 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 
 	if len(f.dashboardActions) > 0 {
 		builder.WriteString("((")
-		dashFilter, _ := accesscontrol.Filter(f.User, "dashboard.id", "dashboards:id:", f.dashboardActions...)
+
+		dashFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeDashboardsPrefix, f.dashboardActions...)
 		builder.WriteString(dashFilter.Where)
 		args = append(args, dashFilter.Args...)
 
-		builder.WriteString(" OR ")
+		builder.WriteString(" OR dashboard.folder_id IN(SELECT id FROM dashboard WHERE ")
+		dashFolderFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeFoldersPrefix, f.dashboardActions...)
 
-		dashFolderFilter, _ := accesscontrol.Filter(f.User, "dashboard.folder_id", "folders:id:", f.dashboardActions...)
 		builder.WriteString(dashFolderFilter.Where)
-		builder.WriteString(") AND NOT dashboard.is_folder)")
+		builder.WriteString(")) AND NOT dashboard.is_folder)")
 		args = append(args, dashFolderFilter.Args...)
 	}
 
@@ -127,12 +130,11 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 			builder.WriteString(" OR ")
 		}
 		builder.WriteString("(")
-		folderFilter, _ := accesscontrol.Filter(f.User, "dashboard.id", "folders:id:", f.folderActions...)
+		folderFilter, _ := accesscontrol.Filter(f.User, "dashboard.uid", dashboards.ScopeFoldersPrefix, f.folderActions...)
 		builder.WriteString(folderFilter.Where)
 		builder.WriteString(" AND dashboard.is_folder)")
 		args = append(args, folderFilter.Args...)
 	}
-
 	builder.WriteString(")")
 	return builder.String(), args
 }

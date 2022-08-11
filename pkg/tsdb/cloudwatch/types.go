@@ -25,11 +25,13 @@ type cloudWatchLink struct {
 
 type metricExpression struct {
 	Expression string `json:"expression"`
+	Label      string `json:"label,omitempty"`
 }
 
 type metricStatMeta struct {
 	Stat   string `json:"stat"`
 	Period int    `json:"period"`
+	Label  string `json:"label,omitempty"`
 }
 
 type metricQueryType uint32

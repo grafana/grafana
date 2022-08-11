@@ -100,7 +100,7 @@ export enum PromOperationId {
   Tanh = 'tanh',
   Time = 'time',
   Timestamp = 'timestamp',
-  Topk = 'topk',
+  TopK = 'topk',
   Vector = 'vector',
   Year = 'year',
   // Binary ops

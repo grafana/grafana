@@ -1,14 +1,15 @@
-import React from 'react';
 import { debounce, sortBy } from 'lodash';
-
+import React from 'react';
 import { Editor as CoreEditor } from 'slate';
+
 import { Plugin as SlatePlugin } from '@grafana/slate-react';
 
-import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 import { Typeahead } from '../components/Typeahead/Typeahead';
 import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types';
 import { makeFragment, SearchFunctionType } from '../utils';
 import { SearchFunctionMap } from '../utils/searchFunctions';
+
+import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 
 export const TYPEAHEAD_DEBOUNCE = 250;
 

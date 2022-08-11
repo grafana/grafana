@@ -1,20 +1,23 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+
 import { DataSourceJsonData, PluginMeta } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { RedirectToRuleViewer } from './RedirectToRuleViewer';
 import { configureStore } from 'app/store/configureStore';
-import { useCombinedRulesMatching } from './hooks/useCombinedRule';
+
 import { CombinedRule, Rule } from '../../../types/unified-alerting';
 import { PromRuleType } from '../../../types/unified-alerting-dto';
+
+import { RedirectToRuleViewer } from './RedirectToRuleViewer';
+import { useCombinedRulesMatching } from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 
 jest.mock('./hooks/useCombinedRule');
 jest.mock('./utils/datasource');
 jest.mock('react-router-dom', () => ({
-  ...(jest.requireActual('react-router-dom') as any),
+  ...jest.requireActual('react-router-dom'),
   Redirect: jest.fn(({}) => `Redirected`),
 }));
 

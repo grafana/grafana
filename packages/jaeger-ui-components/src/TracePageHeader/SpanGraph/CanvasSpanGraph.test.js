@@ -12,22 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { render } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
+
 import { createTheme } from '@grafana/data';
 
 import { UnthemedCanvasSpanGraph } from './CanvasSpanGraph';
 
-describe('<CanvasSpanGraph>', () => {
+describe('CanvasSpanGraph tests', () => {
   it('renders without exploding', () => {
-    const items = [{ valueWidth: 1, valueOffset: 1, serviceName: 'service-name-0' }];
-    const wrapper = shallow(<UnthemedCanvasSpanGraph items={[]} valueWidth={4000} theme={createTheme()} />);
-    expect(wrapper).toBeDefined();
-    wrapper.instance()._setCanvasRef({
-      getContext: () => ({
-        fillRect: () => {},
-      }),
-    });
-    wrapper.setProps({ items });
+    expect(() =>
+      render(<UnthemedCanvasSpanGraph items={items} valueWidth={4000} theme={createTheme()} />)
+    ).not.toThrow();
   });
 });
+
+const items = [
+  {
+    valueWidth: 1,
+    valueOffset: 1,
+    serviceName: 'service-name-0',
+  },
+];

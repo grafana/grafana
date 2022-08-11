@@ -1,6 +1,7 @@
 import { runCLI } from '@jest/core';
-import { useSpinner } from '../../utils/useSpinner';
+
 import { loadJestPluginConfig } from '../../../config/jest.plugin.config';
+import { useSpinner } from '../../utils/useSpinner';
 
 export interface PluginTestOptions {
   updateSnapshot: boolean;

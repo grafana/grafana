@@ -1,6 +1,8 @@
 import { renderHook, act } from '@testing-library/react-hooks';
-import { useChildrenState } from './useChildrenState';
+
 import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
+
+import { useChildrenState } from './useChildrenState';
 
 describe('useChildrenState', () => {
   describe('childrenToggle', () => {

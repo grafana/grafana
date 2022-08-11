@@ -1,4 +1,5 @@
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
+
 import { backendSrv } from '../../backend_srv';
 
 export interface PerformanceEventPayload {

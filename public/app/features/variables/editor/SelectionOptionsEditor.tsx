@@ -1,14 +1,16 @@
 import React, { ChangeEvent, FormEvent, FunctionComponent, useCallback } from 'react';
-import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
 
-import { VariableWithMultiSupport } from '../types';
-import { VariableEditorProps } from './types';
+import { selectors } from '@grafana/e2e-selectors';
+import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
+
 import { KeyedVariableIdentifier } from '../state/types';
+import { VariableWithMultiSupport } from '../types';
+import { toKeyedVariableIdentifier } from '../utils';
+
 import { VariableSectionHeader } from './VariableSectionHeader';
 import { VariableSwitchField } from './VariableSwitchField';
 import { VariableTextField } from './VariableTextField';
-import { toKeyedVariableIdentifier } from '../utils';
+import { VariableEditorProps } from './types';
 
 export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupport = VariableWithMultiSupport>
   extends VariableEditorProps<Model> {

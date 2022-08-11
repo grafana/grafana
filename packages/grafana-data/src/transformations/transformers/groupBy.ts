@@ -1,13 +1,14 @@
 import { map } from 'rxjs/operators';
 
-import { DataTransformerID } from './ids';
+import { MutableField } from '../../dataframe/MutableDataFrame';
+import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
-import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { reduceField, ReducerID } from '../fieldReducer';
-import { MutableField } from '../../dataframe/MutableDataFrame';
+
+import { DataTransformerID } from './ids';
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',

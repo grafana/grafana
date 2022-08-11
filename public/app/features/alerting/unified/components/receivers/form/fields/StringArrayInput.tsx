@@ -1,7 +1,9 @@
-import React, { FC } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Input, useStyles2 } from '@grafana/ui';
+
 import { ActionIcon } from '../../../rules/ActionIcon';
 
 interface Props {

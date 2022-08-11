@@ -1,7 +1,10 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+
 import { FieldMatcherID, fieldMatchers, SelectableValue, DataFrame } from '@grafana/data';
+
 import { Select } from '../Select/Select';
+
+import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
 /**
  * UI to configure "fields by frame refId"-matcher.
@@ -23,7 +26,7 @@ export const FieldsByFrameRefIdMatcher = memo<MatcherUIProps<string>>((props) =>
   );
 
   const selectedOption = selectOptions.find((v) => v.value === options);
-  return <Select menuShouldPortal value={selectedOption} options={selectOptions} onChange={onChange} />;
+  return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
 FieldsByFrameRefIdMatcher.displayName = 'FieldsByFrameRefIdMatcher';

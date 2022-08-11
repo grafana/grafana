@@ -40,6 +40,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             sc.initialResult.Result.Meta.Updated,
@@ -87,6 +89,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
@@ -160,6 +164,8 @@ func TestCreateLibraryElement(t *testing.T) {
 					},
 					Version: 1,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "ScenarioFolder",
+						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
 						Created:             result.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,

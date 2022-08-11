@@ -1,13 +1,11 @@
-import {
-  ArrayVector,
-  DataTransformerConfig,
-  DataTransformerID,
-  FieldType,
-  toDataFrame,
-  transformDataFrame,
-} from '@grafana/data';
-import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
+import { toDataFrame } from '../../dataframe';
+import { FieldType, DataTransformerConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ArrayVector } from '../../vector';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
+import { SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
 
 describe('SeriesToColumns Transformer', () => {
   beforeAll(() => {

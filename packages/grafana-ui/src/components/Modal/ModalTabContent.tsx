@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { IconName } from '../../types';
 
 interface Props {

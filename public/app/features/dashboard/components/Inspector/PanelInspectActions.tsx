@@ -1,3 +1,7 @@
+import React, { ComponentType } from 'react';
+
+import { PanelData } from '@grafana/data';
+
 import { PanelModel } from '../../state';
 
 export interface PanelInspectActionProps {
@@ -50,9 +54,6 @@ export interface PanelInspectActionSupplier {
 // In Grafana 8.1, this can be improved and moved to `@grafana/runtime`
 // NOTE: This is an internal/experimental API/hack and will change!
 // (window as any).grafanaPanelInspectActionSupplier = dummySupplier;
-
-import React, { ComponentType } from 'react';
-import { PanelData } from '@grafana/data';
 
 interface InspectActionsTabProps {
   panel: PanelModel;

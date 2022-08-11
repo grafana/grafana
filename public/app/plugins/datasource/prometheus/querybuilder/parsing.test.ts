@@ -2,6 +2,15 @@ import { buildVisualQueryFromString } from './parsing';
 import { PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
+  it('creates no errors for empty query', () => {
+    expect(buildVisualQueryFromString('')).toEqual(
+      noErrors({
+        labels: [],
+        operations: [],
+        metric: '',
+      })
+    );
+  });
   it('parses simple query', () => {
     expect(buildVisualQueryFromString('counters_logins{app="frontend"}')).toEqual(
       noErrors({
@@ -422,7 +431,7 @@ describe('buildVisualQueryFromString', () => {
         operations: [
           {
             id: '__less_or_equal',
-            params: [false, 2.5],
+            params: [2.5, false],
           },
         ],
       },
@@ -438,7 +447,7 @@ describe('buildVisualQueryFromString', () => {
         operations: [
           {
             id: '__less_or_equal',
-            params: [true, 2],
+            params: [2, true],
           },
         ],
       },
@@ -536,6 +545,35 @@ describe('buildVisualQueryFromString', () => {
             vectorMatches: 'foo',
             vectorMatchesType: 'ignoring',
             query: { metric: 'metric', labels: [], operations: [] },
+          },
+        ],
+      },
+    });
+  });
+
+  it('reports error on parenthesis', () => {
+    expect(buildVisualQueryFromString('foo / (bar + baz)')).toEqual({
+      errors: [
+        {
+          from: 6,
+          parentType: 'Expr',
+          text: '(bar + baz)',
+          to: 17,
+        },
+      ],
+      query: {
+        metric: 'foo',
+        labels: [],
+        operations: [],
+        binaryQueries: [
+          {
+            operator: '/',
+            query: {
+              binaryQueries: [{ operator: '+', query: { labels: [], metric: 'baz', operations: [] } }],
+              metric: 'bar',
+              labels: [],
+              operations: [],
+            },
           },
         ],
       },

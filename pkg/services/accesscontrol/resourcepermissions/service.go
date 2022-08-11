@@ -9,7 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -46,7 +48,10 @@ type Store interface {
 	GetResourcePermissions(ctx context.Context, orgID int64, query types.GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error)
 }
 
-func New(options Options, cfg *setting.Cfg, router routing.RouteRegister, ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore) (*Service, error) {
+func New(
+	options Options, cfg *setting.Cfg, router routing.RouteRegister, license models.Licensing,
+	ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore,
+) (*Service, error) {
 	var permissions []string
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
@@ -71,6 +76,7 @@ func New(options Options, cfg *setting.Cfg, router routing.RouteRegister, ac acc
 		cfg:         cfg,
 		store:       store,
 		options:     options,
+		license:     license,
 		permissions: permissions,
 		actions:     actions,
 		sqlStore:    sqlStore,
@@ -89,10 +95,11 @@ func New(options Options, cfg *setting.Cfg, router routing.RouteRegister, ac acc
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	cfg   *setting.Cfg
-	ac    accesscontrol.AccessControl
-	store Store
-	api   *api
+	cfg     *setting.Cfg
+	ac      accesscontrol.AccessControl
+	store   Store
+	api     *api
+	license models.Licensing
 
 	options     Options
 	permissions []string
@@ -100,7 +107,7 @@ type Service struct {
 	sqlStore    *sqlstore.SQLStore
 }
 
-func (s *Service) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	var inheritedScopes []string
 	if s.options.InheritedScopesSolver != nil {
 		var err error
@@ -306,7 +313,6 @@ func (s *Service) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
 			DisplayName: s.options.ReaderRoleName,
 			Group:       s.options.RoleGroup,
@@ -314,12 +320,11 @@ func (s *Service) declareFixedRoles() error {
 				{Action: fmt.Sprintf("%s.permissions:read", s.options.Resource), Scope: scopeAll},
 			},
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
 			DisplayName: s.options.WriterRoleName,
 			Group:       s.options.RoleGroup,
@@ -327,7 +332,7 @@ func (s *Service) declareFixedRoles() error {
 				{Action: fmt.Sprintf("%s.permissions:write", s.options.Resource), Scope: scopeAll},
 			}),
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	return s.ac.DeclareFixedRoles(readerRole, writerRole)

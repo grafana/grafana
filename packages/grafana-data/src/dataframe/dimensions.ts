@@ -1,5 +1,5 @@
-import { Field } from '../types/dataFrame';
 import { KeyValue } from '../types/data';
+import { Field } from '../types/dataFrame';
 
 export interface Dimension<T = any> {
   // Name of the dimension

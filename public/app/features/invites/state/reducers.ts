@@ -1,5 +1,7 @@
 import { createEntityAdapter, createSlice } from '@reduxjs/toolkit';
+
 import { Invitee } from 'app/types';
+
 import { fetchInvitees, revokeInvite } from './actions';
 
 export type Status = 'idle' | 'loading' | 'succeeded' | 'failed';

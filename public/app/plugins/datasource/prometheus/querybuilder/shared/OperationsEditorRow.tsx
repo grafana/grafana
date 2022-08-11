@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { useStyles2 } from '@grafana/ui';
 import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Stack } from '@grafana/ui';
 
 interface Props {
   children: React.ReactNode;

@@ -1,8 +1,10 @@
-import { DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
 import React, { FC, useState } from 'react';
-import { DataLinkEditor } from '../DataLinkEditor';
+
+import { DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
+
 import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
+import { DataLinkEditor } from '../DataLinkEditor';
 
 interface DataLinkEditorModalContentProps {
   link: DataLink;

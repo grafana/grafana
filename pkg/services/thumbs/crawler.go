@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,51 +20,82 @@ import (
 )
 
 type simpleCrawler struct {
-	renderService rendering.Service
-	threadCount   int
+	renderService    rendering.Service
+	threadCount      int
+	concurrentLimit  int
+	renderingTimeout time.Duration
 
-	glive            *live.GrafanaLive
-	thumbnailRepo    thumbnailRepo
-	mode             CrawlerMode
-	thumbnailKind    models.ThumbnailKind
-	opts             rendering.Opts
-	status           crawlStatus
-	statusMutex      sync.RWMutex
-	queue            []*models.DashboardWithStaleThumbnail
-	queueMutex       sync.Mutex
-	log              log.Logger
-	renderingSession rendering.Session
+	glive                   *live.GrafanaLive
+	thumbnailRepo           thumbnailRepo
+	mode                    CrawlerMode
+	thumbnailKind           models.ThumbnailKind
+	auth                    CrawlerAuth
+	opts                    rendering.Opts
+	status                  crawlStatus
+	statusMutex             sync.RWMutex
+	queue                   []*models.DashboardWithStaleThumbnail
+	queueMutex              sync.Mutex
+	log                     log.Logger
+	renderingSessionByOrgId map[int64]rendering.Session
+	dsUidsLookup            getDatasourceUidsForDashboard
 }
 
-func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo) dashRenderer {
+func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings, dsUidsLookup getDatasourceUidsForDashboard) dashRenderer {
+	threadCount := int(settings.CrawlThreadCount)
 	c := &simpleCrawler{
-		renderService: renderService,
-		threadCount:   6,
-		glive:         gl,
-		thumbnailRepo: repo,
-		log:           log.New("thumbnails_crawler"),
+		// temporarily increases the concurrentLimit from the 'cfg.RendererConcurrentRequestLimit' to 'cfg.RendererConcurrentRequestLimit + crawlerThreadCount'
+		concurrentLimit:  cfg.RendererConcurrentRequestLimit + threadCount,
+		renderingTimeout: settings.RenderingTimeout,
+		renderService:    renderService,
+		threadCount:      threadCount,
+		glive:            gl,
+		dsUidsLookup:     dsUidsLookup,
+		thumbnailRepo:    repo,
+		log:              log.New("thumbnails_crawler"),
 		status: crawlStatus{
 			State:    initializing,
 			Complete: 0,
 			Queue:    0,
 		},
-		queue: nil,
+		renderingSessionByOrgId: make(map[int64]rendering.Session),
+		queue:                   nil,
 	}
 	c.broadcastStatus()
 	return c
 }
 
-func (r *simpleCrawler) next() *models.DashboardWithStaleThumbnail {
+func (r *simpleCrawler) next(ctx context.Context) (*models.DashboardWithStaleThumbnail, rendering.Session, rendering.AuthOpts, error) {
 	r.queueMutex.Lock()
 	defer r.queueMutex.Unlock()
 
 	if r.queue == nil || len(r.queue) < 1 {
-		return nil
+		return nil, nil, rendering.AuthOpts{}, nil
 	}
 
 	v := r.queue[0]
 	r.queue = r.queue[1:]
-	return v
+
+	authOpts := rendering.AuthOpts{
+		OrgID:   v.OrgId,
+		UserID:  r.auth.GetUserId(v.OrgId),
+		OrgRole: r.auth.GetOrgRole(),
+	}
+
+	if renderingSession, ok := r.renderingSessionByOrgId[v.OrgId]; ok {
+		return v, renderingSession, authOpts, nil
+	}
+
+	renderingSession, err := r.renderService.CreateRenderingSession(ctx, authOpts, rendering.SessionOpts{
+		Expiry:                     5 * time.Minute,
+		RefreshExpiryOnEachRequest: true,
+	})
+
+	if err != nil {
+		return nil, nil, authOpts, err
+	}
+
+	r.renderingSessionByOrgId[v.OrgId] = renderingSession
+	return v, renderingSession, authOpts, nil
 }
 
 func (r *simpleCrawler) broadcastStatus() {
@@ -83,7 +116,13 @@ func (r *simpleCrawler) broadcastStatus() {
 	}
 }
 
-func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
+type byOrgId []*models.DashboardWithStaleThumbnail
+
+func (d byOrgId) Len() int           { return len(d) }
+func (d byOrgId) Less(i, j int) bool { return d[i].OrgId > d[j].OrgId }
+func (d byOrgId) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
+
+func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
 	res, err := r.renderService.HasCapability(rendering.ScalingDownImages)
 	if err != nil {
 		return err
@@ -94,14 +133,14 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 			"current version: %s, requiredVersion: %s", r.renderService.Version(), res.SemverConstraint)
 	}
 
+	runStarted := time.Now()
+
 	r.queueMutex.Lock()
 	if r.IsRunning() {
 		r.queueMutex.Unlock()
 		r.log.Info("Already running")
 		return nil
 	}
-
-	now := time.Now()
 
 	items, err := r.thumbnailRepo.findDashboardsWithStaleThumbnails(ctx, theme, thumbnailKind)
 	if err != nil {
@@ -115,38 +154,33 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 		return nil
 	}
 
+	// sort the items so that we render all items from each org before moving on to the next one
+	// helps us avoid having to maintain multiple active rendering sessions
+	sort.Sort(byOrgId(items))
+
 	r.mode = mode
 	r.thumbnailKind = thumbnailKind
+	r.auth = auth
 	r.opts = rendering.Opts{
-		AuthOpts: authOpts,
 		TimeoutOpts: rendering.TimeoutOpts{
-			Timeout:                  20 * time.Second,
+			Timeout:                  r.renderingTimeout,
 			RequestTimeoutMultiplier: 3,
 		},
 		Theme:           theme,
-		ConcurrentLimit: 10,
-	}
-	renderingSession, err := r.renderService.CreateRenderingSession(ctx, r.opts.AuthOpts, rendering.SessionOpts{
-		Expiry:                     5 * time.Minute,
-		RefreshExpiryOnEachRequest: true,
-	})
-	if err != nil {
-		r.log.Error("Error when creating rendering session", "err", err.Error())
-		r.queueMutex.Unlock()
-		return err
+		ConcurrentLimit: r.concurrentLimit,
 	}
 
-	r.renderingSession = renderingSession
+	r.renderingSessionByOrgId = make(map[int64]rendering.Session)
 	r.queue = items
 	r.status = crawlStatus{
-		Started:  now,
+		Started:  runStarted,
 		State:    running,
 		Complete: 0,
 	}
 	r.broadcastStatus()
 	r.queueMutex.Unlock()
 
-	r.log.Info("Starting dashboard crawler", "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind))
+	r.log.Info("Starting dashboard crawler", "threadCount", r.threadCount, "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind), "crawlerSetupTime", time.Since(runStarted))
 
 	group, gCtx := errgroup.WithContext(ctx)
 	// create a pool of workers
@@ -159,6 +193,9 @@ func (r *simpleCrawler) Run(ctx context.Context, authOpts rendering.AuthOpts, mo
 	}
 
 	err = group.Wait()
+
+	status, _ := r.Status()
+	r.log.Info("Crawl finished", "completedCount", status.Complete, "errorCount", status.Errors, "threadCount", r.threadCount, "dashboardsToCrawl", len(items), "mode", string(mode), "theme", string(theme), "kind", string(thumbnailKind), "crawlerRunTime", time.Since(runStarted))
 	if err != nil {
 		r.log.Error("Crawl ended with an error", "err", err)
 	}
@@ -221,7 +258,6 @@ func (r *simpleCrawler) crawlFinished() {
 
 	r.status.State = stopped
 	r.status.Finished = time.Now()
-	r.log.Info("Crawler finished", "startTime", r.status.Started, "endTime", r.status.Finished, "durationInSeconds", int64(time.Since(r.status.Started)/time.Second))
 }
 
 func (r *simpleCrawler) shouldWalk() bool {
@@ -232,29 +268,44 @@ func (r *simpleCrawler) shouldWalk() bool {
 }
 
 func (r *simpleCrawler) walk(ctx context.Context, id int) {
+	walkerStarted := time.Now()
+
 	for {
 		if !r.shouldWalk() {
 			break
 		}
 
-		item := r.next()
-		if item == nil {
+		itemStarted := time.Now()
+		item, renderingSession, authOpts, err := r.next(ctx)
+		if err != nil {
+			r.log.Error("Render item retrieval error", "walkerId", id, "error", err)
+			break
+		}
+
+		if item == nil || renderingSession == nil {
 			break
 		}
 
 		url := models.GetKioskModeDashboardUrl(item.Uid, item.Slug, r.opts.Theme)
 		r.log.Info("Getting dashboard thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url)
 
+		dsUids, err := r.dsUidsLookup(ctx, item.Uid, item.OrgId)
+		if err != nil {
+			r.log.Warn("Error getting datasource uids", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
+			r.newErrorResult()
+			continue
+		}
+
 		res, err := r.renderService.Render(ctx, rendering.Opts{
 			Width:             320,
 			Height:            240,
 			Path:              strings.TrimPrefix(url, "/"),
-			AuthOpts:          r.opts.AuthOpts,
+			AuthOpts:          authOpts,
 			TimeoutOpts:       r.opts.TimeoutOpts,
 			ConcurrentLimit:   r.opts.ConcurrentLimit,
 			Theme:             r.opts.Theme,
 			DeviceScaleFactor: -5, // negative numbers will render larger and then scale down.
-		}, r.renderingSession)
+		}, renderingSession)
 		if err != nil {
 			r.log.Warn("Error getting image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
 			r.newErrorResult()
@@ -279,13 +330,13 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 					OrgId:        item.OrgId,
 					Theme:        r.opts.Theme,
 					Kind:         r.thumbnailKind,
-				}, item.Version)
+				}, item.Version, dsUids)
 
 				if err != nil {
-					r.log.Warn("Error saving image image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
+					r.log.Warn("Error saving image image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err, "itemTime", time.Since(itemStarted))
 					r.newErrorResult()
 				} else {
-					r.log.Info("Saved thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url, "thumbnailId", thumbnailId)
+					r.log.Info("Saved thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url, "thumbnailId", thumbnailId, "itemTime", time.Since(itemStarted))
 					r.newSuccessResult()
 				}
 			}()
@@ -293,5 +344,5 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 		r.broadcastStatus()
 	}
 
-	r.log.Info("Walker finished", "walkerId", id)
+	r.log.Info("Walker finished", "walkerId", id, "walkerTime", time.Since(walkerStarted))
 }

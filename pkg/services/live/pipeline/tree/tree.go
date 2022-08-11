@@ -34,7 +34,7 @@ func longestCommonPrefix(a, b string) int {
 	return i
 }
 
-// addChild will add a child Node, keeping wildcards at the end
+// addChild will add a child Node, keeping wildcardChild at the end
 func (n *Node) addChild(child *Node) {
 	if n.wildChild && len(n.children) > 0 {
 		wildcardChild := n.children[len(n.children)-1]
@@ -273,7 +273,7 @@ func (n *Node) insertChild(path string, fullPath string, handlers Handler) {
 			break
 		}
 
-		// The wildcard name must not contain ':' and '*'
+		// The wildcard name must only contain one ':' or '*' character
 		if !valid {
 			panic("only one wildcard per path segment is allowed, has: '" +
 				wildcard + "' in path '" + fullPath + "'")
@@ -302,7 +302,7 @@ func (n *Node) insertChild(path string, fullPath string, handlers Handler) {
 			n.priority++
 
 			// if the path doesn't end with the wildcard, then there
-			// will be another non-wildcard subpath starting with '/'
+			// will be another subpath starting with '/'
 			if len(wildcard) < len(path) {
 				path = path[len(wildcard):]
 
@@ -326,7 +326,12 @@ func (n *Node) insertChild(path string, fullPath string, handlers Handler) {
 		}
 
 		if len(n.path) > 0 && n.path[len(n.path)-1] == '/' {
-			panic("catch-all conflicts with existing handle for the path segment root in path '" + fullPath + "'")
+			pathSeg := strings.SplitN(n.children[0].path, "/", 2)[0]
+			panic("catch-all wildcard '" + path +
+				"' in new path '" + fullPath +
+				"' conflicts with existing path segment '" + pathSeg +
+				"' in existing prefix '" + n.path + pathSeg +
+				"'")
 		}
 
 		// currently fixed width 1 for '/'
@@ -428,7 +433,7 @@ walk: // Outer loop for walking the tree
 
 				if !n.wildChild {
 					// If the path at the end of the loop is not equal to '/' and the current node has no child nodes
-					// the current node needs to roll back to last vaild skippedNode
+					// the current node needs to roll back to last valid skippedNode
 					if path != "/" {
 						for l := len(*skippedNodes); l > 0; {
 							skippedNode := (*skippedNodes)[l-1]
@@ -508,7 +513,7 @@ walk: // Outer loop for walking the tree
 						// No handle found. Check if a handle for this path + a
 						// trailing slash exists for TSR recommendation
 						n = n.children[0]
-						value.Tsr = n.path == "/" && n.handler != nil
+						value.Tsr = (n.path == "/" && n.handler != nil) || (n.path == "" && n.indices == "/")
 					}
 					return
 
@@ -545,7 +550,7 @@ walk: // Outer loop for walking the tree
 
 		if path == prefix {
 			// If the current path does not equal '/' and the Node does not have a registered handle and the most recently matched Node has a child Node
-			// the current node needs to roll back to last vaild skippedNode
+			// the current node needs to roll back to last valid skippedNode
 			if n.handler == nil && path != "/" {
 				for l := len(*skippedNodes); l > 0; {
 					skippedNode := (*skippedNodes)[l-1]

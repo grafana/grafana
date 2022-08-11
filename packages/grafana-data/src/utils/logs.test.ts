@@ -1,5 +1,6 @@
-import { LogLevel, LogsModel, LogRowModel, LogsSortOrder } from '../types/logs';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { LogLevel, LogsModel, LogRowModel, LogsSortOrder } from '../types/logs';
+
 import {
   getLogLevel,
   calculateLogsLabelStats,

@@ -27,7 +27,7 @@ else
 fi
 
 # Run accessibility command
-yarn dlx --quiet pa11y-ci@pa11y/pa11y-ci#6b2d4f54efe445ad551472acc1877fe7542ac085 --config .pa11yci.conf.js --json > pa11y-ci-results.json
+yarn dlx --quiet pa11y-ci@3.0.1 --config .pa11yci.conf.js --json > pa11y-ci-results.json
 
 # Generate HTML report
 yarn dlx pa11y-ci-reporter-html@3.0.1 pa11y-ci-reporter-html

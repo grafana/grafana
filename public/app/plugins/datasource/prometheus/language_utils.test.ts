@@ -1,4 +1,5 @@
 import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
+
 import {
   escapeLabelValueInExactSelector,
   escapeLabelValueInRegexSelector,

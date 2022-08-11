@@ -1,5 +1,6 @@
-import { DataFrame, getFieldDisplayName } from '@grafana/data';
 import { useMemo } from 'react';
+
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {
@@ -21,4 +22,18 @@ export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
       }, {} as Record<string, boolean>)
     );
   }, [input]);
+}
+
+export function getDistinctLabels(input: DataFrame[]): Set<string> {
+  const distinct = new Set<string>();
+  for (const frame of input) {
+    for (const field of frame.fields) {
+      if (field.labels) {
+        for (const k of Object.keys(field.labels)) {
+          distinct.add(k);
+        }
+      }
+    }
+  }
+  return distinct;
 }

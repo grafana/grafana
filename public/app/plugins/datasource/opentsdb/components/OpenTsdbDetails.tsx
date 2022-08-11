@@ -1,9 +1,12 @@
 import React, { SyntheticEvent } from 'react';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, Input } = LegacyForms;
+
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { OpenTsdbOptions } from '../types';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+
 import { useUniqueId } from '../../influxdb/components/useUniqueId';
+import { OpenTsdbOptions } from '../types';
+
+const { Select, Input } = LegacyForms;
 
 const tsdbVersions = [
   { label: '<=2.1', value: 1 },
@@ -35,7 +38,6 @@ export const OpenTsdbDetails = (props: Props) => {
         </InlineFormLabel>
         <Select
           inputId={`select-version-${idSuffix}`}
-          menuShouldPortal
           options={tsdbVersions}
           value={tsdbVersions.find((version) => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
           onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
@@ -47,7 +49,6 @@ export const OpenTsdbDetails = (props: Props) => {
         </InlineFormLabel>
         <Select
           inputId={`select-resolution-${idSuffix}`}
-          menuShouldPortal
           options={tsdbResolutions}
           value={
             tsdbResolutions.find((resolution) => resolution.value === value.jsonData.tsdbResolution) ??

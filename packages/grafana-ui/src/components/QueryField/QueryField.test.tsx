@@ -1,8 +1,10 @@
-import React from 'react';
 import { shallow } from 'enzyme';
-import { UnThemedQueryField } from './QueryField';
+import React from 'react';
 import { Editor } from 'slate';
+
 import { createTheme } from '@grafana/data';
+
+import { UnThemedQueryField } from './QueryField';
 
 describe('<QueryField />', () => {
   it('should render with null initial value', () => {

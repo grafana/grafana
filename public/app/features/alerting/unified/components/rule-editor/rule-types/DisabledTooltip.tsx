@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+
 import { Tooltip } from '@grafana/ui';
 
 type Props = {

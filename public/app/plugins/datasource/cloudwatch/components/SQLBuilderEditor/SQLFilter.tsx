@@ -1,14 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
+
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { AccessoryButton, EditorList, InputGroup, Select } from '@grafana/ui';
+
 import { COMPARISON_OPERATORS, EQUALS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { QueryEditorExpressionType, QueryEditorOperatorExpression, QueryEditorPropertyType } from '../../expressions';
 import { useDimensionKeys } from '../../hooks';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
+
 import {
   getFlattenedFilters,
   getMetricNameFromExpression,
@@ -128,7 +130,6 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
         options={dimensionKeys}
         allowCustomValue
         onChange={({ value }) => value && onChange(setOperatorExpressionProperty(filter, value))}
-        menuShouldPortal
       />
 
       <Select
@@ -136,7 +137,6 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
         value={filter.operator?.name && toOption(filter.operator.name)}
         options={OPERATORS}
         onChange={({ value }) => value && onChange(setOperatorExpressionName(filter, value))}
-        menuShouldPortal
       />
 
       <Select
@@ -149,7 +149,6 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
         allowCustomValue
         onOpenMenu={loadOptions}
         onChange={({ value }) => value && onChange(setOperatorExpressionValue(filter, value))}
-        menuShouldPortal
       />
 
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />

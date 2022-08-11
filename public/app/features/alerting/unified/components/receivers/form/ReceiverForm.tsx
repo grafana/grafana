@@ -1,19 +1,21 @@
 import { css } from '@emotion/css';
+import React, { useCallback } from 'react';
+import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierDTO } from 'app/types';
-import React, { useCallback } from 'react';
-import { useForm, FormProvider, FieldErrors, Validate } from 'react-hook-form';
+
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
+
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
-import { useAppNotification } from 'app/core/copy/appNotification';
 
 interface Props<R extends ChannelValues> {
   config: AlertManagerCortexConfig;
@@ -25,6 +27,8 @@ interface Props<R extends ChannelValues> {
   takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   commonSettingsComponent: CommonSettingsComponentType;
   initialValues?: ReceiverFormValues<R>;
+  isEditable: boolean;
+  isTestable?: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -37,10 +41,12 @@ export function ReceiverForm<R extends ChannelValues>({
   onTestChannel,
   takenReceiverNames,
   commonSettingsComponent,
+  isEditable,
+  isTestable,
 }: Props<R>): JSX.Element {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
-  const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+
   const defaultValues = initialValues || {
     name: '',
     items: [
@@ -97,11 +103,11 @@ export function ReceiverForm<R extends ChannelValues>({
       )}
       <form onSubmit={handleSubmit(submitCallback, onInvalid)}>
         <h4 className={styles.heading}>
-          {readOnly ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
+          {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
         </h4>
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
           <Input
-            readOnly={readOnly}
+            readOnly={!isEditable}
             id="name"
             {...register('name', {
               required: 'Name is required',
@@ -139,12 +145,13 @@ export function ReceiverForm<R extends ChannelValues>({
               secureFields={initialItem?.secureFields}
               errors={errors?.items?.[index] as FieldErrors<R>}
               commonSettingsComponent={commonSettingsComponent}
-              readOnly={readOnly}
+              isEditable={isEditable}
+              isTestable={isTestable}
             />
           );
         })}
         <>
-          {!readOnly && (
+          {isEditable && (
             <Button
               type="button"
               icon="plus"
@@ -155,7 +162,7 @@ export function ReceiverForm<R extends ChannelValues>({
             </Button>
           )}
           <div className={styles.buttons}>
-            {!readOnly && (
+            {isEditable && (
               <>
                 {loading && (
                   <Button disabled={true} icon="fa fa-spinner" variant="primary">

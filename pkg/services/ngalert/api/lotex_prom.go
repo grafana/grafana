@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -78,12 +77,12 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Respon
 }
 
 func (p *LotexProm) getEndpoints(ctx *models.ReqContext) (*promEndpoints, error) {
-	recipient, err := strconv.ParseInt(web.Params(ctx.Req)[":Recipient"], 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("recipient is invalid")
+	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
+	if datasourceUID == "" {
+		return nil, fmt.Errorf("datasource UID is invalid")
 	}
 
-	ds, err := p.DataProxy.DataSourceCache.GetDatasource(ctx.Req.Context(), recipient, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := p.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return nil, err
 	}

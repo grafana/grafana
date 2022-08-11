@@ -1,7 +1,11 @@
 package api
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"net/http"
+
+	"github.com/grafana/grafana/pkg/models"
+)
 
 func swaggerUI(c *models.ReqContext) {
-	c.HTML(200, "swagger", nil)
+	c.HTML(http.StatusOK, "swagger", nil)
 }

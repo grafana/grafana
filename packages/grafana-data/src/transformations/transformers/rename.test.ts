@@ -1,13 +1,11 @@
-import {
-  ArrayVector,
-  DataTransformerConfig,
-  DataTransformerID,
-  FieldType,
-  toDataFrame,
-  transformDataFrame,
-} from '@grafana/data';
-import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
+import { toDataFrame } from '../../dataframe';
+import { FieldType, DataTransformerConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ArrayVector } from '../../vector';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
+import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
 
 describe('Rename Transformer', () => {
   beforeAll(() => {

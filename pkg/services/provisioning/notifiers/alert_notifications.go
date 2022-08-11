@@ -1,11 +1,12 @@
 package notifiers
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"golang.org/x/net/context"
 )
 
 type Manager interface {

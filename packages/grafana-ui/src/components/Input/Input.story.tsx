@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
 import { Story, Meta } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './Input.mdx';
-import { getAvailableIcons, IconName } from '../../types';
+import React, { useState } from 'react';
+
 import { KeyValue } from '@grafana/data';
 import { Field, Icon, Button, Input } from '@grafana/ui';
+
+import { getAvailableIcons, IconName } from '../../types';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import mdx from './Input.mdx';
 
 const prefixSuffixOpts = {
   None: null,
@@ -17,7 +20,7 @@ const prefixSuffixOpts = {
   }, {}),
 };
 
-export default {
+const meta: Meta = {
   title: 'Forms/Input',
   component: Input,
   decorators: [withCenteredStory],
@@ -59,7 +62,7 @@ export default {
     // validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
     width: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
-} as Meta;
+};
 
 export const Simple: Story = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
@@ -108,3 +111,5 @@ export const WithFieldValidation: Story = (args) => {
     </div>
   );
 };
+
+export default meta;

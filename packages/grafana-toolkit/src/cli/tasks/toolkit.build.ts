@@ -1,7 +1,9 @@
+import chalk from 'chalk';
 import execa = require('execa');
 import * as fs from 'fs';
-import chalk from 'chalk';
+
 import { useSpinner } from '../utils/useSpinner';
+
 import { Task, TaskRunner } from './task';
 
 const path = require('path');
@@ -20,34 +22,8 @@ const compile = () =>
     }
   });
 
-const savePackage = ({ path, pkg }: { path: string; pkg: {} }) =>
-  useSpinner('Updating package.json', async () => {
-    new Promise<void>((resolve, reject) => {
-      fs.writeFile(path, JSON.stringify(pkg, null, 2), (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve();
-      });
-    });
-  });
-
-const preparePackage = async (pkg: any) => {
-  pkg.bin = {
-    'grafana-toolkit': './bin/grafana-toolkit.js',
-  };
-
-  await savePackage({
-    path: `${cwd}/dist/package.json`,
-    pkg,
-  });
-};
-
 const copyFiles = () => {
   const files = [
-    'README.md',
-    'CHANGELOG.md',
     'config/circleci/config.yml',
     'bin/grafana-toolkit.js',
     'src/config/prettier.plugin.config.json',
@@ -113,7 +89,6 @@ const toolkitBuildTaskRunner: TaskRunner<ToolkitBuildOptions> = async () => {
 
   await clean();
   await compile();
-  await preparePackage(pkg);
   fs.mkdirSync('./dist/bin');
   fs.mkdirSync('./dist/sass');
   await copyFiles();

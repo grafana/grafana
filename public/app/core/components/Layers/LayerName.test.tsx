@@ -1,5 +1,6 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { LayerNameProps, LayerName } from './LayerName';
 
 describe('LayerName', () => {
@@ -11,7 +12,7 @@ describe('LayerName', () => {
     fireEvent.change(input, { target: { value: 'new name' } });
     fireEvent.blur(input);
 
-    expect((scenario.props.onChange as any).mock.calls[0][0]).toBe('new name');
+    expect(jest.mocked(scenario.props.onChange).mock.calls[0][0]).toBe('new name');
   });
 
   it('Show error when empty name is specified', async () => {

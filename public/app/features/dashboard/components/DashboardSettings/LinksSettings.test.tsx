@@ -1,8 +1,8 @@
-import React from 'react';
-import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
 import { within } from '@testing-library/dom';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 
 import { LinksSettings } from './LinksSettings';
@@ -84,7 +84,7 @@ describe('LinksSettings', () => {
     ).not.toBeInTheDocument();
   });
 
-  test('it rearranges the order of dashboard links', () => {
+  test('it rearranges the order of dashboard links', async () => {
     // @ts-ignore
     render(<LinksSettings dashboard={dashboard} />);
 
@@ -103,9 +103,9 @@ describe('LinksSettings', () => {
     assertRowHasText(1, links[1].title);
     assertRowHasText(2, links[2].url);
 
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[0]);
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[1]);
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[1]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' })[0]);
 
     // Checking if it has changed the sorting accordingly
     assertRowHasText(0, links[2].url);
@@ -113,67 +113,68 @@ describe('LinksSettings', () => {
     assertRowHasText(2, links[0].title);
   });
 
-  test('it duplicates dashboard links', () => {
+  test('it duplicates dashboard links', async () => {
     // @ts-ignore
     render(<LinksSettings dashboard={dashboard} />);
 
     expect(getTableBodyRows().length).toBe(links.length);
 
-    userEvent.click(within(getTableBody()).getAllByRole('button', { name: /copy/i })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: /copy/i })[0]);
 
     expect(getTableBodyRows().length).toBe(links.length + 1);
     expect(within(getTableBody()).getAllByText(links[0].title).length).toBe(2);
   });
 
-  test('it deletes dashboard links', () => {
+  test('it deletes dashboard links', async () => {
     // @ts-ignore
     render(<LinksSettings dashboard={dashboard} />);
 
     expect(getTableBodyRows().length).toBe(links.length);
 
-    userEvent.click(within(getTableBody()).getAllByLabelText(/Delete link with title/)[0]);
-    userEvent.click(within(getTableBody()).getByRole('button', { name: 'Delete' }));
+    await userEvent.click(within(getTableBody()).getAllByLabelText(/Delete link with title/)[0]);
+    await userEvent.click(within(getTableBody()).getByRole('button', { name: 'Delete' }));
 
     expect(getTableBodyRows().length).toBe(links.length - 1);
     expect(within(getTableBody()).queryByText(links[0].title)).not.toBeInTheDocument();
   });
 
-  test('it renders a form which modifies dashboard links', () => {
+  test('it renders a form which modifies dashboard links', async () => {
     // @ts-ignore
     render(<LinksSettings dashboard={dashboard} />);
-    userEvent.click(screen.getByRole('button', { name: /new/i }));
+    await userEvent.click(screen.getByRole('button', { name: /new/i }));
 
     expect(screen.queryByText('Type')).toBeInTheDocument();
     expect(screen.queryByText('Title')).toBeInTheDocument();
     expect(screen.queryByText('With tags')).toBeInTheDocument();
+    expect(screen.queryByText('Apply')).toBeInTheDocument();
 
     expect(screen.queryByText('Url')).not.toBeInTheDocument();
     expect(screen.queryByText('Tooltip')).not.toBeInTheDocument();
     expect(screen.queryByText('Icon')).not.toBeInTheDocument();
 
-    userEvent.click(screen.getByText('Dashboards'));
+    await userEvent.click(screen.getByText('Dashboards'));
     expect(screen.queryAllByText('Dashboards')).toHaveLength(2);
     expect(screen.queryByText('Link')).toBeVisible();
 
-    userEvent.click(screen.getByText('Link'));
+    await userEvent.click(screen.getByText('Link'));
 
     expect(screen.queryByText('URL')).toBeInTheDocument();
     expect(screen.queryByText('Tooltip')).toBeInTheDocument();
     expect(screen.queryByText('Icon')).toBeInTheDocument();
 
-    userEvent.clear(screen.getByRole('textbox', { name: /title/i }));
-    userEvent.type(screen.getByRole('textbox', { name: /title/i }), 'New Dashboard Link');
-    userEvent.click(
+    await userEvent.clear(screen.getByRole('textbox', { name: /title/i }));
+    await userEvent.type(screen.getByRole('textbox', { name: /title/i }), 'New Dashboard Link');
+    await userEvent.click(
       within(screen.getByRole('heading', { name: /dashboard links edit/i })).getByText(/dashboard links/i)
     );
 
     expect(getTableBodyRows().length).toBe(links.length + 1);
     expect(within(getTableBody()).queryByText('New Dashboard Link')).toBeInTheDocument();
 
-    userEvent.click(screen.getAllByText(links[0].type)[0]);
-    userEvent.clear(screen.getByRole('textbox', { name: /title/i }));
-    userEvent.type(screen.getByRole('textbox', { name: /title/i }), 'The first dashboard link');
-    userEvent.click(
+    await userEvent.click(screen.getAllByText(links[0].type)[0]);
+    await userEvent.clear(screen.getByRole('textbox', { name: /title/i }));
+    await userEvent.type(screen.getByRole('textbox', { name: /title/i }), 'The first dashboard link');
+    await userEvent.click(
       within(screen.getByRole('heading', { name: /dashboard links edit/i })).getByText(/dashboard links/i)
     );
 

@@ -1,9 +1,13 @@
-import React, { FormEvent, HTMLProps, useEffect, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon } from '@grafana/ui';
+import React, { FormEvent, HTMLProps, useEffect, useRef } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { ValueContainer } from './ValueContainer';
+import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Icon } from '@grafana/ui';
+
 import { Role } from '../../../types';
+
+import { ValueContainer } from './ValueContainer';
+import { ROLE_PICKER_WIDTH } from './constants';
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
@@ -48,7 +52,7 @@ export const RolePickerInput = ({
   const numberOfRoles = appliedRoles.length;
 
   return !isFocused ? (
-    <div className={styles.selectedRoles} onMouseDown={onOpen}>
+    <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
       {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
       <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBuiltInRole} />
     </div>
@@ -101,18 +105,12 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
             </div>
           }
         >
-          <div>
-            <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
-              numberOfRoles > 1 ? 's' : ''
-            }`}</ValueContainer>
-          </div>
+          <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
+            numberOfRoles > 1 ? 's' : ''
+          }`}</ValueContainer>
         </Tooltip>
       ) : (
-        !showBuiltInRole && (
-          <div>
-            <ValueContainer>No roles assigned</ValueContainer>
-          </div>
-        )
+        !showBuiltInRole && <ValueContainer>No roles assigned</ValueContainer>
       )}
     </>
   );
@@ -137,7 +135,7 @@ const getRolePickerInputStyles = (
         `,
       disabled && styles.inputDisabled,
       css`
-        width: 520px;
+        width: ${ROLE_PICKER_WIDTH}px;
         min-height: 32px;
         height: auto;
         flex-direction: row;

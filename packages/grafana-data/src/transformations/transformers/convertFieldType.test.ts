@@ -2,6 +2,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { Field, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { ArrayVector } from '../../vector';
+
 import {
   ensureTimeField,
   convertFieldType,

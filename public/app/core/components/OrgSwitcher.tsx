@@ -1,12 +1,13 @@
-import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
+import React, { ReactElement } from 'react';
+import { useAsync } from 'react-use';
+
 import { UserOrgDTO } from '@grafana/data';
 import { Button, CustomScrollbar, Modal } from '@grafana/ui';
-
-import { contextSrv } from 'app/core/services/context_srv';
 import config from 'app/core/config';
+import { contextSrv } from 'app/core/services/context_srv';
+
 import { api } from '../../features/profile/api';
-import { useAsync } from 'react-use';
 
 interface Props {
   onDismiss: () => void;

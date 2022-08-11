@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/secrets"
 
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,6 +31,9 @@ var (
 )
 
 type MultiOrgAlertmanager struct {
+	Crypto    Crypto
+	ProvStore provisioning.ProvisioningStore
+
 	alertmanagersMtx sync.RWMutex
 	alertmanagers    map[int64]*Alertmanager
 
@@ -39,7 +44,7 @@ type MultiOrgAlertmanager struct {
 	peer         ClusterPeer
 	settleCancel context.CancelFunc
 
-	configStore store.AlertingStore
+	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
@@ -49,11 +54,14 @@ type MultiOrgAlertmanager struct {
 	ns      notifications.Service
 }
 
-func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, decryptFn channels.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager,
-	ns notifications.Service, l log.Logger,
+func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
+	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn channels.GetDecryptedValueFn,
+	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
+		Crypto:    NewCrypto(s, configStore, l),
+		ProvStore: provStore,
+
 		logger:        l,
 		settings:      cfg,
 		alertmanagers: map[int64]*Alertmanager{},
