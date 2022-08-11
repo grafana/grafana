@@ -41,6 +41,7 @@ interface RolePickerMenuProps {
   onBuiltInRoleSelect?: (role: OrgRole) => void;
   onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
   updateDisabled?: boolean;
+  apply?: boolean;
   offset: { vertical: number; horizontal: number };
 }
 
@@ -56,6 +57,7 @@ export const RolePickerMenu = ({
   onUpdate,
   updateDisabled,
   offset,
+  apply,
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
@@ -267,11 +269,11 @@ export const RolePickerMenu = ({
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
           <HorizontalGroup justify="flex-end">
-            <Button size="sm" fill="text" onClick={onClearInternal}>
+            <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
               Clear all
             </Button>
-            <Button size="sm" onClick={onUpdateInternal}>
-              {updateDisabled ? `Apply` : `Update`}
+            <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>
+              {apply ? `Apply` : `Update`}
             </Button>
           </HorizontalGroup>
         </div>

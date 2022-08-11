@@ -386,7 +386,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
               onBuiltinRoleChange={this.onOrgRoleChange}
               builtinRolesDisabled={false}
               roleOptions={roleOptions}
-              updateDisabled={true}
+              apply={true}
               onApplyRoles={this.onRoleUpdate}
               pendingRoles={this.state.pendingRoles}
             />
