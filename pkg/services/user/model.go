@@ -109,8 +109,8 @@ type GetSignedInUserQuery struct {
 }
 
 type SignedInUser struct {
-	UserID             int64
-	OrgID              int64
+	UserID             int64 `xorm:"user_id"`
+	OrgID              int64 `xorm:"org_id"`
 	OrgName            string
 	OrgRole            org.RoleType
 	ExternalAuthModule string
@@ -118,7 +118,7 @@ type SignedInUser struct {
 	Login              string
 	Name               string
 	Email              string
-	ApiKeyID           int64
+	ApiKeyID           int64 `xorm:"api_key_id"`
 	OrgCount           int
 	IsGrafanaAdmin     bool
 	IsAnonymous        bool
