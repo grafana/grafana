@@ -176,14 +176,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
-	// we need to use the stored rule namespace uid as the folder could have
-	// been renamed, thus the new namespace uid not matching the old one and
-	// no record would be found
-	rule.IntervalSeconds, err = service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID,
-		storedRule.NamespaceUID, rule.RuleGroup)
-	if err != nil {
-		return models.AlertRule{}, err
-	}
+	rule.IntervalSeconds = storedRule.IntervalSeconds
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err := service.ruleStore.UpdateAlertRules(ctx, []store.UpdateRule{
 			{
