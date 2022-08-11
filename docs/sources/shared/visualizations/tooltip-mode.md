@@ -4,8 +4,6 @@ aliases:
 title: Tooltip mode
 ---
 
-# Tooltip options
-
 ### Tooltip mode
 
 When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.

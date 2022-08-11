@@ -4,11 +4,9 @@ aliases:
 title: Legend mode and legend placement
 ---
 
-## Legend options
-
 ### Legend mode
 
-Use these settings to refine how the legend appears in your visualization.
+Use these settings to define how the legend appears in your visualization.
 
 - **List -** Displays the legend as a list. This is a default display mode of the legend.
 - **Table -** Displays the legend as a table.

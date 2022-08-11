@@ -36,7 +36,15 @@ Time series visualization is the default and primary way to visualize time serie
 
 > **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and then select the **Time series** visualization. Grafana transfers all applicable settings.
 
+# Tooltip options
+
+Tooltip options control the small info overlay that appears when you hover over data points in the graph.
+
 {{< docs/shared "visualizations/tooltip-mode.md" >}}
+
+## Legend options
+
+Legend options control the series names and stats that can be shown under or the the right of the graph.
 
 {{< docs/shared "visualizations/legend-mode.md" >}}
 
@@ -48,7 +56,7 @@ For more information about the legend, refer to [Configure a legend](../configur
 
 ## Graph styles
 
-Use these options to choose how to display your time series data.
+Use this option to define how to display your time series data. Using overrides you can mix styles in the same graph.
 
 - Lines
 - Bars
