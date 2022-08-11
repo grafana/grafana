@@ -150,8 +150,9 @@ var (
 
 func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
@@ -198,7 +199,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 }
 
 func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
@@ -252,7 +253,7 @@ func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 }
 
 func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
@@ -286,8 +287,9 @@ func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 
 func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
@@ -332,7 +334,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 }
 
 func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
@@ -364,8 +366,9 @@ func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 
 func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
@@ -406,7 +409,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 }
 
 func TestDeleteTeamMembersAPIEndpoint_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3

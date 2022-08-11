@@ -8,11 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -160,7 +159,9 @@ const (
 )
 
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
@@ -180,8 +181,9 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl(t *testing.T) {
 
 func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	setInitCtxSignedInEditor(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
@@ -192,7 +194,7 @@ func TestTeamAPIEndpoint_CreateTeam_LegacyAccessControl_EditorsCanAdmin(t *testi
 }
 
 func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
@@ -211,7 +213,7 @@ func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
 }
 
 func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	// Seed three teams
 	for i := 1; i <= 3; i++ {
 		_, err := sc.db.CreateTeam(fmt.Sprintf("team%d", i), fmt.Sprintf("team%d@example.org", i), 1)
@@ -255,7 +257,7 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 }
 
 func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.db = sqlstore.InitTestDB(t)
 
 	_, err := sc.db.CreateTeam("team1", "team1@example.org", 1)
@@ -285,7 +287,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
 
@@ -334,7 +336,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsDelete with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
 	require.NoError(t, err)
@@ -366,7 +368,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsRead with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.db = sqlstore.InitTestDB(t)
 	_, err := sc.db.CreateTeam("team1", "", 1)
 
@@ -399,7 +401,7 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 // Then the endpoint should return 200 if the user has accesscontrol.ActionTeamsWrite with teams:id:1 scope
 // else return 403
 func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sqlStore := sqlstore.InitTestDB(t)
 	sc.db = sqlStore
 

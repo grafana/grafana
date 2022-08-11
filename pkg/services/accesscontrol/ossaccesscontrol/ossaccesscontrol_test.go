@@ -139,9 +139,8 @@ func TestUsageMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			if tt.enabled {
-				cfg.RBACEnabled = true
-			}
+			cfg.RBACEnabled = tt.enabled
+
 			s, errInitAc := ProvideService(
 				featuremgmt.WithFeatures(),
 				cfg,

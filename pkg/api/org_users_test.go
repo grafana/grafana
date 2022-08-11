@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -138,7 +139,9 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create a dashboard folder
@@ -175,7 +178,9 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Setup store teams
@@ -189,7 +194,9 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl_Admin(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInOrgAdmin(sc.initCtx)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
@@ -197,7 +204,9 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_Admin(t *testing.T) {
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl_Viewer(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
@@ -224,7 +233,7 @@ func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			sc := setupHTTPServer(t, true, true)
+			sc := setupHTTPServer(t, true)
 			setInitCtxSignedInViewer(sc.initCtx)
 			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
 
@@ -338,7 +347,9 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = tc.enableAccessControl
+			sc := setupHTTPServerWithCfg(t, false, cfg)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -435,7 +446,9 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = tc.enableAccessControl
+			sc := setupHTTPServerWithCfg(t, false, cfg)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -533,7 +546,9 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = tc.enableAccessControl
+			sc := setupHTTPServerWithCfg(t, false, cfg)
 			userService := usertest.NewUserServiceFake()
 			userService.ExpectedUser = &user.User{ID: 2}
 			sc.hs.userService = userService
@@ -659,7 +674,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			sc := setupHTTPServer(t, true, true)
+			sc := setupHTTPServer(t, true)
 			userService := usertest.NewUserServiceFake()
 			userService.ExpectedUser = &user.User{ID: 2}
 			sc.hs.userService = userService
@@ -774,7 +789,9 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = tc.enableAccessControl
+			sc := setupHTTPServerWithCfg(t, false, cfg)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -894,7 +911,9 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			sc := setupHTTPServer(t, false, tc.enableAccessControl)
+			cfg := setting.NewCfg()
+			cfg.RBACEnabled = tc.enableAccessControl
+			sc := setupHTTPServerWithCfg(t, false, cfg)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 

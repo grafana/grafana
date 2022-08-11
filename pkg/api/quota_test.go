@@ -42,7 +42,9 @@ func setupDBAndSettingsForAccessControlQuotaTests(t *testing.T, sc accessControl
 }
 
 func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -60,7 +62,7 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -83,7 +85,9 @@ func TestAPIEndpoint_GetCurrentOrgQuotas_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetOrgQuotas_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -101,7 +105,7 @@ func TestAPIEndpoint_GetOrgQuotas_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_GetOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -124,7 +128,9 @@ func TestAPIEndpoint_GetOrgQuotas_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)
@@ -144,7 +150,7 @@ func TestAPIEndpoint_PutOrgQuotas_LegacyAccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutOrgQuotas_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	setupDBAndSettingsForAccessControlQuotaTests(t, sc)

@@ -67,7 +67,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			sc := setupHTTPServer(t, true, true)
+			sc := setupHTTPServer(t, true)
 			userService := usertest.NewUserServiceFake()
 			userService.ExpectedUser = &user.User{ID: 2}
 			sc.hs.userService = userService
