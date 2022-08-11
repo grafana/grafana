@@ -47,21 +47,22 @@ Panel: thema.#Lineage & {
 						xTickLabelSpacing?: int32 | *0
 						// TODO docs
 						stacking:   ui.StackingMode | *"none"
-						// TODO docs
+						// This controls whether values are shown on top or to the left of bars.
 						showValue:  ui.VisibilityMode | *"auto"
-						// TODO docs
+						// Controls the width of bars. 1 = Max width, 0 = Min width.
 						barWidth:   float64 & >= 0 & <= 1 | *0.97
-						// TODO docs
+						// Controls the width of groups. 1 = max with, 0 = min width.
 						groupWidth: float64 & >= 0 & <= 1 | *0.7
 					} @cuetsy(kind="interface")
 					PanelFieldConfig: {
 						ui.AxisConfig
 						ui.HideableFieldConfig
-						// TODO docs
+						// Controls line width of the bars.
 						lineWidth?:    int32 & >= 0 & <= 10 | *1
-						// TODO docs
+						// Controls the fill opacity of the bars.
 						fillOpacity?:  int32 & >= 0 & <= 100 | *80
-						// TODO docs
+						// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
+            // Gradient appearance is influenced by the Fill opacity setting.
 						gradientMode?: ui.GraphGradientMode | *"none"
 					} @cuetsy(kind="interface")
 				},
