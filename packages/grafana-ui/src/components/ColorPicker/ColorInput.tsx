@@ -27,9 +27,14 @@ const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(({ color, onCha
   }, [color, previousColor]);
 
   const onChangeColor = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const newColor = tinycolor(event.currentTarget.value);
+    const { value: colorValue } = event.currentTarget;
 
-    setValue(event.currentTarget.value);
+    setValue(colorValue);
+    if (colorValue === '') {
+      updateColor(colorValue);
+      return;
+    }
+    const newColor = tinycolor(colorValue);
 
     if (newColor.isValid()) {
       updateColor(newColor.toString());
