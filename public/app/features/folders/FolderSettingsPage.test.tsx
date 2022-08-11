@@ -1,13 +1,20 @@
-import { render, screen } from '@testing-library/react';
+import { getByRole, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { NavModel } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { ShowConfirmModalEvent } from 'app/types/events';
+
+import appEvents from '../../core/app_events';
 
 import { FolderSettingsPage, Props } from './FolderSettingsPage';
 import { setFolderTitle } from './state/reducers';
+
+jest.mock('../../core/app_events', () => ({
+  publish: jest.fn(),
+}));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -156,5 +163,25 @@ describe('FolderSettingsPage', () => {
     });
     const deleteButton = screen.getByRole('button', { name: 'Delete' });
     expect(deleteButton).not.toBeDisabled();
+  });
+
+  it('should show a confirm modal when the deleteButton is clicked', async () => {
+    const mockFolder = {
+      id: 1,
+      uid: '1234',
+      title: 'loading',
+      canSave: true,
+      canDelete: true,
+      hasChanged: true,
+      version: 1,
+    };
+    setup({
+      folder: mockFolder,
+    });
+    const deleteButton = screen.getByRole('button', { name: 'Delete' });
+    await userEvent.click(deleteButton);
+    expect(appEvents.publish).toHaveBeenCalledWith(
+      new ShowConfirmModalEvent(expect.objectContaining({ title: 'Delete' }))
+    );
   });
 });
