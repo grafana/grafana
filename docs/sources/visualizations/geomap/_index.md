@@ -36,13 +36,15 @@ The initial view configures how the GeoMap panel renders when the panel is first
 
 The Geomap visualization supports showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
 
-### Layer Types
+### Types
 
-There are four-layer types to choose from in the Geomap visualization.
+There are three map layer types to choose from in the Geomap visualization.
 
-- **Marker** renders a marker at each data point.
-- **Heatmap** visualizes a heatmap of the data.
-- **GeoJSON** renders static data from a geojson file.
+- [Markers]({{< relref "markers/" >}}) renders static data from a geojson file.
+- [Heatmap]({{< relref "heatmap/" >}}) visualizes a heatmap of the data.
+- [GeoJSON]({{< relref "geojson/" >}}) renders a marker at each data point.
+
+> **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. An opacity control is provided.
 
 ### Layer Controls
 
@@ -72,11 +74,24 @@ The Geomap panel needs a source of geographical data. This data comes from a dat
 ## Basemap layer
 
 A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
-are available each with specific configuration options to style the base map. The default base layer uses the CARTO map. Custom default base layers can be defined in the `.ini` configuration file.
+are available each with specific configuration options to style the base map.
+
+### Types
+
+There are four basemap layer types to choose from in the Geomap visualization.
+
+- [Open Street Map]({{< relref "osm/" >}}) adds a map from a collaborative free geographic world database.
+- [CARTO]({{< relref "carto/" >}}) adds a layer from CARTO Raster basemaps.
+- [ArcGIS]({{< relref "arcgis/" >}}) adds a layer from an ESRI ArcGIS MapServer
+- [XYZ]({{< relref "xyz/" >}}) adds a map from a generic tile layer.
+
+### Default
+
+The default base layer uses the [CARTO]({{< relref "carto/" >}}) map. Custom default base layers can be defined in the `.ini` configuration file.
 
 ![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
-### Configure the default base layer with provisioning
+#### Configure the default base layer with provisioning
 
 You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page]({{< relref "../administration/provisioning/" >}}).
 

@@ -12,4 +12,19 @@ title: CARTO layer
 weight: 400
 ---
 
-TODO:....
+# CARTO
+
+A layer from CARTO Raster basemaps.
+
+## Options
+
+- **Theme**
+  - Auto
+  - Light
+  - Dark
+- **Show labels** shows the Country details on top of the map.
+- **Opacity** from 0 (transparent) to 1 (opaque)
+
+## More Information
+
+- [**About CARTO**](https://carto.com/about-us/)

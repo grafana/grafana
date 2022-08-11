@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/markers/
-  - /docs/grafana/latest/panels/visualizations/geomap/markers/
+  - /docs/grafana/latest/features/panels/geomap/heatmap/
+  - /docs/grafana/latest/panels/visualizations/geomap/heatmap/
 description: Heatmap layer
 keywords:
   - grafana

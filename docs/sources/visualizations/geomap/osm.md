@@ -12,4 +12,14 @@ title: Open street map layer
 weight: 400
 ---
 
-TODO:....
+# Open Street Map
+
+A map from a collaborative free geographic world database.
+
+## Options
+
+- **Opacity** from 0 (transparent) to 1 (opaque)
+
+## More Information
+
+- [**About Open Street Map**](https://www.openstreetmap.org/about)
