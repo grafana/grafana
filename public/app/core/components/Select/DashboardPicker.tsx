@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelectProps, AsyncSelect } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDTO } from 'app/types';
 
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
@@ -18,8 +18,8 @@ export type DashboardPickerDTO = Pick<DashboardDTO['dashboard'], 'uid' | 'title'
 const formatLabel = (folderTitle = 'General', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
 
 const getDashboards = debounce((query = ''): Promise<Array<SelectableValue<DashboardPickerDTO>>> => {
-  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchHit[]) => {
-    return result.map((item: DashboardSearchHit) => ({
+  return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchItem[]) => {
+    return result.map((item: DashboardSearchItem) => ({
       value: {
         // dashboards uid here is always defined as this endpoint does not return the default home dashboard
         uid: item.uid!,

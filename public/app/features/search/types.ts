@@ -56,7 +56,9 @@ export interface DashboardSectionItem {
  */
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
-export interface DashboardSearchItem extends Omit<DashboardSearchHit, 'id'> {}
+export interface DashboardSearchItem extends Omit<DashboardSearchHit, 'id' | 'uid'> {
+  uid: string;
+}
 
 export interface SearchAction extends Action {
   payload?: any;
