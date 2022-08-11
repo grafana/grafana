@@ -39,6 +39,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Misc',
     formats: [
       { name: 'Number', id: 'none', fn: toFixedUnit('') },
+      { name: 'Decimal', id: 'decimal', fn: stringFormater },
       { name: 'String', id: 'string', fn: stringFormater },
       {
         name: 'short',
