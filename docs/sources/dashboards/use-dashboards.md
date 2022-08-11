@@ -95,10 +95,10 @@ The following image shows the search results when you search using dashboard nam
 
 ### Search dashboards using panel title
 
-You can also search for a dashboard by the title of a panel that appears in a dashboard.
+You can search for a dashboard by the title of a panel that appears in a dashboard.
 If a panel's title matches your search query, the dashboard appears in the search results.
 
-You can access this feature by enabling the `panelTitleSearch` feature toggle.
+This feature is available by default in Grafana Cloud and in Grafana OSS v9.1 and higher, you access this feature by enabling the `panelTitleSearch` feature toggle.
 For more information about enabling panel title search, refer to [Enable the panelTitleSearch feature toggle.](#enable-panelTitleSearch-feature-toggle)
 
 The following image shows the search results when you search using panel title.
