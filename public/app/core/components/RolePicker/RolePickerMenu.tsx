@@ -40,7 +40,6 @@ interface RolePickerMenuProps {
   onSelect: (roles: Role[]) => void;
   onBuiltInRoleSelect?: (role: OrgRole) => void;
   onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
-  onClear?: () => void;
   updateDisabled?: boolean;
   offset: { vertical: number; horizontal: number };
 }
@@ -55,7 +54,6 @@ export const RolePickerMenu = ({
   onSelect,
   onBuiltInRoleSelect,
   onUpdate,
-  onClear,
   updateDisabled,
   offset,
 }: RolePickerMenuProps): JSX.Element => {
@@ -153,9 +151,6 @@ export const RolePickerMenu = ({
   };
 
   const onClearInternal = async () => {
-    if (onClear) {
-      onClear();
-    }
     setSelectedOptions([]);
   };
 
