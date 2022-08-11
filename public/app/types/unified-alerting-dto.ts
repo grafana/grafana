@@ -79,7 +79,15 @@ export interface PromApiFeatures {
 }
 
 export interface AlertmanagerApiFeatures {
-  // Currently, only supported by Mimir AM
+  /**
+   * Some Alertmanager implementations (Mimir) are multi-tenant systems.
+   *
+   * To save on compute costs, tenants are not active until they have a configuration set.
+   * If there is no fallback_config_file set, Alertmanager endpoints will respond with HTTP 404
+   *
+   * Despite that, it is possible to create a configuration for such datasource
+   * by posting a new config to the `/api/v1/alerts` endpoint
+   */
   lazyConfigInit: boolean;
 }
 

@@ -5,13 +5,11 @@ import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 
 const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (requestOptions) => {
   try {
-    const { data, url, headers, redirected, status, statusText } = await lastValueFrom(
-      getBackendSrv().fetch(requestOptions)
-    );
+    const { data, ...meta } = await lastValueFrom(getBackendSrv().fetch(requestOptions));
 
-    return { data: data, meta: { url, headers, redirected, status, statusText } };
+    return { data, meta };
   } catch (error) {
-    return { error: error };
+    return { error };
   }
 };
 
