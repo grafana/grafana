@@ -165,7 +165,7 @@ describe('FolderSettingsPage', () => {
     expect(deleteButton).not.toBeDisabled();
   });
 
-  it('should show a confirm modal when the deleteButton is clicked', async () => {
+  it('should call the publish event when the deleteButton is clicked', async () => {
     const mockFolder = {
       id: 1,
       uid: '1234',
