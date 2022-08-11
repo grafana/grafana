@@ -24,6 +24,11 @@ export const selectFiltered = createSelector(selectAll, selectSearchQuery, (data
   return dataSources.filter(({ name, type, database }) => regex.test(name) || regex.test(database) || regex.test(type));
 });
 
+export const selectByName = (name: string) =>
+  createSelector(selectItems, (items) =>
+    Object.values(items).find((ds) => ds.name.toLowerCase() === name.toLowerCase())
+  );
+
 // The following selectors are used to get information about the outstanding or completed network requests.
 export const selectRequest = (actionType: string) =>
   createSelector(selectRoot, ({ requests = {} }) => requests[actionType]);

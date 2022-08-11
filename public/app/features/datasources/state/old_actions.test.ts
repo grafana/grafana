@@ -22,7 +22,7 @@ import {
   testDataSourceSucceeded,
   testDataSourceFailed,
   dataSourceLoaded,
-} from './reducers';
+} from './old_reducers';
 
 jest.mock('../api');
 jest.mock('app/core/services/backend_srv');

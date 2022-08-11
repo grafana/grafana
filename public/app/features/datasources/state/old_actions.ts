@@ -32,7 +32,7 @@ import {
   testDataSourceFailed,
   testDataSourceStarting,
   testDataSourceSucceeded,
-} from './reducers';
+} from './old_reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
 
 export interface DataSourceTypesLoadedPayload {

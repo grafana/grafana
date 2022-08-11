@@ -64,7 +64,10 @@ export const getDataSourceByIdOrUid = async (idOrUid: string) => {
 };
 
 export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
-  getBackendSrv().post('/api/datasources', dataSource);
+  getBackendSrv().post<{ id: number; message: string; name: string; datasource: DataSourceSettings }>(
+    '/api/datasources',
+    dataSource
+  );
 
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 

@@ -23,7 +23,7 @@ import {
   setDataSourcesSearchQuery,
   setDataSourceTypeSearchQuery,
   setIsDefault,
-} from './reducers';
+} from './old_reducers';
 
 const mockPlugin = () =>
   ({

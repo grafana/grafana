@@ -1,3 +1,5 @@
+import { EntityState } from '@reduxjs/toolkit';
+
 import {
   DataQuery,
   DataSourceApi,
@@ -6,7 +8,6 @@ import {
   DataSourceSettings,
   LayoutMode,
 } from '@grafana/data';
-import { EntityState } from '@reduxjs/toolkit';
 
 export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
 

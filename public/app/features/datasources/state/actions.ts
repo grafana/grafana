@@ -1,13 +1,16 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
-import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { isFetchError, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { StoreState } from 'app/types';
 
 import * as api from '../api';
 import { STATE_PREFIX } from '../constants';
-import { nameExits, findNewName } from '../utils';
+import { findNewName } from '../utils';
+
+import { selectByName } from './selectors';
 
 // Fetch all available datasources
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -34,34 +37,37 @@ export const fetchSingle = createAsyncThunk(`${STATE_PREFIX}/fetchSingle`, async
 });
 
 // Creates a new data source
-export const create = createAsyncThunk(
-  `${STATE_PREFIX}/create`,
-  async ({ plugin, editLink }: { plugin: DataSourcePluginMeta; editLink: string }, thunkApi) => {
-    const { dispatch, getState } = thunkApi;
-    const { dataSources } = getState();
-    const isFirstDataSource = dataSources.items.length === 0;
-    const newDataSource = {
-      name: plugin.name,
-      type: plugin.id,
-      access: 'proxy',
-      isDefault: isFirstDataSource,
-    };
+export const create = createAsyncThunk<
+  DataSourceSettings,
+  { plugin: DataSourcePluginMeta; editLink: string },
+  { state: StoreState }
+>(`${STATE_PREFIX}/create`, async ({ plugin, editLink }, thunkApi) => {
+  const { getState } = thunkApi;
+  const state = getState();
+  const { dataSources } = state;
+  const isFirstDataSource = Object.keys(dataSources.items).length === 0;
+  const dataSourceWithSameName = selectByName(plugin.name)(state);
+  const newDataSource = {
+    name: plugin.name,
+    type: plugin.id,
+    access: 'proxy',
+    isDefault: isFirstDataSource,
+  };
 
-    if (nameExits(dataSources, newDataSource.name)) {
-      newDataSource.name = findNewName(dataSources, newDataSource.name);
-    }
-
-    const result = await api.createDataSource(newDataSource);
-
-    // TODO: let's try to get rid of these somehow
-    await getDatasourceSrv().reload();
-    await contextSrv.fetchUserPermissions();
-
-    locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));
-
-    return result;
+  if (dataSourceWithSameName) {
+    newDataSource.name = findNewName(Object.values(dataSources.items), newDataSource.name);
   }
-);
+
+  const result = await api.createDataSource(newDataSource);
+
+  // TODO: let's try to get rid of these somehow
+  await getDatasourceSrv().reload();
+  await contextSrv.fetchUserPermissions();
+
+  locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));
+
+  return result.datasource;
+});
 
 export const update = createAsyncThunk(`${STATE_PREFIX}/update`, async (dataSource: DataSourceSettings, thunkApi) => {
   await api.updateDataSource(dataSource);
