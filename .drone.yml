@@ -317,8 +317,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -1109,8 +1110,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -1818,8 +1820,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss ${DRONE_TAG}
+  - ./bin/build build-frontend --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -2458,8 +2461,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
+  - ./bin/build build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -3768,8 +3772,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -4353,8 +4358,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
-  - ./bin/grabpl build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
+  - compile-build-cmd
   - gen-version
   - yarn-install
   environment:
@@ -5146,6 +5152,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: a6fff8b3e3e8664ef3e98e3acb2c68aaecdd2eb44fa40bd73ded8322564fb2fa
+hmac: eac88e68cfaee99bc5569b7af5d8c7ebeeac691e5ea3b9f3b9b18e4327d87b21
 
 ...
