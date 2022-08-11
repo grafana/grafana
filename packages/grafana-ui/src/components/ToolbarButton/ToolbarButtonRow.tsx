@@ -95,18 +95,16 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ className, 
   );
 
   return (
-    <>
-      <div ref={containerRef} className={cx(styles.wrapper, className)} {...rest}>
-        <div className={styles.visibleItems} ref={innerRef}>
-          {React.Children.toArray(children).slice(0, numVisibleChildren)}
-          {numVisibleChildren < React.Children.toArray(children).length && (
-            <Dropdown overlay={renderOverflowChildren}>
-              <ToolbarButton icon="ellipsis-v" iconOnly narrow />
-            </Dropdown>
-          )}
-        </div>
+    <div ref={containerRef} className={cx(styles.wrapper, className)} {...rest}>
+      <div className={styles.visibleItems} ref={innerRef}>
+        {React.Children.toArray(children).slice(0, numVisibleChildren)}
+        {numVisibleChildren < React.Children.toArray(children).length && (
+          <Dropdown overlay={renderOverflowChildren}>
+            <ToolbarButton icon="ellipsis-v" iconOnly narrow />
+          </Dropdown>
+        )}
       </div>
-    </>
+    </div>
   );
 });
 
