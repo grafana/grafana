@@ -34,7 +34,7 @@ weight: 1200
 
 The time series visualization type is the default and primary way to visualize time series data as a graph. It can render series as lines, points, or bars. It is versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples of how it can be configured and styled.
 
-> **Note:** You can migrate from the old Graph visualization to the new Time series visualization. To migrate, open the panel and click the "Migrate" button in the side pane.
+> **Note:** You can migrate from the old Graph visualization to the new Time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
 
 ## Tooltip options
 
@@ -145,7 +145,7 @@ _Stacking_ allows Grafana to display series on top of each other. Be cautious wh
 
 ![Stack option](http://localhost:3002/static/img/docs/time-series-panel/stack-option-v9.png)
 
-- **Off:** Turns off series stacking. When **Off**, all series shares the same space in the visualization.
+- **Off:** Turns off series stacking. When **Off**, all series share the same space in the visualization.
 - **Normal:** Stacks series on top of each other.
 - **100%:** Stack by percentage where all series add up to 100%.
 
