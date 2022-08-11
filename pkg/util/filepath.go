@@ -96,7 +96,7 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 			}
 			fileInfo, err := file.Info()
 			if err != nil {
-				continue
+				return fmt.Errorf("unable to read file info: %v, path: %v", file.Name(), path2)
 			}
 
 			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
