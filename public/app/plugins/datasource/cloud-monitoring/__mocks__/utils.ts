@@ -1,4 +1,3 @@
-import { VariableType } from '@grafana/data';
 import { LoadingState } from '@grafana/data/src/types/data';
 import { VariableWithOptions } from 'app/features/variables/types';
 
