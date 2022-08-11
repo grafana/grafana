@@ -4,6 +4,8 @@ aliases:
 title: Legend mode and legend placement
 ---
 
+## Legend options
+
 ### Legend mode
 
 Use these settings to refine how the legend appears in your visualization.

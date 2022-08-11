@@ -36,10 +36,6 @@ Time series visualization is the default and primary way to visualize time serie
 
 > **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and then select the **Time series** visualization. Grafana transfers all applicable settings.
 
-## Common time series options
-
-These options are available whether you are graphing your time series as lines, bars, or points.
-
 {{< docs/shared "visualizations/tooltip-mode.md" >}}
 
 {{< docs/shared "visualizations/legend-mode.md" >}}
@@ -90,7 +86,7 @@ Sets the mode of the gradient fill. Fill gradient is based on the series color. 
 - **None** - No gradient fill. This is the default setting.
 - **Opacity** - An opacity gradient where the opacity of the fill is increasing with the values on the Y-axis.
 - **Hue** - A subtle gradient that based on the hue of the series color.
-- **Scheme** - A color gradient defined by your [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}). This will be used for both the fill area and line. There is more information on this option in [Graph and color scheme]({{< relref "graph-color-scheme/" >}}).
+- **Scheme** - A color gradient defined by your [Color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}). This will be used for both the fill area and line. There is more information on this option in [Scheme gradient mode]({{< relref "#cheme-gradient-mode"  >}}).
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -242,8 +238,6 @@ The most common setup is to use the **Classic palette** for graphs. This scheme 
 Use this mode to set a specific color. You can also click the colored line icon next to each series in the Legend to open the color picker. This will automatically create new override that sets the color scheme to single color and the selected color.
 
 ### By value color schemes
-
-> **Note:** Starting in v8.1 the Time series panel now supports by value color schemes like **From thresholds** of the gradient color schemes.
 
 If you select a by value color scheme like **From thresholds (by value)** or **Green-Yellow-Red (by value)** another option named **Color series by** will show up. This option control what value (Last, Min, Max) to use to assign the series its color.
 
