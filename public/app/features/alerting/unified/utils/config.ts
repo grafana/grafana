@@ -5,7 +5,11 @@ export function getAllDataSources(): Array<DataSourceInstanceSettings<DataSource
   return Object.values(config.datasources);
 }
 
-export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery: string) {
+export function checkEvaluationIntervalGlobalLimit(alertGroupEvaluateEvery?: string) {
+  if (!alertGroupEvaluateEvery || !isValidGoDuration(alertGroupEvaluateEvery)) {
+    return { globalLimit: 0, exceedsLimit: false };
+  }
+
   if (!isValidGoDuration(config.unifiedAlerting.minInterval)) {
     return { globalLimit: 0, exceedsLimit: false };
   }

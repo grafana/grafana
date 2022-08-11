@@ -98,6 +98,15 @@ describe('getHighlighterExpressionsFromQuery', () => {
   it('does not remove backslash escaping if regex filter operator and backticks are used', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |~ `\\w+`')).toEqual(['\\w+']);
   });
+
+  it.each`
+    input          | expected
+    ${'`"test"`'}  | ${'"test"'}
+    ${'"`test`"'}  | ${'`test`'}
+    ${'`"test"a`'} | ${'"test"a'}
+  `('should correctly identify the type of quote used in the term', ({ input, expected }) => {
+    expect(getHighlighterExpressionsFromQuery(`{foo="bar"} |= ${input}`)).toEqual([expected]);
+  });
 });
 
 describe('getNormalizedLokiQuery', () => {

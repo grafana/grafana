@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/web"
@@ -69,7 +70,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgId, saID)
+	saTokens, err := api.store.ListTokens(ctx.Req.Context(), ctx.OrgID, saID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
@@ -124,7 +125,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	}
 
 	// confirm service account exists
-	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgId, saID); err != nil {
+	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
@@ -139,7 +140,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 	}
 
 	// Force affected service account to be the one referenced in the URL
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	if api.cfg.ApiKeyMaxSecondsToLive != -1 {
 		if cmd.SecondsToLive == 0 {
@@ -199,7 +200,7 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 	}
 
 	// confirm service account exists
-	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgId, saID); err != nil {
+	if _, err := api.store.RetrieveServiceAccount(c.Req.Context(), c.OrgID, saID); err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
 			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
@@ -213,12 +214,12 @@ func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Token ID is invalid", err)
 	}
 
-	if err = api.store.DeleteServiceAccountToken(c.Req.Context(), c.OrgId, saID, tokenID); err != nil {
+	if err = api.store.DeleteServiceAccountToken(c.Req.Context(), c.OrgID, saID, tokenID); err != nil {
 		status := http.StatusNotFound
-		if err != nil && !errors.Is(err, models.ErrApiKeyNotFound) {
+		if err != nil && !errors.Is(err, apikey.ErrNotFound) {
 			status = http.StatusInternalServerError
 		} else {
-			err = models.ErrApiKeyNotFound
+			err = apikey.ErrNotFound
 		}
 
 		return response.Error(status, failedToDeleteMsg, err)

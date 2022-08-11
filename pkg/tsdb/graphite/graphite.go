@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -184,7 +184,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

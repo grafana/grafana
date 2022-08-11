@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
@@ -112,7 +113,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 		}
 	}
 
-	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgId, &cmd)
+	serviceAccount, err := api.store.CreateServiceAccount(c.Req.Context(), c.OrgID, &cmd)
 	switch {
 	case errors.Is(err, database.ErrServiceAccountAlreadyExists):
 		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
@@ -122,7 +123,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 
 	if !api.accesscontrol.IsDisabled() {
 		if c.SignedInUser.IsRealUser() {
-			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgId, accesscontrol.User{ID: c.SignedInUser.UserId}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 			}
 		}
@@ -151,7 +152,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	serviceAccount, err := api.store.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
+	serviceAccount, err := api.store.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -211,7 +212,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 		}
 	}
 
-	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgId, scopeID, &cmd)
+	resp, err := api.store.UpdateServiceAccount(c.Req.Context(), c.OrgID, scopeID, &cmd)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
@@ -234,7 +235,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) respon
 	})
 }
 
-func (api *ServiceAccountsAPI) validateRole(r *models.RoleType, orgRole *models.RoleType) error {
+func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole *org.RoleType) error {
 	if r != nil && !r.IsValid() {
 		return serviceaccounts.ErrServiceAccountInvalidRole
 	}
@@ -262,7 +263,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service account ID is invalid", err)
 	}
-	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgId, scopeID)
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
@@ -301,7 +302,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 	if onlyDisabled {
 		filter = serviceaccounts.FilterOnlyDisabled
 	}
-	serviceAccountSearch, err := api.store.SearchOrgServiceAccounts(ctx, c.OrgId, c.Query("query"), filter, page, perPage, c.SignedInUser)
+	serviceAccountSearch, err := api.store.SearchOrgServiceAccounts(ctx, c.OrgID, c.Query("query"), filter, page, perPage, c.SignedInUser)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get service accounts for current organization", err)
 	}
@@ -327,7 +328,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 
 // GET /api/serviceaccounts/migrationstatus
 func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext) response.Response {
-	upgradeStatus, err := api.store.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgId)
+	upgradeStatus, err := api.store.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
@@ -336,7 +337,7 @@ func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext)
 
 // POST /api/serviceaccounts/hideapikeys
 func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.Response {
-	if err := api.store.HideApiKeysTab(ctx.Req.Context(), ctx.OrgId); err != nil {
+	if err := api.store.HideApiKeysTab(ctx.Req.Context(), ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 	return response.Success("API keys hidden")
@@ -344,7 +345,7 @@ func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.R
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
-	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgId); err != nil {
+	if err := api.store.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
 
@@ -358,7 +359,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
 	}
 
-	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgId, keyId); err != nil {
+	if err := api.store.MigrateApiKey(ctx.Req.Context(), ctx.OrgID, keyId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting API key", err)
 	}
 
@@ -391,7 +392,7 @@ func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, sa
 		return map[string]accesscontrol.Metadata{}
 	}
 
-	permissions, ok := c.SignedInUser.Permissions[c.OrgId]
+	permissions, ok := c.SignedInUser.Permissions[c.OrgID]
 	if !ok {
 		return map[string]accesscontrol.Metadata{}
 	}
