@@ -118,9 +118,9 @@ export const RolePicker = ({
     }
     if (canUpdateRoles) {
       onRolesChange(newRoles);
-      setOpen(false);
-      setQuery('');
     }
+    setQuery('');
+    setOpen(false);
   };
 
   const getOptions = () => {
