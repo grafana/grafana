@@ -56,8 +56,8 @@ $gray-7: #fbfbfb;
 
 $white: #ffffff;
 
-$layer0: #FDFDFC;
-$layer1: #F6F5F3;
+$layer0: #F6F5F3;
+$layer1: #FDFDFC;
 $layer2: #FDFDFC;
 
 $divider: rgba(45, 51, 62, 0.12);
@@ -92,9 +92,9 @@ $critical: #CF0E5B;
 
 // Scaffolding
 // -------------------------
-$body-bg: #FDFDFC;
-$page-bg: #FDFDFC;
-$dashboard-bg: #FDFDFC;
+$body-bg: #F6F5F3;
+$page-bg: #F6F5F3;
+$dashboard-bg: #F6F5F3;
 
 $text-color: #2D333E;
 $text-color-strong: #000000;
@@ -127,16 +127,16 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: #F6F5F3;
+$panel-bg: #FDFDFC;
 $panel-border: 1px solid rgba(45, 51, 62, 0.12);
 $panel-header-hover-bg: rgba(45, 51, 62, 0.12);
 $panel-box-shadow: none;
 $panel-corner: $panel-bg;
 
 // Page header
-$page-header-bg: #FDFDFC;
+$page-header-bg: #F6F5F3;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #FDFDFC;
+$page-header-border-color: #F6F5F3;
 
 $divider-border-color: $gray-2;
 
@@ -144,7 +144,7 @@ $divider-border-color: $gray-2;
 $tight-form-func-bg: #FDFDFC;
 $tight-form-func-highlight-bg: #f9f9f6;
 
-$modal-backdrop-bg: #F6F5F3;
+$modal-backdrop-bg: #FDFDFC;
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
@@ -169,8 +169,8 @@ $scrollbarBorder: $gray-7;
 // -------------------------
 $table-bg-accent: #FDFDFC;
 $table-border: rgba(45, 51, 62, 0.30);
-$table-bg-odd: rgb(241, 240, 238);
-$table-bg-hover: rgb(233, 232, 230);
+$table-bg-odd: rgb(247, 247, 246);
+$table-bg-hover: rgb(240, 240, 239);
 
 // Buttons
 // -------------------------
@@ -206,7 +206,7 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: #F6F5F3;
+$input-bg: #FDFDFC;
 $input-bg-disabled: rgba(45, 51, 62, 0.04);
 
 $input-color: #2D333E;
@@ -228,7 +228,7 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: #F6F5F3;
+$dropdownBackground: #FDFDFC;
 $dropdownBorder: rgba(45, 51, 62, 0.12);
 $dropdownDividerTop: rgba(45, 51, 62, 0.12);
 $dropdownDividerBottom: rgba(45, 51, 62, 0.12);
@@ -262,7 +262,7 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: #F6F5F3;
+$menu-dropdown-bg: #FDFDFC;
 $menu-dropdown-hover-bg: rgba(45, 51, 62, 0.12);
 $menu-dropdown-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
@@ -288,7 +288,7 @@ $tooltipArrowColor: #FDFDFC;
 $tooltipBackgroundError: #E0226E;
 $tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.2);
 
-$popover-bg: #F6F5F3;
+$popover-bg: #FDFDFC;
 $popover-color: #2D333E;
 $popover-border-color: rgba(45, 51, 62, 0.12);
 $popover-header-bg: #FDFDFC;
@@ -304,7 +304,7 @@ $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
-$popover-code-bg: #F6F5F3;
+$popover-code-bg: #FDFDFC;
 $popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
