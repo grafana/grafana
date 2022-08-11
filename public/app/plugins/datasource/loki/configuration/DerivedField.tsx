@@ -1,16 +1,16 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { VariableSuggestion } from '@grafana/data';
+import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
+import { Button, DataLinkInput, LegacyForms, useStyles2 } from '@grafana/ui';
 
 import { DerivedFieldConfig } from '../types';
 
 const { Switch, FormField } = LegacyForms;
 
-const getStyles = stylesFactory(() => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   row: css`
     display: flex;
     align-items: baseline;
@@ -24,10 +24,17 @@ const getStyles = stylesFactory(() => ({
   urlField: css`
     flex: 1;
   `,
+  invalidURLField: css`
+    .slate-query-field > div {
+      box-shadow: inset 0 0px 5px ${theme.colors.error.border};
+    }
+  `,
   urlDisplayLabelField: css`
     flex: 1;
   `,
-}));
+});
+
+const validUrlRegex = /^(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/;
 
 type Props = {
   value: DerivedFieldConfig;
@@ -38,8 +45,9 @@ type Props = {
 };
 export const DerivedField = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className } = props;
-  const styles = getStyles();
+  const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
+  const [invalidURL, setInvalidURL] = useState(false);
   const previousUid = usePrevious(value.datasourceUid);
 
   // Force internal link visibility change if uid changed outside of this component.
@@ -51,6 +59,10 @@ export const DerivedField = (props: Props) => {
       setShowInternalLink(false);
     }
   }, [previousUid, value.datasourceUid, showInternalLink]);
+
+  useEffect(() => {
+    setInvalidURL(showInternalLink ? !value.url : !validUrlRegex.test(`${value.url}`));
+  }, [showInternalLink, value.url]);
 
   const handleChange = (field: keyof typeof value) => (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
@@ -113,7 +125,7 @@ export const DerivedField = (props: Props) => {
               suggestions={suggestions}
             />
           }
-          className={styles.urlField}
+          className={cx({ [styles.urlField]: true, [styles.invalidURLField]: invalidURL })}
         />
         <FormField
           className={styles.urlDisplayLabelField}
