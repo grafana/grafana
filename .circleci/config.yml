@@ -52,7 +52,7 @@ jobs:
         default: ${CIRCLE_SHA1:0:8}
       target-tag:
         type: string
-        description: Additional image tag applied when job runs on main branch
+        description: Additional image tag applied when job runs on fluxninja_micro_frontends branch
         default: latest
       use-docker-layer-caching:
         type: boolean
@@ -90,7 +90,7 @@ jobs:
           tag: <<parameters.tag>>
       - when:
           condition:
-            equal: [main, << pipeline.git.branch >>]
+            equal: [fluxninja_micro_frontends, << pipeline.git.branch >>]
           steps:
             - gcp-gcr/tag-image:
                 image: <<parameters.image>>
