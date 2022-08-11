@@ -42,7 +42,11 @@ There are three map layer types to choose from in the Geomap visualization.
 
 - [Markers]({{< relref "markers/" >}}) renders static data from a geojson file.
 - [Heatmap]({{< relref "heatmap/" >}}) visualizes a heatmap of the data.
-- [GeoJSON]({{< relref "geojson/" >}}) renders a marker at each data point.
+- [GeoJSON]({{< relref "geojson/" >}}) renders a marker at each data point.<br /><br />
+- [Night / Day (alpha)]({{< relref "daynight/" >}}) renders a night / day region.
+- **Icon at last point (alpha)** renders an icon at the last data point.
+- **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
+- **Route (alpha)** render data points as a route.
 
 > **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. An opacity control is provided.
 
