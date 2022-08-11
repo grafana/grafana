@@ -1,10 +1,12 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { locationService, setBackendSrv } from '@grafana/runtime';
+import { NavModel, NavModelItem } from '@grafana/data';
+import { setBackendSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { configureStore } from 'app/store/configureStore';
 
 import { DashboardModel } from '../../state';
@@ -24,7 +26,6 @@ setBackendSrv({
 
 describe('DashboardSettings', () => {
   it('pressing escape navigates away correctly', async () => {
-    jest.spyOn(locationService, 'partial');
     const dashboard = new DashboardModel(
       {
         title: 'Foo',
@@ -33,23 +34,22 @@ describe('DashboardSettings', () => {
         folderId: 1,
       }
     );
+
     const store = configureStore();
+    const context = getGrafanaContextMock();
+    const sectionNav: NavModel = { main: { text: 'Dashboards' }, node: { text: 'Dashboards' } };
+    const pageNav: NavModelItem = { text: 'My cool dashboard' };
+
     render(
-      <Provider store={store}>
-        <BrowserRouter>
-          <DashboardSettings editview="settings" dashboard={dashboard} />
-        </BrowserRouter>
-      </Provider>
+      <GrafanaContext.Provider value={context}>
+        <Provider store={store}>
+          <BrowserRouter>
+            <DashboardSettings editview="settings" dashboard={dashboard} sectionNav={sectionNav} pageNav={pageNav} />
+          </BrowserRouter>
+        </Provider>
+      </GrafanaContext.Provider>
     );
 
-    expect(
-      screen.getByText(
-        (_, el) => el?.tagName.toLowerCase() === 'h1' && /Foo\s*\/\s*Settings/.test(el?.textContent ?? '')
-      )
-    ).toBeInTheDocument();
-
-    await userEvent.keyboard('{Escape}');
-
-    expect(locationService.partial).toHaveBeenCalledWith({ editview: null });
+    expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();
   });
 });

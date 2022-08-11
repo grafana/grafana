@@ -111,6 +111,9 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             match: { params: { slug: 'my-dash', uid: '11' } } as any,
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
+          navIndex: {
+            dashboards: { text: 'Dashboards' },
+          },
           initPhase: DashboardInitPhase.NotStarted,
           initError: null,
           initDashboard: jest.fn(),

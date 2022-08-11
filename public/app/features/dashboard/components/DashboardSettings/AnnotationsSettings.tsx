@@ -33,7 +33,6 @@ export function AnnotationsSettings({ dashboard, editIndex }: SettingsPageProps)
 
   return (
     <>
-      <DashboardSettingsHeader title="Annotations" onGoBack={onGoBack} isEditing={isEditing} />
       {!isEditing && <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
       {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIndex!} />}
     </>

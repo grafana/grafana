@@ -50,8 +50,10 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   const subPageNav = getSubPageNav(dashboard, currentPage, editIndex, location);
 
   const actions = [
-    canSaveAs && <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onPostSave} variant="secondary" />,
-    canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onPostSave} />,
+    canSaveAs && (
+      <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={onPostSave} variant="secondary" key="save as" />
+    ),
+    canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onPostSave} key="Save" />,
   ];
 
   return (
@@ -167,7 +169,7 @@ function getSectionNav(
     text: page.title,
     icon: page.icon,
     id: page.id,
-    url: locationUtil.getUrlForPartial(location, { editview: page.id }),
+    url: locationUtil.getUrlForPartial(location, { editview: page.id, editIndex: null }),
     active: page === currentPage,
   }));
 
