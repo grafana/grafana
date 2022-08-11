@@ -171,6 +171,7 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 		Name:  u.Name,
 	}
 }
+
 func (u *SignedInUser) HasRole(role org.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
@@ -181,6 +182,21 @@ func (u *SignedInUser) HasRole(role org.RoleType) bool {
 
 func (u *SignedInUser) IsRealUser() bool {
 	return u.UserId != 0
+}
+
+func (u *SignedInUser) IsApiKeyUser() bool {
+	return u.ApiKeyId != 0
+}
+
+func (u *SignedInUser) HasUniqueId() bool {
+	return u.IsRealUser() || u.IsApiKeyUser()
+}
+
+func (u *SignedInUser) GetCacheKey() string {
+	if u.UserId != 0 {
+		return fmt.Sprintf("%d-user-%d", u.OrgId, u.UserId)
+	}
+	return fmt.Sprintf("%d-apikey-%d", u.OrgId, u.ApiKeyId)
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
