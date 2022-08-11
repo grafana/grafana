@@ -351,8 +351,8 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.PostAnnotation(c)
@@ -380,8 +380,8 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.UpdateAnnotation(c)
@@ -408,8 +408,8 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.PatchAnnotation(c)
@@ -436,8 +436,8 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.MassDeleteAnnotations(c)
@@ -789,7 +789,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			setUpRBACGuardian(t)
 			sc.acmock.
 				RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
-			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgID)
 
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
 			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
@@ -982,7 +982,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setUpRBACGuardian(t)
-			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgID)
 			dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 			organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
 

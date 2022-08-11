@@ -18,13 +18,13 @@ func TestUpdateTeam(t *testing.T) {
 
 	t.Run("Updating a team", func(t *testing.T) {
 		admin := user.SignedInUser{
-			UserId:  1,
-			OrgId:   1,
+			UserID:  1,
+			OrgID:   1,
 			OrgRole: org.RoleAdmin,
 		}
 		editor := user.SignedInUser{
-			UserId:  2,
-			OrgId:   1,
+			UserID:  2,
+			OrgID:   1,
 			OrgRole: org.RoleEditor,
 		}
 		testTeam := models.Team{
@@ -48,7 +48,7 @@ func TestUpdateTeam(t *testing.T) {
 				result := []*models.TeamMemberDTO{{
 					OrgId:      testTeam.OrgId,
 					TeamId:     testTeam.Id,
-					UserId:     editor.UserId,
+					UserId:     editor.UserID,
 					Permission: models.PERMISSION_ADMIN,
 				}}
 
@@ -70,7 +70,7 @@ func TestUpdateTeam(t *testing.T) {
 				result := []*models.TeamMemberDTO{{
 					OrgId:      testTeamOtherOrg.OrgId,
 					TeamId:     testTeamOtherOrg.Id,
-					UserId:     editor.UserId,
+					UserId:     editor.UserID,
 					Permission: models.PERMISSION_ADMIN,
 				}}
 

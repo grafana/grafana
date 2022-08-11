@@ -97,9 +97,9 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *user.Si
 	}
 
 	userMap := make(map[int64]*commentmodel.CommentUser, 1)
-	if signedInUser.UserId > 0 {
-		userMap[signedInUser.UserId] = &commentmodel.CommentUser{
-			Id:        signedInUser.UserId,
+	if signedInUser.UserID > 0 {
+		userMap[signedInUser.UserID] = &commentmodel.CommentUser{
+			Id:        signedInUser.UserID,
 			Name:      signedInUser.Name,
 			Login:     signedInUser.Login,
 			Email:     signedInUser.Email,
@@ -107,7 +107,7 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *user.Si
 		}
 	}
 
-	m, err := s.storage.Create(ctx, orgID, cmd.ObjectType, cmd.ObjectID, signedInUser.UserId, cmd.Content)
+	m, err := s.storage.Create(ctx, orgID, cmd.ObjectType, cmd.ObjectID, signedInUser.UserID, cmd.Content)
 	if err != nil {
 		return nil, err
 	}

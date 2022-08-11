@@ -352,8 +352,8 @@ func updateDashboardPermissionScenario(t *testing.T, ctx updatePermissionContext
 			c.Req.Body = mockRequestBody(ctx.cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.OrgId = testOrgID
-			sc.context.UserId = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.UserID = testUserID
 
 			return hs.UpdateDashboardPermissions(c)
 		})

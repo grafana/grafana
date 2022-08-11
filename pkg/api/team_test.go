@@ -136,7 +136,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			logger := &logtest.Fake{}
 			c := &models.ReqContext{
 				Context:      &web.Context{Req: req},
-				SignedInUser: &user.SignedInUser{UserId: 42},
+				SignedInUser: &user.SignedInUser{UserID: 42},
 				Logger:       logger,
 			}
 			c.OrgRole = org.RoleEditor

@@ -107,7 +107,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, int64(0), sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When creating a new dashboard in other folder, it should create dashboard guardian for other folder with correct arguments and rsult in access denied error",
@@ -127,7 +127,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When creating a new dashboard by existing title in folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
@@ -147,7 +147,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When creating a new dashboard by existing UID in folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
@@ -168,7 +168,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When updating a dashboard by existing id in the General folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
@@ -189,7 +189,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When updating a dashboard by existing id in other folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
@@ -210,7 +210,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When moving a dashboard by existing ID to other folder from General folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
@@ -231,7 +231,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When moving a dashboard by existing id to the General folder from other folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
@@ -252,7 +252,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When moving a dashboard by existing uid to other folder from General folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
@@ -273,7 +273,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 
 			permissionScenario(t, "When moving a dashboard by existing UID to the General folder from other folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
@@ -294,7 +294,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
 					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
-					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserID)
 				})
 		})
 
@@ -919,7 +919,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &user.SignedInUser{
-			UserId:  1,
+			UserID:  1,
 			OrgRole: org.RoleAdmin,
 		},
 	}
@@ -956,7 +956,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.
 		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &user.SignedInUser{
-			UserId:  1,
+			UserID:  1,
 			OrgRole: org.RoleAdmin,
 		},
 	}
@@ -984,7 +984,7 @@ func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashboards.SaveDashboar
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     cmd.OrgId,
-		User:      &user.SignedInUser{UserId: cmd.UserId},
+		User:      &user.SignedInUser{UserID: cmd.UserId},
 		Overwrite: cmd.Overwrite,
 	}
 }

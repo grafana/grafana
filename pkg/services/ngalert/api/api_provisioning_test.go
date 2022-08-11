@@ -76,7 +76,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("GET returns 404", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgId = 2
+				rc.SignedInUser.OrgID = 2
 
 				response := sut.RouteGetPolicyTree(&rc)
 
@@ -86,7 +86,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("POST returns 404", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgId = 2
+				rc.SignedInUser.OrgID = 2
 
 				response := sut.RouteGetPolicyTree(&rc)
 
@@ -405,7 +405,7 @@ func createTestRequestCtx() gfcore.ReqContext {
 			Req: &http.Request{},
 		},
 		SignedInUser: &user.SignedInUser{
-			OrgId: 1,
+			OrgID: 1,
 		},
 	}
 }

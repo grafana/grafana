@@ -96,6 +96,40 @@ type UpdateUserLastSeenAtCommand struct {
 	UserID int64
 }
 
+type SetUsingOrgCommand struct {
+	UserID int64
+	OrgID  int64
+}
+
+type GetSignedInUserQuery struct {
+	UserID int64
+	Login  string
+	Email  string
+	OrgID  int64
+}
+
+type SignedInUser struct {
+	UserID             int64 `xorm:"user_id"`
+	OrgID              int64 `xorm:"org_id"`
+	OrgName            string
+	OrgRole            org.RoleType
+	ExternalAuthModule string
+	ExternalAuthID     string
+	Login              string
+	Name               string
+	Email              string
+	ApiKeyID           int64 `xorm:"api_key_id"`
+	OrgCount           int
+	IsGrafanaAdmin     bool
+	IsAnonymous        bool
+	IsDisabled         bool
+	HelpFlags1         HelpFlags1
+	LastSeenAt         time.Time
+	Teams              []int64
+	// Permissions grouped by orgID and actions
+	Permissions map[int64]map[string][]string `json:"-"`
+}
+
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
@@ -118,28 +152,6 @@ type ErrCaseInsensitiveLoginConflict struct {
 	Users []User
 }
 
-type SignedInUser struct {
-	UserId             int64
-	OrgId              int64
-	OrgName            string
-	OrgRole            org.RoleType
-	ExternalAuthModule string
-	ExternalAuthId     string
-	Login              string
-	Name               string
-	Email              string
-	ApiKeyId           int64
-	OrgCount           int
-	IsGrafanaAdmin     bool
-	IsAnonymous        bool
-	IsDisabled         bool
-	HelpFlags1         HelpFlags1
-	LastSeenAt         time.Time
-	Teams              []int64
-	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string][]string `json:"-"`
-}
-
 type UserDisplayDTO struct {
 	Id        int64  `json:"id,omitempty"`
 	Name      string `json:"name,omitempty"`
@@ -151,7 +163,7 @@ type UserDisplayDTO struct {
 // DTO & Projections
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
-	return u.UserId > 0 && time.Since(u.LastSeenAt) > time.Minute*5
+	return u.UserID > 0 && time.Since(u.LastSeenAt) > time.Minute*5
 }
 
 func (u *SignedInUser) NameOrFallback() string {
@@ -166,7 +178,7 @@ func (u *SignedInUser) NameOrFallback() string {
 
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
-		Id:    u.UserId,
+		Id:    u.UserID,
 		Login: u.Login,
 		Name:  u.Name,
 	}
@@ -180,7 +192,7 @@ func (u *SignedInUser) HasRole(role org.RoleType) bool {
 }
 
 func (u *SignedInUser) IsRealUser() bool {
-	return u.UserId != 0
+	return u.UserID != 0
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {

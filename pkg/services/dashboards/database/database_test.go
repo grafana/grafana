@@ -308,7 +308,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			Title: "1 test dash folder",
 			OrgId: 1,
 			SignedInUser: &user.SignedInUser{
-				OrgId:   1,
+				OrgID:   1,
 				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}},
@@ -332,7 +332,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 			Limit: 1,
 			SignedInUser: &user.SignedInUser{
-				OrgId:   1,
+				OrgID:   1,
 				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}},
@@ -354,7 +354,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			Limit: 1,
 			Page:  2,
 			SignedInUser: &user.SignedInUser{
-				OrgId:   1,
+				OrgID:   1,
 				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {
@@ -379,7 +379,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			Type:  "dash-db",
 			Tags:  []string{"prod"},
 			SignedInUser: &user.SignedInUser{
-				OrgId:   1,
+				OrgID:   1,
 				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -400,7 +400,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId:     1,
 			FolderIds: []int64{savedFolder.Id},
 			SignedInUser: &user.SignedInUser{
-				OrgId:   1,
+				OrgID:   1,
 				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -426,7 +426,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{savedDash.Id, savedDash2.Id},
 			SignedInUser: &user.SignedInUser{
-				OrgId:   1,
+				OrgID:   1,
 				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -463,8 +463,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		query := models.FindPersistedDashboardsQuery{
 			SignedInUser: &user.SignedInUser{
-				UserId:  10,
-				OrgId:   1,
+				UserID:  10,
+				OrgID:   1,
 				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -515,8 +515,8 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	assert.Less(t, dashB.Id, dashA.Id)
 	qNoSort := &models.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
-			OrgId:   1,
-			UserId:  1,
+			OrgID:   1,
+			UserID:  1,
 			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -531,8 +531,8 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 
 	qSort := &models.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
-			OrgId:   1,
-			UserId:  1,
+			OrgID:   1,
+			UserID:  1,
 			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -561,8 +561,8 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
-			OrgId:   1,
-			UserId:  1,
+			OrgID:   1,
+			UserID:  1,
 			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
@@ -575,8 +575,8 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 
 	qFilter := &models.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
-			OrgId:   1,
-			UserId:  1,
+			OrgID:   1,
+			UserID:  1,
 			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},

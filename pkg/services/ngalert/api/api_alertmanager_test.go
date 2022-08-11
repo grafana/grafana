@@ -170,7 +170,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			SignedInUser: &user.SignedInUser{
-				OrgId: 12,
+				OrgID: 12,
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -187,7 +187,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			SignedInUser: &user.SignedInUser{
-				OrgId: 1,
+				OrgID: 1,
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -204,7 +204,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			SignedInUser: &user.SignedInUser{
-				OrgId: 3, // Org 3 was initialized with broken config.
+				OrgID: 3, // Org 3 was initialized with broken config.
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -335,7 +335,7 @@ func TestSilenceCreate(t *testing.T) {
 				},
 				SignedInUser: &user.SignedInUser{
 					OrgRole: org.RoleEditor,
-					OrgId:   1,
+					OrgID:   1,
 				},
 			}
 
@@ -461,7 +461,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				},
 				SignedInUser: &user.SignedInUser{
 					OrgRole: tesCase.role,
-					OrgId:   1,
+					OrgID:   1,
 				},
 			}
 
@@ -627,7 +627,7 @@ func createRequestCtxInOrg(org int64) *models.ReqContext {
 			Req: &http.Request{},
 		},
 		SignedInUser: &user.SignedInUser{
-			OrgId: org,
+			OrgID: org,
 		},
 	}
 }

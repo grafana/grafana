@@ -161,7 +161,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.Equal(t, 200, sc.resp.Code)
 
 		assert.True(t, sc.context.IsSignedIn)
-		assert.Equal(t, orgID, sc.context.OrgId)
+		assert.Equal(t, orgID, sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 	})
 
@@ -195,7 +195,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: 2, UserId: userID}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -209,7 +209,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NotNil(t, sc.context)
 		require.NotNil(t, sc.context.UserToken)
 		assert.True(t, sc.context.IsSignedIn)
-		assert.Equal(t, userID, sc.context.UserId)
+		assert.Equal(t, userID, sc.context.UserID)
 		assert.Equal(t, userID, sc.context.UserToken.UserId)
 		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
 		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
@@ -219,7 +219,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: 2, UserId: userID}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -266,7 +266,7 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.fakeReq("GET", "/").exec()
 
 				assert.True(t, sc.context.IsSignedIn)
-				assert.Equal(t, userID, sc.context.UserId)
+				assert.Equal(t, userID, sc.context.UserID)
 				assert.Equal(t, userID, sc.context.UserToken.UserId)
 				assert.Equal(t, "rotated", sc.context.UserToken.UnhashedToken)
 				assert.Equal(t, expectedCookie.String(), sc.resp.Header().Get("Set-Cookie"))
@@ -311,7 +311,7 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.fakeReq("GET", "/").exec()
 
 		assert.False(t, sc.context.IsSignedIn)
-		assert.Equal(t, int64(0), sc.context.UserId)
+		assert.Equal(t, int64(0), sc.context.UserID)
 		assert.Nil(t, sc.context.UserToken)
 	})
 
@@ -321,8 +321,8 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 		sc.fakeReq("GET", "/").exec()
 
-		assert.Equal(t, int64(0), sc.context.UserId)
-		assert.Equal(t, orga.Id, sc.context.OrgId)
+		assert.Equal(t, int64(0), sc.context.UserID)
+		assert.Equal(t, orga.Id, sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 		assert.False(t, sc.context.IsSignedIn)
 	}, func(cfg *setting.Cfg) {
@@ -350,7 +350,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const group = "grafana-core-team"
 
 		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 
 			h, err := authproxy.HashCacheKey(hdrName + "-" + group)
 			require.NoError(t, err)
@@ -364,8 +364,8 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, orgID, sc.context.OrgId)
+			assert.Equal(t, userID, sc.context.UserID)
+			assert.Equal(t, orgID, sc.context.OrgID)
 		}, configure)
 
 		middlewareScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
@@ -390,7 +390,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
@@ -398,8 +398,8 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, orgID, sc.context.OrgId)
+			assert.Equal(t, userID, sc.context.UserID)
+			assert.Equal(t, orgID, sc.context.OrgID)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
@@ -410,7 +410,7 @@ func TestMiddlewareContext(t *testing.T) {
 			var storedRoleInfo map[int64]org.RoleType = nil
 			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: defaultOrgId, UserId: userID, OrgRole: storedRoleInfo[defaultOrgId]}
+				sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: defaultOrgId, UserID: userID, OrgRole: storedRoleInfo[defaultOrgId]}
 				return &user.User{ID: userID}
 			}
 
@@ -420,8 +420,8 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, defaultOrgId, sc.context.OrgId)
+			assert.Equal(t, userID, sc.context.UserID)
+			assert.Equal(t, defaultOrgId, sc.context.OrgID)
 			assert.Equal(t, orgRole, string(sc.context.OrgRole))
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
@@ -433,7 +433,7 @@ func TestMiddlewareContext(t *testing.T) {
 			var storedRoleInfo map[int64]org.RoleType = nil
 			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID, OrgRole: storedRoleInfo[orgID]}
+				sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID, OrgRole: storedRoleInfo[orgID]}
 				return &user.User{ID: userID}
 			}
 
@@ -444,8 +444,8 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, orgID, sc.context.OrgId)
+			assert.Equal(t, userID, sc.context.UserID)
+			assert.Equal(t, orgID, sc.context.OrgID)
 
 			// For non-default org, the user role should be empty
 			assert.Equal(t, "", string(sc.context.OrgRole))
@@ -457,7 +457,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should use organisation specified by targetOrgId parameter", func(t *testing.T, sc *scenarioContext) {
 			var targetOrgID int64 = 123
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: targetOrgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: targetOrgID, UserID: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", fmt.Sprintf("/?targetOrgId=%d", targetOrgID))
@@ -465,8 +465,8 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, targetOrgID, sc.context.OrgId)
+			assert.Equal(t, userID, sc.context.UserID)
+			assert.Equal(t, targetOrgID, sc.context.OrgID)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
@@ -531,7 +531,7 @@ func TestMiddlewareContext(t *testing.T) {
 			const userID int64 = 12
 			const orgID int64 = 2
 
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
@@ -539,15 +539,15 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, orgID, sc.context.OrgId)
+			assert.Equal(t, userID, sc.context.UserID)
+			assert.Equal(t, orgID, sc.context.OrgID)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
 		})
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgId: orgID, UserId: userID}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
@@ -556,8 +556,8 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, userID, sc.context.UserId)
-			assert.Equal(t, orgID, sc.context.OrgId)
+			assert.Equal(t, userID, sc.context.UserID)
+			assert.Equal(t, orgID, sc.context.OrgID)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
@@ -636,6 +636,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
+		sc.userService = usertest.NewUserServiceFake()
 		sc.m.Use(OrgRedirect(sc.cfg, sc.mockSQLStore))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)

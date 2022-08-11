@@ -178,7 +178,7 @@ func TestFilter_Datasources(t *testing.T) {
 			baseSql := `SELECT data_source.* FROM data_source WHERE`
 			acFilter, err := accesscontrol.Filter(
 				&user.SignedInUser{
-					OrgId:       1,
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: tt.permissions},
 				},
 				tt.sqlID,

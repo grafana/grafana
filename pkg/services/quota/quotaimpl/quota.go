@@ -42,8 +42,8 @@ func (s *Service) QuotaReached(c *models.ReqContext, target string) (bool, error
 	var params *quota.ScopeParameters
 	if c.IsSignedIn {
 		params = &quota.ScopeParameters{
-			OrgID:  c.OrgId,
-			UserID: c.UserId,
+			OrgID:  c.OrgID,
+			UserID: c.UserID,
 		}
 	}
 	return s.CheckQuotaReached(c.Req.Context(), target, params)
