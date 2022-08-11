@@ -56,30 +56,30 @@ Use this option to define how to display your time series data. You can use over
 - Bars
 - Points
 
-![Style modes](http://localhost:3002//static/img/docs/time-series-panel/style-modes-v9.png)
+![Style modes](/static/img/docs/time-series-panel/style-modes-v9.png)
 
 ### Bar alignment
 
 Set the position of the bar relative to a data point. In the examples below, **Show points** is set to **Always** which makes it easier to see the difference this setting makes. The points do not change; the bars change in relationship to the points.
 
-- **Before** ![Bar alignment before icon](http://localhost:3002/static/img/docs/time-series-panel/bar-alignment-before.png)
+- **Before** ![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-before.png)
   The bar is drawn before the point. The point is placed on the trailing corner of the bar.
-- **Center** ![Bar alignment center icon](http://localhost:3002/static/img/docs/time-series-panel/bar-alignment-center.png)
+- **Center** ![Bar alignment center icon](/static/img/docs/time-series-panel/bar-alignment-center.png)
   The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
-- **After** ![Bar alignment after icon](http://localhost:3002/static/img/docs/time-series-panel/bar-alignment-after.png)
+- **After** ![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-after.png)
   The bar is drawn after the point. The point is placed on the leading corner of the bar.
 
 ### Line width
 
 Line width is a slider that controls the thickness for series lines or the outline for bars.
 
-![Line thickness 5 example](http://localhost:3002//static/img/docs/time-series-panel/line-width-5.png)
+![Line thickness 5 example](/static/img/docs/time-series-panel/line-width-5.png)
 
 ### Fill opacity
 
 Use opacity to specify the series area fill color.
 
-![Fill opacity examples](http://localhost:3002/static/img/docs/time-series-panel/fill-opacity.png)
+![Fill opacity examples](/static/img/docs/time-series-panel/fill-opacity.png)
 
 ### Gradient mode
 
@@ -92,7 +92,7 @@ Gradient mode specifies the gradient fill, which is based on the series color. T
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
 
-![Gradient mode examples](http://localhost:3002/static/img/docs/time-series-panel/gradient-modes-v9.png)
+![Gradient mode examples](/static/img/docs/time-series-panel/gradient-modes-v9.png)
 
 ### Show points
 
@@ -110,7 +110,7 @@ Set the size of the points, from 1 to 40 pixels in diameter.
 
 This option controls how the graph interpolates the series line.
 
-![Line interpolation option](http://localhost:3002/static/img/docs/time-series-panel/line-interpolation-option.png)
+![Line interpolation option](/static/img/docs/time-series-panel/line-interpolation-option.png)
 
 - **Linear:** Points are joined by straight lines.
 - **Smooth:** Points are joined by curved lines that smooths transitions between points.
@@ -121,19 +121,19 @@ This option controls how the graph interpolates the series line.
 
 Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../panels/configure-standard-options/#color-scheme" >}}) field option.
 
-![Line style option](http://localhost:3002/static/img/docs/time-series-panel/line-style-option-v9.png)
+![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
 
 - **Solid:** Display a solid line. This is the default setting.
 - **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
 - **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
 
-![Line styles examples](http://localhost:3002/static/img/docs/time-series-panel/line-styles-examples-v9.png)
+![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
 ### Connect null values
 
 Choose how null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected.
 
-![Connect null values option](http://localhost:3002/static/img/docs/time-series-panel/connect-null-values-option-v9.png)
+![Connect null values option](/static/img/docs/time-series-panel/connect-null-values-option-v9.png)
 
 - **Never:** Time series data points with gaps in the the data are never connected.
 - **Always:** Time series data points with gaps in the the data are always connected.
@@ -143,7 +143,7 @@ Choose how null values, which are gaps in the data, appear on the graph. Null va
 
 _Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html).
 
-![Stack option](http://localhost:3002/static/img/docs/time-series-panel/stack-option-v9.png)
+![Stack option](/static/img/docs/time-series-panel/stack-option-v9.png)
 
 - **Off:** Turns off series stacking. When **Off**, all series share the same space in the visualization.
 - **Normal:** Stacks series on top of each other.
@@ -206,7 +206,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options]({{< relref "../../panels/configure-standard-options/#max" >}}).
 
-![Label example](http://localhost:3002/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
+![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
 ### Scale
 
