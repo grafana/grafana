@@ -3,8 +3,8 @@
  *
  * It includes auto-complete for template data and syntax highlighting
  */
-import { editor, IMarkdownString, IRange, languages } from 'monaco-editor';
-import React, { FC } from 'react';
+import { editor, IDisposable, IMarkdownString, IRange, languages, Position } from 'monaco-editor';
+import React, { FC, useEffect, useRef } from 'react';
 
 import { CodeEditor, Monaco } from '@grafana/ui';
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
@@ -18,6 +18,7 @@ type TemplateEditorProps = Omit<CodeEditorProps, 'language' | 'theme'> & {
 
 const TemplateEditor: FC<TemplateEditorProps> = (props) => {
   const shouldAutoHeight = Boolean(props.autoHeight);
+  const disposeSuggestions = useRef<IDisposable | null>(null);
 
   const onEditorDidMount = (editor: editor.IStandaloneCodeEditor) => {
     if (shouldAutoHeight) {
@@ -31,6 +32,12 @@ const TemplateEditor: FC<TemplateEditorProps> = (props) => {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      disposeSuggestions.current?.dispose();
+    };
+  });
+
   return (
     <CodeEditor
       showLineNumbers={true}
@@ -40,7 +47,7 @@ const TemplateEditor: FC<TemplateEditorProps> = (props) => {
       onEditorDidMount={onEditorDidMount}
       onBeforeEditorMount={(monaco) => {
         registerLanguage(monaco, goTemplateLanguageDefinition);
-        registerSuggestions(monaco);
+        disposeSuggestions.current = registerSuggestions(monaco);
       }}
       language={GO_TEMPLATE_LANGUAGE_ID}
     />
@@ -48,7 +55,7 @@ const TemplateEditor: FC<TemplateEditorProps> = (props) => {
 };
 
 function registerSuggestions(monaco: Monaco) {
-  monaco.languages.registerCompletionItemProvider('go-template', {
+  return monaco.languages.registerCompletionItemProvider('go-template', {
     triggerCharacters: ['.'],
     provideCompletionItems(model, position) {
       const wordBeforeDot = model.getWordUntilPosition({
@@ -57,8 +64,6 @@ function registerSuggestions(monaco: Monaco) {
       });
       const word = model.getWordUntilPosition(position);
 
-      console.log(wordBeforeDot);
-
       const range = {
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
@@ -66,10 +71,10 @@ function registerSuggestions(monaco: Monaco) {
         endColumn: word.endColumn,
       };
 
-      if (!wordBeforeDot.word) {
-        return { suggestions: buildTopLevelSuggestions(range) };
-      } else if (wordBeforeDot.word === 'Alerts') {
-        return { suggestions: buildAlertsSuggestions(range) };
+      const insideExpression = isInsideGoExpression(model, position);
+
+      if (!insideExpression) {
+        return { suggestions: [] };
       }
 
       switch (wordBeforeDot.word) {
@@ -90,8 +95,22 @@ function registerSuggestions(monaco: Monaco) {
   });
 }
 
+function isInsideGoExpression(model: editor.ITextModel, position: Position) {
+  const searchRange = {
+    startLineNumber: position.lineNumber,
+    endLineNumber: position.lineNumber,
+    startColumn: model.getLineMinColumn(position.lineNumber),
+    endColumn: model.getLineMaxColumn(position.lineNumber),
+  };
+
+  const goSyntaxRegex = '\\{\\{[a-zA-Z0-9._() "]+\\}\\}';
+  const matches = model.findMatches(goSyntaxRegex, searchRange, true, false, null, true);
+
+  return matches.some((match) => match.range.containsPosition(position));
+}
+
 function buildTopLevelSuggestions(range: IRange) {
-  return [
+  const globalSuggestions = [
     buildAutocompleteSuggestion({
       label: 'Alerts',
       range,
@@ -104,6 +123,26 @@ function buildTopLevelSuggestions(range: IRange) {
     buildAutocompleteSuggestion({ label: 'CommonLabels', range, type: '[]KeyValue' }),
     buildAutocompleteSuggestion({ label: 'CommonAnnotations', range, type: '[]KeyValue' }),
     buildAutocompleteSuggestion({ label: 'ExternalURL', range, type: 'string' }),
+  ];
+
+  const alertSuggestions = buildSingleAlertSuggestions(range);
+
+  return [...globalSuggestions, ...alertSuggestions];
+}
+
+function buildSingleAlertSuggestions(range: IRange) {
+  return [
+    buildAutocompleteSuggestion({ label: 'Status', range, type: '(Alert) string' }),
+    buildAutocompleteSuggestion({ label: 'Labels', range, type: '(Alert) []KeyValue' }),
+    buildAutocompleteSuggestion({ label: 'Annotations', range, type: '(Alert) []KeyValue' }),
+    buildAutocompleteSuggestion({ label: 'StartsAt', range, type: 'time.Time' }),
+    buildAutocompleteSuggestion({ label: 'EndsAt', range, type: 'time.Time' }),
+    buildAutocompleteSuggestion({ label: 'GeneratorURL', range, type: 'string' }),
+    buildAutocompleteSuggestion({ label: 'SilenceURL', range, type: 'string' }),
+    buildAutocompleteSuggestion({ label: 'DashboardURL', range, type: 'string' }),
+    buildAutocompleteSuggestion({ label: 'PanelURL', range, type: 'string' }),
+    buildAutocompleteSuggestion({ label: 'Fingerprint', range, type: 'string' }),
+    buildAutocompleteSuggestion({ label: 'ValueString', range, type: 'string' }),
   ];
 }
 
