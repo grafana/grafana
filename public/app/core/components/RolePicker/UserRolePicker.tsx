@@ -59,7 +59,7 @@ export const UserRolePicker: FC<Props> = ({
   }, [orgId, getUserRoles, pendingRoles]);
 
   const canUpdateRoles =
-    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) ||
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
   // if a user cannot update roles of another user mark every role as non delegatable
