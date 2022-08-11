@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -23,6 +24,7 @@ type gitExportJob struct {
 	logger                    log.Logger
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
+	playlistService           playlist.Service
 	rootDir                   string
 
 	statusMu    sync.Mutex
@@ -32,19 +34,22 @@ type gitExportJob struct {
 	helper      *commitHelper
 }
 
-func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore, dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64, broadcaster statusBroadcaster) (Job, error) {
+func startGitExportJob(cfg ExportConfig, sql *sqlstore.SQLStore,
+	dashboardsnapshotsService dashboardsnapshots.Service, rootDir string, orgID int64,
+	broadcaster statusBroadcaster, playlistService playlist.Service) (Job, error) {
 	job := &gitExportJob{
 		logger:                    log.New("git_export_job"),
 		cfg:                       cfg,
 		sql:                       sql,
 		dashboardsnapshotsService: dashboardsnapshotsService,
+		playlistService:           playlistService,
 		rootDir:                   rootDir,
 		broadcaster:               broadcaster,
 		status: ExportStatus{
 			Running: true,
 			Target:  "git export",
 			Started: time.Now().UnixMilli(),
-			Current: 0,
+			Count:   make(map[string]int, len(exporters)*2),
 		},
 	}
 
@@ -75,7 +80,6 @@ func (e *gitExportJob) requestStop() {
 func (e *gitExportJob) start() {
 	defer func() {
 		e.logger.Info("Finished git export job")
-
 		e.statusMu.Lock()
 		defer e.statusMu.Unlock()
 		s := e.status
@@ -128,6 +132,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 		workDir: e.rootDir,
 		orgDir:  e.rootDir,
 		broadcast: func(p string) {
+			e.status.Index++
 			e.status.Last = p[len(e.rootDir):]
 			e.status.Changed = time.Now().UnixMilli()
 			e.broadcaster(e.status)
@@ -144,6 +149,7 @@ func (e *gitExportJob) doExportWithHistory() error {
 	for _, org := range cmd.Result {
 		if len(cmd.Result) > 1 {
 			e.helper.orgDir = path.Join(e.rootDir, fmt.Sprintf("org_%d", org.Id))
+			e.status.Count["orgs"] += 1
 		}
 		err = e.helper.initOrg(e.sql, org.Id)
 		if err != nil {
@@ -180,18 +186,27 @@ func (e *gitExportJob) process(exporters []Exporter) error {
 			continue
 		}
 
+		e.status.Target = exp.Key
+		e.helper.exporter = exp.Key
+
+		before := e.helper.counter
 		if exp.process != nil {
-			e.status.Target = exp.Key
-			e.helper.exporter = exp.Key
 			err := exp.process(e.helper, e)
+
 			if err != nil {
 				return err
 			}
 		}
 
 		if exp.Exporters != nil {
-			return e.process(exp.Exporters)
+			err := e.process(exp.Exporters)
+			if err != nil {
+				return err
+			}
 		}
+
+		// Aggregate the counts for each org in the same report
+		e.status.Count[exp.Key] += (e.helper.counter - before)
 	}
 	return nil
 }

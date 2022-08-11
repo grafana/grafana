@@ -52,7 +52,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
   helpEnabled = false;
   profileEnabled = false;
   ldapEnabled = false;
+  jwtHeaderName = '';
+  jwtUrlLogin = false;
   sigV4AuthEnabled = false;
+  azureAuthEnabled = false;
   samlEnabled = false;
   samlName = '';
   autoAssignOrg = true;
@@ -69,6 +72,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
   liveEnabled = true;
+  /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[] = [];
@@ -117,6 +121,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
+  unifiedAlerting = { minInterval: '' };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
@@ -169,6 +174,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
     }
 
     overrideFeatureTogglesFromUrl(this);
+
+    // Special feature toggle that impact theme/component looks
+    this.theme2.flags.topnav = this.featureToggles.topnav;
   }
 }
 

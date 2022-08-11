@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   icon: css`
     label: collapse__icon;
-    margin: ${theme.spacing(0, 1, 0, -1)};
+    margin: ${theme.spacing(0.25, 1, 0, -1)};
   `,
 });
 

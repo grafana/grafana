@@ -34,6 +34,7 @@ import { PanelEditExitedEvent } from 'app/types/events';
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
+import { MeasureOverlay } from './components/MeasureOverlay';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
@@ -50,6 +51,7 @@ interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
   legends: ReactNode[];
+  measureMenuActive?: boolean;
 }
 
 export interface GeomapLayerActions {
@@ -98,6 +100,28 @@ export class GeomapPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
+    // TODO: Clean this approach up / potentially support multiple marker layers?
+    // See https://github.com/grafana/grafana/issues/51185 for more details.
+    setTimeout(() => {
+      for (const layer of this.layers) {
+        if (layer.options.type === MARKERS_LAYER_ID) {
+          const colorField = layer.options.config.style.color.field;
+          const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === colorField);
+          // initialize (not override) Standard Options min/max value with color field calc min/max
+          if (colorFieldData) {
+            this.props.onFieldConfigChange({
+              ...this.props.fieldConfig,
+              defaults: {
+                min: colorFieldData.state?.calcs?.min,
+                max: colorFieldData.state?.calcs?.max,
+                ...this.props.fieldConfig.defaults,
+              },
+            });
+            break;
+          }
+        }
+      }
+    }, 50);
   }
 
   componentWillUnmount() {
@@ -246,16 +270,37 @@ export class GeomapPanel extends Component<Props, State> {
    */
   optionsChanged(options: GeomapPanelOptions) {
     const oldOptions = this.props.options;
-    console.log('options changed!', options);
-
     if (options.view !== oldOptions.view) {
-      console.log('View changed');
       this.map!.setView(this.initMapView(options.view, this.map!.getLayers()));
     }
 
     if (options.controls !== oldOptions.controls) {
-      console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
+    }
+
+    // TODO: Clean this approach up / potentially support multiple marker layers?
+    // See https://github.com/grafana/grafana/issues/51185 for more details.
+    for (const layer of options.layers) {
+      if (layer.type === MARKERS_LAYER_ID) {
+        const oldLayer = this.props.options.layers.find((lyr) => lyr.name === layer.name);
+        const newLayerColorField = layer.config.style.color.field;
+        const oldLayerColorField = oldLayer?.config.style.color.field;
+        if (layer.config.style.color.field && newLayerColorField !== oldLayerColorField) {
+          const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === newLayerColorField);
+          if (colorFieldData) {
+            // override Standard Options min/max value with color field calc min/max
+            this.props.onFieldConfigChange({
+              ...this.props.fieldConfig,
+              defaults: {
+                ...this.props.fieldConfig.defaults,
+                min: colorFieldData.state?.calcs?.min,
+                max: colorFieldData.state?.calcs?.max,
+              },
+            });
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -361,6 +406,10 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
+    // If measure menu is open, bypass tooltip logic and display measuring mouse events
+    if (this.state.measureMenuActive) {
+      return true;
+    }
     if (!this.map || this.state.ttipOpen) {
       return false;
     }
@@ -369,8 +418,8 @@ export class GeomapPanel extends Component<Props, State> {
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
     const { hoverPayload } = this;
-    hoverPayload.pageX = mouse.pageX;
-    hoverPayload.pageY = mouse.pageY;
+    hoverPayload.pageX = mouse.offsetX;
+    hoverPayload.pageY = mouse.offsetY;
     hoverPayload.point = {
       lat: hover[1],
       lon: hover[0],
@@ -652,12 +701,26 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     // Update the react overlays
-    let topRight: ReactNode[] = [];
-    if (options.showDebug) {
-      topRight = [<DebugOverlay key="debug" map={this.map} />];
+    let topRight1: ReactNode[] = [];
+    if (options.showMeasure) {
+      topRight1 = [
+        <MeasureOverlay
+          key="measure"
+          map={this.map}
+          // Lifts menuActive state and resets tooltip state upon close
+          menuActiveState={(value: boolean) => {
+            this.setState({ ttipOpen: value, measureMenuActive: value });
+          }}
+        />,
+      ];
     }
 
-    this.setState({ topRight });
+    let topRight2: ReactNode[] = [];
+    if (options.showDebug) {
+      topRight2 = [<DebugOverlay key="debug" map={this.map} />];
+    }
+
+    this.setState({ topRight1, topRight2 });
   }
 
   getLegends() {
@@ -672,7 +735,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    let { ttip, ttipOpen, topRight, legends } = this.state;
+    let { ttip, ttipOpen, topRight1, legends, topRight2 } = this.state;
     const { options } = this.props;
     const showScale = options.controls.showScale;
     if (!ttipOpen && options.tooltip?.mode === TooltipMode.None) {
@@ -684,7 +747,12 @@ export class GeomapPanel extends Component<Props, State> {
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={legends} topRight={topRight} blStyle={{ bottom: showScale ? '35px' : '8px' }} />
+          <GeomapOverlay
+            bottomLeft={legends}
+            topRight1={topRight1}
+            topRight2={topRight2}
+            blStyle={{ bottom: showScale ? '35px' : '8px' }}
+          />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>

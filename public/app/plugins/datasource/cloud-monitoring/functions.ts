@@ -1,10 +1,11 @@
 import { chunk, initial, startCase, uniqBy } from 'lodash';
 
+import { rangeUtil } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { AlignmentTypes, MetricDescriptor, MetricKind, PreprocessorType, ValueTypes } from './types';
+import { AlignmentTypes, CustomMetaData, MetricDescriptor, MetricKind, PreprocessorType, ValueTypes } from './types';
 
 const templateSrv: TemplateSrv = getTemplateSrv();
 
@@ -113,3 +114,15 @@ export const stringArrayToFilters = (filterArray: string[]) =>
     value,
     condition,
   }));
+
+export const alignmentPeriodLabel = (customMetaData: CustomMetaData, datasource: CloudMonitoringDatasource) => {
+  const { perSeriesAligner, alignmentPeriod } = customMetaData;
+  if (!alignmentPeriod || !perSeriesAligner) {
+    return '';
+  }
+
+  const alignment = ALIGNMENTS.find((ap) => ap.value === datasource.templateSrv.replace(perSeriesAligner));
+  const seconds = parseInt(alignmentPeriod, 10);
+  const hms = rangeUtil.secondsToHms(seconds);
+  return `${hms} interval (${alignment?.text ?? ''})`;
+};

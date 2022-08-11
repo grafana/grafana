@@ -63,21 +63,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoServiceGraph",
-			Description:  "show service",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "tempoApmTable",
 			Description:  "Show APM table",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "prometheus_azure_auth",
-			Description: "Experimental. Azure authentication for Prometheus datasource",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "prometheusAzureOverrideAudience",
@@ -142,14 +131,14 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "export",
-			Description:     "Export grafana instance (to git, etc)",
+			Name:            "dashboardsFromStorage",
+			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
 		},
 		{
-			Name:            "storageLocalUpload",
-			Description:     "allow uploads to local storage",
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -188,12 +177,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "azureMonitorExperimentalUI",
-			Description:  "Use grafana-experimental UI in Azure Monitor",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "traceToMetrics",
 			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
@@ -202,6 +185,11 @@ var (
 		{
 			Name:        "prometheusStreamingJSONParser",
 			Description: "Enable streaming JSON parser for Prometheus datasource",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "prometheusStreamingJSONParserTest",
+			Description: "Run both old and streaming requests and log differences",
 			State:       FeatureStateBeta,
 		},
 		{

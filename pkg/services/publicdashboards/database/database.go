@@ -21,6 +21,8 @@ type PublicDashboardStoreImpl struct {
 	dialect  migrator.Dialect
 }
 
+var LogPrefix = "publicdashboards.store"
+
 // Gives us a compile time error if our database does not adhere to contract of
 // the interface
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
@@ -29,9 +31,25 @@ var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
 		sqlStore: sqlStore,
-		log:      log.New("publicdashboards.store"),
+		log:      log.New(LogPrefix),
 		dialect:  sqlStore.Dialect,
 	}
+}
+
+func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
+	dashboard := &models.Dashboard{Uid: dashboardUid}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Get(dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return ErrPublicDashboardNotFound
+		}
+		return nil
+	})
+
+	return dashboard, err
 }
 
 // Retrieves public dashboard configuration
@@ -58,17 +76,7 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboard(ctx context.Context, acces
 	}
 
 	// find dashboard
-	dashRes := &models.Dashboard{OrgId: pdRes.OrgId, Uid: pdRes.DashboardUid}
-	err = d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Get(dashRes)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return ErrPublicDashboardNotFound
-		}
-		return nil
-	})
+	dashRes, err := d.GetDashboard(ctx, pdRes.DashboardUid)
 
 	if err != nil {
 		return nil, nil, err
@@ -170,4 +178,40 @@ func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Conte
 	})
 
 	return err
+}
+
+func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
+	hasPublicDashboard := false
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=true"
+
+		result, err := dbSession.SQL(sql, dashboardUid).Count()
+		if err != nil {
+			return err
+		}
+
+		hasPublicDashboard = result > 0
+
+		return err
+	})
+
+	return hasPublicDashboard, err
+}
+
+func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+	hasPublicDashboard := false
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
+
+		result, err := dbSession.SQL(sql, accessToken).Count()
+		if err != nil {
+			return err
+		}
+
+		hasPublicDashboard = result > 0
+
+		return err
+	})
+
+	return hasPublicDashboard, err
 }

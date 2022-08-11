@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -67,36 +68,42 @@ var exporters = []Exporter{
 		process:     exportDataSources,
 	},
 	{
-		Key:         "services",
-		Name:        "Services",
+		Key:         "system",
+		Name:        "System",
 		Description: "Save service settings",
 		Exporters: []Exporter{
 			{
+				Key:         "system_preferences",
 				Name:        "Preferences",
 				Description: "User and team preferences",
 				process:     exportSystemPreferences,
 			},
 			{
+				Key:         "system_stars",
 				Name:        "Stars",
 				Description: "User stars",
 				process:     exportSystemStars,
 			},
 			{
+				Key:         "system_playlists",
 				Name:        "Playlists",
 				Description: "Playlists",
 				process:     exportSystemPlaylists,
 			},
 			{
+				Key:         "system_kv_store",
 				Name:        "Key Value store",
 				Description: "Internal KV store",
 				process:     exportKVStore,
 			},
 			{
+				Key:         "system_short_url",
 				Name:        "Short URLs",
 				Description: "saved links",
 				process:     exportSystemShortURL,
 			},
 			{
+				Key:         "system_live",
 				Name:        "Grafana live",
 				Description: "archived messages",
 				process:     exportLive,
@@ -144,12 +151,14 @@ type StandardExport struct {
 	// Services
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
+	playlistService           playlist.Service
 
 	// updated with mutex
 	exportJob Job
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg, dashboardsnapshotsService dashboardsnapshots.Service) ExportService {
+func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
+	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
@@ -159,6 +168,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		glive:                     gl,
 		logger:                    log.New("export_service"),
 		dashboardsnapshotsService: dashboardsnapshotsService,
+		playlistService:           playlistService,
 		exportJob:                 &stoppedJob{},
 		dataDir:                   cfg.DataPath,
 	}
@@ -205,7 +215,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 
 	var job Job
 	broadcast := func(s ExportStatus) {
-		ex.broadcastStatus(c.OrgId, s)
+		ex.broadcastStatus(c.OrgID, s)
 	}
 	switch cfg.Format {
 	case "dummy":
@@ -215,7 +225,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return response.Error(http.StatusBadRequest, "Error creating export folder", nil)
 		}
-		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgId, broadcast)
+		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService)
 	default:
 		return response.Error(http.StatusBadRequest, "Unsupported job format", nil)
 	}

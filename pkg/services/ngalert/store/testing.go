@@ -2,25 +2,17 @@ package store
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
-	"net/http"
-	"net/http/httptest"
 	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 
 	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func NewFakeRuleStore(t *testing.T) *FakeRuleStore {
@@ -192,14 +184,7 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 		return err
 	}
 	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			q.Result = append(q.Result, &models.SchedulableAlertRule{
-				UID:             rule.UID,
-				OrgID:           rule.OrgID,
-				IntervalSeconds: rule.IntervalSeconds,
-				Version:         rule.Version,
-			})
-		}
+		q.Result = append(q.Result, rules...)
 	}
 	return nil
 }
@@ -278,7 +263,7 @@ func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroup
 	return nil
 }
 
-func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -295,7 +280,7 @@ func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64,
 	return namespacesMap, nil
 }
 
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser, _ bool) (*models2.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {
@@ -305,7 +290,7 @@ func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, org
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *models2.SignedInUser) (*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*models2.Folder, error) {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
 		Params: []interface{}{orgID, uid},
@@ -365,6 +350,30 @@ func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namesp
 		}
 	}
 	return nil
+}
+
+func (f *FakeRuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "IncreaseVersionForAllRulesInNamespace",
+		Params: []interface{}{orgID, namespaceUID},
+	})
+
+	var result []models.AlertRuleKeyWithVersion
+
+	for _, rule := range f.Rules[orgID] {
+		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
+			rule.Version++
+			rule.Updated = TimeNow()
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
+			})
+		}
+	}
+	return result, nil
 }
 
 type FakeInstanceStore struct {
@@ -435,79 +444,6 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 	f.Configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
 
 	return nil
-}
-
-type FakeExternalAlertmanager struct {
-	t      *testing.T
-	mtx    sync.Mutex
-	alerts amv2.PostableAlerts
-	Server *httptest.Server
-}
-
-func NewFakeExternalAlertmanager(t *testing.T) *FakeExternalAlertmanager {
-	t.Helper()
-
-	am := &FakeExternalAlertmanager{
-		t:      t,
-		alerts: amv2.PostableAlerts{},
-	}
-	am.Server = httptest.NewServer(http.HandlerFunc(am.Handler()))
-
-	return am
-}
-
-func (am *FakeExternalAlertmanager) URL() string {
-	return am.Server.URL
-}
-
-func (am *FakeExternalAlertmanager) AlertNamesCompare(expected []string) bool {
-	n := []string{}
-	alerts := am.Alerts()
-
-	if len(expected) != len(alerts) {
-		return false
-	}
-
-	for _, a := range am.Alerts() {
-		for k, v := range a.Alert.Labels {
-			if k == model.AlertNameLabel {
-				n = append(n, v)
-			}
-		}
-	}
-
-	return assert.ObjectsAreEqual(expected, n)
-}
-
-func (am *FakeExternalAlertmanager) AlertsCount() int {
-	am.mtx.Lock()
-	defer am.mtx.Unlock()
-
-	return len(am.alerts)
-}
-
-func (am *FakeExternalAlertmanager) Alerts() amv2.PostableAlerts {
-	am.mtx.Lock()
-	defer am.mtx.Unlock()
-	return am.alerts
-}
-
-func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		b, err := ioutil.ReadAll(r.Body)
-		require.NoError(am.t, err)
-
-		a := amv2.PostableAlerts{}
-		require.NoError(am.t, json.Unmarshal(b, &a))
-
-		am.mtx.Lock()
-		am.alerts = append(am.alerts, a...)
-		am.mtx.Unlock()
-	}
-}
-
-func (am *FakeExternalAlertmanager) Close() {
-	am.Server.Close()
 }
 
 type FakeAnnotationsRepo struct {

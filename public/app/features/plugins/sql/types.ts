@@ -9,7 +9,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
+import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 
 import { QueryWithDefaults } from './defaults';
 import {
@@ -27,14 +27,31 @@ export interface SqlQueryForInterpolation {
   hide?: boolean;
 }
 
-export interface SQLOptions extends DataSourceJsonData {
-  timeInterval: string;
+export interface SQLConnectionLimits {
+  maxOpenConns: number;
+  maxIdleConns: number;
+  connMaxLifetime: number;
+}
+
+export interface SQLOptions extends SQLConnectionLimits, DataSourceJsonData {
+  tlsAuth: boolean;
+  tlsAuthWithCACert: boolean;
+  timezone: string;
+  tlsSkipVerify: boolean;
+  user: string;
   database: string;
+  url: string;
+  timeInterval: string;
 }
 
 export enum QueryFormat {
   Timeseries = 'time_series',
   Table = 'table',
+}
+
+export enum EditorMode {
+  Builder = 'builder',
+  Code = 'code',
 }
 
 export interface SQLQuery extends DataQuery {
@@ -109,6 +126,13 @@ export interface SQLSelectableValue extends SelectableValue {
   type?: string;
   raqbFieldType?: RAQBFieldTypes;
 }
+
+export interface Aggregate {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export interface DB {
   init?: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
@@ -120,6 +144,7 @@ export interface DB {
   lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getSqlCompletionProvider: () => LanguageCompletionProvider;
   toRawSql?: (query: SQLQuery) => string;
+  functions: () => Promise<Aggregate[]>;
 }
 
 export interface QueryEditorProps {
@@ -154,3 +179,18 @@ export interface MetaDefinition {
   completion?: string;
   kind: CompletionItemKind;
 }
+
+export {
+  CompletionItemKind,
+  LanguageCompletionProvider,
+  LinkedToken,
+  ColumnDefinition,
+  CompletionItemPriority,
+  StatementPlacementProvider,
+  SuggestionKindProvider,
+  TableDefinition,
+  TokenType,
+  OperatorType,
+  StatementPosition,
+  PositionContext,
+} from '@grafana/experimental';

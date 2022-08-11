@@ -105,7 +105,6 @@ export class DashboardModel implements TimeModel {
   // ------------------
 
   // repeat process cycles
-  iteration?: number;
   declare meta: DashboardMeta;
   events: EventBusExtended;
 
@@ -206,7 +205,7 @@ export class DashboardModel implements TimeModel {
     meta.canEdit = meta.canEdit !== false;
     meta.canDelete = meta.canDelete !== false;
 
-    meta.showSettings = meta.canSave;
+    meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
     meta.hasUnsavedFolderChange = false;
 
@@ -507,13 +506,10 @@ export class DashboardModel implements TimeModel {
       return;
     }
 
-    this.iteration = (this.iteration || new Date().getTime()) + 1;
     // cleanup scopedVars
     deleteScopeVars(this.panels);
 
-    const panelsToRemove = this.panels.filter(
-      (p) => (!p.repeat || p.repeatedByRow) && p.repeatPanelId && p.repeatIteration !== this.iteration
-    );
+    const panelsToRemove = this.panels.filter((p) => (!p.repeat || p.repeatedByRow) && p.repeatPanelId);
 
     // remove panels
     pull(this.panels, ...panelsToRemove);
@@ -527,8 +523,6 @@ export class DashboardModel implements TimeModel {
     }
 
     this.cleanUpRepeats();
-
-    this.iteration = (this.iteration || new Date().getTime()) + 1;
 
     for (let i = 0; i < this.panels.length; i++) {
       const panel = this.panels[i];
@@ -584,7 +578,6 @@ export class DashboardModel implements TimeModel {
     // insert after source panel + value index
     this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
 
-    clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
     clone.repeat = undefined;
 
@@ -747,12 +740,13 @@ export class DashboardModel implements TimeModel {
   updateRepeatedPanelIds(panel: PanelModel, repeatedByRow?: boolean) {
     panel.repeatPanelId = panel.id;
     panel.id = this.getNextPanelId();
-    panel.repeatIteration = this.iteration;
+
     if (repeatedByRow) {
       panel.repeatedByRow = true;
     } else {
       panel.repeat = undefined;
     }
+
     return panel;
   }
 
@@ -827,9 +821,11 @@ export class DashboardModel implements TimeModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+
     if (newPanel.alert) {
       delete newPanel.thresholds;
     }
+
     delete newPanel.alert;
 
     // does it fit to the right?
@@ -1077,12 +1073,13 @@ export class DashboardModel implements TimeModel {
     return this.getVariablesFromState(this.uid);
   }
 
-  canEditAnnotations(dashboardId: number) {
+  canEditAnnotations(dashboardUID?: string) {
     let canEdit = true;
 
     // if RBAC is enabled there are additional conditions to check
     if (contextSrv.accessControlEnabled()) {
-      if (dashboardId === 0) {
+      // dashboardUID is falsy when it is an organizational annotation
+      if (!dashboardUID) {
         canEdit = !!this.meta.annotationsPermissions?.organization.canEdit;
       } else {
         canEdit = !!this.meta.annotationsPermissions?.dashboard.canEdit;
@@ -1091,14 +1088,29 @@ export class DashboardModel implements TimeModel {
     return this.canEditDashboard() && canEdit;
   }
 
+  canDeleteAnnotations(dashboardUID?: string) {
+    let canDelete = true;
+
+    if (contextSrv.accessControlEnabled()) {
+      // dashboardUID is falsy when it is an organizational annotation
+      if (!dashboardUID) {
+        canDelete = !!this.meta.annotationsPermissions?.organization.canDelete;
+      } else {
+        canDelete = !!this.meta.annotationsPermissions?.dashboard.canDelete;
+      }
+    }
+    return canDelete && this.canEditDashboard();
+  }
+
   canAddAnnotations() {
-    // If RBAC is enabled there are additional conditions to check
-    const canAdd = !contextSrv.accessControlEnabled() || this.meta.annotationsPermissions?.dashboard.canAdd;
+    // If RBAC is enabled there are additional conditions to check.
+    const canAdd = !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+
     return this.canEditDashboard() && canAdd;
   }
 
   canEditDashboard() {
-    return this.meta.canEdit || this.meta.canMakeEditable;
+    return Boolean(this.meta.canEdit || this.meta.canMakeEditable);
   }
 
   shouldUpdateDashboardPanelFromJSON(updatedPanel: PanelModel, panel: PanelModel) {

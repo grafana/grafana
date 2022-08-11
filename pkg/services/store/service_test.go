@@ -3,42 +3,73 @@ package store
 import (
 	"bytes"
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	dummyUser = &models.SignedInUser{OrgId: 1}
+	cfg = &setting.Cfg{
+		Storage: setting.StorageSettings{
+			AllowUnsanitizedSvgUpload: true,
+		},
+	}
+
+	htmlBytes, _        = os.ReadFile("testdata/page.html")
+	jpgBytes, _         = os.ReadFile("testdata/image.jpg")
+	svgBytes, _         = os.ReadFile("testdata/image.svg")
+	dummyUser           = &user.SignedInUser{OrgID: 1}
+	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+		return map[string]filestorage.PathFilter{
+			ActionFilesDelete: allowAllPathFilter,
+			ActionFilesWrite:  allowAllPathFilter,
+			ActionFilesRead:   allowAllPathFilter,
+		}
+	})
+	denyAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+		return map[string]filestorage.PathFilter{
+			ActionFilesDelete: denyAllPathFilter,
+			ActionFilesWrite:  denyAllPathFilter,
+			ActionFilesRead:   denyAllPathFilter,
+		}
+	})
+	publicRoot, _            = filepath.Abs("../../../public")
+	publicStaticFilesStorage = newDiskStorage(
+		RootStorageMeta{
+			Builtin:  true,
+			ReadOnly: true,
+		}, RootStorageConfig{
+			Prefix: "public",
+			Name:   "Public static files",
+			Disk: &StorageLocalDiskConfig{
+				Path: publicRoot,
+				Roots: []string{
+					"/testdata/",
+					"/img/icons/",
+					"/img/bg/",
+					"/gazetteer/",
+					"/maps/",
+					"/upload/",
+				},
+			}})
 )
 
 func TestListFiles(t *testing.T) {
-	publicRoot, err := filepath.Abs("../../../public")
-	require.NoError(t, err)
-	roots := []storageRuntime{
-		newDiskStorage("public", "Public static files", &StorageLocalDiskConfig{
-			Path: publicRoot,
-			Roots: []string{
-				"/testdata/",
-				"/img/icons/",
-				"/img/bg/",
-				"/gazetteer/",
-				"/maps/",
-				"/upload/",
-			},
-		}).setReadOnly(true).setBuiltin(true),
-	}
+	roots := []storageRuntime{publicStaticFilesStorage}
 
 	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	})
+	}, allowAllAuthService, cfg)
 	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
 	require.NoError(t, err)
 
@@ -53,51 +84,91 @@ func TestListFiles(t *testing.T) {
 	experimental.CheckGoldenJSONFrame(t, "testdata", "public_testdata_js_libraries.golden", testDsFrame, true)
 }
 
-func setupUploadStore(t *testing.T) (StorageService, *filestorage.MockFileStorage, string) {
+func TestListFilesWithoutPermissions(t *testing.T) {
+	roots := []storageRuntime{publicStaticFilesStorage}
+
+	store := newStandardStorageService(sqlstore.InitTestDB(t), roots, func(orgId int64) []storageRuntime {
+		return make([]storageRuntime, 0)
+	}, denyAllAuthService, cfg)
+	frame, err := store.List(context.Background(), dummyUser, "public/testdata")
+	require.NoError(t, err)
+	rowLen, err := frame.RowLen()
+	require.NoError(t, err)
+	require.Equal(t, 0, rowLen)
+}
+
+func setupUploadStore(t *testing.T, authService storageAuthService) (StorageService, *filestorage.MockFileStorage, string) {
 	t.Helper()
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
-	sqlStorage := newSQLStorage(storageName, "Testing upload", &StorageSQLConfig{orgId: 1}, sqlstore.InitTestDB(t))
+	sqlStorage := newSQLStorage(
+		RootStorageMeta{},
+		storageName, "Testing upload", "dummy descr",
+		&StorageSQLConfig{},
+		sqlstore.InitTestDB(t),
+		1, // orgID (prefix init)
+	)
 	sqlStorage.store = mockStorage
 
+	if authService == nil {
+		authService = allowAllAuthService
+	}
 	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage}, func(orgId int64) []storageRuntime {
 		return make([]storageRuntime, 0)
-	})
+	}, authService, cfg)
+	store.cfg = &GlobalStorageConfig{
+		AllowUnsanitizedSvgUpload: true,
+	}
+	store.quotaService = quotatest.NewQuotaServiceFake()
 
 	return store, mockStorage, storageName
 }
 
 func TestShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
-	mockStorage.On("Get", mock.Anything, "/myFile.jpg").Return(nil, nil)
-	mockStorage.On("Upsert", mock.Anything, mock.Anything).Return(nil)
+	fileName := "/myFile.jpg"
+	mockStorage.On("Get", mock.Anything, fileName).Return(nil, nil)
+	mockStorage.On("Upsert", mock.Anything, &filestorage.UpsertFileCommand{
+		Path:     fileName,
+		MimeType: "image/jpeg",
+		Contents: jpgBytes,
+	}).Return(nil)
 
 	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
 		EntityType: EntityTypeImage,
-		Contents:   make([]byte, 0),
-		Path:       storageName + "/myFile.jpg",
-		MimeType:   "image/jpg",
+		Contents:   jpgBytes,
+		Path:       storageName + fileName,
 	})
 	require.NoError(t, err)
 }
 
+func TestShouldFailUploadWithoutAccess(t *testing.T) {
+	service, _, storageName := setupUploadStore(t, denyAllAuthService)
+
+	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
+		EntityType: EntityTypeImage,
+		Contents:   jpgBytes,
+		Path:       storageName + "/myFile.jpg",
+	})
+	require.ErrorIs(t, err, ErrAccessDenied)
+}
+
 func TestShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Get", mock.Anything, "/myFile.jpg").Return(&filestorage.File{Contents: make([]byte, 0)}, nil)
 
 	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
 		EntityType: EntityTypeImage,
-		Contents:   make([]byte, 0),
+		Contents:   jpgBytes,
 		Path:       storageName + "/myFile.jpg",
-		MimeType:   "image/jpg",
 	})
 	require.ErrorIs(t, err, ErrFileAlreadyExists)
 }
 
 func TestShouldDelegateFileDeletion(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("Delete", mock.Anything, "/myFile.jpg").Return(nil)
 
@@ -106,7 +177,7 @@ func TestShouldDelegateFileDeletion(t *testing.T) {
 }
 
 func TestShouldDelegateFolderCreation(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	mockStorage.On("CreateFolder", mock.Anything, "/nestedFolder/mostNestedFolder").Return(nil)
 
@@ -115,13 +186,72 @@ func TestShouldDelegateFolderCreation(t *testing.T) {
 }
 
 func TestShouldDelegateFolderDeletion(t *testing.T) {
-	service, mockStorage, storageName := setupUploadStore(t)
+	service, mockStorage, storageName := setupUploadStore(t, nil)
+	cmds := []*DeleteFolderCmd{
+		{
+			Path:  storageName,
+			Force: false,
+		},
+		{
+			Path:  storageName,
+			Force: true,
+		}}
 
-	mockStorage.On("DeleteFolder", mock.Anything, "/", &filestorage.DeleteFolderOptions{Force: true}).Return(nil)
+	ctx := context.Background()
 
-	err := service.DeleteFolder(context.Background(), dummyUser, &DeleteFolderCmd{
-		Path:  storageName,
-		Force: true,
+	for _, cmd := range cmds {
+		mockStorage.On("DeleteFolder", ctx, "/", &filestorage.DeleteFolderOptions{
+			Force:        cmd.Force,
+			AccessFilter: allowAllPathFilter,
+		}).Once().Return(nil)
+		err := service.DeleteFolder(ctx, dummyUser, cmd)
+		require.NoError(t, err)
+	}
+}
+
+func TestShouldUploadSvg(t *testing.T) {
+	service, mockStorage, storageName := setupUploadStore(t, nil)
+
+	fileName := "/myFile.svg"
+	mockStorage.On("Get", mock.Anything, fileName).Return(nil, nil)
+	mockStorage.On("Upsert", mock.Anything, &filestorage.UpsertFileCommand{
+		Path:     fileName,
+		MimeType: "image/svg+xml",
+		Contents: svgBytes,
+	}).Return(nil)
+
+	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
+		EntityType: EntityTypeImage,
+		Contents:   svgBytes,
+		Path:       storageName + fileName,
 	})
 	require.NoError(t, err)
+}
+
+func TestShouldNotUploadHtmlDisguisedAsSvg(t *testing.T) {
+	service, mockStorage, storageName := setupUploadStore(t, nil)
+
+	fileName := "/myFile.svg"
+	mockStorage.On("Get", mock.Anything, fileName).Return(nil, nil)
+
+	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
+		EntityType: EntityTypeImage,
+		Contents:   htmlBytes,
+		Path:       storageName + fileName,
+	})
+	require.ErrorIs(t, err, ErrValidationFailed)
+}
+
+func TestShouldNotUploadJpgDisguisedAsSvg(t *testing.T) {
+	service, mockStorage, storageName := setupUploadStore(t, nil)
+
+	fileName := "/myFile.svg"
+	mockStorage.On("Get", mock.Anything, fileName).Return(nil, nil)
+
+	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
+		EntityType: EntityTypeImage,
+		Contents:   jpgBytes,
+		Path:       storageName + fileName,
+	})
+	require.ErrorIs(t, err, ErrValidationFailed)
 }

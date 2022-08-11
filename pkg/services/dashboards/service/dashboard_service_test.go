@@ -14,13 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestIntegrationDashboardService(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+func TestDashboardService(t *testing.T) {
 	t.Run("Dashboard service tests", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
@@ -79,7 +77,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 				for _, tc := range testCases {
 					dto.Dashboard = models.NewDashboard("title")
 					dto.Dashboard.SetUid(tc.Uid)
-					dto.User = &models.SignedInUser{}
+					dto.User = &user.SignedInUser{}
 
 					if tc.Error == nil {
 						fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything).Return(true, nil).Once()
@@ -95,7 +93,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 			})
@@ -106,7 +104,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, true)
 				require.NoError(t, err)
 			})
@@ -132,7 +130,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 				fakeStore.On("SaveAlerts", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("alert validation error")).Once()
 
 				dto.Dashboard = models.NewDashboard("Dash")
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveDashboard(context.Background(), dto, false)
 				require.Error(t, err)
 				require.Equal(t, err.Error(), "alert validation error")
@@ -148,7 +146,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
 				require.NoError(t, err)
 			})
@@ -163,7 +161,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				dto.Dashboard.Data.Set("refresh", "1s")
 				_, err := service.SaveProvisionedDashboard(context.Background(), dto, nil)
 				require.NoError(t, err)
@@ -180,7 +178,7 @@ func TestIntegrationDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
-				dto.User = &models.SignedInUser{UserId: 1}
+				dto.User = &user.SignedInUser{UserID: 1}
 				_, err := service.ImportDashboard(context.Background(), dto)
 				require.Equal(t, err, dashboards.ErrDashboardCannotSaveProvisionedDashboard)
 			})
@@ -216,6 +214,28 @@ func TestIntegrationDashboardService(t *testing.T) {
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
+
+			// t.Run("Delete ACL by user", func(t *testing.T) {
+			// 	fakeStore := dashboards.FakeDashboardStore{}
+			// 	args := 1
+			// 	fakeStore.On("DeleteACLByUser", mock.Anything, args).Return(nil).Once()
+			// 	err := service.DeleteACLByUser(context.Background(), 1)
+			// 	require.NoError(t, err)
+			// })
 		})
+	})
+
+	t.Run("Delete user by acl", func(t *testing.T) {
+		fakeStore := dashboards.FakeDashboardStore{}
+		defer fakeStore.AssertExpectations(t)
+
+		service := &DashboardServiceImpl{
+			cfg:                setting.NewCfg(),
+			log:                log.New("test.logger"),
+			dashboardStore:     &fakeStore,
+			dashAlertExtractor: &dummyDashAlertExtractor{},
+		}
+		err := service.DeleteACLByUser(context.Background(), 1)
+		require.NoError(t, err)
 	})
 }

@@ -49,7 +49,13 @@ export const GrafanaRules: FC<Props> = ({ namespaces, expandAll }) => {
       </div>
 
       {pageItems.map(({ group, namespace }) => (
-        <RulesGroup group={group} key={`${namespace.name}-${group.name}`} namespace={namespace} expandAll={expandAll} />
+        <RulesGroup
+          group={group}
+          key={`${namespace.name}-${group.name}`}
+          namespace={namespace}
+          expandAll={expandAll}
+          viewMode={wantsGroupedView ? 'grouped' : 'list'}
+        />
       ))}
       {namespacesFormat?.length === 0 && <p>No rules found.</p>}
       <Pagination

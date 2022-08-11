@@ -20,7 +20,7 @@ export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
   const uid = props.match.params.uid;
   return {
-    navModel: getNavModel(state.navIndex, `folder-settings-${uid}`, getLoadingNav(2)),
+    pageNav: getNavModel(state.navIndex, `folder-settings-${uid}`, getLoadingNav(2)),
     folderUid: uid,
     folder: state.folder,
   };
@@ -84,10 +84,10 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { navModel, folder } = this.props;
+    const { pageNav, folder } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="dashboards/browse" pageNav={pageNav.main}>
         <Page.Contents isLoading={this.state.isLoading}>
           <h3 className="page-sub-heading">Folder settings</h3>
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -26,13 +27,16 @@ var (
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
 	withoutDefaults                 = "testdata/appliedDefaults"
 	invalidAccess                   = "testdata/invalid-access"
+
+	oneDatasourceWithTwoCorrelations = "testdata/one-datasource-two-correlations"
 )
 
 func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("when some values missing should apply default on insert", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{ExpectedOrg: &models.Org{Id: 1}}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), withoutDefaults)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -50,7 +54,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 			items: []*datasources.DataSource{{Name: "My datasource name", OrgId: 1, Id: 1, Uid: util.GenerateShortUID()}},
 		}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), withoutDefaults)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -65,7 +70,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("no datasource in database", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -79,7 +85,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("One datasource in database with same name should update one datasource", func(t *testing.T) {
 		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}}}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -93,7 +100,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Two datasources with is_default should raise error", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), doubleDatasourcesConfig)
 		require.Equal(t, err, ErrInvalidConfigToManyDefault)
 	})
@@ -101,7 +109,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Multiple datasources in different organizations with isDefault in each organization should not raise error", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), multipleOrgsWithDefault)
 		require.NoError(t, err)
 		require.Equal(t, len(store.inserted), 4)
@@ -114,7 +123,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Remove one datasource should have removed old datasource", func(t *testing.T) {
 		store := &spyStore{}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), deleteOneDatasource)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -130,7 +140,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Two configured datasource and purge others", func(t *testing.T) {
 		store := &spyStore{items: []*datasources.DataSource{{Name: "old-graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfigPurgeOthers)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -144,7 +155,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Two configured datasource and purge others = false", func(t *testing.T) {
 		store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}, {Name: "old-graphite2", OrgId: 1, Id: 2}}}
 		orgStore := &mockOrgStore{}
-		dc := newDatasourceProvisioner(logger, store, orgStore)
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
 		err := dc.applyChanges(context.Background(), twoDatasourcesConfig)
 		if err != nil {
 			t.Fatalf("applyChanges return an error %v", err)
@@ -224,6 +236,53 @@ func TestDatasourceAsConfig(t *testing.T) {
 		validateDatasource(t, dsCfg)
 		validateDeleteDatasources(t, dsCfg)
 	})
+
+	t.Run("Correlations", func(t *testing.T) {
+		t.Run("Creates two correlations", func(t *testing.T) {
+			store := &spyStore{}
+			orgStore := &mockOrgStore{}
+			correlationsStore := &mockCorrelationsStore{}
+			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
+			err := dc.applyChanges(context.Background(), oneDatasourceWithTwoCorrelations)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, 2, len(correlationsStore.created))
+			require.Equal(t, 0, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
+		})
+
+		t.Run("Updating existing datasource deletes existing correlations and creates two", func(t *testing.T) {
+			store := &spyStore{items: []*datasources.DataSource{{Name: "Graphite", OrgId: 1, Id: 1}}}
+			orgStore := &mockOrgStore{}
+			correlationsStore := &mockCorrelationsStore{}
+			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
+			err := dc.applyChanges(context.Background(), oneDatasourceWithTwoCorrelations)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, 2, len(correlationsStore.created))
+			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
+		})
+
+		t.Run("Deleting datasource deletes existing correlations", func(t *testing.T) {
+			store := &spyStore{items: []*datasources.DataSource{{Name: "old-data-source", OrgId: 1, Id: 1, Uid: "some-uid"}}}
+			orgStore := &mockOrgStore{}
+			correlationsStore := &mockCorrelationsStore{items: []correlations.Correlation{{UID: "some-uid", SourceUID: "some-uid", TargetUID: "target-uid"}}}
+			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgStore)
+			err := dc.applyChanges(context.Background(), deleteOneDatasource)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, 0, len(correlationsStore.created))
+			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, 1, len(correlationsStore.deletedByTargetUID))
+		})
+	})
 }
 
 func validateDeleteDatasources(t *testing.T, dsCfg *configs) {
@@ -249,6 +308,12 @@ func validateDatasource(t *testing.T, dsCfg *configs) {
 	require.True(t, ds.Editable)
 	require.Equal(t, ds.Version, 10)
 
+	require.Equal(t, []map[string]interface{}{{
+		"targetUID":   "a target",
+		"label":       "a label",
+		"description": "a description",
+	}}, ds.Correlations)
+
 	require.Greater(t, len(ds.JSONData), 2)
 	require.Equal(t, ds.JSONData["graphiteVersion"], "1.1")
 	require.Equal(t, ds.JSONData["tlsAuth"], true)
@@ -273,6 +338,28 @@ func (m *mockOrgStore) GetOrgById(c context.Context, cmd *models.GetOrgByIdQuery
 	return nil
 }
 
+type mockCorrelationsStore struct {
+	created            []correlations.CreateCorrelationCommand
+	deletedBySourceUID []correlations.DeleteCorrelationsBySourceUIDCommand
+	deletedByTargetUID []correlations.DeleteCorrelationsByTargetUIDCommand
+	items              []correlations.Correlation
+}
+
+func (m *mockCorrelationsStore) CreateCorrelation(c context.Context, cmd correlations.CreateCorrelationCommand) (correlations.Correlation, error) {
+	m.created = append(m.created, cmd)
+	return correlations.Correlation{}, nil
+}
+
+func (m *mockCorrelationsStore) DeleteCorrelationsBySourceUID(c context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error {
+	m.deletedBySourceUID = append(m.deletedBySourceUID, cmd)
+	return nil
+}
+
+func (m *mockCorrelationsStore) DeleteCorrelationsByTargetUID(c context.Context, cmd correlations.DeleteCorrelationsByTargetUIDCommand) error {
+	m.deletedByTargetUID = append(m.deletedByTargetUID, cmd)
+	return nil
+}
+
 type spyStore struct {
 	inserted []*datasources.AddDataSourceCommand
 	deleted  []*datasources.DeleteDataSourceCommand
@@ -292,11 +379,20 @@ func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetData
 
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	s.deleted = append(s.deleted, cmd)
+	for _, v := range s.items {
+		if cmd.Name == v.Name && cmd.OrgID == v.OrgId {
+			cmd.DeletedDatasourcesCount = 1
+			return nil
+		}
+	}
 	return nil
 }
 
 func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
 	s.inserted = append(s.inserted, cmd)
+	cmd.Result = &datasources.DataSource{
+		Uid: cmd.Uid,
+	}
 	return nil
 }
 

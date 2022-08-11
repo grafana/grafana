@@ -170,7 +170,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 	for _, tc := range tcs {
 		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 			State: tc.prevState,
-		}, &validations.OSSPluginRequestValidator{}, nil, nil)
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 
 		if tc.state == nil {
 			tc.state = &models.AlertNotificationState{}

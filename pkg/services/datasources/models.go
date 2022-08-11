@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -156,7 +156,7 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgId           int64
 	DataSourceLimit int
-	User            *models.SignedInUser
+	User            *user.SignedInUser
 	Result          []*DataSource
 }
 
@@ -165,13 +165,14 @@ type GetAllDataSourcesQuery struct {
 }
 
 type GetDataSourcesByTypeQuery struct {
+	OrgId  int64 // optional: filter by org_id
 	Type   string
 	Result []*DataSource
 }
 
 type GetDefaultDataSourceQuery struct {
 	OrgId  int64
-	User   *models.SignedInUser
+	User   *user.SignedInUser
 	Result *DataSource
 }
 
@@ -213,7 +214,7 @@ func (p DsPermissionType) String() string {
 }
 
 type DatasourcesPermissionFilterQuery struct {
-	User        *models.SignedInUser
+	User        *user.SignedInUser
 	Datasources []*DataSource
 	Result      []*DataSource
 }

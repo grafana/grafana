@@ -3,7 +3,6 @@ package installer
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -29,16 +28,21 @@ func TestInstall(t *testing.T) {
 	require.NoError(t, err)
 
 	// verify extracted contents
-	files, err := ioutil.ReadDir(filepath.Join(testDir, pluginID))
+	files, err := os.ReadDir(filepath.Join(testDir, pluginID))
 	require.NoError(t, err)
+	file2, err := files[2].Info()
+	require.NoError(t, err)
+	file4, err := files[4].Info()
+	require.NoError(t, err)
+
 	require.Len(t, files, 6)
 	require.Equal(t, files[0].Name(), "MANIFEST.txt")
 	require.Equal(t, files[1].Name(), "dashboards")
 	require.Equal(t, files[2].Name(), "extra")
-	require.Equal(t, os.ModeSymlink, files[2].Mode()&os.ModeSymlink)
+	require.Equal(t, os.ModeSymlink, file2.Mode()&os.ModeSymlink)
 	require.Equal(t, files[3].Name(), "plugin.json")
 	require.Equal(t, files[4].Name(), "symlink_to_txt")
-	require.Equal(t, os.ModeSymlink, files[4].Mode()&os.ModeSymlink)
+	require.Equal(t, os.ModeSymlink, file4.Mode()&os.ModeSymlink)
 	require.Equal(t, files[5].Name(), "text.txt")
 }
 

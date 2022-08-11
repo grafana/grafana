@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -139,8 +138,6 @@ func TestAlertingTicker(t *testing.T) {
 	// create alert rule under main org with one second interval
 	alerts = append(alerts, tests.CreateTestAlertRule(t, ctx, dbstore, 1, mainOrgID))
 
-	const disabledOrgID int64 = 3
-
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
 	stopAppliedCh := make(chan models.AlertRuleKey, len(alerts))
 
@@ -149,9 +146,6 @@ func TestAlertingTicker(t *testing.T) {
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval:            time.Second,
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
-		DisabledOrgs: map[int64]struct{}{
-			disabledOrgID: {},
-		},
 	}
 
 	notifier := &schedule.AlertsSenderMock{}
@@ -177,7 +171,7 @@ func TestAlertingTicker(t *testing.T) {
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, appUrl, st, busmock.New())
+	sched := schedule.NewScheduler(schedCfg, appUrl, st)
 
 	go func() {
 		err := sched.Run(ctx)
@@ -240,15 +234,6 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
-	})
-
-	// create alert rule with one second interval under disabled org
-	alerts = append(alerts, tests.CreateTestAlertRule(t, ctx, dbstore, 1, disabledOrgID))
-
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
-	t.Run(fmt.Sprintf("on 8th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})

@@ -39,7 +39,7 @@ The dashboard header has the following sections.
 
 - **Dashboard title** (2): This also opens the dashboard search when clicked.
 - **Add panel** (3): Use this option to add a new panel or row to the current dashboard.
-- **Star dashboard** (4): Use this option to star (or unstar) the current dashboard. Starred dashboards show up on your own home dashboard by default. It is a convenient way to mark Dashboards that you're interested in.
+- **Star dashboard** (4): Use this option to star (or unstar) the current dashboard. Starred dashboards show up on your own home dashboard and in the navigation bar by default. It is a convenient way to mark Dashboards that you're interested in.
 - **Share dashboard** (5): Use this option to share the current dashboard by link or snapshot. You can also export the dashboard definition from the share modal.
 - **Save dashboard** (6): Use this option to save the current dashboard using its current name.
 - **Settings** (7): Use this option to open dashboard settings. Here you change dashboard name, folder, tags as well as manage variables and annotation queries.
@@ -52,7 +52,7 @@ The main building block of dashboard is the panel. You add new panels via the `A
 
 A dashboard row is a logical divider within a dashboard. It is used to group panels together. Rows can be collapsed or expanded allowing you to hide parts of the dashboard. Panels inside a collapsed row will not issue any queries.
 
-Use the [repeating rows]({{< relref "../panels/add-panels-dynamically/configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
+Use the [repeating rows]({{< relref "../panels/configure-panel-options/#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
 
