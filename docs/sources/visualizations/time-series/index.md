@@ -32,19 +32,19 @@ weight: 1200
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
-Time series visualization is the default and primary way to visualize time series data. It can render as a line, a path of dots, or a series of bars. It is versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples for how this visualization can be configured and styled.
+Time series visualization is the default and primary way to visualize time series data. It can render as a line, a path of dots, or a series of bars. Time series visualizations are versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples for how time series visualizations can be configured and styled.
 
-> **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and then select the **Time series** visualization. Grafana transfers all applicable settings.
+> **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and select the **Time series** visualization. Grafana transfers all applicable settings.
 
 ## Tooltip options
 
-Tooltip options control the small info overlay that appears when you hover over data points in the graph.
+Tooltip options control the information overlay that appears when you hover over data points in the graph.
 
 {{< docs/shared "visualizations/tooltip-mode.md" >}}
 
 ## Legend options
 
-Legend options control the series names and stats that can be shown under or the the right of the graph.
+Legend options control the series names and statistics that appear under or to the right of the graph.
 
 {{< docs/shared "visualizations/legend-mode.md" >}}
 
@@ -175,7 +175,7 @@ This example below shows three series: Min, Max, and Value. The Min and Max seri
 
 ## Axis options
 
-Under the axis cateogry you find options that change how the y and x axis are rendered. Some options will not take affect until you click outside of the field option box you are editing or press Enter.
+Under the axis category you find options that change how the y and x axis are rendered. Some options will not take affect until you click outside of the field option box you are editing or press Enter.
 
 ### Placement
 
