@@ -256,11 +256,11 @@ func (u *SignedInUser) HasRole(role org.RoleType) bool {
 }
 
 func (u *SignedInUser) IsRealUser() bool {
-	return u.UserID != 0
+	return u.UserID > 0
 }
 
 func (u *SignedInUser) IsApiKeyUser() bool {
-	return u.ApiKeyID != 0
+	return u.ApiKeyID > 0
 }
 
 func (u *SignedInUser) HasUniqueId() bool {
