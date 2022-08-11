@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -157,16 +158,16 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		orgUser := models.OrgUser{
 			OrgId:   orgID,
 			UserId:  usr.ID,
-			Role:    models.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
 
 		if ss.Cfg.AutoAssignOrg && !usr.IsAdmin {
 			if len(args.DefaultOrgRole) > 0 {
-				orgUser.Role = models.RoleType(args.DefaultOrgRole)
+				orgUser.Role = org.RoleType(args.DefaultOrgRole)
 			} else {
-				orgUser.Role = models.RoleType(ss.Cfg.AutoAssignOrgRole)
+				orgUser.Role = org.RoleType(ss.Cfg.AutoAssignOrgRole)
 			}
 		}
 
@@ -475,7 +476,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
-		cachedUser := cached.(models.SignedInUser)
+		cachedUser := cached.(user.SignedInUser)
 		query.Result = &cachedUser
 		return nil
 	}
@@ -536,7 +537,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 			}
 		}
 
-		var usr models.SignedInUser
+		var usr user.SignedInUser
 		has, err := sess.Get(&usr)
 		if err != nil {
 			return err
@@ -554,7 +555,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		}
 
 		// tempUser is used to retrieve the teams for the signed in user for internal use.
-		tempUser := &models.SignedInUser{
+		tempUser := &user.SignedInUser{
 			OrgId: usr.OrgId,
 			Permissions: map[int64]map[string][]string{
 				usr.OrgId: {
@@ -822,21 +823,17 @@ func UserDeletions() []string {
 	return deletes
 }
 
-func UserUpdates() []string {
-	deletes := []string{
-		"UPDATE star set email = ?, user_id = ?, login = ? WHERE user_id = ?",
-		"UPDATE team_member set user_id = ? WHERE user_id = ?",
-		"DELETE FROM team_member WHERE user_id = ?",
-		"UPDATE FROM " + dialect.Quote("user") + " WHERE id = ?",
-		"UPDATE FROM org_user WHERE user_id = ?",
-		"DELETE FROM dashboard_acl WHERE user_id = ?",
-		"DELETE FROM preferences WHERE user_id = ?",
-		"DELETE FROM team_member WHERE user_id = ?",
-		"DELETE FROM user_auth WHERE user_id = ?",
-		"DELETE FROM user_auth_token WHERE user_id = ?",
-		"DELETE FROM quota WHERE user_id = ?",
-	}
-	return deletes
+func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
+	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+		user := user.User{
+			ID:         cmd.UserId,
+			HelpFlags1: cmd.HelpFlags1,
+			Updated:    time.Now(),
+		}
+
+		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
+		return err
+	})
 }
 
 // UpdateUserPermissions sets the user Server Admin flag
@@ -849,31 +846,15 @@ func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
 
 		user.IsAdmin = isAdmin
 		sess.UseBool("is_admin")
-
 		_, err := sess.ID(user.ID).Update(&user)
 		if err != nil {
 			return err
 		}
-
 		// validate that after update there is at least one server admin
 		if err := validateOneAdminLeft(sess); err != nil {
 			return err
 		}
-
 		return nil
-	})
-}
-
-func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		user := user.User{
-			ID:         cmd.UserId,
-			HelpFlags1: user.HelpFlags1(cmd.HelpFlags1),
-			Updated:    time.Now(),
-		}
-
-		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
-		return err
 	})
 }
 

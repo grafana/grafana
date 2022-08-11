@@ -7,9 +7,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -35,7 +35,7 @@ type CacheServiceImpl struct {
 func (dc *CacheServiceImpl) GetDatasource(
 	ctx context.Context,
 	datasourceID int64,
-	user *models.SignedInUser,
+	user *user.SignedInUser,
 	skipCache bool,
 ) (*datasources.DataSource, error) {
 	cacheKey := idKey(datasourceID)
@@ -69,7 +69,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 func (dc *CacheServiceImpl) GetDatasourceByUID(
 	ctx context.Context,
 	datasourceUID string,
-	user *models.SignedInUser,
+	user *user.SignedInUser,
 	skipCache bool,
 ) (*datasources.DataSource, error) {
 	if datasourceUID == "" {

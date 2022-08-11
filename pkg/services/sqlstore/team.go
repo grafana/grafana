@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type TeamStore interface {
@@ -22,7 +23,7 @@ type TeamStore interface {
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error)
 }
 
-func getFilteredUsers(signedInUser *models.SignedInUser, hiddenUsers map[string]struct{}) []string {
+func getFilteredUsers(signedInUser *user.SignedInUser, hiddenUsers map[string]struct{}) []string {
 	filteredUsers := make([]string, 0, len(hiddenUsers))
 	if signedInUser == nil || signedInUser.IsGrafanaAdmin {
 		return filteredUsers

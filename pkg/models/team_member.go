@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
@@ -55,7 +57,7 @@ type GetTeamMembersQuery struct {
 	TeamId       int64
 	UserId       int64
 	External     bool
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       []*TeamMemberDTO
 }
 

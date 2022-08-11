@@ -151,7 +151,7 @@ var adminCommands = []*cli.Command{
 	{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
-		Action: runDbCommand(resetPasswordCommand),
+		Action: runRunnerCommand(resetPasswordCommand),
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "password-from-stdin",
@@ -202,7 +202,7 @@ var adminCommands = []*cli.Command{
 				Usage: "runs a conflict resolution to find users with multiple entries",
 				Subcommands: []*cli.Command{
 					{
-						Name:   "ls",
+						Name:   "list",
 						Usage:  "returns a list of users with more than one entry in the database",
 						Action: runListConflictUsers(),
 					},
@@ -210,16 +210,6 @@ var adminCommands = []*cli.Command{
 						Name:   "generate-file",
 						Usage:  "creates a conflict users file.. Safe to execute multiple times.",
 						Action: runGenerateConflictUsersFile(),
-					},
-					{
-						Name:   "validate-file",
-						Usage:  "validates the conflict file",
-						Action: runValidateConflictUsersFile(),
-					},
-					{
-						Name:   "ingest-file",
-						Usage:  "ingests and executes the conflict file",
-						Action: runIngestConflictUsersFile(),
 					},
 				},
 			},

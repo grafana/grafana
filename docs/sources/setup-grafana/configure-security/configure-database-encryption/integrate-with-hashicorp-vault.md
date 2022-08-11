@@ -66,7 +66,7 @@ The argument to Vault consists of three parts separated by a colon:
 - The third part specifies which field of that secret should be used.
 
 For example, if you place a Key/Value secret for the Grafana admin user in _secret/grafana/admin_defaults_
-the syntax for accessing it's _password_ field would be `$__vault{kv:secret/grafana/admin_defaults:password}`.
+the syntax for accessing its _password_ field would be `$__vault{kv:secret/grafana/admin_defaults:password}`.
 
 ### Secrets engines
 

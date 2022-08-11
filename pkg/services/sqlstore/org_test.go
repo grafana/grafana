@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -23,7 +24,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 	}
 	t.Run("Testing Account DB Access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
-		testUser := &models.SignedInUser{
+		testUser := &user.SignedInUser{
 			Permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll}},
 			},
@@ -175,7 +176,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 			})
 
 			t.Run("Can search users", func(t *testing.T) {
-				query := models.SearchUsersQuery{Query: "", SignedInUser: &models.SignedInUser{
+				query := models.SearchUsersQuery{Query: "", SignedInUser: &user.SignedInUser{
 					OrgId: 1,
 					Permissions: map[int64]map[string][]string{
 						1: {accesscontrol.ActionUsersRead: {accesscontrol.ScopeGlobalUsersAll}},
@@ -193,7 +194,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 				cmd := models.AddOrgUserCommand{
 					OrgId:  ac1.OrgID,
 					UserId: ac2.ID,
-					Role:   models.ROLE_VIEWER,
+					Role:   org.RoleViewer,
 				}
 
 				err := sqlStore.AddOrgUser(context.Background(), &cmd)
@@ -202,13 +203,13 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 				})
 
 				t.Run("Can update org user role", func(t *testing.T) {
-					updateCmd := models.UpdateOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID, Role: models.ROLE_ADMIN}
+					updateCmd := models.UpdateOrgUserCommand{OrgId: ac1.OrgID, UserId: ac2.ID, Role: org.RoleAdmin}
 					err = sqlStore.UpdateOrgUser(context.Background(), &updateCmd)
 					require.NoError(t, err)
 
 					orgUsersQuery := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
@@ -216,7 +217,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					err = sqlStore.GetOrgUsers(context.Background(), &orgUsersQuery)
 					require.NoError(t, err)
 
-					require.EqualValues(t, orgUsersQuery.Result[1].Role, models.ROLE_ADMIN)
+					require.EqualValues(t, orgUsersQuery.Result[1].Role, org.RoleAdmin)
 				})
 
 				t.Run("Can get logged in user projection", func(t *testing.T) {
@@ -244,7 +245,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 				t.Run("Can get organization users", func(t *testing.T) {
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
@@ -260,7 +261,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
 						Query: "ac1",
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
@@ -277,7 +278,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 						OrgId: ac1.OrgID,
 						Query: "ac",
 						Limit: 1,
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
@@ -341,7 +342,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 				})
 
 				t.Run("Cannot update role so no one is admin user", func(t *testing.T) {
-					cmd := models.UpdateOrgUserCommand{OrgId: ac1.OrgID, UserId: ac1.ID, Role: models.ROLE_VIEWER}
+					cmd := models.UpdateOrgUserCommand{OrgId: ac1.OrgID, UserId: ac1.ID, Role: org.RoleViewer}
 					err := sqlStore.UpdateOrgUser(context.Background(), &cmd)
 					require.Equal(t, err, models.ErrLastOrgAdmin)
 				})
@@ -354,7 +355,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 					orgUserCmd := models.AddOrgUserCommand{
 						OrgId:  ac1.OrgID,
 						UserId: ac3.ID,
-						Role:   models.ROLE_VIEWER,
+						Role:   org.RoleViewer,
 					}
 
 					err = sqlStore.AddOrgUser(context.Background(), &orgUserCmd)
@@ -362,7 +363,7 @@ func TestIntegrationAccountDataAccess(t *testing.T) {
 
 					query := models.GetOrgUsersQuery{
 						OrgId: ac1.OrgID,
-						User: &models.SignedInUser{
+						User: &user.SignedInUser{
 							OrgId:       ac1.OrgID,
 							Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 						},
