@@ -247,9 +247,10 @@ func TestProvisioningApi(t *testing.T) {
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
 				insertRule(t, sut, rule)
-
 				rule = createInvalidAlertRule()
+
 				response := sut.RoutePutAlertRule(&rc, rule, uid)
+				
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
