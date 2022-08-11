@@ -11,7 +11,6 @@ import { createTheme } from '@grafana/data';
 import { ThemeChangedEvent } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-import { toggleTheme } from 'app/core/services/toggleTheme';
 import fn_app from 'app/fn_app';
 
 class createMfe {
@@ -72,7 +71,7 @@ class createMfe {
       mfe.loadFnTheme();
       ReactDOM.render(
         React.createElement(component, { ...props }),
-        props.container ? props.container.querySelector('#reactRoot') : document.getElementById('reactRoot')
+        props.container ? props.container.querySelector('#grafanaRoot') : document.getElementById('grafanaRoot')
       );
     };
   }
@@ -81,8 +80,8 @@ class createMfe {
     // eslint-disable-next-line
     return async function unmount(props: any) {
       const container = props.container
-        ? props.container.querySelector('#reactRoot')
-        : document.getElementById('reactRoot');
+        ? props.container.querySelector('#grafanaRoot')
+        : document.getElementById('grafanaRoot');
       if (container) {
         ReactDOM.unmountComponentAtNode(container);
       }
