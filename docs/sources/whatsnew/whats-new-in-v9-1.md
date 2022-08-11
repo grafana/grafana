@@ -86,6 +86,13 @@ To learn more about the heatmap panel, see the [documentation]({{< relref "../vi
 
 {{< figure src="/static/img/docs/panels/heatmap-panel-9-1.png" max-width="750px" caption="A heatmap panel" >}}
 
+#### Geomap
+
+Geomap now includes a new [measuring tool]({{< relref "../visualizations/geomap/controls/#show-measure-tools" >}}) that allows you to measure both distances and areas.
+To learn more about the geomap panel, see the [documentation]({{< relref "../visualizations/geomap/" >}}).
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="750px" caption="Geomap panel measuring tool - area" >}}
+
 #### (Beta) Trace to metrics
 
 You can now link metrics queries to your traces.
