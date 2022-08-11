@@ -9,6 +9,7 @@ import { changeDatasource } from './spec/helper/interactions';
 import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
 import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
 import { splitOpen } from './state/main';
+import * as queryState from './state/query';
 
 jest.mock('app/core/core', () => {
   return {
@@ -415,8 +416,13 @@ describe('Wrapper', () => {
           'orgId=1&left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
         prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
       });
+      const reducerMock = jest.spyOn(queryState, 'queryReducer');
       await waitForExplore(undefined, true);
       const urlParams = decodeURIComponent(locationService.getSearch().toString());
+      expect(reducerMock).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ type: 'explore/queriesImported' })
+      );
       // this mixed UID is weird just because of our fake datasource generator
       expect(urlParams).toBe(
         'orgId=1&left={"datasource":"--+Mixed+---uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}'
@@ -432,8 +438,29 @@ describe('Wrapper', () => {
           'orgId=1&left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
         prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
       });
+
+      const reducerMock = jest.spyOn(queryState, 'queryReducer');
       await waitForExplore(undefined, true);
       const urlParams = decodeURIComponent(locationService.getSearch().toString());
+      // because there are no import/export queries in our mock datasources, only the first one remains
+      expect(reducerMock).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          type: 'explore/queriesImported',
+          payload: expect.objectContaining({
+            exploreId: 'left',
+            queries: [
+              expect.objectContaining({
+                datasource: {
+                  type: 'logs',
+                  uid: 'loki-uid',
+                },
+              }),
+            ],
+          }),
+        })
+      );
+      // the actual final URL will have both queries be loki, but due to the complexity of query export/import we do not do a complete URL change in this test
       expect(urlParams).toBe(
         'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}'
       );

@@ -25,9 +25,9 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
 import Explore from './Explore';
-import { changeDatasource } from './state/datasource';
 import { initializeExplore, refreshExplore } from './state/explorePane';
 import { lastSavedUrl, cleanupPaneAction } from './state/main';
+import { importQueries } from './state/query';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -92,7 +92,10 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
           } else {
             const changeDatasourceUid = queries.find((query) => query.datasource?.uid)!.datasource!.uid;
             if (changeDatasourceUid) {
-              this.props.changeDatasource(exploreId, changeDatasourceUid, { importQueries: true });
+              rootDatasourceOverride = changeDatasourceUid;
+              const datasource = await getDatasourceSrv().get(changeDatasourceUid);
+              const datasourceInit = await getDatasourceSrv().get(initialDatasource);
+              this.props.importQueries(exploreId, queries, datasourceInit, datasource);
             }
           }
         }
@@ -170,7 +173,7 @@ const mapDispatchToProps = {
   initializeExplore,
   refreshExplore,
   cleanupPaneAction,
-  changeDatasource,
+  importQueries,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
