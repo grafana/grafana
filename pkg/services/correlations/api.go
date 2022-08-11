@@ -212,7 +212,7 @@ func (s *CorrelationsService) getCorrelationHandler(c *models.ReqContext) respon
 	query := GetCorrelationQuery{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.OrgId,
+		OrgId:     c.OrgID,
 	}
 
 	correlation, err := s.getCorrelation(c.Req.Context(), query)
@@ -258,7 +258,7 @@ type GetCorrelationResponse struct {
 func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *models.ReqContext) response.Response {
 	query := GetCorrelationsBySourceUIDQuery{
 		SourceUID: web.Params(c.Req)[":uid"],
-		OrgId:     c.OrgId,
+		OrgId:     c.OrgID,
 	}
 
 	correlations, err := s.getCorrelationsBySourceUID(c.Req.Context(), query)
@@ -300,7 +300,7 @@ type GetCorrelationsBySourceUIDResponse struct {
 // 500: internalServerError
 func (s *CorrelationsService) getCorrelationsHandler(c *models.ReqContext) response.Response {
 	query := GetCorrelationsQuery{
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 	}
 
 	correlations, err := s.getCorrelations(c.Req.Context(), query)
