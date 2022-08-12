@@ -1,5 +1,5 @@
 import { descending, deviation } from 'd3';
-import { groupBy, partition } from 'lodash';
+import { flatten, groupBy, partition } from 'lodash';
 
 import {
   ArrayDataFrame,
@@ -102,19 +102,18 @@ export function transformV2(
     (df) => isHeatmapResult(df, request)
   );
 
-  const sortedHeatmapResults = heatmapResults.sort(sortSeriesByLabel);
-  console.log(
-    'sortedHeatmapResults',
-    sortedHeatmapResults.map((frame) => {
-      return {
-        name: frame.name,
-        fields: frame.fields.find((field) => field.name === TIME_SERIES_VALUE_FIELD_NAME)?.labels,
-        value: frame.fields.values(),
-        ref: frame.refId,
-      };
-    })
-  );
-  const processedHeatmapFrames = mergeHeatmapFrames(transformToHistogramOverTime(sortedHeatmapResults));
+  // Group heatmaps by query
+  const heatmapResultsGroupedByRef = groupBy<DataFrame>(heatmapResults, (h) => h.refId);
+
+  let processedHeatmapFrames = [];
+
+  for (const heatmapResultsGroupLabel in heatmapResultsGroupedByRef) {
+    // @todo group heatmaps by histogram dimensions/additional properties: see #3373
+    const heatmapResultsGroup = heatmapResultsGroupedByRef[heatmapResultsGroupLabel];
+    const sortedHeatmapResults = heatmapResultsGroup.sort(sortSeriesByLabel);
+
+    processedHeatmapFrames.push(mergeHeatmapFrames(transformToHistogramOverTime(sortedHeatmapResults)));
+  }
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
@@ -128,9 +127,11 @@ export function transformV2(
     return df;
   });
 
+  const flattenedProcessHeatmapFrames = flatten(processedHeatmapFrames);
+
   return {
     ...response,
-    data: [...otherFrames, ...processedTableFrames, ...processedHeatmapFrames, ...processedExemplarFrames],
+    data: [...otherFrames, ...processedTableFrames, ...flattenedProcessHeatmapFrames, ...processedExemplarFrames],
   };
 }
 
@@ -589,6 +590,9 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le20    20  10  30    =>    10  0   30
     le30    30  10  35    =>    10  0   5
     */
+
+  console.log('pre seriesList', seriesList);
+
   for (let i = seriesList.length - 1; i > 0; i--) {
     const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
     // const topSeriesLabels = topSeries?.labels;
@@ -618,6 +622,7 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     }
   }
 
+  console.log('post seriesList', seriesList);
   return seriesList;
 }
 
