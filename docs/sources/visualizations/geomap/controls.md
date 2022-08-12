@@ -53,7 +53,7 @@ Displays measure tools in the upper right corner. Measurements appear only when 
 - **Continue clicking** to continue measurement
 - **Double-click** to end measurement
 
-> **Note:** <br /> - When changing measurement type or units, previous measurement will be removed from the map. <br /> - If the control is closed, then re-opened, most recent measurement will be displayed. <br /> - A measurement can be modified by clicking and dragging on it.
+> **Note:** <br /> - When you change measurement type or units, the previous measurement is removed from the map. <br /> - If the control is closed and then re-opened, the most recent measurement is displayed. <br /> - A measurement can be modified by clicking and dragging on it.
 
 ### Length
 
