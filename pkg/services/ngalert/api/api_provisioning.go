@@ -326,7 +326,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgId, groupModel, c.UserID, alerting_models.ProvenanceAPI)
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgId, groupModel, c.UserId, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
