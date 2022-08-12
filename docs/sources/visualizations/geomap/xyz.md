@@ -14,7 +14,7 @@ weight: 400
 
 # XYZ
 
-A map from a generic tile layer.
+The XYZ tile layer is a map from a generic tile layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" caption="Geomap panel xyz example" >}}
 
