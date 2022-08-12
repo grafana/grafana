@@ -3,7 +3,7 @@ import { editor, IRange, languages, Position } from 'monaco-editor';
 
 import { alertManagerSuggestions } from './alertManagerSuggestions';
 import { SuggestionDefinition } from './suggestionDefinition';
-import { alertSuggestions, globalSuggestions, keyValueSuggestions } from './templateDataSuggestions';
+import { alertsSuggestions, alertSuggestions, globalSuggestions, keyValueSuggestions } from './templateDataSuggestions';
 
 export const GoTemplateAutocompleteProvider: languages.CompletionItemProvider = {
   triggerCharacters: ['.'],
@@ -66,10 +66,12 @@ export class CompletionBuilder {
       case '':
         return this.getCompletionsFromDefinitions(globalSuggestions, alertSuggestions);
       case 'Alerts':
-        return this.getCompletionsFromDefinitions(alertSuggestions);
+        return this.getCompletionsFromDefinitions(alertsSuggestions);
       case 'GroupLabels':
       case 'CommonLabels':
       case 'CommonAnnotations':
+      case 'Labels':
+      case 'Annotations':
         return this.getCompletionsFromDefinitions(keyValueSuggestions);
       default:
         return { suggestions: [] };
@@ -86,15 +88,20 @@ export class CompletionBuilder {
 }
 
 function buildAutocompleteSuggestion(
-  { label, type, docs, kind }: SuggestionDefinition,
+  { label, detail, documentation, kind, insertText }: SuggestionDefinition,
   range: IRange
 ): languages.CompletionItem {
+  const insertFallback = typeof label === 'string' ? label : label.label;
+  const labelObject = typeof label === 'string' ? { label: label, description: detail } : { ...label };
+
+  labelObject.description ??= detail;
+
   return {
-    label: label,
+    label: labelObject,
     kind: kind,
-    insertText: label,
+    insertText: insertText ?? insertFallback,
     range,
-    documentation: docs,
-    detail: type,
+    documentation: documentation,
+    detail: detail,
   };
 }

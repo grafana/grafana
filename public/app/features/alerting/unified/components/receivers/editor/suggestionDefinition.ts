@@ -1,8 +1,5 @@
-import { IMarkdownString, languages } from 'monaco-editor';
+import { languages } from 'monaco-editor';
 
-export interface SuggestionDefinition {
-  label: string;
-  kind: languages.CompletionItemKind;
-  type?: string;
-  docs?: IMarkdownString | string;
+export interface SuggestionDefinition extends Omit<languages.CompletionItem, 'range' | 'insertText'> {
+  insertText?: languages.CompletionItem['insertText'];
 }
