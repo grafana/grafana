@@ -43,9 +43,9 @@ RUN if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then \
         if expr match "$plugin" '.*\;.*'; then \
             pluginUrl=$(echo "$plugin" | cut -d';' -f 1); \
             pluginInstallFolder=$(echo "$plugin" | cut -d';' -f 2); \
-            grafana-cli --pluginUrl ${pluginUrl} --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}"; \
+            grafana-cli --debug --pluginUrl ${pluginUrl} --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}" || true; \
         else \
-            grafana-cli --pluginsDir "${GF_PATHS_PLUGINS}" plugins install ${plugin}; \
+            grafana-cli --debug --pluginsDir "${GF_PATHS_PLUGINS}" plugins install ${plugin} || true; \
         fi \
     done \
 fi
