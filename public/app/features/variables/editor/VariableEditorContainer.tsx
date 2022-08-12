@@ -3,8 +3,9 @@ import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Icon } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { Button } from '@grafana/ui';
+import { Page } from 'app/core/components/PageNew/Page';
+import { SettingsPageProps } from 'app/features/dashboard/components/DashboardSettings/types';
 
 import { StoreState, ThunkDispatch } from '../../../types';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
@@ -55,9 +56,7 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   };
 };
 
-interface OwnProps {
-  dashboard: DashboardModel;
-}
+interface OwnProps extends SettingsPageProps {}
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
@@ -97,23 +96,8 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
     const variableToEdit = this.props.variables.find((s) => s.id === this.props.idInEditor) ?? null;
 
     return (
-      <div>
+      <Page navModel={this.props.sectionNav}>
         <div className="page-action-bar">
-          <h3 className="dashboard-settings__header">
-            <a
-              onClick={this.onChangeToListMode}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.headerLink}
-            >
-              Variables
-            </a>
-            {this.props.idInEditor && (
-              <span>
-                <Icon name="angle-right" />
-                Edit
-              </span>
-            )}
-          </h3>
-
           <div className="page-action-bar__spacer" />
           {this.props.variables.length > 0 && variableToEdit === null && (
             <>
@@ -145,7 +129,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           <VariablesUnknownTable variables={this.props.variables} dashboard={this.props.dashboard} />
         )}
         {variableToEdit && <VariableEditorEditor identifier={toKeyedVariableIdentifier(variableToEdit)} />}
-      </div>
+      </Page>
     );
   }
 }

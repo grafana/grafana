@@ -84,6 +84,8 @@ function getSettingsPages(dashboard: DashboardModel) {
       id: 'annotations',
       icon: 'comment-alt',
       component: AnnotationsSettings,
+      subTitle:
+        'Annotation queries return events that can be visualized as event markers in graphs across the dashboard.',
     });
 
     pages.push({
@@ -167,6 +169,8 @@ function getSectionNav(
     id: page.id,
     url: locationUtil.getUrlForPartial(location, { editview: page.id, editIndex: null }),
     active: page === currentPage,
+    parentItem: main,
+    subTitle: page.subTitle,
   }));
 
   if (pageNav.parentItem) {
@@ -190,33 +194,6 @@ function getSectionNav(
     main,
     node: main.children.find((x) => x.active)!,
   };
-}
-
-function getSubPageNav(
-  dashboard: DashboardModel,
-  currentPage: SettingsPage,
-  editIndex: number | undefined,
-  location: H.Location
-): NavModelItem {
-  const listPage: NavModelItem = {
-    text: currentPage.title,
-    url: locationUtil.getUrlForPartial(location, { editview: currentPage.id, editIndex: null }),
-  };
-
-  if (editIndex != null) {
-    switch (currentPage.id) {
-      case 'annotations':
-        const editItem = dashboard.annotations.list[editIndex];
-        if (editItem) {
-          return {
-            text: editItem.name,
-            parentItem: listPage,
-          };
-        }
-    }
-  }
-
-  return listPage;
 }
 
 function MakeEditable({ dashboard }: SettingsPageProps) {

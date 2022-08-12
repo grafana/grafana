@@ -10,6 +10,7 @@ export interface SettingsPage {
   title: string;
   icon: IconName;
   component: ComponentType<SettingsPageProps>;
+  subTitle?: string;
 }
 
 export interface SettingsPageProps {
