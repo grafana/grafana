@@ -88,7 +88,7 @@ describe('contactPointsStateDtoToModel method', () => {
         'contact point 1': {
           active: true,
           errorCount: 3,
-          integrations: {
+          notifiers: {
             email: [
               {
                 lastError:
@@ -124,7 +124,7 @@ describe('contactPointsStateDtoToModel method', () => {
         'contact point 2': {
           active: true,
           errorCount: 0,
-          integrations: {
+          notifiers: {
             email: [
               {
                 lastNotify: '2022-07-08 17:42:44.998893 +0000 UTC',

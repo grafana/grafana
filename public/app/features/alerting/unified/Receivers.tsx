@@ -140,8 +140,8 @@ const Receivers: FC = () => {
   }
 
   return (
-    <AlertingPageWrapper pageId="receivers">
-      <div className={styles.headingContainer} pageId="receivers" pageNav={pageNav}>
+    <AlertingPageWrapper pageId="receivers" pageNav={pageNav}>
+      <div className={styles.headingContainer}>
         <AlertManagerPicker
           current={alertManagerSourceName}
           disabled={disableAmSelect}
