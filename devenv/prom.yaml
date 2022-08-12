@@ -1,0 +1,6 @@
+scrape_configs:
+  - job_name: test-data
+    scrape_interval: 1s
+    static_configs:
+      - targets:
+        - metrics-exporter:9100
