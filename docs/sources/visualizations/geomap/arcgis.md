@@ -12,7 +12,7 @@ title: ArcGIS layer
 weight: 400
 ---
 
-# ArcGIS
+# ArcGIS layer
 
 An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
