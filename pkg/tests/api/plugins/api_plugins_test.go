@@ -128,7 +128,7 @@ func TestPlugins(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		expected := `[{"name":"Test App","type":"app","id":"test-app","enabled":false,"pinned":false,"info":{"author":{"name":"Test Inc.","url":"http://test.com"},"description":"Official Grafana Test App & Dashboard bundle","links":[{"name":"Project site","url":"http://project.com"},{"name":"License & Terms","url":"http://license.com"}],"logos":{"small":"public/plugins/test-app/img/logo_small.png","large":"public/plugins/test-app/img/logo_large.png"},"build":{},"screenshots":[{"name":"img1","path":"public/plugins/test-app/img/screenshot1.png"},{"name":"img2","path":"public/plugins/test-app/img/screenshot2.png"}],"version":"1.0.0","updated":"2015-02-10"},"dependencies":{"grafanaDependency":"","grafanaVersion":"3.x.x","plugins":[{"id":"graphite","type":"datasource","name":"Graphite","version":"1.0.0"},{"id":"graph","type":"panel","name":"Graph","version":"1.0.0"}]},"latestVersion":"","hasUpdate":false,"defaultNavUrl":"/plugins/test-app/","category":"","state":"","signature":"valid","signatureType":"grafana","signatureOrg":"Grafana Labs"}]`
 		require.JSONEq(t, expected, string(b))
