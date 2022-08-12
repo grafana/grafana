@@ -15,7 +15,7 @@ export enum Interval {
   Week = 'week',
   Day = 'day',
   Hour = 'hour',
-  Minute = 'min',
+  Minute = 'minute',
   Second = 'second',
   Millisecond = 'millisecond',
   Microsecond = 'microsecond',
