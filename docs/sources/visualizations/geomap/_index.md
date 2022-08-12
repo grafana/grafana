@@ -48,7 +48,7 @@ There are three map layer types to choose from in the Geomap visualization.
 - **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
 - **Route (alpha)** render data points as a route.
 
-> **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. An opacity control is provided.
+> **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
 
 ### Layer Controls
 
