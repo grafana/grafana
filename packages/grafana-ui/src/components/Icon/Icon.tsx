@@ -1,14 +1,19 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
-import SVG from 'react-inlinesvg';
+import React, { Suspense } from 'react';
+import { convertFromString } from 'react-from-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types/icon';
+import { IconName, IconSize, IconType } from '../../types/icon';
 
-import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 import { getIconSubDir, getSvgSize } from './utils';
+
+/**
+ * Construct a context bundle from all the svg icons in the public/img/icons folder.
+ * See https://webpack.js.org/guides/dependency-management/
+ */
+const iconBundle = require.context('../../../../../public/img/icons/', true, /\.svg$/, 'lazy-once');
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
@@ -49,31 +54,38 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
       size = 'xl';
     }
 
-    if (!cacheInitialized) {
-      initIconCache();
-    }
-
     const svgSize = getSvgSize(size);
-    const svgHgt = svgSize;
     const svgWid = name?.startsWith('gf-bar-align') ? 16 : name?.startsWith('gf-interp') ? 30 : svgSize;
     const subDir = getIconSubDir(name, type);
-    const svgPath = `${iconRoot}${subDir}/${name}.svg`;
+    const svgBundlePath = `./${subDir}/${name}.svg`;
+
+    const IconLazy = React.lazy(async () => {
+      const content = await iconBundle(svgBundlePath);
+      const svg = React.cloneElement(convertFromString(content) as React.ReactElement, {
+        width: svgWid,
+        height: svgSize,
+        title,
+        className: cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : ''),
+        style,
+      });
+      return {
+        default: () => {
+          return (
+            <div className={styles.container} {...divElementProps} ref={ref}>
+              {svg}
+            </div>
+          );
+        },
+      };
+    });
 
     return (
-      <div className={styles.container} {...divElementProps} ref={ref}>
-        <SVG
-          src={svgPath}
-          width={svgWid}
-          height={svgHgt}
-          title={title}
-          className={cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : '')}
-          style={style}
-        />
-      </div>
+      <Suspense fallback={<div></div>}>
+        <IconLazy />
+      </Suspense>
     );
   }
 );
-
 Icon.displayName = 'Icon';
 
 function getFontAwesomeIconStyles(iconName: string, className?: string): string {
