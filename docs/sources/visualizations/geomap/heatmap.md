@@ -17,7 +17,7 @@ To add a heatmap layer:
 
 Click on the drop-down menu under Data Layer and choose `Heatmap`.
 
-Similar to `Markers`, you are prompted with various options to determine which data points to visualize and how.
+Similar to `Markers`, you are prompted with various options to determine which data points to visualize and how you want to visualize them.
 
 ![Heatmap Layer](/static/img/docs/geomap-panel/geomap-heatmap-8-1-0.png)
 
