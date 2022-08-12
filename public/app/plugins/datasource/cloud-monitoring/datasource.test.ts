@@ -9,7 +9,7 @@ describe('Cloud Monitoring Datasource', () => {
     it('should leave a query unchanged if there are no template variables', () => {
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings);
-      const query = createMockQuery({ hide: false });
+      const query = createMockQuery();
       const templateVariablesApplied = ds.interpolateVariablesInQueries([query], {});
       expect(templateVariablesApplied[0]).toEqual(query);
     });
@@ -19,7 +19,7 @@ describe('Cloud Monitoring Datasource', () => {
       templateSrv.replace = jest.fn().mockReturnValue('project-variable');
       const mockInstanceSettings = createMockInstanceSetttings();
       const ds = new Datasource(mockInstanceSettings, templateSrv);
-      const query = createMockQuery({ hide: false, metricQuery: { projectName: '$testVar' } });
+      const query = createMockQuery({ metricQuery: { projectName: '$testVar' } });
       const templatedQuery = ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].metricQuery.projectName).toEqual('project-variable');

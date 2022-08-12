@@ -45,6 +45,7 @@ export const createMockQuery: (overrides?: Subset<CloudMonitoringQuery>) => Clou
     queryType: QueryType.METRICS,
     intervalMs: 0,
     type: 'timeSeriesQuery',
+    hide: false,
     ...overrides,
     metricQuery: createMockMetricQuery(overrides?.metricQuery),
     sloQuery: createMockSLOQuery(overrides?.sloQuery),
