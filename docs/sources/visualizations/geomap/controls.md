@@ -79,7 +79,7 @@ Get the spherical area of a geometry. This is the area assuming that polygon edg
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="1200px" caption="Geomap panel measure area" >}}
 
-## Show Debug
+## Show debug
 
 Displays debug information in the upper right corner. This can be useful for debugging or validating a data source.
 
