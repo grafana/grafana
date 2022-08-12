@@ -105,7 +105,7 @@ export function transformV2(
   // Group heatmaps by query
   const heatmapResultsGroupedByRef = groupBy<DataFrame>(heatmapResults, (h) => h.refId);
 
-  let processedHeatmapFrames = [];
+  let processedHeatmapFrames: DataFrame[][] = [];
 
   for (const heatmapResultsGroupLabel in heatmapResultsGroupedByRef) {
     // @todo group heatmaps by histogram dimensions/additional properties: see #3373
@@ -127,11 +127,11 @@ export function transformV2(
     return df;
   });
 
-  const flattenedProcessHeatmapFrames = flatten(processedHeatmapFrames);
+  const flattenedProcessedHeatmapFrames = flatten(processedHeatmapFrames);
 
   return {
     ...response,
-    data: [...otherFrames, ...processedTableFrames, ...flattenedProcessHeatmapFrames, ...processedExemplarFrames],
+    data: [...otherFrames, ...processedTableFrames, ...flattenedProcessedHeatmapFrames, ...processedExemplarFrames],
   };
 }
 
