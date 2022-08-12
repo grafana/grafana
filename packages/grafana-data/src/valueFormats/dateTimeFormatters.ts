@@ -19,7 +19,7 @@ export enum Interval {
   Second = 'second',
   Millisecond = 'millisecond',
   Microsecond = 'microsecond',
-  Nanosecond = 'nanosecond'
+  Nanosecond = 'nanosecond',
 }
 
 const UNITS = [
