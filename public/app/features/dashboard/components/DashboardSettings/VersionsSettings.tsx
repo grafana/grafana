@@ -141,9 +141,8 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
     if (viewMode === 'compare') {
       return (
-        <div>
+        <Page navModel={this.props.sectionNav}>
           <VersionHistoryHeader
-            isComparing
             onClick={this.reset}
             baseVersion={baseInfo?.version}
             newVersion={newInfo?.version}
@@ -159,13 +158,12 @@ export class VersionsSettings extends PureComponent<Props, State> {
               diffData={diffData}
             />
           )}
-        </div>
+        </Page>
       );
     }
 
     return (
       <Page navModel={this.props.sectionNav}>
-        <VersionHistoryHeader />
         {isLoading ? (
           <VersionsHistorySpinner msg="Fetching history list&hellip;" />
         ) : (

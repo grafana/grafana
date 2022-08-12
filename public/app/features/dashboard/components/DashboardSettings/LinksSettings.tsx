@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { Page } from 'app/core/components/PageNew/Page';
+
 import { LinkSettingsEdit, LinkSettingsList } from '../LinksSettings';
 import { newLink } from '../LinksSettings/LinkSettingsEdit';
 
-import { DashboardSettingsHeader } from './DashboardSettingsHeader';
-interface Props {
-  dashboard: DashboardModel;
-}
+import { SettingsPageProps } from './types';
 
 export type LinkSettingsMode = 'list' | 'new' | 'edit';
 
-export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
+export function LinksSettings({ dashboard, sectionNav }: SettingsPageProps) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const onGoBack = () => {
@@ -30,10 +28,9 @@ export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
   const isEditing = editIdx !== null;
 
   return (
-    <>
-      <DashboardSettingsHeader onGoBack={onGoBack} title="Dashboard links" isEditing={isEditing} />
+    <Page navModel={sectionNav}>
       {!isEditing && <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
       {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIdx!} onGoBack={onGoBack} />}
-    </>
+    </Page>
   );
-};
+}

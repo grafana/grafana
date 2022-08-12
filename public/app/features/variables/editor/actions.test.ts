@@ -9,7 +9,6 @@ import * as selectors from '../state/selectors';
 import { addVariable } from '../state/sharedReducer';
 
 import { getNextAvailableId, initListMode, createNewVariable } from './actions';
-import { setIdInEditor } from './reducer';
 
 describe('getNextAvailableId', () => {
   describe('when called with a custom type and there is already 2 variables', () => {
