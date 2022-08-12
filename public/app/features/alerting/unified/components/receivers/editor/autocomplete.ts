@@ -3,21 +3,18 @@ import { editor, IRange, languages, Position } from 'monaco-editor';
 
 import { alertManagerSuggestions } from './alertManagerSuggestions';
 import { SuggestionDefinition } from './suggestionDefinition';
-import { alertsSuggestions, alertSuggestions, globalSuggestions, keyValueSuggestions } from './templateDataSuggestions';
+import {
+  alertsSuggestions,
+  alertSuggestions,
+  globalSuggestions,
+  keyValueSuggestions,
+  snippetsSuggestions,
+} from './templateDataSuggestions';
 
 export const GoTemplateAutocompleteProvider: languages.CompletionItemProvider = {
   triggerCharacters: ['.'],
   provideCompletionItems(model, position, context): languages.ProviderResult<languages.CompletionList> {
-    const insideExpression = isInsideGoExpression(model, position);
-
-    if (!insideExpression) {
-      return { suggestions: [] };
-    }
-
-    console.log(context);
-
     const word = model.getWordUntilPosition(position);
-
     const range = {
       startLineNumber: position.lineNumber,
       endLineNumber: position.lineNumber,
@@ -26,6 +23,11 @@ export const GoTemplateAutocompleteProvider: languages.CompletionItemProvider = 
     };
 
     const builder = new CompletionBuilder(range);
+
+    const insideExpression = isInsideGoExpression(model, position);
+    if (!insideExpression) {
+      return builder.getSnippetsSuggestions();
+    }
 
     if (context.triggerKind === languages.CompletionTriggerKind.Invoke && !context.triggerCharacter) {
       return builder.getFunctionsSuggestions();
@@ -56,6 +58,10 @@ function isInsideGoExpression(model: editor.ITextModel, position: Position) {
 
 export class CompletionBuilder {
   constructor(private readonly range: IRange) {}
+
+  getSnippetsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
+    return this.getCompletionsFromDefinitions(snippetsSuggestions);
+  };
 
   getFunctionsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
     return this.getCompletionsFromDefinitions(alertManagerSuggestions);

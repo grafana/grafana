@@ -1,6 +1,18 @@
 import { languages } from 'monaco-editor';
 
+import {
+  alertDetailsSnippet,
+  alertsLoopSnippet,
+  annotationsLoopSnippet,
+  commonAnnotationsLoopSnippet,
+  commonLabelsLoopSnippet,
+  groupLabelsLoopSnippet,
+  keyValueLoopSnippet,
+  labelsLoopSnippet,
+} from './snippets';
 import { SuggestionDefinition } from './suggestionDefinition';
+
+import CompletionItemInsertTextRule = languages.CompletionItemInsertTextRule;
 
 const kind = languages.CompletionItemKind.Field;
 
@@ -111,3 +123,47 @@ export const keyValueSuggestions: SuggestionDefinition[] = [
 ];
 
 // Snippets
+export const snippetsSuggestions: SuggestionDefinition[] = [
+  {
+    label: 'alertsloop',
+    kind: languages.CompletionItemKind.Snippet,
+    insertText: alertsLoopSnippet,
+    insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+  },
+  {
+    label: { label: 'alertdetails', detail: '(Alert)' },
+    kind: languages.CompletionItemKind.Snippet,
+    insertText: alertDetailsSnippet,
+    insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+  },
+  {
+    label: 'grouplabelsloop',
+    kind: languages.CompletionItemKind.Snippet,
+    insertText: groupLabelsLoopSnippet,
+    insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+  },
+  {
+    label: 'commonlabelsloop',
+    kind: languages.CompletionItemKind.Snippet,
+    insertText: commonLabelsLoopSnippet,
+    insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+  },
+  {
+    label: 'commonannotationsloop',
+    kind: languages.CompletionItemKind.Snippet,
+    insertText: commonAnnotationsLoopSnippet,
+    insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+  },
+  {
+    label: { label: 'labelsloop', detail: '(Alert)' },
+    kind: languages.CompletionItemKind.Snippet,
+    insertText: labelsLoopSnippet,
+    insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+  },
+  {
+    label: { label: 'annotationsloop', detail: '(Alert)' },
+    kind: languages.CompletionItemKind.Snippet,
+    insertText: annotationsLoopSnippet,
+    insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
+  },
+];
