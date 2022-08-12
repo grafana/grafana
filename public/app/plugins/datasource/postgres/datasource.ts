@@ -184,25 +184,12 @@ export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, Pos
     });
   }
 
-  async getVersion(): Promise<string> {
-    const value = await lastValueFrom(this._metaRequest("SELECT current_setting('server_version_num')::int/100"));
-    const results = value.data.results['meta'];
-    if (results.frames) {
-      // This returns number
-      return results.frames[0].data?.values[0][0].toString();
-    }
-    return '';
+  getVersion(): Promise<any> {
+    return lastValueFrom(this._metaRequest("SELECT current_setting('server_version_num')::int/100"));
   }
 
-  async getTimescaleDBVersion(): Promise<string[] | undefined> {
-    const value = await lastValueFrom(
-      this._metaRequest("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'")
-    );
-    const results = value.data.results['meta'];
-    if (results.frames) {
-      return results.frames[0].data?.values[0][0];
-    }
-    return undefined;
+  getTimescaleDBVersion(): Promise<any> {
+    return lastValueFrom(this._metaRequest("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'"));
   }
 
   testDatasource(): Promise<any> {

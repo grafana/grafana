@@ -3267,16 +3267,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/polyfill@npm:^7.6.0":
-  version: 7.12.1
-  resolution: "@babel/polyfill@npm:7.12.1"
-  dependencies:
-    core-js: ^2.6.5
-    regenerator-runtime: ^0.13.4
-  checksum: 3f59a9d85a41b390b044a1be13e11ae6d8efbfcf4e07217964585c7cef337b828eecfc5e164083227189146d2b6efc1affae8f59c831438eb40b848ab6fe5f39
-  languageName: node
-  linkType: hard
-
 "@babel/preset-env@npm:7.18.9, @babel/preset-env@npm:^7.18.9":
   version: 7.18.9
   resolution: "@babel/preset-env@npm:7.18.9"
@@ -3544,15 +3534,6 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 1d8e888c104022c2924803fc9e217c99f8a9b87dc5bf8ea1ddd9921765102c8267d2bd92d4f42aaa1b5ca3713ea400580b29702bb89829a59d63baf0321eb284
-  languageName: node
-  linkType: hard
-
-"@babel/runtime@npm:7.18.9":
-  version: 7.18.9
-  resolution: "@babel/runtime@npm:7.18.9"
-  dependencies:
-    regenerator-runtime: ^0.13.4
-  checksum: 36dd736baba7164e82b3cc9d43e081f0cb2d05ff867ad39cac515d99546cee75b7f782018b02a3dcf5f2ef3d27f319faa68965fdfec49d4912c60c6002353a2e
   languageName: node
   linkType: hard
 
@@ -4185,24 +4166,6 @@ __metadata:
     debug: ^3.1.0
     lodash.once: ^4.1.1
   checksum: 7bdcdaeb1bb692ec9d9bf8ec52538aa0bead6764753f4a067a171a511807a43fab016f7285a56bef6a606c2467ff3f1365e1ad2d2d583b81beed849ee1573fd1
-  languageName: node
-  linkType: hard
-
-"@date-io/core@npm:^1.3.13":
-  version: 1.3.13
-  resolution: "@date-io/core@npm:1.3.13"
-  checksum: 5a9e9d1de20f0346a3c7d2d5946190caef4bfb0b64d82ba1f4c566657a9192667c94ebe7f438d11d4286d9c190974daad4fb2159294225cd8af4d9a140239879
-  languageName: node
-  linkType: hard
-
-"@date-io/moment@npm:^1.3.13":
-  version: 1.3.13
-  resolution: "@date-io/moment@npm:1.3.13"
-  dependencies:
-    "@date-io/core": ^1.3.13
-  peerDependencies:
-    moment: ^2.24.0
-  checksum: c4847f9d1bf09bb22c1acc5806fc50825c0bdb52408c9fec8cc5f9a65f16a8014870b5890a0eeb73b2c53a6487c35acbd2ab2a5c49068ff5a5dccbcb5c9e654b
   languageName: node
   linkType: hard
 
@@ -4932,6 +4895,20 @@ __metadata:
     eslint-plugin-react-hooks: 4.3.0
     typescript: 4.6.4
   checksum: ed7dbf3bff5ac38daf57dfd590696d3f48f31f216f2bbcac126c3a37619aea66e856c07677c6387531bb2ae007bdd09caf36b8f289bb88b1ac1c719b6a537ae9
+  languageName: node
+  linkType: hard
+
+"@grafana/experimental@npm:^0.0.2-canary.32":
+  version: 0.0.2-canary.32
+  resolution: "@grafana/experimental@npm:0.0.2-canary.32"
+  dependencies:
+    "@types/uuid": ^8.3.3
+    uuid: ^8.3.2
+  peerDependencies:
+    "@emotion/css": 11.1.3
+    react: 17.0.1
+    react-select: 5.2.1
+  checksum: 71924e6d03335fbedf1553ce08c2bbe95819ad746af48728aa81923f3f8ca0f0e8cf3db979095da5048f2b256e96fbb88aa8efb480e84913d81dd66faefeadec
   languageName: node
   linkType: hard
 
@@ -12165,6 +12142,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/uuid@npm:^8.3.3":
+  version: 8.3.3
+  resolution: "@types/uuid@npm:8.3.3"
+  checksum: 3f340155bb1161f9ffa7163926d6222fea8f3505c23619b72bcc230883354926672c08a06510c7a543f73553c792a84444cc1744cff631b4ba988763e4bd7a8f
+  languageName: node
+  linkType: hard
+
 "@types/webpack-dev-server@npm:3":
   version: 3.11.6
   resolution: "@types/webpack-dev-server@npm:3.11.6"
@@ -15880,13 +15864,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clone@npm:^2.1.2":
-  version: 2.1.2
-  resolution: "clone@npm:2.1.2"
-  checksum: aaf106e9bc025b21333e2f4c12da539b568db4925c0501a1bf4070836c9e848c892fa22c35548ce0d1132b08bbbfa17a00144fe58fccdab6fa900fec4250f67d
-  languageName: node
-  linkType: hard
-
 "clsx@npm:^1.1.1":
   version: 1.1.1
   resolution: "clsx@npm:1.1.1"
@@ -16619,7 +16596,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:^2.0.0, core-js@npm:^2.4.0, core-js@npm:^2.6.5":
+"core-js@npm:^2.0.0, core-js@npm:^2.4.0":
   version: 2.6.12
   resolution: "core-js@npm:2.6.12"
   checksum: 44fa9934a85f8c78d61e0c8b7b22436330471ffe59ec5076fe7f324d6e8cf7f824b14b1c81ca73608b13bdb0fef035bd820989bf059767ad6fa13123bb8bd016
@@ -21297,7 +21274,6 @@ __metadata:
     "@babel/preset-env": 7.18.9
     "@babel/preset-react": 7.18.6
     "@babel/preset-typescript": 7.18.6
-    "@babel/runtime": 7.18.9
     "@betterer/betterer": 5.3.7
     "@betterer/cli": 5.3.7
     "@betterer/eslint": 5.3.7
@@ -21313,6 +21289,7 @@ __metadata:
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 4.0.0
+    "@grafana/experimental": ^0.0.2-canary.32
     "@grafana/google-sdk": 0.0.3
     "@grafana/lezer-logql": 0.0.14
     "@grafana/runtime": "workspace:*"
@@ -21536,7 +21513,6 @@ __metadata:
     rc-tree: 5.6.6
     re-resizable: 6.9.9
     react: 17.0.2
-    react-awesome-query-builder: ^5.1.2
     react-beautiful-dnd: 13.1.0
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.2
@@ -21579,7 +21555,6 @@ __metadata:
     sinon: 14.0.0
     slate: 0.47.8
     slate-plain-serializer: 0.7.10
-    sql-formatter-plus: ^1.3.6
     style-loader: 3.3.1
     stylelint: 14.9.1
     stylelint-config-prettier: 9.0.3
@@ -27049,7 +27024,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1, moment@npm:^2.29.1":
+"moment@npm:2.29.4, moment@npm:2.x, moment@npm:>= 2.9.0, moment@npm:^2.19.4, moment@npm:^2.20.1":
   version: 2.29.4
   resolution: "moment@npm:2.29.4"
   checksum: 0ec3f9c2bcba38dc2451b1daed5daded747f17610b92427bebe1d08d48d8b7bdd8d9197500b072d14e326dd0ccf3e326b9e3d07c5895d3d49e39b6803b76e80e
@@ -31148,45 +31123,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-awesome-query-builder@npm:^5.1.2":
-  version: 5.1.2
-  resolution: "react-awesome-query-builder@npm:5.1.2"
-  dependencies:
-    "@date-io/moment": ^1.3.13
-    classnames: ^2.3.1
-    clone: ^2.1.2
-    immutable: ^3.8.2
-    lodash: ^4.17.21
-    moment: ^2.29.1
-    prop-types: ^15.7.2
-    react-redux: ^7.2.2
-    redux: ^4.1.0
-    spel2js: ^0.2.8
-    sqlstring: ^2.3.2
-  peerDependencies:
-    "@ant-design/icons": ^4.0.0
-    "@emotion/react": ^11.7.1
-    "@emotion/styled": ^11.6.0
-    "@fortawesome/fontawesome-svg-core": ^1.2.36
-    "@fortawesome/free-solid-svg-icons": ^5.15.4
-    "@fortawesome/react-fontawesome": ^0.1.16
-    "@material-ui/core": ^4.12.3
-    "@material-ui/icons": ^4.0.0
-    "@material-ui/lab": ^4.0.0-alpha.57
-    "@material-ui/pickers": ^3.2.10
-    "@mui/icons-material": ^5.2.4
-    "@mui/lab": ^5.0.0-alpha.60
-    "@mui/material": ^5.2.4
-    antd: ^4.0.0
-    bootstrap: ^5.1.3
-    material-ui-confirm: ^2.0.1 || ^3.0.0
-    react: ^16.8.4 || ^17.0.1
-    react-dom: ^16.8.4 || ^17.0.1
-    reactstrap: ^9.0.0
-  checksum: 6efab0fcbb98d4843fbe3b5036a7831fd097774869fc0e175ca40c4770d7939dd3efcb2c3365c6fe539c8ba6b6bb19ddef55d93f491770a9bfdc3f1355cc5e4e
-  languageName: node
-  linkType: hard
-
 "react-beautiful-dnd@npm:13.1.0":
   version: 13.1.0
   resolution: "react-beautiful-dnd@npm:13.1.0"
@@ -31768,27 +31704,6 @@ __metadata:
     react-native:
       optional: true
   checksum: 0bf142ce0d0b80aef955650fd5e9489fca32d94f19ee23893b332f1b01ceee7bd3623337c942cbda642667d1dc9de5ac869c3c1946afa6cf2046407b57d24741
-  languageName: node
-  linkType: hard
-
-"react-redux@npm:^7.2.2":
-  version: 7.2.8
-  resolution: "react-redux@npm:7.2.8"
-  dependencies:
-    "@babel/runtime": ^7.15.4
-    "@types/react-redux": ^7.1.20
-    hoist-non-react-statics: ^3.3.2
-    loose-envify: ^1.4.0
-    prop-types: ^15.7.2
-    react-is: ^17.0.2
-  peerDependencies:
-    react: ^16.8.3 || ^17 || ^18
-  peerDependenciesMeta:
-    react-dom:
-      optional: true
-    react-native:
-      optional: true
-  checksum: ecf1933e91013f2d41bfc781515b536bf81eb1f70ff228607841094c8330fe77d522372b359687e51c0b52b9888dba73db9ac0486aace1896ab9eb9daec102d5
   languageName: node
   linkType: hard
 
@@ -32416,7 +32331,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux@npm:4.2.0, redux@npm:^4.1.0":
+"redux@npm:4.2.0":
   version: 4.2.0
   resolution: "redux@npm:4.2.0"
   dependencies:
@@ -34399,13 +34314,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spel2js@npm:^0.2.8":
-  version: 0.2.8
-  resolution: "spel2js@npm:0.2.8"
-  checksum: a81f30b90438c6fef27627d8f91e2ce9040cc3743918846e535e44bdbf76be4d404d281e83b1be8287f36c1566a22e20d711532b941838f9ca7673e5caebf75f
-  languageName: node
-  linkType: hard
-
 "split-string@npm:^3.0.1, split-string@npm:^3.0.2":
   version: 3.1.0
   resolution: "split-string@npm:3.1.0"
@@ -34446,23 +34354,6 @@ __metadata:
   version: 1.0.3
   resolution: "sprintf-js@npm:1.0.3"
   checksum: 19d79aec211f09b99ec3099b5b2ae2f6e9cdefe50bc91ac4c69144b6d3928a640bb6ae5b3def70c2e85a2c3d9f5ec2719921e3a59d3ca3ef4b2fd1a4656a0df3
-  languageName: node
-  linkType: hard
-
-"sql-formatter-plus@npm:^1.3.6":
-  version: 1.3.6
-  resolution: "sql-formatter-plus@npm:1.3.6"
-  dependencies:
-    "@babel/polyfill": ^7.6.0
-    lodash: ^4.17.15
-  checksum: 5c215f85936b3465d6778af868f0a8a2d3dd4b714ab95025c3b17b9748fe420ae2e128c523d50be0a43667bf8329a974f3248828971299146786e28d9714e752
-  languageName: node
-  linkType: hard
-
-"sqlstring@npm:^2.3.2":
-  version: 2.3.3
-  resolution: "sqlstring@npm:2.3.3"
-  checksum: 1e7e2d51c38a0cf7372e875408ca100b6e0c9a941ab7773975ea41fb36e5528e404dc787689be855780cf6d0a829ff71027964ae3a05a7446e91dce26672fda7
   languageName: node
   linkType: hard
 
