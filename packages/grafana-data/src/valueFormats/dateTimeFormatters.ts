@@ -15,9 +15,11 @@ export enum Interval {
   Week = 'week',
   Day = 'day',
   Hour = 'hour',
-  Minute = 'minute',
+  Minute = 'min',
   Second = 'second',
   Millisecond = 'millisecond',
+  Microsecond = 'microsecond',
+  Nanosecond = 'nanosecond'
 }
 
 const UNITS = [
@@ -29,6 +31,8 @@ const UNITS = [
   Interval.Minute,
   Interval.Second,
   Interval.Millisecond,
+  Interval.Microsecond,
+  Interval.Nanosecond,
 ];
 
 const INTERVALS_IN_SECONDS: IntervalsInSeconds = {
@@ -40,6 +44,8 @@ const INTERVALS_IN_SECONDS: IntervalsInSeconds = {
   [Interval.Minute]: 60,
   [Interval.Second]: 1,
   [Interval.Millisecond]: 0.001,
+  [Interval.Microsecond]: 0.000001,
+  [Interval.Nanosecond]: 0.000000001,
 };
 
 export function toNanoSeconds(size: number, decimals?: DecimalCount): FormattedValue {
