@@ -3,13 +3,13 @@ package correlations
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
@@ -30,12 +30,12 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	}
 
 	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_VIEWER),
+		DefaultOrgRole: string(org.RoleViewer),
 		Password:       viewerUser.password,
 		Login:          viewerUser.username,
 	})
 	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_ADMIN),
+		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       adminUser.password,
 		Login:          adminUser.username,
 	})
@@ -49,7 +49,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response errorResponseBody
@@ -90,7 +90,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response errorResponseBody
@@ -120,7 +120,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusOK, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response []correlations.Correlation
@@ -141,7 +141,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response errorResponseBody
@@ -171,7 +171,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response errorResponseBody
@@ -190,7 +190,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response errorResponseBody
@@ -209,7 +209,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusOK, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response []correlations.Correlation
@@ -230,7 +230,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusUnauthorized, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response errorResponseBody
@@ -243,8 +243,6 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		})
 
 		t.Run("Authenticated users shouldn't get unauthorized or forbidden errors", func(t *testing.T) {
-			// FIXME: don't skip this test
-			t.Skip("this test should pass but somehow testing with accesscontrol works different than live grafana")
 			res := ctx.Get(GetParams{
 				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", "some-ds-uid", "some-correlation-uid"),
 				user: viewerUser,
@@ -262,7 +260,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response errorResponseBody
@@ -281,7 +279,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusNotFound, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response errorResponseBody
@@ -300,7 +298,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			})
 			require.Equal(t, http.StatusOK, res.StatusCode)
 
-			responseBody, err := ioutil.ReadAll(res.Body)
+			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
 			var response correlations.Correlation
