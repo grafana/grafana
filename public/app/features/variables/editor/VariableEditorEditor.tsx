@@ -5,7 +5,8 @@ import { bindActionCreators } from 'redux';
 
 import { AppEvents, LoadingState, SelectableValue, VariableType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
+import { Button, HorizontalGroup, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
 import { appEvents } from '../../../core/core';
 import { StoreState, ThunkDispatch } from '../../../types';
@@ -14,7 +15,7 @@ import { hasOptions } from '../guard';
 import { updateOptions } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../state/selectors';
-import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
+import { changeVariableProp, changeVariableType, removeVariable } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
 import { VariableHide } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
@@ -47,6 +48,11 @@ const mapDispatchToProps = (dispatch: ThunkDispatch) => {
       ),
     changeVariableType: (identifier: KeyedVariableIdentifier, newType: VariableType) =>
       dispatch(toKeyedAction(identifier.rootStateKey, changeVariableType(toVariablePayload(identifier, { newType })))),
+    removeVariable: (identifier: KeyedVariableIdentifier) => {
+      dispatch(
+        toKeyedAction(identifier.rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: true })))
+      );
+    },
   };
 };
 
@@ -116,6 +122,14 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     await this.props.onEditorUpdate(this.props.identifier);
   };
 
+  onDelete = () => {
+    this.props.removeVariable(this.props.identifier);
+  };
+
+  onApply = () => {
+    locationService.partial({ editIndex: null });
+  };
+
   render() {
     const { variable } = this.props;
     const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
@@ -176,18 +190,25 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 
             {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
 
-            <VerticalGroup spacing="none">
+            <HorizontalGroup spacing="md">
+              <Button variant="destructive" onClick={this.onDelete}>
+                Delete
+              </Button>
               <Button
                 type="submit"
                 aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
                 disabled={loading}
+                variant={'secondary'}
               >
-                Update
+                Run query
                 {loading ? (
                   <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />
                 ) : null}
               </Button>
-            </VerticalGroup>
+              <Button variant="primary" onClick={this.onApply}>
+                Apply
+              </Button>
+            </HorizontalGroup>
           </VerticalGroup>
         </form>
       </div>

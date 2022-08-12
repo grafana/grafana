@@ -93,6 +93,7 @@ function getSettingsPages(dashboard: DashboardModel) {
       id: 'templating',
       icon: 'calculator-alt',
       component: VariableEditorContainer,
+      subTitle: 'Variables can make your dashboard more dynamic and act as global filters.',
     });
 
     pages.push({

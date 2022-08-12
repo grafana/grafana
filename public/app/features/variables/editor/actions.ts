@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { VariableType } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
 import { ThunkResult } from '../../../types';
 import { variableAdapters } from '../adapters';
@@ -94,7 +95,7 @@ export const completeChangeVariableName =
     dispatch(toKeyedAction(rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
   };
 
-export const switchToNewMode =
+export const createNewVariable =
   (key: string | null | undefined, type: VariableType = 'query'): ThunkResult<void> =>
   (dispatch, getState) => {
     const rootStateKey = toStateKey(key);
@@ -109,7 +110,8 @@ export const switchToNewMode =
     dispatch(
       toKeyedAction(rootStateKey, addVariable(toVariablePayload<AddVariable>(identifier, { global, model, index })))
     );
-    dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
+
+    locationService.partial({ editIndex: index });
   };
 
 export const switchToEditMode =
