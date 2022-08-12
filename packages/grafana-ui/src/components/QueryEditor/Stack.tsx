@@ -10,6 +10,7 @@ interface StackProps {
   alignItems?: CSSProperties['alignItems'];
   wrap?: boolean;
   gap?: number;
+  flexGrow?: CSSProperties['flexGrow'];
 }
 
 export const Stack: React.FC<StackProps> = ({ children, ...props }) => {
@@ -25,5 +26,6 @@ const getStyles = (theme: GrafanaTheme2, props: StackProps) => ({
     flexWrap: props.wrap ?? true ? 'wrap' : undefined,
     alignItems: props.alignItems,
     gap: theme.spacing(props.gap ?? 2),
+    flexGrow: props.flexGrow,
   }),
 });
