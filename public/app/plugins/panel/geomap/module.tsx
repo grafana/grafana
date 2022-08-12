@@ -44,10 +44,8 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
     if (!state?.layers) {
       // TODO? show spinner?
     } else {
-      const layersCategory = ['Map layers'];
-      const basemapCategory = ['Basemap layer'];
       builder.addCustomEditor({
-        category: layersCategory,
+        category: ['Data layer'],
         id: 'layers',
         path: '',
         name: '',
@@ -59,7 +57,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         builder.addNestedOptions(
           getLayerEditor({
             state: selected,
-            category: layersCategory,
+            category: ['Data layer'],
             basemaps: false,
           })
         );
@@ -68,18 +66,18 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       const baselayer = state.layers[0];
       if (config.geomapDisableCustomBaseLayer) {
         builder.addCustomEditor({
-          category: basemapCategory,
+          category: ['Base layer'],
           id: 'layers',
           path: '',
           name: '',
           // eslint-disable-next-line react/display-name
-          editor: () => <div>The basemap layer is configured by the server admin.</div>,
+          editor: () => <div>The base layer is configured by the server admin.</div>,
         });
       } else if (baselayer) {
         builder.addNestedOptions(
           getLayerEditor({
             state: baselayer,
-            category: basemapCategory,
+            category: ['Base layer'],
             basemaps: true,
           })
         );
@@ -119,16 +117,16 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       })
       .addBooleanSwitch({
         category,
-        path: 'controls.showMeasure',
-        name: 'Show measure tools',
-        description: 'Show tools for making measurements on the map',
+        path: 'controls.showDebug',
+        name: 'Show debug',
+        description: 'Show map info',
         defaultValue: false,
       })
       .addBooleanSwitch({
         category,
-        path: 'controls.showDebug',
-        name: 'Show debug',
-        description: 'Show map info',
+        path: 'controls.showMeasure',
+        name: 'Show measure tools',
+        description: 'Show tools for making measurements on the map',
         defaultValue: false,
       })
       .addRadio({
