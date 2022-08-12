@@ -27,6 +27,6 @@ The Night / Day layer displays night and day regions based on the current time r
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
 
-## More Information
+## More information
 
 - [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
