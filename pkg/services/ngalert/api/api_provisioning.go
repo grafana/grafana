@@ -316,13 +316,13 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext, folder 
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, definitions.NewAlertRuleGroupFromDomain(g))
+	return response.JSON(http.StatusOK, definitions.NewAlertRuleGroupFromModel(g))
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
 	ag.FolderUID = folderUID
 	ag.Title = group
-	domain, err := ag.ToDomain()
+	domain, err := ag.ToModel()
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}

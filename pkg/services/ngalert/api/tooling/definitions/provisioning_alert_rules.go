@@ -190,7 +190,7 @@ type AlertRuleGroup struct {
 	Rules     []ProvisionedAlertRule `json:"rules"`
 }
 
-func (a *AlertRuleGroup) ToDomain() (models.AlertRuleGroup, error) {
+func (a *AlertRuleGroup) ToModel() (models.AlertRuleGroup, error) {
 	rules := make([]models.AlertRule, 0, len(a.Rules))
 	for i := range a.Rules {
 		converted, err := a.Rules[i].UpstreamModel()
@@ -207,7 +207,7 @@ func (a *AlertRuleGroup) ToDomain() (models.AlertRuleGroup, error) {
 	}, nil
 }
 
-func NewAlertRuleGroupFromDomain(d models.AlertRuleGroup) AlertRuleGroup {
+func NewAlertRuleGroupFromModel(d models.AlertRuleGroup) AlertRuleGroup {
 	rules := make([]ProvisionedAlertRule, 0, len(d.Rules))
 	for i := range d.Rules {
 		rules = append(rules, NewAlertRule(d.Rules[i], d.Provenance))
