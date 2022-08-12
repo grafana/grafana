@@ -18,7 +18,7 @@ The map controls section allows toggling of which controls and information panel
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-9-1-0.png" max-width="1200px" caption="Geomap panel map controls" >}}
 
 ## Zoom
-
+This section describes each of the zoom controls.
 ### Show zoom control
 
 Displays zoom controls in the upper left corner. This control can be useful when using systems that don't have a mouse.
