@@ -43,7 +43,7 @@ Displays scale information in the bottom left corner.
 
 > **Note:** Currently only displays units in [m]/[km].
 
-## Show Measure Tools
+## Show measure tools
 
 Display measure tools in the upper right corner. Measurements will only be displayed when this control is open.
 
