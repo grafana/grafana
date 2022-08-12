@@ -25,7 +25,7 @@ import { VariableSectionHeader } from './VariableSectionHeader';
 import { VariableTextField } from './VariableTextField';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableValuesPreview } from './VariableValuesPreview';
-import { changeVariableName, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
+import { changeVariableName, variableEditorMount, variableEditorUnMount } from './actions';
 import { OnPropChangeArguments } from './types';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
@@ -35,10 +35,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
 
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   return {
-    ...bindActionCreators(
-      { variableEditorMount, variableEditorUnMount, changeVariableName, onEditorUpdate, updateOptions },
-      dispatch
-    ),
+    ...bindActionCreators({ variableEditorMount, variableEditorUnMount, changeVariableName, updateOptions }, dispatch),
     changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: any) =>
       dispatch(
         toKeyedAction(
@@ -106,10 +103,11 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     this.props.changeVariableProp(this.props.identifier, 'hide', option.value);
   };
 
-  onPropChanged = async ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
+  onPropChanged = ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
     this.props.changeVariableProp(this.props.identifier, propName, propValue);
+
     if (updateOptions) {
-      await this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable));
+      this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable));
     }
   };
 
@@ -119,7 +117,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
       return;
     }
 
-    await this.props.onEditorUpdate(this.props.identifier);
+    this.props.updateOptions(toKeyedVariableIdentifier(this.props.variable));
   };
 
   onDelete = () => {

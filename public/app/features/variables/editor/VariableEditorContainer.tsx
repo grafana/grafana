@@ -19,7 +19,7 @@ import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { VariableEditorList } from './VariableEditorList';
-import { createNewVariable } from './actions';
+import { createNewVariable, initListMode } from './actions';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { uid } = ownProps.dashboard;
@@ -34,7 +34,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
 
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   return {
-    ...bindActionCreators({ createNewVariable }, dispatch),
+    ...bindActionCreators({ createNewVariable, initListMode }, dispatch),
     changeVariableOrder: (identifier: KeyedVariableIdentifier, fromIndex: number, toIndex: number) =>
       dispatch(
         toKeyedAction(
@@ -64,6 +64,10 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class VariableEditorContainerUnconnected extends PureComponent<Props> {
+  componentDidMount() {
+    this.props.initListMode(this.props.dashboard.uid);
+  }
+
   onEditVariable = (identifier: KeyedVariableIdentifier) => {
     const index = this.props.variables.findIndex((x) => x.id === identifier.id);
     locationService.partial({ editIndex: index });

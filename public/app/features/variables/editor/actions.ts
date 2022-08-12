@@ -7,7 +7,6 @@ import { ThunkResult } from '../../../types';
 import { variableAdapters } from '../adapters';
 import { initInspect } from '../inspect/reducer';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
-import { updateOptions } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getNewVariableIndex, getVariable, getVariablesByKey } from '../state/selectors';
 import { addVariable, removeVariable } from '../state/sharedReducer';
@@ -19,7 +18,6 @@ import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
   clearIdInEditor,
-  setIdInEditor,
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
@@ -35,13 +33,6 @@ export const variableEditorUnMount = (identifier: KeyedVariableIdentifier): Thun
   return async (dispatch, getState) => {
     const { rootStateKey } = identifier;
     dispatch(toKeyedAction(rootStateKey, variableEditorUnMounted(toVariablePayload(identifier))));
-  };
-};
-
-export const onEditorUpdate = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
-  return async (dispatch) => {
-    await dispatch(updateOptions(identifier));
-    dispatch(switchToListMode(identifier.rootStateKey));
   };
 };
 
@@ -91,7 +82,6 @@ export const completeChangeVariableName =
     dispatch(
       toKeyedAction(rootStateKey, changeVariableNameSucceeded(toVariablePayload(renamedIdentifier, { newName })))
     );
-    dispatch(switchToEditMode(renamedIdentifier));
     dispatch(toKeyedAction(rootStateKey, removeVariable(toVariablePayload(identifier, { reIndex: false }))));
   };
 
@@ -114,14 +104,7 @@ export const createNewVariable =
     locationService.partial({ editIndex: index });
   };
 
-export const switchToEditMode =
-  (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
-  (dispatch) => {
-    const { rootStateKey } = identifier;
-    dispatch(toKeyedAction(rootStateKey, setIdInEditor({ id: identifier.id })));
-  };
-
-export const switchToListMode =
+export const initListMode =
   (key: string | null | undefined): ThunkResult<void> =>
   (dispatch, getState) => {
     const rootStateKey = toStateKey(key);
