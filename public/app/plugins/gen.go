@@ -44,30 +44,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// var find func(path string) (string, error)
-	// find = func(path string) (string, error) {
-	// 	parent := filepath.Dir(path)
-	// 	if parent == path {
-	// 		return "", errors.New("grafana root directory could not be found")
-	// 	}
-	// 	fp := filepath.Join(path, "go.mod")
-	// 	if _, err := os.Stat(fp); err == nil {
-	// 		return path, nil
-	// 	}
-	// 	return find(parent)
-	// }
-	// groot, err := find(cwd)
-	// if err != nil {
-	// 	fmt.Fprint(os.Stderr, err)
-	// 	os.Exit(1)
-	// }
-	//
-	// wd, err := codegen.CuetsifyPlugins(cuecontext.New(), groot)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "error while generating code:\n%s\n", err)
-	// 	os.Exit(1)
-	// }
-
 	wd := codegen.NewWriteDiffer()
 	parent := os.DirFS(cwd)
 	lib := cuectx.ProvideThemaLibrary()

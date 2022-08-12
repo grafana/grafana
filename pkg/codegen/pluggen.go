@@ -25,15 +25,12 @@ import (
 	tload "github.com/grafana/thema/load"
 )
 
-// The only import statement we currently allow in any models.cue file
-const schemasPath = "github.com/grafana/grafana/packages/grafana-schema/src/schema"
-
 // CUE import paths, mapped to corresponding TS import paths. An empty value
 // indicates the import path should be dropped in the conversion to TS. Imports
 // not present in the list are not not allowed, and code generation will fail.
 var importMap = map[string]string{
-	"github.com/grafana/thema": "",
-	schemasPath:                "@grafana/schema",
+	"github.com/grafana/thema":                                      "",
+	"github.com/grafana/grafana/packages/grafana-schema/src/schema": "@grafana/schema",
 }
 
 func init() {
@@ -91,7 +88,9 @@ func CuetsifyPlugin(t *pfs.Tree, path string) (WriteDiffer, error) {
 		return nil, nil
 	}
 	for _, im := range pi.CUEImports() {
-		f.Imports = append(f.Imports, convertImport(im))
+		if tsim := convertImport(im); tsim != nil {
+			f.Imports = append(f.Imports, tsim)
+		}
 	}
 
 	for slotname, lin := range slotimps {
@@ -128,7 +127,7 @@ func CuetsifyPlugin(t *pfs.Tree, path string) (WriteDiffer, error) {
 
 	wd := NewWriteDiffer()
 	var buf bytes.Buffer
-	err := tsTemplate.Execute(&buf, f)
+	err := tsSectionTemplate.Execute(&buf, f)
 	if err != nil {
 		return nil, fmt.Errorf("%s: error executing plugin TS generator template: %w", path, err)
 	}
@@ -273,6 +272,11 @@ func convertImport(im *ast.ImportSpec) *tsImport {
 	if err != nil {
 		// should be unreachable if paths has been verified already
 		panic(err)
+	}
+
+	if tsim.Pkg == "" {
+		// Empty string mapping means skip it
+		return nil
 	}
 
 	if im.Name != nil && im.Name.String() != "" {
@@ -461,8 +465,7 @@ var tsSectionTemplate = template.Must(template.New("cuetsymulti").Parse(`//~~~~~
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {{range .Imports}}
 import * as {{.Ident}} from '{{.Pkg}}';{{end}}
-{{range .Sections}}{{if .ModelName ne "" }}
+{{range .Sections}}{{if ne .ModelName "" }}
 export const {{.ModelName}}ModelVersion = Object.freeze([{{index .V 0}}, {{index .V 1}}]);
 {{end}}
-{{.Body}}
-{{end}}`))
+{{.Body}}{{end}}`))

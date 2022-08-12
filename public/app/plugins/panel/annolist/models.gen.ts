@@ -5,7 +5,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-export const modelVersion = Object.freeze([0, 0]);
+export const PanelModelVersion = Object.freeze([0, 0]);
 
 
 export interface PanelOptions {
