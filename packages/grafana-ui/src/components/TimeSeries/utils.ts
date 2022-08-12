@@ -231,7 +231,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       yScaleKey = scaleKey;
     }
 
-    if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+    if (customConfig.axisPlacement !== AxisPlacement.Hidden && !customConfig.hideFrom?.viz) {
       let axisColor: uPlot.Axis.Stroke | undefined;
 
       if (customConfig.axisColorMode === AxisColorMode.Series) {
@@ -272,7 +272,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
-            show: customConfig.hideFrom?.viz === false,
             ...axisColorOpts,
           },
           field
