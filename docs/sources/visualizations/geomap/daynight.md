@@ -14,7 +14,7 @@ weight: 400
 
 # Night / Day
 
-A layer that displays night and day regions based on current time range.
+The Night / Day layer displays night and day regions based on the current time range.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day" >}}
 
