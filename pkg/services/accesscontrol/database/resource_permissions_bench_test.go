@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -58,7 +57,7 @@ func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int
 	dsId := dataSources[0]
 
 	permissions, err := store.GetResourcePermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcePermissionsQuery{
-		User:              &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}, "teams:read": {"teams:*"}}}},
+		User:              &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}, "teams:read": {"teams:*"}}}},
 		Actions:           []string{dsAction},
 		Resource:          dsResource,
 		ResourceID:        strconv.Itoa(int(dsId)),

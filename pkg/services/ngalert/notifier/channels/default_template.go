@@ -1,7 +1,6 @@
 package channels
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -92,7 +91,7 @@ Labels:
 `
 
 func templateForTests(t *testing.T) *template.Template {
-	f, err := ioutil.TempFile("/tmp", "template")
+	f, err := os.CreateTemp("/tmp", "template")
 	require.NoError(t, err)
 	defer func(f *os.File) {
 		_ = f.Close()

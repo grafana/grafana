@@ -7,7 +7,7 @@ import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data'
 import { LokiDatasource } from '../../datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
-import { LokiQueryBuilder } from './LokiQueryBuilder';
+import { MISSING_LABEL_FILTER_ERROR_MESSAGE, LokiQueryBuilder } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const defaultQuery: LokiVisualQuery = {
@@ -54,9 +54,7 @@ describe('LokiQueryBuilder', () => {
     const query = { labels: [], operations: [{ id: LokiOperationId.Logfmt, params: [] }] };
     render(<LokiQueryBuilder {...createDefaultProps()} query={query} />);
 
-    expect(
-      await screen.findByText('You need to specify at least 1 label filter (stream selector)')
-    ).toBeInTheDocument();
+    expect(await screen.findByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).toBeInTheDocument();
   });
 
   it('shows no error for query with empty __line_contains operation and no stream selector', async () => {
@@ -64,9 +62,7 @@ describe('LokiQueryBuilder', () => {
     render(<LokiQueryBuilder {...createDefaultProps()} query={query} />);
 
     await waitFor(() => {
-      expect(
-        screen.queryByText('You need to specify at least 1 label filter (stream selector)')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(MISSING_LABEL_FILTER_ERROR_MESSAGE)).not.toBeInTheDocument();
     });
   });
   it('shows explain section when showExplain is true', async () => {

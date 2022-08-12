@@ -11,6 +11,7 @@ export interface DashboardInfo {
   dashboardUid: string;
   dashboardName: string;
   folderName?: string;
+  publicDashboardUid?: string;
 }
 
 /**
