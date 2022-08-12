@@ -16,7 +16,6 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
-import { FnAppProvider } from 'app/fn-app/fn-app-provider';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
@@ -98,7 +97,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
   pageNav?: NavModelItem;
-  toolbar: React.Component;
   getCleanState(): State {
     return {
       editPanel: null,
@@ -150,13 +148,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { dashboard, match, templateVarsChangedInUrl, isPublic, isFNDashboard, controlsContainer } = this.props;
-    if (controlsContainer && this.toolbar) {
-      const fnToolbar: React.Component = () => {
-        return <FnAppProvider>{this.toolbar}</FnAppProvider>;
-      };
-      ReactDOM.render(React.createElement(fnToolbar), controlsContainer);
-    }
+    const { dashboard, match, templateVarsChangedInUrl, isPublic, isFNDashboard } = this.props;
     if (!dashboard) {
       return;
     }
@@ -400,12 +392,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         />
       </header>
     );
-    this.toolbar = toolbar;
     return (
       <Page
         {...this.getPageProps()}
         layout={PageLayoutType.Dashboard}
-        toolbar={this.props.controlsContainer ? <></> : toolbar}
+        toolbar={this.props.controlsContainer ? ReactDOM.createPortal(toolbar, this.props.controlsContainer) : toolbar}
         className={containerClassNames}
         scrollRef={this.setScrollRef}
         scrollTop={updateScrollTop}
