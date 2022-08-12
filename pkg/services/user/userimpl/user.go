@@ -321,3 +321,92 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	}
 	return q.Result, nil
 }
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	q := &models.GetSignedInUserQuery{
+		UserId: query.UserID,
+		Login:  query.Login,
+		Email:  query.Email,
+		OrgId:  query.OrgID,
+	}
+	err := s.sqlStore.GetSignedInUser(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return q.Result, nil
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	var usrSeschHitDTOs []*user.UserSearchHitDTO
+	q := &models.SearchUsersQuery{
+		SignedInUser: query.SignedInUser,
+		Query:        query.Query,
+		OrgId:        query.OrgID,
+		Page:         query.Page,
+		Limit:        query.Limit,
+		AuthModule:   query.AuthModule,
+		Filters:      query.Filters,
+		IsDisabled:   query.IsDisabled,
+	}
+	err := s.sqlStore.SearchUsers(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	for _, usrSearch := range q.Result.Users {
+		usrSeschHitDTOs = append(usrSeschHitDTOs, &user.UserSearchHitDTO{
+			ID:            usrSearch.Id,
+			Login:         usrSearch.Login,
+			Email:         usrSearch.Email,
+			Name:          usrSearch.Name,
+			AvatarUrl:     usrSearch.AvatarUrl,
+			IsDisabled:    usrSearch.IsDisabled,
+			IsAdmin:       usrSearch.IsAdmin,
+			LastSeenAt:    usrSearch.LastSeenAt,
+			LastSeenAtAge: usrSearch.LastSeenAtAge,
+			AuthLabels:    usrSearch.AuthLabels,
+			AuthModule:    user.AuthModuleConversion(usrSearch.AuthModule),
+		})
+	}
+
+	res := &user.SearchUserQueryResult{
+		Users:      usrSeschHitDTOs,
+		TotalCount: q.Result.TotalCount,
+		Page:       q.Result.Page,
+		PerPage:    q.Result.PerPage,
+	}
+	return res, nil
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	q := &models.DisableUserCommand{
+		UserId:     cmd.UserID,
+		IsDisabled: cmd.IsDisabled,
+	}
+	return s.sqlStore.DisableUser(ctx, q)
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	c := &models.BatchDisableUsersCommand{
+		UserIds:    cmd.UserIDs,
+		IsDisabled: cmd.IsDisabled,
+	}
+	return s.sqlStore.BatchDisableUsers(ctx, c)
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) UpdatePermissions(userID int64, isAdmin bool) error {
+	return s.sqlStore.UpdateUserPermissions(userID, isAdmin)
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
+	c := &models.SetUserHelpFlagCommand{
+		UserId:     cmd.UserID,
+		HelpFlags1: cmd.HelpFlags1,
+	}
+	return s.sqlStore.SetUserHelpFlag(ctx, c)
+}
