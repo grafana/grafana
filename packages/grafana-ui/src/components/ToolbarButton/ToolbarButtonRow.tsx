@@ -25,6 +25,8 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ className, 
         entries.forEach((entry) => {
           if (entry.target instanceof HTMLElement && entry.target.parentNode) {
             const index = Array.prototype.indexOf.call(entry.target.parentNode.children, entry.target);
+            entry.target.style.visibility = entry.isIntersecting ? 'visible' : 'hidden';
+            entry.target.style.order = index.toString();
             setChildVisibility((prev) => {
               const newVisibility = [...prev];
               newVisibility[index] = entry.isIntersecting;
@@ -54,16 +56,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ className, 
 
   return (
     <div ref={containerRef} className={cx(styles.wrapper, className)} {...rest}>
-      {React.Children.toArray(children).map((child, index) => {
-        return React.isValidElement(child)
-          ? React.cloneElement(child, {
-              style: {
-                visibility: childVisibility[index] ? 'visible' : 'hidden',
-                order: index,
-              },
-            })
-          : null;
-      })}
+      {children}
       {childVisibility.includes(false) && (
         <Dropdown overlay={renderOverflowChildren}>
           <ToolbarButton className={styles.overflowButton} icon="ellipsis-v" iconOnly narrow />
