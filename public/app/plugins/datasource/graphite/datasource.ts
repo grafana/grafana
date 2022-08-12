@@ -29,7 +29,7 @@ import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { AnnotationEditor } from './components/AnnotationsEditor';
 import { convertToGraphiteQueryObject } from './components/helpers';
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
-import GraphiteQueryModel from './graphite_query';
+import GraphiteQueryModel, {GraphiteTarget} from './graphite_query';
 import { prepareAnnotation } from './migrations';
 // Types
 import {
@@ -138,7 +138,7 @@ export class GraphiteDatasource
         ...query,
         target: query.target || '',
         textEditor: false,
-      },
+      } as GraphiteTarget,
       getTemplateSrv()
     );
     graphiteQuery.parseTarget();

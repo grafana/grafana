@@ -34,15 +34,15 @@ export default class GraphiteQuery {
   functions: FuncInstance[] = [];
   segments: GraphiteSegment[] = [];
   tags: GraphiteTag[] = [];
-  error: any;
+  error?: string | null;
   seriesByTagUsed = false;
   checkOtherSegmentsIndex = 0;
   removeTagValue: string;
-  templateSrv: any;
-  scopedVars: any;
+  templateSrv?: TemplateSrv;
+  scopedVars?: ScopedVars;
 
   /** @ngInject */
-  constructor(datasource: any, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
+  constructor(datasource: GraphiteDatasource, target: GraphiteTarget, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.datasource = datasource;
     this.target = target;
     this.templateSrv = templateSrv;
@@ -179,7 +179,7 @@ export default class GraphiteQuery {
   updateModelTarget(targets: any) {
     const wrapFunction = (target: string, func: any) => {
       return func.render(target, (value: string) => {
-        return this.templateSrv.replace(value, this.scopedVars);
+        return this.templateSrv?.replace(value, this.scopedVars);
       });
     };
 
