@@ -211,6 +211,7 @@ type GetUserPermissionsQuery struct {
 	UserID  int64 `json:"userId"`
 	Roles   []string
 	Actions []string
+	TeamIDs []int64
 }
 
 // ScopeParams holds the parameters used to fill in scope templates
