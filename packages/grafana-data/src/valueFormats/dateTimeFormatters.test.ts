@@ -196,13 +196,13 @@ describe('duration', () => {
   it('too many decimals', () => {
     const str = toDuration(38898367008, 20, Interval.Millisecond);
     expect(formattedValueToString(str)).toBe(
-      '1 year, 2 months, 3 weeks, 4 days, 5 hours, 6 minutes, 7 seconds, 8 milliseconds'
+      '1 year, 2 months, 3 weeks, 4 days, 5 hours, 6 minutes, 7 seconds, 8 milliseconds, 0 microseconds, 0 nanoseconds'
     );
   });
   it('floating point error', () => {
     const str = toDuration(36993906007, 8, Interval.Millisecond);
     expect(formattedValueToString(str)).toBe(
-      '1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds'
+      '1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds, 0 microseconds'
     );
   });
   it('1 dthms', () => {
