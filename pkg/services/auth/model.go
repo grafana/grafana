@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -24,10 +23,6 @@ type userAuthToken struct {
 }
 
 func userAuthTokenFromUserToken(ut *models.UserToken) (*userAuthToken, error) {
-	_, fileErr := ioutil.ReadDir("dir")
-	if fileErr != nil {
-		fmt.Printf("inside")
-	}
 	var uat userAuthToken
 	err := uat.fromUserToken(ut)
 	return &uat, err
