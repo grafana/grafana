@@ -28,5 +28,5 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
     },
   };
 
-  return <DashboardPage isFNDashboard controlsContainer={data.controls_container} {...props} />;
+  return <DashboardPage isFNDashboard controlsContainer={data.controlsContainer} {...props} />;
 };
