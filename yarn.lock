@@ -20451,7 +20451,7 @@ __metadata:
     raw-loader: 4.0.2
     rc-cascader: 3.6.1
     rc-drawer: 4.4.3
-    rc-slider: 9.7.5
+    rc-slider: 10.0.1
     rc-time-picker: 3.7.3
     rc-tree: 5.6.6
     re-resizable: 6.9.9
@@ -29821,6 +29821,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rc-slider@npm:10.0.1":
+  version: 10.0.1
+  resolution: "rc-slider@npm:10.0.1"
+  dependencies:
+    "@babel/runtime": ^7.10.1
+    classnames: ^2.2.5
+    rc-util: ^5.18.1
+    shallowequal: ^1.1.0
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 803f0cc39d43897c0b24549e87232a668d26ff5b0e14b528fd454aa455cdf96ebc60654832c51bb1a6c7b7594ca39017d6c96b3237662471efb863f1723e3d9c
+  languageName: node
+  linkType: hard
+
 "rc-slider@npm:9.7.5":
   version: 9.7.5
   resolution: "rc-slider@npm:9.7.5"
@@ -29951,6 +29966,20 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: f2a6fd262d91d0b2ee1d84853c5ab212c9138b535ce5df8fa807fad4d8772539cbf0fee8cf7044ce9d47d8847950dfa5ae2f884c40eda9b0e9879050e4d549ec
+  languageName: node
+  linkType: hard
+
+"rc-util@npm:^5.18.1":
+  version: 5.23.0
+  resolution: "rc-util@npm:5.23.0"
+  dependencies:
+    "@babel/runtime": ^7.18.3
+    react-is: ^16.12.0
+    shallowequal: ^1.1.0
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 58cebf9744fa67c1b1d666e8d8eea2ed24e911198c3ecf2c729132a39b4716b1d150f8717a7aeb2ce08ad7b8bea5124d1a65662b020cb9714e21b8d13ea97ce1
   languageName: node
   linkType: hard
 
