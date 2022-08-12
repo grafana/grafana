@@ -44,7 +44,7 @@ There are three map layer types to choose from in the Geomap visualization.
 - [Heatmap]({{< relref "heatmap/" >}}) visualizes a heatmap of the data.
 - [GeoJSON]({{< relref "geojson/" >}}) renders static data from a GeoJSON file.
 
-There are also four alpha layer types currently implemented.
+There are also four alpha layer types.
 
 - [Night / Day (alpha)]({{< relref "daynight/" >}}) renders a night / day region.
 - **Icon at last point (alpha)** renders an icon at the last data point.
