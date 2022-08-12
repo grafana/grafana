@@ -8,13 +8,13 @@
 //  }
 //  Name: Query results
 //  Dimensions: 8 Fields by 1 Rows
-//  +----------------+----------------+--------------------------------+------------------+----------------+--------------------------+--------------------------+----------------+
-//  | Name: kind     | Name: uid      | Name: name                     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid             | Name: location |
-//  | Labels:        | Labels:        | Labels:                        | Labels:          | Labels:        | Labels:                  | Labels:                  | Labels:        |
-//  | Type: []string | Type: []string | Type: []string                 | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []*json.RawMessage | Type: []string |
-//  +----------------+----------------+--------------------------------+------------------+----------------+--------------------------+--------------------------+----------------+
-//  | dashboard      | 1              | Eyjafjallajökull Eruption data |                  | /pfix/d/1/     | null                     | null                     |                |
-//  +----------------+----------------+--------------------------------+------------------+----------------+--------------------------+--------------------------+----------------+
+//  +----------------+----------------+--------------------------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  | Name: kind     | Name: uid      | Name: name                     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid            | Name: location |
+//  | Labels:        | Labels:        | Labels:                        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
+//  | Type: []string | Type: []string | Type: []string                 | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
+//  +----------------+----------------+--------------------------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  | dashboard      | 1              | Eyjafjallajökull Eruption data |                  | /pfix/d/1/     | null                     | []                      |                |
+//  +----------------+----------------+--------------------------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -85,8 +85,7 @@
             "name": "ds_uid",
             "type": "other",
             "typeInfo": {
-              "frame": "json.RawMessage",
-              "nullable": true
+              "frame": "json.RawMessage"
             }
           },
           {
@@ -119,7 +118,7 @@
             null
           ],
           [
-            null
+            []
           ],
           [
             ""

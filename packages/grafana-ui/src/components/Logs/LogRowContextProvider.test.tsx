@@ -2,9 +2,12 @@ import { mount } from 'enzyme';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
-import { FieldType, LogRowModel, MutableDataFrame, Labels, LogLevel, DataQueryResponse } from '@grafana/data';
+import { FieldType, LogRowModel, MutableDataFrame, DataQueryResponse } from '@grafana/data';
 
 import { getRowContexts, LogRowContextProvider } from './LogRowContextProvider';
+import { createLogRow } from './__mocks__/logRow';
+
+const row = createLogRow({ entry: '4', timeEpochMs: 4 });
 
 describe('getRowContexts', () => {
   describe('when called with a DataFrame and results are returned', () => {
@@ -175,21 +178,3 @@ describe('LogRowContextProvider', () => {
     });
   });
 });
-
-const row: LogRowModel = {
-  entryFieldIndex: 0,
-  rowIndex: 0,
-  dataFrame: new MutableDataFrame(),
-  entry: '4',
-  labels: null as any as Labels,
-  hasAnsi: false,
-  hasUnescapedContent: false,
-  raw: '4',
-  logLevel: LogLevel.info,
-  timeEpochMs: 4,
-  timeEpochNs: '4000000',
-  timeFromNow: '',
-  timeLocal: '',
-  timeUtc: '',
-  uid: '1',
-};

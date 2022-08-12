@@ -26,8 +26,8 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			desc: "should return all users",
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
-				User: &models.SignedInUser{
-					OrgId:       1,
+				User: &user.SignedInUser{
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
 			},
@@ -37,8 +37,8 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			desc: "should return no users",
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
-				User: &models.SignedInUser{
-					OrgId:       1,
+				User: &user.SignedInUser{
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
 				},
 			},
@@ -48,8 +48,8 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			desc: "should return some users",
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
-				User: &models.SignedInUser{
-					OrgId: 1,
+				User: &user.SignedInUser{
+					OrgID: 1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
 						"users:id:1",
 						"users:id:5",
@@ -76,7 +76,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 
 			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
 				for _, u := range tt.query.Result {
-					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgId][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
+					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
 				}
 			}
 		})
@@ -95,8 +95,8 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			desc: "should return all users",
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
-				User: &models.SignedInUser{
-					OrgId:       1,
+				User: &user.SignedInUser{
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
 			},
@@ -106,8 +106,8 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			desc: "should return no users",
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
-				User: &models.SignedInUser{
-					OrgId:       1,
+				User: &user.SignedInUser{
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
 				},
 			},
@@ -117,8 +117,8 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			desc: "should return some users",
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
-				User: &models.SignedInUser{
-					OrgId: 1,
+				User: &user.SignedInUser{
+					OrgID: 1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
 						"users:id:1",
 						"users:id:5",
@@ -141,7 +141,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 
 			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
 				for _, u := range tt.query.Result.OrgUsers {
-					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgId][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
+					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
 				}
 			}
 		})
@@ -271,8 +271,8 @@ func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
 	}
 }
 
-func hasWildcardScope(user *models.SignedInUser, action string) bool {
-	for _, scope := range user.Permissions[user.OrgId][action] {
+func hasWildcardScope(user *user.SignedInUser, action string) bool {
+	for _, scope := range user.Permissions[user.OrgID][action] {
 		if strings.HasSuffix(scope, ":*") {
 			return true
 		}

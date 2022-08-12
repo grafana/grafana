@@ -8,10 +8,7 @@ import (
 
 	prometheusModel "github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -19,6 +16,8 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/benbjohnson/clock"
@@ -27,23 +26,19 @@ import (
 
 // ScheduleService is an interface for a service that schedules the evaluation
 // of alert rules.
-//go:generate mockery --name ScheduleService --structname FakeScheduleService --inpackage --filename schedule_mock.go
+//go:generate mockery --name ScheduleService --structname FakeScheduleService --inpackage --filename schedule_mock.go --with-expecter
 type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
 	// UpdateAlertRule notifies scheduler that a rule has been changed
 	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64)
-	// UpdateAlertRulesByNamespaceUID notifies scheduler that all rules in a namespace should be updated.
-	UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error
 	// DeleteAlertRule notifies scheduler that a rule has been changed
 	DeleteAlertRule(key ngmodels.AlertRuleKey)
 	// the following are used by tests only used for tests
 	evalApplied(ngmodels.AlertRuleKey, time.Time)
 	stopApplied(ngmodels.AlertRuleKey)
 	overrideCfg(cfg SchedulerCfg)
-
-	folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error
 }
 
 //go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
@@ -97,9 +92,6 @@ type schedule struct {
 	// current tick depends on its evaluation interval and when it was
 	// last evaluated.
 	schedulableAlertRules alertRulesRegistry
-
-	// bus is used to hook into events that should cause rule updates.
-	bus bus.Bus
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -117,7 +109,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager, bus bus.Bus) *schedule {
+func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
@@ -138,11 +130,8 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.Cfg.MinInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
-		bus:                   bus,
 		alertsSender:          cfg.AlertSender,
 	}
-
-	bus.AddEventListener(sch.folderUpdateHandler)
 
 	return &sch
 }
@@ -163,26 +152,6 @@ func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int6
 		return
 	}
 	ruleInfo.update(ruleVersion(lastVersion))
-}
-
-// UpdateAlertRulesByNamespaceUID looks for the active rule evaluation for every rule in the given namespace and commands it to update the rule.
-func (sch *schedule) UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error {
-	q := ngmodels.ListAlertRulesQuery{
-		OrgID:         orgID,
-		NamespaceUIDs: []string{uid},
-	}
-	if err := sch.ruleStore.ListAlertRules(ctx, &q); err != nil {
-		return err
-	}
-
-	for _, r := range q.Result {
-		sch.UpdateAlertRule(ngmodels.AlertRuleKey{
-			OrgID: orgID,
-			UID:   r.UID,
-		}, r.Version)
-	}
-
-	return nil
 }
 
 // DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
@@ -465,14 +434,6 @@ func (sch *schedule) saveAlertStates(ctx context.Context, states []*state.State)
 	}
 }
 
-// folderUpdateHandler listens for folder update events and updates all rules in the given folder.
-func (sch *schedule) folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error {
-	if sch.disableGrafanaFolder {
-		return nil
-	}
-	return sch.UpdateAlertRulesByNamespaceUID(ctx, evt.OrgID, evt.UID)
-}
-
 // overrideCfg is only used on tests.
 func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.clock = cfg.C
@@ -508,10 +469,10 @@ func (sch *schedule) getRuleExtraLabels(ctx context.Context, alertRule *ngmodels
 	extraLabels[prometheusModel.AlertNameLabel] = alertRule.Title
 	extraLabels[ngmodels.RuleUIDLabel] = alertRule.UID
 
-	user := &models.SignedInUser{
-		UserId:  0,
-		OrgRole: models.ROLE_ADMIN,
-		OrgId:   alertRule.OrgID,
+	user := &user.SignedInUser{
+		UserID:  0,
+		OrgRole: org.RoleAdmin,
+		OrgID:   alertRule.OrgID,
 	}
 
 	if !sch.disableGrafanaFolder {

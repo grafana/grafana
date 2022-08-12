@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -60,7 +60,7 @@ func (s *ScopeResolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMut
 	}
 }
 
-func (s *ScopeResolvers) GetScopeKeywordMutator(user *models.SignedInUser) ScopeKeywordMutator {
+func (s *ScopeResolvers) GetScopeKeywordMutator(user *user.SignedInUser) ScopeKeywordMutator {
 	return func(ctx context.Context, scope string) (string, error) {
 		if resolver, ok := s.keywordResolvers[scope]; ok {
 			scopes, err := resolver.Resolve(ctx, user)
@@ -103,13 +103,13 @@ type ScopeAttributeMutator func(context.Context, string) ([]string, error)
 // ScopeKeywordResolver is used to resolve keywords in scopes e.g. "users:self" -> "user:id:1".
 // These type of resolvers is used when fetching stored permissions
 type ScopeKeywordResolver interface {
-	Resolve(ctx context.Context, user *models.SignedInUser) (string, error)
+	Resolve(ctx context.Context, user *user.SignedInUser) (string, error)
 }
 
 // ScopeKeywordResolverFunc is an adapter to allow functions to implement ScopeKeywordResolver interface
-type ScopeKeywordResolverFunc func(ctx context.Context, user *models.SignedInUser) (string, error)
+type ScopeKeywordResolverFunc func(ctx context.Context, user *user.SignedInUser) (string, error)
 
-func (f ScopeKeywordResolverFunc) Resolve(ctx context.Context, user *models.SignedInUser) (string, error) {
+func (f ScopeKeywordResolverFunc) Resolve(ctx context.Context, user *user.SignedInUser) (string, error) {
 	return f(ctx, user)
 }
 
@@ -135,6 +135,6 @@ func ScopeInjector(params ScopeParams) ScopeAttributeMutator {
 	}
 }
 
-var userSelfResolver = ScopeKeywordResolverFunc(func(ctx context.Context, user *models.SignedInUser) (string, error) {
-	return Scope("users", "id", fmt.Sprintf("%v", user.UserId)), nil
+var userSelfResolver = ScopeKeywordResolverFunc(func(ctx context.Context, user *user.SignedInUser) (string, error) {
+	return Scope("users", "id", fmt.Sprintf("%v", user.UserID)), nil
 })

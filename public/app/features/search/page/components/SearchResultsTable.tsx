@@ -26,6 +26,7 @@ export type SearchResultsProps = {
   clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
+  onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
@@ -45,6 +46,7 @@ export const SearchResultsTable = React.memo(
     clearSelection,
     onTagSelected,
     onDatasourceChange,
+    onClickItem,
     keyboardEvents,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
@@ -121,14 +123,14 @@ export const SearchResultsTable = React.memo(
                   cell={cell}
                   columnIndex={index}
                   columnCount={row.cells.length}
-                  userProps={{ href: url }}
+                  userProps={{ href: url, onClick: onClickItem }}
                 />
               );
             })}
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles, onClickItem]
     );
 
     if (!rows.length) {

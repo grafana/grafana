@@ -11,6 +11,7 @@ load(
     'test_backend_step',
     'test_backend_integration_step',
     'verify_gen_cue_step',
+    'compile_build_cmd',
 )
 
 load(
@@ -22,6 +23,7 @@ def test_backend(trigger, ver_mode):
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
+        compile_build_cmd(),
         gen_version_step(ver_mode),
         verify_gen_cue_step(edition="oss"),
         wire_install_step(),

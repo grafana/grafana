@@ -3,6 +3,10 @@ import React, { ComponentProps } from 'react';
 
 import { dateTime } from '@grafana/data';
 
+import { LokiDatasource } from '../datasource';
+import LokiLanguageProvider from '../language_provider';
+import syntax from '../syntax';
+
 import { LokiQueryField } from './LokiQueryField';
 
 type Props = ComponentProps<typeof LokiQueryField>;
@@ -12,12 +16,11 @@ const defaultProps: Props = {
     languageProvider: {
       start: () => Promise.resolve(['label1']),
       fetchLabels: Promise.resolve(['label1']),
-      getSyntax: () => {},
+      getSyntax: () => syntax,
       getLabelKeys: () => ['label1'],
-      getLabelValues: () => ['value1'],
-    } as any,
-    getInitHints: () => [],
-  } as any,
+      getLabelValues: () => Promise.resolve(['value1']),
+    } as unknown as LokiLanguageProvider,
+  } as LokiDatasource,
   range: {
     from: dateTime([2021, 1, 11, 12, 0, 0]),
     to: dateTime([2021, 1, 11, 18, 0, 0]),
