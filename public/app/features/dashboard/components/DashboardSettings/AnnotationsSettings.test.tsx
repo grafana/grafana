@@ -4,13 +4,15 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+
+import { DashboardModel } from '../../state';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 
 describe('AnnotationsSettings', () => {
-  let dashboard: any;
+  let dashboard: DashboardModel;
 
   const dataSources = {
     grafana: mockDataSource(
@@ -18,7 +20,6 @@ describe('AnnotationsSettings', () => {
         name: 'Grafana',
         uid: 'uid1',
         type: 'grafana',
-        isDefault: true,
       },
       { annotations: true }
     ),
@@ -57,7 +58,7 @@ describe('AnnotationsSettings', () => {
   });
 
   beforeEach(() => {
-    dashboard = {
+    dashboard = new DashboardModel({
       id: 74,
       version: 7,
       annotations: {
@@ -74,13 +75,12 @@ describe('AnnotationsSettings', () => {
         ],
       },
       links: [],
-    };
+    });
   });
 
   test('it renders a header and cta if no annotations or only builtIn annotation', async () => {
-    render(<AnnotationsSettings dashboard={dashboard} />);
+    const { rerender } = render(<AnnotationsSettings dashboard={dashboard} />);
 
-    expect(screen.getByRole('heading', { name: /annotations/i })).toBeInTheDocument();
     expect(screen.queryByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana/i })).toBeInTheDocument();
     expect(
@@ -88,22 +88,8 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /annotations documentation/i })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('cell', { name: /annotations & alerts \(built\-in\)/i }));
-
-    const heading = screen.getByRole('heading', {
-      name: /annotations edit/i,
-    });
-    const nameInput = screen.getByRole('textbox', { name: /name/i });
-
-    expect(heading).toBeInTheDocument();
-
-    await userEvent.clear(nameInput);
-    await userEvent.type(nameInput, 'My Annotation');
-
-    expect(screen.queryByText(/grafana/i)).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /hidden/i })).toBeChecked();
-
-    await userEvent.click(within(heading).getByText(/annotations/i));
+    dashboard.annotations.list[0].name = 'My annotation';
+    rerender(<AnnotationsSettings dashboard={dashboard} />);
 
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /my annotation \(built\-in\) grafana/i })).toBeInTheDocument();
@@ -121,8 +107,8 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
   });
 
-  test('it renders the anotation names or uid if annotation doesnt exist', async () => {
-    const annotationsList = [
+  test('it renders the annotation names or uid if annotation doesnt exist', async () => {
+    dashboard.annotations.list = [
       ...dashboard.annotations.list,
       {
         builtIn: 0,
@@ -143,20 +129,15 @@ describe('AnnotationsSettings', () => {
         type: 'dashboard',
       },
     ];
-    const dashboardWithAnnotations = {
-      ...dashboard,
-      annotations: {
-        list: [...annotationsList],
-      },
-    };
-    render(<AnnotationsSettings dashboard={dashboardWithAnnotations} />);
+
+    render(<AnnotationsSettings dashboard={dashboard} />);
     // Check that we have the correct annotations
     expect(screen.queryByText(/prometheus/i)).toBeInTheDocument();
     expect(screen.queryByText(/deletedAnnotationId/i)).toBeInTheDocument();
   });
 
   test('it renders a sortable table of annotations', async () => {
-    const annotationsList = [
+    dashboard.annotations.list = [
       ...dashboard.annotations.list,
       {
         builtIn: 0,
@@ -177,13 +158,9 @@ describe('AnnotationsSettings', () => {
         type: 'dashboard',
       },
     ];
-    const dashboardWithAnnotations = {
-      ...dashboard,
-      annotations: {
-        list: [...annotationsList],
-      },
-    };
-    render(<AnnotationsSettings dashboard={dashboardWithAnnotations} />);
+
+    render(<AnnotationsSettings dashboard={dashboard} />);
+
     // Check that we have sorting buttons
     expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-up' })).not.toBeInTheDocument();
     expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
@@ -209,18 +186,26 @@ describe('AnnotationsSettings', () => {
     expect(within(getTableBodyRows()[2]).queryByText(/annotations & alerts/i)).toBeInTheDocument();
   });
 
-  test('it renders a form for adding/editing annotations', async () => {
+  test('Adding a new annotation', async () => {
     render(<AnnotationsSettings dashboard={dashboard} />);
 
     await userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query')));
 
-    const heading = screen.getByRole('heading', {
-      name: /annotations edit/i,
+    expect(locationService.getSearchObject().editIndex).toBe('1');
+    expect(dashboard.annotations.list.length).toBe(2);
+  });
+
+  test('Editing annotations', async () => {
+    dashboard.annotations.list.push({
+      name: 'New annotation query',
+      datasource: { uid: 'uid2', type: 'testdata' },
+      iconColor: 'red',
+      enable: true,
     });
+
+    render(<AnnotationsSettings dashboard={dashboard} editIndex={1} />);
+
     const nameInput = screen.getByRole('textbox', { name: /name/i });
-
-    expect(heading).toBeInTheDocument();
-
     await userEvent.clear(nameInput);
     await userEvent.type(nameInput, 'My Prometheus Annotation');
 
@@ -233,24 +218,9 @@ describe('AnnotationsSettings', () => {
 
     expect(screen.getByRole('checkbox', { name: /hidden/i })).not.toBeChecked();
 
-    await userEvent.click(within(heading).getByText(/annotations/i));
-
-    expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(2);
-    expect(screen.queryByRole('row', { name: /my prometheus annotation prometheus/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /new query/i })).toBeInTheDocument();
-    expect(
-      screen.queryByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
-    ).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: /new query/i }));
-
-    await userEvent.click(within(screen.getByRole('heading', { name: /annotations edit/i })).getByText(/annotations/i));
-
-    expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(3);
-
-    await userEvent.click(screen.getAllByLabelText(/Delete query with title/)[0]);
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
-    expect(within(screen.getAllByRole('rowgroup')[1]).getAllByRole('row').length).toBe(2);
+    expect(locationService.getSearchObject().editIndex).toBe(undefined);
+    expect(dashboard.annotations.list.length).toBe(1);
   });
 });

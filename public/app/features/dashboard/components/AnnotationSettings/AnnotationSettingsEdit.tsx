@@ -15,7 +15,6 @@ import { AngularEditorLoader } from './AngularEditorLoader';
 type Props = {
   editIdx: number;
   dashboard: DashboardModel;
-  onDelete: () => void;
 };
 
 export const newAnnotationName = 'New annotation';
