@@ -154,11 +154,6 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
           .then((roles) => this.setState({ roleOptions: roles }))
           .catch((e) => console.error(e));
       }
-      if (contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)) {
-        fetchRoleOptions(this.props.org.orgId)
-          .then((roles) => this.setState({ builtInRoles: roles }))
-          .catch((e) => console.error(e));
-      }
     }
   }
 
@@ -166,7 +161,10 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     const { org, user } = this.props;
     this.props.onOrgRemove(org.orgId);
     if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.OrgUsersRemove)) {
+      if (
+        contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove) &&
+        contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)
+      ) {
         user && (await updateUserRoles([], user.id, org.orgId));
       }
     }
@@ -333,7 +331,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     this.props.onOrgAdd(selectedOrg!.id, role);
     // add the stored userRoles also
     if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.OrgUsersWrite)) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)) {
         if (this.state.pendingUserId) {
           await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
           // clear pending state
@@ -391,7 +389,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
               onBuiltinRoleChange={this.onOrgRoleChange}
               builtinRolesDisabled={false}
               roleOptions={roleOptions}
-              updateDisabled={true}
+              apply={true}
               onApplyRoles={this.onRoleUpdate}
               pendingRoles={this.state.pendingRoles}
             />
