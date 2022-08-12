@@ -28,7 +28,7 @@ export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDT
   // for each receiver from response
   receiversStateDto.forEach((cpState) => {
     //init receiver state
-    contactPointsState.receivers[cpState.name] = { active: cpState.active, integrations: {}, errorCount: 0 };
+    contactPointsState.receivers[cpState.name] = { active: cpState.active, notifiers: {}, errorCount: 0 };
     const receiverState = contactPointsState.receivers[cpState.name];
     //update integrations in response
     cpState.integrations.forEach((integrationStatusDTO) => {
@@ -42,11 +42,11 @@ export const contactPointsStateDtoToModel = (receiversStateDto: ReceiversStateDT
       const integrationType = getIntegrationType(integrationStatusDTO.name);
       if (integrationType) {
         //if type still does not exist in IntegrationsTypeState we initialize it with an empty array
-        if (!receiverState.integrations[integrationType]) {
-          receiverState.integrations[integrationType] = [];
+        if (!receiverState.notifiers[integrationType]) {
+          receiverState.notifiers[integrationType] = [];
         }
         // add error status for this type
-        receiverState.integrations[integrationType].push(integrationStatusDTO);
+        receiverState.notifiers[integrationType].push(integrationStatusDTO);
       }
     });
   });
