@@ -40,7 +40,7 @@ The Geomap visualization supports showing multiple layers. Each layer determines
 
 There are three map layer types to choose from in the Geomap visualization.
 
-- [Markers]({{< relref "markers/" >}}) renders static data from a geojson file.
+- [Markers]({{< relref "markers/" >}}) renders static data from a GeoJSON file.
 - [Heatmap]({{< relref "heatmap/" >}}) visualizes a heatmap of the data.
 - [GeoJSON]({{< relref "geojson/" >}}) renders a marker at each data point.<br /><br />
 - [Night / Day (alpha)]({{< relref "daynight/" >}}) renders a night / day region.
