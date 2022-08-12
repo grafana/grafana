@@ -42,7 +42,12 @@ export default class GraphiteQuery {
   scopedVars?: ScopedVars;
 
   /** @ngInject */
-  constructor(datasource: GraphiteDatasource, target: GraphiteTarget, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
+  constructor(
+    datasource: GraphiteDatasource,
+    target: GraphiteTarget,
+    templateSrv?: TemplateSrv,
+    scopedVars?: ScopedVars
+  ) {
     this.datasource = datasource;
     this.target = target;
     this.templateSrv = templateSrv;
