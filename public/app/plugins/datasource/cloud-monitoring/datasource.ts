@@ -57,16 +57,12 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return super.query(request);
   }
 
-  applyTemplateVariables(
-    { metricQuery, refId, queryType, sloQuery, type = 'timeSeriesQuery' }: CloudMonitoringQuery,
-    scopedVars: ScopedVars
-  ): Record<string, any> {
+  applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
+    const { metricQuery, sloQuery } = target;
     return {
+      ...target,
       datasource: this.getRef(),
-      refId,
       intervalMs: this.intervalMs,
-      type,
-      queryType,
       metricQuery: {
         ...this.interpolateProps(metricQuery, scopedVars),
         projectName: this.templateSrv.replace(

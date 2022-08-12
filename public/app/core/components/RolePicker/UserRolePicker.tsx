@@ -16,7 +16,7 @@ export interface Props {
   builtInRoles?: { [key: string]: Role[] };
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
-  updateDisabled?: boolean;
+  apply?: boolean;
   onApplyRoles?: (newRoles: Role[], userId: number, orgId: number | undefined) => void;
   pendingRoles?: Role[];
 }
@@ -30,13 +30,13 @@ export const UserRolePicker: FC<Props> = ({
   builtInRoles,
   disabled,
   builtinRolesDisabled,
-  updateDisabled,
+  apply = false,
   onApplyRoles,
   pendingRoles,
 }) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
-      if (updateDisabled) {
+      if (apply) {
         if (pendingRoles?.length! > 0) {
           return pendingRoles;
         }
@@ -59,15 +59,17 @@ export const UserRolePicker: FC<Props> = ({
   }, [orgId, getUserRoles, pendingRoles]);
 
   const onRolesChange = async (roles: Role[]) => {
-    if (!updateDisabled) {
+    if (!apply) {
       await updateUserRoles(roles, userId, orgId);
       await getUserRoles();
-    } else {
-      if (onApplyRoles) {
-        onApplyRoles(roles, userId, orgId);
-      }
+    } else if (onApplyRoles) {
+      onApplyRoles(roles, userId, orgId);
     }
   };
+
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
   return (
     <RolePicker
@@ -81,7 +83,8 @@ export const UserRolePicker: FC<Props> = ({
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
       showBuiltInRole
-      updateDisabled={updateDisabled || false}
+      apply={apply}
+      canUpdateRoles={canUpdateRoles}
     />
   );
 };

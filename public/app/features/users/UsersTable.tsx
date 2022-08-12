@@ -90,11 +90,13 @@ const UsersTable: FC<Props> = (props) => {
                     <UserRolePicker
                       userId={user.userId}
                       orgId={orgId}
-                      builtInRole={user.role}
-                      onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
                       roleOptions={roleOptions}
                       builtInRoles={builtinRoles}
-                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
+                      builtInRole={user.role}
+                      onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
+                      builtinRolesDisabled={
+                        !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)
+                      }
                     />
                   ) : (
                     <OrgRolePicker
