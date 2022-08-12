@@ -14,7 +14,7 @@ weight: 500
 
 # Map Controls
 
-The map controls section allows toggling of which controls and information panels are overlayed over the map.
+The map controls section contains various options for map information and tool overlays.
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-9-1-0.png" max-width="1200px" caption="Geomap panel map controls" >}}
 
 ## Zoom
