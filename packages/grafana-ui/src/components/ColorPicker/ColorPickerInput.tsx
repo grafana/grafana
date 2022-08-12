@@ -60,7 +60,7 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
             />
           )}
           <div onClick={() => setIsOpen(true)}>
-            <ColorInput {...inputProps} theme={theme} color={currentColor} onChange={setColor} ref={ref} />
+            <ColorInput {...inputProps} theme={theme} color={currentColor} onChange={setColor} ref={ref} isClearable />
           </div>
         </div>
       </ClickOutsideWrapper>
