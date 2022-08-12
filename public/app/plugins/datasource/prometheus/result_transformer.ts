@@ -590,11 +590,9 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le20    20  10  30    =>    10  0   30
     le30    30  10  35    =>    10  0   5
     */
-
   for (let i = seriesList.length - 1; i > 0; i--) {
     const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
     const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
-
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
