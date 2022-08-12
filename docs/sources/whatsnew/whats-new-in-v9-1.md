@@ -88,7 +88,7 @@ To learn more about the heatmap panel, see the [documentation]({{< relref "../vi
 
 #### Geomap
 
-Geomap now includes a new [measuring tool]({{< relref "../visualizations/geomap/controls/#show-measure-tools" >}}) that allows you to measure both distances and areas.
+You can now measure both distances and areas on Geomap visualizations by using the panel's new [measure tools]({{< relref "../visualizations/geomap/controls/#show-measure-tools" >}}).
 To learn more about the geomap panel, see the [documentation]({{< relref "../visualizations/geomap/" >}}).
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="750px" caption="Geomap panel measuring tool - area" >}}
