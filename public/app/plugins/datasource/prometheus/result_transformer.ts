@@ -591,17 +591,9 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le30    30  10  35    =>    10  0   5
     */
 
-  console.log('pre seriesList', seriesList);
-
   for (let i = seriesList.length - 1; i > 0; i--) {
     const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
-    // const topSeriesLabels = topSeries?.labels;
-    const bottomSeries = seriesList[i - 1].fields.find((s) => {
-      // if(topSeriesLabels){
-      //   return s.name === TIME_SERIES_VALUE_FIELD_NAME && s.labels?.every(label => {})
-      // }
-      return s.name === TIME_SERIES_VALUE_FIELD_NAME;
-    });
+    const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
 
     // Change how we find bottom series to get one that matches labels???
 
@@ -609,20 +601,12 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
 
-    // console.log('topSeries', topSeries, topSeries.values.toArray());
-    // console.log('bottomSeries', bottomSeries, bottomSeries.values.toArray());
-
     for (let j = 0; j < topSeries.values.length; j++) {
       const bottomPoint = bottomSeries.values.get(j) || [0];
-      console.log('topPoint', topSeries.values.toArray()[j]);
-      console.log('bottomPoint', bottomPoint);
-      const newValue = topSeries.values.toArray()[j] - bottomPoint;
-      console.log('new Value', newValue);
-      topSeries.values.toArray()[j] = newValue;
+      topSeries.values.toArray()[j] = topSeries.values.toArray()[j] - bottomPoint;
     }
   }
 
-  console.log('post seriesList', seriesList);
   return seriesList;
 }
 
