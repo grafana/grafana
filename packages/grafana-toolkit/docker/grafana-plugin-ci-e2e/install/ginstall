@@ -6,7 +6,7 @@
 #
 
 latest=$(wget -O - 'https://raw.githubusercontent.com/grafana/grafana/main/latest.json' | jq -r '.stable')
-canary=$(wget -O - "https://grafana.com/api/grafana/versions" | jq ".items[0].version" | tr -d '"')
+canary=$(wget -O - "https://grafana.com/api/grafana-enterprise/versions" | jq ".items[0].version" | tr -d '"')
 
 show_help() {
     echo "Usage: gget <version>"
@@ -59,12 +59,12 @@ fi
 version=$1
 if [ "$version" == "latest" ]; then
   version="$latest"
-  wget -O - "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
+  wget -O - "https://dl.grafana.com/enterprise/release/grafana-enterprise-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 elif [ "$version" == "canary" ]; then
   version="$canary"
-  wget -O - "https://dl.grafana.com/oss/main/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
+  wget -O - "https://dl.grafana.com/enterprise/main/grafana-enterprise-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 else
-  wget -O - "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
+  wget -O - "https://dl.grafana.com/enterprise/release/grafana-enterprise-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 fi
 
 /bin/rm -rf /opt/grafana > /dev/null 2>&1 || true

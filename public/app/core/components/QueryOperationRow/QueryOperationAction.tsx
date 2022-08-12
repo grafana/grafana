@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { IconButton, IconName, useStyles2 } from '@grafana/ui';
 
-interface QueryOperationActionProps {
+export interface QueryOperationActionProps {
   icon: IconName;
   title: string;
   onClick: (e: React.MouseEvent) => void;

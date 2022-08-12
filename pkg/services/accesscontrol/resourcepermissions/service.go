@@ -9,7 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -105,17 +107,17 @@ type Service struct {
 	sqlStore    *sqlstore.SQLStore
 }
 
-func (s *Service) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	var inheritedScopes []string
 	if s.options.InheritedScopesSolver != nil {
 		var err error
-		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgId, resourceID)
+		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgID, resourceID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return s.store.GetResourcePermissions(ctx, user.OrgId, types.GetResourcePermissionsQuery{
+	return s.store.GetResourcePermissions(ctx, user.OrgID, types.GetResourcePermissionsQuery{
 		User:              user,
 		Actions:           s.actions,
 		Resource:          s.options.Resource,
@@ -311,7 +313,6 @@ func (s *Service) declareFixedRoles() error {
 	scopeAll := accesscontrol.Scope(s.options.Resource, "*")
 	readerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:reader", s.options.Resource),
 			DisplayName: s.options.ReaderRoleName,
 			Group:       s.options.RoleGroup,
@@ -319,12 +320,11 @@ func (s *Service) declareFixedRoles() error {
 				{Action: fmt.Sprintf("%s.permissions:read", s.options.Resource), Scope: scopeAll},
 			},
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	writerRole := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     6,
 			Name:        fmt.Sprintf("fixed:%s.permissions:writer", s.options.Resource),
 			DisplayName: s.options.WriterRoleName,
 			Group:       s.options.RoleGroup,
@@ -332,7 +332,7 @@ func (s *Service) declareFixedRoles() error {
 				{Action: fmt.Sprintf("%s.permissions:write", s.options.Resource), Scope: scopeAll},
 			}),
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	return s.ac.DeclareFixedRoles(readerRole, writerRole)

@@ -1841,16 +1841,17 @@ describe('PrometheusDatasource for POST', () => {
     });
   });
 
-  describe('When querying prometheus via check headers X-Dashboard-Id and X-Panel-Id', () => {
-    const options = { dashboardId: 1, panelId: 2 };
+  describe('When querying prometheus via check headers X-Dashboard-Id X-Panel-Id and X-Dashboard-UID', () => {
+    const options = { dashboardId: 1, panelId: 2, dashboardUID: 'WFlOM-jM1' };
     const httpOptions = {
       headers: {} as { [key: string]: number | undefined },
     };
 
     it('with proxy access tracing headers should be added', () => {
       ds._addTracingHeaders(httpOptions as any, options as any);
-      expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
-      expect(httpOptions.headers['X-Panel-Id']).toBe(2);
+      expect(httpOptions.headers['X-Dashboard-Id']).toBe(options.dashboardId);
+      expect(httpOptions.headers['X-Panel-Id']).toBe(options.panelId);
+      expect(httpOptions.headers['X-Dashboard-UID']).toBe(options.dashboardUID);
     });
 
     it('with direct access tracing headers should not be added', () => {
@@ -1862,6 +1863,7 @@ describe('PrometheusDatasource for POST', () => {
       mockDs._addTracingHeaders(httpOptions as any, options as any);
       expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
       expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
+      expect(httpOptions.headers['X-Dashboard-UID']).toBe(undefined);
     });
   });
 });
@@ -1928,6 +1930,7 @@ describe('prepareTargets', () => {
         expr: 'up',
         headers: {
           'X-Dashboard-Id': undefined,
+          'X-Dashboard-UID': undefined,
           'X-Panel-Id': panelId,
         },
         hinting: undefined,
@@ -2089,6 +2092,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           headers: {
             'X-Dashboard-Id': undefined,
+            'X-Dashboard-UID': undefined,
             'X-Panel-Id': panelId,
           },
           hinting: undefined,
@@ -2110,6 +2114,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           headers: {
             'X-Dashboard-Id': undefined,
+            'X-Dashboard-UID': undefined,
             'X-Panel-Id': panelId,
           },
           hinting: undefined,
@@ -2150,6 +2155,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           headers: {
             'X-Dashboard-Id': undefined,
+            'X-Dashboard-UID': undefined,
             'X-Panel-Id': panelId,
           },
           hinting: undefined,
@@ -2186,6 +2192,7 @@ describe('prepareTargets', () => {
         expr: 'up',
         headers: {
           'X-Dashboard-Id': undefined,
+          'X-Dashboard-UID': undefined,
           'X-Panel-Id': panelId,
         },
         hinting: undefined,
@@ -2205,7 +2212,7 @@ describe('modifyQuery', () => {
     describe('and query has no labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
-        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER' };
+        const action = { options: { key: 'cluster', value: 'us-cluster' }, type: 'ADD_FILTER' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2219,7 +2226,7 @@ describe('modifyQuery', () => {
     describe('and query has labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
-        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER' };
+        const action = { options: { key: 'pod', value: 'pod-123' }, type: 'ADD_FILTER' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2235,7 +2242,7 @@ describe('modifyQuery', () => {
     describe('and query has no labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines' };
-        const action = { key: 'cluster', value: 'us-cluster', type: 'ADD_FILTER_OUT' };
+        const action = { options: { key: 'cluster', value: 'us-cluster' }, type: 'ADD_FILTER_OUT' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 
@@ -2249,7 +2256,7 @@ describe('modifyQuery', () => {
     describe('and query has labels', () => {
       it('then the correct label should be added', () => {
         const query: PromQuery = { refId: 'A', expr: 'go_goroutines{cluster="us-cluster"}' };
-        const action = { key: 'pod', value: 'pod-123', type: 'ADD_FILTER_OUT' };
+        const action = { options: { key: 'pod', value: 'pod-123' }, type: 'ADD_FILTER_OUT' };
         const instanceSettings = { jsonData: {} } as unknown as DataSourceInstanceSettings<PromOptions>;
         const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
 

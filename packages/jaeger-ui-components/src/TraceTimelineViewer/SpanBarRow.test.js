@@ -16,6 +16,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { NONE, DURATION, TAG } from '../settings/SpanBarSettings';
+
 import SpanBarRow from './SpanBarRow';
 
 describe('<SpanBarRow>', () => {
@@ -43,11 +45,10 @@ describe('<SpanBarRow>', () => {
     showErrorIcon: false,
     getViewedBounds: () => ({ start: 0, end: 1 }),
     span: {
-      duration: 'test-duration',
+      duration: 9000,
       hasChildren: true,
       process: {
         serviceName: 'service-name',
-        tags: [],
       },
       spanID,
       logs: [],
@@ -180,5 +181,90 @@ describe('<SpanBarRow>', () => {
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
+  });
+
+  describe('render span bar label', () => {
+    it('with default value', () => {
+      render(<SpanBarRow {...props} />);
+      expect(screen.getByText('(9ms)')).toBeInTheDocument();
+    });
+
+    it('with none value', () => {
+      const testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: NONE,
+          },
+        },
+        props
+      );
+      render(<SpanBarRow {...testProps} />);
+      expect(screen.queryByText('(9ms)')).not.toBeInTheDocument();
+    });
+
+    it('with duration value', () => {
+      const testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: DURATION,
+          },
+        },
+        props
+      );
+      render(<SpanBarRow {...testProps} />);
+      expect(screen.getByText('(9ms)')).toBeInTheDocument();
+    });
+
+    it('with tag value', () => {
+      const testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: TAG,
+            tag: 'tag',
+          },
+        },
+        {
+          ...props,
+          span: {
+            process: {},
+            tags: [
+              {
+                key: 'tag',
+                value: 'tag-value',
+              },
+            ],
+          },
+        }
+      );
+      render(<SpanBarRow {...testProps} />);
+      expect(screen.getByText('(tag-value)')).toBeInTheDocument();
+    });
+
+    it('with process value', () => {
+      let testProps = Object.assign(
+        {
+          spanBarOptions: {
+            type: TAG,
+            tag: 'tag',
+          },
+        },
+        {
+          ...props,
+          span: {
+            process: {
+              tags: [
+                {
+                  key: 'tag',
+                  value: 'process-value',
+                },
+              ],
+            },
+            tags: [],
+          },
+        }
+      );
+      render(<SpanBarRow {...testProps} />);
+      expect(screen.getByText('(process-value)')).toBeInTheDocument();
+    });
   });
 });

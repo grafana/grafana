@@ -51,8 +51,9 @@ export function prepScatter(
     builder = prepConfig(getData, series, theme, ttip);
   } catch (e) {
     console.log('prepScatter ERROR', e);
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error in prepScatter';
     return {
-      error: e.message,
+      error: errorMessage,
       series: [],
     };
   }

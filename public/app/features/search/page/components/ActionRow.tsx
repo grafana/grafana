@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, FormEvent } from 'react';
+import React, { FC, FormEvent, useEffect } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -7,6 +7,7 @@ import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from 
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { SEARCH_SELECTED_LAYOUT } from '../../constants';
 import { DashboardQuery, SearchLayout } from '../../types';
 
 export const layoutOptions = [
@@ -38,7 +39,7 @@ export function getValidQueryLayout(q: DashboardQuery): SearchLayout {
 
   // Folders is not valid when a query exists
   if (layout === SearchLayout.Folders) {
-    if (q.query || q.sort) {
+    if (q.query || q.sort || q.starred) {
       return SearchLayout.List;
     }
   }
@@ -69,25 +70,34 @@ export const ActionRow: FC<Props> = ({
   // Disabled folder layout option when query is present
   const disabledOptions = query.query ? [SearchLayout.Folders] : [];
 
+  const updateLayoutPreference = (layout: SearchLayout) => {
+    localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
+    onLayoutChange(layout);
+  };
+
+  useEffect(() => {
+    if (includePanels && layout === SearchLayout.Folders) {
+      setIncludePanels(false);
+    }
+  }, [layout, includePanels, setIncludePanels]);
+
   return (
     <div className={styles.actionRow}>
-      <div className={styles.rowContainer}>
-        <HorizontalGroup spacing="md" width="auto">
-          {!hideLayout && (
-            <RadioButtonGroup
-              options={layoutOptions}
-              disabledOptions={disabledOptions}
-              onChange={onLayoutChange}
-              value={layout}
-            />
-          )}
-          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
-        </HorizontalGroup>
-      </div>
       <HorizontalGroup spacing="md" width="auto">
+        <TagFilter isClearable={false} tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
+        {config.featureToggles.panelTitleSearch && (
+          <Checkbox
+            data-testid="include-panels"
+            disabled={layout === SearchLayout.Folders}
+            value={includePanels}
+            onChange={() => setIncludePanels(!includePanels)}
+            label="Include panels"
+          />
+        )}
+
         {showStarredFilter && (
           <div className={styles.checkboxWrapper}>
-            <Checkbox label="Filter by starred" onChange={onStarredFilterChange} value={query.starred} />
+            <Checkbox label="Starred" onChange={onStarredFilterChange} value={query.starred} />
           </div>
         )}
         {query.datasource && (
@@ -95,12 +105,20 @@ export const ActionRow: FC<Props> = ({
             Datasource: {query.datasource}
           </Button>
         )}
-        {layout !== SearchLayout.Folders && config.featureToggles.panelTitleSearch && (
-          <Checkbox value={includePanels} onChange={() => setIncludePanels(!includePanels)} label="Include panels" />
-        )}
-
-        <TagFilter isClearable tags={query.tag} tagOptions={getTagOptions} onChange={onTagFilterChange} />
       </HorizontalGroup>
+      <div className={styles.rowContainer}>
+        <HorizontalGroup spacing="md" width="auto">
+          {!hideLayout && (
+            <RadioButtonGroup
+              options={layoutOptions}
+              disabledOptions={disabledOptions}
+              onChange={updateLayoutPreference}
+              value={layout}
+            />
+          )}
+          <SortPicker onChange={onSortChange} value={query.sort?.value} getSortOptions={getSortOptions} isClearable />
+        </HorizontalGroup>
+      </div>
     </div>
   );
 };

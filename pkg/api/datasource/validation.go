@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 )
 
@@ -16,20 +16,20 @@ var logger = log.New("datasource")
 
 // requiredURL contains the set of data sources that require a URL.
 var requiredURL = map[string]bool{
-	models.DS_GRAPHITE:     true,
-	models.DS_INFLUXDB:     true,
-	models.DS_INFLUXDB_08:  true,
-	models.DS_ES:           true,
-	models.DS_PROMETHEUS:   true,
-	models.DS_ALERTMANAGER: true,
-	models.DS_JAEGER:       true,
-	models.DS_LOKI:         true,
-	models.DS_OPENTSDB:     true,
-	models.DS_TEMPO:        true,
-	models.DS_ZIPKIN:       true,
-	models.DS_MYSQL:        true,
-	models.DS_POSTGRES:     true,
-	models.DS_MSSQL:        true,
+	datasources.DS_GRAPHITE:     true,
+	datasources.DS_INFLUXDB:     true,
+	datasources.DS_INFLUXDB_08:  true,
+	datasources.DS_ES:           true,
+	datasources.DS_PROMETHEUS:   true,
+	datasources.DS_ALERTMANAGER: true,
+	datasources.DS_JAEGER:       true,
+	datasources.DS_LOKI:         true,
+	datasources.DS_OPENTSDB:     true,
+	datasources.DS_TEMPO:        true,
+	datasources.DS_ZIPKIN:       true,
+	datasources.DS_MYSQL:        true,
+	datasources.DS_POSTGRES:     true,
+	datasources.DS_MSSQL:        true,
 }
 
 // URLValidationError represents an error from validating a data source URL.

@@ -1,6 +1,7 @@
 package ualert
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -47,6 +48,39 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 			r, err := queries[0].Model.MarshalJSON()
 			require.NoError(t, err)
 			require.JSONEq(t, tt.expected, string(r))
+		})
+	}
+}
+
+func TestAddMigrationInfo(t *testing.T) {
+	tt := []struct {
+		name                string
+		tagsJSON            string
+		expectedLabels      map[string]string
+		expectedAnnotations map[string]string
+	}{
+		{
+			name:                "when alert rule tags are a JSON array, they're ignored.",
+			tagsJSON:            `{ "alertRuleTags": ["one", "two", "three", "four"] }`,
+			expectedLabels:      map[string]string{},
+			expectedAnnotations: map[string]string{"__alertId__": "0", "__dashboardUid__": "", "__panelId__": "0"},
+		},
+		{
+			name:                "when alert rule tags are a JSON object",
+			tagsJSON:            `{ "alertRuleTags": { "key": "value", "key2": "value2" } }`,
+			expectedLabels:      map[string]string{"key": "value", "key2": "value2"},
+			expectedAnnotations: map[string]string{"__alertId__": "0", "__dashboardUid__": "", "__panelId__": "0"},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			var settings dashAlertSettings
+			require.NoError(t, json.Unmarshal([]byte(tc.tagsJSON), &settings))
+
+			labels, annotations := addMigrationInfo(&dashAlert{ParsedSettings: &settings})
+			require.Equal(t, tc.expectedLabels, labels)
+			require.Equal(t, tc.expectedAnnotations, annotations)
 		})
 	}
 }

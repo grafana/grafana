@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { selectOptionInTest } from '../../../../../../../packages/grafana-ui';
 import { getLabelSelects } from '../testUtils';
 
 import { LabelFilters } from './LabelFilters';
@@ -28,6 +28,21 @@ describe('LabelFilters', () => {
     expect(screen.getByText(/qux/)).toBeInTheDocument();
     expect(screen.getByText(/quux/)).toBeInTheDocument();
     expect(screen.getByText(/quuz/)).toBeInTheDocument();
+    expect(getAddButton()).toBeInTheDocument();
+  });
+
+  it('renders multiple values for regex selectors', async () => {
+    setup([
+      { label: 'bar', op: '!~', value: 'baz|bat|bau' },
+      { label: 'foo', op: '!~', value: 'fop|for|fos' },
+    ]);
+    expect(screen.getByText(/bar/)).toBeInTheDocument();
+    expect(screen.getByText(/baz/)).toBeInTheDocument();
+    expect(screen.getByText(/bat/)).toBeInTheDocument();
+    expect(screen.getByText(/bau/)).toBeInTheDocument();
+    expect(screen.getByText(/foo/)).toBeInTheDocument();
+    expect(screen.getByText(/for/)).toBeInTheDocument();
+    expect(screen.getByText(/fos/)).toBeInTheDocument();
     expect(getAddButton()).toBeInTheDocument();
   });
 

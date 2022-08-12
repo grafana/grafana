@@ -29,7 +29,7 @@ export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEch
       this.transports.push(new CustomEndpointTransport({ endpoint: options.customEndpoint }));
     }
 
-    // initialize Sentry so it can set up it's hooks and start collecting errors
+    // initialize Sentry so it can set up its hooks and start collecting errors
     const sentryOptions: BrowserOptions = {
       release: options.buildInfo.version,
       environment: options.buildInfo.env,

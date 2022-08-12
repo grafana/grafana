@@ -435,6 +435,26 @@ describe('PanelModel', () => {
       });
     });
 
+    describe('updateGridPos', () => {
+      it('Should not have changes if no change', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 1, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(false);
+      });
+
+      it('Should have changes if gridPos is different', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(true);
+      });
+
+      it('Should not have changes if not manually updated', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 }, false);
+        expect(model.hasChanged).toBe(false);
+      });
+    });
+
     describe('destroy', () => {
       it('Should still preserve last query result', () => {
         model.getQueryRunner().useLastResultFrom({
@@ -472,6 +492,7 @@ describe('PanelModel', () => {
           run: jest.fn(),
         });
         const dashboardId = 123;
+        const dashboardUID = 'ggHbN42mk';
         const dashboardTimezone = 'browser';
         const width = 860;
         const timeData = {
@@ -486,7 +507,7 @@ describe('PanelModel', () => {
           } as TimeRange,
         } as TimeOverrideResult;
 
-        model.runAllPanelQueries(dashboardId, dashboardTimezone, timeData, width);
+        model.runAllPanelQueries({ dashboardId, dashboardUID, dashboardTimezone, timeData, width });
 
         expect(model.getQueryRunner).toBeCalled();
       });

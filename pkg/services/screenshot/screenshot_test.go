@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -76,10 +77,10 @@ func TestBrowserScreenshotService(t *testing.T) {
 
 	d := dashboards.FakeDashboardService{}
 	r := rendering.NewMockService(c)
-	s := NewBrowserScreenshotService(&d, r)
+	s := NewRemoteRenderScreenshotService(&d, r)
 
 	// a non-existent dashboard should return error
-	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(models.ErrDashboardNotFound).Once()
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboards.ErrDashboardNotFound).Once()
 	ctx := context.Background()
 	opts := ScreenshotOptions{}
 	screenshot, err := s.Take(ctx, opts)
@@ -94,7 +95,7 @@ func TestBrowserScreenshotService(t *testing.T) {
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   2,
-			OrgRole: models.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 		ErrorOpts: rendering.ErrorOpts{
 			ErrorConcurrentLimitReached: true,

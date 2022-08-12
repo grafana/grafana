@@ -12,14 +12,15 @@ import { store } from 'app/store/store';
 import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
+import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
-import { NavBarNext } from './core/components/NavBar/Next/NavBarNext';
-import { I18nProvider } from './core/localisation';
+import { GrafanaContext } from './core/context/GrafanaContext';
+import { I18nProvider } from './core/internationalization';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
-import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
+import { ThemeProvider } from './core/utils/ConfigProvider';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
@@ -82,68 +83,78 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
+  renderNavBar() {
+    if (config.isPublicDashboardView || !this.state.ready || config.featureToggles.topnav) {
+      return null;
+    }
+
+    return <NavBar />;
+  }
+
+  commandPaletteEnabled() {
+    return config.featureToggles.commandPalette && !config.isPublicDashboardView;
+  }
+
+  searchBarEnabled() {
+    return !config.isPublicDashboardView;
+  }
+
   render() {
+    const { app } = this.props;
     const { ready } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
 
-    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
-
     const commandPaletteActionSelected = (action: Action) => {
       reportInteraction('commandPalette_action_selected', {
         actionId: action.id,
+        actionName: action.name,
       });
     };
 
-    const commandPaletteEnabled = () => !config.isPublicDashboardView && config.featureToggles.commandPalette;
-
-    const renderNavBar = () => {
-      return !config.isPublicDashboardView && ready && <>{newNavigationEnabled ? <NavBarNext /> : <NavBar />}</>;
-    };
-
-    const searchBarEnabled = () => !config.isPublicDashboardView;
-
     return (
-      <Provider store={store}>
-        <I18nProvider>
-          <ErrorBoundaryAlert style="page">
-            <ConfigContext.Provider value={config}>
-              <ThemeProvider>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <ModalsProvider>
-                    <GlobalStyles />
-                    {commandPaletteEnabled() && <CommandPalette />}
-                    <div className="grafana-app">
-                      <Router history={locationService.getHistory()}>
-                        {renderNavBar()}
-                        <main className="main-view">
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
+      <React.StrictMode>
+        <Provider store={store}>
+          <I18nProvider>
+            <ErrorBoundaryAlert style="page">
+              <GrafanaContext.Provider value={app.context}>
+                <ThemeProvider value={config.theme2}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <ModalsProvider>
+                      <GlobalStyles />
+                      {this.commandPaletteEnabled() && <CommandPalette />}
+                      <div className="grafana-app">
+                        <Router history={locationService.getHistory()}>
+                          {this.renderNavBar()}
+                          <AppChrome>
+                            {pageBanners.map((Banner, index) => (
+                              <Banner key={index.toString()} />
+                            ))}
 
-                          <AngularRoot />
-                          <AppNotificationList />
-                          {searchBarEnabled() && <SearchWrapper />}
-                          {ready && this.renderRoutes()}
-                          {bodyRenderHooks.map((Hook, index) => (
-                            <Hook key={index.toString()} />
-                          ))}
-                        </main>
-                      </Router>
-                    </div>
-                    <LiveConnectionWarning />
-                    <ModalRoot />
-                    <PortalContainer />
-                  </ModalsProvider>
-                </KBarProvider>
-              </ThemeProvider>
-            </ConfigContext.Provider>
-          </ErrorBoundaryAlert>
-        </I18nProvider>
-      </Provider>
+                            <AngularRoot />
+                            <AppNotificationList />
+                            {this.searchBarEnabled() && <SearchWrapper />}
+                            {ready && this.renderRoutes()}
+                            {bodyRenderHooks.map((Hook, index) => (
+                              <Hook key={index.toString()} />
+                            ))}
+                          </AppChrome>
+                        </Router>
+                      </div>
+                      <LiveConnectionWarning />
+                      <ModalRoot />
+                      <PortalContainer />
+                    </ModalsProvider>
+                  </KBarProvider>
+                </ThemeProvider>
+              </GrafanaContext.Provider>
+            </ErrorBoundaryAlert>
+          </I18nProvider>
+        </Provider>
+      </React.StrictMode>
     );
   }
 }

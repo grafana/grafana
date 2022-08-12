@@ -8,9 +8,7 @@ let searcher: GrafanaSearcher | undefined = undefined;
 
 export function getGrafanaSearcher(): GrafanaSearcher {
   if (!searcher) {
-    const useBluge =
-      config.featureToggles.panelTitleSearch && // set in system configs
-      window.location.search.indexOf('index=sql') < 0; // or URL override
+    const useBluge = config.featureToggles.panelTitleSearch;
     searcher = useBluge ? new BlugeSearcher() : new SQLSearcher();
   }
   return searcher!;

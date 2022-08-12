@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,10 +37,10 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 }
 
 // extractRawPermissionsHelper extracts action and scope fields only from a permission slice
-func extractRawPermissionsHelper(perms []*accesscontrol.Permission) []*accesscontrol.Permission {
-	res := make([]*accesscontrol.Permission, len(perms))
+func extractRawPermissionsHelper(perms []accesscontrol.Permission) []accesscontrol.Permission {
+	res := make([]accesscontrol.Permission, len(perms))
 	for i, p := range perms {
-		res[i] = &accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
+		res[i] = accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
 	}
 	return res
 }
@@ -52,7 +54,7 @@ type evaluatingPermissionsTestCase struct {
 
 type userTestCase struct {
 	name           string
-	orgRole        models.RoleType
+	orgRole        org.RoleType
 	isGrafanaAdmin bool
 }
 
@@ -66,7 +68,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should successfully evaluate access to the endpoint",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        models.ROLE_VIEWER,
+				orgRole:        org.RoleViewer,
 				isGrafanaAdmin: true,
 			},
 			endpoints: []endpointTestCase{
@@ -79,7 +81,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should restrict access to the unauthorized endpoints",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        models.ROLE_VIEWER,
+				orgRole:        org.RoleViewer,
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
@@ -99,9 +101,9 @@ func TestEvaluatingPermissions(t *testing.T) {
 			errRegisterRoles := ac.RegisterFixedRoles(context.Background())
 			require.NoError(t, errRegisterRoles)
 
-			user := &models.SignedInUser{
-				UserId:         1,
-				OrgId:          1,
+			user := &user.SignedInUser{
+				UserID:         1,
+				OrgID:          1,
 				Name:           tc.user.name,
 				OrgRole:        tc.user.orgRole,
 				IsGrafanaAdmin: tc.user.isGrafanaAdmin,
@@ -200,8 +202,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -213,8 +214,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "custom:test:test",
+						Name: "custom:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -227,8 +227,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"WrongAdmin"},
 				},
@@ -241,15 +240,13 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test:test",
+						Name: "fixed:test:test",
 					},
 					Grants: []string{"Admin"},
 				},
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test2:test2",
+						Name: "fixed:test2:test2",
 					},
 					Grants: []string{"Admin"},
 				},
@@ -299,7 +296,6 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version:     1,
 						Name:        "fixed:test:test",
 						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
 					},
@@ -313,7 +309,6 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 			registrations: []accesscontrol.RoleRegistration{
 				{
 					Role: accesscontrol.RoleDTO{
-						Version:     1,
 						Name:        "fixed:test:test",
 						Permissions: []accesscontrol.Permission{{Action: "test:test"}},
 					},
@@ -321,8 +316,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 				},
 				{
 					Role: accesscontrol.RoleDTO{
-						Version: 1,
-						Name:    "fixed:test2:test2",
+						Name: "fixed:test2:test2",
 						Permissions: []accesscontrol.Permission{
 							{Action: "test:test2"},
 							{Action: "test:test3", Scope: "test:*"},
@@ -365,18 +359,17 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 }
 
 func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
-	testUser := models.SignedInUser{
-		UserId:  2,
-		OrgId:   3,
+	testUser := user.SignedInUser{
+		UserID:  2,
+		OrgID:   3,
 		OrgName: "TestOrg",
-		OrgRole: models.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 		Login:   "testUser",
 		Name:    "Test User",
 		Email:   "testuser@example.org",
 	}
 	registration := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
 			UID:         "fixed:test:test",
 			Name:        "fixed:test:test",
 			Description: "Test role",
@@ -386,7 +379,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	}
 	tests := []struct {
 		name     string
-		user     models.SignedInUser
+		user     user.SignedInUser
 		rawPerm  accesscontrol.Permission
 		wantPerm accesscontrol.Permission
 		wantErr  bool
@@ -421,25 +414,24 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 			rawUserPerms := extractRawPermissionsHelper(userPerms)
 
-			assert.Contains(t, rawUserPerms, &tt.wantPerm, "Expected resolution of raw permission")
-			assert.NotContains(t, rawUserPerms, &tt.rawPerm, "Expected raw permission to have been resolved")
+			assert.Contains(t, rawUserPerms, tt.wantPerm, "Expected resolution of raw permission")
+			assert.NotContains(t, rawUserPerms, tt.rawPerm, "Expected raw permission to have been resolved")
 		})
 	}
 }
 
 func TestOSSAccessControlService_Evaluate(t *testing.T) {
-	testUser := models.SignedInUser{
-		UserId:  2,
-		OrgId:   3,
+	testUser := user.SignedInUser{
+		UserID:  2,
+		OrgID:   3,
 		OrgName: "TestOrg",
-		OrgRole: models.ROLE_VIEWER,
+		OrgRole: org.RoleViewer,
 		Login:   "testUser",
 		Name:    "Test User",
 		Email:   "testuser@example.org",
 	}
 	registration := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Version:     1,
 			UID:         "fixed:test:test",
 			Name:        "fixed:test:test",
 			Description: "Test role",
@@ -456,7 +448,7 @@ func TestOSSAccessControlService_Evaluate(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		user       models.SignedInUser
+		user       user.SignedInUser
 		rawPerm    accesscontrol.Permission
 		evaluator  accesscontrol.Evaluator
 		wantAccess bool

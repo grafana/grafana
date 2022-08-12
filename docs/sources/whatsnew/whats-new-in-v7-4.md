@@ -104,7 +104,7 @@ _Server-side expressions_ is an experimental feature that allows you to manipula
 
 The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-dimensions/" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
-> **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
+> **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana Alerting.
 
 For more information, refer to [About expressions]({{< relref "../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/" >}}). [About queries]({{< relref "../panels/query-a-data-source/about-queries/" >}}) was also updated as a result of this feature.
 
@@ -113,8 +113,6 @@ For more information, refer to [About expressions]({{< relref "../panels/query-a
 You can now provide detailed information to alert notification recipients by injecting alert label data as template variables into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields using the `${Label}` syntax. The alert label data is automatically injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
-
-For more information, refer to the [alert notification docs](https://grafana.com/docs/grafana/latest/alerting/old-alerting/add-notification-template/).
 
 ### Content security policy support
 
@@ -193,13 +191,13 @@ These features are included in the Grafana Enterprise edition.
 
 ### Licensing changes
 
-When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions/#dashboard-permissions" >}}).
+When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard permissions]({{< relref "../administration/user-management/manage-dashboard-permissions/" >}}).
 
 After the number of Viewers or Editors has reached its license limit, only Admins will see a banner in Grafana indicating that the license limit has been reached. Previously, all users saw the banner.
 
 Grafana Enterprise license tokens update automatically on a daily basis, which means you no longer need to manually update your license, and the process for adding additional users to a license is smoother than it was before.
 
-Refer to [Licensing restrictions]({{< relref "../enterprise/license/license-restrictions/" >}}) for more information.
+Refer to [Licensing restrictions]({{< relref "../administration/enterprise-licensing#license-restrictions" >}}) for more information.
 
 ### Export usage insights to Loki
 

@@ -3,7 +3,7 @@ import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   FileDropzone,
   InlineField,
@@ -75,11 +75,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON file' },
+      { value: 'serviceMap', label: 'Service Graph' },
     ];
-
-    if (config.featureToggles.tempoServiceGraph) {
-      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
-    }
 
     if (!datasource?.search?.hide) {
       queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });

@@ -21,14 +21,11 @@ func BenchmarkJson(b *testing.B) {
 	api, err := makeMockedApi(resp)
 	require.NoError(b, err)
 
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(b, err)
-
-	s := Buffered{tracer: tracer, log: &fakeLogger{}}
+	s := Buffered{tracer: tracing.InitializeTracerForTest(), log: &fakeLogger{}, client: api}
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		_, err := s.runQueries(context.Background(), api, []*PrometheusQuery{&query})
+		_, err := s.runQueries(context.Background(), []*PrometheusQuery{&query})
 		require.NoError(b, err)
 	}
 }

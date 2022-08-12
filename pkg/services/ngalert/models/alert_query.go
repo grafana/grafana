@@ -40,11 +40,29 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
+func (d Duration) MarshalYAML() (interface{}, error) {
+	return time.Duration(d).Seconds(), nil
+}
+
+func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var v interface{}
+	if err := unmarshal(&v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case int:
+		*d = Duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
 // RelativeTimeRange is the per query start and end time
 // for requests.
 type RelativeTimeRange struct {
-	From Duration `json:"from"`
-	To   Duration `json:"to"`
+	From Duration `json:"from" yaml:"from"`
+	To   Duration `json:"to" yaml:"to"`
 }
 
 // isValid checks that From duration is greater than To duration.

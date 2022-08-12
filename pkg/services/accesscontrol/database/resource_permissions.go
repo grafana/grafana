@@ -9,7 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type flatResourcePermission struct {
@@ -37,18 +39,18 @@ func (p *flatResourcePermission) IsInherited(scope string) bool {
 }
 
 func (s *AccessControlStore) SetUserResourcePermission(
-	ctx context.Context, orgID int64, user accesscontrol.User,
+	ctx context.Context, orgID int64, usr accesscontrol.User,
 	cmd types.SetResourcePermissionCommand,
 	hook types.UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	if user.ID == 0 {
-		return nil, models.ErrUserNotFound
+	if usr.ID == 0 {
+		return nil, user.ErrUserNotFound
 	}
 
 	var err error
 	var permission *accesscontrol.ResourcePermission
 	err = s.sql.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permission, err = s.setUserResourcePermission(sess, orgID, user, cmd, hook)
+		permission, err = s.setUserResourcePermission(sess, orgID, usr, cmd, hook)
 		return err
 	})
 
@@ -117,7 +119,7 @@ func (s *AccessControlStore) SetBuiltInResourcePermission(
 	cmd types.SetResourcePermissionCommand,
 	hook types.BuiltinResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
-	if !models.RoleType(builtInRole).IsValid() || builtInRole == accesscontrol.RoleGrafanaAdmin {
+	if !org.RoleType(builtInRole).IsValid() || builtInRole == accesscontrol.RoleGrafanaAdmin {
 		return nil, fmt.Errorf("invalid role: %s", builtInRole)
 	}
 
@@ -170,7 +172,7 @@ func (s *AccessControlStore) SetResourcePermissions(
 				p, err = s.setUserResourcePermission(sess, orgID, cmd.User, cmd.SetResourcePermissionCommand, hooks.User)
 			} else if cmd.TeamID != 0 {
 				p, err = s.setTeamResourcePermission(sess, orgID, cmd.TeamID, cmd.SetResourcePermissionCommand, hooks.Team)
-			} else if models.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
+			} else if org.RoleType(cmd.BuiltinRole).IsValid() || cmd.BuiltinRole == accesscontrol.RoleGrafanaAdmin {
 				p, err = s.setBuiltInResourcePermission(sess, orgID, cmd.BuiltinRole, cmd.SetResourcePermissionCommand, hooks.BuiltInRole)
 			}
 			if err != nil {

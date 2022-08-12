@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type AlertStateType string
@@ -63,6 +64,7 @@ func (s ExecutionErrorOption) ToAlertState() AlertStateType {
 	return AlertStateType(s)
 }
 
+// swagger:model LegacyAlert
 type Alert struct {
 	Id             int64
 	Version        int64
@@ -158,7 +160,7 @@ type GetAlertsQuery struct {
 	PanelId      int64
 	Limit        int64
 	Query        string
-	User         *SignedInUser
+	User         *user.SignedInUser
 
 	Result []*AlertListItemDTO
 }

@@ -1,6 +1,6 @@
 import { sortBy } from 'lodash';
 
-import { urlUtil, UrlQueryMap, Labels } from '@grafana/data';
+import { urlUtil, UrlQueryMap, Labels, DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
@@ -96,6 +96,14 @@ export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels
   matcherParams.forEach((value, key) => silenceUrlParams.append(key, value));
 
   return `${config.appSubUrl}/alerting/silence/new?${silenceUrlParams.toString()}`;
+}
+
+export function makeDataSourceLink<T>(dataSource: DataSourceInstanceSettings<T>) {
+  return `${config.appSubUrl}/datasources/edit/${dataSource.uid}`;
+}
+
+export function makeFolderLink(folderUID: string): string {
+  return `${config.appSubUrl}/dashboards/f/${folderUID}`;
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet

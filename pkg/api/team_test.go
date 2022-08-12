@@ -15,10 +15,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -33,7 +35,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		mock := &mockstore.SQLStoreMock{}
 
 		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
-			models.ROLE_ADMIN, func(sc *scenarioContext) {
+			org.RoleAdmin, func(sc *scenarioContext) {
 				_, err := hs.SQLStore.CreateTeam("team1", "", 1)
 				require.NoError(t, err)
 				_, err = hs.SQLStore.CreateTeam("team2", "", 1)
@@ -117,10 +119,10 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			logger := &logtest.Fake{}
 			c := &models.ReqContext{
 				Context:      &web.Context{Req: req},
-				SignedInUser: &models.SignedInUser{},
+				SignedInUser: &user.SignedInUser{},
 				Logger:       logger,
 			}
-			c.OrgRole = models.ROLE_EDITOR
+			c.OrgRole = org.RoleEditor
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
@@ -134,10 +136,10 @@ func TestTeamAPIEndpoint(t *testing.T) {
 			logger := &logtest.Fake{}
 			c := &models.ReqContext{
 				Context:      &web.Context{Req: req},
-				SignedInUser: &models.SignedInUser{UserId: 42},
+				SignedInUser: &user.SignedInUser{UserID: 42},
 				Logger:       logger,
 			}
-			c.OrgRole = models.ROLE_EDITOR
+			c.OrgRole = org.RoleEditor
 			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
@@ -195,14 +197,14 @@ func TestTeamAPIEndpoint_CreateTeam_RBAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
 	t.Run("Access control allows creating teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsCreate}}, 1)
 		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
 	t.Run("Access control prevents creating teams with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: "teams:invalid"}}, accesscontrol.GlobalOrgID)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "teams:invalid"}}, accesscontrol.GlobalOrgID)
 		response := callAPI(sc.server, http.MethodPost, createTeamURL, input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -219,13 +221,13 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	t.Run("Access control prevents searching for teams with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:*"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:*"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	t.Run("Access control allows searching for teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:*"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:*"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
@@ -237,7 +239,7 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 	})
 
 	t.Run("Access control filters teams based on user permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}, {Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}, {Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:3"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, searchTeamsURL, http.NoBody, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
@@ -262,13 +264,13 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	t.Run("Access control prevents getting a team with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
 	t.Run("Access control allows getting a team with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
@@ -293,7 +295,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 
 	input := strings.NewReader(fmt.Sprintf(teamCmd, 1))
 	t.Run("Access control allows updating teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
@@ -305,7 +307,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 2))
 	t.Run("Access control allows updating teams with the correct global permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:*"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:*"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
@@ -317,7 +319,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 
 	input = strings.NewReader(fmt.Sprintf(teamCmd, 3))
 	t.Run("Access control prevents updating teams with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamURL, 1), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 
@@ -340,7 +342,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	t.Run("Access control prevents deleting teams with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:7"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:7"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 
@@ -350,7 +352,7 @@ func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	})
 
 	t.Run("Access control allows deleting teams with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
@@ -381,13 +383,13 @@ func TestTeamAPIEndpoint_GetTeamPreferences_RBAC(t *testing.T) {
 
 	t.Run("Access control allows getting team preferences with the correct permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock,
-			[]*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
+			[]accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamPreferenceURL, 1), http.NoBody, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 	})
 
 	t.Run("Access control prevents getting team preferences with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(detailTeamPreferenceURL, 1), http.NoBody, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
@@ -413,7 +415,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
 
 	input := strings.NewReader(teamPreferenceCmd)
 	t.Run("Access control allows updating team preferences with the correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:1"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
 		assert.Equal(t, http.StatusOK, response.Code)
 
@@ -425,7 +427,7 @@ func TestTeamAPIEndpoint_UpdateTeamPreferences_RBAC(t *testing.T) {
 
 	input = strings.NewReader(teamPreferenceCmdLight)
 	t.Run("Access control prevents updating team preferences with the incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []*accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
+		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:id:2"}}, 1)
 		response := callAPI(sc.server, http.MethodPut, fmt.Sprintf(detailTeamPreferenceURL, 1), input, t)
 		assert.Equal(t, http.StatusForbidden, response.Code)
 

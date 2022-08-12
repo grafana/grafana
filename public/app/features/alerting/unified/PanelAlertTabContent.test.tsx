@@ -27,14 +27,15 @@ import {
   mockPromRuleNamespace,
   mockRulerGrafanaRule,
 } from './mocks';
-import { getAllDataSources } from './utils/config';
+import * as config from './utils/config';
 import { Annotation } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import * as ruleFormUtils from './utils/rule-form';
 
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
-jest.mock('./utils/config');
+
+jest.spyOn(config, 'getAllDataSources');
 
 const dataSources = {
   prometheus: mockDataSource<PromOptions>({
@@ -52,7 +53,7 @@ dataSources.prometheus.meta.alerting = true;
 dataSources.default.meta.alerting = true;
 
 const mocks = {
-  getAllDataSources: jest.mocked(getAllDataSources),
+  getAllDataSources: jest.mocked(config.getAllDataSources),
   api: {
     fetchRules: jest.mocked(fetchRules),
     fetchRulerRules: jest.mocked(fetchRulerRules),
@@ -159,7 +160,7 @@ const dashboard = {
   },
 } as DashboardModel;
 
-const panel = {
+const panel = new PanelModel({
   datasource: {
     type: 'prometheus',
     uid: dataSources.prometheus.uid,
@@ -172,7 +173,7 @@ const panel = {
       refId: 'A',
     },
   ],
-} as any as PanelModel;
+});
 
 const ui = {
   row: byTestId('row'),
@@ -196,11 +197,14 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will take into account panel maxDataPoints', async () => {
-    await renderAlertTabContent(dashboard, {
-      ...panel,
-      maxDataPoints: 100,
-      interval: '10s',
-    } as any as PanelModel);
+    await renderAlertTabContent(
+      dashboard,
+      new PanelModel({
+        ...panel,
+        maxDataPoints: 100,
+        interval: '10s',
+      })
+    );
 
     const button = await ui.createButton.find();
     const href = button.href;
@@ -222,12 +226,15 @@ describe('PanelAlertTabContent', () => {
   });
 
   it('Will work with default datasource', async () => {
-    await renderAlertTabContent(dashboard, {
-      ...panel,
-      datasource: undefined,
-      maxDataPoints: 100,
-      interval: '10s',
-    } as any as PanelModel);
+    await renderAlertTabContent(
+      dashboard,
+      new PanelModel({
+        ...panel,
+        datasource: undefined,
+        maxDataPoints: 100,
+        interval: '10s',
+      })
+    );
 
     const button = await ui.createButton.find();
     const href = button.href;
@@ -251,10 +258,13 @@ describe('PanelAlertTabContent', () => {
   it('Will take into account datasource minInterval', async () => {
     (getDatasourceSrv() as any as MockDataSourceSrv).datasources[dataSources.prometheus.uid].interval = '7m';
 
-    await renderAlertTabContent(dashboard, {
-      ...panel,
-      maxDataPoints: 100,
-    } as any as PanelModel);
+    await renderAlertTabContent(
+      dashboard,
+      new PanelModel({
+        ...panel,
+        maxDataPoints: 100,
+      })
+    );
 
     const button = await ui.createButton.find();
     const href = button.href;
@@ -319,6 +329,7 @@ describe('PanelAlertTabContent', () => {
           model: {
             refId: 'B',
             hide: false,
+            expression: 'A',
             type: 'classic_conditions',
             datasource: {
               type: ExpressionDatasourceRef.type,

@@ -3,10 +3,11 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 import { rangeUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -14,12 +15,23 @@ import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { APIKeysMigratedCard } from './APIKeysMigratedCard';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import { ApiKeysController } from './ApiKeysController';
 import { ApiKeysForm } from './ApiKeysForm';
 import { ApiKeysTable } from './ApiKeysTable';
-import { addApiKey, deleteApiKey, loadApiKeys, toggleIncludeExpired } from './state/actions';
+import { MigrateToServiceAccountsCard } from './MigrateToServiceAccountsCard';
+import {
+  addApiKey,
+  deleteApiKey,
+  migrateApiKey,
+  migrateAll,
+  loadApiKeys,
+  toggleIncludeExpired,
+  getApiKeysMigrationStatus,
+  hideApiKeys,
+} from './state/actions';
 import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
@@ -36,15 +48,20 @@ function mapStateToProps(state: StoreState) {
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
     canCreate: canCreate,
+    apiKeysMigrated: state.apiKeys.apiKeysMigrated,
   };
 }
 
 const mapDispatchToProps = {
   loadApiKeys,
   deleteApiKey,
+  migrateApiKey,
+  migrateAll,
   setSearchQuery,
   toggleIncludeExpired,
   addApiKey,
+  getApiKeysMigrationStatus,
+  hideApiKeys,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -64,6 +81,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchApiKeys();
+    this.props.getApiKeysMigrationStatus();
   }
 
   async fetchApiKeys() {
@@ -72,6 +90,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   onDeleteApiKey = (key: ApiKey) => {
     this.props.deleteApiKey(key.id!);
+  };
+
+  onMigrateAll = () => {
+    this.props.migrateAll();
+  };
+
+  onMigrateApiKey = (key: ApiKey) => {
+    this.props.migrateApiKey(key.id!);
   };
 
   onSearchQueryChange = (value: string) => {
@@ -116,6 +142,17 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     }
   };
 
+  onHideApiKeys = async () => {
+    try {
+      await this.props.hideApiKeys();
+      let serviceAccountsUrl = '/org/serviceaccounts';
+      locationService.push(serviceAccountsUrl);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   render() {
     const {
       hasFetched,
@@ -127,6 +164,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       includeExpired,
       includeExpiredDisabled,
       canCreate,
+      apiKeysMigrated,
     } = this.props;
 
     if (!hasFetched) {
@@ -142,18 +180,12 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
         <Page.Contents isLoading={false}>
           <ApiKeysController>
             {({ isAdding, toggleIsAdding }) => {
-              const showCTA = !isAdding && apiKeysCount === 0;
+              const showCTA = !isAdding && apiKeysCount === 0 && !apiKeysMigrated;
               const showTable = apiKeysCount > 0;
               return (
                 <>
-                  {/* TODO: enable when API keys to service accounts migration is ready
-                    {config.featureToggles.serviceAccounts && (
-                      <Alert title="Switch from API keys to Service accounts" severity="info">
-                        Service accounts give you more control. API keys will be automatically migrated into tokens inside
-                        respective service accounts. The current API keys will still work, but will be called tokens and
-                        you will find them in the detail view of a respective service account.
-                      </Alert>
-                  )} */}
+                  {!apiKeysMigrated && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
+                  {apiKeysMigrated && <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."
@@ -183,7 +215,12 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                       <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
                         <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
                       </InlineField>
-                      <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
+                      <ApiKeysTable
+                        apiKeys={apiKeys}
+                        timeZone={timeZone}
+                        onMigrate={this.onMigrateApiKey}
+                        onDelete={this.onDeleteApiKey}
+                      />
                     </VerticalGroup>
                   ) : null}
                 </>

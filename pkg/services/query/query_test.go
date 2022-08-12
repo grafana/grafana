@@ -6,22 +6,22 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestQueryData(t *testing.T) {
@@ -102,13 +102,13 @@ func TestQueryData(t *testing.T) {
 
 func setup(t *testing.T) *testContext {
 	pc := &fakePluginClient{}
-	dc := &fakeDataSourceCache{ds: &models.DataSource{}}
+	dc := &fakeDataSourceCache{ds: &datasources.DataSource{}}
 	tc := &fakeOAuthTokenService{}
 	rv := &fakePluginRequestValidator{}
 
 	ss := kvstore.SetupTestService(t)
 	ssvc := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	ds := datasources.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+	ds := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 	return &testContext{
 		pluginContext:          pc,
@@ -152,23 +152,23 @@ type fakeOAuthTokenService struct {
 	token           *oauth2.Token
 }
 
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token {
+func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
 	return ts.token
 }
 
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
+func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
 	return ts.passThruEnabled
 }
 
 type fakeDataSourceCache struct {
-	ds *models.DataSource
+	ds *datasources.DataSource
 }
 
-func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
+func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	return c.ds, nil
 }
 
-func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error) {
+func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	return c.ds, nil
 }
 

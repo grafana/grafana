@@ -2,9 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { NavModel } from '@grafana/data';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 
-import { CreateTeam, Props } from './CreateTeam';
+import { CreateTeam } from './CreateTeam';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -14,23 +14,12 @@ const mockPost = jest.fn(() => {
   return Promise.resolve({});
 });
 
-jest.mock('@grafana/runtime', () => ({
-  getBackendSrv: () => {
-    return {
-      post: mockPost,
-    };
-  },
-  config: {
-    buildInfo: {},
-    licenseInfo: {},
-  },
-}));
+setBackendSrv({
+  post: mockPost,
+} as any as BackendSrv);
 
 const setup = () => {
-  const props: Props = {
-    navModel: { node: {}, main: {} } as NavModel,
-  };
-  return render(<CreateTeam {...props} />);
+  return render(<CreateTeam />);
 };
 
 describe('Create team', () => {

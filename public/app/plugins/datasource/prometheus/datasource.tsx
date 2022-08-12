@@ -23,6 +23,7 @@ import {
   DataFrame,
   dateTime,
   AnnotationQueryRequest,
+  QueryFixAction,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -32,6 +33,7 @@ import {
   DataSourceWithBackend,
   BackendDataSourceResponse,
   toDataQueryResponse,
+  isFetchError,
 } from '@grafana/runtime';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -145,6 +147,7 @@ export class PrometheusDatasource
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
   }
@@ -219,7 +222,7 @@ export class PrometheusDatasource
   }
 
   // Use this for tab completion features, wont publish response to other components
-  async metadataRequest<T = any>(url: string, params = {}) {
+  async metadataRequest<T = any>(url: string, params = {}, options?: Partial<BackendSrvRequest>) {
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
@@ -228,11 +231,12 @@ export class PrometheusDatasource
             method: this.httpMethod,
             hideFromInspector: true,
             showErrorAlert: false,
+            ...options,
           })
         );
       } catch (err) {
         // If status code of error is Method Not Allowed (405) and HTTP method is POST, retry with GET
-        if (this.httpMethod === 'POST' && (err.status === 405 || err.status === 400)) {
+        if (this.httpMethod === 'POST' && isFetchError(err) && (err.status === 405 || err.status === 400)) {
           console.warn(`Couldn't use configured POST HTTP method for this request. Trying to use GET method instead.`);
         } else {
           throw err;
@@ -244,6 +248,7 @@ export class PrometheusDatasource
       this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
         method: 'GET',
         hideFromInspector: true,
+        ...options,
       })
     ); // toPromise until we change getTagValues, getTagKeys to Observable
   }
@@ -852,7 +857,10 @@ export class PrometheusDatasource
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
         options.series.map((series: string) => this.languageProvider.fetchSeriesLabels(series))
       );
-      const uniqueLabels = [...new Set(...seriesLabels.map((value) => Object.keys(value)))];
+      // Combines tags from all options.series provided
+      let tags: string[] = [];
+      seriesLabels.map((value) => (tags = tags.concat(Object.keys(value))));
+      const uniqueLabels = [...new Set(tags)];
       return uniqueLabels.map((value: any) => ({ text: value }));
     } else {
       // Get all tags
@@ -1013,7 +1021,7 @@ export class PrometheusDatasource
 
   async loadRules() {
     try {
-      const res = await this.metadataRequest('/api/v1/rules');
+      const res = await this.metadataRequest('/api/v1/rules', {}, { showErrorAlert: false });
       const groups = res.data?.data?.groups;
 
       if (groups) {
@@ -1027,11 +1035,18 @@ export class PrometheusDatasource
 
   async areExemplarsAvailable() {
     try {
-      const res = await this.getResource('/api/v1/query_exemplars', {
-        query: 'test',
-        start: dateTime().subtract(30, 'minutes').valueOf(),
-        end: dateTime().valueOf(),
-      });
+      const res = await this.metadataRequest(
+        '/api/v1/query_exemplars',
+        {
+          query: 'test',
+          start: dateTime().subtract(30, 'minutes').valueOf().toString(),
+          end: dateTime().valueOf().toString(),
+        },
+        {
+          // Avoid alerting the user if this test fails
+          showErrorAlert: false,
+        }
+      );
       if (res.data.status === 'success') {
         return true;
       }
@@ -1041,15 +1056,22 @@ export class PrometheusDatasource
     }
   }
 
-  modifyQuery(query: PromQuery, action: any): PromQuery {
+  modifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value);
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value);
+        }
+
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value, '!=');
+        }
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
@@ -1065,8 +1087,8 @@ export class PrometheusDatasource
         break;
       }
       case 'EXPAND_RULES': {
-        if (action.mapping) {
-          expression = expandRecordingRules(expression, action.mapping);
+        if (action.options) {
+          expression = expandRecordingRules(expression, action.options);
         }
         break;
       }

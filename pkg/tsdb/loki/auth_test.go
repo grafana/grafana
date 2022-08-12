@@ -120,8 +120,7 @@ func TestOauthForwardIdentity(t *testing.T) {
 				req.Headers[cookieName] = cookieValue
 			}
 
-			tracer, err := tracing.InitializeTracerForTest()
-			require.NoError(t, err)
+			tracer := tracing.InitializeTracerForTest()
 
 			data, err := queryData(context.Background(), &req, &dsInfo, log.New("testlog"), tracer)
 			// we do a basic check that the result is OK

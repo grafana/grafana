@@ -2,7 +2,7 @@ import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { config, DataSourcePicker } from '@grafana/runtime';
+import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
 import {
   defaultIntervals,
   PageToolbar,
@@ -146,7 +146,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               <DataSourcePicker
                 key={`${exploreId}-ds-picker`}
                 onChange={this.onChangeDatasource}
-                current={this.props.datasourceName}
+                current={this.props.datasourceRef}
                 hideTextValue={showSmallDataSourcePicker}
                 width={showSmallDataSourcePicker ? 8 : undefined}
               />
@@ -192,17 +192,28 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
             {hasLiveOption && (
               <LiveTailControls exploreId={exploreId}>
-                {(controls) => (
-                  <LiveTailButton
-                    splitted={splitted}
-                    isLive={isLive}
-                    isPaused={isPaused}
-                    start={controls.start}
-                    pause={controls.pause}
-                    resume={controls.resume}
-                    stop={controls.stop}
-                  />
-                )}
+                {(c) => {
+                  const controls = {
+                    ...c,
+                    start: () => {
+                      reportInteraction('grafana_explore_logs_live_tailing_clicked', {
+                        datasourceType: this.props.datasourceType,
+                      });
+                      c.start();
+                    },
+                  };
+                  return (
+                    <LiveTailButton
+                      splitted={splitted}
+                      isLive={isLive}
+                      isPaused={isPaused}
+                      start={controls.start}
+                      pause={controls.pause}
+                      resume={controls.resume}
+                      stop={controls.stop}
+                    />
+                  );
+                }}
               </LiveTailControls>
             )}
           </ToolbarButtonRow>
@@ -222,7 +233,8 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
 
   return {
     datasourceMissing,
-    datasourceName: datasourceInstance?.name,
+    datasourceRef: datasourceInstance?.getRef(),
+    datasourceType: datasourceInstance?.type,
     loading,
     range,
     timeZone: getTimeZone(state.user),

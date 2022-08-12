@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	busmock "github.com/grafana/grafana/pkg/bus/mock"
 	"github.com/grafana/grafana/pkg/infra/log"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -43,7 +44,7 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	dashboardStore := databasestore.ProvideDashboardStore(sqlStore)
+	dashboardStore := databasestore.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 
 	ac := acmock.New()
 	features := featuremgmt.WithFeatures()
@@ -54,19 +55,23 @@ func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *
 		cfg, dashboardStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 	)
+
+	bus := busmock.New()
 	folderService := dashboardservice.ProvideFolderService(
 		cfg, dashboardService, dashboardStore, nil,
-		features, folderPermissions, ac,
+		features, folderPermissions, ac, bus,
 	)
 
 	ng, err := ngalert.ProvideService(
-		cfg, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
-		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil,
+		cfg, nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, nil,
+		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus,
 	)
 	require.NoError(t, err)
 	return ng, &store.DBstore{
-		SQLStore:         ng.SQLStore,
-		BaseInterval:     baseInterval * time.Second,
+		SQLStore: ng.SQLStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: baseInterval * time.Second,
+		},
 		Logger:           log.New("ngalert-test"),
 		DashboardService: dashboardService,
 	}

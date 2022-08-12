@@ -15,9 +15,9 @@ weight: 450
 
 # About alerting high availability
 
-The Grafana alerting system has two main components: a `Scheduler` and an internal `Alertmanager`. The `Scheduler` evaluates your [alert rules]({{< relref "../fundamentals/evaluate-grafana-alerts/" >}}), while the internal Alertmanager manages **routing** and **grouping**.
+The Grafana Alerting system has two main components: a `Scheduler` and an internal `Alertmanager`. The `Scheduler` evaluates your [alert rules]({{< relref "../fundamentals/evaluate-grafana-alerts/" >}}), while the internal Alertmanager manages **routing** and **grouping**.
 
-When running Grafana alerting in high availability, the operational mode of the scheduler remains unaffected, and each Grafana instance evaluates all alerts. The operational change happens in the Alertmanager when it deduplicates alert notifications across Grafana instances.
+When running Grafana Alerting in high availability, the operational mode of the scheduler remains unaffected, and each Grafana instance evaluates all alerts. The operational change happens in the Alertmanager when it deduplicates alert notifications across Grafana instances.
 
 {{< figure src="/static/img/docs/alerting/unified/high-availability-ua.png" class="docs-image--no-shadow" max-width= "750px" caption="High availability" >}}
 

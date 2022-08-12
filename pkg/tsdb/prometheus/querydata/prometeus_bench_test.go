@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -22,12 +22,14 @@ import (
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkJson(b *testing.B) {
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
-	tCtx := setup(true)
+	tCtx, err := setup(true)
+	require.NoError(b, err)
+
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		res := http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader(body)),
+			Body:       io.NopCloser(bytes.NewReader(body)),
 		}
 		tCtx.httpProvider.setResponse(&res)
 		_, err := tCtx.queryData.Execute(context.Background(), q)

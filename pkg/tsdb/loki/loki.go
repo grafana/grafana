@@ -16,13 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"go.opentelemetry.io/otel/attribute"
 )
 
 type Service struct {
-	im     instancemgmt.InstanceManager
-	plog   log.Logger
-	tracer tracing.Tracer
+	im       instancemgmt.InstanceManager
+	features featuremgmt.FeatureToggles
+	plog     log.Logger
+	tracer   tracing.Tracer
 }
 
 var (
@@ -31,11 +33,12 @@ var (
 	_ backend.CallResourceHandler = (*Service)(nil)
 )
 
-func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		plog:   log.New("tsdb.loki"),
-		tracer: tracer,
+		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		features: features,
+		plog:     log.New("tsdb.loki"),
+		tracer:   tracer,
 	}
 }
 

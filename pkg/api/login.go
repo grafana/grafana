@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	loginService "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -120,10 +122,10 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
 		if hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken {
-			user := &models.User{Id: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
+			user := &user.User{ID: c.SignedInUser.UserID, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
-				c.Handle(hs.Cfg, 500, "Failed to sign in user", err)
+				c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to sign in user", err)
 				return
 			}
 		}
@@ -179,7 +181,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad login data", err)
 	}
 	authModule := ""
-	var user *models.User
+	var usr *user.User
 	var resp *response.NormalResponse
 
 	defer func() {
@@ -189,7 +191,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		}
 		hs.HooksService.RunLoginHook(&models.LoginInfo{
 			AuthModule:    authModule,
-			User:          user,
+			User:          usr,
 			LoginUsername: cmd.User,
 			HTTPStatus:    resp.Status(),
 			Error:         err,
@@ -214,7 +216,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	if err != nil {
 		resp = response.Error(401, "Invalid username or password", err)
 		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
-			models.ErrUserNotFound) {
+			user.ErrUserNotFound) {
 			return resp
 		}
 
@@ -229,9 +231,9 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		return resp
 	}
 
-	user = authQuery.User
+	usr = authQuery.User
 
-	err = hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
 		var createTokenErr *models.CreateTokenErr
 		if errors.As(err, &createTokenErr) {
@@ -260,7 +262,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	return resp
 }
 
-func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) error {
+func (hs *HTTPServer) loginUserWithUser(user *user.User, c *models.ReqContext) error {
 	if user == nil {
 		return errors.New("could not login user")
 	}
@@ -286,9 +288,15 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
+	// If SAML is enabled and this is a SAML user use saml logout
 	if hs.samlSingleLogoutEnabled() {
-		c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
-		return
+		getAuthQuery := models.GetAuthInfoQuery{UserId: c.UserID}
+		if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+			if getAuthQuery.Result.AuthModule == loginService.SAMLAuthModule {
+				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
+				return
+			}
+		}
 	}
 
 	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
@@ -359,7 +367,7 @@ func (hs *HTTPServer) samlName() string {
 }
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
-	return hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.samlEnabled()
+	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.samlEnabled()
 }
 
 func getLoginExternalError(err error) string {

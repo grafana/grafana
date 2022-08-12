@@ -10,7 +10,7 @@ weight: 200
 
 # Configure Grafana
 
-Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/view-server/view-server-settings/" >}}).
+Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/stats-and-license#view-server-settings" >}}).
 
 > **Note:** After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file. Restart Grafana for your changes to take effect.
 
@@ -26,7 +26,7 @@ If you installed Grafana using the `deb` or `rpm` packages, then your configurat
 
 ### Docker
 
-Refer to [Configure a Grafana Docker image]({{< relref "../../administration/configure-docker/" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
+Refer to [Configure a Grafana Docker image]({{< relref "../configure-docker/" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
 
@@ -170,7 +170,7 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../../plugins/installation/" >}}).
+Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management/#install-grafana-plugins" >}}).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
@@ -324,7 +324,7 @@ Sets the maximum amount of time a connection may be reused. The default is 14400
 
 ### locking_attempt_timeout_sec
 
-For "mysql", if `lockingMigration` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
+For "mysql", if the `migrationLocking` feature toggle is set, specify the time (in seconds) to wait before failing to lock the database for the migrations. Default is 0.
 
 ### log_queries
 
@@ -611,6 +611,14 @@ Current core features that will stop working:
 
 Before we disable angular support by default we plan to migrate these remaining areas to React.
 
+### csrf_trusted_origins
+
+List of additional allowed URLs to pass by the CSRF check. Suggested when authentication comes from an IdP.
+
+### csrf_additional_headers
+
+List of allowed headers to be set by the user. Suggested to use for if authentication lives behind reverse proxies.
+
 ## [snapshots]
 
 ### external_enabled
@@ -664,7 +672,7 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Default is `false`. The admin user can still create
-users. For more information about creating a user, refer to [Add a user]({{< relref "../../administration/manage-users-and-permissions/manage-server-users/add-user/" >}}).
+users. For more information about creating a user, refer to [Add a user]({{< relref "../../administration/user-management/server-user-management/#add-a-user" >}}).
 
 ### allow_org_create
 
@@ -675,7 +683,8 @@ Default is `false`.
 
 Set to `true` to automatically add new users to the main organization
 (id 1). When set to `false`, new users automatically cause a new
-organization to be created for that new user. Default is `true`.
+organization to be created for that new user. The organization will be
+created even if the `allow_org_create` setting is set to `false`. Default is `true`.
 
 ### auto_assign_org_id
 
@@ -1095,6 +1104,10 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 Sentry javascript agent is initialized. Default is `false`.
 
+### provider
+
+Defines which provider to use `sentry` or `grafana`. Default is `sentry`
+
 ### sentry_dsn
 
 Sentry DSN if you want to send events to Sentry
@@ -1114,6 +1127,22 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 ### log_endpoint_burst_limit
 
 Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
+
+### instrumentations_errors_enabled
+
+Turn on error instrumentation. Only affects Grafana Javascript Agent.
+
+### instrumentations_console_enabled
+
+Turn on console instrumentation. Only affects Grafana Javascript Agent
+
+### instrumentations_webvitals_enabled
+
+Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
+
+### api_key
+
+If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
 
 <hr>
 
@@ -1177,11 +1206,11 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [About Grafana alerting]({{< relref "../../alerting/" >}}).
+For more information about the Grafana alerts, refer to [About Grafana Alerting]({{< relref "../../alerting/" >}}).
 
 ### enabled
 
-Enable the Unified Alerting sub-system and interface. When enabled we'll migrate all of your alert rules and notification channels to the new system. New alert rules will be created and your notification channels will be converted into an Alertmanager configuration. Previous data is preserved to enable backwards compatibility but new data is removed. The default value is `false`.
+Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1203,11 +1232,11 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### ha_listen_address
 
-Listen address/hostname and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
+Listen IP address and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
 
 ### ha_advertise_address
 
-Explicit address/hostname and port to advertise other Grafana instances. The port is used for both TCP and UDP.
+Explicit IP address and port to advertise other Grafana instances. The port is used for both TCP and UDP.
 
 ### ha_peers
 
@@ -1259,13 +1288,43 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 <hr>
 
+## [unified_alerting.screenshots]
+
+For more information about screenshots, refer to [Images in notifications]({{< relref "../../alerting/images-in-notifications/" >}}).
+
+### capture
+
+Enable screenshots in notifications. This option requires a remote HTTP image rendering service. Please see `[rendering]` for further configuration options.
+
+### max_concurrent_screenshots
+
+The maximum number of screenshots that can be taken at the same time. This option is different from `concurrent_render_request_limit` as `max_concurrent_screenshots` sets the number of concurrent screenshots that can be taken at the same time for all firing alerts where as concurrent_render_request_limit sets the total number of concurrent screenshots across all Grafana services.
+
+### upload_external_image_storage
+
+Uploads screenshots to the local Grafana server or remote storage such as Azure, S3 and GCS. Please see `[external_image_storage]` for further configuration options. If this option is false then screenshots will be persisted to disk for up to `temp_data_lifetime`.
+
+<hr>
+
+## [unified_alerting.reserved_labels]
+
+For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting]({{< relref "../../alerting/fundamentals/annotation-label/how-to-use-labels/#grafana-reserved-labels" >}}).
+
+### disabled_labels
+
+Comma-separated list of reserved labels added by the Grafana Alerting engine that should be disabled.
+
+For example: `disabled_labels=grafana_folder`
+
+<hr>
+
 ## [alerting]
 
-For more information about the legacy dashboard alerting feature in Grafana, refer to [Alerts overview]({{< relref "../../alerting/" >}}).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts]({{< relref "https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/" >}}).
 
 ### enabled
 
-Set to `false` to [enable Grafana alerting]({{<relref "#unified_alerting">}}) and to disable legacy alerting engine. to disable Grafana alerting, set to `true`.
+Set to `true` to [enable legacy dashboard alerting]({{<relref "#unified_alerting">}}). The default value is `false`.
 
 ### execute_alerts
 
@@ -1696,13 +1755,13 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 
-We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../plugins/plugin-signatures/" >}}).
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../../administration/plugin-management/#plugin-signatures" >}}).
 
 ### plugin_admin_enabled
 
 Available to Grafana administrators only, enables installing / uninstalling / updating plugins directly from the Grafana UI. Set to `true` by default. Setting it to `false` will hide the install / uninstall / update controls.
 
-For more information, refer to [Plugin catalog]({{< relref "../../plugins/catalog/" >}}).
+For more information, refer to [Plugin catalog]({{< relref "../../administration/plugin-management/#plugin-catalog" >}}).
 
 ### plugin_admin_external_manage_enabled
 
@@ -1974,4 +2033,4 @@ Refer to the [dashboards previews]({{< relref "../../dashboards/previews/" >}}) 
 
 ## [rbac]
 
-Refer to [Role-based access control]({{< relref "../../enterprise/access-control/about-rbac/" >}}) for more information.
+Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) for more information.

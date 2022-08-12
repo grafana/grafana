@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // RoleRegistration stores a role and its assignments to built-in roles
@@ -385,6 +385,10 @@ const (
 	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
+
+	// Alerting provisioning actions
+	ActionAlertingProvisioningRead  = "alert.provisioning:read"
+	ActionAlertingProvisioningWrite = "alert.provisioning:write"
 )
 
 var (
@@ -406,7 +410,7 @@ func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
 	for _, br := range builtInRoles {
 		res[br] = struct{}{}
 		if br != RoleGrafanaAdmin {
-			for _, parent := range models.RoleType(br).Parents() {
+			for _, parent := range org.RoleType(br).Parents() {
 				res[string(parent)] = struct{}{}
 			}
 		}

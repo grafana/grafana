@@ -9,8 +9,8 @@ import (
 // Get all message templates.
 //
 //     Responses:
-//       200: MessageTemplate
-//       400: ValidationError
+//       200: MessageTemplates
+//       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
@@ -18,7 +18,7 @@ import (
 //
 //     Responses:
 //       200: MessageTemplate
-//       404: NotFound
+//       404: description: Not found.
 
 // swagger:route PUT /api/v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
@@ -28,7 +28,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       202: Ack
+//       202: MessageTemplate
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
@@ -36,7 +36,7 @@ import (
 // Delete a template.
 //
 //     Responses:
-//       204: Ack
+//       204: description: The template was deleted successfully.
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
 type RouteGetTemplateParam struct {
@@ -47,8 +47,8 @@ type RouteGetTemplateParam struct {
 
 // swagger:model
 type MessageTemplate struct {
-	Name       string
-	Template   string
+	Name       string            `json:"name"`
+	Template   string            `json:"template"`
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
@@ -56,7 +56,7 @@ type MessageTemplate struct {
 type MessageTemplates []MessageTemplate
 
 type MessageTemplateContent struct {
-	Template string
+	Template string `json:"template"`
 }
 
 // swagger:parameters RoutePutTemplate
