@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/services/queries"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -129,6 +130,7 @@ type HTTPServer struct {
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
 	StorageService               store.StorageService
+	QueriesService               queries.ServiceHTTPHandler
 	ContextHandler               *contexthandler.ContextHandler
 	SQLStore                     sqlstore.Store
 	AlertEngine                  *alerting.AlertEngine
@@ -212,11 +214,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service) (*HTTPServer, error) {
+	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, queriesService queries.ServiceHTTPHandler) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
 	hs := &HTTPServer{
+		QueriesService:               queriesService,
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
 		bus:                          bus,
