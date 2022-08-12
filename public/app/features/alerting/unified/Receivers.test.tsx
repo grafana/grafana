@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, within, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -95,7 +95,7 @@ const ui = {
   testContactPoint: byRole('button', { name: /send test notification/i }),
   cancelButton: byTestId('cancel-button'),
 
-  receiversTable: byTestId('receivers-table'),
+  receiversTable: byTestId('dynamic-table'),
   templatesTable: byTestId('templates-table'),
   alertManagerPicker: byTestId('alertmanager-picker'),
 
@@ -158,14 +158,14 @@ describe('Receivers', () => {
     await renderReceivers();
 
     // check that by default grafana templates & receivers are fetched rendered in appropriate tables
-    let receiversTable = await ui.receiversTable.find();
+    await ui.receiversTable.find();
     let templatesTable = await ui.templatesTable.find();
     let templateRows = templatesTable.querySelectorAll('tbody tr');
     expect(templateRows).toHaveLength(3);
     expect(templateRows[0]).toHaveTextContent('first template');
     expect(templateRows[1]).toHaveTextContent('second template');
     expect(templateRows[2]).toHaveTextContent('third template');
-    let receiverRows = receiversTable.querySelectorAll('tbody tr');
+    let receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('default');
     expect(receiverRows[1]).toHaveTextContent('critical');
     expect(receiverRows).toHaveLength(2);
@@ -181,12 +181,12 @@ describe('Receivers', () => {
     expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2);
     expect(mocks.api.fetchConfig).toHaveBeenLastCalledWith('CloudManager');
 
-    receiversTable = await ui.receiversTable.find();
+    await ui.receiversTable.find();
     templatesTable = await ui.templatesTable.find();
     templateRows = templatesTable.querySelectorAll('tbody tr');
     expect(templateRows[0]).toHaveTextContent('foo template');
     expect(templateRows).toHaveLength(1);
-    receiverRows = receiversTable.querySelectorAll('tbody tr');
+    receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     expect(receiverRows).toHaveLength(1);
     expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual('CloudManager');
@@ -329,8 +329,8 @@ describe('Receivers', () => {
     await renderReceivers('CloudManager');
 
     // click edit button for the receiver
-    const receiversTable = await ui.receiversTable.find();
-    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    await ui.receiversTable.find();
+    const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     await userEvent.click(byTestId('edit').get(receiverRows[0]));
 
@@ -424,12 +424,12 @@ describe('Receivers', () => {
     });
     await renderReceivers(dataSources.promAlertManager.name);
 
-    const receiversTable = await ui.receiversTable.find();
+    await ui.receiversTable.find();
     // there's no templates table for vanilla prom, API does not return templates
     expect(ui.templatesTable.query()).not.toBeInTheDocument();
 
     // click view button on the receiver
-    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
     expect(byTestId('edit').query(receiverRows[0])).not.toBeInTheDocument();
     await userEvent.click(byTestId('view').get(receiverRows[0]));
@@ -464,8 +464,8 @@ describe('Receivers', () => {
     await renderReceivers('CloudManager');
 
     // check that receiver from the default config is represented
-    const receiversTable = await ui.receiversTable.find();
-    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    await ui.receiversTable.find();
+    const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
     expect(receiverRows[0]).toHaveTextContent('default-email');
 
     // check that both config and status endpoints were called
