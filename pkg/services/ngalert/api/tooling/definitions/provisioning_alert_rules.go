@@ -184,8 +184,38 @@ type AlertRuleGroupMetadata struct {
 
 // swagger:model
 type AlertRuleGroup struct {
-	Title     string             `json:"title"`
-	FolderUID string             `json:"folderUid"`
-	Interval  int64              `json:"interval"`
-	Rules     []models.AlertRule `json:"rules"`
+	Title     string                 `json:"title"`
+	FolderUID string                 `json:"folderUid"`
+	Interval  int64                  `json:"interval"`
+	Rules     []ProvisionedAlertRule `json:"rules"`
+}
+
+func (a *AlertRuleGroup) ToModel() (models.AlertRuleGroup, error) {
+	rules := make([]models.AlertRule, 0, len(a.Rules))
+	for i := range a.Rules {
+		converted, err := a.Rules[i].UpstreamModel()
+		if err != nil {
+			return models.AlertRuleGroup{}, err
+		}
+		rules = append(rules, converted)
+	}
+	return models.AlertRuleGroup{
+		Title:     a.Title,
+		FolderUID: a.FolderUID,
+		Interval:  a.Interval,
+		Rules:     rules,
+	}, nil
+}
+
+func NewAlertRuleGroupFromModel(d models.AlertRuleGroup) AlertRuleGroup {
+	rules := make([]ProvisionedAlertRule, 0, len(d.Rules))
+	for i := range d.Rules {
+		rules = append(rules, NewAlertRule(d.Rules[i], d.Provenance))
+	}
+	return AlertRuleGroup{
+		Title:     d.Title,
+		FolderUID: d.FolderUID,
+		Interval:  d.Interval,
+		Rules:     rules,
+	}
 }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -365,8 +364,8 @@ func createTestRule(title string, groupTitle string, orgID int64) models.AlertRu
 	}
 }
 
-func createDummyGroup(title string, orgID int64) definitions.AlertRuleGroup {
-	return definitions.AlertRuleGroup{
+func createDummyGroup(title string, orgID int64) models.AlertRuleGroup {
+	return models.AlertRuleGroup{
 		Title:     title,
 		Interval:  60,
 		FolderUID: "my-namespace",
