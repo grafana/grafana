@@ -16,8 +16,10 @@ module.exports = (env = {}) =>
     devtool: 'source-map',
 
     entry: {
+      app: './public/app/index.ts',
       dark: './public/sass/grafana.dark.scss',
       light: './public/sass/grafana.light.scss',
+      fn_dashboard: './public/app/fn_dashboard.ts',
     },
 
     module: {
@@ -70,15 +72,23 @@ module.exports = (env = {}) =>
         filename: path.resolve(__dirname, '../../public/views/error.html'),
         template: path.resolve(__dirname, '../../public/views/error-template.html'),
         inject: false,
-        excludeChunks: ['dark', 'light'],
+        excludeChunks: ['dark', 'light', 'fn_dashboard'],
         chunksSortMode: 'none',
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
         inject: false,
-        excludeChunks: ['manifest', 'dark', 'light'],
+        excludeChunks: ['manifest', 'dark', 'light', 'fn_dashboard'],
         chunksSortMode: 'none',
+      }),
+      // Added fn_dashboard/index.html
+      new HtmlWebpackPlugin({
+        filename: path.resolve(__dirname, '../../public/microfrontends/fn_dashboard/index.html'),
+        template: path.resolve(__dirname, '../../public/views/index-microfrontend-template.html'),
+        inject: false,
+        chunksSortMode: 'none',
+        excludeChunks: ['dark', 'light', 'app'],
       }),
       new HTMLWebpackCSSChunks(),
       function () {
