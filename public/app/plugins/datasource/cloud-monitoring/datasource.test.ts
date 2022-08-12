@@ -1,7 +1,7 @@
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
 import { createMockQuery } from './__mocks__/cloudMonitoringQuery';
-import { createMockInstanceSetttings } from './__mocks__/instanceSettings';
 import Datasource from './datasource';
 
 describe('Cloud Monitoring Datasource', () => {
