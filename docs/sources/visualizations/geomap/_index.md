@@ -73,7 +73,7 @@ The Geomap panel needs a source of geographical data. This data comes from a dat
   - lookup: “lookup”
 - **Coords** specifies that your query holds coordinate data. You will get prompted to select numeric data fields for latitude and longitude from your database query.
 - **Geohash** specifies that your query holds geohash data. You will get prompted to select a string data field for the geohash from your database query.
-- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will get prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
+- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
 
 ## Basemap layer
 
