@@ -55,8 +55,8 @@ type AlertRuleService interface {
 	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance, userID int64) (alerting_models.AlertRule, error)
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
-	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error)
-	ReplaceRuleGroup(ctx context.Context, orgID int64, group definitions.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
+	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
+	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
@@ -316,13 +316,17 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext, folder 
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, g)
+	return response.JSON(http.StatusOK, definitions.NewAlertRuleGroupFromModel(g))
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
 	ag.FolderUID = folderUID
 	ag.Title = group
-	err := srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgID, ag, c.UserID, alerting_models.ProvenanceAPI)
+	groupModel, err := ag.ToModel()
+	if err != nil {
+		ErrResp(http.StatusBadRequest, err, "")
+	}
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgID, groupModel, c.UserID, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
