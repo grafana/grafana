@@ -2,7 +2,7 @@ package commands
 
 import (
 	"context"
-	"os"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -172,12 +172,75 @@ func TestGetConflictingUsers(t *testing.T) {
 	}
 }
 
+func TestBuildConflictBlock(t *testing.T) {
+	type testBuildConflictBlock struct {
+		desc                string
+		users               []user.User
+		expectedBlock       string
+		wantDiscardedBlock  string
+		wantedNumberOfUsers int
+	}
+	testOrgID := 1
+	testCases := []testBuildConflictBlock{
+		{
+			desc: "should get one block with only 3 users",
+			users: []user.User{
+				{
+					Email: "ldap-editor",
+					Login: "ldap-editor",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "LDAP-EDITOR",
+					Login: "LDAP-EDITOR",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "overlapping conflict",
+					Login: "LDAP-editor",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "OVERLAPPING conflict",
+					Login: "no conflict",
+					OrgID: int64(testOrgID),
+				},
+			},
+			expectedBlock:       "conflict: ldap-editor",
+			wantDiscardedBlock:  "conflict: overlapping conflict",
+			wantedNumberOfUsers: 3,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Restore after destructive operation
+			sqlStore := sqlstore.InitTestDB(t)
+			for _, u := range tc.users {
+				cmd := user.CreateUserCommand{
+					Email: u.Email,
+					Name:  u.Name,
+					Login: u.Login,
+					OrgID: int64(testOrgID),
+				}
+				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				require.NoError(t, err)
+			}
+			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
+			require.NoError(t, err)
+			r := ConflictResolver{Users: m}
+			r.BuildConflictBlocks(fmt.Sprintf)
+			require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
+			require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
+		})
+	}
+}
+
 func TestGenerateConflictingUsersFile(t *testing.T) {
 	type testListConflictingUsers struct {
-		desc  string
-		users []user.User
-		//nolint
-		want string
+		desc               string
+		users              []user.User
+		wantDiscardedBlock string
+		want               string
 	}
 	testOrgID := 1
 	testCases := []testListConflictingUsers{
@@ -211,7 +274,7 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 				},
 				{
 					Email: "oauth-admin@example.org",
-					Login: "No confli",
+					Login: "No conflict",
 					OrgID: int64(testOrgID),
 				},
 				{
@@ -220,15 +283,42 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 					OrgID: int64(testOrgID),
 				},
 			},
+			wantDiscardedBlock: "conflict: user2",
 			want: `conflict: user_duplicate_test_login
-			+ id: 1, email: user1, login: USER_DUPLICATE_TEST_LOGIN
-			- id: 2, email: user2, login: user_duplicate_test_login
-			conflict: ldap-admin
-			+ id: 4, email: xo, login: ldap-admin
-			- id: 5, email: ldap-admin, login: LDAP-ADMIN
-			conflict: oauth-admin@example.org
-			+ id: 6, email: oauth-admin@example.org, login: No confli
-			- id: 7, email: oauth-admin@EXAMPLE.ORG, login: oauth-admin`,
++ id: 1, email: user1, login: USER_DUPLICATE_TEST_LOGIN
+- id: 2, email: user2, login: user_duplicate_test_login
+conflict: ldap-admin
++ id: 4, email: xo, login: ldap-admin
+- id: 5, email: ldap-admin, login: LDAP-ADMIN
+conflict: oauth-admin@example.org
++ id: 6, email: oauth-admin@example.org, login: No conflict
+- id: 7, email: oauth-admin@EXAMPLE.ORG, login: oauth-admin
+`,
+		},
+		{
+			desc: "should get one block with only 3 users",
+			users: []user.User{
+				{
+					Email: "ldap-editor",
+					Login: "ldap-editor",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "LDAP-EDITOR",
+					Login: "LDAP-EDITOR",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "No confli",
+					Login: "LDAP-editor",
+					OrgID: int64(testOrgID),
+				},
+			},
+			want: `conflict: ldap-editor
++ id: 1, email: ldap-editor, login: ldap-editor
+- id: 2, email: LDAP-EDITOR, login: LDAP-EDITOR
+- id: 3, email: No confli, login: LDAP-editor
+`,
 		},
 	}
 	for _, tc := range testCases {
@@ -237,11 +327,10 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 			sqlStore := sqlstore.InitTestDB(t)
 			for _, u := range tc.users {
 				cmd := user.CreateUserCommand{
-					Email:            u.Email,
-					Name:             u.Name,
-					Login:            u.Login,
-					OrgID:            int64(testOrgID),
-					IsServiceAccount: u.IsServiceAccount,
+					Email: u.Email,
+					Name:  u.Name,
+					Login: u.Login,
+					OrgID: int64(testOrgID),
 				}
 				_, err := sqlStore.CreateUser(context.Background(), cmd)
 				require.NoError(t, err)
@@ -249,12 +338,12 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
 			r := ConflictResolver{Users: m}
-			file, genErr := generateConflictUsersFile(&r)
-			require.NoError(t, genErr)
-			_, readErr := os.ReadFile(file.Name())
-			require.NoError(t, readErr)
-			// TODO: once implementation is finished make sure to write a test to make the file output the same as expected
-			// require.Equal(t, tc.want, string(b))
+			r.BuildConflictBlocks(fmt.Sprintf)
+			if tc.wantDiscardedBlock != "" {
+				require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
+			}
+			fileString := r.ToStringPresentation()
+			require.Equal(t, tc.want, fileString)
 		})
 	}
 }

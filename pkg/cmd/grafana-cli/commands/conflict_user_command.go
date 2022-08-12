@@ -20,6 +20,7 @@ import (
 func getSqlStore(context *cli.Context) (*sqlstore.SQLStore, error) {
 	cmd := &utils.ContextCommandLine{Context: context}
 	cfg, err := initCfg(cmd)
+	cfg.Logger = nil
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to load configuration", err)
 	}
@@ -45,14 +46,16 @@ func runListConflictUsers() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
+		whiteBold := color.New(color.FgWhite).Add(color.Bold)
 		resolver := ConflictResolver{Users: conflicts}
+		resolver.BuildConflictBlocks(whiteBold.Sprintf)
 		logger.Infof("\n\nShowing Conflicts\n\n")
-		logger.Infof(resolver.String())
+		logger.Infof(resolver.ToStringPresentation())
 		logger.Infof("\n")
 		// TODO: remove line when finished
 		// this is only for debugging
-		if len(resolver.DiscardedUsers) != 0 {
-			logDiscardedUsers(resolver.DiscardedUsers)
+		if len(resolver.DiscardedBlocks) != 0 {
+			resolver.logDiscardedUsers()
 		}
 		return nil
 	}
@@ -73,6 +76,7 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 			return nil
 		}
 		resolver := ConflictResolver{Users: conflicts}
+		resolver.BuildConflictBlocks(fmt.Sprintf)
 		tmpFile, err := generateConflictUsersFile(&resolver)
 		if err != nil {
 			return fmt.Errorf("generating file return error: %w", err)
@@ -80,8 +84,8 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 		logger.Infof("\n\ngenerated file\n")
 		logger.Infof("%s\n\n", tmpFile.Name())
 		logger.Infof("once the file is edited and resolved conflicts, you can either validate or ingest the file\n\n")
-		if len(resolver.DiscardedUsers) != 0 {
-			logDiscardedUsers(resolver.DiscardedUsers)
+		if len(resolver.DiscardedBlocks) != 0 {
+			resolver.logDiscardedUsers()
 		}
 		return nil
 	}
@@ -92,7 +96,7 @@ func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := tmpFile.Write([]byte(r.ToFileRepresentation())); err != nil {
+	if _, err := tmpFile.Write([]byte(r.ToStringPresentation())); err != nil {
 		return nil, err
 	}
 	return tmpFile, nil
@@ -108,9 +112,25 @@ func BoldFormatter(format string, a ...interface{}) string {
 	return whiteBold.Sprintf(format, a...)
 }
 
-func (c *ConflictingUsers) GetConflictBlocks(f Formatter) map[string]ConflictingUsers {
+func shouldDiscardBlock(seenUsersInBlock map[string]string, block string, user ConflictingUser) bool {
+	// loop through users to see if we should skip this block
+	// we have some more tricky scenarios where we have more than two users that can have conflicts with each other
+	// we have made the approach to discard any users that we have seen
+	if _, ok := seenUsersInBlock[user.Id]; ok {
+		// we have seen the user in different block than the current block
+		if seenUsersInBlock[user.Id] != block {
+			return true
+		}
+	}
+	seenUsersInBlock[user.Id] = block
+	return false
+}
+
+func (r *ConflictResolver) BuildConflictBlocks(f Formatter) {
+	discardedBlocks := make(map[string]bool)
+	seenUsersToBlock := make(map[string]string)
 	blocks := make(map[string]ConflictingUsers)
-	for _, user := range *c {
+	for _, user := range r.Users {
 		// conflict blocks is how we identify a conflict in the user base.
 		var conflictBlock string
 		if user.ConflictEmail != "" {
@@ -122,64 +142,43 @@ func (c *ConflictingUsers) GetConflictBlocks(f Formatter) map[string]Conflicting
 			// should not be here unless changed in sql
 			conflictBlock = f("conflict: %s%s", strings.ToLower(user.Email), strings.ToLower(user.Login))
 		}
+
+		// discard logic
+		if shouldDiscardBlock(seenUsersToBlock, conflictBlock, user) {
+			discardedBlocks[conflictBlock] = true
+		}
+
+		// adding users to blocks
 		if _, ok := blocks[conflictBlock]; !ok {
 			blocks[conflictBlock] = []ConflictingUser{user}
 			continue
 		}
+		// skip user thats already part of the block
+		// since we get duplicate entries
+		if contains(blocks[conflictBlock], user) {
+			continue
+		}
 		blocks[conflictBlock] = append(blocks[conflictBlock], user)
 	}
-	return blocks
+	r.Blocks = blocks
+	r.DiscardedBlocks = discardedBlocks
 }
 
-func (r *ConflictResolver) String() string {
-	/*
-		hej@test.com+hej@test.com
-		id: 1, email: hej@test.com, login: hej@test.com
-		id: 2, email: HEJ@TEST.COM, login: HEJ@TEST.COM
-		id: 3, email: hej@TEST.com, login: hej@TEST.com
-	*/
-	userIdentifiersSeen := make(map[string]bool)
-	seenUsers := make(map[string]bool)
-	discardConflictBlockToUserId := make(map[string]string)
-	str := ""
-	blocks := r.Users.GetConflictBlocks(BoldFormatter)
-	for block, users := range blocks {
-		for _, user := range users {
-			// we have some more tricky scenarios where we have more than two users that can have conflicts with each other
-			// we have made the approach to discard any users that we have seen
-			if seenUsers[user.Id] {
-				// Improvement: for now we make it easier for us by discarding if any users passes through again
-				discardConflictBlockToUserId[block] = user.Id
-				continue
-			}
-			seenUsers[user.Id] = true
-			// we already have a user with that has another conflict
-			// with the same user id
-			// once the users solve the first conflict
-			// this conflict will pass through on running the command again
-			if _, ok := discardConflictBlockToUserId[block]; ok {
-				continue
-			}
-
-			if !userIdentifiersSeen[block] {
-				str += fmt.Sprintf("%s\n", block)
-				userIdentifiersSeen[block] = true
-				str += fmt.Sprintf("+ id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
-				continue
-			}
-			// mergable users
-			str += fmt.Sprintf("- id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+func contains(cu ConflictingUsers, target ConflictingUser) bool {
+	for _, u := range cu {
+		if u.Id == target.Id {
+			return true
 		}
 	}
-	// set disgarded users
-	r.DiscardedUsers = discardConflictBlockToUserId
-	return str
+	return false
 }
 
-func logDiscardedUsers(discarded map[string]string) {
-	keys := make([]string, 0, len(discarded))
-	for _, v := range discarded {
-		keys = append(keys, v)
+func (r *ConflictResolver) logDiscardedUsers() {
+	keys := make([]string, 0, len(r.DiscardedBlocks))
+	for block := range r.DiscardedBlocks {
+		for _, u := range r.Blocks[block] {
+			keys = append(keys, u.Id)
+		}
 	}
 	warn := color.YellowString("Note: We discarded some conflicts that have multiple conflicting types involved.")
 	logger.Infof(`
@@ -189,7 +188,7 @@ users discarded with more than one conflict:
 ids: %s
 
 Solve conflicts and run the command again to see other conflicts.
-`, warn, keys)
+`, warn, strings.Join(keys, ","))
 }
 
 // handling tricky cases::
@@ -202,40 +201,24 @@ Solve conflicts and run the command again to see other conflicts.
 // if any has ids that have already been seen
 // discard that conflict
 // make note to the user to run again after fixing these conflicts
-func (r *ConflictResolver) ToFileRepresentation() string {
+func (r *ConflictResolver) ToStringPresentation() string {
 	/*
 		hej@test.com+hej@test.com
 		+ id: 1, email: hej@test.com, login: hej@test.com
 		- id: 2, email: HEJ@TEST.COM, login: HEJ@TEST.COM
 		- id: 3, email: hej@TEST.com, login: hej@TEST.com
 	*/
-	userIdentifiersSeen := make(map[string]bool)
-	seenUsers := make(map[string]bool)
-	discardConflictBlockToUserId := make(map[string]string)
+	startOfBlock := make(map[string]bool)
 	fileString := ""
-
-	blocks := r.Users.GetConflictBlocks(fmt.Sprintf)
-	for block, users := range blocks {
+	for block, users := range r.Blocks {
+		if _, ok := r.DiscardedBlocks[block]; ok {
+			// skip block
+			continue
+		}
 		for _, user := range users {
-			// we have some more tricky scenarios where we have more than two users that can have conflicts with each other
-			// we have made the approach to discard any users that we have seen
-			if seenUsers[user.Id] {
-				// Improvement: for now we make it easier for us by discarding if any users passes through again
-				discardConflictBlockToUserId[block] = user.Id
-				continue
-			}
-			seenUsers[user.Id] = true
-			// we already have a user with that has another conflict
-			// with the same user id
-			// once the users solve the first conflict
-			// this conflict will pass through on running the command again
-			if _, ok := discardConflictBlockToUserId[block]; ok {
-				continue
-			}
-
-			if !userIdentifiersSeen[block] {
+			if !startOfBlock[block] {
 				fileString += fmt.Sprintf("%s\n", block)
-				userIdentifiersSeen[block] = true
+				startOfBlock[block] = true
 				fileString += fmt.Sprintf("+ id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 				continue
 			}
@@ -243,14 +226,13 @@ func (r *ConflictResolver) ToFileRepresentation() string {
 			fileString += fmt.Sprintf("- id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
 		}
 	}
-	// set disgarded users
-	r.DiscardedUsers = discardConflictBlockToUserId
 	return fileString
 }
 
 type ConflictResolver struct {
-	Users          ConflictingUsers
-	DiscardedUsers map[string]string
+	Users           ConflictingUsers
+	Blocks          map[string]ConflictingUsers
+	DiscardedBlocks map[string]bool
 }
 
 type ConflictingUser struct {
