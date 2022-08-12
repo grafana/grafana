@@ -24,7 +24,7 @@ describe('ConfigEditor', () => {
     const onChangeMock = jest.fn();
     const wrapper = mount(<ConfigEditor onOptionsChange={onChangeMock} options={createDefaultConfigOptions()} />);
     const inputWrapper = wrapper.find({ label: 'Maximum lines' }).find('input');
-    (inputWrapper.getDOMNode() as any).value = 42;
+    inputWrapper.getDOMNode<HTMLInputElement>().value = '42';
     inputWrapper.simulate('change');
     expect(onChangeMock.mock.calls[0][0].jsonData.maxLines).toBe('42');
   });

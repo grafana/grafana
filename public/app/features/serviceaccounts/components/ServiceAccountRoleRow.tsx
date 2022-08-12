@@ -23,7 +23,6 @@ export const ServiceAccountRoleRow = ({
 }: Props): JSX.Element => {
   const inputId = `${label}-input`;
   const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
-  const rolePickerDisabled = !canUpdateRole || serviceAccount.isDisabled;
 
   return (
     <tr>
@@ -39,7 +38,8 @@ export const ServiceAccountRoleRow = ({
             onBuiltinRoleChange={onRoleChange}
             roleOptions={roleOptions}
             builtInRoles={builtInRoles}
-            disabled={rolePickerDisabled}
+            builtinRolesDisabled={!canUpdateRole}
+            disabled={serviceAccount.isDisabled}
           />
         </td>
       ) : (
@@ -50,7 +50,7 @@ export const ServiceAccountRoleRow = ({
               inputId={inputId}
               aria-label="Role"
               value={serviceAccount.role}
-              disabled={rolePickerDisabled}
+              disabled={serviceAccount.isDisabled}
               onChange={onRoleChange}
             />
           </td>

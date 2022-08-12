@@ -36,13 +36,13 @@ require (
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-kit/kit v0.11.0
-	github.com/go-openapi/strfmt v0.20.2
+	github.com/go-openapi/strfmt v0.21.2
 	github.com/go-redis/redis/v8 v8.11.4
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/go-stack/stack v1.8.0
+	github.com/go-stack/stack v1.8.1
 	github.com/gobwas/glob v0.2.3
-	github.com/gofrs/uuid v4.0.0+incompatible // indirect
+	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/golang/snappy v0.0.4
@@ -77,7 +77,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.23.1-0.20211116083607-e2a10119aaf7
+	github.com/prometheus/alertmanager v0.24.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.32.1
@@ -135,7 +135,7 @@ require (
 	github.com/FZambia/sentinel v1.1.0 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/alecthomas/units v0.0.0-20210912230133-d1bdfacee922 // indirect
+	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/andybalholm/brotli v1.0.3
 	github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
@@ -153,17 +153,17 @@ require (
 	github.com/edsrzf/mmap-go v1.0.0 // indirect
 	github.com/emicklei/proto v1.10.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
-	github.com/go-kit/log v0.1.0
+	github.com/go-kit/log v0.2.0
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
-	github.com/go-openapi/analysis v0.20.1 // indirect
-	github.com/go-openapi/errors v0.20.0 // indirect
+	github.com/go-openapi/analysis v0.21.2 // indirect
+	github.com/go-openapi/errors v0.20.2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
-	github.com/go-openapi/loads v0.20.2
-	github.com/go-openapi/runtime v0.19.29 // indirect
+	github.com/go-openapi/loads v0.21.1
+	github.com/go-openapi/runtime v0.23.1 // indirect
 	github.com/go-openapi/spec v0.20.4 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
-	github.com/go-openapi/validate v0.20.2 // indirect
+	github.com/go-openapi/validate v0.21.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
@@ -206,7 +206,7 @@ require (
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
-	github.com/prometheus/exporter-toolkit v0.7.0 // indirect
+	github.com/prometheus/exporter-toolkit v0.7.1 // indirect
 	github.com/prometheus/node_exporter v1.0.0-rc.0.0.20200428091818-01054558c289 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
@@ -223,7 +223,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/weaveworks/promrus v1.2.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
-	go.mongodb.org/mongo-driver v1.7.0 // indirect
+	go.mongodb.org/mongo-driver v1.8.3 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0
 	go.uber.org/goleak v1.1.12 // indirect
@@ -265,7 +265,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/memberlist v0.3.0 // indirect
+	github.com/hashicorp/memberlist v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
