@@ -595,15 +595,13 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
     const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
 
-    // Change how we find bottom series to get one that matches labels???
-
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
 
     for (let j = 0; j < topSeries.values.length; j++) {
       const bottomPoint = bottomSeries.values.get(j) || [0];
-      topSeries.values.toArray()[j] = topSeries.values.toArray()[j] - bottomPoint;
+      topSeries.values.toArray()[j] -= bottomPoint;
     }
   }
 
