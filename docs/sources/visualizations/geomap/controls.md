@@ -29,7 +29,7 @@ Displays zoom controls in the upper left corner. This control can be useful when
 
 Enables the mouse wheel to be used for zooming in or out.
 
-## Show Attribution
+## Show attribution
 
 Displays attribution for basemap layers.
 
