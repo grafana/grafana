@@ -28,7 +28,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				Req: &http.Request{},
 			},
 			SignedInUser: &user.SignedInUser{
-				OrgId: 1,
+				OrgID: 1,
 			},
 		}
 
@@ -96,7 +96,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			},
 			IsSignedIn: false,
 			SignedInUser: &user.SignedInUser{
-				OrgId: 1,
+				OrgID: 1,
 			},
 		}
 		ac := acMock.New().WithDisabled()
@@ -151,7 +151,7 @@ func TestRouteEvalQueries(t *testing.T) {
 				Req: &http.Request{},
 			},
 			SignedInUser: &user.SignedInUser{
-				OrgId: 1,
+				OrgID: 1,
 			},
 		}
 
@@ -220,7 +220,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			},
 			IsSignedIn: false,
 			SignedInUser: &user.SignedInUser{
-				OrgId: 1,
+				OrgID: 1,
 			},
 		}
 		ac := acMock.New().WithDisabled()

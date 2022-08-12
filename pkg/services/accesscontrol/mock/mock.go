@@ -84,27 +84,27 @@ func (m Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
 
 // Evaluate evaluates access to the given resource.
 // This mock uses GetUserPermissions to then call the evaluator Evaluate function.
-func (m *Mock) Evaluate(ctx context.Context, user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-	m.Calls.Evaluate = append(m.Calls.Evaluate, []interface{}{ctx, user, evaluator})
+func (m *Mock) Evaluate(ctx context.Context, usr *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+	m.Calls.Evaluate = append(m.Calls.Evaluate, []interface{}{ctx, usr, evaluator})
 	// Use override if provided
 	if m.EvaluateFunc != nil {
-		return m.EvaluateFunc(ctx, user, evaluator)
+		return m.EvaluateFunc(ctx, usr, evaluator)
 	}
 
 	var permissions map[string][]string
-	if user.Permissions != nil && user.Permissions[user.OrgId] != nil {
-		permissions = user.Permissions[user.OrgId]
+	if usr.Permissions != nil && usr.Permissions[usr.OrgID] != nil {
+		permissions = usr.Permissions[usr.OrgID]
 	}
 
 	if permissions == nil {
-		userPermissions, err := m.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
+		userPermissions, err := m.GetUserPermissions(ctx, usr, accesscontrol.Options{ReloadCache: true})
 		if err != nil {
 			return false, err
 		}
 		permissions = accesscontrol.GroupScopesByAction(userPermissions)
 	}
 
-	attributeMutator := m.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
+	attributeMutator := m.scopeResolvers.GetScopeAttributeMutator(usr.OrgID)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err

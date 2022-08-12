@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Service interface {
@@ -17,10 +18,10 @@ type Service interface {
 
 type OSSService struct {
 	sqlStore         sqlstore.Store
-	searchUserFilter models.SearchUserFilter
+	searchUserFilter user.SearchUserFilter
 }
 
-func ProvideUsersService(sqlStore sqlstore.Store, searchUserFilter models.SearchUserFilter) *OSSService {
+func ProvideUsersService(sqlStore sqlstore.Store, searchUserFilter user.SearchUserFilter) *OSSService {
 	return &OSSService{sqlStore: sqlStore, searchUserFilter: searchUserFilter}
 }
 
@@ -75,7 +76,7 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*models.SearchUsersQuery,
 	}
 
 	searchQuery := c.Query("query")
-	filters := make([]models.Filter, 0)
+	filters := make([]user.Filter, 0)
 	for filterName := range s.searchUserFilter.GetFilterList() {
 		filter := s.searchUserFilter.GetFilter(filterName, c.QueryStrings(filterName))
 		if filter != nil {

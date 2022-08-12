@@ -37,9 +37,9 @@ func BuildBackend(ctx *cli.Context) error {
 		}
 	)
 
-	mode, err := config.GetVersion(metadata.ReleaseMode)
+	mode, err := config.GetVersion(metadata.ReleaseMode.Mode)
 	if err != nil {
-		return fmt.Errorf("could not get version / package info for mode '%s': %w", metadata.ReleaseMode, err)
+		return fmt.Errorf("could not get version / package info for mode '%s': %w", metadata.ReleaseMode.Mode, err)
 	}
 
 	const grafanaDir = "."

@@ -351,7 +351,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 		{
 			desc: "should return permissions for resource id",
 			user: &user.SignedInUser{
-				OrgId: 1,
+				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
@@ -364,7 +364,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 		{
 			desc: "should return manage permissions for all resource ids",
 			user: &user.SignedInUser{
-				OrgId: 1,
+				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
@@ -383,7 +383,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 
 			err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				role := &accesscontrol.Role{
-					OrgID:   test.user.OrgId,
+					OrgID:   test.user.OrgID,
 					UID:     "seeded",
 					Name:    "seeded",
 					Updated: time.Now(),
@@ -418,7 +418,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 
 			seedResourcePermissions(t, store, sql, test.actions, test.resource, test.resourceID, test.resourceAttribute, test.numUsers)
 
-			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgId, types.GetResourcePermissionsQuery{
+			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgID, types.GetResourcePermissionsQuery{
 				User:              test.user,
 				Actions:           test.actions,
 				Resource:          test.resource,

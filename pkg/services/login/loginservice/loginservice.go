@@ -254,8 +254,8 @@ func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, e
 	return ls.AuthInfoService.UpdateAuthInfo(ctx, updateCmd)
 }
 
-func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
-	logger.Debug("Syncing organization roles", "id", user.ID, "extOrgRoles", extUser.OrgRoles)
+func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
+	logger.Debug("Syncing organization roles", "id", usr.ID, "extOrgRoles", extUser.OrgRoles)
 
 	// don't sync org roles if none is specified
 	if len(extUser.OrgRoles) == 0 {
@@ -263,7 +263,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 		return nil
 	}
 
-	orgsQuery := &models.GetUserOrgListQuery{UserId: user.ID}
+	orgsQuery := &models.GetUserOrgListQuery{UserId: usr.ID}
 	if err := ls.SQLStore.GetUserOrgList(ctx, orgsQuery); err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 			deleteOrgIds = append(deleteOrgIds, org.OrgId)
 		} else if extRole != org.Role {
 			// update role
-			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.ID, Role: extRole}
+			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: usr.ID, Role: extRole}
 			if err := ls.SQLStore.UpdateOrgUser(ctx, cmd); err != nil {
 				return err
 			}
@@ -294,7 +294,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 		}
 
 		// add role
-		cmd := &models.AddOrgUserCommand{UserId: user.ID, Role: orgRole, OrgId: orgId}
+		cmd := &models.AddOrgUserCommand{UserId: usr.ID, Role: orgRole, OrgId: orgId}
 		err := ls.SQLStore.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
@@ -304,8 +304,8 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 	// delete any removed org roles
 	for _, orgId := range deleteOrgIds {
 		logger.Debug("Removing user's organization membership as part of syncing with OAuth login",
-			"userId", user.ID, "orgId", orgId)
-		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.ID}
+			"userId", usr.ID, "orgId", orgId)
+		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: usr.ID}
 		if err := ls.SQLStore.RemoveOrgUser(ctx, cmd); err != nil {
 			if errors.Is(err, models.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
@@ -317,15 +317,15 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 	}
 
 	// update user's default org if needed
-	if _, ok := extUser.OrgRoles[user.OrgID]; !ok {
+	if _, ok := extUser.OrgRoles[usr.OrgID]; !ok {
 		for orgId := range extUser.OrgRoles {
-			user.OrgID = orgId
+			usr.OrgID = orgId
 			break
 		}
 
 		return ls.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{
-			UserId: user.ID,
-			OrgId:  user.OrgID,
+			UserId: usr.ID,
+			OrgId:  usr.OrgID,
 		})
 	}
 

@@ -486,7 +486,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 		return err
 	}
 
-	cacheKey = newSignedInUserCacheKey(query.Result.OrgId, query.UserId)
+	cacheKey = newSignedInUserCacheKey(query.Result.OrgID, query.UserId)
 	ss.CacheService.Set(cacheKey, *query.Result, time.Second*5)
 	return nil
 }
@@ -546,26 +546,26 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		}
 
 		if usr.OrgRole == "" {
-			usr.OrgId = -1
+			usr.OrgID = -1
 			usr.OrgName = "Org missing"
 		}
 
 		if usr.ExternalAuthModule != "oauth_grafana_com" {
-			usr.ExternalAuthId = ""
+			usr.ExternalAuthID = ""
 		}
 
 		// tempUser is used to retrieve the teams for the signed in user for internal use.
 		tempUser := &user.SignedInUser{
-			OrgId: usr.OrgId,
+			OrgID: usr.OrgID,
 			Permissions: map[int64]map[string][]string{
-				usr.OrgId: {
+				usr.OrgID: {
 					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
 				},
 			},
 		}
 		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
-			OrgId:        usr.OrgId,
-			UserId:       usr.UserId,
+			OrgId:        usr.OrgID,
+			UserId:       usr.UserID,
 			SignedInUser: tempUser,
 		}
 		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)

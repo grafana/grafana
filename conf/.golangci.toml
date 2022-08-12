@@ -13,6 +13,11 @@ ignore-generated-header = false
 severity = "warning"
 confidence = 3
 
+[linters-settings.depguard]
+list-type = "blacklist"
+include-go-root = true
+packages = ["io/ioutil"]
+
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]

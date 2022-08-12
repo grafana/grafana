@@ -3,7 +3,6 @@ package notifier
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -53,7 +52,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	}
 
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
-	existingFiles, err := ioutil.ReadDir(path)
+	existingFiles, err := os.ReadDir(path)
 	if err != nil {
 		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "err", err, "path", path)
 	}

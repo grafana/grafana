@@ -95,7 +95,7 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *use
 	}
 
 	return backend.PluginContext{
-		OrgID:    user.OrgId,
+		OrgID:    user.OrgID,
 		PluginID: plugin.ID,
 		User:     adapters.BackendUserFromSignedInUser(user),
 		AppInstanceSettings: &backend.AppInstanceSettings{
@@ -111,14 +111,14 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 
 	if cached, found := p.cacheService.Get(cacheKey); found {
 		ps := cached.(*pluginsettings.DTO)
-		if ps.OrgID == user.OrgId {
+		if ps.OrgID == user.OrgID {
 			return ps, nil
 		}
 	}
 
 	ps, err := p.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
 		PluginID: pluginID,
-		OrgID:    user.OrgId,
+		OrgID:    user.OrgID,
 	})
 	if err != nil {
 		return nil, err
