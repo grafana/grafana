@@ -18,7 +18,7 @@ export const ConfigEditor = (props: Props) => {
   const alertmanagers = getAllAlertmanagerDataSources();
 
   const azureAuthSettings = {
-    azureAuthSupported: !!config.featureToggles.prometheus_azure_auth,
+    azureAuthSupported: config.azureAuthEnabled,
     getAzureAuthEnabled: (config: DataSourceSettings<any, any>): boolean => hasCredentials(config),
     setAzureAuthEnabled: (config: DataSourceSettings<any, any>, enabled: boolean) =>
       enabled ? setDefaultCredentials(config) : resetCredentials(config),

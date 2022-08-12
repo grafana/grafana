@@ -1,7 +1,8 @@
 import React, { FC, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { Role } from 'app/types';
+import { contextSrv } from 'app/core/core';
+import { Role, AccessControlAction } from 'app/types';
 
 import { RolePicker } from './RolePicker';
 // @ts-ignore
@@ -35,6 +36,10 @@ export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled
     await getTeamRoles();
   };
 
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
+
   return (
     <RolePicker
       onRolesChange={onRolesChange}
@@ -43,6 +48,7 @@ export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled
       isLoading={loading}
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
+      canUpdateRoles={canUpdateRoles}
     />
   );
 };

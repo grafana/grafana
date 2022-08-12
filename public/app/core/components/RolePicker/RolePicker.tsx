@@ -18,7 +18,8 @@ export interface Props {
   showBuiltInRole?: boolean;
   onRolesChange: (newRoles: Role[]) => void;
   onBuiltinRoleChange?: (newRole: OrgRole) => void;
-  updateDisabled?: boolean;
+  canUpdateRoles?: boolean;
+  apply?: boolean;
 }
 
 export const RolePicker = ({
@@ -31,7 +32,8 @@ export const RolePicker = ({
   showBuiltInRole,
   onRolesChange,
   onBuiltinRoleChange,
-  updateDisabled,
+  canUpdateRoles = true,
+  apply = false,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
@@ -109,16 +111,21 @@ export const RolePicker = ({
     if (onBuiltinRoleChange && newBuiltInRole && newBuiltInRole !== builtInRole) {
       onBuiltinRoleChange(newBuiltInRole);
     }
-    onRolesChange(newRoles);
-    setOpen(false);
+    if (canUpdateRoles) {
+      onRolesChange(newRoles);
+    }
     setQuery('');
+    setOpen(false);
   };
 
   const getOptions = () => {
+    // if roles cannot be updated mark every role as non delegatable
+    const options = roleOptions.map((r) => ({ ...r, delegatable: canUpdateRoles && r.delegatable }));
+
     if (query && query.trim() !== '') {
-      return roleOptions.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
+      return options.filter((option) => option.name?.toLowerCase().includes(query.toLowerCase()));
     }
-    return roleOptions;
+    return options;
   };
 
   if (isLoading) {
@@ -155,7 +162,8 @@ export const RolePicker = ({
             showGroups={query.length === 0 || query.trim() === ''}
             builtinRolesDisabled={builtinRolesDisabled}
             showBuiltInRole={showBuiltInRole}
-            updateDisabled={updateDisabled || false}
+            updateDisabled={builtinRolesDisabled && !canUpdateRoles}
+            apply={apply}
             offset={offset}
           />
         )}
