@@ -322,11 +322,11 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext, folder 
 func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
 	ag.FolderUID = folderUID
 	ag.Title = group
-	domain, err := ag.ToModel()
+	groupModel, err := ag.ToModel()
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgID, domain, c.UserID, alerting_models.ProvenanceAPI)
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgID, groupModel, c.UserID, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
