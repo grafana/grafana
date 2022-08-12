@@ -254,7 +254,11 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID str
 }
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
-	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI, c.UserID)
+	upstreamModel, err := ar.UpstreamModel()
+	if err != nil {
+		ErrResp(http.StatusBadRequest, err, "")
+	}
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.ProvenanceAPI, c.UserID)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -274,9 +278,12 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 }
 
 func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule, UID string) response.Response {
-	updated := ar.UpstreamModel()
+	updated, err := ar.UpstreamModel()
+	if err != nil {
+		ErrResp(http.StatusBadRequest, err, "")
+	}
 	updated.UID = UID
-	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
+	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
