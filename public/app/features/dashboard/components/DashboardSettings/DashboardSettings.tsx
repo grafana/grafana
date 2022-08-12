@@ -3,10 +3,9 @@ import React, { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { locationUtil, NavModel, NavModelItem } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, PageToolbar } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { Page } from 'app/core/components/PageNew/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';

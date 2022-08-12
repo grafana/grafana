@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 
 import { Spinner, HorizontalGroup } from '@grafana/ui';
+import { Page } from 'app/core/components/PageNew/Page';
 
-import { DashboardModel } from '../../state/DashboardModel';
 import {
   historySrv,
   RevisionsModel,
@@ -12,9 +12,9 @@ import {
   VersionHistoryComparison,
 } from '../VersionHistory';
 
-interface Props {
-  dashboard: DashboardModel;
-}
+import { SettingsPageProps } from './types';
+
+interface Props extends SettingsPageProps {}
 
 type State = {
   isLoading: boolean;
@@ -164,7 +164,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }
 
     return (
-      <div>
+      <Page navModel={this.props.sectionNav}>
         <VersionHistoryHeader />
         {isLoading ? (
           <VersionsHistorySpinner msg="Fetching history list&hellip;" />
@@ -181,7 +181,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
             isLastPage={!!this.isLastPage()}
           />
         )}
-      </div>
+      </Page>
     );
   }
 }
