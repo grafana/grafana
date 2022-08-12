@@ -12,6 +12,8 @@ title: GeoJSON layer
 weight: 400
 ---
 
+# GeoJSON layer
+
 The GeoJSON layer allows you to select and load a static GeoJSON file from the filesystem.
 
 - **GeoJSON URL** provides a choice of GeoJSON files that ship with Grafana.

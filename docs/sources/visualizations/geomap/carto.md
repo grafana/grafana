@@ -12,7 +12,7 @@ title: CARTO layer
 weight: 400
 ---
 
-# CARTO
+# CARTO layer
 
 A CARTO layer is from CARTO Raster basemaps.
 

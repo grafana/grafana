@@ -12,7 +12,7 @@ title: Night / Day layer
 weight: 400
 ---
 
-# Night / Day
+# Night / Day layer
 
 The Night / Day layer displays night and day regions based on the current time range.
 

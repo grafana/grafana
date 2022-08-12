@@ -12,7 +12,7 @@ title: Open street map layer
 weight: 400
 ---
 
-# Open Street Map
+# Open Street Map layer
 
 A map from a collaborative free geographic world database.
 

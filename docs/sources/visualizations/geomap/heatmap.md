@@ -12,6 +12,8 @@ title: Heatmap layer
 weight: 500
 ---
 
+# Heatmap layer
+
 The heatmap layer clusters various data points to visualize locations with different densities.
 To add a heatmap layer:
 
