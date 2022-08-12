@@ -30,7 +30,6 @@ class createMfe {
     // eslint-disable-next-line
     return async function bootstrap() {
       await fn_app.init();
-      console.log('grafana app bootstraped');
     };
   }
 
@@ -52,9 +51,6 @@ class createMfe {
     const bodyLinks = document.getElementsByTagName('link');
     for (let i = 0; i < bodyLinks.length; i++) {
       const link = bodyLinks[i];
-      if (link.href) {
-        console.log(link.href, 'href');
-      }
       if (link.href && link.href.indexOf(`build/grafana.${other}`) > 0) {
         // Remove existing link after a 500ms to allow new css to load to avoid flickering
         // If we add new css at the same time we remove current one the page will be rendered without css
@@ -85,15 +81,12 @@ class createMfe {
       if (container) {
         ReactDOM.unmountComponentAtNode(container);
       }
-      console.log('unmounting grafana app', props);
     };
   }
 
   static updateFnApp() {
     // eslint-disable-next-line
-    return async function update(props: any) {
-      console.log('update props', props);
-    };
+    return async function update(props: any) {};
   }
 }
 

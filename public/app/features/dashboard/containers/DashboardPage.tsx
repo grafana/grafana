@@ -134,8 +134,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       this.closeDashboard();
     }
 
-    console.log('info', match, dashboard, queryParams, this.props);
-
     this.props.initDashboard({
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
@@ -389,7 +387,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const containerClassNames = classnames({ 'panel-in-fullscreen': viewPanel });
 
     const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
-    console.log(dashboard, '====>dashboard', kioskMode, '===>>> kioskMode');
     const toolbar = kioskMode !== KioskMode.Full && (
       <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
         <DashNav
@@ -404,7 +401,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       </header>
     );
     this.toolbar = toolbar;
-    console.log(showSubMenu);
     return (
       <Page
         {...this.getPageProps()}

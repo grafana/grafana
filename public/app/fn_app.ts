@@ -9,7 +9,7 @@ import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEve
 
 import 'app/features/all';
 
-import _, { merge } from 'lodash'; // eslint-disable-line lodash/import-scope
+import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 
 import {
   locationUtil,
@@ -101,7 +101,6 @@ export class GrafanaApp {
       config.panels = settings.panels;
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;
-      console.log('config', config);
 
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
@@ -146,7 +145,6 @@ export class GrafanaApp {
       // Init DataSourceSrv
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
-      console.log('config.datasources, config.defaultDatasource', config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
@@ -163,15 +161,6 @@ export class GrafanaApp {
         chrome: new AppChromeService(),
         config,
       };
-
-      console.log('this.context', this.context);
-
-      // ReactDOM.render(
-      //   React.createElement(AppWrapper, {
-      //     app: this,
-      //   }),
-      //   document.getElementById('reactRoot')
-      // );
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
