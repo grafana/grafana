@@ -86,7 +86,7 @@ There are four basemap layer types to choose from in the Geomap visualization.
 
 - [Open Street Map]({{< relref "osm/" >}}) adds a map from a collaborative free geographic world database.
 - [CARTO]({{< relref "carto/" >}}) adds a layer from CARTO Raster basemaps.
-- [ArcGIS]({{< relref "arcgis/" >}}) adds a layer from an ESRI ArcGIS MapServer
+- [ArcGIS]({{< relref "arcgis/" >}}) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ]({{< relref "xyz/" >}}) adds a map from a generic tile layer.
 
 ### Default
