@@ -12,7 +12,7 @@ title: XYZ tile layer
 weight: 400
 ---
 
-# XYZ
+# XYZ tile layer
 
 The XYZ tile layer is a map from a generic tile layer.
 
