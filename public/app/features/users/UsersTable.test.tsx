@@ -41,7 +41,7 @@ describe('Render', () => {
     });
   });
 
-  it('should render disabled flag when any of the User is disabled', () => {
+  it('should render disabled flag when any of the Users are disabled', () => {
     const usersData = getMockUsers(5);
     usersData[0].isDisabled = true;
     setup({ users: usersData });
