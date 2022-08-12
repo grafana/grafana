@@ -5,14 +5,9 @@ import { getDataSourceSrv, locationService } from '@grafana/runtime';
 
 import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from '../AnnotationSettings';
 
-import { DashboardSettingsHeader } from './DashboardSettingsHeader';
 import { SettingsPageProps } from './types';
 
 export function AnnotationsSettings({ dashboard, editIndex }: SettingsPageProps) {
-  const onGoBack = () => {
-    locationService.partial({ editIndex: null });
-  };
-
   const onNew = () => {
     const newAnnotation: AnnotationQuery = {
       name: newAnnotationName,
