@@ -71,8 +71,8 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	}
 
 	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
-		require.Equal(t, int64(2), user.UserId)
-		require.Equal(t, int64(1), user.OrgId)
+		require.Equal(t, int64(2), user.UserID)
+		require.Equal(t, int64(1), user.OrgID)
 		require.Equal(t, testPluginContext.PluginID, pluginID)
 		require.Equal(t, testPluginContext.DataSourceInstanceSettings.UID, datasourceUID)
 		return testPluginContext, true, nil
@@ -93,12 +93,12 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, testPluginContext, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "1/test", "test", nil, testPluginContext, mockStreamRunner, false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
 	// try submit the same.
-	result, err = manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
+	result, err = manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
 	require.NoError(t, err)
 	require.True(t, result.StreamExists)
 
@@ -162,12 +162,12 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner1, false)
+	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner1, false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
 	// try submit the same channel but different orgID.
-	result, err = manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 2}, "2/test", "test", nil, backend.PluginContext{}, mockStreamRunner2, false)
+	result, err = manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 2}, "2/test", "test", nil, backend.PluginContext{}, mockStreamRunner2, false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
@@ -218,7 +218,7 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	_, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
+	_, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "1/test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
 	require.NoError(t, err)
 
 	waitWithTimeout(t, startedCh, time.Second)
@@ -254,8 +254,8 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 	}
 
 	mockContextGetter.EXPECT().GetPluginContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
-		require.Equal(t, int64(2), user.UserId)
-		require.Equal(t, int64(1), user.OrgId)
+		require.Equal(t, int64(2), user.UserID)
+		require.Equal(t, int64(1), user.OrgID)
 		require.Equal(t, testPluginContext.PluginID, pluginID)
 		require.Equal(t, testPluginContext.DataSourceInstanceSettings.UID, datasourceUID)
 		return testPluginContext, true, nil
@@ -272,7 +272,7 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 		return errors.New("boom")
 	}).Times(numErrors + 1)
 
-	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
@@ -306,7 +306,7 @@ func TestStreamManager_SubmitStream_NilErrorStopsRunStream(t *testing.T) {
 		return nil
 	}).Times(1)
 
-	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "test", "test", nil, backend.PluginContext{}, mockStreamRunner, false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 	waitWithTimeout(t, result.CloseNotify, time.Second)
@@ -337,8 +337,8 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 	}
 
 	mockContextGetter.EXPECT().GetPluginContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
-		require.Equal(t, int64(2), user.UserId)
-		require.Equal(t, int64(1), user.OrgId)
+		require.Equal(t, int64(2), user.UserID)
+		require.Equal(t, int64(1), user.OrgID)
 		require.Equal(t, testPluginContext.PluginID, pluginID)
 		require.Equal(t, testPluginContext.DataSourceInstanceSettings.UID, datasourceUID)
 		return testPluginContext, true, nil
@@ -365,7 +365,7 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 		return nil
 	}).Times(2)
 
-	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 
@@ -403,8 +403,8 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 	}
 
 	mockContextGetter.EXPECT().GetPluginContext(context.Background(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
-		require.Equal(t, int64(2), user.UserId)
-		require.Equal(t, int64(1), user.OrgId)
+		require.Equal(t, int64(2), user.UserID)
+		require.Equal(t, int64(1), user.OrgID)
 		require.Equal(t, testPluginContext.PluginID, pluginID)
 		require.Equal(t, testPluginContext.DataSourceInstanceSettings.UID, datasourceUID)
 		return testPluginContext, true, nil
@@ -421,7 +421,7 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserId: 2, OrgId: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
+	result, err := manager.SubmitStream(context.Background(), &user.SignedInUser{UserID: 2, OrgID: 1}, "test", "test", nil, testPluginContext, mockStreamRunner, false)
 	require.NoError(t, err)
 	require.False(t, result.StreamExists)
 

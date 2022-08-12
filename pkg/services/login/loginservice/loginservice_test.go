@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,6 +34,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
+		userService:     usertest.NewUserServiceFake(),
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
@@ -57,6 +59,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
+		userService:     usertest.NewUserServiceFake(),
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)

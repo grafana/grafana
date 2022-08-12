@@ -77,7 +77,7 @@ func setupTestServer(
 			Logger:     log.New("publicdashboards-test"),
 
 			// Set signed in user. We might not actually need to do this.
-			SignedInUser: &user.SignedInUser{UserId: 1, OrgId: 1, OrgRole: org.RoleAdmin, Login: "testUser"},
+			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testUser"},
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), ctx))
 	})

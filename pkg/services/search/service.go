@@ -86,7 +86,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 		hits = sortedHits(hits)
 	}
 
-	if err := s.setStarredDashboards(ctx, query.SignedInUser.UserId, hits); err != nil {
+	if err := s.setStarredDashboards(ctx, query.SignedInUser.UserID, hits); err != nil {
 		return err
 	}
 

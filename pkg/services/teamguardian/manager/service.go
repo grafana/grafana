@@ -22,14 +22,14 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 		return nil
 	}
 
-	if user.OrgId != orgId {
+	if user.OrgID != orgId {
 		return models.ErrNotAllowedToUpdateTeamInDifferentOrg
 	}
 
 	cmd := models.GetTeamMembersQuery{
 		OrgId:        orgId,
 		TeamId:       teamId,
-		UserId:       user.UserId,
+		UserId:       user.UserID,
 		SignedInUser: user,
 	}
 
@@ -39,7 +39,7 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 	}
 
 	for _, member := range results {
-		if member.UserId == user.UserId && member.Permission == models.PERMISSION_ADMIN {
+		if member.UserId == user.UserID && member.Permission == models.PERMISSION_ADMIN {
 			return nil
 		}
 	}

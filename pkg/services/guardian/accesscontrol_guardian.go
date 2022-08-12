@@ -145,11 +145,11 @@ func (a *AccessControlDashboardGuardian) CanCreate(folderID int64, isFolder bool
 func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
 	if err != nil {
-		a.log.Debug("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserId, "id", a.dashboardID)
+		a.log.Debug("Failed to evaluate access control to folder or dashboard", "error", err, "userId", a.user.UserID, "id", a.dashboardID)
 	}
 
 	if !ok && err == nil {
-		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserId, "id", a.dashboardID, "permissions", evaluator.GoString())
+		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserID, "id", a.dashboardID, "permissions", evaluator.GoString())
 	}
 
 	return ok, err
@@ -256,7 +256,7 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 
 func (a *AccessControlDashboardGuardian) loadDashboard() error {
 	if a.dashboard == nil {
-		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgId}
+		query := &models.GetDashboardQuery{Id: a.dashboardID, OrgId: a.user.OrgID}
 		if err := a.dashboardService.GetDashboard(a.ctx, query); err != nil {
 			return err
 		}
@@ -269,7 +269,7 @@ func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*mode
 	if folderID == 0 {
 		return &models.Dashboard{Uid: accesscontrol.GeneralFolderUID}, nil
 	}
-	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgId}
+	folderQuery := &models.GetDashboardQuery{Id: folderID, OrgId: a.user.OrgID}
 	if err := a.dashboardService.GetDashboard(a.ctx, folderQuery); err != nil {
 		return nil, err
 	}
