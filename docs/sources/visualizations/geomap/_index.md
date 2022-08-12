@@ -91,7 +91,7 @@ There are four basemap layer types to choose from in the Geomap visualization.
 
 ### Default
 
-The default base layer uses the [CARTO]({{< relref "carto/" >}}) map. Custom default base layers can be defined in the `.ini` configuration file.
+The default base layer uses the [CARTO]({{< relref "carto/" >}}) map. You can define custom default base layers in the `.ini` configuration file.
 
 ![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
