@@ -17,7 +17,7 @@ import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashb
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { KioskMode } from 'app/types';
+import { KioskMode, StoreState } from 'app/types';
 
 import { setStarred } from '../../../../core/reducers/navBarTree';
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -31,7 +31,11 @@ const mapDispatchToProps = {
   updateTimeZoneForSession,
 };
 
-const connector = connect(null, mapDispatchToProps);
+const mapStateToProps = (state: StoreState) => {
+  return { ...state.fnGlobleState };
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 const selectors = e2eSelectors.pages.Dashboard.DashNav;
 
@@ -66,11 +70,9 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const DashNav = React.memo<Props>((props) => {
   const forceUpdate = useForceUpdate();
-
   const onStarDashboard = () => {
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
-
     dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
       setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
@@ -223,7 +225,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const renderRightActions = () => {
-    const { dashboard, onAddPanel, isFullscreen, kioskMode } = props;
+    const { dashboard, onAddPanel, isFullscreen, kioskMode, FNDashboard } = props;
     const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -234,6 +236,7 @@ export const DashNav = React.memo<Props>((props) => {
         icon="monitor"
         onClick={onToggleTVMode}
         key="tv-button"
+        isHidden={FNDashboard ? true : false}
       />
     );
 
@@ -242,7 +245,6 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (kioskMode === KioskMode.TV || kioskMode === KioskMode.FN) {
-      // FN -- this should be it's own MFE
       return [renderTimeControls(), tvButton];
     }
 

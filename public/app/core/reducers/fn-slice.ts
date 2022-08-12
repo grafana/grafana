@@ -21,8 +21,10 @@ const fnSlice = createSlice({
   initialState,
   reducers: {
     setIntialMountState: (state, action: PayloadAction<FNState>) => {
-      const { payload } = action.payload;
-      return payload;
+      return {
+        ...state,
+        ...action.payload,
+      };
     },
     updateFnState: (state, action: PayloadAction<{ type: string; payload: string | boolean | HTMLElement }>) => {
       const { type, payload } = action.payload;
