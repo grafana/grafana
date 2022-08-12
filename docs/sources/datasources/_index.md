@@ -18,23 +18,23 @@ Each data source has a specific Query Editor that is customized for the features
 
 The following data sources are officially supported:
 
-- [Alertmanager]({{< relref "./alertmanager/" >}})
+- [Alertmanager]({{< relref "./alertmanager.md" >}})
 - [AWS CloudWatch]({{< relref "./aws-cloudwatch/" >}})
 - [Azure Monitor]({{< relref "./azuremonitor/" >}})
-- [Elasticsearch]({{< relref "./elasticsearch/" >}})
+- [Elasticsearch]({{< relref "./elasticsearch.md" >}})
 - [Google Cloud Monitoring]({{< relref "./google-cloud-monitoring/" >}})
-- [Graphite]({{< relref "./graphite/" >}})
+- [Graphite]({{< relref "./graphite.md" >}})
 - [InfluxDB]({{< relref "./influxdb/" >}})
-- [Loki]({{< relref "./loki/" >}})
-- [Microsoft SQL Server (MSSQL)]({{< relref "./mssql/" >}})
-- [MySQL]({{< relref "./mysql/" >}})
-- [OpenTSDB]({{< relref "./opentsdb/" >}})
-- [PostgreSQL]({{< relref "./postgres/" >}})
-- [Prometheus]({{< relref "./prometheus/" >}})
-- [Jaeger]({{< relref "./jaeger/" >}})
-- [Zipkin]({{< relref "./zipkin/" >}})
-- [Tempo]({{< relref "./tempo/" >}})
-- [Testdata]({{< relref "./testdata/" >}})
+- [Loki]({{< relref "./loki.md" >}})
+- [Microsoft SQL Server (MSSQL)]({{< relref "./mssql.md" >}})
+- [MySQL]({{< relref "./mysql.md" >}})
+- [OpenTSDB]({{< relref "./opentsdb.md" >}})
+- [PostgreSQL]({{< relref "./postgres.md" >}})
+- [Prometheus]({{< relref "./prometheus.md" >}})
+- [Jaeger]({{< relref "./jaeger.md" >}})
+- [Zipkin]({{< relref "./zipkin.md" >}})
+- [Tempo]({{< relref "./tempo.md" >}})
+- [Testdata]({{< relref "./testdata.md" >}})
 
 In addition to the data sources that you have configured in your Grafana, there are three special data sources available:
 
