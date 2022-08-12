@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -192,4 +193,30 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		},
 	})
 	return &StorageListFrame{frame}, nil
+}
+
+func (t *nestedTree) ListFolderRaw(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*filestorage.ListResponse, error) {
+	if path == "" || path == "/" {
+		return nil, errors.New("not supported")
+	}
+
+	root, path := t.getRoot(orgId, path)
+	if root == nil {
+		return nil, nil // not found (or not ready)
+	}
+
+	store := root.Store()
+	if store == nil {
+		return nil, fmt.Errorf("store not ready")
+	}
+
+	listResponse, err := store.List(ctx, path, nil, &filestorage.ListOptions{
+		Recursive:    true,
+		WithFolders:  true,
+		WithContents: true,
+		WithFiles:    true,
+		Filter:       accessFilter,
+	})
+
+	return listResponse, err
 }

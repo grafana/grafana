@@ -64,7 +64,7 @@ type StandardSearchService struct {
 	reIndexCh      chan struct{}
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl, store store.StorageService) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -76,9 +76,11 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 		},
 		dashboardIndex: newSearchIndex(
 			newSQLDashboardLoader(sql),
+			newStorageQueriesLoader(store),
 			entityEventStore,
 			extender.GetDocumentExtender(),
 			newFolderIDLookup(sql),
+			sql,
 		),
 		logger:    log.New("searchV2"),
 		extender:  extender,

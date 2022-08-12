@@ -24,10 +24,16 @@ type EntityType string
 
 const (
 	EntityTypeDashboard EntityType = "dashboard"
+	EntityTypeQuery     EntityType = "query"
 	EntityTypeFolder    EntityType = "folder"
 	EntityTypeImage     EntityType = "image"
 	EntityTypeJSON      EntityType = "json"
 )
+
+func IsValidType(candidate string) bool {
+	casted := EntityType(candidate)
+	return casted == EntityTypeDashboard || casted == EntityTypeQuery || casted == EntityTypeFolder || casted == EntityTypeImage || casted == EntityTypeJSON
+}
 
 // CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables
 func CreateDatabaseEntityId(internalId interface{}, orgId int64, entityType EntityType) string {
@@ -63,9 +69,23 @@ type EntityEventsService interface {
 	registry.BackgroundService
 	registry.CanBeDisabled
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
+	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
+
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
 
 	deleteEventsOlderThan(ctx context.Context, duration time.Duration) error
+}
+
+func (e *entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
+	entityEvent := &EntityEvent{
+		EventType: cmd.EventType,
+		EntityId:  cmd.EntityId,
+		Created:   time.Now().Unix(),
+	}
+	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(entityEvent)
+		return err
+	})
 }
 
 func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, features featuremgmt.FeatureToggles) EntityEventsService {
@@ -168,3 +188,10 @@ func (d dummyEntityEventsService) deleteEventsOlderThan(ctx context.Context, dur
 }
 
 var _ EntityEventsService = &dummyEntityEventsService{}
+
+func (d dummyEntityEventsService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
+	return nil
+}
+
+func (d dummyEntityEventsService) OnEvent(handler EventHandler) {
+}

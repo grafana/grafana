@@ -194,4 +194,8 @@ const (
 	// FlagCustomBranding
 	// Replaces whitelabeling with the new custom branding feature
 	FlagCustomBranding = "customBranding"
+
+	// FlagSavedQueries
+	// Datasource queries as a first-class object
+	FlagSavedQueries = "savedQueries"
 )

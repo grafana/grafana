@@ -34,3 +34,15 @@ type DashboardInfo struct {
 	Refresh       string                   `json:"refresh,omitempty"`
 	ReadOnly      bool                     `json:"readOnly,omitempty"` // editable = false
 }
+
+type QueryInfo struct {
+	UID           string   `json:"uid"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
+	Tags          []string `json:"tags"`
+	TimeFrom      string   `json:"timeFrom"`
+	TimeTo        string   `json:"timeTo"`
+	SchemaVersion int64    `json:"schemaVersion"`
+
+	Datasource []dslookup.DataSourceRef `json:"datasource,omitempty"` // UIDs
+}

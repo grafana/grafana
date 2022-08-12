@@ -39,10 +39,13 @@ const RootSystem = "system"
 
 const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
+const queriesStorage = "queries"
+const SystemQueriesStorage = "system/" + queriesStorage
 
 var (
 	SystemBrandingReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
 	SystemBrandingAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
+	QueriesSearch        = &user.SignedInUser{OrgID: 1} // TODO per org
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
@@ -65,6 +68,8 @@ type StorageService interface {
 	// List folder contents
 	List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error)
 
+	ListRaw(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.ListResponse, error) // TODO remove this
+
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error)
 
@@ -83,17 +88,19 @@ type StorageService interface {
 }
 
 type standardStorageService struct {
-	sql          *sqlstore.SQLStore
-	tree         *nestedTree
-	cfg          *GlobalStorageConfig
-	authService  storageAuthService
-	quotaService quota.Service
+	sql                 *sqlstore.SQLStore
+	tree                *nestedTree
+	cfg                 *GlobalStorageConfig
+	authService         storageAuthService
+	quotaService        quota.Service
+	entityEventsService EntityEventsService
 }
 
 func ProvideService(
 	sql *sqlstore.SQLStore,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
+	entityEventsService EntityEventsService,
 	quotaService quota.Service,
 ) StorageService {
 	settings, err := LoadStorageConfig(cfg, features)
@@ -199,18 +206,27 @@ func ProvideService(
 		if storageName == RootSystem {
 			if user == SystemBrandingReader {
 				return map[string]filestorage.PathFilter{
-					ActionFilesRead:   createSystemBrandingPathFilter(),
+					ActionFilesRead:   createSystemPathFilter(brandingStorage),
 					ActionFilesWrite:  denyAllPathFilter,
 					ActionFilesDelete: denyAllPathFilter,
 				}
 			}
 
 			if user == SystemBrandingAdmin {
-				systemBrandingFilter := createSystemBrandingPathFilter()
+				systemBrandingFilter := createSystemPathFilter(brandingStorage)
 				return map[string]filestorage.PathFilter{
 					ActionFilesRead:   systemBrandingFilter,
 					ActionFilesWrite:  systemBrandingFilter,
 					ActionFilesDelete: systemBrandingFilter,
+				}
+			}
+
+			if user == QueriesSearch {
+				filter := createSystemPathFilter(queriesStorage)
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   filter,
+					ActionFilesWrite:  filter,
+					ActionFilesDelete: filter,
 				}
 			}
 		}
@@ -227,16 +243,16 @@ func ProvideService(
 		}
 	})
 
-	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
+	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, entityEventsService)
 	s.quotaService = quotaService
 	s.cfg = settings
 	return s
 }
 
-func createSystemBrandingPathFilter() filestorage.PathFilter {
+func createSystemPathFilter(subpath string) filestorage.PathFilter {
 	return filestorage.NewPathFilter(
-		[]string{filestorage.Delimiter + brandingStorage + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
-		[]string{filestorage.Delimiter + brandingStorage},                         // access to the `/branding` folder itself, but not to any other sibling folder
+		[]string{filestorage.Delimiter + subpath + filestorage.Delimiter}, // access to all folders and files inside `/branding/`
+		[]string{filestorage.Delimiter + subpath},                         // access to the `/branding` folder itself, but not to any other sibling folder
 		nil,
 		nil)
 }
@@ -247,6 +263,7 @@ func newStandardStorageService(
 	initializeOrgStorages func(orgId int64) []storageRuntime,
 	authService storageAuthService,
 	cfg *setting.Cfg,
+	entityEventsService EntityEventsService,
 ) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
@@ -257,9 +274,10 @@ func newStandardStorageService(
 	}
 	res.init()
 	return &standardStorageService{
-		sql:         sql,
-		tree:        res,
-		authService: authService,
+		sql:                 sql,
+		entityEventsService: entityEventsService,
+		tree:                res,
+		authService:         authService,
 	}
 }
 
@@ -279,6 +297,11 @@ func getOrgId(user *user.SignedInUser) int64 {
 func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error) {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
 	return s.tree.ListFolder(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
+}
+
+func (s *standardStorageService) ListRaw(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.ListResponse, error) {
+	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
+	return s.tree.ListFolderRaw(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error) {

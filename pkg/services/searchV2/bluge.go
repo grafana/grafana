@@ -34,7 +34,7 @@ const (
 	DocumentFieldUpdatedAt   = "updated_at"
 )
 
-func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc) (*orgIndex, error) {
+func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc, queries []query) (*orgIndex, error) {
 	dashboardWriter, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
 		return nil, fmt.Errorf("error opening writer: %v", err)
@@ -118,6 +118,22 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 		}
 	}
 
+	// Then each query.
+	for _, query := range queries {
+
+		location := "content"
+		lastSlash := strings.LastIndex(query.uid, "/")
+		if lastSlash != -1 {
+			location = query.uid[:lastSlash]
+		}
+
+		doc := getQueryDoc(query, location)
+		batch.Insert(doc)
+		if err := flushIfRequired(false); err != nil {
+			return nil, err
+		}
+	}
+
 	// Flush docs in batch with force as we are in the end.
 	if err := flushIfRequired(true); err != nil {
 		return nil, err
@@ -146,6 +162,41 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, dash.created).Sortable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, dash.updated).Sortable().StoreValue())
+}
+
+func getQueryDoc(query query, location string) *bluge.Document {
+	url := fmt.Sprintf("/admin/storage/system%s", query.uid)
+
+	// Dashboard document
+	doc := newSearchDocument(query.uid, query.info.Title, query.info.Description, url).
+		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindQuery)).Aggregatable().StoreValue()).
+		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
+		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, query.created).Sortable().StoreValue()).
+		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, query.updated).Sortable().StoreValue())
+
+	for _, tag := range query.info.Tags {
+		doc.AddField(bluge.NewKeywordField(documentFieldTag, tag).
+			StoreValue().
+			Aggregatable().
+			SearchTermPositions())
+	}
+
+	for _, ds := range query.info.Datasource {
+		if ds.UID != "" {
+			doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ds.UID).
+				StoreValue().
+				Aggregatable().
+				SearchTermPositions())
+		}
+		if ds.Type != "" {
+			doc.AddField(bluge.NewKeywordField(documentFieldDSType, ds.Type).
+				StoreValue().
+				Aggregatable().
+				SearchTermPositions())
+		}
+	}
+
+	return doc
 }
 
 func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {

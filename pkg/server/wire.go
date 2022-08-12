@@ -8,6 +8,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
+	"github.com/grafana/grafana/pkg/services/queries"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -316,6 +317,8 @@ var wireBasicSet = wire.NewSet(
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
+	queries.ProvideService,
+	queries.ProvideServiceHTTPHandler,
 )
 
 var wireSet = wire.NewSet(

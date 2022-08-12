@@ -1,0 +1,31 @@
+{
+  "UID": "some-uid",
+  "title": "ds-variables",
+  "tags": null,
+  "description": "example description",
+  "schemaVersion": 1,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "queries": [
+    {
+      "refId": "A",
+      "intervalMs": 12412412,
+      "maxDataPoints": 1241,
+      "datasource": {
+        "uid": "sqlite-2",
+        "type": "sqlite-datasource"
+      }
+    },
+    {
+      "refId": "B",
+      "intervalMs": 12412412,
+      "maxDataPoints": 1241,
+      "datasource": {
+        "uid": "sqlite-1",
+        "type": "sqlite-datasource"
+      }
+    }
+  ]
+}

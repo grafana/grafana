@@ -83,6 +83,7 @@ func (i *orgIndex) readerForIndex(idxType indexType) (*bluge.Reader, func(), err
 type searchIndex struct {
 	mu             sync.RWMutex
 	loader         dashboardLoader
+	queryLoader    *storageQueriesLoader
 	perOrgIndex    map[int64]*orgIndex
 	eventStore     eventStore
 	logger         log.Logger
@@ -90,11 +91,13 @@ type searchIndex struct {
 	extender       DocumentExtender
 	folderIdLookup folderUIDLookup
 	syncCh         chan chan struct{}
+	sql            *sqlstore.SQLStore
 }
 
-func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup) *searchIndex {
+func newSearchIndex(dashLoader dashboardLoader, queryLoader *storageQueriesLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, sql *sqlstore.SQLStore) *searchIndex {
 	return &searchIndex{
 		loader:         dashLoader,
+		queryLoader:    queryLoader,
 		eventStore:     evStore,
 		perOrgIndex:    map[int64]*orgIndex{},
 		logger:         log.New("searchIndex"),
@@ -102,6 +105,7 @@ func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender Doc
 		extender:       extender,
 		folderIdLookup: folderIDs,
 		syncCh:         make(chan chan struct{}),
+		sql:            sql,
 	}
 }
 
@@ -389,8 +393,14 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
+	lookup, err := dslookup.LoadDatasourceLookup(ctx, orgID, i.sql) // todo pass as param
+	if err != nil {
+		return 0, fmt.Errorf("error initializing ds lookup: %w", err)
+	}
+
 	i.logger.Info("Start building org index", "orgId", orgID)
 	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
+	queries, err := i.queryLoader.LoadQueries(ctx, orgID, "", lookup)
 	if err != nil {
 		return 0, fmt.Errorf("error loading dashboards: %w", err)
 	}
@@ -398,7 +408,7 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
-	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender)
+	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender, queries)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)
 	}
@@ -539,6 +549,15 @@ func (i *searchIndex) applyEvent(ctx context.Context, orgID int64, kind store.En
 	}
 	i.mu.Unlock()
 
+	var queries []query
+	if kind == store.EntityTypeQuery {
+		// key will allow name or uid
+		lookup, err := dslookup.LoadDatasourceLookup(ctx, orgID, i.sql)
+		if err != nil {
+			return err
+		}
+		queries, err = i.queryLoader.LoadQueries(ctx, orgID, uid, lookup)
+	}
 	// Both dashboard and folder share same DB table.
 	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, uid)
 	if err != nil {
@@ -551,6 +570,20 @@ func (i *searchIndex) applyEvent(ctx context.Context, orgID int64, kind store.En
 	index, ok := i.perOrgIndex[orgID]
 	if !ok {
 		// Skip event for org not yet fully indexed.
+		return nil
+	}
+
+	if kind == store.EntityTypeQuery {
+		if len(queries) == 0 {
+			if err := i.removeQuery(ctx, index, uid); err != nil {
+				return err
+			}
+		}
+
+		if err := i.updateQuery(ctx, index, uid, queries[0]); err != nil {
+			return err
+		}
+
 		return nil
 	}
 
@@ -686,6 +719,71 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 
 	batch.Update(doc.ID(), doc)
 
+	return writer.Batch(batch)
+}
+
+func getQueryLocation(index *orgIndex, dashboardUID string) (string, bool, error) {
+	var queryLocation string
+	var found bool
+
+	reader, cancel, err := index.readerForIndex(indexTypeDashboard)
+	if err != nil {
+		return "", false, err
+	}
+	defer cancel()
+
+	fullQuery := bluge.NewBooleanQuery()
+	fullQuery.AddMust(bluge.NewTermQuery(dashboardUID).SetField(documentFieldUID))
+	fullQuery.AddMust(bluge.NewTermQuery(string(entityKindDashboard)).SetField(documentFieldKind))
+	req := bluge.NewAllMatches(fullQuery)
+	documentMatchIterator, err := reader.Search(context.Background(), req)
+	if err != nil {
+		return "", false, err
+	}
+	match, err := documentMatchIterator.Next()
+	for err == nil && match != nil {
+		// load the identifier for this match
+		err = match.VisitStoredFields(func(field string, value []byte) bool {
+			if field == documentFieldLocation {
+				queryLocation = string(value)
+				found = true
+				return false
+			}
+			return true
+		})
+		if err != nil {
+			return "", false, err
+		}
+		// load the next document match
+		match, err = documentMatchIterator.Next()
+	}
+	return queryLocation, found, err
+}
+
+func (i *searchIndex) updateQuery(ctx context.Context, index *orgIndex, uid string, q query) error {
+
+	writer := index.writerForIndex(indexTypeDashboard)
+
+	batch := bluge.NewBatch()
+
+	location := "content"
+	lastSlash := strings.LastIndex(uid, "/")
+	if lastSlash != -1 {
+		location = uid[:lastSlash]
+	}
+
+	doc := getQueryDoc(q, location)
+
+	batch.Update(doc.ID(), doc)
+
+	return writer.Batch(batch)
+}
+
+func (i *searchIndex) removeQuery(ctx context.Context, index *orgIndex, uid string) error {
+	writer := index.writerForIndex(indexTypeDashboard)
+
+	batch := bluge.NewBatch()
+	batch.Delete(bluge.NewDocument(uid).ID())
 	return writer.Batch(batch)
 }
 

@@ -1,0 +1,19 @@
+{
+  "uid": "testdata/queries/example-query.json",
+  "title": "ds-variables",
+  "description": "example description",
+  "tags": null,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "schemaVersion": 1,
+  "datasource": [
+    {
+      "uid": "sqlite-2",
+      "type": "sqlite-datasource"
+    },
+    {
+      "uid": "sqlite-1",
+      "type": "sqlite-datasource"
+    }
+  ]
+}

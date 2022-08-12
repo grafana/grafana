@@ -85,6 +85,8 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 	switch req.EntityType {
 	case EntityTypeJSON:
 		fallthrough
+	case EntityTypeQuery:
+		fallthrough
 	case EntityTypeFolder:
 		fallthrough
 	case EntityTypeDashboard:

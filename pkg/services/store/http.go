@@ -102,6 +102,16 @@ func (s *standardStorageService) doUpload(c *models.ReqContext) response.Respons
 			return response.JSON(400, rsp)
 		}
 
+		kind := getMultipartFormValue(c.Req, k+".kind") // match the kind with a file
+		if kind != "" && !IsValidType(kind) {
+			rsp.Message = fmt.Sprintf("kind %s in invalid", kind)
+			rsp.Error = true
+			return response.JSON(400, rsp)
+		}
+
+		fmt.Println("KIND")
+		fmt.Println(kind)
+
 		for _, fileHeader := range fileHeaders {
 			// restrict file size based on file size
 			// open each file to copy contents
@@ -122,10 +132,15 @@ func (s *standardStorageService) doUpload(c *models.ReqContext) response.Respons
 				path = folder + "/" + fileHeader.Filename
 			}
 
-			entityType := EntityTypeJSON
-			mimeType := http.DetectContentType(data)
-			if strings.HasPrefix(mimeType, "image") || strings.HasSuffix(path, ".svg") {
-				entityType = EntityTypeImage
+			var entityType EntityType
+			if kind == "" {
+				entityType = EntityTypeJSON
+				mimeType := http.DetectContentType(data)
+				if strings.HasPrefix(mimeType, "image") || strings.HasSuffix(path, ".svg") {
+					entityType = EntityTypeImage
+				}
+			} else {
+				entityType = EntityType(kind)
 			}
 
 			err = s.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{
@@ -135,8 +150,18 @@ func (s *standardStorageService) doUpload(c *models.ReqContext) response.Respons
 				OverwriteExistingFile: overwriteExistingFile,
 				Properties: map[string]string{
 					"message": message, // the commit/changelog entry
+					"kind":    string(entityType),
 				},
 			})
+
+			if entityType == EntityTypeQuery {
+				if err := s.entityEventsService.SaveEvent(c.Req.Context(), SaveEventCmd{
+					EntityId:  CreateDatabaseEntityId(path, c.OrgID, EntityTypeQuery),
+					EventType: EntityEventTypeUpdate,
+				}); err != nil {
+					grafanaStorageLogger.Error("error when saving event", "path", path)
+				}
+			}
 
 			if err != nil {
 				return response.Error(UploadErrorToStatusCode(err), err.Error(), err)
@@ -191,6 +216,13 @@ func (s *standardStorageService) doDelete(c *models.ReqContext) response.Respons
 	scope, path := getPathAndScope(c)
 
 	err := s.Delete(c.Req.Context(), c.SignedInUser, scope+"/"+path)
+
+	if err := s.entityEventsService.SaveEvent(c.Req.Context(), SaveEventCmd{
+		EntityId:  CreateDatabaseEntityId(path, c.OrgID, EntityTypeQuery), // todo its not really query
+		EventType: EntityEventTypeDelete,
+	}); err != nil {
+		grafanaStorageLogger.Error("error when saving event", "path", path)
+	}
 	if err != nil {
 		return response.Error(400, "failed to delete the file: "+err.Error(), err)
 	}

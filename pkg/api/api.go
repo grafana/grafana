@@ -263,6 +263,10 @@ func (hs *HTTPServer) registerRoutes() {
 			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
 		}
 
+		if !hs.QueriesService.IsDisabled() {
+			apiRoute.Group("/queries", hs.QueriesService.RegisterHTTPRoutes)
+		}
+
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))

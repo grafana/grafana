@@ -262,5 +262,10 @@ var (
 			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "savedQueries",
+			Description: "Datasource queries as a first-class object",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
