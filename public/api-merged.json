@@ -4020,6 +4020,27 @@
         }
       }
     },
+    "/datasources/correlations": {
+      "get": {
+        "tags": ["correlations"],
+        "summary": "Gets all correlations.",
+        "operationId": "getCorrelations",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/id/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
@@ -4402,6 +4423,33 @@
       }
     },
     "/datasources/uid/{sourceUID}/correlations": {
+      "get": {
+        "tags": ["correlations"],
+        "summary": "Gets all correlations originating from the given data source.",
+        "operationId": "getCorrelationsBySourceUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationsBySourceUIDResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "post": {
         "tags": [
           "correlations"
@@ -4447,6 +4495,39 @@
       }
     },
     "/datasources/uid/{sourceUID}/correlations/{correlationUID}": {
+      "get": {
+        "tags": ["correlations"],
+        "summary": "Gets a correlation.",
+        "operationId": "getCorrelation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "sourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "correlationUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getCorrelationResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
       "patch": {
         "tags": [
           "correlations"
@@ -19171,6 +19252,30 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/ItemDTO"
+        }
+      }
+    },
+    "getCorrelationResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/Correlation"
+      }
+    },
+    "getCorrelationsBySourceUIDResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Correlation"
+        }
+      }
+    },
+    "getCorrelationsResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Correlation"
         }
       }
     },
