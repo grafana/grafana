@@ -23,7 +23,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"live-config":                   true,
 		"live-pipeline":                 true,
 		"live-service-web-worker":       true,
-		"prometheus_azure_auth":         true,
 	}
 
 	t.Run("verify files", func(t *testing.T) {

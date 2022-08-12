@@ -257,10 +257,10 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 }
 
 func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, error) {
-	if user == nil || user.Permissions[user.OrgId] == nil {
+	if user == nil || user.Permissions[user.OrgID] == nil {
 		return "", nil, errors.New("missing permissions")
 	}
-	scopes, has := user.Permissions[user.OrgId][ac.ActionAnnotationsRead]
+	scopes, has := user.Permissions[user.OrgID][ac.ActionAnnotationsRead]
 	if !has {
 		return "", nil, errors.New("missing permissions")
 	}

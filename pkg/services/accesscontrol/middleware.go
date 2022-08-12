@@ -28,7 +28,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 
 func authorize(c *models.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
 	injected, err := evaluator.MutateScopes(c.Req.Context(), ScopeInjector(ScopeParams{
-		OrgID:     c.OrgId,
+		OrgID:     c.OrgID,
 		URLParams: web.Params(c.Req),
 	}))
 	if err != nil {
@@ -50,7 +50,7 @@ func deny(c *models.ReqContext, evaluator Evaluator, err error) {
 	} else {
 		c.Logger.Info(
 			"Access denied",
-			"userID", c.UserId,
+			"userID", c.UserID,
 			"accessErrorID", id,
 			"permissions", evaluator.GoString(),
 		)
@@ -110,16 +110,17 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 				return
 			}
 			if orgID == GlobalOrgID {
-				userCopy.OrgId = orgID
+				userCopy.OrgID = orgID
 				userCopy.OrgName = ""
 				userCopy.OrgRole = ""
 			} else {
-				query := models.GetSignedInUserQuery{UserId: c.UserId, OrgId: orgID}
-				if err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query); err != nil {
+				query := models.GetSignedInUserQuery{UserId: c.UserID, OrgId: orgID}
+				err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
+				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 					return
 				}
-				userCopy.OrgId = query.Result.OrgId
+				userCopy.OrgID = query.Result.OrgID
 				userCopy.OrgName = query.Result.OrgName
 				userCopy.OrgRole = query.Result.OrgRole
 			}
@@ -163,6 +164,6 @@ func LoadPermissionsMiddleware(ac AccessControl) web.Handler {
 		if c.SignedInUser.Permissions == nil {
 			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 		}
-		c.SignedInUser.Permissions[c.OrgId] = GroupScopesByAction(permissions)
+		c.SignedInUser.Permissions[c.OrgID] = GroupScopesByAction(permissions)
 	}
 }

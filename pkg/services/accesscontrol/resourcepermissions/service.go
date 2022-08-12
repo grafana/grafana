@@ -111,13 +111,13 @@ func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, r
 	var inheritedScopes []string
 	if s.options.InheritedScopesSolver != nil {
 		var err error
-		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgId, resourceID)
+		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgID, resourceID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return s.store.GetResourcePermissions(ctx, user.OrgId, types.GetResourcePermissionsQuery{
+	return s.store.GetResourcePermissions(ctx, user.OrgID, types.GetResourcePermissionsQuery{
 		User:              user,
 		Actions:           s.actions,
 		Resource:          s.options.Resource,

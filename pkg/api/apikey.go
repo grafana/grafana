@@ -27,7 +27,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
-	query := apikey.GetApiKeysQuery{OrgId: c.OrgId, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
+	query := apikey.GetApiKeysQuery{OrgId: c.OrgID, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
 	if err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "Failed to list api keys", err)
@@ -50,7 +50,7 @@ func (hs *HTTPServer) GetAPIKeys(c *models.ReqContext) response.Response {
 		}
 	}
 
-	metadata := hs.getMultiAccessControlMetadata(c, c.OrgId, "apikeys:id", ids)
+	metadata := hs.getMultiAccessControlMetadata(c, c.OrgID, "apikeys:id", ids)
 	if len(metadata) > 0 {
 		for _, key := range result {
 			key.AccessControl = metadata[strconv.FormatInt(key.Id, 10)]
@@ -76,7 +76,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	cmd := &apikey.DeleteCommand{Id: id, OrgId: c.OrgId}
+	cmd := &apikey.DeleteCommand{Id: id, OrgId: c.OrgID}
 	err = hs.apiKeyService.DeleteApiKey(c.Req.Context(), cmd)
 	if err != nil {
 		var status int
@@ -125,7 +125,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext) response.Response {
 		}
 	}
 
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
 	if err != nil {

@@ -175,7 +175,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					key.OrgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},
@@ -253,7 +253,7 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), c.orgId, "", "all", 1, 50, &user.SignedInUser{UserId: 101, OrgId: c.orgId, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), c.orgId, "", "all", 1, 50, &user.SignedInUser{UserID: 101, OrgID: c.orgId, Permissions: map[int64]map[string][]string{
 					c.orgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},
@@ -310,7 +310,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 			if c.forceMismatchServiceAccount {
 				saId = rand.Int63()
 			} else {
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					key.OrgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},
@@ -326,7 +326,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					key.OrgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},

@@ -21,6 +21,27 @@ type FakePublicDashboardService struct {
 	mock.Mock
 }
 
+// AccessTokenExists provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardService) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+	ret := _m.Called(ctx, accessToken)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, accessToken)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, accessToken)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // BuildAnonymousUser provides a mock function with given fields: ctx, dashboard
 func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
 	ret := _m.Called(ctx, dashboard)

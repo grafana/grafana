@@ -215,7 +215,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 
 	var job Job
 	broadcast := func(s ExportStatus) {
-		ex.broadcastStatus(c.OrgId, s)
+		ex.broadcastStatus(c.OrgID, s)
 	}
 	switch cfg.Format {
 	case "dummy":
@@ -225,7 +225,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return response.Error(http.StatusBadRequest, "Error creating export folder", nil)
 		}
-		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgId, broadcast, ex.playlistService)
+		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService)
 	default:
 		return response.Error(http.StatusBadRequest, "Unsupported job format", nil)
 	}
