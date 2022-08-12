@@ -13,6 +13,7 @@ import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
+import { getRoutes as getQueryLibraryRoutes } from 'app/features/query-library/routes';
 import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
@@ -451,6 +452,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
     ...getProfileRoutes(),
+    ...getQueryLibraryRoutes(),
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),

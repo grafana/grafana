@@ -229,6 +229,18 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		navTree = append(navTree, hs.buildAlertNavLinks(c)...)
 	}
 
+	if hs.Features.IsEnabled(featuremgmt.FlagSavedQueries) {
+		navTree = append(navTree, &dtos.NavLink{
+			Text:       "Query Library",
+			Id:         "query",
+			SubTitle:   "Explore your queries",
+			Icon:       "file-search-alt",
+			SortWeight: dtos.WeightExplore,
+			Section:    dtos.NavSectionCore,
+			Url:        hs.Cfg.AppSubURL + "/query-library",
+		})
+	}
+
 	if hs.Features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
 		navTree = append(navTree, hs.buildDataConnectionsNavLink(c))
 	}
