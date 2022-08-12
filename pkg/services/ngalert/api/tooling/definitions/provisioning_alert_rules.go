@@ -128,7 +128,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) Provision
 		FolderUID:    rule.NamespaceUID,
 		RuleGroup:    rule.RuleGroup,
 		Title:        rule.Title,
-		For:          model.Duration(rule.For.Seconds()),
+		For:          model.Duration(rule.For),
 		Condition:    rule.Condition,
 		Data:         rule.Data,
 		Updated:      rule.Updated,
