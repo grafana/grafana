@@ -1,11 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 
+import { setIntialMountState } from 'app/core/reducers/fn-slice';
 import DashboardPage from 'app/features/dashboard/containers/DashboardPage';
 import { DashboardRoutes } from 'app/types';
 
 import { FNDashboardProps } from '../types';
 
 export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(
+      setIntialMountState({
+        FNDashboard: true,
+        uid: data.uid,
+        slug: data.slug,
+        theme: data.theme,
+        controlsContainer: data.controlsContainer,
+      })
+    );
+  }, [data, dispatch]);
   const props = {
     match: {
       params: {
