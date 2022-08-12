@@ -18,7 +18,9 @@ The map controls section contains various options for map information and tool o
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-9-1-0.png" max-width="1200px" caption="Geomap panel map controls" >}}
 
 ## Zoom
+
 This section describes each of the zoom controls.
+
 ### Show zoom control
 
 Displays zoom controls in the upper left corner. This control can be useful when using systems that don't have a mouse.
@@ -68,7 +70,7 @@ Get the spherical length of a geometry. This length is the sum of the great circ
 
 ### Area
 
-Get the spherical area of a geometry. This is the area assuming that polygon edges are segments of great circles on a sphere. Geometries are assumed to be in 'EPSG:3857'.
+Get the spherical area of a geometry. This area is calculated assuming that polygon edges are segments of great circles on a sphere. Geometries are assumed to be in 'EPSG:3857'.
 
 - **Square Meters (m²)**
 - **Square Kilometers (km²)**
