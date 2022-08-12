@@ -13,6 +13,7 @@ interface Pluginmeta {
   annotations?: boolean;
   autoEnabled?: boolean;
   backend?: boolean;
+  builtIn: boolean;
   category?: ('tsdb' | 'logging' | 'cloud' | 'tracing' | 'sql' | 'enterprise' | 'other');
   dependencies: {
     grafanaVersion?: string;
@@ -29,6 +30,7 @@ interface Pluginmeta {
   };
   executable?: string;
   hiddenQueries?: boolean;
+  hideFromList: false;
   id: string;
   includes?: {
     uid?: string;
@@ -69,8 +71,8 @@ interface Pluginmeta {
       name?: string;
       path?: string;
     }[];
-    updated: string;
-    version: string;
+    updated?: string;
+    version?: string;
   };
   logs?: boolean;
   metrics?: boolean;
@@ -110,7 +112,7 @@ interface Pluginmeta {
     };
   }[];
   skipDataQuery?: boolean;
-  state?: ('alpha' | 'beta');
+  state?: ('alpha' | 'beta' | 'deprecated');
   streaming?: boolean;
   tables?: boolean;
   tracing?: boolean;
@@ -118,6 +120,7 @@ interface Pluginmeta {
 }
 
 const defaultPluginmeta: Partial<Pluginmeta> = {
+  builtIn: false,
   includes: [],
   routes: [],
 };

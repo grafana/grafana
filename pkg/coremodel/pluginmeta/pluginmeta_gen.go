@@ -41,6 +41,11 @@ const (
 	ModelDependenciesPluginsTypePanel ModelDependenciesPluginsType = "panel"
 )
 
+// Defines values for PluginmetaHideFromList.
+const (
+	ModelHideFromListFalse ModelHideFromList = false
+)
+
 // Defines values for PluginmetaIncludesRole.
 const (
 	ModelIncludesRoleAdmin ModelIncludesRole = "Admin"
@@ -66,6 +71,8 @@ const (
 	ModelStateAlpha ModelState = "alpha"
 
 	ModelStateBeta ModelState = "beta"
+
+	ModelStateDeprecated ModelState = "deprecated"
 )
 
 // Defines values for PluginmetaType.
@@ -95,6 +102,10 @@ type Model struct {
 
 	// If the plugin has a backend component.
 	Backend *bool `json:"backend,omitempty"`
+
+	// builtin indicates whether the plugin is developed and shipped as part
+	// of Grafana. Also known as a "core plugin."
+	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
 	Category *ModelCategory `json:"category,omitempty"`
@@ -138,6 +149,10 @@ type Model struct {
 	// For data source plugins, include hidden queries in the data
 	// request.
 	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
+
+	// hideFromList excludes the plugin from listings in Grafana's UI. Only
+	// allowed for builtin plugins.
+	HideFromList ModelHideFromList `json:"hideFromList"`
 
 	// Unique name of the plugin. If the plugin is published on
 	// grafana.com, then the plugin id has to follow the naming
@@ -192,15 +207,15 @@ type Model struct {
 			Branch *string `json:"branch,omitempty"`
 
 			// Git hash of the commit the plugin was built from
-			Hash   *string  `json:"hash,omitempty"`
-			Number *float32 `json:"number,omitempty"`
+			Hash   *string `json:"hash,omitempty"`
+			Number *int64  `json:"number,omitempty"`
 
 			// GitHub pull request the plugin was built from
-			Pr   *float32 `json:"pr,omitempty"`
-			Repo *string  `json:"repo,omitempty"`
+			Pr   *int32  `json:"pr,omitempty"`
+			Repo *string `json:"repo,omitempty"`
 
 			// Time when the plugin was built, as a Unix timestamp.
-			Time *float32 `json:"time,omitempty"`
+			Time *int64 `json:"time,omitempty"`
 		} `json:"build,omitempty"`
 
 		// Description of plugin. Used on the plugins page in Grafana and
@@ -237,10 +252,10 @@ type Model struct {
 		} `json:"screenshots,omitempty"`
 
 		// Date when this plugin was built.
-		Updated string `json:"updated"`
+		Updated *string `json:"updated,omitempty"`
 
 		// Project version of this commit, e.g. `6.7.x`.
-		Version string `json:"version"`
+		Version *string `json:"version,omitempty"`
 	} `json:"info"`
 
 	// For data source plugins, if the plugin supports logs.
@@ -380,6 +395,13 @@ type ModelCategory string
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type ModelDependenciesPluginsType string
+
+// hideFromList excludes the plugin from listings in Grafana's UI. Only
+// allowed for builtin plugins.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelHideFromList bool
 
 // PluginmetaIncludesRole defines model for Pluginmeta.Includes.Role.
 //

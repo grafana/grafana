@@ -29,7 +29,7 @@ func init() {
 	}
 }
 
-var prefix = filepath.Join("pkg", "framework", "coremodel")
+var prefix = filepath.Join("/pkg", "framework", "coremodel")
 
 //nolint:nakedret
 func doLoadFrameworkCUE(ctx *cue.Context) (v cue.Value, err error) {
@@ -38,6 +38,9 @@ func doLoadFrameworkCUE(ctx *cue.Context) (v cue.Value, err error) {
 	err = fs.WalkDir(cueFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
+		}
+		if d.IsDir() {
+			return nil
 		}
 		b, err := fs.ReadFile(cueFS, path)
 		if err != nil {

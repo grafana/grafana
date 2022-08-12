@@ -3,6 +3,7 @@
   "type": "datasource",
   "id": "stackdriver",
   "category": "cloud",
+  "builtIn": true,
 
   "metrics": true,
   "alerting": true,

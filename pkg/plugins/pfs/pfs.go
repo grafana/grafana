@@ -3,14 +3,14 @@ package pfs
 import (
 	"fmt"
 	"io/fs"
-	"path/filepath"
 	"strings"
-	"testing/fstest"
+	"sync"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/parser"
+	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/coremodel/pluginmeta"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
@@ -66,6 +66,18 @@ func init() {
 	}
 	allowedImportsStr = strings.Join(all, "\n")
 
+}
+
+// If we were to load during init, then the code generator that fixes
+// misalignments between the pluginmeta Go type and the schema could be
+// triggered, resulting in a panic and making it impossible for codegen to heal
+// itself.
+//
+// Instead, we use this sync.Once to trigger it during ParsePluginFS when it's
+// actually needed, but avoid repeating the work across multiple calls.
+var muxonce sync.Once
+
+func loadMux() {
 	// TODO these are easily generalizable in pkg/f/coremodel, no need for one-off
 	var err error
 	var t pluginmeta.Model
@@ -120,6 +132,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	if f == nil {
 		return nil, ErrEmptyFS
 	}
+	muxonce.Do(loadMux)
 	ctx := lib.Context()
 
 	b, err := fs.ReadFile(f, "plugin.json")
@@ -162,11 +175,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		// misleading path (not their actual path relative to grafana repo root) in the
 		// event of any errors.
 
-		m := fstest.MapFS{
-			// fstest can recognize only forward slashes.
-			filepath.ToSlash(filepath.Join("cue.mod", "module.cue")): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
-		}
-		mfs := merged_fs.NewMergedFS(m, f)
+		mfs := merged_fs.NewMergedFS(f, grafana.CueSchemaFS)
 
 		// Note that this actually will load any .cue files in the fs.FS root dir in the pkgname.
 		// That's...maybe good? But not what it says on the tin
@@ -197,7 +206,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 					// If it's not accepted for the type, but is declared, error out. This keeps a
 					// precise boundary on what's actually expected for plugins to do, which makes
 					// for clearer docs and guarantees for users.
-					return nil, fmt.Errorf("%s: %s plugins may not provide a %s slot implementations in models.cue", r.meta.Id, r.meta.Type, s.Name())
+					return nil, fmt.Errorf("%s: %s plugins may not provide a %s slot implementation in models.cue", r.meta.Id, r.meta.Type, s.Name())
 				}
 				continue
 			}

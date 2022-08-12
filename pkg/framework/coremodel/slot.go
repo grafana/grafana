@@ -47,8 +47,9 @@ func AllSlots() map[string]*Slot {
 		plugin := iter.Selector().String()
 		iiter, _ := iter.Value().Fields(cue.Optional(true))
 		for iiter.Next() {
-			plugslots[plugin] = append(plugslots[plugin], nameopt{
-				name: iiter.Selector().String(),
+			slotname := iiter.Selector().String()
+			plugslots[slotname] = append(plugslots[slotname], nameopt{
+				name: plugin,
 				req:  !iiter.IsOptional(),
 			})
 		}

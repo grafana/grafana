@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Table (old)",
   "id": "table-old",
+  "builtIn": true,
 
   "state": "deprecated",
 

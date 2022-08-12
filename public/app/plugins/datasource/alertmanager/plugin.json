@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Alertmanager",
   "id": "alertmanager",
+  "builtIn": true,
   "metrics": false,
   "routes": [
     {

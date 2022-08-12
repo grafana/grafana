@@ -3,6 +3,7 @@
   "name": "Icon",
   "id": "icon",
   "state": "alpha",
+  "builtIn": true,
 
   "info": {
     "description": "Show icon based on data",

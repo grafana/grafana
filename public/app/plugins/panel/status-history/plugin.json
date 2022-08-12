@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Status history",
   "id": "status-history",
+  "builtIn": true,
 
   "state": "beta",
 

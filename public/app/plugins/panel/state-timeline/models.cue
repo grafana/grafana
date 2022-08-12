@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
 import (
 	"github.com/grafana/thema"
@@ -21,7 +21,7 @@ import (
 
 Panel: thema.#Lineage & {
 	name: "state-timeline"
-	lineages: [
+	seqs: [
 		{
 			schemas: [
 				{

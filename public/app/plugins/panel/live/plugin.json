@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Live",
   "id": "live",
+  "builtIn": true,
 
   "skipDataQuery": true,
 

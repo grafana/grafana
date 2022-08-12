@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Heatmap",
   "id": "heatmap",
+  "builtIn": true,
 
   "info": {
     "description": "Like a histogram over time",

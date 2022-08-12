@@ -3,6 +3,7 @@
   "name": "Prometheus",
   "id": "prometheus",
   "category": "tsdb",
+  "builtIn": true,
   "routes": [
     {
       "method": "POST",

@@ -55,7 +55,8 @@ slots: DSOptions: {
 
 // pluginTypeMetaSchema defines which plugin types should use which metaschemas
 // as joinSchema for the lineages declared at which paths.
-pluginTypeMetaSchema: [string]: {...} & {
+pluginTypeMetaSchema: [string]: {...}
+pluginTypeMetaSchema: {
 	// Panel plugins are expected to provide a lineage at path Panel conforming to
 	// the Panel joinSchema.
 	panel: {

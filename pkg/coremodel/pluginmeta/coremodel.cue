@@ -11,7 +11,10 @@ seqs: [
 				// Unique name of the plugin. If the plugin is published on
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
-				id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+				id: string
+				if !builtIn {
+						id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+				}
 
 				// Plugin type.
 				type: "app" | "datasource" | "panel"
@@ -33,6 +36,17 @@ seqs: [
 				// If the plugin has a backend component.
 				backend?: bool
 
+				// builtin indicates whether the plugin is developed and shipped as part
+				// of Grafana. Also known as a "core plugin."
+				builtIn: bool | *false
+
+				// hideFromList excludes the plugin from listings in Grafana's UI. Only
+				// allowed for builtin plugins.
+				hideFromList: bool | *false
+				if !builtIn {
+					hideFromList: false
+				}
+
 				// The first part of the file name of the backend component
 				// executable. There can be multiple executables built for
 				// different operating system and architecture. Grafana will
@@ -47,7 +61,7 @@ seqs: [
 				preload?: bool
 
 				// Marks a plugin as a pre-release.
-				state?: "alpha" | "beta"
+				state?: "alpha" | "beta" | "deprecated"
 
 				// Resources to include in plugin.
 				includes?: [...{
@@ -112,7 +126,10 @@ seqs: [
 
 					// Required Grafana version for this plugin. Validated using
 					// https://github.com/npm/node-semver.
-					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
+					grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
+					if !builtIn { // required for non-core plugins
+						grafanaDependency: string
+					}
 
 					// An array of required plugins on which this plugin depends.
 					plugins?: [...{
@@ -143,7 +160,7 @@ seqs: [
 					// Build information
 					build?: {
 						// Time when the plugin was built, as a Unix timestamp.
-						time?: number
+						time?: int64
 						repo?: string
 
 						// Git branch the plugin was built from.
@@ -151,10 +168,10 @@ seqs: [
 
 						// Git hash of the commit the plugin was built from
 						hash?:   string
-						"number"?: number
+						"number"?: int64
 
 						// GitHub pull request the plugin was built from
-						pr?: number
+						pr?: int32
 					}
 
 					// Description of plugin. Used on the plugins page in Grafana and
@@ -194,10 +211,10 @@ seqs: [
 					}]
 
 					// Date when this plugin was built.
-					updated: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
+					updated?: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
 
 					// Project version of this commit, e.g. `6.7.x`.
-					version: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
+					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
 				}
 
 				// For data source plugins. There is a query options section in

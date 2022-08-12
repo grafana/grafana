@@ -3,6 +3,7 @@
   "name": "XY Chart",
   "id": "xychart",
   "state": "alpha",
+  "builtIn": true,
 
   "info": {
     "author": {

@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "TestData DB",
   "id": "testdata",
+  "builtIn": true,
 
   "metrics": true,
   "logs": true,

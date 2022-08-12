@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Text",
   "id": "text",
+  "builtIn": true,
 
   "skipDataQuery": true,
 

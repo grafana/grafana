@@ -86,11 +86,15 @@ func CuetsifyPlugin(t *pfs.Tree, path string) (WriteDiffer, error) {
 	f := &tsFile{}
 
 	pi := t.RootPlugin()
+	slotimps := pi.SlotImplementations()
+	if len(slotimps) == 0 {
+		return nil, nil
+	}
 	for _, im := range pi.CUEImports() {
 		f.Imports = append(f.Imports, convertImport(im))
 	}
 
-	for slotname, lin := range pi.SlotImplementations() {
+	for slotname, lin := range slotimps {
 		// TODO this is hardcoded for now, but should ultimately be a property of
 		// whether the slot is a grouped schema or not:
 		// https://github.com/grafana/thema/issues/62

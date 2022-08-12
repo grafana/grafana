@@ -2,9 +2,20 @@
   "type": "datasource",
   "name": "-- Grafana --",
   "id": "grafana",
-
-  "backend": true,
   "builtIn": true,
+
+  "info": {
+    "description": "TODO",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "TODO",
+      "large": "TODO"
+    }
+  },
+  "backend": true,
   "annotations": true,
   "metrics": true
 }

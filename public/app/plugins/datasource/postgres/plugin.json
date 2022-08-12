@@ -3,6 +3,7 @@
   "name": "PostgreSQL",
   "id": "postgres",
   "category": "sql",
+  "builtIn": true,
 
   "info": {
     "description": "Data source for PostgreSQL and compatible databases",
