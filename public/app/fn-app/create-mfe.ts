@@ -63,6 +63,7 @@ class createMfe {
   static mountFnApp(component: React.Component) {
     // eslint-disable-next-line
     return async function mount(props: any) {
+      console.log('mount grafana app');
       const mfe = new createMfe(props.theme);
       mfe.loadFnTheme();
       ReactDOM.render(
@@ -75,6 +76,7 @@ class createMfe {
   static unMountFnApp() {
     // eslint-disable-next-line
     return async function unmount(props: any) {
+      console.log('unmount grafana app');
       const container = props.container
         ? props.container.querySelector('#grafanaRoot')
         : document.getElementById('grafanaRoot');
@@ -86,7 +88,9 @@ class createMfe {
 
   static updateFnApp() {
     // eslint-disable-next-line
-    return async function update(props: any) {};
+    return async function update(props: any) {
+      console.log('update grafana app');
+    };
   }
 }
 
