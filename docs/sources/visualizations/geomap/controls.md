@@ -35,7 +35,7 @@ Displays attribution for basemap layers.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="1200px" caption="Geomap panel attribution" >}}
 
-## Show Scale
+## Show scale
 
 Displays scale information in the bottom left corner.
 
