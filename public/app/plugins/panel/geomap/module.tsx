@@ -122,6 +122,13 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         description: 'Show map info',
         defaultValue: false,
       })
+      .addBooleanSwitch({
+        category,
+        path: 'controls.showMeasure',
+        name: 'Show measure tools',
+        description: 'Show tools for making measurements on the map',
+        defaultValue: false,
+      })
       .addRadio({
         category,
         path: 'tooltip.mode',

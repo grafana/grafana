@@ -8,13 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestPushoverNotifier(t *testing.T) {
+	encryptionService := encryptionservice.SetupTestService(t)
+
 	t.Run("Parsing alert notification from settings", func(t *testing.T) {
 		t.Run("empty settings should return error", func(t *testing.T) {
 			json := `{ }`
@@ -26,7 +28,7 @@ func TestPushoverNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewPushoverNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			_, err := NewPushoverNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -48,7 +50,7 @@ func TestPushoverNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewPushoverNotifier(model, ossencryption.ProvideService().GetDecryptedValue, nil)
+			not, err := NewPushoverNotifier(model, encryptionService.GetDecryptedValue, nil)
 			pushoverNotifier := not.(*PushoverNotifier)
 
 			require.Nil(t, err)
@@ -74,7 +76,7 @@ func TestGenPushoverBody(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
 					State: models.AlertStateAlerting,
-				}, &validations.OSSPluginRequestValidator{}, nil, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 			require.Nil(t, err)
@@ -85,7 +87,7 @@ func TestGenPushoverBody(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
 					State: models.AlertStateOK,
-				}, &validations.OSSPluginRequestValidator{}, nil, nil)
+				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
 			require.Nil(t, err)

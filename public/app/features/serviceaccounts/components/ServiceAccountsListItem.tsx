@@ -40,7 +40,6 @@ const ServiceAccountListItem = memo(
     const displayRolePicker =
       contextSrv.hasPermission(AccessControlAction.ActionRolesList) &&
       contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
-    const enableRolePicker = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite) && canUpdateRole;
 
     return (
       <tr key={serviceAccount.id} className={cx({ [styles.disabled]: serviceAccount.isDisabled })}>
@@ -83,7 +82,8 @@ const ServiceAccountListItem = memo(
                 onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 builtInRoles={builtInRoles}
-                disabled={!enableRolePicker || serviceAccount.isDisabled}
+                builtinRolesDisabled={!canUpdateRole}
+                disabled={serviceAccount.isDisabled}
               />
             )}
           </td>

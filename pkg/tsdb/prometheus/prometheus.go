@@ -48,7 +48,7 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper. Probably should be used for both buffered and streaming/querydata instances.
-		opts, err := buffered.CreateTransportOptions(settings, cfg.Azure, features, plog)
+		opts, err := buffered.CreateTransportOptions(settings, cfg, plog)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}

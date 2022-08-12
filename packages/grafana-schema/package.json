@@ -2,11 +2,12 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "9.1.0-pre",
+  "version": "9.2.0-pre",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
   ],
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
@@ -14,12 +15,23 @@
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
   "scripts": {
-    "build": "grafana-toolkit package:build --scope=schema",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
-    "clean": "rimraf ./dist ./compiled",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
@@ -27,10 +39,12 @@
     "@rollup/plugin-json": "4.1.0",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@swc/helpers": "0.4.3",
+    "esbuild": "^0.14.47",
     "rimraf": "3.0.2",
     "rollup": "2.77.2",
-    "rollup-plugin-sourcemaps": "0.6.3",
-    "rollup-plugin-terser": "7.0.2",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-esbuild": "^4.9.1",
+    "rollup-plugin-node-externals": "^4.1.0",
     "typescript": "4.7.4"
   },
   "dependencies": {

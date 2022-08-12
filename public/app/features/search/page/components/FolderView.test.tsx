@@ -99,7 +99,7 @@ describe('FolderView', () => {
   });
 
   it('does not show the recent items if no dashboards have been opened recently', async () => {
-    jest.spyOn(impressionSrv, 'getDashboardOpened').mockReturnValue([]);
+    jest.spyOn(impressionSrv, 'getDashboardOpened').mockResolvedValue([]);
     render(
       <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
     );
@@ -108,7 +108,7 @@ describe('FolderView', () => {
   });
 
   it('shows the recent items if any dashboards have recently been opened', async () => {
-    jest.spyOn(impressionSrv, 'getDashboardOpened').mockReturnValue([12345]);
+    jest.spyOn(impressionSrv, 'getDashboardOpened').mockResolvedValue(['7MeksYbmk']);
     render(
       <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
     );
@@ -138,7 +138,7 @@ describe('FolderView', () => {
     });
 
     it('does not show the recent items even if recent dashboards have been opened', async () => {
-      jest.spyOn(impressionSrv, 'getDashboardOpened').mockReturnValue([12345]);
+      jest.spyOn(impressionSrv, 'getDashboardOpened').mockResolvedValue(['7MeksYbmk']);
       render(
         <FolderView
           hidePseudoFolders

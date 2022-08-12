@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -356,7 +355,7 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	defer cancel()
 
 	// create a temp directory to store the index
-	tmpDir, err := ioutil.TempDir("", "grafana.dashboard_index")
+	tmpDir, err := os.MkdirTemp("", "grafana.dashboard_index")
 	if err != nil {
 		i.logger.Error("can't create temp dir", "error", err)
 		return

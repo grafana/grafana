@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -610,7 +611,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	if dashboardSvc == nil {
 		dashboardSvc = &dashboards.FakeDashboardService{}
 	}
-	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc), dash
+	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc), dash
 }
 
 func testDashSvc(t *testing.T) dashboards.DashboardService {

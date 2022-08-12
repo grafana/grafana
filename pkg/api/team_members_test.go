@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
@@ -27,7 +28,7 @@ type TeamGuardianMock struct {
 	result error
 }
 
-func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *models.SignedInUser) error {
+func (t *TeamGuardianMock) CanAdmin(ctx context.Context, orgId int64, teamId int64, user *user.SignedInUser) error {
 	return t.result
 }
 
@@ -66,7 +67,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	mock := mockstore.NewSQLStoreMock()
 
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
-		"api/teams/:teamId/members", models.ROLE_ADMIN, func(sc *scenarioContext) {
+		"api/teams/:teamId/members", org.RoleAdmin, func(sc *scenarioContext) {
 			setUpGetTeamMembersHandler(t, sqlStore)
 
 			sc.handlerFunc = hs.GetTeamMembers
@@ -88,7 +89,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
-			"api/teams/:teamId/members", models.ROLE_ADMIN, func(sc *scenarioContext) {
+			"api/teams/:teamId/members", org.RoleAdmin, func(sc *scenarioContext) {
 				setUpGetTeamMembersHandler(t, sqlStore)
 
 				sc.handlerFunc = hs.GetTeamMembers
@@ -149,8 +150,9 @@ var (
 
 func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
@@ -174,7 +176,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	input = strings.NewReader(fmt.Sprintf(createTeamMemberCmd, newUserId))
 	t.Run("Team members cannot add team members", func(t *testing.T) {
@@ -183,7 +185,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 
 	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,
@@ -197,7 +199,7 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 }
 
 func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
@@ -251,7 +253,7 @@ func TestGetTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 }
 
 func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
@@ -285,8 +287,9 @@ func TestAddTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 
 func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
@@ -308,7 +311,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	input = strings.NewReader(fmt.Sprintf(updateTeamMemberCmd, 0))
 	t.Run("Team members cannot update team members", func(t *testing.T) {
@@ -317,7 +320,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 
 	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,
@@ -331,7 +334,7 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 }
 
 func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
@@ -363,8 +366,9 @@ func TestUpdateTeamMembersAPIEndpoint_RBAC(t *testing.T) {
 
 func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.EditorsCanAdmin = true
-	sc := setupHTTPServerWithCfg(t, true, false, cfg)
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	guardian := manager.ProvideService(database.ProvideTeamGuardianStore(sc.db))
 	sc.hs.teamGuardian = guardian
 
@@ -384,7 +388,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, response.Code)
 	})
 
-	err := sc.db.AddTeamMember(sc.initCtx.UserId, 1, 1, false, 0)
+	err := sc.db.AddTeamMember(sc.initCtx.UserID, 1, 1, false, 0)
 	require.NoError(t, err)
 	t.Run("Team members cannot remove team members", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(teamMemberDeleteRoute, "1", "3"), nil, t)
@@ -392,7 +396,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 	})
 
 	err = sc.db.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{
-		UserId:     sc.initCtx.UserId,
+		UserId:     sc.initCtx.UserID,
 		OrgId:      1,
 		TeamId:     1,
 		Permission: models.PERMISSION_ADMIN,
@@ -405,7 +409,7 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 }
 
 func TestDeleteTeamMembersAPIEndpoint_RBAC(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.hs.License = &licensing.OSSLicensingService{}
 
 	teamMemberCount := 3
