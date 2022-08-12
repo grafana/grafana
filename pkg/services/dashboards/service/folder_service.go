@@ -145,7 +145,7 @@ func (f *FolderServiceImpl) CreateFolder(ctx context.Context, user *user.SignedI
 	}
 
 	dashFolder.SetUid(trimmedUID)
-	userID := user.UserId
+	userID := user.UserID
 	if userID == 0 {
 		userID = -1
 	}
@@ -214,7 +214,7 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *user.SignedI
 		return dashboards.ErrFolderNotFound
 	}
 
-	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserId)
+	cmd.UpdateDashboardModel(dashFolder, orgID, user.UserID)
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
@@ -248,7 +248,7 @@ func (f *FolderServiceImpl) UpdateFolder(ctx context.Context, user *user.SignedI
 			UID:       dash.Uid,
 			OrgID:     orgID,
 		}); err != nil {
-			f.log.Error("failed to publish FolderTitleUpdated event", "folder", folder.Title, "user", user.UserId, "error", err)
+			f.log.Error("failed to publish FolderTitleUpdated event", "folder", folder.Title, "user", user.UserID, "error", err)
 		}
 	}
 

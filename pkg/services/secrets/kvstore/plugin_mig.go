@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,8 +20,8 @@ type PluginSecretMigrationService struct {
 	logger         log.Logger
 	sqlStore       sqlstore.Store
 	secretsService secrets.Service
-	remoteCheck    UseRemoteSecretsPluginCheck
 	kvstore        kvstore.KVStore
+	manager        plugins.SecretsPluginManager
 	getAllFunc     func(ctx context.Context) ([]Item, error)
 }
 
@@ -29,8 +30,8 @@ func ProvidePluginSecretMigrationService(
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
-	remoteCheck UseRemoteSecretsPluginCheck,
 	kvstore kvstore.KVStore,
+	manager plugins.SecretsPluginManager,
 ) *PluginSecretMigrationService {
 	return &PluginSecretMigrationService{
 		secretsStore:   secretsStore,
@@ -38,14 +39,14 @@ func ProvidePluginSecretMigrationService(
 		logger:         log.New("sec-plugin-mig"),
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
-		remoteCheck:    remoteCheck,
 		kvstore:        kvstore,
+		manager:        manager,
 	}
 }
 
 func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 	// Check if we should migrate to plugin - default false
-	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) && s.remoteCheck.ShouldUseRemoteSecretsPlugin() {
+	if err := EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		s.logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
 		// the secrets store would be the plugin.

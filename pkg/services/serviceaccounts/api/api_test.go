@@ -181,8 +181,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 					assert.Equal(t, tc.body["name"], sa.Name)
 					assert.Equal(t, tc.wantID, sa.Login)
 					tempUser := &user.SignedInUser{
-						OrgId:  1,
-						UserId: 1,
+						OrgID:  1,
+						UserID: 1,
 						Permissions: map[int64]map[string][]string{
 							1: {
 								serviceaccounts.ActionRead:       []string{serviceaccounts.ScopeAll},
@@ -289,8 +289,8 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 
 	m := web.New()
 	signedUser := &user.SignedInUser{
-		OrgId:   1,
-		UserId:  1,
+		OrgID:   1,
+		UserID:  1,
 		OrgRole: org.RoleViewer,
 	}
 

@@ -102,8 +102,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 			require.NoError(t, errRegisterRoles)
 
 			user := &user.SignedInUser{
-				UserId:         1,
-				OrgId:          1,
+				UserID:         1,
+				OrgID:          1,
 				Name:           tc.user.name,
 				OrgRole:        tc.user.orgRole,
 				IsGrafanaAdmin: tc.user.isGrafanaAdmin,
@@ -139,9 +139,8 @@ func TestUsageMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			if tt.enabled {
-				cfg.RBACEnabled = true
-			}
+			cfg.RBACEnabled = tt.enabled
+
 			s, errInitAc := ProvideService(
 				featuremgmt.WithFeatures(),
 				cfg,
@@ -360,8 +359,8 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 
 func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	testUser := user.SignedInUser{
-		UserId:  2,
-		OrgId:   3,
+		UserID:  2,
+		OrgID:   3,
 		OrgName: "TestOrg",
 		OrgRole: org.RoleViewer,
 		Login:   "testUser",
@@ -422,8 +421,8 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 
 func TestOSSAccessControlService_Evaluate(t *testing.T) {
 	testUser := user.SignedInUser{
-		UserId:  2,
-		OrgId:   3,
+		UserID:  2,
+		OrgID:   3,
 		OrgName: "TestOrg",
 		OrgRole: org.RoleViewer,
 		Login:   "testUser",

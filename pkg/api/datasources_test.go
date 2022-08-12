@@ -518,8 +518,8 @@ func TestAPI_Datasources_AccessControl(t *testing.T) {
 			// Create a middleware to pretend user is logged in
 			pretendSignInMiddleware := func(c *models.ReqContext) {
 				sc.context = c
-				sc.context.UserId = testUserID
-				sc.context.OrgId = testOrgID
+				sc.context.UserID = testUserID
+				sc.context.OrgID = testOrgID
 				sc.context.Login = testUserLogin
 				sc.context.OrgRole = org.RoleViewer
 				sc.context.IsSignedIn = true
