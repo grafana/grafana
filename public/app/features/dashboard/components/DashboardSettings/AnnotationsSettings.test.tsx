@@ -2,14 +2,34 @@ import { within } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
 import { DashboardModel } from '../../state';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
+
+function setup(dashboard: DashboardModel, editIndex?: number) {
+  const sectionNav = {
+    main: { text: 'Dashboard' },
+    node: {
+      text: 'Annotations',
+    },
+  };
+
+  return render(
+    <GrafanaContext.Provider value={getGrafanaContextMock()}>
+      <BrowserRouter>
+        <AnnotationsSettings sectionNav={sectionNav} dashboard={dashboard} editIndex={editIndex} />
+      </BrowserRouter>
+    </GrafanaContext.Provider>
+  );
+}
 
 describe('AnnotationsSettings', () => {
   let dashboard: DashboardModel;
@@ -78,8 +98,8 @@ describe('AnnotationsSettings', () => {
     });
   });
 
-  test('it renders a header and cta if no annotations or only builtIn annotation', async () => {
-    const { rerender } = render(<AnnotationsSettings dashboard={dashboard} />);
+  test('it renders empty list cta if only builtIn annotation', async () => {
+    setup(dashboard);
 
     expect(screen.queryByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('row', { name: /annotations & alerts \(built\-in\) grafana/i })).toBeInTheDocument();
@@ -87,21 +107,12 @@ describe('AnnotationsSettings', () => {
       screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /annotations documentation/i })).toBeInTheDocument();
+  });
 
-    dashboard.annotations.list[0].name = 'My annotation';
-    rerender(<AnnotationsSettings dashboard={dashboard} />);
+  test('it renders empty list if annotations', async () => {
+    dashboard.annotations.list = [];
+    setup(dashboard);
 
-    expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(screen.getByRole('row', { name: /my annotation \(built\-in\) grafana/i })).toBeInTheDocument();
-    expect(
-      screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /new query/i })).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getAllByLabelText(/Delete query with title/)[0]);
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
-
-    expect(screen.queryAllByRole('row').length).toBe(0);
     expect(
       screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query'))
     ).toBeInTheDocument();
@@ -129,8 +140,7 @@ describe('AnnotationsSettings', () => {
         type: 'dashboard',
       },
     ];
-
-    render(<AnnotationsSettings dashboard={dashboard} />);
+    setup(dashboard);
     // Check that we have the correct annotations
     expect(screen.queryByText(/prometheus/i)).toBeInTheDocument();
     expect(screen.queryByText(/deletedAnnotationId/i)).toBeInTheDocument();
@@ -159,7 +169,7 @@ describe('AnnotationsSettings', () => {
       },
     ];
 
-    render(<AnnotationsSettings dashboard={dashboard} />);
+    setup(dashboard);
 
     // Check that we have sorting buttons
     expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-up' })).not.toBeInTheDocument();
@@ -187,7 +197,7 @@ describe('AnnotationsSettings', () => {
   });
 
   test('Adding a new annotation', async () => {
-    render(<AnnotationsSettings dashboard={dashboard} />);
+    setup(dashboard);
 
     await userEvent.click(screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add annotation query')));
 
@@ -195,7 +205,7 @@ describe('AnnotationsSettings', () => {
     expect(dashboard.annotations.list.length).toBe(2);
   });
 
-  test('Editing annotations', async () => {
+  test('Editing annotation', async () => {
     dashboard.annotations.list.push({
       name: 'New annotation query',
       datasource: { uid: 'uid2', type: 'testdata' },
@@ -203,7 +213,7 @@ describe('AnnotationsSettings', () => {
       enable: true,
     });
 
-    render(<AnnotationsSettings dashboard={dashboard} editIndex={1} />);
+    setup(dashboard, 1);
 
     const nameInput = screen.getByRole('textbox', { name: /name/i });
     await userEvent.clear(nameInput);
@@ -217,10 +227,14 @@ describe('AnnotationsSettings', () => {
     await userEvent.click(screen.getByText(/prometheus/i));
 
     expect(screen.getByRole('checkbox', { name: /hidden/i })).not.toBeChecked();
+  });
+
+  test('Deleting annotation', async () => {
+    setup(dashboard, 0);
 
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
     expect(locationService.getSearchObject().editIndex).toBe(undefined);
-    expect(dashboard.annotations.list.length).toBe(1);
+    expect(dashboard.annotations.list.length).toBe(0);
   });
 });

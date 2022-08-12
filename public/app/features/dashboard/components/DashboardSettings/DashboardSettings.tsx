@@ -47,7 +47,6 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
   const location = useLocation();
   const editIndex = getEditIndex(location);
   const subSectionNav = getSectionNav(pageNav, sectionNav, pages, currentPage, location);
-  const subPageNav = getSubPageNav(dashboard, currentPage, editIndex, location);
 
   const actions = [
     canSaveAs && (
@@ -65,9 +64,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
       ) : (
         <AppChromeUpdate actions={actions} />
       )}
-      <Page navModel={subSectionNav} pageNav={subPageNav}>
-        <currentPage.component dashboard={dashboard} editIndex={editIndex} />
-      </Page>
+      <currentPage.component sectionNav={subSectionNav} dashboard={dashboard} editIndex={editIndex} />
     </>
   );
 }
@@ -192,7 +189,7 @@ function getSectionNav(
 
   return {
     main,
-    node: main,
+    node: main.children.find((x) => x.active)!,
   };
 }
 

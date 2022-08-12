@@ -1,5 +1,6 @@
 import { ComponentType } from 'react';
 
+import { NavModel } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 
 import { DashboardModel } from '../../state';
@@ -13,5 +14,6 @@ export interface SettingsPage {
 
 export interface SettingsPageProps {
   dashboard: DashboardModel;
+  sectionNav: NavModel;
   editIndex?: number;
 }
