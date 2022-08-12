@@ -364,7 +364,64 @@ providers:
 
 > **Note:** To provision dashboards to the General folder, store them in the root of your `path`.
 
+## Alerting
+
+You can manage alert objects in Grafana by adding one ore more YAML or JSON
+config files in the [`provisioning/alerting`]({{< relref "../../setup-grafana/configure-grafana/" >}}) directory. Those files will be applied once when starting Grafana. When Grafana
+is running, it's possible to do a hot reload using the [Admin API]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
+
+### Rules
+
+```yaml
+# config file version
+a1piVersion: 1
+
+# List of rule groups to import or update
+groups:
+  # <int> organization id, default = 1
+  - orgId: 123
+    # <string, required> name of the rule group
+    name: my_rule_group
+    # <string, required> name of the folder the rule group will be stored in
+    folder: my_first_folder
+    # <duration, required> interval that the rule group should evaluated at
+    interval: 60s
+    # <list, required> list of rules that are part of the rule group
+    rules:
+      # <string, required> unique identifier for the rule
+      - uid: my_id_1
+        # <string, required> title of the rule that will be displayed in the UI
+        title: my_first_rule
+        # <string, required> which query should be used for the condition
+        condition: A
+        # <list, required> list of query objects that should be executed on each
+        #                  evaluation - should be obtained trough the API
+        data:
+          - ...
+        # <string> UID of a dashboard that the alert rule should be linked to
+        dashboardUid: my_dashboard
+        # <int> ID of the panel that the alert rule should be linked to
+        panelId: 123
+        # <string> the state the alert rule will have when no data is returned
+        #          possible values: "NoData", "Alerting", "OK", default = NoData
+        noDataState: Alerting
+        # <string> the state the alert rule will have when the query execution
+        #          failed - possible values: "Error", "Alerting", "OK"
+        #          default = Alerting
+        # <duration, required> for how long should the alert fire before alerting
+        for: 60s
+        # <map<string, string>> a map of strings to pass around any data
+        annotations:
+          some_key: some_value
+        # <map<string, string> a map of strings that can be used to filter and
+        #                      route alerts
+        labels:
+          team: sre_team_1
+```
+
 ## Alert Notification Channels
+
+> **Note:** Alert Notification Channels are deprecated and will be removed. Use the alerting section above.
 
 Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
