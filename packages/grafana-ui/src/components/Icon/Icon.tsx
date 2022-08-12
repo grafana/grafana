@@ -61,14 +61,16 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
 
     const IconLazy = React.lazy(async () => {
       const content = await iconBundle(svgBundlePath);
-      // necessary type assertion due to the library returning the wrong type
-      const svg = React.cloneElement(convertFromString(content) as React.ReactElement, {
-        width: svgWid,
-        height: svgSize,
-        title,
-        className: cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : ''),
-        style,
-      });
+      const svgElement = convertFromString(content);
+      const svg = React.isValidElement(svgElement)
+        ? React.cloneElement(svgElement, {
+            width: svgWid,
+            height: svgSize,
+            title,
+            className: cx(styles.icon, className, type === 'mono' ? { [styles.orange]: name === 'favorite' } : ''),
+            style,
+          })
+        : '';
       return {
         default: () => {
           return (
