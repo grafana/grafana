@@ -102,9 +102,19 @@ export function transformV2(
     (df) => isHeatmapResult(df, request)
   );
 
-  const processedHeatmapFrames = mergeHeatmapFrames(
-    transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel))
+  const sortedHeatmapResults = heatmapResults.sort(sortSeriesByLabel);
+  console.log(
+    'sortedHeatmapResults',
+    sortedHeatmapResults.map((frame) => {
+      return {
+        name: frame.name,
+        fields: frame.fields.find((field) => field.name === TIME_SERIES_VALUE_FIELD_NAME)?.labels,
+        value: frame.fields.values(),
+        ref: frame.refId,
+      };
+    })
   );
+  const processedHeatmapFrames = mergeHeatmapFrames(transformToHistogramOverTime(sortedHeatmapResults));
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
@@ -581,14 +591,30 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     */
   for (let i = seriesList.length - 1; i > 0; i--) {
     const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
-    const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    // const topSeriesLabels = topSeries?.labels;
+    const bottomSeries = seriesList[i - 1].fields.find((s) => {
+      // if(topSeriesLabels){
+      //   return s.name === TIME_SERIES_VALUE_FIELD_NAME && s.labels?.every(label => {})
+      // }
+      return s.name === TIME_SERIES_VALUE_FIELD_NAME;
+    });
+
+    // Change how we find bottom series to get one that matches labels???
+
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
 
+    // console.log('topSeries', topSeries, topSeries.values.toArray());
+    // console.log('bottomSeries', bottomSeries, bottomSeries.values.toArray());
+
     for (let j = 0; j < topSeries.values.length; j++) {
       const bottomPoint = bottomSeries.values.get(j) || [0];
-      topSeries.values.toArray()[j] -= bottomPoint;
+      console.log('topPoint', topSeries.values.toArray()[j]);
+      console.log('bottomPoint', bottomPoint);
+      const newValue = topSeries.values.toArray()[j] - bottomPoint;
+      console.log('new Value', newValue);
+      topSeries.values.toArray()[j] = newValue;
     }
   }
 
