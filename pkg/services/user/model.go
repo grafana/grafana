@@ -26,6 +26,7 @@ var (
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
 	ErrProtectedUser     = errors.New("cannot adopt protected user")
+	ErrNoUniqueID        = errors.New("identifying id not found")
 )
 
 type User struct {
@@ -245,6 +246,7 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 		Name:  u.Name,
 	}
 }
+
 func (u *SignedInUser) HasRole(role org.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
@@ -254,7 +256,25 @@ func (u *SignedInUser) HasRole(role org.RoleType) bool {
 }
 
 func (u *SignedInUser) IsRealUser() bool {
-	return u.UserID != 0
+	return u.UserID > 0
+}
+
+func (u *SignedInUser) IsApiKeyUser() bool {
+	return u.ApiKeyID > 0
+}
+
+func (u *SignedInUser) HasUniqueId() bool {
+	return u.IsRealUser() || u.IsApiKeyUser()
+}
+
+func (u *SignedInUser) GetCacheKey() (string, error) {
+	if u.IsRealUser() {
+		return fmt.Sprintf("%d-user-%d", u.OrgID, u.UserID), nil
+	}
+	if u.IsApiKeyUser() {
+		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
+	}
+	return "", ErrNoUniqueID
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
