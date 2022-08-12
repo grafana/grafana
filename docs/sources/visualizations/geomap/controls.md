@@ -90,5 +90,5 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 ## Tooltip
 
-- **None** displays tooltips only when clicking on data points.
+- **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when hovering over data points.
