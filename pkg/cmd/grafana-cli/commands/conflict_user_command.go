@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -92,7 +91,7 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 }
 
 func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "conflicting_user_*.diff")
+	tmpFile, err := os.CreateTemp(os.TempDir(), "conflicting_user_*.diff")
 	if err != nil {
 		return nil, err
 	}
