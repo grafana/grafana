@@ -45,7 +45,7 @@ Displays scale information in the bottom left corner.
 
 ## Show measure tools
 
-Display measure tools in the upper right corner. Measurements will only be displayed when this control is open.
+Displays measure tools in the upper right corner. Measurements appear only when this control is open.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-9-1-0.png" max-width="1200px" caption="Geomap panel measure" >}}
 
