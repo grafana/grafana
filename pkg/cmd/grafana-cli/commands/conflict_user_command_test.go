@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -154,22 +156,26 @@ func TestGetConflictingUsers(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := sqlstore.InitTestDB(t)
-			for _, u := range tc.users {
-				cmd := user.CreateUserCommand{
-					Email:            u.Email,
-					Name:             u.Name,
-					Login:            u.Login,
-					OrgID:            int64(testOrgID),
-					IsServiceAccount: u.IsServiceAccount,
+
+			// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
+			if sqlStore.GetDialect().DriverName() != "mysql" {
+				for _, u := range tc.users {
+					cmd := user.CreateUserCommand{
+						Email:            u.Email,
+						Name:             u.Name,
+						Login:            u.Login,
+						OrgID:            int64(testOrgID),
+						IsServiceAccount: u.IsServiceAccount,
+					}
+					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					require.NoError(t, err)
 				}
-				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
-			}
-			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
-			require.NoError(t, err)
-			require.Equal(t, tc.want, len(m))
-			if tc.wantErr != nil {
-				require.EqualError(t, err, tc.wantErr.Error())
+				require.Equal(t, tc.want, len(m))
+				if tc.wantErr != nil {
+					require.EqualError(t, err, tc.wantErr.Error())
+				}
 			}
 		})
 	}
@@ -261,9 +267,7 @@ func TestMarshalConflictUser(t *testing.T) {
 			require.Equal(t, tc.expectedUser.LastSeenAt, user.LastSeenAt)
 		})
 	}
-
 }
-
 func TestBuildConflictBlock(t *testing.T) {
 	type testBuildConflictBlock struct {
 		desc                string
@@ -307,22 +311,26 @@ func TestBuildConflictBlock(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := sqlstore.InitTestDB(t)
-			for _, u := range tc.users {
-				cmd := user.CreateUserCommand{
-					Email: u.Email,
-					Name:  u.Name,
-					Login: u.Login,
-					OrgID: int64(testOrgID),
+
+			// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
+			if sqlStore.GetDialect().DriverName() != "mysql" {
+				for _, u := range tc.users {
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
+					}
+					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					require.NoError(t, err)
 				}
-				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
+				r := ConflictResolver{Users: m}
+				r.BuildConflictBlocks(fmt.Sprintf)
+				require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
+				require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
 			}
-			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
-			require.NoError(t, err)
-			r := ConflictResolver{Users: m}
-			r.BuildConflictBlocks(fmt.Sprintf)
-			require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
-			require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
 		})
 	}
 }
@@ -376,16 +384,6 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 				},
 			},
 			wantDiscardedBlock: "conflict: user2",
-			want: `conflict: user_duplicate_test_login
-+ id: 1, email: user1, login: USER_DUPLICATE_TEST_LOGIN
-- id: 2, email: user2, login: user_duplicate_test_login
-conflict: ldap-admin
-+ id: 4, email: xo, login: ldap-admin
-- id: 5, email: ldap-admin, login: LDAP-ADMIN
-conflict: oauth-admin@example.org
-+ id: 6, email: oauth-admin@example.org, login: No conflict
-- id: 7, email: oauth-admin@EXAMPLE.ORG, login: oauth-admin
-`,
 		},
 		{
 			desc: "should get one block with only 3 users",
@@ -417,25 +415,30 @@ conflict: oauth-admin@example.org
 		t.Run(tc.desc, func(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := sqlstore.InitTestDB(t)
-			for _, u := range tc.users {
-				cmd := user.CreateUserCommand{
-					Email: u.Email,
-					Name:  u.Name,
-					Login: u.Login,
-					OrgID: int64(testOrgID),
+			// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
+			if sqlStore.GetDialect().DriverName() != "mysql" {
+				for _, u := range tc.users {
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
+					}
+					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					require.NoError(t, err)
 				}
-				_, err := sqlStore.CreateUser(context.Background(), cmd)
+				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
+				r := ConflictResolver{Users: m}
+				r.BuildConflictBlocks(fmt.Sprintf)
+				if tc.wantDiscardedBlock != "" {
+					require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
+				}
+				if tc.want != "" {
+					fileString := r.ToStringPresentation()
+					require.Equal(t, tc.want, fileString)
+				}
 			}
-			m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
-			require.NoError(t, err)
-			r := ConflictResolver{Users: m}
-			r.BuildConflictBlocks(fmt.Sprintf)
-			if tc.wantDiscardedBlock != "" {
-				require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
-			}
-			fileString := r.ToStringPresentation()
-			require.Equal(t, tc.want, fileString)
 		})
 	}
 }
