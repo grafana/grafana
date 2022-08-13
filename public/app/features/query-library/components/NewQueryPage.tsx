@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-// import { useStyles2 } from '@grafana/ui';
 import { locationService } from '@grafana/runtime/src';
-import { Button, CodeEditor } from '@grafana/ui/src';
+import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/PageNew/Page';
 
 import { SavedQuery, useUpdateSavedQueryMutation } from '../api/SavedQueriesApi';
@@ -78,6 +77,8 @@ const initialForm: QueryForm = {
 };
 
 const NewQueryPage = () => {
+  const styles = useStyles2(getStyles);
+
   const [updateSavedQuery] = useUpdateSavedQueryMutation();
 
   const [query, setQuery] = useState(initialForm);
@@ -85,9 +86,22 @@ const NewQueryPage = () => {
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
-        <h3>New Query </h3>
+        <div className={styles.header}>
+          <h3>New Query </h3>
+          <Button
+            type="submit"
+            className={styles.submitButton}
+            onClick={async () => {
+              await updateSavedQuery(query.val);
+              locationService.push('/query-library');
+            }}
+          >
+            Create
+          </Button>
+        </div>
         <CodeEditor
-          width="100%"
+          containerStyles={styles.editor}
+          width="80%"
           height="70vh"
           language="json"
           showLineNumbers={false}
@@ -97,15 +111,6 @@ const NewQueryPage = () => {
           onSave={(val) => setQuery(() => ({ val: JSON.parse(val) }))}
           readOnly={false}
         />
-        <Button
-          type="submit"
-          onClick={async () => {
-            await updateSavedQuery(query.val);
-            locationService.push('/query-library');
-          }}
-        >
-          Create
-        </Button>
       </Page.Contents>
     </Page>
   );
@@ -115,15 +120,17 @@ export default NewQueryPage;
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    tableWrapper: css`
-      height: 100%;
+    editor: css``,
+    submitButton: css`
+      width: 75px;
+      align-self: flex-end;
+      margin-bottom: 15px;
     `,
-    table: css`
-      width: 100%;
-      height: 100%;
-    `,
-    info: css`
-      padding-bottom: 30px;
+    header: css`
+      width: 80%;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
     `,
   };
 };
