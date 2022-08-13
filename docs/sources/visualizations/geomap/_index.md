@@ -32,17 +32,23 @@ The initial view configures how the GeoMap panel renders when the panel is first
 - **Longitude** (available when the **View** mode is _Coordinates_)
 - **Zoom** sets the initial zoom level for the GeoMap panel, or the initial maximum zoom level in case the _Fit data layers_ view is selected.
 
-## Data layer
+## Map layers
 
-The Geomap visualization supports multiple Data Layers. Each data layer determines how you visualize geospatial data on top of the base map.
+The Geomap visualization supports showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
 
-### Layer Types
+### Types
 
-There are four-layer types to choose from in the Geomap visualization.
+There are three map layer types to choose from in the Geomap visualization.
 
-- **Marker** renders a marker at each data point.
-- **Heatmap** visualizes a heatmap of the data.
-- **GeoJSON** renders static data from a geojson file.
+- [Markers]({{< relref "markers/" >}}) renders static data from a GeoJSON file.
+- [Heatmap]({{< relref "heatmap/" >}}) visualizes a heatmap of the data.
+- [GeoJSON]({{< relref "geojson/" >}}) renders a marker at each data point.<br /><br />
+- [Night / Day (alpha)]({{< relref "daynight/" >}}) renders a night / day region.
+- **Icon at last point (alpha)** renders an icon at the last data point.
+- **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
+- **Route (alpha)** render data points as a route.
+
+> **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
 
 ### Layer Controls
 
@@ -66,60 +72,30 @@ The Geomap panel needs a source of geographical data. This data comes from a dat
   - longitude: “longitude”, “lng”, “lon”
   - lookup: “lookup”
 - **Coords** specifies that your query holds coordinate data. You will get prompted to select numeric data fields for latitude and longitude from your database query.
-- **Geohash** specifies that your query holds geohash data. You will get prompted to select a string data field for the geohash from your database query.
-- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will get prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
+- **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for the geohash from your database query.
+- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
 
-### Markers layer
+## Basemap layer
 
-The markers layer allows you to display data points as different marker shapes such as circles, squares, triangles, stars, and more.
+A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
+are available each with specific configuration options to style the base map.
 
-![Markers Layer](/static/img/docs/geomap-panel/geomap-markers-8-1-0.png)
+### Types
 
-![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
+There are four basemap layer types to choose from in the Geomap visualization.
 
-- **Marker Color** configures the color of the marker. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
-- **Marker Size** configures the size of the marker. Default is `Fixed size`, making all marker size the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within this range.
-- **Marker Shape** allows you to choose the shape, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple shapes or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
-- **Fill opacity** configures the transparency of each marker.
+- [Open Street Map]({{< relref "osm/" >}}) adds a map from a collaborative free geographic world database.
+- [CARTO]({{< relref "carto/" >}}) adds a layer from CARTO Raster basemaps.
+- [ArcGIS]({{< relref "arcgis/" >}}) adds a layer from an ESRI ArcGIS MapServer.
+- [XYZ]({{< relref "xyz/" >}}) adds a map from a generic tile layer.
 
-### Heatmap layer
+### Default
 
-The heatmap layer clusters various data points to visualize locations with different densities.
-To add a heatmap layer:
+The default base layer uses the [CARTO]({{< relref "carto/" >}}) map. You can define custom default base layers in the `.ini` configuration file.
 
-Click on the drop-down menu under Data Layer and choose `Heatmap`.
+![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
-Similar to `Markers`, you are prompted with various options to determine which data points to visualize and how.
-
-![Heatmap Layer](/static/img/docs/geomap-panel/geomap-heatmap-8-1-0.png)
-
-![Heatmap Layer Options](/static/img/docs/geomap-panel/geomap-heatmap-options-8-1-0.png)
-
-- **Weight values** configure the intensity of the heatmap clusters. `Fixed value` keeps a constant weight value throughout all data points. This value should be in the range of 0~1. Similar to Markers, there is an alternate option in the drop-down to automatically scale the weight values depending on data values.
-- **Radius** configures the size of the heatmap clusters.
-- **Blur** configures the amount of blur on each cluster.
-
-### GeoJSON layer
-
-The GeoJSON layer allows you to select and load a static GeoJSON file from the filesystem.
-
-- **GeoJSON URL** provides a choice of GeoJSON files that ship with Grafana.
-- **Default Style** controls which styles to apply when no rules above match.
-  - **Color** configures the color of the default style
-  - **Opacity** configures the default opacity
-- **Style Rules** apply styles based on feature properties
-  - **Rule** allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.
-  - **Color** configures the color of the style for the current rule
-  - **Opacity** configures the transparency level for the current rule
-- **Add style rule** creates additional style rules.
-
-## Base layer
-
-The base layer loads in a blank world map from the tile server to the Grafana panel. Several base layer options are available each with specific configuration options to style the base map. The default base layer is CartoDB base map. Custom default base layers can be defined in the `.ini` configuration file.
-
-![Base layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
-
-### Configure the default base layer with provisioning
+#### Configure the default base layer with provisioning
 
 You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page]({{< relref "../administration/provisioning/" >}}).
 
