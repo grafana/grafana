@@ -477,7 +477,7 @@ func (s *standardStorageService) write(ctx context.Context, user *user.SignedInU
 	}
 
 	// not svg!
-	if req.EntityType != EntityTypeDashboard {
+	if req.EntityType != EntityTypeDashboard && req.EntityType != EntityTypeQuery {
 		return nil, ErrOnlyDashboardSaveSupported
 	}
 

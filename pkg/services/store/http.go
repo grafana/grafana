@@ -65,6 +65,15 @@ func (s *standardStorageService) doWrite(c *models.ReqContext) response.Response
 	}
 	cmd.Path = scope + "/" + path
 	rsp, err := s.write(c.Req.Context(), c.SignedInUser, cmd)
+	if cmd.EntityType == EntityTypeQuery {
+
+		if err := s.entityEventsService.SaveEvent(c.Req.Context(), SaveEventCmd{
+			EntityId:  CreateDatabaseEntityId(scope+"/"+path, c.OrgID, EntityTypeQuery),
+			EventType: EntityEventTypeUpdate,
+		}); err != nil {
+			grafanaStorageLogger.Error("error when saving event", "path", path)
+		}
+	}
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "save error", err)
 	}

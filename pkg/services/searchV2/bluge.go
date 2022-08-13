@@ -468,6 +468,12 @@ func doSearchQuery(
 		hasConstraints = true
 	}
 
+	// Datasource type
+	if q.DatasourceType != "" {
+		fullQuery.AddMust(bluge.NewTermQuery(q.DatasourceType).SetField(documentFieldDSType))
+		hasConstraints = true
+	}
+
 	// Datasource
 	if q.Datasource != "" {
 		fullQuery.AddMust(bluge.NewTermQuery(q.Datasource).SetField(documentFieldDSUID))

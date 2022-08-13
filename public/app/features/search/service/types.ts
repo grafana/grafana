@@ -11,6 +11,7 @@ export interface SearchQuery {
   location?: string;
   sort?: string;
   ds_uid?: string;
+  ds_type?: string;
   tags?: string[];
   kind?: string[];
   panel_type?: string;
@@ -27,7 +28,7 @@ export interface SearchQuery {
 }
 
 export interface DashboardQueryResult {
-  kind: string; // panel, dashboard, folder
+  kind: string; // panel, dashboard, folder, query
   name: string;
   uid: string;
   url: string; // link to value (unique)

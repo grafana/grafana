@@ -21,6 +21,7 @@ type DashboardQuery struct {
 	Tags               []string     `json:"tags,omitempty"`
 	Kind               []string     `json:"kind,omitempty"`
 	PanelType          string       `json:"panel_type,omitempty"`
+	DatasourceType     string       `json:"ds_type,omitempty"`
 	UIDs               []string     `json:"uid,omitempty"`
 	Explain            bool         `json:"explain,omitempty"`            // adds details on why document matched
 	WithAllowedActions bool         `json:"withAllowedActions,omitempty"` // adds allowed actions per entity

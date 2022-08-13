@@ -71,6 +71,10 @@ func (s *rootStorageSQL) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 	err := s.store.Upsert(ctx, &filestorage.UpsertFileCommand{
 		Path:     path,
 		Contents: byteAray,
+		MimeType: "application/json",
+		Properties: map[string]string{
+			"kind": string(cmd.EntityType),
+		},
 	})
 	if err != nil {
 		return nil, err
