@@ -81,6 +81,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
+	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -178,6 +179,7 @@ type HTTPServer struct {
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
 	userService                  user.Service
+	tempUserService              tempUser.Service
 }
 
 type ServerOptions struct {
@@ -214,7 +216,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, queriesService queries.ServiceHTTPHandler) (*HTTPServer, error) {
+	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, queriesService queries.ServiceHTTPHandler) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -303,6 +305,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PublicDashboardsApi:          publicDashboardsApi,
 		secretsMigrator:              secretsMigrator,
 		userService:                  userService,
+		tempUserService:              tempUserService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
