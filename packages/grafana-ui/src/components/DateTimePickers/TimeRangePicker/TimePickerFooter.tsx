@@ -59,6 +59,10 @@ export const TimePickerFooter: FC<Props> = (props) => {
   return (
     <div>
       <section aria-label="Time zone selection" className={style.container}>
+        <Button variant="secondary" onClick={onToggleChangeTimeSettings} size="sm">
+          Change time settings
+        </Button>
+        <div className={style.spacer} />
         <div className={style.timeZoneContainer}>
           <div className={style.timeZone}>
             <TimeZoneTitle title={info.name} />
@@ -67,10 +71,6 @@ export const TimePickerFooter: FC<Props> = (props) => {
           </div>
           <TimeZoneOffset timeZone={timeZone} timestamp={timestamp} />
         </div>
-        <div className={style.spacer} />
-        <Button variant="secondary" onClick={onToggleChangeTimeSettings} size="sm">
-          Change time settings
-        </Button>
       </section>
       {isEditing ? (
         <div className={style.editContainer}>
