@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
+    "jsx": "react",
     "baseUrl": "./",
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."]
+    "rootDirs": ["."],
+    "moduleResolution": "node"
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",

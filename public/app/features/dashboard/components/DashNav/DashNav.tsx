@@ -255,6 +255,7 @@ export const DashNav = React.memo<Props>((props) => {
           icon="panel-add"
           onClick={onAddPanel}
           key="button-panel-add"
+          isHidden={FNDashboard ? true : false}
         />
       );
     }
@@ -272,6 +273,7 @@ export const DashNav = React.memo<Props>((props) => {
                   onDismiss: hideModal,
                 });
               }}
+              isHidden={FNDashboard ? true : false}
             />
           )}
         </ModalsController>
@@ -285,6 +287,7 @@ export const DashNav = React.memo<Props>((props) => {
           onClick={() => gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
           key="button-snapshot"
+          isHidden={FNDashboard ? true : false}
         />
       );
     }
@@ -296,6 +299,7 @@ export const DashNav = React.memo<Props>((props) => {
           icon="cog"
           onClick={onOpenSettings}
           key="button-settings"
+          isHidden={FNDashboard ? true : false}
         />
       );
     }
