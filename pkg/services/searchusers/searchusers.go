@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -17,15 +16,13 @@ type Service interface {
 }
 
 type OSSService struct {
-	sqlStore         sqlstore.Store
 	searchUserFilter user.SearchUserFilter
 	userService      user.Service
 }
 
-func ProvideUsersService(sqlStore sqlstore.Store, searchUserFilter user.SearchUserFilter, userService user.Service,
+func ProvideUsersService(searchUserFilter user.SearchUserFilter, userService user.Service,
 ) *OSSService {
 	return &OSSService{
-		sqlStore:         sqlStore,
 		searchUserFilter: searchUserFilter,
 		userService:      userService,
 	}
