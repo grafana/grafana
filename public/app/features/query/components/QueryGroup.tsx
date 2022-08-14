@@ -114,85 +114,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     }
   }
 
-  async removeSavedQueryLink() {
-    const { queries, dataSource, savedQueryUid } = this.state.initialState;
-
-    try {
-      // CASE 1: we started with a link.
-      //   - retrieve the link details,
-      //   - set the query details according to the link and
-      //   - remove the link
-      if (savedQueryUid?.length) {
-        const { dsSettings } = this.state;
-        const currentDS = dsSettings ? await getDataSourceSrv().get(dsSettings.uid) : undefined;
-
-        const resp = await getSavedQuerySrv().getSavedQueryByUids([{ uid: savedQueryUid }]);
-        if (!resp?.length) {
-          throw new Error('TODO error handling');
-        }
-        const savedQuery = resp[0];
-        const isMixedDatasource = isQueryWithMixedDatasource(savedQuery);
-
-        const nextDS = isMixedDatasource
-          ? await getDataSourceSrv().get('-- Mixed --')
-          : await getDataSourceSrv().get(savedQuery.queries[0].datasource.uid);
-
-        // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
-        const queries = await updateQueries(nextDS, nextDS.uid, savedQuery.queries, currentDS);
-
-        const newDsSettings = await getDataSourceSrv().getInstanceSettings(nextDS.uid);
-        if (!newDsSettings) {
-          throw new Error('TODO error handling');
-        }
-        this.onChange({
-          queries,
-          savedQueryUid: null,
-          dataSource: {
-            name: newDsSettings.name,
-            uid: newDsSettings.uid,
-            type: newDsSettings.meta.id,
-            default: newDsSettings.isDefault,
-          },
-        });
-
-        this.setState({
-          queries,
-          savedQueryUid: null,
-          dataSource: nextDS,
-          dsSettings: newDsSettings,
-        });
-        return;
-      }
-
-      // CASE 2: started with no link - retrieve initial queries
-      const ds = await this.dataSourceSrv.get(dataSource);
-      const dsSettings = this.dataSourceSrv.getInstanceSettings(dataSource);
-      const defaultDataSource = await this.dataSourceSrv.get();
-      const datasource = ds.getRef();
-      const newQueries = queries.map((q) => (q.datasource ? q : { ...q, datasource }));
-      this.setState({
-        queries: newQueries,
-        dataSource: ds,
-        dsSettings,
-        defaultDataSource,
-        savedQueryUid: null,
-        initialState: this.state.initialState,
-      });
-      this.onChange({
-        queries: newQueries,
-        savedQueryUid: null,
-        dataSource: {
-          name: dsSettings!.name,
-          uid: dsSettings!.uid,
-          type: dsSettings!.meta.id,
-          default: dsSettings!.isDefault,
-        },
-      });
-    } catch (error) {
-      console.log('failed to load data source', error);
-    }
-  }
-
   componentWillUnmount() {
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
@@ -234,7 +155,24 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onChangeSavedQuery = async (savedQueryUid: string | null) => {
     if (!savedQueryUid?.length) {
-      await this.removeSavedQueryLink();
+      // leave the queries, remove the link
+      this.onChange({
+        queries: this.state.queries,
+        savedQueryUid: null,
+        dataSource: {
+          name: this.state.dsSettings?.name,
+          uid: this.state.dsSettings?.uid,
+          type: this.state.dsSettings?.meta.id,
+          default: this.state.dsSettings?.isDefault,
+        },
+      });
+
+      this.setState({
+        queries: this.state.queries,
+        savedQueryUid: null,
+        dataSource: this.state.dataSource,
+        dsSettings: this.state.dsSettings,
+      });
       return;
     }
 
