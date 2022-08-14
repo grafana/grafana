@@ -72,14 +72,15 @@ func (l storageQueriesLoader) LoadQueries(ctx context.Context, orgID int64, uid 
 			continue
 		}
 
-		info, err := extract.ReadQuery(bytes.NewReader(file.Contents), file.FullPath, lookup)
+		uid := store.RootSystem + file.FullPath
+		info, err := extract.ReadQuery(bytes.NewReader(file.Contents), uid, lookup)
 		if err != nil {
 			return nil, err
 		}
 
 		queries = append(queries, query{
-			uid:     file.FullPath,
-			slug:    file.FullPath,
+			uid:     uid,
+			slug:    uid,
 			created: file.Created,
 			updated: file.Modified,
 			info:    info,

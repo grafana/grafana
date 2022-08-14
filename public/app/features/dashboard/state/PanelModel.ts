@@ -523,6 +523,19 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       uid: dataSource.uid,
       type: dataSource.type,
     };
+
+    if (options.savedQueryUid) {
+      // TODO update queries using SavedQueriesSrv - assure queries weren't modified
+      this.savedQueryLink = {
+        ref: {
+          uid: options.savedQueryUid,
+        },
+        variables: [],
+      };
+    } else {
+      this.savedQueryLink = null;
+    }
+
     this.cacheTimeout = options.cacheTimeout;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;

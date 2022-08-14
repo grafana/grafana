@@ -2,8 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { DataQuery, DataSourceRef } from '@grafana/data/src';
 
-import { getGrafanaStorage } from '../../storage/storage';
-import { WorkflowID } from '../../storage/types';
+import { getSavedQuerySrv } from './SavedQueriesSrv';
 
 export type SavedQueryRef = {
   uid: string;
@@ -42,13 +41,12 @@ const api = createApi({
   endpoints: (build) => ({
     getSavedQueryByUids: build.query<SavedQuery[] | null, SavedQueryRef[]>({
       async queryFn(arg, queryApi, extraOptions, baseQuery) {
-        const storage = getGrafanaStorage();
-        return { data: await Promise.all(arg.map((ref) => storage.get<SavedQuery>(ref.uid))) };
+        return { data: await getSavedQuerySrv().getSavedQueryByUids(arg) };
       },
     }),
     deleteSavedQuery: build.mutation<null, SavedQueryRef>({
       async queryFn(arg) {
-        await getGrafanaStorage().delete({ isFolder: false, path: arg.uid });
+        await getSavedQuerySrv().deleteSavedQuery(arg);
         return {
           data: null,
         };
@@ -56,13 +54,7 @@ const api = createApi({
     }),
     updateSavedQuery: build.mutation<null, SavedQuery>({
       async queryFn(arg) {
-        const path = `system/queries/${arg.title}.json`;
-        await getGrafanaStorage().write(path, {
-          kind: 'query',
-          body: arg,
-          title: arg.title,
-          workflow: WorkflowID.Save,
-        });
+        await getSavedQuerySrv().updateSavedQuery(arg);
         return {
           data: null,
         };

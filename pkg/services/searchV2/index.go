@@ -761,7 +761,8 @@ func getQueryLocation(index *orgIndex, dashboardUID string) (string, bool, error
 }
 
 func (i *searchIndex) updateQuery(ctx context.Context, index *orgIndex, uid string, q query) error {
-
+	// TODO: fix, lacking storage (system/) prefix
+	q.uid = uid
 	writer := index.writerForIndex(indexTypeDashboard)
 
 	batch := bluge.NewBatch()
