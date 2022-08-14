@@ -10,21 +10,22 @@ export interface FieldValidationMessageProps {
   /** Override component style */
   className?: string;
   horizontal?: boolean;
+  warning?: boolean; // defaults to error
 }
 
-export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaTheme2, warning: boolean) => {
   const baseStyle = `
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
       padding: ${theme.spacing(0.5, 1)};
-      color: ${theme.colors.error.contrastText};
-      background: ${theme.colors.error.main};
+      color: ${warning ? theme.colors.warning.contrastText : theme.colors.error.contrastText};
+      background: ${warning ? theme.colors.warning.main : theme.colors.error.main};
       border-radius: ${theme.shape.borderRadius()};
       position: relative;
       display: inline-block;
 
       a {
-        color: ${theme.colors.error.contrastText};
+        color: ${warning ? theme.colors.warning.contrastText : theme.colors.error.contrastText};
         text-decoration: underline;
       }
 
@@ -46,7 +47,8 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
         width: 0;
         height: 0;
         border-width: 0 4px 5px 4px;
-        border-color: transparent transparent ${theme.colors.error.main} transparent;
+        border-color: transparent transparent ${warning ? theme.colors.warning.main : theme.colors.error.main}
+          transparent;
         border-style: solid;
       }
     `,
@@ -72,9 +74,14 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
   };
 });
 
-export const FieldValidationMessage: React.FC<FieldValidationMessageProps> = ({ children, horizontal, className }) => {
+export const FieldValidationMessage: React.FC<FieldValidationMessageProps> = ({
+  children,
+  horizontal,
+  className,
+  warning,
+}) => {
   const theme = useTheme2();
-  const styles = getFieldValidationMessageStyles(theme);
+  const styles = getFieldValidationMessageStyles(theme, warning);
   const cssName = cx(horizontal ? styles.horizontal : styles.vertical, className);
 
   return (

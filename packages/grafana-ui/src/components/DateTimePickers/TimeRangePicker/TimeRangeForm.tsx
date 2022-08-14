@@ -5,6 +5,7 @@ import {
   dateMath,
   DateTime,
   dateTimeFormat,
+  dateTimeForTimeZone,
   dateTimeParse,
   GrafanaTheme2,
   isDateTime,
@@ -37,11 +38,17 @@ interface InputState {
   value: string;
   invalid: boolean;
   errorMessage: string;
+  warningMessage: string;
 }
 
 const ERROR_MESSAGES = {
   default: 'Please enter a past date or "now"',
   range: '"From" can\'t be after "To"',
+};
+
+const WARNING_MESSAGES = {
+  default: '',
+  future: 'Time is in the future',
 };
 
 export const TimeRangeForm: React.FC<Props> = (props) => {
@@ -117,7 +124,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   return (
     <form>
       <div className={style.fieldContainer}>
-        <Field label="From" invalid={from.invalid} error={from.errorMessage}>
+        <Field label="From" invalid={from.invalid} error={from.errorMessage} warning={from.warningMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
@@ -129,7 +136,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
         {fyTooltip}
       </div>
       <div className={style.fieldContainer}>
-        <Field label="To" invalid={to.invalid} error={to.errorMessage}>
+        <Field label="To" invalid={to.invalid} error={to.errorMessage} warning={to.warningMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
@@ -176,6 +183,8 @@ function valueToState(
   const toValue = valueAsString(rawTo, timeZone);
   const fromInvalid = !isValid(fromValue, false, timeZone);
   const toInvalid = !isValid(toValue, true, timeZone);
+  const fromInFuture = !fromInvalid && isInFuture(fromValue, false, timeZone);
+  const toInFuture = !toInvalid && isInFuture(toValue, true, timeZone);
   // If "To" is invalid, we should not check the range anyways
   const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
 
@@ -184,8 +193,15 @@ function valueToState(
       value: fromValue,
       invalid: fromInvalid || rangeInvalid,
       errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range : ERROR_MESSAGES.default,
+      warningMessage: fromInFuture ? WARNING_MESSAGES.future : WARNING_MESSAGES.default,
     },
-    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default },
+    {
+      value: toValue,
+      invalid: toInvalid,
+      errorMessage: ERROR_MESSAGES.default,
+      // One warning is enough (if "From" is already in future)
+      warningMessage: toInFuture && !fromInFuture ? WARNING_MESSAGES.future : WARNING_MESSAGES.default,
+    },
   ];
 }
 
@@ -194,6 +210,15 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
     return dateTimeFormat(value, { timeZone });
   }
   return value;
+}
+
+function isInFuture(value: string, roundUp: boolean, timeZone?: TimeZone): boolean {
+  const parsed = dateTimeParse(value, { roundUp, timeZone });
+
+  // Do not warn if browser clock is slightly off
+  const aroundNow = dateTimeForTimeZone(timeZone).add(15, 's');
+
+  return parsed.isValid() && aroundNow.isBefore(parsed);
 }
 
 function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean {

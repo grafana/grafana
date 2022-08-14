@@ -26,6 +26,8 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   required?: boolean;
   /** Error message to display */
   error?: React.ReactNode;
+  /** Warning message to display (lower priority than error message) */
+  warning?: React.ReactNode;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
   /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
@@ -78,6 +80,7 @@ export const Field: React.FC<FieldProps> = ({
   disabled,
   required,
   error,
+  warning,
   children,
   className,
   validationMessageHorizontalOverflow,
@@ -112,6 +115,15 @@ export const Field: React.FC<FieldProps> = ({
             <FieldValidationMessage>{error}</FieldValidationMessage>
           </div>
         )}
+        {!invalid && warning && !horizontal && (
+          <div
+            className={cx(styles.fieldValidationWrapper, {
+              [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+            })}
+          >
+            <FieldValidationMessage warning={true}>{warning}</FieldValidationMessage>
+          </div>
+        )}
       </div>
 
       {invalid && error && horizontal && (
@@ -121,6 +133,15 @@ export const Field: React.FC<FieldProps> = ({
           })}
         >
           <FieldValidationMessage>{error}</FieldValidationMessage>
+        </div>
+      )}
+      {!invalid && warning && horizontal && (
+        <div
+          className={cx(styles.fieldValidationWrapper, styles.fieldValidationWrapperHorizontal, {
+            [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+          })}
+        >
+          <FieldValidationMessage warning={true}>{warning}</FieldValidationMessage>
         </div>
       )}
     </div>
