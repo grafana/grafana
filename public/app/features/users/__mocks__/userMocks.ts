@@ -15,7 +15,7 @@ export const getMockUsers = (amount: number) => {
       role: 'Admin',
       userId: i,
       isDisabled: false,
-    } as OrgUser);
+    });
   }
 
   return users as OrgUser[];
