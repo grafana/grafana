@@ -143,6 +143,7 @@ export interface SLOQuery extends BaseQuery {
   sloId: string;
   sloName: string;
   goal?: number;
+  lookbackPeriod?: string;
 }
 
 export interface CloudMonitoringQuery extends DataQuery {

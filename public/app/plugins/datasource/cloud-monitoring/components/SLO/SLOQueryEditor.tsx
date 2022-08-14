@@ -7,6 +7,8 @@ import { ALIGNMENT_PERIODS, SELECT_WIDTH } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
 
+import { LookbackPeriodSelect } from './LookbackPeriodSelect';
+
 import { Selector, Service, SLO } from '.';
 
 export interface Props {
@@ -29,6 +31,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
   serviceName: '',
   sloId: '',
   sloName: '',
+  lookbackPeriod: '1h',
 });
 
 export function SLOQueryEditor({
@@ -69,6 +72,14 @@ export function SLOQueryEditor({
         query={query}
         onChange={onChange}
       ></Selector>
+
+      <LookbackPeriodSelect
+        refId={refId}
+        onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
+        selectorName={query.selectorName}
+        current={query.lookbackPeriod}
+        templateVariableOptions={variableOptionGroup.options}
+      />
 
       <QueryEditorRow label="Alignment period" htmlFor={`${refId}-alignment-period`}>
         <PeriodSelect
