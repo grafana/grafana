@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
+import { connect } from 'react-redux';
 import { Subscription } from 'rxjs';
 
 import {
@@ -27,6 +28,7 @@ import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
+import { StoreState } from 'app/types';
 import { RenderEvent } from 'app/types/events';
 
 import { isSoloRoute } from '../../../routes/utils';
@@ -64,7 +66,7 @@ export interface State {
   liveTime?: TimeRange;
 }
 
-export class PanelChrome extends PureComponent<Props, State> {
+class PanelChromeUnconnected extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
   private eventFilter: EventFilterOptions = { onlyLocal: true };
@@ -502,7 +504,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, plugin, FNDashboard, slug } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -521,18 +523,30 @@ export class PanelChrome extends PureComponent<Props, State> {
         className={containerClassNames}
         aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
       >
-        <PanelHeader
-          panel={panel}
-          dashboard={dashboard}
-          title={panel.title}
-          description={panel.description}
-          links={panel.links}
-          error={errorMessage}
-          isEditing={isEditing}
-          isViewing={isViewing}
-          alertState={alertState}
-          data={data}
-        />
+        {FNDashboard ? (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: 3,
+              textTransform: 'capitalize',
+            }}
+          >
+            {slug}
+          </div>
+        ) : (
+          <PanelHeader
+            panel={panel}
+            dashboard={dashboard}
+            title={panel.title}
+            description={panel.description}
+            links={panel.links}
+            error={errorMessage}
+            isEditing={isEditing}
+            isViewing={isViewing}
+            alertState={alertState}
+            data={data}
+          />
+        )}
         <ErrorBoundary
           dependencies={[data, plugin, panel.getOptions()]}
           onError={this.onPanelError}
@@ -549,3 +563,9 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   }
 }
+
+const mapStateToProps = (state: StoreState) => {
+  return { ...state.fnGlobleState };
+};
+const connector = connect(mapStateToProps);
+export const PanelChrome = connector(PanelChromeUnconnected);
