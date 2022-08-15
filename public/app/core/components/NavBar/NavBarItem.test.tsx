@@ -66,17 +66,6 @@ async function getTestContext(overrides: Partial<Props> = {}, subUrl = '', isMen
 }
 
 describe('NavBarItem', () => {
-  beforeEach(() => {
-    // IntersectionObserver isn't available in test environment
-    const mockIntersectionObserver = jest.fn();
-    mockIntersectionObserver.mockReturnValue({
-      observe: () => null,
-      unobserve: () => null,
-      disconnect: () => null,
-    });
-    window.IntersectionObserver = mockIntersectionObserver;
-  });
-
   describe('when url property is not set', () => {
     it('then it renders the menu trigger as a button', async () => {
       await getTestContext();
