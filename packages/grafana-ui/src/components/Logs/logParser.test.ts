@@ -151,6 +151,57 @@ describe('getAllFields', () => {
     expect(fields.length).toBe(1);
     expect(fields.find((field) => field.key === testStringField.name)).not.toBe(undefined);
   });
+
+  it('should filter out nanosecond-timestamp field', () => {
+    const logRow = createLogRow({
+      entryFieldIndex: 10,
+      dataFrame: new MutableDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            config: {},
+            values: new ArrayVector(['abc']),
+          },
+        ],
+      }),
+    });
+
+    const fields = getAllFields(logRow);
+    expect(fields.length).toBe(0);
+  });
+
+  it('should filter out the first field of type=time, but not others of type=time', () => {
+    const logRow = createLogRow({
+      entryFieldIndex: 10,
+      dataFrame: new MutableDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'Time1',
+            type: FieldType.time,
+            config: {},
+            values: new ArrayVector([1]),
+          },
+          {
+            name: 'Time2',
+            type: FieldType.time,
+            config: {},
+            values: new ArrayVector([2]),
+          },
+        ],
+      }),
+    });
+
+    const fields = getAllFields(logRow);
+    expect(fields.length).toBe(1);
+
+    const field1 = fields[0];
+
+    expect(field1.key).toBe('Time2');
+    expect(field1.value).toBe('2');
+  });
 });
 
 const testStringField = {

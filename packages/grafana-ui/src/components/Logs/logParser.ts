@@ -97,6 +97,10 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   if (field.name === 'id') {
     return true;
   }
+  // "tsNs" field which we use for nanosecond-timestamps, if available
+  if (field.name === 'tsNs') {
+    return true;
+  }
   // entry field which we are showing as the log message
   if (row.entryFieldIndex === index) {
     return true;
@@ -108,6 +112,14 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   // field that has empty value (we want to keep 0 or empty string)
   if (field.values.get(row.rowIndex) == null) {
     return true;
+  }
+  // the first time-field
+  if (field.type === FieldType.time) {
+    // the first field of type=time is used as the timestamp for the log-row, we want to remove it
+    const firstTimeFieldIndex = row.dataFrame.fields.findIndex((f) => f.type === FieldType.time);
+    if (index === firstTimeFieldIndex) {
+      return true;
+    }
   }
   return false;
 }
