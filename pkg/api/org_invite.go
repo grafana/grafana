@@ -278,7 +278,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) updateTempUserStatus(ctx context.Context, code string, status models.TempUserStatus) (bool, response.Response) {
 	// update temp user status
 	updateTmpUserCmd := models.UpdateTempUserStatusCommand{Code: code, Status: status}
-	if err := hs.SQLStore.UpdateTempUserStatus(ctx, &updateTmpUserCmd); err != nil {
+	if err := hs.tempUserService.UpdateTempUserStatus(ctx, &updateTmpUserCmd); err != nil {
 		return false, response.Error(500, "Failed to update invite status", err)
 	}
 
