@@ -34,6 +34,10 @@ export function mergeLocalsAndRemotes(
   return [...localOnly, ...remoteOnly, ...localAndRemote];
 }
 
+export function mergeLocalAndRemote(local: LocalPlugin, remote: RemotePlugin, error?: PluginError) {
+  return merge(mapRemoteToCatalog(remote, error), mapLocalToCatalog(local));
+}
+
 export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): CatalogPlugin {
   return {
     id: plugin.slug,
@@ -41,8 +45,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     orgName: plugin.orgName,
     // category
     description: plugin.description,
-    // grafanaDependency
-    // pluginDependencies
+    grafanaDependency: plugin.json?.dependencies.grafanaDependency,
+    pluginDependencies: plugin.json?.dependencies.plugins,
     // includes
     // readme
     // state
@@ -54,19 +58,28 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
       large: `https://grafana.com/api/plugins/${plugin.id}/versions/${plugin.version}/logos/large`,
     },
 
-    catalogInfo: {
+    // Catalog related
+    info: {
       downloads: plugin.downloads,
-      hasUpdate: false, // We are settings this to `false` by default, as we need to hit a different endpoint to get this info
       isCore: plugin.internal,
       isDev: false,
       isEnterprise: plugin.status === 'enterprise',
       isPublished: true, // If it is found on the remote it means that it is publised
-      popularity: plugin.popularity,
       publishedAt: plugin.createdAt,
+      updatedAt: plugin.updatedAt,
+      popularity: plugin.popularity,
       signature: getPluginSignature({ remote: plugin, error }),
       signatureOrg: plugin.versionSignedByOrg,
       signatureType: plugin.versionSignatureType as PluginSignatureType,
-      updatedAt: plugin.updatedAt,
+      versions: [],
+    },
+
+    // Install related
+    // (setting a default here, as there are plugins which are not installed)
+    settings: {
+      isDisabled: false,
+      isInstalled: false,
+      hasUpdate: false,
     },
 
     error: error?.errorCode,
@@ -85,7 +98,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     // orgName
     // category
     description: plugin.info.description,
-    grafanaDependency: plugin.dependencies.grafanaDependency,
+    grafanaDependency: plugin.dependencies.grafanaDependency || '',
     pluginDependencies: plugin.dependencies.plugins,
     // includes
     // readme
@@ -95,9 +108,28 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     links: plugin.info.links,
     logos: plugin.info.logos || defaultLogos,
 
+    // Catalog related
+    // (setting a default value here, as there are plugins which don't have a remote counterpart)
+    info: {
+      downloads: 0,
+      isCore: plugin.signature === 'internal',
+      isDev: Boolean(plugin.dev),
+      isEnterprise: false,
+      isPublished: false,
+      publishedAt: '',
+      updatedAt: '',
+      popularity: 0,
+      signature: getPluginSignature({ local: plugin, error }),
+      signatureOrg: plugin.signatureOrg,
+      signatureType: plugin.signatureType,
+      versions: [],
+    },
+
+    // Install related
     settings: {
       defaultNavUrl: plugin.defaultNavUrl,
       enabled: plugin.enabled,
+      hasUpdate: plugin.hasUpdate,
       isDisabled: !!error || isDisabledSecretsPlugin(plugin.type),
       isInstalled: true,
       isPinned: plugin.pinned,
@@ -123,11 +155,10 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
     nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
     nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.localeCompare(a.name),
     updated: (a: CatalogPlugin, b: CatalogPlugin) =>
-      dateTimeParse(b.catalogInfo?.updatedAt || '').valueOf() - dateTimeParse(a.catalogInfo?.updatedAt || '').valueOf(),
+      dateTimeParse(b.info.updatedAt || '').valueOf() - dateTimeParse(a.info.updatedAt || '').valueOf(),
     published: (a: CatalogPlugin, b: CatalogPlugin) =>
-      dateTimeParse(b.catalogInfo?.publishedAt || '').valueOf() -
-      dateTimeParse(a.catalogInfo?.publishedAt || '').valueOf(),
-    downloads: (a: CatalogPlugin, b: CatalogPlugin) => b.catalogInfo?.downloads - a.catalogInfo?.downloads,
+      dateTimeParse(b.info.publishedAt || '').valueOf() - dateTimeParse(a.info.publishedAt || '').valueOf(),
+    downloads: (a: CatalogPlugin, b: CatalogPlugin) => b.info.downloads - a.info.downloads,
   };
 
   if (sorters[sortBy]) {

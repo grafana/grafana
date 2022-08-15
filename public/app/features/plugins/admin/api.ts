@@ -2,28 +2,56 @@ import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { API_ROOT, GCOM_API_ROOT } from './constants';
-import { isLocalPluginVisible, isRemotePluginVisible } from './helpers';
-import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion } from './types';
+import {
+  isLocalPluginVisible,
+  isRemotePluginVisible,
+  mapLocalToCatalog,
+  mapRemoteToCatalog,
+  mergeLocalAndRemote,
+} from './helpers';
+import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion, CatalogPlugin } from './types';
 
-export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
-  const remote = await getRemotePlugin(id);
-  const isPublished = Boolean(remote);
-
-  const [localPlugins, versions, localReadme] = await Promise.all([
-    getLocalPlugins(),
-    getPluginVersions(id, isPublished),
+// We are fetching these details separately as they are currently not part of the list responses (either locally or on the remote).
+// (Ideally all of these could be moved to the list responses, except the versions)
+export async function getPluginDetails(id: string): Promise<CatalogPlugin> {
+  const [local, remote, versions, localReadme] = await Promise.all([
+    getLocalPlugin(id),
+    getRemotePlugin(id),
+    getPluginVersions(id),
     getLocalPluginReadme(id),
   ]);
 
-  const local = localPlugins.find((p) => p.id === id);
+  let plugin: CatalogPlugin;
+
+  if (local && remote) {
+    plugin = mergeLocalAndRemote(local, remote);
+  } else if (local) {
+    plugin = mapLocalToCatalog(local);
+  } else if (remote) {
+    plugin = mapRemoteToCatalog(remote);
+  } else {
+    throw new Error(`No local or remote version of the plugin was found ("${id}")`);
+  }
+
   const dependencies = local?.dependencies || remote?.json?.dependencies;
 
   return {
+    ...plugin,
+    readme: localReadme || remote?.readme,
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
     links: local?.info.links || remote?.json?.info.links || [],
-    readme: localReadme || remote?.readme,
-    versions,
+
+    info: {
+      ...plugin.info,
+      versions,
+    },
+
+    settings: {
+      ...plugin.settings,
+      module: local?.module,
+      baseUrl: local?.baseUrl,
+    },
   };
 }
 
@@ -53,12 +81,19 @@ async function getRemotePlugin(id: string): Promise<RemotePlugin | undefined> {
   }
 }
 
-async function getPluginVersions(id: string, isPublished: boolean): Promise<Version[]> {
+async function getLocalPlugin(id: string): Promise<LocalPlugin | undefined> {
   try {
-    if (!isPublished) {
-      return [];
+    return await getBackendSrv().get(`${API_ROOT}/${id}/settings`, {});
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
     }
+    return;
+  }
+}
 
+async function getPluginVersions(id: string): Promise<Version[]> {
+  try {
     const versions: { items: PluginVersion[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions`);
 
     return (versions.items || []).map((v) => ({

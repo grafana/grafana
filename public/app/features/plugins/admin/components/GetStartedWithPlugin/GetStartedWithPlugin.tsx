@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function GetStartedWithPlugin({ plugin }: Props): ReactElement | null {
-  if (!plugin.settings?.isInstalled || plugin.settings?.isDisabled) {
+  if (!plugin.settings.isInstalled || plugin.settings.isDisabled) {
     return null;
   }
 

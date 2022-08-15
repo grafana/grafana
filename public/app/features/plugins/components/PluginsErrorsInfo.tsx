@@ -5,14 +5,13 @@ import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useTheme } from '@grafana/ui';
 
-import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
+import { useGetErrors } from '../admin/state/hooks';
 
 export function PluginsErrorsInfo(): React.ReactElement | null {
-  const errors = useGetErrors();
-  const { isLoading } = useFetchStatus();
+  const { loading, errors } = useGetErrors();
   const theme = useTheme();
 
-  if (isLoading || errors.length === 0) {
+  if (loading || errors.length === 0) {
     return null;
   }
 

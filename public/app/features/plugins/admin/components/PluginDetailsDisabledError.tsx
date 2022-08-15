@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function PluginDetailsDisabledError({ className, plugin }: Props): ReactElement | null {
-  if (!plugin.settings?.isDisabled) {
+  if (!plugin.settings.isDisabled) {
     return null;
   }
 

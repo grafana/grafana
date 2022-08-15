@@ -66,30 +66,30 @@ export interface CatalogPlugin<T = {}> {
     large: string;
   };
 
-  // Information related to the plugins catalog
-  catalogInfo?: {
+  // Catalog related information (only for published plugins)
+  info: {
     downloads: number; // The number of times this plugin was downloaded
-    hasUpdate: boolean; // Tells if the plugin has a new version published on GCOM than the currently installed version
     isCore: boolean; // Tells if the plugin was shipped with the core Grafana
     isDev: boolean; // TODO: ??????
     isEnterprise: boolean; // Tells if the plugin needs an enterprise license
     isPublished: boolean; // Tells if the plugin is published to GCOM
-    popularity?: number; // TODO: ???
     publishedAt: string; // The time the plugin was first published to our catalog (TODO: check if this is correct)
+    updatedAt: string; // The last time a new version of the plugin was published to our catalog (TODO: check if this is correct)
+    popularity?: number; // TODO: ???
     signature?: PluginSignatureStatus; // TODO: ???
     signatureOrg?: string; // TODO: ???
     signatureType?: PluginSignatureType; // TODO: ???
-    updatedAt: string; // The last time a new version of the plugin was published to our catalog (TODO: check if this is correct)
     versions?: Version[]; // Available versions of the plugin in our catalog
   };
 
-  // Information that is only available if the plugin is installed
-  settings?: {
+  // Installation related information (only for locally installed plugins)
+  settings: {
+    hasUpdate: boolean; // Tells if the plugin has a new version published on GCOM than the currently installed version
+    isDisabled: boolean; // The plugin can be visible but still disabled for various reasons, but mostly due to errors. Set by the backend.
+    isInstalled: boolean; // (TODO: is this redundant?) Tells if the plugin is installed on the current instance
     baseUrl?: string; // TODO: specify this
     defaultNavUrl?: string; // TODO: ???
     enabled?: boolean; // Only relevant for "app" plugins
-    isDisabled: boolean; // The plugin can be visible but still disabled for various reasons, but mostly due to errors. Set by the backend.
-    isInstalled: boolean; // (TODO: is this redundant?) Tells if the plugin is installed on the current instance
     isPinned?: boolean; // TODO: ???
     jsonData?: T; // Plugin specific settings persisted on the backend
     module?: string; // TODO: specify this
@@ -101,6 +101,8 @@ export interface CatalogPlugin<T = {}> {
   error?: PluginErrorCode;
 }
 export interface CatalogPluginDetails {
+  module?: string;
+  baseUrl?: string;
   readme?: string;
   versions?: Version[];
   links: Array<{
@@ -190,6 +192,8 @@ export type LocalPlugin = {
   state: string;
   type: PluginType;
   dependencies: PluginDependencies;
+  module?: string; // only available when fetching /api/plugins/<ID>/settings, not in the list
+  baseUrl?: string; // only available when fetching /api/plugins/<ID>/settings, not in the list
 };
 
 interface Rel {

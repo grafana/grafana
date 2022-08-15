@@ -1,16 +1,13 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { PluginError } from '@grafana/data';
-
 import { sortPlugins, Sorters } from '../helpers';
-import { CatalogPlugin, PluginCatalogStoreState, PluginListDisplayMode } from '../types';
+import { PluginCatalogStoreState, PluginListDisplayMode } from '../types';
 
-import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall } from './actions';
+import { fetchAll, fetchRemotePlugins, fetchSingle, install, uninstall } from './actions';
 import { setDisplayMode } from './reducer';
 import {
   find,
-  selectAll,
   selectById,
   selectIsRequestPending,
   selectRequestError,
@@ -26,107 +23,88 @@ type Filters = {
   sortBy?: Sorters;
 };
 
-export const useGetAllWithFilters = ({
+// Returns the list of plugins.
+// (Also fetches the plugins if needed)
+export const useGetPlugins = ({
   query = '',
   filterBy = 'installed',
   filterByType = 'all',
   sortBy = Sorters.nameAsc,
-}: Filters) => {
-  useFetchAll();
+}: Filters = {}) => {
+  const dispatch = useDispatch();
+  const { typePrefix } = fetchAll;
+  const plugins = useSelector(find(query, filterBy, filterByType));
+  const error = useSelector(selectRequestError(typePrefix));
+  const isNotFetched = useSelector(selectIsRequestNotFetched(typePrefix));
+  const isPending = useSelector(selectIsRequestPending(typePrefix));
 
-  const filtered = useSelector(find(query, filterBy, filterByType));
-  const { isLoading, error } = useFetchStatus();
-  const sortedAndFiltered = sortPlugins(filtered, sortBy);
+  useEffect(() => {
+    isNotFetched && dispatch(fetchAll());
+  }, [isNotFetched, dispatch]);
 
-  return {
-    isLoading,
-    error,
-    plugins: sortedAndFiltered,
-  };
+  return { plugins: sortPlugins(plugins, sortBy), error, loading: isPending };
 };
 
-export const useGetAll = (): CatalogPlugin[] => {
-  useFetchAll();
+// Returns a single plugin by id.
+// (Also fetches the plugin if needed)
+export const useGetPlugin = (id: string) => {
+  const dispatch = useDispatch();
+  const { typePrefix } = fetchSingle;
+  const plugin = useSelector((state: PluginCatalogStoreState) => selectById(state, id));
+  const error = useSelector(selectRequestError(typePrefix));
+  const isPending = useSelector(selectIsRequestPending(typePrefix));
+  const isNotFetched = useSelector(selectIsRequestNotFetched(typePrefix));
+  const isDetailsMissing = !plugin?.settings.module || !plugin.settings.baseUrl || !plugin.readme;
+  const shouldFetch = isNotFetched || isDetailsMissing;
 
-  return useSelector(selectAll);
+  useEffect(() => {
+    shouldFetch && dispatch(fetchSingle(id));
+  }, [shouldFetch, dispatch, id]);
+
+  return { plugin, error, loading: isPending || shouldFetch };
 };
 
-export const useGetSingle = (id: string): CatalogPlugin | undefined => {
-  useFetchAll();
-  useFetchDetails(id);
+// Returns all plugin related errors
+export const useGetErrors = () => {
+  const { loading } = useGetPlugins();
+  const errors = useSelector(selectPluginErrors);
 
-  return useSelector((state: PluginCatalogStoreState) => selectById(state, id));
-};
-
-export const useGetErrors = (): PluginError[] => {
-  useFetchAll();
-
-  return useSelector(selectPluginErrors);
+  return { errors, loading };
 };
 
 export const useInstall = () => {
   const dispatch = useDispatch();
-  return (id: string, version?: string, isUpdating?: boolean) => dispatch(install({ id, version, isUpdating }));
+  const { typePrefix } = install;
+  const loading = useSelector(selectIsRequestPending(typePrefix));
+  const error = useSelector(selectRequestError(typePrefix));
+  const callback = (id: string, version?: string, isUpdating?: boolean) =>
+    dispatch(install({ id, version, isUpdating }));
+
+  return {
+    install: callback,
+    loading,
+    error,
+  };
 };
 
 export const useUninstall = () => {
   const dispatch = useDispatch();
+  const { typePrefix } = uninstall;
+  const loading = useSelector(selectIsRequestPending(typePrefix));
+  const error = useSelector(selectRequestError(typePrefix));
+  const callback = (id: string) => dispatch(uninstall(id));
 
-  return (id: string) => dispatch(uninstall(id));
+  return {
+    uninstall: callback,
+    loading,
+    error,
+  };
 };
 
+// TODO: remove this from the store
 export const useIsRemotePluginsAvailable = () => {
   const error = useSelector(selectRequestError(fetchRemotePlugins.typePrefix));
   return error === null;
-};
-
-export const useFetchStatus = () => {
-  const isLoading = useSelector(selectIsRequestPending(fetchAll.typePrefix));
-  const error = useSelector(selectRequestError(fetchAll.typePrefix));
-
-  return { isLoading, error };
-};
-
-export const useFetchDetailsStatus = () => {
-  const isLoading = useSelector(selectIsRequestPending(fetchDetails.typePrefix));
-  const error = useSelector(selectRequestError(fetchDetails.typePrefix));
-
-  return { isLoading, error };
-};
-
-export const useInstallStatus = () => {
-  const isInstalling = useSelector(selectIsRequestPending(install.typePrefix));
-  const error = useSelector(selectRequestError(install.typePrefix));
-
-  return { isInstalling, error };
-};
-
-export const useUninstallStatus = () => {
-  const isUninstalling = useSelector(selectIsRequestPending(uninstall.typePrefix));
-  const error = useSelector(selectRequestError(uninstall.typePrefix));
-
-  return { isUninstalling, error };
-};
-
-// Only fetches in case they were not fetched yet
-export const useFetchAll = () => {
-  const dispatch = useDispatch();
-  const isNotFetched = useSelector(selectIsRequestNotFetched(fetchAll.typePrefix));
-
-  useEffect(() => {
-    isNotFetched && dispatch(fetchAll());
-  }, []); // eslint-disable-line
-};
-
-export const useFetchDetails = (id: string) => {
-  const dispatch = useDispatch();
-  const plugin = useSelector((state: PluginCatalogStoreState) => selectById(state, id));
-  const isNotFetching = !useSelector(selectIsRequestPending(fetchDetails.typePrefix));
-  const shouldFetch = isNotFetching && plugin && !plugin.details;
-
-  useEffect(() => {
-    shouldFetch && dispatch(fetchDetails(id));
-  }, [plugin]); // eslint-disable-line
 };
 
 export const useDisplayMode = () => {

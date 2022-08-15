@@ -22,8 +22,8 @@ type Props = {
 
 export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const latestCompatibleVersion = getLatestCompatibleVersion(plugin.catalogInfo?.versions);
-  const version = plugin.settings?.version || latestCompatibleVersion?.version;
+  const latestCompatibleVersion = getLatestCompatibleVersion(plugin.info.versions);
+  const version = plugin.settings.version || latestCompatibleVersion?.version;
 
   return (
     <div>
@@ -69,10 +69,10 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
               ))}
 
               {/* Downloads */}
-              {Number(plugin.catalogInfo?.downloads) > 0 && (
+              {Number(plugin.info.downloads) > 0 && (
                 <span>
                   <Icon name="cloud-download" />
-                  {` ${new Intl.NumberFormat().format(plugin.catalogInfo?.downloads || 0)}`}{' '}
+                  {` ${new Intl.NumberFormat().format(plugin.info.downloads || 0)}`}{' '}
                 </span>
               )}
 
@@ -82,7 +82,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
               {/* Signature information */}
               <PluginDetailsHeaderSignature plugin={plugin} />
 
-              {plugin.settings?.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
+              {plugin.settings.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
             </div>
 
             <PluginDetailsHeaderDependencies

@@ -9,10 +9,10 @@ export const usePluginConfig = (plugin?: CatalogPlugin) => {
       return null;
     }
 
-    if (plugin.settings?.isInstalled && !plugin.settings?.isDisabled) {
+    if (plugin.settings.isInstalled && !plugin.settings.isDisabled) {
       return loadPlugin(plugin.id);
     }
 
     return null;
-  }, [plugin?.id, plugin?.settings?.isInstalled, plugin?.settings?.isDisabled]);
+  }, [plugin?.id, plugin?.settings.isInstalled, plugin?.settings.isDisabled]);
 };

@@ -4,7 +4,7 @@ import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 
-import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
+import { useInstall, useUninstall } from '../../state/hooks';
 import { CatalogPlugin, PluginStatus, Version } from '../../types';
 
 type InstallControlsButtonProps = {
@@ -14,18 +14,16 @@ type InstallControlsButtonProps = {
 };
 
 export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVersion }: InstallControlsButtonProps) {
-  const { isInstalling, error: errorInstalling } = useInstallStatus();
-  const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
-  const install = useInstall();
-  const uninstall = useUninstall();
+  const { install, error: installError, loading: installLoading } = useInstall();
+  const { uninstall, error: uninstallError, loading: uninstallLoading } = useUninstall();
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const showConfirmModal = () => setIsConfirmModalVisible(true);
   const hideConfirmModal = () => setIsConfirmModalVisible(false);
-  const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
+  const uninstallBtnText = uninstallLoading ? 'Uninstalling' : 'Uninstall';
 
   const onInstall = async () => {
     await install(plugin.id, latestCompatibleVersion?.version);
-    if (!errorInstalling) {
+    if (!installError) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
     }
   };
@@ -33,14 +31,14 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
   const onUninstall = async () => {
     hideConfirmModal();
     await uninstall(plugin.id);
-    if (!errorUninstalling) {
+    if (!uninstallError) {
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
     }
   };
 
   const onUpdate = async () => {
     await install(plugin.id, latestCompatibleVersion?.version, true);
-    if (!errorInstalling) {
+    if (!installError) {
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
     }
   };
@@ -58,7 +56,7 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
           onDismiss={hideConfirmModal}
         />
         <HorizontalGroup height="auto">
-          <Button variant="destructive" disabled={isUninstalling} onClick={showConfirmModal}>
+          <Button variant="destructive" disabled={uninstallLoading} onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
         </HorizontalGroup>
@@ -69,10 +67,10 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
   if (pluginStatus === PluginStatus.UPDATE) {
     return (
       <HorizontalGroup height="auto">
-        <Button disabled={isInstalling} onClick={onUpdate}>
-          {isInstalling ? 'Updating' : 'Update'}
+        <Button disabled={installLoading} onClick={onUpdate}>
+          {installLoading ? 'Updating' : 'Update'}
         </Button>
-        <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
+        <Button variant="destructive" disabled={uninstallLoading} onClick={onUninstall}>
           {uninstallBtnText}
         </Button>
       </HorizontalGroup>
@@ -80,8 +78,8 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
   }
 
   return (
-    <Button disabled={isInstalling} onClick={onInstall}>
-      {isInstalling ? 'Installing' : 'Install'}
+    <Button disabled={installLoading} onClick={onInstall}>
+      {installLoading ? 'Installing' : 'Install'}
     </Button>
   );
 }

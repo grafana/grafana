@@ -16,7 +16,7 @@ import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
-import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
+import { useGetPlugins, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
 import { PluginAdminRoutes, PluginListDisplayMode } from '../types';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
@@ -32,7 +32,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const filterBy = (locationSearch.filterBy as string) || 'installed';
   const filterByType = (locationSearch.filterByType as string) || 'all';
   const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
-  const { isLoading, error, plugins } = useGetAllWithFilters({
+  const { loading, error, plugins } = useGetPlugins({
     query,
     filterBy,
     filterByType,
@@ -142,7 +142,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
           </HorizontalGroup>
         </HorizontalGroup>
         <div className={styles.listWrap}>
-          {isLoading ? (
+          {loading ? (
             <LoadingPlaceholder
               className={css`
                 margin-bottom: 0;

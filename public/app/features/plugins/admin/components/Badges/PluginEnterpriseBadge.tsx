@@ -26,7 +26,7 @@ export function PluginEnterpriseBadge({ plugin }: Props): React.ReactElement {
 
   return (
     <HorizontalGroup>
-      <PluginSignatureBadge status={plugin.catalogInfo?.signature} />
+      <PluginSignatureBadge status={plugin.info.signature} />
       <Badge icon="lock" aria-label="lock icon" text="Enterprise" color="blue" className={customBadgeStyles} />
       <Button size="sm" fill="text" icon="external-link-alt" onClick={onClick}>
         Learn more

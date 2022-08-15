@@ -16,7 +16,7 @@ export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems
 
 const selectInstalled = (filterBy: string) =>
   createSelector(selectAll, (plugins) =>
-    plugins.filter((plugin) => (filterBy === 'installed' ? plugin.isInstalled : !plugin.isCore))
+    plugins.filter((plugin) => (filterBy === 'installed' ? plugin.settings.isInstalled : !plugin.info.isCore))
   );
 
 const findByInstallAndType = (filterBy: string, filterByType: string) =>
@@ -79,4 +79,7 @@ export const selectRequestError = (actionType: string) =>
   );
 
 export const selectIsRequestNotFetched = (actionType: string) =>
+  createSelector(selectRequest(actionType), (request) => request === undefined);
+
+export const selectShouldFetch = (actionType: string) =>
   createSelector(selectRequest(actionType), (request) => request === undefined);

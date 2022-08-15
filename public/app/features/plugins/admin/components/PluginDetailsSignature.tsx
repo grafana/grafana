@@ -13,9 +13,9 @@ type Props = {
 
 // Designed to show signature information inside the active tab on the plugin's details page
 export function PluginDetailsSignature({ className, plugin }: Props): React.ReactElement | null {
-  const isSignatureValid = plugin.catalogInfo?.signature === PluginSignatureStatus.valid;
-  const isCore = plugin.catalogInfo?.signature === PluginSignatureStatus.internal;
-  const isDisabled = plugin.settings?.isDisabled && isDisabledDueTooSignatureError(plugin.error);
+  const isSignatureValid = plugin.info.signature === PluginSignatureStatus.valid;
+  const isCore = plugin.info.signature === PluginSignatureStatus.internal;
+  const isDisabled = plugin.settings.isDisabled && isDisabledDueTooSignatureError(plugin.error);
 
   // The basic information is already available in the header
   if (isSignatureValid || isCore || isDisabled) {

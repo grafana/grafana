@@ -16,7 +16,7 @@ import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledE
 import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
-import { useGetSingle, useFetchStatus, useFetchDetailsStatus } from '../state/hooks';
+import { useGetPlugin } from '../state/hooks';
 import { PluginTabLabels, PluginTabIds, PluginDetailsTab } from '../types';
 
 type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
@@ -35,10 +35,8 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
       href: `${url}?page=${PluginTabIds.OVERVIEW}`,
     },
   ];
-  const plugin = useGetSingle(pluginId); // fetches the localplugin settings
+  const { plugin, loading } = useGetPlugin(pluginId); // fetches the localplugin settings
   const { tabs, defaultTab } = usePluginDetailsTabs(plugin, defaultTabs);
-  const { isLoading: isFetchLoading } = useFetchStatus();
-  const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
   const prevTabs = usePrevious(tabs);
   const pageId = (queryParams.page as PluginTabIds) || defaultTab;
@@ -53,7 +51,7 @@ export default function PluginDetails({ match, queryParams }: Props): JSX.Elemen
     }
   }, [pageId, url, tabs, prevTabs]);
 
-  if (isFetchLoading || isFetchDetailsLoading) {
+  if (loading) {
     return (
       <Page>
         <Loader />

@@ -47,14 +47,11 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
   }
 );
 
-export const fetchDetails = createAsyncThunk(`${STATE_PREFIX}/fetchDetails`, async (id: string, thunkApi) => {
+export const fetchSingle = createAsyncThunk(`${STATE_PREFIX}/fetchSingle`, async (id: string, thunkApi) => {
   try {
-    const details = await getPluginDetails(id);
+    const plugin = await getPluginDetails(id);
 
-    return {
-      id,
-      changes: { details },
-    } as Update<CatalogPlugin>;
+    return plugin;
   } catch (e) {
     return thunkApi.rejectWithValue('Unknown error.');
   }
