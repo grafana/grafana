@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLProps } from 'react';
+import React, { HTMLProps, ReactNode } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,21 +12,75 @@ import { Icon } from '../Icon/Icon';
 
 import { Counter } from './Counter';
 
-export interface TabProps extends HTMLProps<HTMLAnchorElement> {
+export interface TabProps {
   label: string;
   active?: boolean;
   /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
   href?: string;
   icon?: IconName;
-  onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
+  onChangeTab?: (event?: React.MouseEvent<HTMLElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
   /** Extra content, displayed after the tab label and counter */
   suffix?: NavModelItem['tabSuffix'];
+  children?: ReactNode;
+  value?: string;
 }
 
-export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
+interface TabAsLinkProps extends HTMLProps<HTMLAnchorElement>, TabProps {
+  onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
+  ref: string;
+}
+
+interface TabAsButtonProps extends HTMLProps<HTMLButtonElement>, TabProps {
+  onChangeTab?: (event?: React.MouseEvent<HTMLButtonElement>) => void;
+}
+
+const TabAsLink = ({
+  tabClass,
+  onChangeTab,
+  href,
+  ariaLabel,
+  active,
+  children,
+  ref,
+  ...otherProps
+}: TabAsLinkProps) => {
+  return (
+    <a
+      href={href}
+      className={tabClass}
+      {...otherProps}
+      onClick={onChangeTab}
+      aria-label={ariaLabel}
+      role="tab"
+      aria-selected={active}
+      ref={ref}
+    >
+      {children}
+    </a>
+  );
+};
+
+const TabAsButton = ({ tabClass, onChangeTab, ariaLabel, active, children, ...otherProps }: TabAsButtonProps) => {
+  return (
+    <Button
+      className={tabClass}
+      variant="secondary"
+      fill="text"
+      onClick={onChangeTab}
+      aria-label={ariaLabel}
+      role="tab"
+      aria-selected={active}
+      {...otherProps}
+    >
+      {children}
+    </Button>
+  );
+};
+
+export const Tab = React.forwardRef<HTMLElement, TabProps>(
+  ({ label, active, icon, counter, suffix: Suffix, href, onChangeTab, ...otherProps }, ref) => {
     const theme = useTheme2();
     const tabsStyles = getTabStyles(theme);
     const content = () => (
@@ -38,36 +92,33 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
       </>
     );
 
+    const ariaLabel = otherProps['aria-label'] || selectors.components.Tab.title(label);
     const tabClass = cx(tabsStyles.tab, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     return (
       <div className={tabsStyles.tabContainer}>
         {href ? (
-          <a
+          <TabAsLink
             href={href}
             className={tabClass}
             {...otherProps}
             onClick={onChangeTab}
-            aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-            role="tab"
+            aria-label={ariaLabel}
             aria-selected={active}
             ref={ref}
           >
             {content()}
-          </a>
+          </TabAsLink>
         ) : (
-          <Button
+          <TabAsButton
             className={tabClass}
-            variant="secondary"
-            fill="text"
             onClick={onChangeTab}
-            aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-            role="tab"
+            aria-label={ariaLabel}
             aria-selected={active}
             {...otherProps}
           >
             {content()}
-          </Button>
+          </TabAsButton>
         )}
       </div>
     );
