@@ -453,7 +453,7 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 }
 
 func TestAPI_Annotations_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInEditor(sc.initCtx)
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -860,7 +860,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 }
 
 func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInEditor(sc.initCtx)
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)

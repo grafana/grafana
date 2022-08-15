@@ -26,6 +26,7 @@ var (
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
 	ErrProtectedUser     = errors.New("cannot adopt protected user")
+	ErrNoUniqueID        = errors.New("identifying id not found")
 )
 
 type User struct {
@@ -101,6 +102,68 @@ type SetUsingOrgCommand struct {
 	OrgID  int64
 }
 
+type SearchUsersQuery struct {
+	SignedInUser *SignedInUser
+	OrgID        int64
+	Query        string
+	Page         int
+	Limit        int
+	AuthModule   string
+	Filters      []Filter
+
+	IsDisabled *bool
+}
+
+type SearchUserQueryResult struct {
+	TotalCount int64               `json:"totalCount"`
+	Users      []*UserSearchHitDTO `json:"users"`
+	Page       int                 `json:"page"`
+	PerPage    int                 `json:"perPage"`
+}
+
+type UserSearchHitDTO struct {
+	ID            int64                `json:"id"`
+	Name          string               `json:"name"`
+	Login         string               `json:"login"`
+	Email         string               `json:"email"`
+	AvatarUrl     string               `json:"avatarUrl"`
+	IsAdmin       bool                 `json:"isAdmin"`
+	IsDisabled    bool                 `json:"isDisabled"`
+	LastSeenAt    time.Time            `json:"lastSeenAt"`
+	LastSeenAtAge string               `json:"lastSeenAtAge"`
+	AuthLabels    []string             `json:"authLabels"`
+	AuthModule    AuthModuleConversion `json:"-"`
+}
+
+// implement Conversion interface to define custom field mapping (xorm feature)
+type AuthModuleConversion []string
+
+func (auth *AuthModuleConversion) FromDB(data []byte) error {
+	auth_module := string(data)
+	*auth = []string{auth_module}
+	return nil
+}
+
+// Just a stub, we don't want to write to database
+func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
+	return []byte{}, nil
+}
+
+type DisableUserCommand struct {
+	UserID     int64
+	IsDisabled bool
+}
+
+type BatchDisableUsersCommand struct {
+	UserIDs    []int64
+	IsDisabled bool
+}
+
+type SetUserHelpFlagCommand struct {
+	HelpFlags1 HelpFlags1
+	UserID     int64
+}
+
 type GetSignedInUserQuery struct {
 	UserID int64
 	Login  string
@@ -153,7 +216,7 @@ type ErrCaseInsensitiveLoginConflict struct {
 }
 
 type UserDisplayDTO struct {
-	Id        int64  `json:"id,omitempty"`
+	ID        int64  `json:"id,omitempty"`
 	Name      string `json:"name,omitempty"`
 	Login     string `json:"login,omitempty"`
 	AvatarUrl string `json:"avatarUrl"`
@@ -178,11 +241,12 @@ func (u *SignedInUser) NameOrFallback() string {
 
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
-		Id:    u.UserID,
+		ID:    u.UserID,
 		Login: u.Login,
 		Name:  u.Name,
 	}
 }
+
 func (u *SignedInUser) HasRole(role org.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
@@ -192,7 +256,25 @@ func (u *SignedInUser) HasRole(role org.RoleType) bool {
 }
 
 func (u *SignedInUser) IsRealUser() bool {
-	return u.UserID != 0
+	return u.UserID > 0
+}
+
+func (u *SignedInUser) IsApiKeyUser() bool {
+	return u.ApiKeyID > 0
+}
+
+func (u *SignedInUser) HasUniqueId() bool {
+	return u.IsRealUser() || u.IsApiKeyUser()
+}
+
+func (u *SignedInUser) GetCacheKey() (string, error) {
+	if u.IsRealUser() {
+		return fmt.Sprintf("%d-user-%d", u.OrgID, u.UserID), nil
+	}
+	if u.IsApiKeyUser() {
+		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
+	}
+	return "", ErrNoUniqueID
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
@@ -211,3 +293,32 @@ func (e *ErrCaseInsensitiveLoginConflict) Error() string {
 		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
 		n, strings.Join(userStrings, ", "))
 }
+
+type Filter interface {
+	WhereCondition() *WhereCondition
+	InCondition() *InCondition
+	JoinCondition() *JoinCondition
+}
+
+type WhereCondition struct {
+	Condition string
+	Params    interface{}
+}
+
+type InCondition struct {
+	Condition string
+	Params    interface{}
+}
+
+type JoinCondition struct {
+	Operator string
+	Table    string
+	Params   string
+}
+
+type SearchUserFilter interface {
+	GetFilter(filterName string, params []string) Filter
+	GetFilterList() map[string]FilterHandler
+}
+
+type FilterHandler func(params []string) (Filter, error)

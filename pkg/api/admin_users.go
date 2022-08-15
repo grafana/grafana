@@ -189,9 +189,9 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	cmd := models.DeleteUserCommand{UserId: userID}
+	cmd := user.DeleteUserCommand{UserID: userID}
 
-	if err := hs.SQLStore.DeleteUser(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Delete(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
