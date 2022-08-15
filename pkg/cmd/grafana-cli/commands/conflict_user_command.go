@@ -191,9 +191,6 @@ func mergeUsers(context *cli.Context, r *ConflictResolver) error {
 
 func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	newConflicts := make(ConflictingUsers, 0)
-
-	r.BuildConflictBlocks(fmt.Sprintf)
-
 	// need to verify that id or email exists
 	previouslySeenBlock := map[string]bool{}
 	previouslySeenIds := map[string]bool{}
@@ -229,8 +226,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			// example
 			// conflict: hej
 			// + id: 1, email: HEJ, login: hej, last_seen_at: 2012
-			block := strings.TrimLeft(row, "conflict: ")
-			if !previouslySeenBlock[block] {
+			if !previouslySeenBlock[row] {
 				return fmt.Errorf("did not recognize block \n%s\n\n terminated validation", row)
 			}
 			continue
@@ -240,14 +236,13 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		case strings.HasPrefix(row, "+"):
 			newUser := &ConflictingUser{}
 			newUser.Marshal(row)
-			if _, ok := previouslySeenEmails[newUser.Email]; !ok {
-				return fmt.Errorf("not valid email, email not in previous list")
-			}
-			if !previouslySeenEmails[newUser.Email] {
-				return fmt.Errorf("not valid email, email not in previous list")
+			fmt.Printf("%s", row)
+			fmt.Printf("%v+\n", newUser)
+			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
+				return fmt.Errorf("not valid email: %s, email not in previous conflicts seen", newUser.Email)
 			}
 			if strings.ToLower(newUser.Email) != newUser.Email {
-				return fmt.Errorf("not valid email for user: %s, email needs to be lowercased", newUser.Id)
+				return fmt.Errorf("not valid email: %s for user: %s, email needs to be lowercased", newUser.Email, newUser.Id)
 			}
 			if strings.ToLower(newUser.Login) != newUser.Login {
 				return fmt.Errorf("not valid login for user: %s, login needs to be lowercased", newUser.Id)
@@ -260,7 +255,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			if err != nil {
 				return fmt.Errorf("unable to know which operation should be performed on the user")
 			}
-			if !previouslySeenEmails[newUser.Email] {
+			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
 				return fmt.Errorf("not valid email, email not in previous list")
 			}
 			// valid entry
@@ -450,26 +445,30 @@ func (c *ConflictingUser) Marshal(filerow string) error {
 	}
 	trimmed := strings.TrimLeft(trimmedSpaces, "+-")
 	values := strings.Split(trimmed, ",")
-	if len(values) != 5 {
-		// fmt errror
-		return fmt.Errorf("expected 5 values in entryrow")
+
+	if len(values) < 3 {
+		return fmt.Errorf("expected at least 3 values in entryrow")
 	}
+	// expected fields
 	id := strings.Split(values[0], ":")
 	email := strings.Split(values[1], ":")
 	login := strings.Split(values[2], ":")
-	lastSeenAt := strings.TrimPrefix(values[3], "last_seen_at:")
-	authModule := strings.Split(values[4], ":")
-	// optional field
-	if len(authModule) < 2 {
-		c.AuthModule = ""
-	} else {
-		c.AuthModule = authModule[1]
-	}
-	// expected fields
 	c.Id = id[1]
 	c.Email = email[1]
 	c.Login = login[1]
-	c.LastSeenAt = lastSeenAt
+
+	// optional fields
+	if len(values) == 5 {
+		// why trim values, 2022-08-20:19:17:12
+		lastSeenAt := strings.TrimPrefix(values[3], "last_seen_at:")
+		authModule := strings.Split(values[4], ":")
+		if len(authModule) < 2 {
+			c.AuthModule = ""
+		} else {
+			c.AuthModule = authModule[1]
+		}
+		c.LastSeenAt = lastSeenAt
+	}
 	return nil
 }
 

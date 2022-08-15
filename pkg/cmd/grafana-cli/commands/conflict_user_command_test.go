@@ -16,6 +16,72 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func TestBuildConflictBlock(t *testing.T) {
+	type testBuildConflictBlock struct {
+		desc                string
+		users               []user.User
+		expectedBlock       string
+		wantDiscardedBlock  string
+		wantedNumberOfUsers int
+	}
+	testOrgID := 1
+	testCases := []testBuildConflictBlock{
+		{
+			desc: "should get one block with only 3 users",
+			users: []user.User{
+				{
+					Email: "ldap-editor",
+					Login: "ldap-editor",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "LDAP-EDITOR",
+					Login: "LDAP-EDITOR",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "overlapping conflict",
+					Login: "LDAP-editor",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "OVERLAPPING conflict",
+					Login: "no conflict",
+					OrgID: int64(testOrgID),
+				},
+			},
+			expectedBlock:       "conflict: ldap-editor",
+			wantDiscardedBlock:  "conflict: overlapping conflict",
+			wantedNumberOfUsers: 3,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Restore after destructive operation
+			sqlStore := sqlstore.InitTestDB(t)
+
+			// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
+			if sqlStore.GetDialect().DriverName() != "mysql" {
+				for _, u := range tc.users {
+					cmd := user.CreateUserCommand{
+						Email: u.Email,
+						Name:  u.Name,
+						Login: u.Login,
+						OrgID: int64(testOrgID),
+					}
+					_, err := sqlStore.CreateUser(context.Background(), cmd)
+					require.NoError(t, err)
+				}
+				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
+				require.NoError(t, err)
+				r := ConflictResolver{Users: m}
+				r.BuildConflictBlocks(fmt.Sprintf)
+				require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
+				require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
+			}
+		})
+	}
+}
 func TestGetConflictingUsers(t *testing.T) {
 	type testListConflictingUsers struct {
 		desc    string
@@ -181,160 +247,6 @@ func TestGetConflictingUsers(t *testing.T) {
 	}
 }
 
-func TestRunValidateConflictUserFile(t *testing.T) {
-	t.Run("should validate file thats gets created", func(t *testing.T) {
-		// Restore after destructive operation
-		sqlStore := sqlstore.InitTestDB(t)
-
-		const testOrgID int64 = 1
-		for i := 0; i < 5; i++ {
-			cmd := user.CreateUserCommand{
-				Email: fmt.Sprint("user", i, "@test.com"),
-				Name:  fmt.Sprint("user", i),
-				Login: fmt.Sprint("loginuser", i),
-				OrgID: testOrgID,
-			}
-			_, err := sqlStore.CreateUser(context.Background(), cmd)
-			require.Nil(t, err)
-		}
-
-		// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-		if sqlStore.GetDialect().DriverName() != "mysql" {
-			// add additional user with conflicting login where DOMAIN is upper case
-			dupUserLogincmd := user.CreateUserCommand{
-				Email: "userduplicatetest1@test.com",
-				Name:  "user name 1",
-				Login: "user_duplicate_test_1_login",
-				OrgID: testOrgID,
-			}
-			_, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
-			require.NoError(t, err)
-			dupUserEmailcmd := user.CreateUserCommand{
-				Email: "USERDUPLICATETEST1@TEST.COM",
-				Name:  "user name 1",
-				Login: "USER_DUPLICATE_TEST_1_LOGIN",
-				OrgID: testOrgID,
-			}
-			_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
-			require.NoError(t, err)
-
-			// get users
-			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
-			require.NoError(t, err)
-			r := ConflictResolver{Users: conflictUsers}
-			r.BuildConflictBlocks(fmt.Sprintf)
-			tmpFile, err := generateConflictUsersFile(&r)
-			require.NoError(t, err)
-
-			b, err := ioutil.ReadFile(tmpFile.Name())
-			require.NoError(t, err)
-
-			validErr := getValidConflictUsers(&r, b)
-			require.NoError(t, validErr)
-			require.Equal(t, 2, len(r.ValidUsers))
-		}
-	})
-}
-
-func TestMarshalConflictUser(t *testing.T) {
-	// TODO: add more testcases
-	testCases := []struct {
-		name         string
-		inputRow     string
-		expectedUser ConflictingUser
-	}{{
-		name:     "should be able to marshal expected input row",
-		inputRow: "+ id: 4, email: userduplicatetest1@test.com, login: userduplicatetest1@test.com, last_seen_at: 2012-07-26T16:08:11Z, auth_module:",
-		expectedUser: ConflictingUser{
-			Direction:  "+",
-			Id:         "4",
-			Email:      "userduplicatetest1@test.com",
-			Login:      "userduplicatetest1@test.com",
-			LastSeenAt: "2012-07-26T16:08:11Z",
-			AuthModule: "",
-		},
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			user := ConflictingUser{}
-			err := user.Marshal(tc.inputRow)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedUser.Direction, user.Direction)
-			require.Equal(t, tc.expectedUser.Id, user.Id)
-			require.Equal(t, tc.expectedUser.Email, user.Email)
-			require.Equal(t, tc.expectedUser.Login, user.Login)
-			require.Equal(t, tc.expectedUser.LastSeenAt, user.LastSeenAt)
-		})
-	}
-}
-func TestBuildConflictBlock(t *testing.T) {
-	type testBuildConflictBlock struct {
-		desc                string
-		users               []user.User
-		expectedBlock       string
-		wantDiscardedBlock  string
-		wantedNumberOfUsers int
-	}
-	testOrgID := 1
-	testCases := []testBuildConflictBlock{
-		{
-			desc: "should get one block with only 3 users",
-			users: []user.User{
-				{
-					Email: "ldap-editor",
-					Login: "ldap-editor",
-					OrgID: int64(testOrgID),
-				},
-				{
-					Email: "LDAP-EDITOR",
-					Login: "LDAP-EDITOR",
-					OrgID: int64(testOrgID),
-				},
-				{
-					Email: "overlapping conflict",
-					Login: "LDAP-editor",
-					OrgID: int64(testOrgID),
-				},
-				{
-					Email: "OVERLAPPING conflict",
-					Login: "no conflict",
-					OrgID: int64(testOrgID),
-				},
-			},
-			expectedBlock:       "conflict: ldap-editor",
-			wantDiscardedBlock:  "conflict: overlapping conflict",
-			wantedNumberOfUsers: 3,
-		},
-	}
-	for _, tc := range testCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			// Restore after destructive operation
-			sqlStore := sqlstore.InitTestDB(t)
-
-			// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
-			if sqlStore.GetDialect().DriverName() != "mysql" {
-				for _, u := range tc.users {
-					cmd := user.CreateUserCommand{
-						Email: u.Email,
-						Name:  u.Name,
-						Login: u.Login,
-						OrgID: int64(testOrgID),
-					}
-					_, err := sqlStore.CreateUser(context.Background(), cmd)
-					require.NoError(t, err)
-				}
-				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
-				require.NoError(t, err)
-				r := ConflictResolver{Users: m}
-				r.BuildConflictBlocks(fmt.Sprintf)
-				require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
-				require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
-			}
-		})
-	}
-}
-
 func TestGenerateConflictingUsersFile(t *testing.T) {
 	type testGenerateConflictUsers struct {
 		desc               string
@@ -441,6 +353,48 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRunValidateConflictUserFile(t *testing.T) {
+	t.Run("should validate file thats gets created", func(t *testing.T) {
+		// Restore after destructive operation
+		sqlStore := sqlstore.InitTestDB(t)
+		const testOrgID int64 = 1
+		// "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
+		if sqlStore.GetDialect().DriverName() != "mysql" {
+			// add additional user with conflicting login where DOMAIN is upper case
+			dupUserLogincmd := user.CreateUserCommand{
+				Email: "userduplicatetest1@test.com",
+				Login: "user_duplicate_test_1_login",
+				OrgID: testOrgID,
+			}
+			_, err := sqlStore.CreateUser(context.Background(), dupUserLogincmd)
+			require.NoError(t, err)
+			dupUserEmailcmd := user.CreateUserCommand{
+				Email: "USERDUPLICATETEST1@TEST.COM",
+				Login: "USER_DUPLICATE_TEST_1_LOGIN",
+				OrgID: testOrgID,
+			}
+			_, err = sqlStore.CreateUser(context.Background(), dupUserEmailcmd)
+			require.NoError(t, err)
+
+			// get users
+			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
+			require.NoError(t, err)
+			r := ConflictResolver{Users: conflictUsers}
+			r.BuildConflictBlocks(fmt.Sprintf)
+			tmpFile, err := generateConflictUsersFile(&r)
+			require.NoError(t, err)
+
+			b, err := ioutil.ReadFile(tmpFile.Name())
+			require.NoError(t, err)
+
+			validErr := getValidConflictUsers(&r, b)
+			fmt.Printf("\n\nvalid users %v\n\n", r.ValidUsers)
+			require.NoError(t, validErr)
+			require.Equal(t, 2, len(r.ValidUsers))
+		}
+	})
 }
 
 func TestMergeUser(t *testing.T) {
@@ -609,4 +563,47 @@ func TestMergeUser(t *testing.T) {
 			/* }}} */
 		}
 	})
+}
+
+func TestMarshalConflictUser(t *testing.T) {
+	testCases := []struct {
+		name         string
+		inputRow     string
+		expectedUser ConflictingUser
+	}{
+		{
+			name:     "should be able to marshal expected input row",
+			inputRow: "+ id: 4, email: userduplicatetest1@test.com, login: userduplicatetest1@test.com, last_seen_at: 2012-07-26T16:08:11Z, auth_module:",
+			expectedUser: ConflictingUser{
+				Direction:  "+",
+				Id:         "4",
+				Email:      "userduplicatetest1@test.com",
+				Login:      "userduplicatetest1@test.com",
+				LastSeenAt: "2012-07-26T16:08:11Z",
+				AuthModule: "",
+			},
+		},
+		{
+			name:     "should be able to marshal expected input row",
+			inputRow: "+ id: 1, email: userduplicatetest1@test.com, login: user_duplicate_test_1_login",
+			expectedUser: ConflictingUser{
+				Direction: "+",
+				Id:        "1",
+				Email:     "userduplicatetest1@test.com",
+				Login:     "user_duplicate_test_1_login",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			user := ConflictingUser{}
+			err := user.Marshal(tc.inputRow)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedUser.Direction, user.Direction)
+			require.Equal(t, tc.expectedUser.Id, user.Id)
+			require.Equal(t, tc.expectedUser.Email, user.Email)
+			require.Equal(t, tc.expectedUser.Login, user.Login)
+			require.Equal(t, tc.expectedUser.LastSeenAt, user.LastSeenAt)
+		})
+	}
 }
