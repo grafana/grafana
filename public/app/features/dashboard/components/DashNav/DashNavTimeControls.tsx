@@ -1,11 +1,10 @@
-import { css } from '@emotion/css';
 import { t } from '@lingui/macro';
 import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { dateMath, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
+import { dateMath, TimeRange, TimeZone } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
-import { defaultIntervals, RefreshPicker, Themeable2, withTheme2 } from '@grafana/ui';
+import { defaultIntervals, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -13,12 +12,12 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state';
 
-export interface Props extends Themeable2 {
+export interface Props {
   dashboard: DashboardModel;
   onChangeTimeZone: (timeZone: TimeZone) => void;
 }
 
-class UnthemedDashNavTimeControls extends Component<Props> {
+export class DashNavTimeControls extends Component<Props> {
   private sub?: Unsubscribable;
 
   componentDidMount() {
@@ -78,8 +77,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
   };
 
   render() {
-    const { dashboard, theme } = this.props;
-    const styles = getStyles(theme);
+    const { dashboard } = this.props;
     const { refresh_intervals } = dashboard.timepicker;
     const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
 
@@ -89,7 +87,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
     const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
 
     return (
-      <div className={styles.wrapper}>
+      <>
         <TimePickerWithHistory
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
@@ -121,16 +119,7 @@ class UnthemedDashNavTimeControls extends Component<Props> {
           offOptionLabelMsg={t({ id: 'dashboard.refresh-picker.off-label', message: 'Off' })}
           offOptionAriaLabelMsg={t({ id: 'dashboard.refresh-picker.off-arialabel', message: 'Turn off auto refresh' })}
         />
-      </div>
+      </>
     );
   }
 }
-
-export const DashNavTimeControls = withTheme2(UnthemedDashNavTimeControls);
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'flex',
-    gap: theme.spacing(1),
-  })
-});
