@@ -37,7 +37,7 @@ function setup() {
   const sectionNav = {
     main: { text: 'Dashboard' },
     node: {
-      text: 'Annotations',
+      text: 'Versions',
     },
   };
 
@@ -183,7 +183,7 @@ describe('VersionSettings', () => {
 
     await user.click(compareButton);
 
-    await waitFor(() => expect(screen.getByRole('heading', { name: /versions comparing 2 11/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('heading', { name: /comparing 2 11/i })).toBeInTheDocument());
 
     expect(queryByFullText('Version 11 updated by admin')).toBeInTheDocument();
     expect(queryByFullText('Version 2 updated by admin')).toBeInTheDocument();

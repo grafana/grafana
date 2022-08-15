@@ -17,7 +17,6 @@ import { toKeyedVariableIdentifier, toStateKey, toVariablePayload } from '../uti
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
-  clearIdInEditor,
   variableEditorMounted,
   variableEditorUnMounted,
 } from './reducer';
@@ -108,7 +107,6 @@ export const initListMode =
   (key: string | null | undefined): ThunkResult<void> =>
   (dispatch, getState) => {
     const rootStateKey = toStateKey(key);
-    dispatch(toKeyedAction(rootStateKey, clearIdInEditor()));
     const state = getState();
     const variables = getEditorVariables(rootStateKey, state);
     const dashboard = state.dashboard.getModel();

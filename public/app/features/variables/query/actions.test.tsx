@@ -15,7 +15,6 @@ import {
   changeVariableEditorExtended,
   initialVariableEditorState,
   removeVariableEditorError,
-  setIdInEditor,
 } from '../editor/reducer';
 import { updateOptions } from '../state/actions';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
@@ -168,7 +167,6 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
@@ -195,7 +193,6 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateQueryVariableOptions(toKeyedVariableIdentifier(variable), 'search'), true);
 
       const update = { results: optionsMetrics, templatedRegex: '' };
@@ -221,7 +218,6 @@ describe('query actions', () => {
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         )
         .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
-        .whenActionIsDispatched(toKeyedAction('key', setIdInEditor({ id: variable.id })))
         .whenAsyncActionIsDispatched(updateOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {

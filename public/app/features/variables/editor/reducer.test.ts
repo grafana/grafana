@@ -7,10 +7,8 @@ import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
   cleanEditorState,
-  clearIdInEditor,
   initialVariableEditorState,
   removeVariableEditorError,
-  setIdInEditor,
   variableEditorMounted,
   variableEditorReducer,
   VariableEditorState,
@@ -18,30 +16,6 @@ import {
 } from './reducer';
 
 describe('variableEditorReducer', () => {
-  describe('when setIdInEditor is dispatched', () => {
-    it('then state should be correct', () => {
-      const payload = { id: '0' };
-      reducerTester<VariableEditorState>()
-        .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
-        .whenActionIsDispatched(setIdInEditor(payload))
-        .thenStateShouldEqual({
-          ...initialVariableEditorState,
-          id: '0',
-        });
-    });
-  });
-
-  describe('when clearIdInEditor is dispatched', () => {
-    it('then state should be correct', () => {
-      reducerTester<VariableEditorState>()
-        .givenReducer(variableEditorReducer, { ...initialVariableEditorState, id: '0' })
-        .whenActionIsDispatched(clearIdInEditor())
-        .thenStateShouldEqual({
-          ...initialVariableEditorState,
-        });
-    });
-  });
-
   describe('when variableEditorMounted is dispatched', () => {
     it('then state should be correct', () => {
       const payload = { name: 'A name' };
