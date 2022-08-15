@@ -132,9 +132,7 @@ export const PageToolbar: FC<Props> = React.memo(
             )}
           </nav>
         </div>
-        <ToolbarButtonRow alignment="right">
-          {React.Children.toArray(children).filter(Boolean)}
-        </ToolbarButtonRow>
+        <ToolbarButtonRow alignment="right">{React.Children.toArray(children).filter(Boolean)}</ToolbarButtonRow>
       </nav>
     );
   }

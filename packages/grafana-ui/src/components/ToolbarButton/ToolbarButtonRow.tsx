@@ -12,61 +12,63 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   alignment?: 'left' | 'right';
 }
 
-export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ alignment = 'left', className, children, ...rest }, ref) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [childVisibility, setChildVisibility] = useState<boolean[]>(
-    Array(React.Children.toArray(children).length).fill(true)
-  );
-  const theme = useTheme2();
-  const overflowButtonOrder = alignment === 'left' ? childVisibility.indexOf(false) - 1 : childVisibility.length;
-  const styles = getStyles(theme, overflowButtonOrder, alignment);
-
-  useLayoutEffect(() => {
-    const intersectionObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.target instanceof HTMLElement && entry.target.parentNode) {
-            const index = Array.prototype.indexOf.call(entry.target.parentNode.children, entry.target);
-            entry.target.style.visibility = entry.isIntersecting ? 'visible' : 'hidden';
-            entry.target.style.order = index.toString();
-            setChildVisibility((prev) => {
-              const newVisibility = [...prev];
-              newVisibility[index] = entry.isIntersecting;
-              return newVisibility;
-            });
-          }
-        });
-      },
-      {
-        threshold: 1,
-        root: containerRef.current,
-      }
+export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
+  ({ alignment = 'left', className, children, ...rest }, ref) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [childVisibility, setChildVisibility] = useState<boolean[]>(
+      Array(React.Children.toArray(children).length).fill(true)
     );
-    if (containerRef.current) {
-      Array.from(containerRef.current.children).forEach((item) => {
-        intersectionObserver.observe(item);
-      });
-    }
-    return () => intersectionObserver.disconnect();
-  }, []);
+    const theme = useTheme2();
+    const overflowButtonOrder = alignment === 'left' ? childVisibility.indexOf(false) - 1 : childVisibility.length;
+    const styles = getStyles(theme, overflowButtonOrder, alignment);
 
-  const renderOverflowChildren = () => (
-    <div className={styles.overflowItems}>
-      {React.Children.toArray(children).map((child, index) => !childVisibility[index] && child)}
-    </div>
-  );
+    useLayoutEffect(() => {
+      const intersectionObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.target instanceof HTMLElement && entry.target.parentNode) {
+              const index = Array.prototype.indexOf.call(entry.target.parentNode.children, entry.target);
+              entry.target.style.visibility = entry.isIntersecting ? 'visible' : 'hidden';
+              entry.target.style.order = index.toString();
+              setChildVisibility((prev) => {
+                const newVisibility = [...prev];
+                newVisibility[index] = entry.isIntersecting;
+                return newVisibility;
+              });
+            }
+          });
+        },
+        {
+          threshold: 1,
+          root: containerRef.current,
+        }
+      );
+      if (containerRef.current) {
+        Array.from(containerRef.current.children).forEach((item) => {
+          intersectionObserver.observe(item);
+        });
+      }
+      return () => intersectionObserver.disconnect();
+    }, []);
 
-  return (
-    <div ref={containerRef} className={cx(styles.wrapper, className)} {...rest}>
-      {children}
-      {childVisibility.includes(false) && (
-        <Dropdown overlay={renderOverflowChildren}>
-          <ToolbarButton className={styles.overflowButton} icon="ellipsis-v" iconOnly narrow />
-        </Dropdown>
-      )}
-    </div>
-  );
-});
+    const renderOverflowChildren = () => (
+      <div className={styles.overflowItems}>
+        {React.Children.toArray(children).map((child, index) => !childVisibility[index] && child)}
+      </div>
+    );
+
+    return (
+      <div ref={containerRef} className={cx(styles.wrapper, className)} {...rest}>
+        {children}
+        {childVisibility.includes(false) && (
+          <Dropdown overlay={renderOverflowChildren}>
+            <ToolbarButton className={styles.overflowButton} icon="ellipsis-v" iconOnly narrow />
+          </Dropdown>
+        )}
+      </div>
+    );
+  }
+);
 
 ToolbarButtonRow.displayName = 'ToolbarButtonRow';
 
