@@ -3,8 +3,8 @@ import React from 'react';
 
 import { PluginErrorCode, PluginType } from '@grafana/data';
 
-import { getCatalogPluginMock } from '../__mocks__';
-import { PluginListDisplayMode } from '../types';
+import { getCatalogPluginMock } from '../../__mocks__';
+import { PluginListDisplayMode } from '../../types';
 
 import { PluginListItem } from './PluginListItem';
 

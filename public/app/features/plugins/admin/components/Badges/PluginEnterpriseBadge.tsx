@@ -3,7 +3,7 @@ import React from 'react';
 import { featureEnabled } from '@grafana/runtime';
 import { Badge, Button, HorizontalGroup, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 
-import { CatalogPlugin } from '../../types';
+import { CatalogPlugin } from '../../../types';
 
 import { getBadgeColor } from './sharedStyles';
 

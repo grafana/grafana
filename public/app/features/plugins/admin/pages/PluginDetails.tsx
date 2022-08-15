@@ -10,6 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AppNotificationSeverity } from 'app/types';
 
+import { PluginTabLabels, PluginTabIds, PluginDetailsTab } from '../../types';
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
@@ -17,7 +18,6 @@ import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
 import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { useGetPlugin } from '../state/hooks';
-import { PluginTabLabels, PluginTabIds, PluginDetailsTab } from '../types';
 
 type Props = GrafanaRouteComponentProps<{ pluginId?: string }>;
 

@@ -4,8 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon, HorizontalGroup } from '@grafana/ui';
 
+import { CatalogPlugin } from '../../types';
 import { getLatestCompatibleVersion } from '../helpers';
-import { CatalogPlugin } from '../types';
 
 import { PluginDisabledBadge } from './Badges';
 import { GetStartedWithPlugin } from './GetStartedWithPlugin';

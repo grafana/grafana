@@ -6,6 +6,7 @@ import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
 import { invalidatePluginInCache } from '../../pluginCacheBuster';
+import { CatalogPlugin, RemotePlugin } from '../../types';
 import {
   getRemotePlugins,
   getPluginErrors,
@@ -16,7 +17,6 @@ import {
 } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { mergeLocalsAndRemotes, updatePanels } from '../helpers';
-import { CatalogPlugin, RemotePlugin } from '../types';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {

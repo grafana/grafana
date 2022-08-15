@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2, PluginSignatureStatus } from '@grafana/data';
 import { PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin } from '../../types';
 
 import { PluginSignatureDetailsBadge } from './PluginSignatureDetailsBadge';
 

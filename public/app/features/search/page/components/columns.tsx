@@ -13,7 +13,7 @@ import {
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { PluginIconName } from 'app/features/plugins/admin/types';
+import { PluginIconName } from 'app/features/plugins/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { QueryResponse, SearchResultMeta } from '../../service';

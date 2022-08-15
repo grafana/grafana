@@ -4,7 +4,7 @@ import React from 'react';
 import { PluginErrorCode } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getCatalogPluginMock } from '../__mocks__';
+import { getCatalogPluginMock } from '../../__mocks__';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 

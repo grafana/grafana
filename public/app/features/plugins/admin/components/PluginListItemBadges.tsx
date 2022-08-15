@@ -2,7 +2,7 @@ import React from 'react';
 
 import { HorizontalGroup, PluginSignatureBadge } from '@grafana/ui';
 
-import { CatalogPlugin } from '../types';
+import { CatalogPlugin } from '../../types';
 
 import { PluginEnterpriseBadge, PluginDisabledBadge, PluginInstalledBadge, PluginUpdateAvailableBadge } from './Badges';
 

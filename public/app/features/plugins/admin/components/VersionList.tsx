@@ -4,8 +4,8 @@ import React from 'react';
 import { dateTimeFormatTimeAgo, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import { Version } from '../../types';
 import { getLatestCompatibleVersion } from '../helpers';
-import { Version } from '../types';
 
 interface Props {
   versions?: Version[];

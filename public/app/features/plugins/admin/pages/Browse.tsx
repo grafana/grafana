@@ -11,13 +11,13 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types/store';
 
+import { PluginAdminRoutes, PluginListDisplayMode } from '../../types';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
 import { useGetPlugins, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
-import { PluginAdminRoutes, PluginListDisplayMode } from '../types';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();

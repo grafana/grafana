@@ -1,6 +1,8 @@
 import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 
+import { LocalPlugin, RemotePlugin, Version, PluginVersion, CatalogPlugin } from '../types';
+
 import { API_ROOT, GCOM_API_ROOT } from './constants';
 import {
   isLocalPluginVisible,
@@ -9,7 +11,6 @@ import {
   mapRemoteToCatalog,
   mergeLocalAndRemote,
 } from './helpers';
-import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion, CatalogPlugin } from './types';
 
 // We are fetching these details separately as they are currently not part of the list responses (either locally or on the remote).
 // (Ideally all of these could be moved to the list responses, except the versions)

@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { PluginError, PluginErrorCode } from '@grafana/data';
 
-import { RequestStatus, PluginCatalogStoreState } from '../types';
+import { RequestStatus, PluginCatalogStoreState } from '../../types';
 
 import { pluginsAdapter } from './reducer';
 

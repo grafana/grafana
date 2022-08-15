@@ -10,11 +10,17 @@ import { config } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
-import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions, Subset } from '../__mocks__';
+import {
+  mockPluginApis,
+  getCatalogPluginMock,
+  getPluginsStateMock,
+  mockUserPermissions,
+  Subset,
+} from '../../__mocks__';
+import { CatalogPlugin, PluginTabIds, PluginTabLabels, ReducerState, RequestStatus } from '../../types';
 import * as api from '../api';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { fetchRemotePlugins } from '../state/actions';
-import { CatalogPlugin, PluginTabIds, PluginTabLabels, ReducerState, RequestStatus } from '../types';
 
 import PluginDetailsPage from './PluginDetails';
 

@@ -2,8 +2,8 @@ import { createSlice, createEntityAdapter, Reducer, AnyAction, PayloadAction } f
 
 import { PanelPlugin } from '@grafana/data';
 
+import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../../types';
 import { STATE_PREFIX } from '../constants';
-import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
 
 import { fetchAll, fetchSingle, install, uninstall, loadPluginDashboards, panelPluginLoaded } from './actions';
 
