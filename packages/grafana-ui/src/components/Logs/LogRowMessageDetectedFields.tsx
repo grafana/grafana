@@ -3,12 +3,12 @@ import React, { PureComponent } from 'react';
 
 import { LogRowModel, Field, LinkModel } from '@grafana/data';
 
-import { withTheme } from '../../themes/index';
-import { Themeable } from '../../types/theme';
+import { withTheme2 } from '../../themes/index';
+import { Themeable2 } from '../../types/theme';
 
 import { getAllFields } from './logParser';
 
-export interface Props extends Themeable {
+export interface Props extends Themeable2 {
   row: LogRowModel;
   showDetectedFields: string[];
   wrapLogMessage: boolean;
@@ -45,5 +45,5 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   }
 }
 
-export const LogRowMessageDetectedFields = withTheme(UnThemedLogRowMessageDetectedFields);
+export const LogRowMessageDetectedFields = withTheme2(UnThemedLogRowMessageDetectedFields);
 LogRowMessageDetectedFields.displayName = 'LogRowMessageDetectedFields';

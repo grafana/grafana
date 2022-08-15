@@ -37,7 +37,8 @@ load(
     'benchmark_ldap_step',
     'store_storybook_step',
     'upload_packages_step',
-    'store_packages_step',
+    'publish_packages_step',
+    'publish_grafanacom_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
     'publish_images_step',
@@ -66,7 +67,7 @@ load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', '
 def store_npm_packages_step():
     return {
         'name': 'store-npm-packages',
-        'image': publish_image,
+        'image': build_image,
         'depends_on': [
             'build-frontend-packages',
         ],
@@ -369,17 +370,6 @@ def publish_artifacts_step(mode):
         'depends_on': ['grabpl'],
     }
 
-def publish_packages_step(edition):
-    return {
-        'name': 'publish-packages-{}'.format(edition),
-        'image': publish_image,
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-        },
-        'commands': ['./bin/grabpl store-packages {}'.format(edition)],
-        'depends_on': ['grabpl'],
-    }
-
 def publish_artifacts_pipelines(mode):
     trigger = {
         'event': ['promote'],
@@ -402,13 +392,15 @@ def publish_packages_pipeline():
     oss_steps = [
         download_grabpl_step(),
         gen_version_step(ver_mode='release'),
-        store_packages_step(edition='oss', ver_mode='release'),
+        publish_packages_step(edition='oss', ver_mode='release'),
+        publish_grafanacom_step(edition='oss', ver_mode='release'),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
         gen_version_step(ver_mode='release'),
-        store_packages_step(edition='enterprise', ver_mode='release'),
+        publish_packages_step(edition='enterprise', ver_mode='release'),
+        publish_grafanacom_step(edition='enterprise', ver_mode='release'),
     ]
     deps = [
         'publish-artifacts-public',

@@ -40,7 +40,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *models.ReqContext, body a
 
 	evalCond := ngmodels.Condition{
 		Condition: body.GrafanaManagedCondition.Condition,
-		OrgID:     c.SignedInUser.OrgId,
+		OrgID:     c.SignedInUser.OrgID,
 		Data:      body.GrafanaManagedCondition.Data,
 	}
 
@@ -115,7 +115,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 		return ErrResp(http.StatusBadRequest, err, "invalid queries or expressions")
 	}
 
-	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser.OrgId, cmd.Data, now)
+	evalResults, err := srv.evaluator.QueriesAndExpressionsEval(c.Req.Context(), c.SignedInUser.OrgID, cmd.Data, now)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate queries and expressions")
 	}

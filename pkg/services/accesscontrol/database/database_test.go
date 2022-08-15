@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -66,16 +67,6 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			actions:            []string{"dashboards:write"},
 		},
 		{
-			desc:               "Should return no permission when passing empty slice of actions",
-			orgID:              1,
-			role:               "Viewer",
-			userPermissions:    []string{"1", "2", "10"},
-			teamPermissions:    []string{"100", "2"},
-			builtinPermissions: []string{"5", "6"},
-			expected:           0,
-			actions:            []string{},
-		},
-		{
 			desc:               "should only get br permissions for anonymous user",
 			anonymousUser:      true,
 			orgID:              1,
@@ -120,7 +111,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			var roles []string
-			role := models.RoleType(tt.role)
+			role := org.RoleType(tt.role)
 
 			if role.IsValid() {
 				roles = append(roles, string(role))
@@ -130,14 +121,17 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			userID := user.ID
+			teamIDs := []int64{team.Id}
 			if tt.anonymousUser {
 				userID = 0
+				teamIDs = []int64{}
 			}
 			permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
 				OrgID:   tt.orgID,
 				UserID:  userID,
 				Roles:   roles,
 				Actions: tt.actions,
+				TeamIDs: teamIDs,
 			})
 
 			require.NoError(t, err)

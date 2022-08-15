@@ -7,8 +7,6 @@ import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';
 import CloudMonitoringDatasource from './datasource';
 import { AlignmentTypes, CustomMetaData, MetricDescriptor, MetricKind, PreprocessorType, ValueTypes } from './types';
 
-const templateSrv: TemplateSrv = getTemplateSrv();
-
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
   uniqBy(metricDescriptors, 'service');
 
@@ -79,6 +77,7 @@ export const getAlignmentPickerData = (
   perSeriesAligner: string | undefined = AlignmentTypes.ALIGN_MEAN,
   preprocessor?: PreprocessorType
 ) => {
+  const templateSrv: TemplateSrv = getTemplateSrv();
   const alignOptions = getAlignmentOptionsByMetric(valueType!, metricKind!, preprocessor!).map((option) => ({
     ...option,
     label: option.text,

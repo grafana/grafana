@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -233,7 +232,7 @@ func (s *Server) writePIDFile() {
 
 	// Retrieve the PID and write it to file.
 	pid := strconv.Itoa(os.Getpid())
-	if err := ioutil.WriteFile(s.pidFile, []byte(pid), 0644); err != nil {
+	if err := os.WriteFile(s.pidFile, []byte(pid), 0644); err != nil {
 		s.log.Error("Failed to write pidfile", "error", err)
 		os.Exit(1)
 	}
