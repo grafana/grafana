@@ -58,6 +58,7 @@ const UsersTable: FC<Props> = (props) => {
             <th>Seen</th>
             <th>Role</th>
             <th style={{ width: '34px' }} />
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -108,8 +109,12 @@ const UsersTable: FC<Props> = (props) => {
                   )}
                 </td>
 
+                <td className="width-1 text-center">
+                  {user.isDisabled && <span className="label label-tag label-tag--gray">Disabled</span>}
+                </td>
+
                 {contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, user) && (
-                  <td>
+                  <td className="text-right">
                     <Button
                       size="sm"
                       variant="destructive"
