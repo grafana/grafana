@@ -180,7 +180,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')
+        () => import(/* webpackChunkName: "UserProfileEditPage" */ 'app/features/profile/UserProfileEditPage') // LOGZ.IO CHANGE :: DEV-33551
       ),
     },
     {
