@@ -2,7 +2,7 @@ package pluginproxy
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -241,7 +241,7 @@ func TestPluginProxy(t *testing.T) {
 			route,
 			store,
 		)
-		content, err := ioutil.ReadAll(req.Body)
+		content, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 	})

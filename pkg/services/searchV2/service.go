@@ -132,7 +132,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		}
 
 		usr = &user.SignedInUser{
-			OrgId:       orga.Id,
+			OrgID:       orga.Id,
 			OrgName:     orga.Name,
 			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
 			IsAnonymous: true,

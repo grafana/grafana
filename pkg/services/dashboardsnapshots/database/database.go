@@ -118,7 +118,7 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 		case query.SignedInUser.OrgRole == org.RoleAdmin:
 			sess.Where("org_id = ?", query.OrgId)
 		case !query.SignedInUser.IsAnonymous:
-			sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserId)
+			sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserID)
 		default:
 			query.Result = snapshots
 			return nil

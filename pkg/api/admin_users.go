@@ -303,7 +303,7 @@ func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.UserId == userID {
+	if c.UserID == userID {
 		return response.Error(400, "You cannot logout yourself", nil)
 	}
 

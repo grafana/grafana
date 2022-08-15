@@ -117,7 +117,7 @@ func TestIntegrationPreferencesDataAccess(t *testing.T) {
 		ss := sqlstore.InitTestDB(t)
 		prefStore := sqlStore{db: ss}
 		id, err := prefStore.Insert(context.Background(), &pref.Preference{
-			UserID:          user.SignedInUser{}.UserId,
+			UserID:          user.SignedInUser{}.UserID,
 			Theme:           "dark",
 			Timezone:        "browser",
 			HomeDashboardID: 5,
@@ -160,7 +160,7 @@ func TestIntegrationPreferencesDataAccess(t *testing.T) {
 	t.Run("insert preference that does not exist", func(t *testing.T) {
 		_, err := prefStore.Insert(context.Background(),
 			&pref.Preference{
-				UserID:   user.SignedInUser{}.UserId,
+				UserID:   user.SignedInUser{}.UserID,
 				Created:  time.Now(),
 				Updated:  time.Now(),
 				JSONData: &pref.PreferenceJSONData{},

@@ -86,7 +86,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	}
 	ss := InitTestDB(t)
 	usr := &user.SignedInUser{
-		OrgId:       1,
+		OrgID:       1,
 		Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:*"}}},
 	}
 
@@ -416,9 +416,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
 		require.Nil(t, err)
 		require.NotNil(t, query4.Result)
-		require.Equal(t, query4.Result.OrgId, users[0].OrgID)
+		require.Equal(t, query4.Result.OrgID, users[0].OrgID)
 
-		cacheKey := newSignedInUserCacheKey(query4.Result.OrgId, query4.UserId)
+		cacheKey := newSignedInUserCacheKey(query4.Result.OrgID, query4.UserId)
 		_, found := ss.CacheService.Get(cacheKey)
 		require.True(t, found)
 
@@ -466,7 +466,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 
 		testUser := &user.SignedInUser{
-			OrgId:       1,
+			OrgID:       1,
 			Permissions: map[int64]map[string][]string{1: {"users:read": {"global.users:id:1", "global.users:id:3"}}},
 		}
 		query := models.SearchUsersQuery{SignedInUser: testUser}

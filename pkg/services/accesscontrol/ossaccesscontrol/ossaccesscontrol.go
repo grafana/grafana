@@ -86,20 +86,20 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *user.Sign
 		user.Permissions = map[int64]map[string][]string{}
 	}
 
-	if _, ok := user.Permissions[user.OrgId]; !ok {
+	if _, ok := user.Permissions[user.OrgID]; !ok {
 		permissions, err := ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
 		if err != nil {
 			return false, err
 		}
-		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
+		user.Permissions[user.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	attributeMutator := ac.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
+	attributeMutator := ac.scopeResolvers.GetScopeAttributeMutator(user.OrgID)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
+	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgID]), nil
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
@@ -110,8 +110,8 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	permissions := ac.getFixedPermissions(ctx, user)
 
 	dbPermissions, err := ac.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:   user.OrgId,
-		UserID:  user.UserId,
+		OrgID:   user.OrgID,
+		UserID:  user.UserID,
 		Roles:   accesscontrol.GetOrgRoles(ac.cfg, user),
 		Actions: append(TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...),
 	})

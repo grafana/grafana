@@ -5,6 +5,7 @@ package server
 
 import (
 	"github.com/google/wire"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
@@ -31,9 +32,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
-	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/thumbs"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -66,7 +67,7 @@ var wireExtsBasicSet = wire.NewSet(
 	encryptionprovider.ProvideEncryptionProvider,
 	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 	filters.ProvideOSSSearchUserFilter,
-	wire.Bind(new(models.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
+	wire.Bind(new(user.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	signature.ProvideOSSAuthorizer,
@@ -86,8 +87,6 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
-	secretsStore.ProvideRemotePluginCheck,
-	wire.Bind(new(secretsStore.UseRemoteSecretsPluginCheck), new(*secretsStore.OSSRemoteSecretsPluginCheck)),
 )
 
 var wireExtsSet = wire.NewSet(
