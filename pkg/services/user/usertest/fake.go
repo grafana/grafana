@@ -56,3 +56,27 @@ func (f *FakeUserService) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrg
 func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	return f.ExpectedSignedInUser, f.ExpectedError
 }
+
+func (f *FakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	return f.ExpectedSignedInUser, f.ExpectedError
+}
+
+func (f *FakeUserService) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return &user.SearchUserQueryResult{}, f.ExpectedError
+}
+
+func (f *FakeUserService) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) UpdatePermissions(userID int64, isAdmin bool) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
+	return f.ExpectedError
+}
