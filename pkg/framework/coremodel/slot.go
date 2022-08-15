@@ -23,10 +23,16 @@ func (s Slot) MetaSchema() cue.Value {
 	return s.raw
 }
 
-// ForPlugin indicates whether, for the particular Slot, a slot implementation is
-// accepted for that plugin type, and whether it is required to produce one.
-func (s Slot) ForPlugin(plugintype string) (accepted, required bool) {
-	required, accepted = s.plugins[plugintype]
+// ForPluginType indicates whether for this Slot, plugins of the given type may
+// provide a slot implementation (first return value), and for those types that
+// may, whether they must produce one (second return value).
+//
+// Note that, at least for now, plugins are not required to provide any slot
+// implementations, by simply not containing a models.cue file. Consequently,
+// the "must" return value here is best understood as, "IF a plugin provides
+// a models.cue file, it MUST contain an implementation of this slot."
+func (s Slot) ForPluginType(plugintype string) (may, must bool) {
+	must, may = s.plugins[plugintype]
 	return
 }
 

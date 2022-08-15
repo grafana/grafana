@@ -66,9 +66,6 @@ func CuetsifyPlugin(t *pfs.Tree, path string) (WriteDiffer, error) {
 	}
 
 	for slotname, lin := range slotimps {
-		// TODO this is hardcoded for now, but should ultimately be a property of
-		// whether the slot is a grouped schema or not:
-		// https://github.com/grafana/thema/issues/62
 		v := thema.LatestVersion(lin)
 		sch := thema.SchemaP(lin, v)
 		// TODO need call expressions in cuetsy tsast to be able to do these
@@ -77,6 +74,9 @@ func CuetsifyPlugin(t *pfs.Tree, path string) (WriteDiffer, error) {
 			ModelName: slotname,
 		}
 
+		// TODO this is hardcoded for now, but should ultimately be a property of
+		// whether the slot is a grouped lineage:
+		// https://github.com/grafana/thema/issues/62
 		switch slotname {
 		case "Panel", "DSConfig":
 			b, err := cuetsy.Generate(sch.UnwrapCUE(), cuetsy.Config{})

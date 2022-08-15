@@ -65,27 +65,38 @@ func init() {
 		all = append(all, fmt.Sprintf("\t%s", im))
 	}
 	allowedImportsStr = strings.Join(all, "\n")
-
 }
 
-// If we were to load during init, then the code generator that fixes
-// misalignments between the pluginmeta Go type and the schema could be
-// triggered, resulting in a panic and making it impossible for codegen to heal
-// itself.
-//
-// Instead, we use this sync.Once to trigger it during ParsePluginFS when it's
-// actually needed, but avoid repeating the work across multiple calls.
 var muxonce sync.Once
 
-func loadMux() {
-	// TODO these are easily generalizable in pkg/f/coremodel, no need for one-off
-	var err error
-	var t pluginmeta.Model
-	tsch, err = thema.BindType[pluginmeta.Model](pm.CurrentSchema(), t)
-	if err != nil {
-		panic(err)
-	}
-	plugmux = vmux.NewValueMux(tsch, vmux.NewJSONEndec("plugin.json"))
+// This used to be in init(), but that creates a risk for codegen.
+//
+// thema.BindType ensures that Go type and Thema schema are aligned. If we were
+// to call it during init(), then the code generator that fixes misalignments
+// between those two could trigger it if it depends on this package. That would
+// mean that schema changes to pluginmeta get caught in a loop where the codegen
+// process can't heal itself.
+//
+// In theory, that dependency shouldn't exist - this package should only be
+// imported for plugin codegen, which should all happen after coremodel codegen.
+// But in practice, it might exist. And it's really brittle and confusing to
+// fix if that does happen.
+//
+// Better to be resilient to the possibility instead. So, this is a standalone function,
+// called as needed to get our muxer, and internally relies on a sync.Once to avoid
+// repeated processing of thema.BindType.
+// TODO mux loading is easily generalizable in pkg/f/coremodel, shouldn't need one-off
+func loadMux() (thema.TypedSchema[pluginmeta.Model], vmux.ValueMux[pluginmeta.Model]) {
+	muxonce.Do(func() {
+		var err error
+		var t pluginmeta.Model
+		tsch, err = thema.BindType[pluginmeta.Model](pm.CurrentSchema(), t)
+		if err != nil {
+			panic(err)
+		}
+		plugmux = vmux.NewValueMux(tsch, vmux.NewJSONEndec("plugin.json"))
+	})
+	return tsch, plugmux
 }
 
 // Tree represents the contents of a plugin filesystem tree.
@@ -100,6 +111,12 @@ func (t *Tree) FS() fs.FS {
 
 func (t *Tree) RootPlugin() PluginInfo {
 	return t.rootinfo
+}
+
+// SubPlugins returned a map of the PluginInfos for subplugins
+// within the tree, if any, keyed by subpath.
+func (t *Tree) SubPlugins() map[string]PluginInfo {
+	panic("TODO")
 }
 
 // PluginInfo represents everything knowable about a single plugin from static
@@ -118,8 +135,15 @@ func (pi PluginInfo) CUEImports() []*ast.ImportSpec {
 
 // SlotImplementations returns a map of the plugin's Thema lineages that
 // implement particular slots, keyed by the name of the slot.
+//
+// Returns an empty map if the plugin has not implemented any slots.
 func (pi PluginInfo) SlotImplementations() map[string]thema.Lineage {
 	return pi.slotimpls
+}
+
+// Meta returns the metadata declared in the plugin's plugin.json file.
+func (pi PluginInfo) Meta() pluginmeta.Model {
+	return pi.meta
 }
 
 // ParsePluginFS takes an fs.FS and checks that it represents exactly one valid
@@ -132,7 +156,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	if f == nil {
 		return nil, ErrEmptyFS
 	}
-	muxonce.Do(loadMux)
+	_, mux := loadMux()
 	ctx := lib.Context()
 
 	b, err := fs.ReadFile(f, "plugin.json")
@@ -153,7 +177,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 
 	// Pass the raw bytes into the muxer, get the populated Model type out that we want.
 	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the pluginmeta lineage)
-	r.meta, _, err = plugmux(b)
+	r.meta, _, err = mux(b)
 	if err != nil {
 		// TODO more nuanced error handling by class of Thema failure
 		return nil, fmt.Errorf("plugin.json was invalid: %w", err)
@@ -169,11 +193,6 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		// here, but we'll need to layer the same on top for importable Grafana packages.
 		// Needing to do this twice strongly suggests it needs a generic, standalone
 		// library.
-		//
-		// However, we can ignore this for core Grafana plugins, because they're within
-		// the same CUE module. That said, this approach to loading will give them a
-		// misleading path (not their actual path relative to grafana repo root) in the
-		// event of any errors.
 
 		mfs := merged_fs.NewMergedFS(f, grafana.CueSchemaFS)
 
@@ -198,7 +217,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		val := ctx.BuildInstance(bi)
 		for _, s := range slots {
 			iv := val.LookupPath(cue.ParsePath(s.Name()))
-			accept, required := s.ForPlugin(string(r.meta.Type))
+			accept, required := s.ForPluginType(string(r.meta.Type))
 			exists := iv.Exists()
 
 			if !accept {
