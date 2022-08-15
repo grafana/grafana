@@ -48,7 +48,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ alignment =
       });
     }
     return () => intersectionObserver.disconnect();
-  }, [alignment]);
+  }, []);
 
   const renderOverflowChildren = () => (
     <div className={styles.overflowItems}>

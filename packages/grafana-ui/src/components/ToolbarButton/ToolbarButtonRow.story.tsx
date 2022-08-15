@@ -1,6 +1,7 @@
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
+import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { ToolbarButton } from './ToolbarButton';
@@ -23,14 +24,16 @@ const meta: ComponentMeta<typeof ToolbarButtonRow> = {
 
 export const Basic: ComponentStory<typeof ToolbarButtonRow> = (args) => {
   return (
-    <ToolbarButtonRow {...args}>
-      <ToolbarButton>Just text</ToolbarButton>
-      <ToolbarButton icon="sync" tooltip="Sync" />
-      <ToolbarButton imgSrc="./grafana_icon.svg">With imgSrc</ToolbarButton>
-      <ToolbarButton>Just text</ToolbarButton>
-      <ToolbarButton icon="sync" tooltip="Sync" />
-      <ToolbarButton imgSrc="./grafana_icon.svg">With imgSrc</ToolbarButton>
-    </ToolbarButtonRow>
+    <DashboardStoryCanvas>
+      <ToolbarButtonRow {...args}>
+        <ToolbarButton>Just text</ToolbarButton>
+        <ToolbarButton icon="sync" tooltip="Sync" />
+        <ToolbarButton imgSrc="./grafana_icon.svg">With imgSrc</ToolbarButton>
+        <ToolbarButton>Just text</ToolbarButton>
+        <ToolbarButton icon="sync" tooltip="Sync" />
+        <ToolbarButton imgSrc="./grafana_icon.svg">With imgSrc</ToolbarButton>
+      </ToolbarButtonRow>
+    </DashboardStoryCanvas>
   );
 };
 
