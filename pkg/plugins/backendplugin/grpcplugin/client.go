@@ -3,6 +3,9 @@ package grpcplugin
 import (
 	"os/exec"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"google.golang.org/grpc"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -36,6 +39,10 @@ func newClientConfig(executablePath string, env []string, logger log.Logger,
 		VersionedPlugins: versionedPlugins,
 		Logger:           logWrapper{Logger: logger},
 		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
+		GRPCDialOptions: []grpc.DialOption{
+			grpc.WithUnaryInterceptor(grpc_prometheus.UnaryClientInterceptor),
+			grpc.WithStreamInterceptor(grpc_prometheus.StreamClientInterceptor),
+		},
 	}
 }
 
