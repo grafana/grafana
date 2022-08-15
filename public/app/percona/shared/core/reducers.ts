@@ -21,6 +21,7 @@ import {
 import { KubernetesClusterStatus } from 'app/percona/dbaas/components/Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { SettingsService } from 'app/percona/settings/Settings.service';
 import { Settings, SettingsAPIChangePayload } from 'app/percona/settings/Settings.types';
+import { PlatformService } from 'app/percona/settings/components/Platform/Platform.service';
 import { api } from 'app/percona/shared/helpers/api';
 
 import { UserService } from '../services/user/User.service';
@@ -332,10 +333,7 @@ export const fetchServerInfoAction = createAsyncThunk(
   (_, thunkAPI): Promise<void> =>
     withSerializedError(
       (async () => {
-        const { pmm_server_id = '', pmm_server_name = '' } = await api.post<
-          { pmm_server_id: string; pmm_server_name: string },
-          Object
-        >('/v1/Platform/ServerInfo', {}, true);
+        const { pmm_server_id = '', pmm_server_name = '' } = await PlatformService.getServerInfo();
 
         thunkAPI.dispatch(
           setServerInfo({
