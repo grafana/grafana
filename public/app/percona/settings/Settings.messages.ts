@@ -12,6 +12,7 @@ export const Messages = {
     telemetryTooltip: 'Option to send usage data back to Percona to let us make our product better.',
     telemetryDisclaimer:
       'Disabling Telemetry while Advisor Checks/Alerting is on will prevent PMM from downloading checks and alert templates.',
+    telemetrySummaryTitle: 'We gather and send the following information to Percona:',
     updatesLabel: 'Check for updates',
     updatesLink: `${HOW_TO_DOC_URL}#check-for-updates`,
     updatesTooltip: 'Option to check new versions and ability to update PMM from UI.',

@@ -58,7 +58,7 @@ export const SSHKey: FC = () => {
                 <form onSubmit={handleSubmit}>
                   <div className={settingsStyles.labelWrapper} data-testid="ssh-key-label">
                     <span>{label}</span>
-                    <LinkTooltip tooltipText={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />
+                    <LinkTooltip tooltipContent={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />
                   </div>
                   <Field
                     name="key"

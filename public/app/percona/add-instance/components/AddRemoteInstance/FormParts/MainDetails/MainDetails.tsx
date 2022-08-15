@@ -22,7 +22,7 @@ export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ form, remote
       <h4 className={styles.sectionHeader}>{Messages.form.titles.mainDetails}</h4>
       <div className={styles.labelWrapper} data-testid="address-label">
         <span>{Messages.form.labels.mainDetails.address}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.address} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.mainDetails.address} icon="info-circle" />
       </div>
       <TextInputField
         name="address"
@@ -32,12 +32,12 @@ export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ form, remote
       />
       <div className={styles.labelWrapper} data-testid="service-name-label">
         <span>{Messages.form.labels.mainDetails.serviceName}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.serviceName} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.mainDetails.serviceName} icon="info-circle" />
       </div>
       <TextInputField name="serviceName" placeholder={Messages.form.placeholders.mainDetails.serviceName} />
       <div className={styles.labelWrapper} data-testid="port-label">
         <span>{Messages.form.labels.mainDetails.port}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.port} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.mainDetails.port} icon="info-circle" />
       </div>
       <TextInputField
         name="port"
@@ -46,7 +46,7 @@ export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ form, remote
       />
       <div className={styles.labelWrapper} data-testid="username-label">
         <span>{Messages.form.labels.mainDetails.username}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.username} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.mainDetails.username} icon="info-circle" />
       </div>
       <TextInputField
         key={`username-${tlsFlag}`}
@@ -56,7 +56,7 @@ export const MainDetailsFormPart: FC<MainDetailsFormPartProps> = ({ form, remote
       />
       <div className={styles.labelWrapper} data-testid="password-label">
         <span>{Messages.form.labels.mainDetails.password}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.password} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.mainDetails.password} icon="info-circle" />
       </div>
       <PasswordInputField
         key={`password-${tlsFlag}`}

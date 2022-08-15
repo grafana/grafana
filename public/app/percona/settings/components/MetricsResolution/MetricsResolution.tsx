@@ -67,7 +67,9 @@ export const MetricsResolution: FC = () => {
     setLoading(false);
   };
 
-  const updateResolutions = (form: FormApi<any>) => {
+  const updateResolutions = (
+    form: FormApi<{ hr: string; mr: string; lr: string; resolutions: MetricsResolutionPresets }>
+  ) => {
     const { hr, mr, lr, resolutions: newResolution } = form.getState().values;
 
     if (resolution === newResolution) {
@@ -75,6 +77,7 @@ export const MetricsResolution: FC = () => {
     }
 
     if (resolution === MetricsResolutionPresets.custom) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       updateCustomResolutions({ hr, mr, lr } as MetricsResolutions);
     }
 
@@ -107,12 +110,13 @@ export const MetricsResolution: FC = () => {
               render={({ form, handleSubmit, valid, pristine }) => (
                 <form
                   onSubmit={handleSubmit}
+                  // @ts-ignore
                   onChange={() => updateResolutions(form)}
                   data-testid="metrics-resolution-form"
                 >
                   <div className={settingsStyles.labelWrapper} data-testid="metrics-resolution-label">
                     <span>{label}</span>
-                    <LinkTooltip tooltipText={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />
+                    <LinkTooltip tooltipContent={tooltip} link={link} linkText={tooltipLinkText} icon="info-circle" />
                   </div>
                   <RadioButtonGroupField
                     name="resolutions"

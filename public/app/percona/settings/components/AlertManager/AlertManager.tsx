@@ -50,7 +50,7 @@ export const AlertManager: FC = () => {
   };
   const isEqual = (a: string, b: string) => (!a && !b) || a === b;
 
-  const applyChanges = async ({ url, rules }: { url: string; rules: any }) => {
+  const applyChanges = async ({ url, rules }: { url: string; rules: string }) => {
     const body: AlertManagerChangePayload = {
       alert_manager_url: url,
       alert_manager_rules: rules,
@@ -94,7 +94,7 @@ export const AlertManager: FC = () => {
                     </strong>
                     <span>{urlLabel}</span>
                     <LinkTooltip
-                      tooltipText={urlTooltip}
+                      tooltipContent={urlTooltip}
                       link={urlLink}
                       linkText={tooltipLinkText}
                       icon="info-circle"
@@ -111,7 +111,7 @@ export const AlertManager: FC = () => {
                   >
                     <span>{rulesLabel}</span>
                     <LinkTooltip
-                      tooltipText={rulesTooltip}
+                      tooltipContent={rulesTooltip}
                       link={rulesLink}
                       linkText={tooltipLinkText}
                       icon="info-circle"

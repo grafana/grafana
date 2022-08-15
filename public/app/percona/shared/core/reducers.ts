@@ -38,6 +38,7 @@ const initialSettingsState: Settings = {
     hr: '15s',
     mr: '20s',
   },
+  telemetrySummaries: [],
   dataRetention: '',
   sshKey: '',
   awsPartitions: [],

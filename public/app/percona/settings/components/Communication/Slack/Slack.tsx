@@ -38,7 +38,7 @@ export const Slack: FC<SlackProps> = ({ updateSettings, settings }) => {
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.slackURL.label}</span>
               <LinkTooltip
-                tooltipText={Messages.fields.slackURL.tooltipText}
+                tooltipContent={Messages.fields.slackURL.tooltipText}
                 link={Messages.fields.slackURL.tooltipLink}
                 linkText={Messages.fields.slackURL.tooltipLinkText}
                 icon="info-circle"

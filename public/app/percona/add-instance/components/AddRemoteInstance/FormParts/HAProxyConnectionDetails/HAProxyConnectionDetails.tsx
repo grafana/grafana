@@ -20,7 +20,7 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
       <h4 className={styles.sectionHeader}>{Messages.form.titles.mainDetails}</h4>
       <div className={styles.labelWrapper} data-testid="address-label">
         <span>{Messages.form.labels.mainDetails.address}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.address} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.mainDetails.address} icon="info-circle" />
       </div>
       <TextInputField
         name="address"
@@ -30,7 +30,7 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
       />
       <div className={styles.labelWrapper} data-testid="service-name-label">
         <span>{Messages.form.labels.mainDetails.serviceName}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.mainDetails.serviceName} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.mainDetails.serviceName} icon="info-circle" />
       </div>
       <TextInputField
         name="serviceName"
@@ -39,7 +39,7 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
       />
       <div className={styles.labelWrapper} data-testid="port-label">
         <span>{Messages.form.labels.mainDetails.port}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.haproxy.port} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.haproxy.port} icon="info-circle" />
       </div>
       <TextInputField
         name="port"
@@ -49,7 +49,7 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
       />
       <div className={styles.labelWrapper} data-testid="username-label">
         <span>{Messages.form.labels.mainDetails.username}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.haproxy.username} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.haproxy.username} icon="info-circle" />
       </div>
       <TextInputField
         name="username"
@@ -59,7 +59,7 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
       />
       <div className={styles.labelWrapper} data-testid="password-label">
         <span>{Messages.form.labels.mainDetails.password}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.haproxy.password} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.haproxy.password} icon="info-circle" />
       </div>
       <PasswordInputField
         name="password"

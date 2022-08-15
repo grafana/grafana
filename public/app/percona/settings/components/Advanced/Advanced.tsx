@@ -56,6 +56,7 @@ export const Advanced: FC = () => {
     azureDiscoverEnabled,
     publicAddress,
     alertingEnabled,
+    telemetrySummaries,
   } = settings!;
   const settingsStyles = useStyles2(getSettingsStyles);
   const { rareInterval, standardInterval, frequentInterval } = convertCheckIntervalsToHours(sttCheckIntervals);
@@ -68,6 +69,7 @@ export const Advanced: FC = () => {
       telemetryLabel,
       telemetryLink,
       telemetryTooltip,
+      telemetrySummaryTitle,
       telemetryDisclaimer,
       updatesLabel,
       updatesLink,
@@ -110,6 +112,7 @@ export const Advanced: FC = () => {
     rareInterval,
     standardInterval,
     frequentInterval,
+    telemetrySummaries,
   };
   const [loading, setLoading] = useState(false);
 
@@ -181,7 +184,7 @@ export const Advanced: FC = () => {
                       <div className={settingsStyles.labelWrapper} data-testid="advanced-label">
                         <span>{retentionLabel}</span>
                         <LinkTooltip
-                          tooltipText={retentionTooltip}
+                          tooltipContent={retentionTooltip}
                           link={Messages.advanced.retentionLink}
                           linkText={tooltipLinkText}
                           icon="info-circle"
@@ -200,7 +203,13 @@ export const Advanced: FC = () => {
                     name="telemetry"
                     type="checkbox"
                     label={telemetryLabel}
-                    tooltip={telemetryTooltip}
+                    tooltip={
+                      <TelemetryTooltip
+                        telemetryTooltip={telemetryTooltip}
+                        telemetrySummaryTitle={telemetrySummaryTitle}
+                        telemetrySummaries={telemetrySummaries}
+                      />
+                    }
                     tooltipLinkText={tooltipLinkText}
                     link={telemetryLink}
                     dataTestId="advanced-telemetry"
@@ -234,7 +243,7 @@ export const Advanced: FC = () => {
                     <div className={cx(styles.advancedCol, styles.publicAddressLabelWrapper)}>
                       <div className={settingsStyles.labelWrapper} data-testid="public-address-label">
                         <span>{publicAddressLabel}</span>
-                        <LinkTooltip tooltipText={publicAddressTooltip} icon="info-circle" />
+                        <LinkTooltip tooltipContent={publicAddressTooltip} icon="info-circle" />
                       </div>
                     </div>
                     <div className={styles.publicAddressWrapper}>
@@ -255,7 +264,7 @@ export const Advanced: FC = () => {
                     <div className={cx(styles.advancedCol, styles.advancedChildCol, styles.sttCheckIntervalsLabel)}>
                       <div className={settingsStyles.labelWrapper} data-testid="check-intervals-label">
                         <span>{sttCheckIntervalsLabel}</span>
-                        <LinkTooltip tooltipText={sttCheckIntervalTooltip} icon="info-circle" />
+                        <LinkTooltip tooltipContent={sttCheckIntervalTooltip} icon="info-circle" />
                       </div>
                     </div>
                   </div>
@@ -345,6 +354,32 @@ export const Advanced: FC = () => {
         </FeatureLoader>
       </Page.Contents>
     </Page>
+  );
+};
+
+interface TelemetryTooltipProps {
+  telemetryTooltip: string;
+  telemetrySummaryTitle: string;
+  telemetrySummaries: string[];
+}
+
+const TelemetryTooltip: FC<TelemetryTooltipProps> = ({
+  telemetryTooltip,
+  telemetrySummaryTitle,
+  telemetrySummaries,
+}) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.telemetryTooltip}>
+      <p>{telemetryTooltip}</p>
+      <p>{telemetrySummaryTitle}</p>
+      <ul className={styles.telemetryListTooltip}>
+        {telemetrySummaries.map((summary) => (
+          <li key={summary}>{summary}</li>
+        ))}
+      </ul>
+    </div>
   );
 };
 

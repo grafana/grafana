@@ -111,6 +111,7 @@ export interface SettingsPayload
   azurediscover_enabled: boolean;
   stt_check_intervals: SttCheckIntervalsPayload;
   connected_to_platform: boolean;
+  telemetry_summaries: string[];
 }
 
 export type SettingsAPIChangePayload =
@@ -140,6 +141,7 @@ export interface Settings {
   alertingSettings: AlertingSettings;
   sttCheckIntervals: SttCheckIntervalsSettings;
   isConnectedToPortal?: boolean;
+  telemetrySummaries: string[];
 }
 
 export interface MetricsResolutions {

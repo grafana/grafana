@@ -16,7 +16,7 @@ export const SettingsService = {
   async setSettings(body: Partial<SettingsAPIChangePayload>, token?: CancelToken): Promise<Settings | undefined> {
     let response;
     try {
-      const { settings }: SettingsAPIResponse = await api.post<any, Partial<SettingsAPIChangePayload>>(
+      const { settings } = await api.post<SettingsAPIResponse, Partial<SettingsAPIChangePayload>>(
         '/v1/Settings/Change',
         body,
         false,
@@ -35,6 +35,7 @@ const toModel = (response: SettingsPayload): Settings => ({
   awsPartitions: response.aws_partitions,
   updatesDisabled: response.updates_disabled,
   telemetryEnabled: response.telemetry_enabled,
+  telemetrySummaries: response.telemetry_summaries,
   metricsResolutions: response.metrics_resolutions,
   dataRetention: response.data_retention,
   sshKey: response.ssh_key,

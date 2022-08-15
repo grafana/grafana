@@ -47,17 +47,17 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
       <h4 className={styles.sectionHeader}>{Messages.form.titles.connectionDetails}</h4>
       <div className={styles.labelWrapper} data-testid="username-label">
         <span>{Messages.form.labels.externalService.serviceName}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.externalService.serviceName} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.serviceName} icon="info-circle" />
       </div>
       <TextInputField name="serviceName" placeholder={Messages.form.placeholders.externalService.serviceName} />
       <div className={styles.labelWrapper} data-testid="username-label">
         <span>{Messages.form.labels.externalService.group}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.externalService.group} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.group} icon="info-circle" />
       </div>
       <TextInputField name="group" />
       <div className={styles.labelWrapper} data-testid="address-label">
         <span>{Messages.form.labels.externalService.connectionParameters}</span>
-        <LinkTooltip tooltipText={Messages.form.tooltips.externalService.url} icon="info-circle" />
+        <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.url} icon="info-circle" />
       </div>
       <RadioButtonGroupField
         name="metricsParameters"
@@ -68,7 +68,7 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
         <>
           <div className={styles.labelWrapper} data-testid="address-label">
             <span>{Messages.form.labels.externalService.url}</span>
-            <LinkTooltip tooltipText={Messages.form.tooltips.externalService.url} icon="info-circle" />
+            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.url} icon="info-circle" />
           </div>
           <div className={styles.urlFieldWrapper}>
             <TextInputField
@@ -83,12 +83,12 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
         <>
           <div className={styles.labelWrapper} data-testid="address-label">
             <span>{Messages.form.labels.externalService.schema}</span>
-            <LinkTooltip tooltipText={Messages.form.tooltips.externalService.schema} icon="info-circle" />
+            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.schema} icon="info-circle" />
           </div>
           <RadioButtonGroupField name="schema" data-testid="http-schema-field" options={schemaOptions} />
           <div className={styles.labelWrapper} data-testid="address-label">
             <span>{Messages.form.labels.externalService.address}</span>
-            <LinkTooltip tooltipText={Messages.form.tooltips.externalService.address} icon="info-circle" />
+            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.address} icon="info-circle" />
           </div>
           <TextInputField
             name="address"
@@ -98,7 +98,7 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
           />
           <div className={styles.labelWrapper} data-testid="service-name-label">
             <span>{Messages.form.labels.externalService.metricsPath}</span>
-            <LinkTooltip tooltipText={Messages.form.tooltips.externalService.metricsPath} icon="info-circle" />
+            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.metricsPath} icon="info-circle" />
           </div>
           <TextInputField
             name="metrics_path"
@@ -107,12 +107,12 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
           />
           <div className={styles.labelWrapper} data-testid="port-label">
             <span>{Messages.form.labels.externalService.port}</span>
-            <LinkTooltip tooltipText={Messages.form.tooltips.externalService.port} icon="info-circle" />
+            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.port} icon="info-circle" />
           </div>
           <TextInputField name="port" placeholder="Port" validators={portValidators} />
           <div className={styles.labelWrapper} data-testid="username-label">
             <span>{Messages.form.labels.externalService.username}</span>
-            <LinkTooltip tooltipText={Messages.form.tooltips.externalService.username} icon="info-circle" />
+            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.username} icon="info-circle" />
           </div>
           <TextInputField
             name="username"
@@ -122,7 +122,7 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
           />
           <div className={styles.labelWrapper} data-testid="password-label">
             <span>{Messages.form.labels.externalService.password}</span>
-            <LinkTooltip tooltipText={Messages.form.tooltips.externalService.password} icon="info-circle" />
+            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.password} icon="info-circle" />
           </div>
           <PasswordInputField
             name="password"

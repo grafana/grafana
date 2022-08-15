@@ -70,7 +70,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.smarthost.label}</span>
               <LinkTooltip
-                tooltipText={Messages.fields.smarthost.tooltipText}
+                tooltipContent={Messages.fields.smarthost.tooltipText}
                 link={Messages.fields.smarthost.tooltipLink}
                 linkText={Messages.fields.smarthost.tooltipLinkText}
                 icon="info-circle"
@@ -81,7 +81,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.hello.label}</span>
               <LinkTooltip
-                tooltipText={Messages.fields.hello.tooltipText}
+                tooltipContent={Messages.fields.hello.tooltipText}
                 link={Messages.fields.hello.tooltipLink}
                 linkText={Messages.fields.hello.tooltipLinkText}
                 icon="info-circle"
@@ -92,7 +92,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.from.label}</span>
               <LinkTooltip
-                tooltipText={Messages.fields.from.tooltipText}
+                tooltipContent={Messages.fields.from.tooltipText}
                 link={Messages.fields.from.tooltipLink}
                 linkText={Messages.fields.from.tooltipLinkText}
                 icon="info-circle"
@@ -103,7 +103,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.type.label}</span>
               <LinkTooltip
-                tooltipText={Messages.fields.type.tooltipText}
+                tooltipContent={Messages.fields.type.tooltipText}
                 link={Messages.fields.type.tooltipLink}
                 linkText={Messages.fields.type.tooltipLinkText}
                 icon="info-circle"
@@ -122,7 +122,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.username.label}</span>
               <LinkTooltip
-                tooltipText={Messages.fields.username.tooltipText}
+                tooltipContent={Messages.fields.username.tooltipText}
                 link={Messages.fields.username.tooltipLink}
                 linkText={Messages.fields.username.tooltipLinkText}
                 icon="info-circle"
@@ -137,7 +137,7 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings, testSettings }
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.password.label}</span>
               <LinkTooltip
-                tooltipText={Messages.fields.password.tooltipText}
+                tooltipContent={Messages.fields.password.tooltipText}
                 link={Messages.fields.password.tooltipLink}
                 linkText={Messages.fields.password.tooltipLinkText}
                 icon="info-circle"

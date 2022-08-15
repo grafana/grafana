@@ -113,5 +113,12 @@ export const getStyles = ({ v1: { breakpoints, spacing, typography, border, colo
       margin: ${spacing.sm};
       fill: ${colors.linkExternal};
     `,
+    telemetryTooltip: css`
+      overflow: auto;
+      max-height: 80vh;
+    `,
+    telemetryListTooltip: css`
+      padding-left: ${spacing.sm};
+    `,
   };
 };

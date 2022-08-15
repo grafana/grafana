@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface SwitchRowProps {
   label?: string;
-  tooltip?: string;
+  tooltip?: React.ReactNode;
   tooltipLinkText?: string;
   link?: string;
   disabled?: boolean;
