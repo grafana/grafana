@@ -30,6 +30,7 @@ import (
 //
 // Responses:
 // 200: snapshotResponse
+// 400: badRequestError
 // 404: notFoundError
 // 500: internalServerError
 
