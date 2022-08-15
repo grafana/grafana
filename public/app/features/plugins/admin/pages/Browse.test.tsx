@@ -49,10 +49,10 @@ describe('Browse list of plugins', () => {
   describe('when filtering', () => {
     it('should list installed plugins by default', async () => {
       const { queryByText } = renderBrowse('/plugins', [
-        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', settings: { isInstalled: false } }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
@@ -65,10 +65,15 @@ describe('Browse list of plugins', () => {
 
     it('should list all plugins (except core plugins) when filtering by all', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
-        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', settings: { isInstalled: false } }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', settings: { isInstalled: true } }),
+        getCatalogPluginMock({
+          id: 'plugin-4',
+          name: 'Plugin 4',
+          settings: { isInstalled: true },
+          info: { isCore: true },
+        }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
@@ -81,10 +86,15 @@ describe('Browse list of plugins', () => {
 
     it('should list installed plugins (including core plugins) when filtering by installed', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=installed', [
-        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', settings: { isInstalled: false } }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', settings: { isInstalled: true } }),
+        getCatalogPluginMock({
+          id: 'plugin-4',
+          name: 'Plugin 4',
+          settings: { isInstalled: true },
+          info: { isCore: true },
+        }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
@@ -97,10 +107,10 @@ describe('Browse list of plugins', () => {
 
     it('should list all plugins (including disabled plugins) when filtering by all', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&filterByType=all', [
-        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isDisabled: true }),
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', settings: { isInstalled: false } }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', settings: { isInstalled: true, isDisabled: true } }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
@@ -112,10 +122,10 @@ describe('Browse list of plugins', () => {
 
     it('should list installed plugins (including disabled plugins) when filtering by installed', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=installed', [
-        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isDisabled: true }),
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', settings: { isInstalled: false } }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', settings: { isInstalled: true, isDisabled: true } }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
@@ -128,9 +138,19 @@ describe('Browse list of plugins', () => {
 
     it('should list enterprise plugins when querying for them', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&q=wavefront', [
-        getCatalogPluginMock({ id: 'wavefront', name: 'Wavefront', isInstalled: true, isEnterprise: true }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: true, isCore: true }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({
+          id: 'wavefront',
+          name: 'Wavefront',
+          settings: { isInstalled: true },
+          info: { isEnterprise: true },
+        }),
+        getCatalogPluginMock({
+          id: 'plugin-2',
+          name: 'Plugin 2',
+          settings: { isInstalled: true },
+          info: { isCore: true },
+        }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', settings: { isInstalled: true } }),
       ]);
 
       await waitFor(() => expect(queryByText('Wavefront')).toBeInTheDocument());
@@ -242,11 +262,11 @@ describe('Browse list of plugins', () => {
 
     it('should sort plugins by date in ascending updated order', async () => {
       const { findByTestId } = renderBrowse('/plugins?filterBy=all&sortBy=updated', [
-        getCatalogPluginMock({ id: '1', name: 'Wavefront', updatedAt: '2021-04-01T00:00:00.000Z' }),
-        getCatalogPluginMock({ id: '2', name: 'Redis Application', updatedAt: '2021-02-01T00:00:00.000Z' }),
-        getCatalogPluginMock({ id: '3', name: 'Zabbix', updatedAt: '2021-01-01T00:00:00.000Z' }),
-        getCatalogPluginMock({ id: '4', name: 'Diagram', updatedAt: '2021-05-01T00:00:00.000Z' }),
-        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', updatedAt: '2021-02-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '1', name: 'Wavefront', info: { updatedAt: '2021-04-01T00:00:00.000Z' } }),
+        getCatalogPluginMock({ id: '2', name: 'Redis Application', info: { updatedAt: '2021-02-01T00:00:00.000Z' } }),
+        getCatalogPluginMock({ id: '3', name: 'Zabbix', info: { updatedAt: '2021-01-01T00:00:00.000Z' } }),
+        getCatalogPluginMock({ id: '4', name: 'Diagram', info: { updatedAt: '2021-05-01T00:00:00.000Z' } }),
+        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', info: { updatedAt: '2021-02-01T00:00:00.000Z' } }),
       ]);
 
       const pluginList = await findByTestId('plugin-list');
@@ -262,11 +282,11 @@ describe('Browse list of plugins', () => {
 
     it('should sort plugins by date in ascending published order', async () => {
       const { findByTestId } = renderBrowse('/plugins?filterBy=all&sortBy=published', [
-        getCatalogPluginMock({ id: '1', name: 'Wavefront', publishedAt: '2021-04-01T00:00:00.000Z' }),
-        getCatalogPluginMock({ id: '2', name: 'Redis Application', publishedAt: '2021-02-01T00:00:00.000Z' }),
-        getCatalogPluginMock({ id: '3', name: 'Zabbix', publishedAt: '2021-01-01T00:00:00.000Z' }),
-        getCatalogPluginMock({ id: '4', name: 'Diagram', publishedAt: '2021-05-01T00:00:00.000Z' }),
-        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', publishedAt: '2021-02-01T00:00:00.000Z' }),
+        getCatalogPluginMock({ id: '1', name: 'Wavefront', info: { publishedAt: '2021-04-01T00:00:00.000Z' } }),
+        getCatalogPluginMock({ id: '2', name: 'Redis Application', info: { publishedAt: '2021-02-01T00:00:00.000Z' } }),
+        getCatalogPluginMock({ id: '3', name: 'Zabbix', info: { publishedAt: '2021-01-01T00:00:00.000Z' } }),
+        getCatalogPluginMock({ id: '4', name: 'Diagram', info: { publishedAt: '2021-05-01T00:00:00.000Z' } }),
+        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', info: { publishedAt: '2021-02-01T00:00:00.000Z' } }),
       ]);
 
       const pluginList = await findByTestId('plugin-list');
@@ -282,11 +302,11 @@ describe('Browse list of plugins', () => {
 
     it('should sort plugins by number of downloads in ascending order', async () => {
       const { findByTestId } = renderBrowse('/plugins?filterBy=all&sortBy=downloads', [
-        getCatalogPluginMock({ id: '1', name: 'Wavefront', downloads: 30 }),
-        getCatalogPluginMock({ id: '2', name: 'Redis Application', downloads: 10 }),
-        getCatalogPluginMock({ id: '3', name: 'Zabbix', downloads: 50 }),
-        getCatalogPluginMock({ id: '4', name: 'Diagram', downloads: 20 }),
-        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', downloads: 40 }),
+        getCatalogPluginMock({ id: '1', name: 'Wavefront', info: { downloads: 30 } }),
+        getCatalogPluginMock({ id: '2', name: 'Redis Application', info: { downloads: 10 } }),
+        getCatalogPluginMock({ id: '3', name: 'Zabbix', info: { downloads: 50 } }),
+        getCatalogPluginMock({ id: '4', name: 'Diagram', info: { downloads: 20 } }),
+        getCatalogPluginMock({ id: '5', name: 'ACE.SVG', info: { downloads: 40 } }),
       ]);
 
       const pluginList = await findByTestId('plugin-list');
@@ -304,9 +324,9 @@ describe('Browse list of plugins', () => {
   describe('when GCOM api is not available', () => {
     it('should disable the All / Installed filter', async () => {
       const plugins = [
-        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 2', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 3', isInstalled: true }),
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 2', settings: { isInstalled: true } }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 3', settings: { isInstalled: true } }),
       ];
       const state = getPluginsStateMock(plugins);
 

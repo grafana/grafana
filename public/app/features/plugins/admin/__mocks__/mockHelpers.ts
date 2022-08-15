@@ -1,3 +1,5 @@
+import { merge } from 'lodash';
+
 import { setBackendSrv } from '@grafana/runtime';
 
 import { API_ROOT, GCOM_API_ROOT } from '../constants';
@@ -16,14 +18,20 @@ import catalogPluginMock from './catalogPlugin.mock';
 import localPluginMock from './localPlugin.mock';
 import remotePluginMock from './remotePlugin.mock';
 
+// Subset<T> allows to partially provide nested objects, too
+// TODO: should this live somewhere else?
+export type Subset<T> = {
+  [attr in keyof T]?: T[attr] extends object ? Subset<T[attr]> : T[attr];
+};
+
 // Returns a sample mock for a CatalogPlugin plugin with the possibility to extend it
-export const getCatalogPluginMock = (overrides?: Partial<CatalogPlugin>) => ({ ...catalogPluginMock, ...overrides });
+export const getCatalogPluginMock = (overrides?: Subset<CatalogPlugin>) => merge(catalogPluginMock, overrides);
 
 // Returns a sample mock for a local (installed) plugin with the possibility to extend it
-export const getLocalPluginMock = (overrides?: Partial<LocalPlugin>) => ({ ...localPluginMock, ...overrides });
+export const getLocalPluginMock = (overrides?: Partial<LocalPlugin>) => merge(localPluginMock, overrides);
 
 // Returns a sample mock for a remote plugin with the possibility to extend it
-export const getRemotePluginMock = (overrides?: Partial<RemotePlugin>) => ({ ...remotePluginMock, ...overrides });
+export const getRemotePluginMock = (overrides?: Partial<RemotePlugin>) => merge(remotePluginMock, overrides);
 
 // Returns a mock for the Redux store state of plugins
 export const getPluginsStateMock = (plugins: CatalogPlugin[] = []): ReducerState => ({

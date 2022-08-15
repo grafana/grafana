@@ -2,52 +2,50 @@ import { CatalogPlugin } from '../types';
 
 // Exported from the Redux store
 export default {
-  description: 'Zabbix plugin for Grafana',
-  downloads: 35977451,
-  hasUpdate: false,
   id: 'alexanderzobnin-zabbix-app',
-  info: {
-    logos: {
-      small: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.2.2/logos/small',
-      large: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.2.2/logos/large',
-    },
-  },
-  isCore: false,
-  isDev: false,
-  isEnterprise: false,
-  isInstalled: false,
-  isDisabled: false,
-  isPublished: true,
   name: 'Zabbix',
   orgName: 'Alexander Zobnin',
-  popularity: 0.2093,
-  publishedAt: '2016-04-06T20:23:41.000Z',
+  // category
+  description: 'Zabbix plugin for Grafana',
+  grafanaDependency: '>=8.0.0',
+  pluginDependencies: [],
+  // includes
+  readme:
+    '<h1>Zabbix plugin for Grafana</h1>\n<p><a href="https://circleci.com/gh/alexanderzobnin/grafana-zabbix" target="_blank"><img src="https://circleci.com/gh/alexanderzobnin/grafana-zabbix.svg?style=svg" alt="CircleCI"></a>\n<a href="https://github.com/alexanderzobnin/grafana-zabbix/releases" target="_blank"><img src="https://badge.fury.io/gh/alexanderzobnin%2Fgrafana-zabbix.svg" alt="Version"></a>\n<a href="https://codecov.io/gh/alexanderzobnin/grafana-zabbix" target="_blank"><img src="https://codecov.io/gh/alexanderzobnin/grafana-zabbix/branch/master/graph/badge.svg" alt="codecov"></a>\n<a href="https://github.com/alexanderzobnin/grafana-zabbix/blob/master/CHANGELOG.md" target="_blank"><img src="https://img.shields.io/badge/change-log-blue.svg?style=flat" alt="Change Log"></a>\n<a href="https://alexanderzobnin.github.io/grafana-zabbix" target="_blank"><img src="https://img.shields.io/badge/docs-latest-red.svg?style=flat" alt="Docs"></a>\n<a href="https://twitter.com/alexanderzobnin" target="_blank"><img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social&amp;label=Follow" alt="Twitter URL"></a>\n<a href="https://paypal.me/alexanderzobnin/10" target="_blank"><img src="https://img.shields.io/badge/donate-paypal-2c9eda.svg?style=flat&amp;colorA=0b3684" alt="Donate"></a></p>\n<p>Visualize your Zabbix metrics with the leading open source software for time series analytics.</p>\n<p><img src="https://user-images.githubusercontent.com/4932851/53799185-e1cdc700-3f4a-11e9-9cb4-8330f501b32e.png" alt="Dashboard"></p>\n<h2>Features</h2>\n<ul>\n<li>Select multiple metrics <a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/gettingstarted/#multiple-items-on-one-graph" target="_blank">by using Regex</a></li>\n<li>Create interactive and reusable dashboards with <a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/templating/" target="_blank">template variables</a></li>\n<li>Show events on graphs with <a href="http://docs.grafana.org/reference/annotations/" target="_blank">Annotations</a></li>\n<li>Display active problems with Triggers panel</li>\n<li>Transform and shape your data with <a href="https://alexanderzobnin.github.io/grafana-zabbix/reference/functions/" target="_blank">metric processing functions</a> (Avg, Median, Min, Max, Multiply, Summarize, Time shift, Alias)</li>\n<li>Find problems faster with <a href="https://alexanderzobnin.github.io/grafana-zabbix/reference/alerting/" target="_blank">Alerting</a> feature</li>\n<li>Mix metrics from multiple data sources in the same dashboard or even graph</li>\n<li>Discover and share <a href="https://grafana.com/dashboards" target="_blank">dashboards</a> in the official library</li>\n</ul>\n<p>See all features overview and dashboards examples at Grafana-Zabbix <a href="http://play.grafana-zabbix.org" target="_blank">Live demo</a> site.\nVisit <a href="https://grafana.com/plugins" target="_blank">plugins page</a> at <a href="http://grafana.com" target="_blank">grafana.com</a> and check out available Grafana data sources, panels and <a href="https://grafana.com/dashboards?dataSource=alexanderzobnin-zabbix-datasource" target="_blank">dashboards</a>.</p>\n<h2>Installation</h2>\n<p>Install by using <code>grafana-cli</code></p>\n<pre><code class="language-sh">grafana-cli plugins install alexanderzobnin-zabbix-app\n</code></pre>\n<p>Or see more installation options in <a href="https://alexanderzobnin.github.io/grafana-zabbix/installation/" target="_blank">docs</a>.</p>\n<h2>Getting started</h2>\n<p>First, <a href="https://alexanderzobnin.github.io/grafana-zabbix/configuration/" target="_blank">configure</a> Zabbix data source. Then you can create your first dashboard with step-by-step <a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/gettingstarted/" target="_blank">Getting started guide</a>.</p>\n<h2>Documentation</h2>\n<ul>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix" target="_blank">About</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/installation" target="_blank">Installation</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/gettingstarted" target="_blank">Getting Started</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/templating" target="_blank">Templating</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/reference/alerting/" target="_blank">Alerting</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/reference/functions/" target="_blank">Metric processing functions</a></li>\n</ul>\n<h2>Community Resources, Feedback, and Support</h2>\n<ul>\n<li>Found a bug? Want a new feature? Feel free to open an <a href="https://github.com/alexanderzobnin/grafana-zabbix/issues/new" target="_blank">issue</a>.</li>\n<li>Have a question? You also can open issue, but for questions, it would be better to use <a href="https://community.grafana.com/" target="_blank">Grafana Community</a> portal.</li>\n<li>Need additional support? Contact me for details <a href="mailto:alexanderzobnin@gmail.com" target="_blank">alexanderzobnin@gmail.com</a></li>\n</ul>\n<hr>\n<p>:copyright: 2015-2021 Alexander Zobnin alexanderzobnin@gmail.com</p>\n<p>Licensed under the Apache 2.0 License</p>\n',
+  // state
   type: 'app',
-  signature: 'valid',
-  signatureOrg: 'Alexander Zobnin',
-  signatureType: 'community',
-  updatedAt: '2021-08-25T15:03:49.000Z',
-  version: '4.2.2',
-  error: undefined,
-  details: {
-    grafanaDependency: '>=8.0.0',
-    pluginDependencies: [],
-    links: [
-      {
-        name: 'GitHub',
-        url: 'https://github.com/alexanderzobnin/grafana-zabbix',
-      },
-      {
-        name: 'Docs',
-        url: 'https://alexanderzobnin.github.io/grafana-zabbix',
-      },
-      {
-        name: 'License',
-        url: 'https://github.com/alexanderzobnin/grafana-zabbix/blob/master/LICENSE',
-      },
-    ],
-    readme:
-      '<h1>Zabbix plugin for Grafana</h1>\n<p><a href="https://circleci.com/gh/alexanderzobnin/grafana-zabbix" target="_blank"><img src="https://circleci.com/gh/alexanderzobnin/grafana-zabbix.svg?style=svg" alt="CircleCI"></a>\n<a href="https://github.com/alexanderzobnin/grafana-zabbix/releases" target="_blank"><img src="https://badge.fury.io/gh/alexanderzobnin%2Fgrafana-zabbix.svg" alt="Version"></a>\n<a href="https://codecov.io/gh/alexanderzobnin/grafana-zabbix" target="_blank"><img src="https://codecov.io/gh/alexanderzobnin/grafana-zabbix/branch/master/graph/badge.svg" alt="codecov"></a>\n<a href="https://github.com/alexanderzobnin/grafana-zabbix/blob/master/CHANGELOG.md" target="_blank"><img src="https://img.shields.io/badge/change-log-blue.svg?style=flat" alt="Change Log"></a>\n<a href="https://alexanderzobnin.github.io/grafana-zabbix" target="_blank"><img src="https://img.shields.io/badge/docs-latest-red.svg?style=flat" alt="Docs"></a>\n<a href="https://twitter.com/alexanderzobnin" target="_blank"><img src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social&amp;label=Follow" alt="Twitter URL"></a>\n<a href="https://paypal.me/alexanderzobnin/10" target="_blank"><img src="https://img.shields.io/badge/donate-paypal-2c9eda.svg?style=flat&amp;colorA=0b3684" alt="Donate"></a></p>\n<p>Visualize your Zabbix metrics with the leading open source software for time series analytics.</p>\n<p><img src="https://user-images.githubusercontent.com/4932851/53799185-e1cdc700-3f4a-11e9-9cb4-8330f501b32e.png" alt="Dashboard"></p>\n<h2>Features</h2>\n<ul>\n<li>Select multiple metrics <a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/gettingstarted/#multiple-items-on-one-graph" target="_blank">by using Regex</a></li>\n<li>Create interactive and reusable dashboards with <a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/templating/" target="_blank">template variables</a></li>\n<li>Show events on graphs with <a href="http://docs.grafana.org/reference/annotations/" target="_blank">Annotations</a></li>\n<li>Display active problems with Triggers panel</li>\n<li>Transform and shape your data with <a href="https://alexanderzobnin.github.io/grafana-zabbix/reference/functions/" target="_blank">metric processing functions</a> (Avg, Median, Min, Max, Multiply, Summarize, Time shift, Alias)</li>\n<li>Find problems faster with <a href="https://alexanderzobnin.github.io/grafana-zabbix/reference/alerting/" target="_blank">Alerting</a> feature</li>\n<li>Mix metrics from multiple data sources in the same dashboard or even graph</li>\n<li>Discover and share <a href="https://grafana.com/dashboards" target="_blank">dashboards</a> in the official library</li>\n</ul>\n<p>See all features overview and dashboards examples at Grafana-Zabbix <a href="http://play.grafana-zabbix.org" target="_blank">Live demo</a> site.\nVisit <a href="https://grafana.com/plugins" target="_blank">plugins page</a> at <a href="http://grafana.com" target="_blank">grafana.com</a> and check out available Grafana data sources, panels and <a href="https://grafana.com/dashboards?dataSource=alexanderzobnin-zabbix-datasource" target="_blank">dashboards</a>.</p>\n<h2>Installation</h2>\n<p>Install by using <code>grafana-cli</code></p>\n<pre><code class="language-sh">grafana-cli plugins install alexanderzobnin-zabbix-app\n</code></pre>\n<p>Or see more installation options in <a href="https://alexanderzobnin.github.io/grafana-zabbix/installation/" target="_blank">docs</a>.</p>\n<h2>Getting started</h2>\n<p>First, <a href="https://alexanderzobnin.github.io/grafana-zabbix/configuration/" target="_blank">configure</a> Zabbix data source. Then you can create your first dashboard with step-by-step <a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/gettingstarted/" target="_blank">Getting started guide</a>.</p>\n<h2>Documentation</h2>\n<ul>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix" target="_blank">About</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/installation" target="_blank">Installation</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/gettingstarted" target="_blank">Getting Started</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/guides/templating" target="_blank">Templating</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/reference/alerting/" target="_blank">Alerting</a></li>\n<li><a href="https://alexanderzobnin.github.io/grafana-zabbix/reference/functions/" target="_blank">Metric processing functions</a></li>\n</ul>\n<h2>Community Resources, Feedback, and Support</h2>\n<ul>\n<li>Found a bug? Want a new feature? Feel free to open an <a href="https://github.com/alexanderzobnin/grafana-zabbix/issues/new" target="_blank">issue</a>.</li>\n<li>Have a question? You also can open issue, but for questions, it would be better to use <a href="https://community.grafana.com/" target="_blank">Grafana Community</a> portal.</li>\n<li>Need additional support? Contact me for details <a href="mailto:alexanderzobnin@gmail.com" target="_blank">alexanderzobnin@gmail.com</a></li>\n</ul>\n<hr>\n<p>:copyright: 2015-2021 Alexander Zobnin alexanderzobnin@gmail.com</p>\n<p>Licensed under the Apache 2.0 License</p>\n',
+  // author
+  links: [
+    {
+      name: 'GitHub',
+      url: 'https://github.com/alexanderzobnin/grafana-zabbix',
+    },
+    {
+      name: 'Docs',
+      url: 'https://alexanderzobnin.github.io/grafana-zabbix',
+    },
+    {
+      name: 'License',
+      url: 'https://github.com/alexanderzobnin/grafana-zabbix/blob/master/LICENSE',
+    },
+  ],
+  logos: {
+    small: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.2.2/logos/small',
+    large: 'https://grafana.com/api/plugins/alexanderzobnin-zabbix-app/versions/4.2.2/logos/large',
+  },
+
+  info: {
+    downloads: 35977451,
+    isCore: false,
+    isDev: false,
+    isEnterprise: false,
+    isPublished: true,
+    updatedAt: '2021-08-25T15:03:49.000Z',
+    publishedAt: '2016-04-06T20:23:41.000Z',
+    popularity: 0.2093,
+    signature: 'valid',
+    signatureOrg: 'Alexander Zobnin',
+    signatureType: 'community',
     versions: [
       {
         version: '4.2.2',
@@ -333,4 +331,13 @@ export default {
       },
     ],
   },
+
+  settings: {
+    hasUpdate: false,
+    isDisabled: false,
+    isInstalled: false,
+    version: '4.2.2',
+  },
+
+  error: undefined,
 } as CatalogPlugin;
