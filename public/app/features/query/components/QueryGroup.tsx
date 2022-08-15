@@ -188,7 +188,7 @@ export class QueryGroup extends PureComponent<Props, State> {
 
     const nextDS = isMixedDatasource
       ? await getDataSourceSrv().get('-- Mixed --')
-      : await getDataSourceSrv().get(savedQuery.queries[0].datasource.uid);
+      : await getDataSourceSrv().get(savedQuery.queries[0].datasource?.uid);
 
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
     const queries = await updateQueries(nextDS, nextDS.uid, savedQuery.queries, currentDS);
@@ -417,6 +417,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       <HorizontalGroup spacing="md" align="flex-start">
         {showAddButton && (
           <Button
+            disabled={true}
             icon="plus"
             onClick={this.onAddQueryClick}
             variant="secondary"

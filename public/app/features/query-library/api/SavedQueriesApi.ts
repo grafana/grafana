@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-import { DataQuery, DataSourceRef } from '@grafana/data/src';
+import { DataQuery } from '@grafana/data/src';
 
 import { getSavedQuerySrv } from './SavedQueriesSrv';
 
@@ -15,16 +15,11 @@ type SavedQueryMeta = {
   schemaVersion: number;
 };
 
-type DataQueryWithRequiredDatasource = DataQuery & {
-  datasource: DataSourceRef;
-};
-
-type SavedQueryData<TQuery extends DataQueryWithRequiredDatasource = DataQueryWithRequiredDatasource> = {
+type SavedQueryData<TQuery extends DataQuery = DataQuery> = {
   queries: TQuery[];
 };
 
-export type SavedQuery<TQuery extends DataQueryWithRequiredDatasource = DataQueryWithRequiredDatasource> =
-  SavedQueryMeta & SavedQueryData<TQuery> & SavedQueryRef;
+export type SavedQuery<TQuery extends DataQuery = DataQuery> = SavedQueryMeta & SavedQueryData<TQuery> & SavedQueryRef;
 
 export const isQueryWithMixedDatasource = (savedQuery: SavedQuery): boolean => {
   if (!savedQuery?.queries?.length) {
@@ -32,7 +27,7 @@ export const isQueryWithMixedDatasource = (savedQuery: SavedQuery): boolean => {
   }
 
   const firstDs = savedQuery.queries[0].datasource;
-  return savedQuery.queries.some((q) => q.datasource.uid !== firstDs.uid || q.datasource.type !== firstDs.type);
+  return savedQuery.queries.some((q) => q.datasource?.uid !== firstDs?.uid || q.datasource?.type !== firstDs?.type);
 };
 
 const api = createApi({
