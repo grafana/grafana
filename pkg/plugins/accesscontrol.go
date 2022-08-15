@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	ActionAppAccess = "plugins.app:access"
+	ActionAppAccess      = "plugins.app:access"
+	ActionPluginsInstall = "plugins:install"
 )
 
 var (
@@ -26,5 +27,20 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 		},
 		Grants: []string{string(org.RoleViewer)},
 	}
-	return acService.DeclareFixedRoles(AppPluginsReader)
+
+	PluginsInstaller := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        ac.FixedRolePrefix + "plugins:installer",
+			DisplayName: "Plugins Installer",
+			// FIXME update description with new actions
+			Description: "Install plugins",
+			Group:       "Plugins",
+			Permissions: []ac.Permission{
+				{Action: ActionPluginsInstall, Scope: ScopeProvider.GetResourceAllScope()},
+			},
+		},
+		Grants: []string{ac.RoleGrafanaAdmin},
+	}
+
+	return acService.DeclareFixedRoles(AppPluginsReader, PluginsInstaller)
 }
