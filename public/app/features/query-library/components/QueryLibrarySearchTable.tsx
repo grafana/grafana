@@ -5,12 +5,14 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FilterInput, HorizontalGroup, LinkButton, Spinner, useStyles2 } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, FilterInput, HorizontalGroup, LinkButton, ModalsController, Spinner, useStyles2 } from '@grafana/ui';
 
 import { SearchResultsTable } from '../../search/page/components/SearchResultsTable';
 import { getGrafanaSearcher, SearchQuery } from '../../search/service';
 
 import { DatasourceTypePicker } from './DatasourceTypePicker';
+import { QueryEditorDrawer } from './QueryEditorDrawer';
 
 const QueryLibrarySearchTable = () => {
   const styles = useStyles2(getStyles);
@@ -67,6 +69,22 @@ const QueryLibrarySearchTable = () => {
           <LinkButton size="md" href={`query-library/new`} icon="plus" title="Create Query">
             {'Create Query'}
           </LinkButton>
+          <ModalsController>
+            {({ showModal, hideModal }) => {
+              return (
+                <Button
+                  onClick={() => {
+                    showModal(QueryEditorDrawer, {
+                      onDismiss: hideModal,
+                    });
+                  }}
+                  aria-label={selectors.pages.Dashboard.Settings.General.saveDashBoard}
+                >
+                  Open query editor drawer
+                </Button>
+              );
+            }}
+          </ModalsController>
         </div>
       </HorizontalGroup>
 
