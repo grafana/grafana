@@ -17,6 +17,6 @@ export class FullstoryBackend implements EchoBackend<FullstoryEchoEvent, Fullsto
   // Not using custom events, Fullstory track every interaction automatically
   addEvent = (e: FullstoryEchoEvent) => {};
 
-  // Not using Echo buffering, addEvent above sends events to GA as soon as they appear
+  // Not using Echo buffering
   flush = () => {};
 }
