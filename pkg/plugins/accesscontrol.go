@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	ActionAppAccess      = "plugins.app:access"
+	ActionAppAccess    = "plugins.app:access"
+	ActionPluginsWrite = "plugins:write"
+	// FIXME: have uninstall action?
 	ActionPluginsInstall = "plugins:install"
 )
 
@@ -28,6 +30,19 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 		Grants: []string{string(org.RoleViewer)},
 	}
 
+	PluginsWriter := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        ac.FixedRolePrefix + "plugins:writer",
+			DisplayName: "Plugins Writer",
+			Description: "Update plugin settings",
+			Group:       "Plugins",
+			Permissions: []ac.Permission{
+				{Action: ActionPluginsWrite, Scope: ScopeProvider.GetResourceAllScope()},
+			},
+		},
+		Grants: []string{ac.RoleGrafanaAdmin, string(org.RoleAdmin)},
+	}
+
 	PluginsInstaller := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins:installer",
@@ -35,12 +50,12 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 			// FIXME update description with new actions
 			Description: "Install plugins",
 			Group:       "Plugins",
-			Permissions: []ac.Permission{
+			Permissions: ac.ConcatPermissions(PluginsWriter.Role.Permissions, []ac.Permission{
 				{Action: ActionPluginsInstall, Scope: ScopeProvider.GetResourceAllScope()},
-			},
+			}),
 		},
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
-	return acService.DeclareFixedRoles(AppPluginsReader, PluginsInstaller)
+	return acService.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsInstaller)
 }
