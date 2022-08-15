@@ -13,7 +13,7 @@ import { getIconSubDir, getSvgSize } from './utils';
  * Construct a context bundle from all the svg icons in the public/img/icons folder.
  * See https://webpack.js.org/guides/dependency-management/
  */
-const iconBundle = require.context('../../../../../public/img/icons/', true, /\.svg$/, 'lazy-once');
+const iconBundle = require.context('../../../../../public/img/icons/', true, /\.svg$/, 'lazy');
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
