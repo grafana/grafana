@@ -366,15 +366,15 @@ providers:
 
 ## Alerting
 
-You can manage alert objects in Grafana by adding one ore more YAML or JSON
-config files in the [`provisioning/alerting`]({{< relref "../../setup-grafana/configure-grafana/" >}}) directory. Those files will be applied once when starting Grafana. When Grafana
+You can manage alert objects in Grafana by adding one or more YAML or JSON
+configuration files in the [`provisioning/alerting`]({{< relref "../../setup-grafana/configure-grafana/" >}}) directory. Those files will be applied when starting Grafana. When Grafana
 is running, it's possible to do a hot reload using the [Admin API]({{< relref "../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
 
 ### Rules
 
 ```yaml
 # config file version
-a1piVersion: 1
+apiVersion: 1
 
 # List of rule groups to import or update
 groups:

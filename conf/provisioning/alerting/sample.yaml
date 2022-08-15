@@ -17,28 +17,28 @@ apiVersion: 1
 #     - uid: my_id_1
 #       # <string, required> title of the rule that will be displayed in the UI
 #       title: my_first_rule
-#       # <string, required> which query should be used for the condition
+#       # <string, required> query used for the condition
 #       condition: A
 #       # <list, required> list of query objects that should be executed on each
-#       #                  evaluation - should be obtained trough the API
+#       #                  evaluation - should be obtained via the API
 #       data:
 #       - ...
 #       # <string> UID of a dashboard that the alert rule should be linked to
 #       dashboardUid: my_dashboard
 #       # <int> ID of the panel that the alert rule should be linked to
 #       panelId: 123
-#       # <string> the state the alert rule will have when no data is returned
+#       # <string> state of the alert rule when no data is returned
 #       #          possible values: "NoData", "Alerting", "OK", default = NoData
 #       noDataState: Alerting
-#       # <string> the state the alert rule will have when the query execution 
-#       #          failed - possible values: "Error", "Alerting", "OK"
+#       # <string> state of the alert rule when the query execution 
+#       #          fails - possible values: "Error", "Alerting", "OK"
 #       #          default = Alerting
-#       # <duration, required> for how long should the alert fire before alerting
+#       # <duration, required> how long the alert should fire before alerting
 #       for: 60s
-#       # <map<string, string>> a map of strings to pass around any data 
+#       # <map<string, string>> map of strings to pass around any data 
 #       annotations:
 #         some_key: some_value
-#       # <map<string, string> a map of strings that can be used to filter and 
+#       # <map<string, string> map of strings to filter and 
 #       #                      route alerts
 #       labels:
 #         team: sre_team_1
