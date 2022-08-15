@@ -17,9 +17,11 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
         slug: data.slug,
         theme: data.theme,
         controlsContainer: data.controlsContainer,
+        pageTitle: data?.pageTitle || '',
       })
     );
   }, [data, dispatch]);
+
   const props = {
     match: {
       params: {

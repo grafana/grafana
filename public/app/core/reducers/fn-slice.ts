@@ -6,6 +6,7 @@ interface FNState {
   slug: string;
   theme: string;
   controlsContainer: HTMLElement | undefined;
+  pageTitle: string;
 }
 
 const initialState: FNState = {
@@ -14,6 +15,7 @@ const initialState: FNState = {
   slug: '',
   theme: '',
   controlsContainer: undefined,
+  pageTitle: '',
 };
 
 const fnSlice = createSlice({
