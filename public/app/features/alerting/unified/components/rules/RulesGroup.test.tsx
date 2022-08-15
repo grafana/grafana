@@ -45,7 +45,7 @@ describe('Rules group tests', () => {
   function renderRulesGroup(namespace: CombinedRuleNamespace, group: CombinedRuleGroup) {
     return render(
       <Provider store={store}>
-        <RulesGroup group={group} namespace={namespace} expandAll={false} />
+        <RulesGroup group={group} namespace={namespace} expandAll={false} viewMode={'grouped'} />
       </Provider>
     );
   }

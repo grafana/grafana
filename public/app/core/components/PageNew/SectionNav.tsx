@@ -88,9 +88,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: 48,
     }),
     subSection: css({
-      padding: theme.spacing(3, 0, 1, 1),
+      padding: theme.spacing(3, 0, 0.5, 1),
       fontWeight: 500,
-      fontSize: '16px',
     }),
   };
 };

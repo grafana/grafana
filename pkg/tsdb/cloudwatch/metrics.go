@@ -254,6 +254,7 @@ var metricsMap = map[string][]string{
 		"CurrConfig",
 		"CurrConnections",
 		"CurrItems",
+		"CurrVolatileItems",
 		"DatabaseMemoryUsagePercentage",
 		"DatabaseMemoryUsageCountedForEvictPercentage",
 		"DB0AverageTTL",
@@ -275,6 +276,7 @@ var metricsMap = map[string][]string{
 		"GetTypeCmds",
 		"GetTypeCmdsLatency",
 		"GlobalDatastoreReplicationLag",
+		"IsMaster",
 		"HashBasedCmds",
 		"HashBasedCmdsLatency",
 		"HyperLogLogBasedCmds",
@@ -398,6 +400,7 @@ var metricsMap = map[string][]string{
 	"AWS/Rekognition":          {"DetectedFaceCount", "DetectedLabelCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 	"AWS/Cassandra":            {"AccountMaxReads", "AccountMaxTableLevelReads", "AccountMaxTableLevelWrites", "AccountMaxWrites", "AccountProvisionedReadCapacityUtilization", "AccountProvisionedWriteCapacityUtilization", "ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "MaxProvisionedTableReadCapacityUtilization", "MaxProvisionedTableWriteCapacityUtilization", "ReturnedItemCount", "ReturnedItemCountBySelect", "SuccessfulRequestCount", "SuccessfulRequestLatency", "SystemErrors", "UserErrors"},
 	"AWS/AmplifyHosting":       {"Requests", "BytesDownloaded", "BytesUploaded", "4XXErrors", "5XXErrors", "Latency"},
+	"CloudWatchSynthetics":     {"SuccessPercent", "Duration", "2xx", "4xx", "5xx", "Failed", "Failed requests", "VisualMonitoringSuccessPercent", "VisualMonitoringTotalComparisons"},
 }
 
 var dimensionsMap = map[string][]string{
@@ -513,6 +516,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Rekognition":             {},
 	"AWS/Cassandra":               {"Keyspace", "Operation", "TableName"},
 	"AWS/AmplifyHosting":          {"App"},
+	"CloudWatchSynthetics":        {"CanaryName"},
 }
 
 // Known AWS regions.

@@ -1,39 +1,45 @@
 import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/client-api';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { TimeZonePicker } from '@grafana/ui';
 
-import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-export default {
+const meta: ComponentMeta<typeof TimeZonePicker> = {
   title: 'Pickers and Editors/TimePickers/TimeZonePicker',
   component: TimeZonePicker,
   decorators: [withCenteredStory],
+  parameters: {
+    controls: {
+      exclude: ['inputId', 'onChange', 'onBlur'],
+    },
+  },
+  args: {
+    value: 'Europe/Stockholm',
+  },
+  argTypes: {
+    includeInternal: {
+      control: {
+        type: 'boolean',
+      },
+    },
+  },
 };
 
-export const basic = () => {
+export const Basic: ComponentStory<typeof TimeZonePicker> = (args) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState
-      initialState={{
-        value: 'Europe/Stockholm',
+    <TimeZonePicker
+      {...args}
+      onChange={(newValue) => {
+        action('on selected')(newValue);
+        updateArgs({ value: newValue });
       }}
-    >
-      {(value, updateValue) => {
-        return (
-          <TimeZonePicker
-            includeInternal={true}
-            value={value.value}
-            onChange={(newValue) => {
-              if (!newValue) {
-                return;
-              }
-              action('on selected')(newValue);
-              updateValue({ value: newValue });
-            }}
-          />
-        );
-      }}
-    </UseState>
+      onBlur={action('onBlur')}
+    />
   );
 };
+
+export default meta;

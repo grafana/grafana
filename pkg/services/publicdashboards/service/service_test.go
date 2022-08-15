@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,6 +26,10 @@ var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}
 var defaultPubdashTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
 var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})
 var mergedDashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-12", "to": "now"}})
+
+func TestLogPrefix(t *testing.T) {
+	assert.Equal(t, LogPrefix, "publicdashboards.service")
+}
 
 func TestGetPublicDashboard(t *testing.T) {
 	type storeResp struct {
@@ -118,9 +124,9 @@ func TestGetPublicDashboard(t *testing.T) {
 func TestSavePublicDashboard(t *testing.T) {
 	t.Run("Saving public dashboard", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -162,9 +168,9 @@ func TestSavePublicDashboard(t *testing.T) {
 
 	t.Run("Validate pubdash has default time setting value", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -190,15 +196,40 @@ func TestSavePublicDashboard(t *testing.T) {
 		assert.Equal(t, defaultPubdashTimeSettings, pubdash.TimeSettings)
 	})
 
-	t.Run("PLACEHOLDER - dashboard with template variables cannot be saved", func(t *testing.T) {})
+	t.Run("Validate pubdash whose dashboard has template variables returns error", func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+		publicdashboardStore := database.ProvideStore(sqlStore)
+		templateVars := make([]map[string]interface{}, 1)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, templateVars)
+
+		service := &PublicDashboardServiceImpl{
+			log:   log.New("test.logger"),
+			store: publicdashboardStore,
+		}
+
+		dto := &SavePublicDashboardConfigDTO{
+			DashboardUid: dashboard.Uid,
+			OrgId:        dashboard.OrgId,
+			UserId:       7,
+			PublicDashboard: &PublicDashboard{
+				IsEnabled:    true,
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+			},
+		}
+
+		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		require.Error(t, err)
+	})
 }
 
 func TestUpdatePublicDashboard(t *testing.T) {
 	t.Run("Updating public dashboard", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -263,9 +294,9 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 	t.Run("Updating set empty time settings", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
-		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
+		dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		publicdashboardStore := database.ProvideStore(sqlStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 
 		service := &PublicDashboardServiceImpl{
 			log:   log.New("test.logger"),
@@ -322,8 +353,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 func TestBuildAnonymousUser(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
-	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 	publicdashboardStore := database.ProvideStore(sqlStore)
 	service := &PublicDashboardServiceImpl{
 		log:   log.New("test.logger"),
@@ -333,21 +364,21 @@ func TestBuildAnonymousUser(t *testing.T) {
 	t.Run("will add datasource read and query permissions to user for each datasource in dashboard", func(t *testing.T) {
 		user, err := service.BuildAnonymousUser(context.Background(), dashboard)
 		require.NoError(t, err)
-		require.Equal(t, dashboard.OrgId, user.OrgId)
-		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgId]["datasources:query"][0])
-		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgId]["datasources:query"][1])
-		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgId]["datasources:read"][0])
-		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgId]["datasources:read"][1])
+		require.Equal(t, dashboard.OrgId, user.OrgID)
+		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:query"][0])
+		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:query"][1])
+		require.Equal(t, "datasources:uid:ds1", user.Permissions[user.OrgID]["datasources:read"][0])
+		require.Equal(t, "datasources:uid:ds3", user.Permissions[user.OrgID]["datasources:read"][1])
 	})
 }
 
 func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore)
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	publicdashboardStore := database.ProvideStore(sqlStore)
 
-	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
-	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true)
+	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{})
 
 	service := &PublicDashboardServiceImpl{
 		log:   log.New("test.logger"),
@@ -441,7 +472,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	folderId int64, isFolder bool, templateVars []map[string]interface{}, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
@@ -489,6 +520,9 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 						},
 					},
 				},
+			},
+			"templating": map[string]interface{}{
+				"list": templateVars,
 			},
 		}),
 	}

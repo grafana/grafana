@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -59,10 +60,9 @@ func ProvideTeamPermissions(
 			return nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           false,
-			BuiltInRoles:    false,
-			ServiceAccounts: true,
+			Users:        true,
+			Teams:        false,
+			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
 			"Member": TeamMemberActions,
@@ -151,10 +151,9 @@ func ProvideDashboardPermissions(
 			return []string{}, nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           true,
-			BuiltInRoles:    true,
-			ServiceAccounts: false,
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  DashboardViewActions,
@@ -209,10 +208,9 @@ func ProvideFolderPermissions(
 			return nil
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           true,
-			BuiltInRoles:    true,
-			ServiceAccounts: false,
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
 			"View":  append(DashboardViewActions, FolderViewActions...),
@@ -238,7 +236,7 @@ var _ accesscontrol.DatasourcePermissionsService = new(DatasourcePermissionsServ
 
 type DatasourcePermissionsService struct{}
 
-func (e DatasourcePermissionsService) GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (e DatasourcePermissionsService) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	return nil, nil
 }
 
@@ -283,14 +281,12 @@ func ProvideServiceAccountPermissions(
 			return err
 		},
 		Assignments: resourcepermissions.Assignments{
-			Users:           true,
-			Teams:           true,
-			BuiltInRoles:    false,
-			ServiceAccounts: false,
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  {serviceaccounts.ActionRead},
-			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete},
+			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
 			"Admin": {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete, serviceaccounts.ActionPermissionsRead, serviceaccounts.ActionPermissionsWrite},
 		},
 		ReaderRoleName: "Service account permission reader",
