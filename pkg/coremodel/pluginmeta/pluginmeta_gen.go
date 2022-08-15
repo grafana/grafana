@@ -192,8 +192,8 @@ type Model struct {
 			Branch *string `json:"branch,omitempty"`
 
 			// Git hash of the commit the plugin was built from
-			Hash    *string  `json:"hash,omitempty"`
-			Numberr *float32 `json:"numberr,omitempty"`
+			Hash   *string  `json:"hash,omitempty"`
+			Number *float32 `json:"number,omitempty"`
 
 			// GitHub pull request the plugin was built from
 			Pr   *float32 `json:"pr,omitempty"`
@@ -417,7 +417,7 @@ var currentVersion = thema.SV(0, 0)
 // all prior schema versions, and the mappings that allow migration between
 // schema versions.
 func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "dashboard"), cueFS, lib, opts...)
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "pluginmeta"), cueFS, lib, opts...)
 }
 
 var _ thema.LineageFactory = Lineage
@@ -429,7 +429,7 @@ type Coremodel struct {
 	lin thema.Lineage
 }
 
-// Lineage returns the canonical dashboard Lineage.
+// Lineage returns the canonical pluginmeta Lineage.
 func (c *Coremodel) Lineage() thema.Lineage {
 	return c.lin
 }
