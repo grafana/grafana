@@ -61,7 +61,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: 
   return (
     <table className={styles.infoWrap}>
       <tbody>
-        {(mode === TooltipDisplayMode.Multi || mode === null) &&
+        {(mode === TooltipDisplayMode.Multi || mode == null) &&
           displayValues.map((v, i) => (
             <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
               <th>{v[0]}:</th>

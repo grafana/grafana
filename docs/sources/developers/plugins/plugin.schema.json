@@ -438,6 +438,24 @@
                 }
               }
             }
+          },
+          "urlParams": {
+            "type": "array",
+            "description": "Add URL parameters to a proxy route",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the URL parameter"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Value of the URL parameter"
+                }
+              }
+            }
           }
         }
       }
