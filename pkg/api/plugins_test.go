@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -21,7 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -60,7 +61,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/install", strings.NewReader("{ \"version\": \"1.0.2\" }"))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_EDITOR, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
@@ -78,7 +79,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/uninstall", strings.NewReader("{}"))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
@@ -99,9 +100,9 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 func Test_GetPluginAssets(t *testing.T) {
 	pluginID := "test-plugin"
 	pluginDir := "."
-	tmpFile, err := ioutil.TempFile(pluginDir, "")
+	tmpFile, err := os.CreateTemp(pluginDir, "")
 	require.NoError(t, err)
-	tmpFileInParentDir, err := ioutil.TempFile("..", "")
+	tmpFileInParentDir, err := os.CreateTemp("..", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(tmpFile.Name())

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -157,16 +158,16 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		orgUser := models.OrgUser{
 			OrgId:   orgID,
 			UserId:  usr.ID,
-			Role:    models.ROLE_ADMIN,
+			Role:    org.RoleAdmin,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
 
 		if ss.Cfg.AutoAssignOrg && !usr.IsAdmin {
 			if len(args.DefaultOrgRole) > 0 {
-				orgUser.Role = models.RoleType(args.DefaultOrgRole)
+				orgUser.Role = org.RoleType(args.DefaultOrgRole)
 			} else {
-				orgUser.Role = models.RoleType(ss.Cfg.AutoAssignOrgRole)
+				orgUser.Role = org.RoleType(ss.Cfg.AutoAssignOrgRole)
 			}
 		}
 
@@ -178,7 +179,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	return usr, nil
 }
 
-//  deprecated method, use only for tests
+// deprecated method, use only for tests
 func (ss *SQLStore) CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error) {
 	var user user.User
 	createErr := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) (err error) {
@@ -475,7 +476,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
-		cachedUser := cached.(models.SignedInUser)
+		cachedUser := cached.(user.SignedInUser)
 		query.Result = &cachedUser
 		return nil
 	}
@@ -485,7 +486,7 @@ func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *mode
 		return err
 	}
 
-	cacheKey = newSignedInUserCacheKey(query.Result.OrgId, query.UserId)
+	cacheKey = newSignedInUserCacheKey(query.Result.OrgID, query.UserId)
 	ss.CacheService.Set(cacheKey, *query.Result, time.Second*5)
 	return nil
 }
@@ -536,7 +537,7 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 			}
 		}
 
-		var usr models.SignedInUser
+		var usr user.SignedInUser
 		has, err := sess.Get(&usr)
 		if err != nil {
 			return err
@@ -545,26 +546,26 @@ func (ss *SQLStore) GetSignedInUser(ctx context.Context, query *models.GetSigned
 		}
 
 		if usr.OrgRole == "" {
-			usr.OrgId = -1
+			usr.OrgID = -1
 			usr.OrgName = "Org missing"
 		}
 
 		if usr.ExternalAuthModule != "oauth_grafana_com" {
-			usr.ExternalAuthId = ""
+			usr.ExternalAuthID = ""
 		}
 
 		// tempUser is used to retrieve the teams for the signed in user for internal use.
-		tempUser := &models.SignedInUser{
-			OrgId: usr.OrgId,
+		tempUser := &user.SignedInUser{
+			OrgID: usr.OrgID,
 			Permissions: map[int64]map[string][]string{
-				usr.OrgId: {
+				usr.OrgID: {
 					ac.ActionTeamsRead: {ac.ScopeTeamsAll},
 				},
 			},
 		}
 		getTeamsByUserQuery := &models.GetTeamsByUserQuery{
-			OrgId:        usr.OrgId,
-			UserId:       usr.UserId,
+			OrgId:        usr.OrgID,
+			UserId:       usr.UserID,
 			SignedInUser: tempUser,
 		}
 		err = ss.GetTeamsByUser(ctx, getTeamsByUserQuery)
@@ -847,7 +848,7 @@ func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelp
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			ID:         cmd.UserId,
-			HelpFlags1: user.HelpFlags1(cmd.HelpFlags1),
+			HelpFlags1: cmd.HelpFlags1,
 			Updated:    time.Now(),
 		}
 

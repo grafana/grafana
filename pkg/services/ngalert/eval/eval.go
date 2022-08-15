@@ -15,10 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -195,9 +196,9 @@ func getExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, d
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, &m.SignedInUser{
-					OrgId:   ctx.OrgID,
-					OrgRole: m.ROLE_ADMIN, // Get DS as admin for service, API calls (test/post) must check permissions based on user.
+				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, &user.SignedInUser{
+					OrgID:   ctx.OrgID,
+					OrgRole: org.RoleAdmin, // Get DS as admin for service, API calls (test/post) must check permissions based on user.
 				}, true)
 				if err != nil {
 					return nil, err
@@ -374,18 +375,18 @@ func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, no
 //
 // For example, given the following:
 //
-//		map[string]string{
-//			"ref1": "datasource1",
-//			"ref2": "datasource1",
-//			"ref3": "datasource2",
-//		}
+//	map[string]string{
+//		"ref1": "datasource1",
+//		"ref2": "datasource1",
+//		"ref3": "datasource2",
+//	}
 //
 // we would expect:
 //
-//  	map[string][]string{
-// 			"datasource1": []string{"ref1", "ref2"},
-//			"datasource2": []string{"ref3"},
-//		}
+//	 	map[string][]string{
+//				"datasource1": []string{"ref1", "ref2"},
+//				"datasource2": []string{"ref3"},
+//			}
 func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string][]string {
 	if refIDsToDatasourceUIDs == nil {
 		return nil
@@ -420,12 +421,12 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 // Also, each Frame must be uniquely identified by its Field.Labels or a single Error result will be returned.
 //
 // Per Frame, data becomes a State based on the following rules:
-//  - Empty or zero length Frames result in NoData.
-//  - If a value:
-//    - 0 results in Normal.
-//    - Nonzero (e.g 1.2, NaN) results in Alerting.
-//    - nil results in noData.
-//    - unsupported Frame schemas results in Error.
+//   - Empty or zero length Frames result in NoData.
+//   - If a value:
+//   - 0 results in Normal.
+//   - Nonzero (e.g 1.2, NaN) results in Alerting.
+//   - nil results in noData.
+//   - unsupported Frame schemas results in Error.
 func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
 	evalResults := make([]Result, 0)
 

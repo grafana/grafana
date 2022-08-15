@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -587,7 +590,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	toSave.SetUid(uid)
 
 	// seed dashboard
-	dashStore := dashdb.ProvideDashboardStore(store)
+	dashStore := dashdb.ProvideDashboardStore(store, featuremgmt.WithFeatures())
 	dash, err := dashStore.SaveDashboard(models.SaveDashboardCommand{
 		Dashboard: toSave.Data,
 		UserId:    1,
@@ -608,7 +611,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	if dashboardSvc == nil {
 		dashboardSvc = &dashboards.FakeDashboardService{}
 	}
-	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &models.SignedInUser{OrgId: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc), dash
+	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc), dash
 }
 
 func testDashSvc(t *testing.T) dashboards.DashboardService {

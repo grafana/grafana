@@ -11,12 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // for stubbing in tests
-//nolint: gocritic
+// nolint: gocritic
 var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
 	return imguploader.NewImageUploader()
 }
@@ -210,7 +211,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		},
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   evalCtx.Rule.OrgID,
-			OrgRole: models.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 		Width:           1000,
 		Height:          500,

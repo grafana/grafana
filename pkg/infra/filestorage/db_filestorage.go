@@ -33,6 +33,11 @@ type file struct {
 	MimeType             string    `xorm:"mime_type"`
 }
 
+var (
+	fileColsNoContents = []string{"path", "path_hash", "parent_folder_path_hash", "etag", "cache_control", "content_disposition", "updated", "created", "size", "mime_type"}
+	allFileCols        = append([]string{"contents"}, fileColsNoContents...)
+)
+
 type fileMeta struct {
 	PathHash string `xorm:"path_hash"`
 	Key      string `xorm:"key"`
@@ -270,7 +275,7 @@ func upsertProperty(dialect migrator.Dialect, sess *sqlstore.DBSession, now time
 	return err
 }
 
-//nolint: gocyclo
+// nolint: gocyclo
 func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
 	var resp *ListResponse
 
@@ -337,6 +342,12 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 
 		if cursor != "" {
 			sess.Where("path > ?", cursor)
+		}
+
+		if options.WithContents {
+			sess.Cols(allFileCols...)
+		} else {
+			sess.Cols(fileColsNoContents...)
 		}
 
 		if err := sess.Find(&foundFiles); err != nil {

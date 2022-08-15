@@ -3,7 +3,8 @@ load(
     'identify_runner_step',
     'gen_version_step',
     'download_grabpl_step',
-    'store_packages_step'
+    'publish_packages_step',
+    'compile_build_cmd',
 )
 
 load(
@@ -15,8 +16,9 @@ def publish(trigger, ver_mode, edition):
     steps = [
         download_grabpl_step(),
         gen_version_step(ver_mode),
+        compile_build_cmd(),
         identify_runner_step(),
-        store_packages_step(edition=edition, ver_mode=ver_mode),
+        publish_packages_step(edition=edition, ver_mode=ver_mode),
     ]
     return pipeline(
                    name='main-publish', edition=edition, trigger=dict(trigger, repo=['grafana/grafana']),

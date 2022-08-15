@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -77,6 +78,7 @@ func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
 }
 
 // ScreenshotService is an interface for taking screenshots.
+//
 //go:generate mockgen -destination=mock.go -package=screenshot github.com/grafana/grafana/pkg/services/screenshot ScreenshotService
 type ScreenshotService interface {
 	Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error)
@@ -226,7 +228,7 @@ func (s *RemoteRenderScreenshotService) Take(ctx context.Context, opts Screensho
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
 			OrgID:   q.Result.OrgId,
-			OrgRole: models.ROLE_ADMIN,
+			OrgRole: org.RoleAdmin,
 		},
 		ErrorOpts: rendering.ErrorOpts{
 			ErrorConcurrentLimitReached: true,

@@ -115,6 +115,7 @@ var (
 
 	// HTTP auth
 	SigV4AuthEnabled bool
+	AzureAuthEnabled bool
 
 	AnonymousEnabled bool
 
@@ -287,6 +288,7 @@ type Cfg struct {
 	TokenRotationIntervalMinutes int
 	SigV4AuthEnabled             bool
 	SigV4VerboseLogging          bool
+	AzureAuthEnabled             bool
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
@@ -316,6 +318,7 @@ type Cfg struct {
 	// JWT Auth
 	JWTAuthEnabled       bool
 	JWTAuthHeaderName    string
+	JWTAuthURLLogin      bool
 	JWTAuthEmailClaim    string
 	JWTAuthUsernameClaim string
 	JWTAuthExpectClaims  string
@@ -837,9 +840,10 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Logger: log.New("settings"),
-		Raw:    ini.Empty(),
-		Azure:  &azsettings.AzureSettings{},
+		Logger:      log.New("settings"),
+		Raw:         ini.Empty(),
+		Azure:       &azsettings.AzureSettings{},
+		RBACEnabled: true,
 	}
 }
 
@@ -1289,6 +1293,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
 	cfg.SigV4VerboseLogging = auth.Key("sigv4_verbose_logging").MustBool(false)
 
+	// Azure Auth
+	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
+	cfg.AzureAuthEnabled = AzureAuthEnabled
+
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousEnabled = AnonymousEnabled
@@ -1305,6 +1313,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authJWT := iniFile.Section("auth.jwt")
 	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
 	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthURLLogin = authJWT.Key("url_login").MustBool(false)
 	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
 	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
 	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")

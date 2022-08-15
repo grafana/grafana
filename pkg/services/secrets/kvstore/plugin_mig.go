@@ -2,9 +2,11 @@ package kvstore
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,8 +20,8 @@ type PluginSecretMigrationService struct {
 	logger         log.Logger
 	sqlStore       sqlstore.Store
 	secretsService secrets.Service
-	remoteCheck    UseRemoteSecretsPluginCheck
 	kvstore        kvstore.KVStore
+	manager        plugins.SecretsPluginManager
 	getAllFunc     func(ctx context.Context) ([]Item, error)
 }
 
@@ -28,8 +30,8 @@ func ProvidePluginSecretMigrationService(
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
-	remoteCheck UseRemoteSecretsPluginCheck,
 	kvstore kvstore.KVStore,
+	manager plugins.SecretsPluginManager,
 ) *PluginSecretMigrationService {
 	return &PluginSecretMigrationService{
 		secretsStore:   secretsStore,
@@ -37,14 +39,14 @@ func ProvidePluginSecretMigrationService(
 		logger:         log.New("sec-plugin-mig"),
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
-		remoteCheck:    remoteCheck,
 		kvstore:        kvstore,
+		manager:        manager,
 	}
 }
 
 func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 	// Check if we should migrate to plugin - default false
-	if s.cfg.SectionWithEnvOverrides("secrets").Key("migrate_to_plugin").MustBool(false) && s.remoteCheck.ShouldUseRemoteSecretsPlugin() {
+	if err := EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		s.logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
 		// the secrets store would be the plugin.
@@ -62,23 +64,28 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 		namespacedKVStore := GetNamespacedKVStore(s.kvstore)
 		wasFatal, err := isPluginStartupErrorFatal(ctx, namespacedKVStore)
 		if err != nil {
-			s.logger.Warn("unabled to determine whether plugin startup failures are fatal - continuing migration anyway.")
+			s.logger.Warn("unable to determine whether plugin startup failures are fatal - continuing migration anyway.")
 		}
 
 		allSec, err := secretsSql.GetAll(ctx)
 		if err != nil {
 			return nil
 		}
+		totalSec := len(allSec)
 		// We just set it again as the current secret store should be the plugin secret
-		for _, sec := range allSec {
+		s.logger.Debug(fmt.Sprintf("Total amount of secrets to migrate: %d", totalSec))
+		for i, sec := range allSec {
+			s.logger.Debug(fmt.Sprintf("Migrating secret %d of %d", i+1, totalSec), "current", i+1, "secretCount", totalSec)
 			err = s.secretsStore.Set(ctx, *sec.OrgId, *sec.Namespace, *sec.Type, sec.Value)
 			if err != nil {
 				return err
 			}
 		}
-		s.logger.Debug("migrated unified secrets to plugin", "number of secrets", len(allSec))
+		s.logger.Debug("migrated unified secrets to plugin", "number of secrets", totalSec)
 		// as no err was returned, when we delete all the secrets from the sql store
 		for index, sec := range allSec {
+			s.logger.Debug(fmt.Sprintf("Cleaning secret %d of %d", index+1, totalSec), "current", index+1, "secretCount", totalSec)
+
 			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
 			if err != nil {
 				s.logger.Error("plugin migrator encountered error while deleting unified secrets")
@@ -94,7 +101,7 @@ func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
 				return err
 			}
 		}
-		s.logger.Debug("deleted unified secrets after migration", "number of secrets", len(allSec))
+		s.logger.Debug("deleted unified secrets after migration", "number of secrets", totalSec)
 	}
 	return nil
 }

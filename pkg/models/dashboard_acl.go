@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type PermissionType int
@@ -39,9 +41,9 @@ type DashboardACL struct {
 	OrgID       int64 `xorm:"org_id"`
 	DashboardID int64 `xorm:"dashboard_id"`
 
-	UserID     int64     `xorm:"user_id"`
-	TeamID     int64     `xorm:"team_id"`
-	Role       *RoleType // pointer to be nullable
+	UserID     int64         `xorm:"user_id"`
+	TeamID     int64         `xorm:"team_id"`
+	Role       *org.RoleType // pointer to be nullable
 	Permission PermissionType
 
 	Created time.Time
@@ -64,7 +66,7 @@ type DashboardACLInfoDTO struct {
 	TeamEmail      string         `json:"teamEmail"`
 	TeamAvatarUrl  string         `json:"teamAvatarUrl"`
 	Team           string         `json:"team"`
-	Role           *RoleType      `json:"role,omitempty"`
+	Role           *org.RoleType  `json:"role,omitempty"`
 	Permission     PermissionType `json:"permission"`
 	PermissionName string         `json:"permissionName"`
 	Uid            string         `json:"uid"`
@@ -96,9 +98,7 @@ func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
 	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
 }
 
-//
 // QUERIES
-//
 type GetDashboardACLInfoListQuery struct {
 	DashboardID int64
 	OrgID       int64

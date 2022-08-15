@@ -353,7 +353,7 @@ func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, e
 	return dashboardLocation, found, err
 }
 
-//nolint: gocyclo
+// nolint: gocyclo
 func doSearchQuery(
 	ctx context.Context,
 	logger log.Logger,
@@ -496,7 +496,7 @@ func doSearchQuery(
 	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fLocation := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
-	fDSUIDs := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
+	fDSUIDs := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
 	fExplain := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
 
 	fScore.Name = "score"
@@ -592,13 +592,13 @@ func doSearchQuery(
 			fTags.Append(nil)
 		}
 
-		if len(dsUIDs) > 0 {
-			js, _ := json.Marshal(dsUIDs)
-			jsb := json.RawMessage(js)
-			fDSUIDs.Append(&jsb)
-		} else {
-			fDSUIDs.Append(nil)
+		if len(dsUIDs) == 0 {
+			dsUIDs = []string{}
 		}
+
+		js, _ := json.Marshal(dsUIDs)
+		jsb := json.RawMessage(js)
+		fDSUIDs.Append(jsb)
 
 		if q.Explain {
 			if isMatchAllQuery {

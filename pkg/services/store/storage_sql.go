@@ -13,34 +13,35 @@ import (
 
 const rootStorageTypeSQL = "sql"
 
-type rootStorageSQL struct {
-	baseStorageRuntime
+var _ storageRuntime = &rootStorageSQL{}
 
+type rootStorageSQL struct {
 	settings *StorageSQLConfig
+	meta     RootStorageMeta
+	store    filestorage.FileStorage
 }
 
 // getDbRootFolder creates a DB path prefix for a given storage name and orgId.
 // example:
-//   orgId: 5
-//   storageName: "upload"
-//     => prefix: "/5/upload/"
+//
+//	orgId: 5
+//	storageName: "upload"
+//	  => prefix: "/5/upload/"
 func getDbStoragePathPrefix(orgId int64, storageName string) string {
 	return filestorage.Join(fmt.Sprintf("%d", orgId), storageName+filestorage.Delimiter)
 }
 
-func newSQLStorage(prefix string, name string, descr string, cfg *StorageSQLConfig, sql *sqlstore.SQLStore, orgId int64) *rootStorageSQL {
+func newSQLStorage(meta RootStorageMeta, prefix string, name string, descr string, cfg *StorageSQLConfig, sql *sqlstore.SQLStore, orgId int64) *rootStorageSQL {
 	if cfg == nil {
 		cfg = &StorageSQLConfig{}
 	}
 
-	meta := RootStorageMeta{
-		Config: RootStorageConfig{
-			Type:        rootStorageTypeSQL,
-			Prefix:      prefix,
-			Name:        name,
-			Description: descr,
-			SQL:         cfg,
-		},
+	meta.Config = RootStorageConfig{
+		Type:        rootStorageTypeSQL,
+		Prefix:      prefix,
+		Name:        name,
+		Description: descr,
+		SQL:         cfg,
 	}
 
 	if prefix == "" {
@@ -76,6 +77,14 @@ func (s *rootStorageSQL) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 		return nil, err
 	}
 	return &WriteValueResponse{Code: 200}, nil
+}
+
+func (s *rootStorageSQL) Meta() RootStorageMeta {
+	return s.meta
+}
+
+func (s *rootStorageSQL) Store() filestorage.FileStorage {
+	return s.store
 }
 
 func (s *rootStorageSQL) Sync() error {

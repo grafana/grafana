@@ -57,7 +57,6 @@ Grafana Enterprise adds the following features:
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "../enterprise/usage-insights/" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/" >}}) to manage your configuration or provisioning secrets with Vault.
-- [AWS Secrets Manager integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/store-secrets-using-aws-secrets-manager-plugin/" >}}) to store datasource secrets in AWS Secrets Manager.
 - [Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana/" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "../setup-grafana/configure-security/configure-request-security/" >}}) makes it possible to restrict outgoing requests from the Grafana server.
 - [Settings updates at runtime]({{< relref "../enterprise/settings-updates.md" >}}) allows you to update Grafana settings at runtime without requiring a restart.

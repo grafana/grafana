@@ -5,10 +5,8 @@ package schedule
 import (
 	context "context"
 
-	events "github.com/grafana/grafana/pkg/events"
-	mock "github.com/stretchr/testify/mock"
-
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	mock "github.com/stretchr/testify/mock"
 
 	time "time"
 )
@@ -18,9 +16,40 @@ type FakeScheduleService struct {
 	mock.Mock
 }
 
+type FakeScheduleService_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *FakeScheduleService) EXPECT() *FakeScheduleService_Expecter {
+	return &FakeScheduleService_Expecter{mock: &_m.Mock}
+}
+
 // DeleteAlertRule provides a mock function with given fields: key
 func (_m *FakeScheduleService) DeleteAlertRule(key models.AlertRuleKey) {
 	_m.Called(key)
+}
+
+// FakeScheduleService_DeleteAlertRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAlertRule'
+type FakeScheduleService_DeleteAlertRule_Call struct {
+	*mock.Call
+}
+
+// DeleteAlertRule is a helper method to define mock.On call
+//   - key models.AlertRuleKey
+func (_e *FakeScheduleService_Expecter) DeleteAlertRule(key interface{}) *FakeScheduleService_DeleteAlertRule_Call {
+	return &FakeScheduleService_DeleteAlertRule_Call{Call: _e.mock.On("DeleteAlertRule", key)}
+}
+
+func (_c *FakeScheduleService_DeleteAlertRule_Call) Run(run func(key models.AlertRuleKey)) *FakeScheduleService_DeleteAlertRule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(models.AlertRuleKey))
+	})
+	return _c
+}
+
+func (_c *FakeScheduleService_DeleteAlertRule_Call) Return() *FakeScheduleService_DeleteAlertRule_Call {
+	_c.Call.Return()
+	return _c
 }
 
 // Run provides a mock function with given fields: _a0
@@ -37,23 +66,56 @@ func (_m *FakeScheduleService) Run(_a0 context.Context) error {
 	return r0
 }
 
+// FakeScheduleService_Run_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Run'
+type FakeScheduleService_Run_Call struct {
+	*mock.Call
+}
+
+// Run is a helper method to define mock.On call
+//   - _a0 context.Context
+func (_e *FakeScheduleService_Expecter) Run(_a0 interface{}) *FakeScheduleService_Run_Call {
+	return &FakeScheduleService_Run_Call{Call: _e.mock.On("Run", _a0)}
+}
+
+func (_c *FakeScheduleService_Run_Call) Run(run func(_a0 context.Context)) *FakeScheduleService_Run_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *FakeScheduleService_Run_Call) Return(_a0 error) *FakeScheduleService_Run_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
 // UpdateAlertRule provides a mock function with given fields: key, lastVersion
 func (_m *FakeScheduleService) UpdateAlertRule(key models.AlertRuleKey, lastVersion int64) {
 	_m.Called(key, lastVersion)
 }
 
-// UpdateAlertRulesByNamespaceUID provides a mock function with given fields: ctx, orgID, uid
-func (_m *FakeScheduleService) UpdateAlertRulesByNamespaceUID(ctx context.Context, orgID int64, uid string) error {
-	ret := _m.Called(ctx, orgID, uid)
+// FakeScheduleService_UpdateAlertRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAlertRule'
+type FakeScheduleService_UpdateAlertRule_Call struct {
+	*mock.Call
+}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
-		r0 = rf(ctx, orgID, uid)
-	} else {
-		r0 = ret.Error(0)
-	}
+// UpdateAlertRule is a helper method to define mock.On call
+//   - key models.AlertRuleKey
+//   - lastVersion int64
+func (_e *FakeScheduleService_Expecter) UpdateAlertRule(key interface{}, lastVersion interface{}) *FakeScheduleService_UpdateAlertRule_Call {
+	return &FakeScheduleService_UpdateAlertRule_Call{Call: _e.mock.On("UpdateAlertRule", key, lastVersion)}
+}
 
-	return r0
+func (_c *FakeScheduleService_UpdateAlertRule_Call) Run(run func(key models.AlertRuleKey, lastVersion int64)) *FakeScheduleService_UpdateAlertRule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(models.AlertRuleKey), args[1].(int64))
+	})
+	return _c
+}
+
+func (_c *FakeScheduleService_UpdateAlertRule_Call) Return() *FakeScheduleService_UpdateAlertRule_Call {
+	_c.Call.Return()
+	return _c
 }
 
 // evalApplied provides a mock function with given fields: _a0, _a1
@@ -61,18 +123,28 @@ func (_m *FakeScheduleService) evalApplied(_a0 models.AlertRuleKey, _a1 time.Tim
 	_m.Called(_a0, _a1)
 }
 
-// folderUpdateHandler provides a mock function with given fields: ctx, evt
-func (_m *FakeScheduleService) folderUpdateHandler(ctx context.Context, evt *events.FolderUpdated) error {
-	ret := _m.Called(ctx, evt)
+// FakeScheduleService_evalApplied_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'evalApplied'
+type FakeScheduleService_evalApplied_Call struct {
+	*mock.Call
+}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *events.FolderUpdated) error); ok {
-		r0 = rf(ctx, evt)
-	} else {
-		r0 = ret.Error(0)
-	}
+// evalApplied is a helper method to define mock.On call
+//   - _a0 models.AlertRuleKey
+//   - _a1 time.Time
+func (_e *FakeScheduleService_Expecter) evalApplied(_a0 interface{}, _a1 interface{}) *FakeScheduleService_evalApplied_Call {
+	return &FakeScheduleService_evalApplied_Call{Call: _e.mock.On("evalApplied", _a0, _a1)}
+}
 
-	return r0
+func (_c *FakeScheduleService_evalApplied_Call) Run(run func(_a0 models.AlertRuleKey, _a1 time.Time)) *FakeScheduleService_evalApplied_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(models.AlertRuleKey), args[1].(time.Time))
+	})
+	return _c
+}
+
+func (_c *FakeScheduleService_evalApplied_Call) Return() *FakeScheduleService_evalApplied_Call {
+	_c.Call.Return()
+	return _c
 }
 
 // overrideCfg provides a mock function with given fields: cfg
@@ -80,7 +152,53 @@ func (_m *FakeScheduleService) overrideCfg(cfg SchedulerCfg) {
 	_m.Called(cfg)
 }
 
+// FakeScheduleService_overrideCfg_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'overrideCfg'
+type FakeScheduleService_overrideCfg_Call struct {
+	*mock.Call
+}
+
+// overrideCfg is a helper method to define mock.On call
+//   - cfg SchedulerCfg
+func (_e *FakeScheduleService_Expecter) overrideCfg(cfg interface{}) *FakeScheduleService_overrideCfg_Call {
+	return &FakeScheduleService_overrideCfg_Call{Call: _e.mock.On("overrideCfg", cfg)}
+}
+
+func (_c *FakeScheduleService_overrideCfg_Call) Run(run func(cfg SchedulerCfg)) *FakeScheduleService_overrideCfg_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(SchedulerCfg))
+	})
+	return _c
+}
+
+func (_c *FakeScheduleService_overrideCfg_Call) Return() *FakeScheduleService_overrideCfg_Call {
+	_c.Call.Return()
+	return _c
+}
+
 // stopApplied provides a mock function with given fields: _a0
 func (_m *FakeScheduleService) stopApplied(_a0 models.AlertRuleKey) {
 	_m.Called(_a0)
+}
+
+// FakeScheduleService_stopApplied_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'stopApplied'
+type FakeScheduleService_stopApplied_Call struct {
+	*mock.Call
+}
+
+// stopApplied is a helper method to define mock.On call
+//   - _a0 models.AlertRuleKey
+func (_e *FakeScheduleService_Expecter) stopApplied(_a0 interface{}) *FakeScheduleService_stopApplied_Call {
+	return &FakeScheduleService_stopApplied_Call{Call: _e.mock.On("stopApplied", _a0)}
+}
+
+func (_c *FakeScheduleService_stopApplied_Call) Run(run func(_a0 models.AlertRuleKey)) *FakeScheduleService_stopApplied_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(models.AlertRuleKey))
+	})
+	return _c
+}
+
+func (_c *FakeScheduleService_stopApplied_Call) Return() *FakeScheduleService_stopApplied_Call {
+	_c.Call.Return()
+	return _c
 }
