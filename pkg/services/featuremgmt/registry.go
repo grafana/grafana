@@ -265,7 +265,6 @@ var (
 		{
 			Name:        "fullstoryUserTracking",
 			Description: "Enables Fullstory cliend SDK to do user analytics",
-			State:       FeatureStateAlpha,
 		},
 	}
 )
