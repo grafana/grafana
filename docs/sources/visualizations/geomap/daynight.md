@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: Night / Day layer
-weight: 400
+weight: 6
 ---
 
 # Night / Day layer
