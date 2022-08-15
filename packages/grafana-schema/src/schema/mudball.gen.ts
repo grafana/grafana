@@ -4,8 +4,6 @@
 // To regenerate, run "make gen-cue" from the repository root.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 export enum AxisPlacement {
   Auto = 'auto',
   Bottom = 'bottom',
