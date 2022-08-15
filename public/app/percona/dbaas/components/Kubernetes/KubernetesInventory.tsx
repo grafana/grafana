@@ -60,8 +60,8 @@ export const KubernetesInventory: FC = () => {
   const deleteKubernetesCluster = useCallback(
     async (force?: boolean) => {
       if (selectedCluster) {
-        await dispatch(deleteKubernetesAction({ kubernetesToDelete: selectedCluster, force }));
         setDeleteModalVisible(false);
+        await dispatch(deleteKubernetesAction({ kubernetesToDelete: selectedCluster, force }));
         setSelectedCluster(null);
       }
     },
