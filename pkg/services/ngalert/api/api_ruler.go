@@ -44,8 +44,10 @@ var (
 	errProvisionedResource = errors.New("request affects resources created via provisioning API")
 )
 
-// RouteDeleteAlertRules deletes all alert rules user is authorized to access in the given namespace
-// or, if non-empty, a specific group of rules in the namespace
+// RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
+// or, if non-empty, a specific group of rules in the namespace.
+// Returns http.StatusUnauthorized if user does not have access to any of the rules that match the filter.
+// Returns http.StatusBadRequest if all rules that match the filter and the user is authorized to delete are provisioned.
 func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle string, group string) response.Response {
 	namespace, err := srv.store.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.SignedInUser.OrgID, c.SignedInUser, true)
 	if err != nil {
@@ -71,8 +73,9 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle s
 		return ErrResp(http.StatusInternalServerError, err, "failed to fetch provenances of alert rules")
 	}
 
-	var deletableRules []string
+	deletedGroups := make(map[ngmodels.AlertRuleGroupKey][]ngmodels.AlertRuleKey)
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		unauthz, provisioned := false, false
 		q := ngmodels.ListAlertRulesQuery{
 			OrgID:         c.SignedInUser.OrgID,
 			NamespaceUIDs: []string{namespace.Uid},
@@ -87,68 +90,65 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle s
 			return nil
 		}
 
-		var canDelete []*ngmodels.AlertRule
-		var cannotDelete []string
-
-		// partition will partation the given rules in two, one partition
-		// being the rules that fulfill the predicate the other partation being
-		// the ruleIDs not fulfilling it.
-		partition := func(alerts []*ngmodels.AlertRule, predicate func(rule *ngmodels.AlertRule) bool) ([]*ngmodels.AlertRule, []string) {
-			positive, negative := make([]*ngmodels.AlertRule, 0, len(alerts)), make([]string, 0, len(alerts))
-			for _, rule := range alerts {
-				if predicate(rule) {
-					positive = append(positive, rule)
-					continue
-				}
-				negative = append(negative, rule.UID)
+		var groupsToDelete = make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
+		for _, rule := range q.Result {
+			key := rule.GetGroupKey()
+			groupsToDelete[key] = append(groupsToDelete[key], rule)
+		}
+		rulesToDelete := make([]string, 0, len(q.Result))
+		for groupKey, rules := range groupsToDelete {
+			if !authorizeAccessToRuleGroup(rules, hasAccess) {
+				unauthz = true
+				break
 			}
-			return positive, negative
+			canDelete := true
+			uid := make([]string, 0, len(rules))
+			keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
+			for _, rule := range rules {
+				provenance, exists := provenances[rule.UID]
+				// if at least one rule is provisioned do not allow to delete via regular api
+				if exists && provenance != ngmodels.ProvenanceNone {
+					provisioned = true
+					canDelete = false
+					break
+				}
+				uid = append(uid, rule.UID)
+				keys = append(keys, rule.GetKey())
+			}
+			if canDelete {
+				rulesToDelete = append(rulesToDelete, uid...)
+				deletedGroups[groupKey] = keys
+			}
 		}
-
-		canDelete, cannotDelete = partition(q.Result, func(rule *ngmodels.AlertRule) bool {
-			return authorizeDatasourceAccessForRule(rule, hasAccess)
-		})
-		if len(canDelete) == 0 {
-			return fmt.Errorf("%w to delete rules because user is not authorized to access data sources used by the rules", ErrAuthorization)
+		if len(rulesToDelete) > 0 {
+			return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgID, rulesToDelete...)
 		}
-		if len(cannotDelete) > 0 {
-			logger.Info("user cannot delete one or many alert rules because it does not have access to data sources. Those rules will be skipped", "expected", len(q.Result), "authorized", len(canDelete), "unauthorized", cannotDelete)
+		// if none rules were deleted return an error.
+		if provisioned {
+			return errProvisionedResource
 		}
-
-		canDelete, cannotDelete = partition(canDelete, func(rule *ngmodels.AlertRule) bool {
-			provenance, exists := provenances[rule.UID]
-			return (exists && provenance == ngmodels.ProvenanceNone) || !exists
-		})
-
-		if len(canDelete) == 0 {
-			return fmt.Errorf("all rules have been provisioned and cannot be deleted through this api")
+		if unauthz {
+			if group == "" {
+				return fmt.Errorf("%w to delete any existing rules in the namespace", ErrAuthorization)
+			}
+			return fmt.Errorf("%w to delete group of the rules", ErrAuthorization)
 		}
-
-		if len(cannotDelete) > 0 {
-			logger.Info("user cannot delete one or many alert rules because it does have a provenance set. Those rules will be skipped", "expected", len(q.Result), "provenance_none", len(canDelete), "provenance_set", cannotDelete)
-		}
-
-		for _, rule := range canDelete {
-			deletableRules = append(deletableRules, rule.UID)
-		}
-
-		return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgID, deletableRules...)
+		return nil
 	})
 
 	if err != nil {
 		if errors.Is(err, ErrAuthorization) {
-			return ErrResp(http.StatusUnauthorized, err, "")
+			return ErrResp(http.StatusUnauthorized, err, "failed to delete rule group")
+		}
+		if errors.Is(err, errProvisionedResource) {
+			return ErrResp(http.StatusBadRequest, err, "failed to delete rule group")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
 
 	logger.Debug("rules have been deleted from the store. updating scheduler")
-
-	for _, uid := range deletableRules {
-		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
-			OrgID: c.SignedInUser.OrgID,
-			UID:   uid,
-		})
+	for _, ruleKeys := range deletedGroups {
+		srv.scheduleService.DeleteAlertRule(ruleKeys...)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
@@ -427,11 +427,12 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 		}, rule.Existing.Version+1)
 	}
 
-	for _, rule := range finalChanges.Delete {
-		srv.scheduleService.DeleteAlertRule(ngmodels.AlertRuleKey{
-			OrgID: c.SignedInUser.OrgID,
-			UID:   rule.UID,
-		})
+	if len(finalChanges.Delete) > 0 {
+		keys := make([]ngmodels.AlertRuleKey, 0, len(finalChanges.Delete))
+		for _, rule := range finalChanges.Delete {
+			keys = append(keys, rule.GetKey())
+		}
+		srv.scheduleService.DeleteAlertRule(keys...)
 	}
 
 	if finalChanges.IsEmpty() {

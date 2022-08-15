@@ -33,8 +33,8 @@ type ScheduleService interface {
 	Run(context.Context) error
 	// UpdateAlertRule notifies scheduler that a rule has been changed
 	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64)
-	// DeleteAlertRule notifies scheduler that a rule has been changed
-	DeleteAlertRule(key ngmodels.AlertRuleKey)
+	// DeleteAlertRule notifies scheduler that rules have been deleted
+	DeleteAlertRule(keys ...ngmodels.AlertRuleKey)
 	// the following are used by tests only used for tests
 	evalApplied(ngmodels.AlertRuleKey, time.Time)
 	stopApplied(ngmodels.AlertRuleKey)
@@ -155,23 +155,23 @@ func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int6
 }
 
 // DeleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
-func (sch *schedule) DeleteAlertRule(key ngmodels.AlertRuleKey) {
-	// It can happen that the scheduler has deleted the alert rule before the
-	// Ruler API has called DeleteAlertRule. This can happen as requests to
-	// the Ruler API do not hold an exclusive lock over all scheduler operations.
-	if _, ok := sch.schedulableAlertRules.del(key); !ok {
-		sch.log.Info("alert rule cannot be removed from the scheduler as it is not scheduled", "uid", key.UID, "org_id", key.OrgID)
+func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
+	for _, key := range keys {
+		// It can happen that the scheduler has deleted the alert rule before the
+		// Ruler API has called DeleteAlertRule. This can happen as requests to
+		// the Ruler API do not hold an exclusive lock over all scheduler operations.
+		if _, ok := sch.schedulableAlertRules.del(key); !ok {
+			sch.log.Info("alert rule cannot be removed from the scheduler as it is not scheduled", "uid", key.UID, "org_id", key.OrgID)
+		}
+		// Delete the rule routine
+		ruleInfo, ok := sch.registry.del(key)
+		if !ok {
+			sch.log.Info("alert rule cannot be stopped as it is not running", "uid", key.UID, "org_id", key.OrgID)
+			continue
+		}
+		// stop rule evaluation
+		ruleInfo.stop()
 	}
-
-	// Delete the rule routine
-	ruleInfo, ok := sch.registry.del(key)
-	if !ok {
-		sch.log.Info("alert rule cannot be stopped as it is not running", "uid", key.UID, "org_id", key.OrgID)
-		return
-	}
-	// stop rule evaluation
-	ruleInfo.stop()
-
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules := sch.schedulableAlertRules.all()
 	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
