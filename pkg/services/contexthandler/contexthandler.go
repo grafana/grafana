@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -96,7 +97,7 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 
 	reqContext := &models.ReqContext{
 		Context:        mContext,
-		SignedInUser:   &models.SignedInUser{},
+		SignedInUser:   &user.SignedInUser{},
 		IsSignedIn:     false,
 		AllowAnonymous: false,
 		SkipCache:      false,
@@ -151,19 +152,19 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	case h.initContextWithAnonymousUser(reqContext):
 	}
 
-	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
+	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 	span.AddEvents(
 		[]string{"uname", "orgId", "userId"},
 		[]tracing.EventValue{
 			{Str: reqContext.Login},
-			{Num: reqContext.OrgId},
-			{Num: reqContext.UserId}},
+			{Num: reqContext.OrgID},
+			{Num: reqContext.UserID}},
 	)
 
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
-		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserId}); err != nil {
+		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)
+		if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -177,7 +178,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
 	defer span.End()
 
-	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
+	orga, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
 		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
@@ -185,10 +186,10 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 
 	reqContext.IsSignedIn = false
 	reqContext.AllowAnonymous = true
-	reqContext.SignedInUser = &models.SignedInUser{IsAnonymous: true}
-	reqContext.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
-	reqContext.OrgId = org.Id
-	reqContext.OrgName = org.Name
+	reqContext.SignedInUser = &user.SignedInUser{IsAnonymous: true}
+	reqContext.OrgRole = org.RoleType(h.Cfg.AnonymousOrgRole)
+	reqContext.OrgID = orga.Id
+	reqContext.OrgName = orga.Name
 	return true
 }
 
@@ -288,10 +289,10 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		//Use the old APIkey method.  This provides backwards compatibility.
-		reqContext.SignedInUser = &models.SignedInUser{}
+		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apikey.Role
-		reqContext.ApiKeyId = apikey.Id
-		reqContext.OrgId = apikey.OrgId
+		reqContext.ApiKeyID = apikey.Id
+		reqContext.OrgID = apikey.OrgId
 		reqContext.IsSignedIn = true
 		return true
 	}
@@ -300,7 +301,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	//Use service account linked to API key as the signed in user
 	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser); err != nil {
+	err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
+	if err != nil {
 		reqContext.Logger.Error(
 			"Failed to link API key to service account in",
 			"id", querySignedInUser.UserId,
@@ -364,7 +366,8 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 	usr := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: usr.ID, OrgId: orgID}
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
+	err = h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query)
+	if err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
 			"id", usr.ID,
@@ -400,7 +403,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	}
 
 	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
+	err = h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query)
+	if err != nil {
 		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}
@@ -466,16 +470,17 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		return true
 	}
 
-	reqContext.SignedInUser = &models.SignedInUser{
-		OrgId:   renderUser.OrgID,
-		UserId:  renderUser.UserID,
-		OrgRole: models.RoleType(renderUser.OrgRole),
+	reqContext.SignedInUser = &user.SignedInUser{
+		OrgID:   renderUser.OrgID,
+		UserID:  renderUser.UserID,
+		OrgRole: org.RoleType(renderUser.OrgRole),
 	}
 
 	// UserID can be 0 for background tasks and, in this case, there is no user info to retrieve
 	if renderUser.UserID != 0 {
 		query := models.GetSignedInUserQuery{UserId: renderUser.UserID, OrgId: renderUser.OrgID}
-		if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err == nil {
+		err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query)
+		if err == nil {
 			reqContext.SignedInUser = query.Result
 		}
 	}
@@ -576,7 +581,7 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 		}
 	}
 
-	logger.Debug("Successfully got user info", "userID", user.UserId, "username", user.Login)
+	logger.Debug("Successfully got user info", "userID", user.UserID, "username", user.Login)
 
 	// Add user info to context
 	reqContext.SignedInUser = user

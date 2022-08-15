@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -99,9 +98,13 @@ func BuildManifest(ctx context.Context, dpath string, signingAdmin bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to get signed manifest from Grafana API: %w", err)
 	}
-	defer logError(resp.Body.Close())
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println("failed to close response body, err: %w", err)
+		}
+	}()
 	if resp.StatusCode != 200 {
-		msg, err := ioutil.ReadAll(resp.Body)
+		msg, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Printf("Failed to read response body: %s", err)
 			msg = []byte("")
@@ -114,7 +117,11 @@ func BuildManifest(ctx context.Context, dpath string, signingAdmin bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to create %s: %w", manifestPath, err)
 	}
-	defer logCloseError(f.Close)
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Println("failed to close file, err: %w", err)
+		}
+	}()
 	if _, err := io.Copy(f, resp.Body); err != nil {
 		return fmt.Errorf("failed to write %s: %w", manifestPath, err)
 	}

@@ -44,7 +44,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	cmd.OrgId = -1
 	cmd.Email = form.Email
 	cmd.Status = models.TmpUserSignUpStarted
-	cmd.InvitedByUserId = c.UserId
+	cmd.InvitedByUserId = c.UserID
 	cmd.Code, err = util.GetRandomString(20)
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)

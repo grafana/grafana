@@ -51,10 +51,6 @@ const (
 	// Show APM table
 	FlagTempoApmTable = "tempoApmTable"
 
-	// FlagPrometheusAzureAuth
-	// Experimental. Azure authentication for Prometheus datasource
-	FlagPrometheusAzureAuth = "prometheus_azure_auth"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"

@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -160,7 +162,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		Message:   dto.Message,
 		OrgId:     dto.OrgId,
 		Overwrite: dto.Overwrite,
-		UserId:    dto.User.UserId,
+		UserId:    dto.User.UserID,
 		FolderId:  dash.FolderId,
 		IsFolder:  dash.IsFolder,
 		PluginId:  dash.PluginId,
@@ -216,10 +218,10 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
-	dto.User = &models.SignedInUser{
-		UserId:  0,
-		OrgRole: models.ROLE_ADMIN,
-		OrgId:   dto.OrgId,
+	dto.User = &user.SignedInUser{
+		UserID:  0,
+		OrgRole: org.RoleAdmin,
+		OrgID:   dto.OrgId,
 		Permissions: map[int64]map[string][]string{
 			dto.OrgId: provisionerPermissions,
 		},
@@ -258,7 +260,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 	if dto.Dashboard.Id == 0 {
 		if err := dr.setDefaultPermissions(ctx, dto, dash, true); err != nil {
-			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserId, "error", err)
+			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserID, "error", err)
 		}
 	}
 
@@ -266,9 +268,9 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 }
 
 func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
-	dto.User = &models.SignedInUser{
-		UserId:      0,
-		OrgRole:     models.ROLE_ADMIN,
+	dto.User = &user.SignedInUser{
+		UserID:      0,
+		OrgRole:     org.RoleAdmin,
 		Permissions: map[int64]map[string][]string{dto.OrgId: provisionerPermissions},
 	}
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, false)
@@ -302,7 +304,7 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 
 	if dto.Dashboard.Id == 0 {
 		if err := dr.setDefaultPermissions(ctx, dto, dash, true); err != nil {
-			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserId, "error", err)
+			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserID, "error", err)
 		}
 	}
 
@@ -350,7 +352,7 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	// new dashboard created
 	if dto.Dashboard.Id == 0 {
 		if err := dr.setDefaultPermissions(ctx, dto, dash, false); err != nil {
-			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserId, "error", err)
+			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserID, "error", err)
 		}
 	}
 
@@ -368,8 +370,8 @@ func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, das
 }
 
 func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
-	rtEditor := models.ROLE_EDITOR
-	rtViewer := models.ROLE_VIEWER
+	rtEditor := org.RoleEditor
+	rtViewer := org.RoleViewer
 
 	items := []*models.DashboardACL{
 		{
@@ -450,7 +452,7 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 	}
 
 	if err := dr.setDefaultPermissions(ctx, dto, dash, false); err != nil {
-		dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserId, "error", err)
+		dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserID, "error", err)
 	}
 
 	return dash, nil
@@ -472,14 +474,14 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: dto.User.UserId, Permission: models.PERMISSION_ADMIN.String(),
+				UserID: dto.User.UserID, Permission: models.PERMISSION_ADMIN.String(),
 			})
 		}
 
 		if !inFolder {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(models.ROLE_EDITOR), Permission: models.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(models.ROLE_VIEWER), Permission: models.PERMISSION_VIEW.String()},
+				{BuiltinRole: string(org.RoleEditor), Permission: models.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
 			}...)
 		}
 
@@ -493,7 +495,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 			return err
 		}
 	} else if dr.cfg.EditorsCanAdmin && !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
-		if err := dr.MakeUserAdmin(ctx, dto.OrgId, dto.User.UserId, dash.Id, !inFolder); err != nil {
+		if err := dr.MakeUserAdmin(ctx, dto.OrgId, dto.User.UserID, dash.Id, !inFolder); err != nil {
 			return err
 		}
 	}

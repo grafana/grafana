@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -118,21 +120,21 @@ func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardInde
 	s.dashboardIndex.extender = ext.GetDocumentExtender()
 }
 
-func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*models.SignedInUser, error) {
+func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*user.SignedInUser, error) {
 	// TODO: get user & user's permissions from the request context
 
-	var user *models.SignedInUser
+	var usr *user.SignedInUser
 	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
-		org, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
+		orga, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
 		if err != nil {
 			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.AnonymousOrgName, "error", err)
 			return nil, err
 		}
 
-		user = &models.SignedInUser{
-			OrgId:       org.Id,
-			OrgName:     org.Name,
-			OrgRole:     models.RoleType(s.cfg.AnonymousOrgRole),
+		usr = &user.SignedInUser{
+			OrgID:       orga.Id,
+			OrgName:     orga.Name,
+			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
 			IsAnonymous: true,
 		}
 	} else {
@@ -152,32 +154,32 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 			return nil, errors.New("auth error")
 		}
 
-		user = getSignedInUserQuery.Result
+		usr = getSignedInUserQuery.Result
 	}
 
 	if s.ac.IsDisabled() {
-		return user, nil
+		return usr, nil
 	}
 
-	if user.Permissions == nil {
-		user.Permissions = make(map[int64]map[string][]string)
+	if usr.Permissions == nil {
+		usr.Permissions = make(map[int64]map[string][]string)
 	}
 
-	if _, ok := user.Permissions[orgId]; ok {
+	if _, ok := usr.Permissions[orgId]; ok {
 		// permissions as part of the `s.sql.GetSignedInUser` query - return early
-		return user, nil
+		return usr, nil
 	}
 
 	// TODO: ensure this is cached
-	permissions, err := s.ac.GetUserPermissions(ctx, user,
+	permissions, err := s.ac.GetUserPermissions(ctx, usr,
 		accesscontrol.Options{ReloadCache: false})
 	if err != nil {
 		s.logger.Error("failed to retrieve user permissions", "error", err, "email", backendUser.Email)
 		return nil, errors.New("auth error")
 	}
 
-	user.Permissions[orgId] = accesscontrol.GroupScopesByAction(permissions)
-	return user, nil
+	usr.Permissions[orgId] = accesscontrol.GroupScopesByAction(permissions)
+	return usr, nil
 }
 
 func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {

@@ -4927,7 +4927,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/eslint-config@npm:4.0.0, @grafana/eslint-config@npm:^4.0.0":
+"@grafana/eslint-config@npm:5.0.0":
+  version: 5.0.0
+  resolution: "@grafana/eslint-config@npm:5.0.0"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": 5.16.0
+    "@typescript-eslint/parser": 5.16.0
+    eslint: 8.11.0
+    eslint-config-prettier: 8.5.0
+    eslint-plugin-jsdoc: 38.0.6
+    eslint-plugin-react: 7.29.4
+    eslint-plugin-react-hooks: 4.3.0
+    typescript: 4.6.4
+  checksum: b5ad3e34109a0abac6c6c5291f971cc45b1b3edff33584ff5d39f149e969641c21a7c93c6be2eb89b4ea04b99de76e0b38b6d7b95f357e947297fc11e8fbf430
+  languageName: node
+  linkType: hard
+
+"@grafana/eslint-config@npm:^4.0.0":
   version: 4.0.0
   resolution: "@grafana/eslint-config@npm:4.0.0"
   dependencies:
@@ -21546,7 +21562,7 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 4.0.0
+    "@grafana/eslint-config": 5.0.0
     "@grafana/experimental": ^0.0.2-canary.36
     "@grafana/google-sdk": 0.0.3
     "@grafana/lezer-logql": 0.0.14

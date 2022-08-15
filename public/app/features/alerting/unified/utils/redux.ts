@@ -61,7 +61,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
 }
 
 /*
- * createAsyncSlice creates a slice based on a given async action, exposing it's state.
+ * createAsyncSlice creates a slice based on a given async action, exposing its state.
  * takes care to only use state of the latest invocation of the action if there are several in flight.
  */
 export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -60,7 +61,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		const quotaUsed = 4
 		setUp := func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{UserId: 12}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 12}
 			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 				return &models.UserToken{
 					UserId:        12,

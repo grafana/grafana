@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type WriteValueWorkflow = string
@@ -18,7 +18,7 @@ var (
 )
 
 type WriteValueRequest struct {
-	User       *models.SignedInUser
+	User       *user.SignedInUser
 	Path       string             // added from URL
 	EntityType EntityType         `json:"kind,omitempty"` // for now only dashboard
 	Body       json.RawMessage    `json:"body,omitempty"`

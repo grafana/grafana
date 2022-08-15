@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,7 +46,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 	for _, tc := range testCases {
 		middlewareScenario(t, tc.desc, func(t *testing.T, sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 1, UserId: 12}
+			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: 1, UserID: 12}
 			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 				return &models.UserToken{
 					UserId:        0,
@@ -64,7 +65,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 		sc.mockSQLStore.ExpectedSetUsingOrgError = fmt.Errorf("")
-		sc.mockSQLStore.ExpectedSignedInUser = &models.SignedInUser{OrgId: 1, UserId: 12}
+		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: 1, UserID: 12}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{

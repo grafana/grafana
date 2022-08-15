@@ -25,7 +25,7 @@ jest.mock('app/core/store', () => {
       return undefined;
     },
     set() {},
-    getObject(key: string, defaultValue: any) {
+    getObject(key: string, defaultValue: unknown) {
       return defaultValue;
     },
   };
@@ -162,7 +162,7 @@ describe('LokiQueryEditorSelector', () => {
 });
 
 function renderWithMode(mode: QueryEditorMode) {
-  return renderWithProps({ editorMode: mode } as any);
+  return renderWithProps({ editorMode: mode });
 }
 
 function renderWithProps(overrides?: Partial<LokiQuery>) {
@@ -179,7 +179,7 @@ function expectCodeEditor() {
 }
 
 async function expectBuilder() {
-  expect(await screen.findByText('Labels')).toBeInTheDocument();
+  expect(await screen.findByText('Label filters')).toBeInTheDocument();
 }
 
 async function switchToMode(mode: QueryEditorMode) {

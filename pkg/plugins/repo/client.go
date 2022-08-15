@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -37,7 +36,7 @@ func newClient(skipTLSVerify bool, logger logger.Logger) *Client {
 
 func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
-	tmpFile, err := ioutil.TempFile("", "*.zip")
+	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to create temporary file", err)
 	}
@@ -168,7 +167,7 @@ func (c *Client) sendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
 			c.log.Warn("Failed to close stream", "err", err)
 		}
 	}()
-	return ioutil.ReadAll(bodyReader)
+	return io.ReadAll(bodyReader)
 }
 
 func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
@@ -200,7 +199,7 @@ func (c *Client) createReq(url *url.URL, compatOpts CompatOpts) (*http.Request, 
 
 func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		defer func() {
 			if err := res.Body.Close(); err != nil {
 				c.log.Warn("Failed to close response body", "err", err)
