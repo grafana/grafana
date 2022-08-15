@@ -159,17 +159,4 @@ export const Examples: ComponentStory<typeof ToolbarButton> = (args) => {
   );
 };
 
-export const BasicWithRow: ComponentStory<typeof ToolbarButton> = (args) => {
-  return (
-    <ToolbarButtonRow>
-      <ToolbarButton>Just text</ToolbarButton>
-      <ToolbarButton icon="sync" tooltip="Sync" />
-      <ToolbarButton imgSrc="./grafana_icon.svg">With imgSrc</ToolbarButton>
-      <ToolbarButton>Just text</ToolbarButton>
-      <ToolbarButton icon="sync" tooltip="Sync" />
-      <ToolbarButton imgSrc="./grafana_icon.svg">With imgSrc</ToolbarButton>
-    </ToolbarButtonRow>
-  );
-};
-
 export default meta;

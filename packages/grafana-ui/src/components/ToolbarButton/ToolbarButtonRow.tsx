@@ -9,15 +9,17 @@ import { Dropdown } from '../Dropdown/Dropdown';
 import { ToolbarButton } from './ToolbarButton';
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   className?: string;
+  alignment?: 'left' | 'right';
 }
 
-export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ className, children, ...rest }, ref) => {
+export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ alignment = 'left', className, children, ...rest }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [childVisibility, setChildVisibility] = useState<boolean[]>(
     Array(React.Children.toArray(children).length).fill(true)
   );
   const theme = useTheme2();
-  const styles = getStyles(theme, childVisibility.indexOf(false) - 1);
+  const overflowButtonOrder = alignment === 'left' ? childVisibility.indexOf(false) - 1 : childVisibility.length;
+  const styles = getStyles(theme, overflowButtonOrder, alignment);
 
   useLayoutEffect(() => {
     const intersectionObserver = new IntersectionObserver(
@@ -46,7 +48,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ className, 
       });
     }
     return () => intersectionObserver.disconnect();
-  }, []);
+  }, [alignment]);
 
   const renderOverflowChildren = () => (
     <div className={styles.overflowItems}>
@@ -68,9 +70,9 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(({ className, 
 
 ToolbarButtonRow.displayName = 'ToolbarButtonRow';
 
-const getStyles = (theme: GrafanaTheme2, order: number) => ({
+const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment: Props['alignment']) => ({
   overflowButton: css`
-    order: ${order};
+    order: ${overflowButtonOrder};
   `,
   overflowItems: css`
     align-items: center;
@@ -85,8 +87,8 @@ const getStyles = (theme: GrafanaTheme2, order: number) => ({
   wrapper: css`
     align-items: center;
     display: flex;
-    flex: 1;
     gap: ${theme.spacing(1)};
+    justify-content: ${alignment === 'left' ? 'flex-start' : 'flex-end'};
     min-width: 0;
   `,
 });
