@@ -208,7 +208,9 @@ function initEchoSrv() {
   }
 
   if (config.featureToggles.fullstoryUserTracking && config.fullstoryOrgId) {
-    registerEchoBackend(new FullstoryBackend({ orgId: config.fullstoryOrgId }));
+    registerEchoBackend(
+      new FullstoryBackend({ orgId: config.fullstoryOrgId, devMode: process.env.NODE_ENV === 'development' })
+    );
   }
 
   if (config.sentry.enabled) {
