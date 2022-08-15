@@ -192,6 +192,29 @@ var adminCommands = []*cli.Command{
 			},
 		},
 	},
+	{
+		Name:  "user-manager",
+		Usage: "Runs different helpful user commands",
+		Subcommands: []*cli.Command{
+			// TODO: reset password for user
+			{
+				Name:  "conflicts",
+				Usage: "runs a conflict resolution to find users with multiple entries",
+				Subcommands: []*cli.Command{
+					{
+						Name:   "list",
+						Usage:  "returns a list of users with more than one entry in the database",
+						Action: runListConflictUsers(),
+					},
+					{
+						Name:   "generate-file",
+						Usage:  "creates a conflict users file.. Safe to execute multiple times.",
+						Action: runGenerateConflictUsersFile(),
+					},
+				},
+			},
+		},
+	},
 }
 
 var Commands = []*cli.Command{
