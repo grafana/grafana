@@ -41,6 +41,21 @@ const getIconStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+/**
+ * Using a cache mechanism to avoid converting the same svg string
+ * to react elements multiple times in the same render.
+ */
+const iconsElementsCache = new Map<string, React.ReactNode>();
+async function getIconReactElement(svgBundlePath: string): Promise<React.ReactNode> {
+  let svgElement: React.ReactNode | undefined = iconsElementsCache.get(svgBundlePath);
+  if (!svgElement) {
+    const content = await iconBundle(svgBundlePath);
+    svgElement = convertFromString(content);
+    iconsElementsCache.set(svgBundlePath, svgElement);
+  }
+  return svgElement;
+}
+
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   ({ size = 'md', type = 'default', name, className, style, title = '', ...divElementProps }, ref) => {
     const styles = useStyles2(getIconStyles);
@@ -60,8 +75,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const svgBundlePath = `./${subDir}/${name}.svg`;
 
     const IconLazy = React.lazy(async () => {
-      const content = await iconBundle(svgBundlePath);
-      const svgElement = convertFromString(content);
+      const svgElement = await getIconReactElement(svgBundlePath);
       const svg = React.isValidElement(svgElement)
         ? React.cloneElement(svgElement, {
             width: svgWid,
@@ -73,18 +87,16 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
         : '';
       return {
         default: () => {
-          return (
-            <div className={styles.container} {...divElementProps} ref={ref}>
-              {svg}
-            </div>
-          );
+          return <>{svg}</>;
         },
       };
     });
 
     return (
       <Suspense fallback={<div></div>}>
-        <IconLazy />
+        <div className={styles.container} {...divElementProps} ref={ref}>
+          <IconLazy />
+        </div>
       </Suspense>
     );
   }
