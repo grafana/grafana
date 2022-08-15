@@ -1,21 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { DataQuery } from '@grafana/data/src/types/query';
+import { Drawer, Tab, TabContent, TabsBar } from '@grafana/ui';
+
+import { SavedQuery } from '../api/SavedQueriesApi';
+
+import { ConnectionsTab } from './ConnectionsTab';
+import { QueryEditor } from './QueryEditor';
+import { QueryEditorDrawerHeader } from './QueryEditorDrawerHeader';
+import { VariablesTab } from './VariablesTab';
 
 type Props = {
   onDismiss: () => void;
+  savedQuery: SavedQuery<DataQuery>;
 };
 
-export const QueryEditorDrawer = ({ onDismiss }: Props) => {
+const initialTabs = [
+  {
+    label: 'Variables',
+    active: true,
+  },
+  {
+    label: 'Connections',
+    active: false,
+  },
+];
+
+export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
+  const [tabs, setTabs] = useState(initialTabs);
+
   return (
-    <Drawer title={'Query'} onClose={onDismiss} width={'40%'} subtitle={'query title'} expandable scrollableContent>
+    <Drawer onClose={onDismiss} width={'40%'} expandable scrollableContent>
       <div>
-        <div>Test query</div>
+        <QueryEditorDrawerHeader title={savedQuery.title} />
+        <QueryEditor />
         <TabsBar>
-          <Tab label={'Variables'} active={false} onChangeTab={() => {}} />
-          <Tab label={'Connection'} active={true} onChangeTab={() => {}} />
-          <Tab label={'History'} active={false} onChangeTab={() => {}} />
+          {tabs.map((tab, index) => (
+            <Tab
+              key={index}
+              label={tab.label}
+              active={tab.active}
+              onChangeTab={() => setTabs(tabs.map((tab, idx) => ({ ...tab, active: idx === index })))}
+            />
+          ))}
         </TabsBar>
+        <TabContent>
+          {tabs[0].active && <VariablesTab />}
+          {tabs[1].active && <ConnectionsTab />}
+        </TabContent>
       </div>
     </Drawer>
   );

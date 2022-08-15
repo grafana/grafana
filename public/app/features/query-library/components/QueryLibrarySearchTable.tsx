@@ -1,15 +1,18 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { DataQuery } from '@grafana/data/src/types/query';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, FilterInput, HorizontalGroup, LinkButton, ModalsController, Spinner, useStyles2 } from '@grafana/ui';
 
 import { SearchResultsTable } from '../../search/page/components/SearchResultsTable';
 import { getGrafanaSearcher, SearchQuery } from '../../search/service';
+import { SavedQuery } from '../api/SavedQueriesApi';
+import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
 
 import { DatasourceTypePicker } from './DatasourceTypePicker';
 import { QueryEditorDrawer } from './QueryEditorDrawer';
@@ -19,6 +22,7 @@ const QueryLibrarySearchTable = () => {
 
   const [datasourceType, setDatasourceType] = useState<string | null>(null);
   const [searchQueryBy, setSearchByQuery] = useState<string>('');
+  const [savedQuery, setSavedQuery] = useState<SavedQuery<DataQuery>>();
 
   const searchQuery = useMemo<SearchQuery>(() => {
     const query: SearchQuery = {
@@ -39,6 +43,15 @@ const QueryLibrarySearchTable = () => {
   const results = useAsync(() => {
     return getGrafanaSearcher().search(searchQuery);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const loadQuery = async () => {
+      const result = await getSavedQuerySrv().getSavedQueryByUids([{ uid: 'system/queries/ds-variables.json' }]);
+      setSavedQuery(result[0]);
+    };
+
+    loadQuery();
+  }, []);
 
   if (results.loading) {
     return <Spinner />;
@@ -72,16 +85,19 @@ const QueryLibrarySearchTable = () => {
           <ModalsController>
             {({ showModal, hideModal }) => {
               return (
-                <Button
-                  onClick={() => {
-                    showModal(QueryEditorDrawer, {
-                      onDismiss: hideModal,
-                    });
-                  }}
-                  aria-label={selectors.pages.Dashboard.Settings.General.saveDashBoard}
-                >
-                  Open query editor drawer
-                </Button>
+                savedQuery && (
+                  <Button
+                    onClick={() => {
+                      showModal(QueryEditorDrawer, {
+                        onDismiss: hideModal,
+                        savedQuery,
+                      });
+                    }}
+                    aria-label={selectors.pages.Dashboard.Settings.General.saveDashBoard}
+                  >
+                    Open query editor drawer
+                  </Button>
+                )
               );
             }}
           </ModalsController>
