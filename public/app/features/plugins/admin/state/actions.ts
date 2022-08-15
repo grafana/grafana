@@ -5,6 +5,7 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
+import { STATE_PREFIX } from '../../constants';
 import { invalidatePluginInCache } from '../../pluginCacheBuster';
 import { CatalogPlugin, RemotePlugin } from '../../types';
 import {
@@ -15,7 +16,6 @@ import {
   installPlugin,
   uninstallPlugin,
 } from '../api';
-import { STATE_PREFIX } from '../constants';
 import { mergeLocalsAndRemotes, updatePanels } from '../helpers';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
