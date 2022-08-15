@@ -18,7 +18,6 @@ import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
-  fixSummariesMetadata,
   parseSelector,
   processHistogramMetrics,
   processLabels,
@@ -146,9 +145,19 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async loadMetricsMetadata() {
-    this.metricsMetadata = fixSummariesMetadata(
-      await this.request('/api/v1/metadata', {}, {}, { showErrorAlert: false })
-    );
+    // The metadata endpoint is experimental and
+    // we have customers who are not implementing it.
+    // This is to be a temporary fix until the Observability Metrics Squad
+    // has time to implement the 2022Q3 plan
+    // to detect prometheus versions and implementations.
+    // This will allow us to see if endpoints such as api/v1/metadata
+    // are implemented or not and handle them as such
+    this.metricsMetadata = {};
+
+    // PREVIOUS IMPLEMENTATION FOR NOTES
+    // this.metricsMetadata = fixSummariesMetadata(
+    //   await this.request('/api/v1/metadata', {}, {}, { showErrorAlert: false })
+    // );
   }
 
   getLabelKeys(): string[] {
@@ -498,7 +507,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a series. This is cached by it's args but also by the global timeRange currently selected as
+   * Fetch labels for a series. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name
    * @param withName

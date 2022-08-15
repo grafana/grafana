@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -26,6 +25,9 @@ func UploadErrorToStatusCode(err error) int {
 		return 400
 
 	case errors.Is(err, ErrValidationFailed):
+		return 400
+
+	case errors.Is(err, ErrQuotaReached):
 		return 400
 
 	case errors.Is(err, ErrFileAlreadyExists):
@@ -70,16 +72,6 @@ func (s *standardStorageService) doWrite(c *models.ReqContext) response.Response
 }
 
 func (s *standardStorageService) doUpload(c *models.ReqContext) response.Response {
-	// assumes we are only uploading to the SQL database - TODO: refactor once we introduce object stores
-	quotaReached, err := s.quotaService.CheckQuotaReached(c.Req.Context(), "file", nil)
-	if err != nil {
-		return response.Error(500, "Internal server error", err)
-	}
-
-	if quotaReached {
-		return response.Error(400, "File quota reached", errors.New("file quota reached"))
-	}
-
 	type rspInfo struct {
 		Message string `json:"message,omitempty"`
 		Path    string `json:"path,omitempty"`
@@ -121,7 +113,7 @@ func (s *standardStorageService) doUpload(c *models.ReqContext) response.Respons
 			if err != nil {
 				return response.Error(500, "Internal Server Error", err)
 			}
-			data, err := ioutil.ReadAll(file)
+			data, err := io.ReadAll(file)
 			if err != nil {
 				return response.Error(500, "Internal Server Error", err)
 			}
@@ -280,7 +272,7 @@ func (s *standardStorageService) list(c *models.ReqContext) response.Response {
 
 func (s *standardStorageService) getConfig(c *models.ReqContext) response.Response {
 	roots := make([]RootStorageMeta, 0)
-	orgId := c.OrgId
+	orgId := c.OrgID
 	t := s.tree
 	t.assureOrgIsInitialized(orgId)
 

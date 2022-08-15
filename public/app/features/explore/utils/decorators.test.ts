@@ -1,19 +1,26 @@
-// import { lastValueFrom } from 'rxjs';
-//
-// import {
-//   ArrayVector,
-//   DataFrame,
-//   DataQueryRequest,
-//   FieldColorModeId,
-//   FieldType,
-//   LoadingState,
-//   PanelData,
-//   TimeRange,
-//   toDataFrame,
-// } from '@grafana/data';
-// import { GraphDrawStyle, StackingMode } from '@grafana/schema';
-// import TableModel from 'app/core/table_model';
-// import { ExplorePanelData } from 'app/types';
+import { lastValueFrom } from 'rxjs';
+
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryRequest,
+  FieldColorModeId,
+  FieldType,
+  LoadingState,
+  PanelData,
+  TimeRange,
+  toDataFrame,
+} from '@grafana/data';
+import { GraphDrawStyle, StackingMode } from '@grafana/schema';
+import TableModel from 'app/core/TableModel';
+import { ExplorePanelData } from 'app/types';
+
+import {
+  decorateWithFrameTypeMetadata,
+  decorateWithGraphResult,
+  decorateWithLogsResult,
+  decorateWithTableResult,
+} from './decorators';
 
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),

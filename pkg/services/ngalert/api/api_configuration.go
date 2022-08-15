@@ -13,6 +13,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -26,8 +27,8 @@ type ConfigSrv struct {
 }
 
 func (srv ConfigSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Response {
-	urls := srv.alertmanagerProvider.AlertmanagersFor(c.OrgId)
-	droppedURLs := srv.alertmanagerProvider.DroppedAlertmanagersFor(c.OrgId)
+	urls := srv.alertmanagerProvider.AlertmanagersFor(c.OrgID)
+	droppedURLs := srv.alertmanagerProvider.DroppedAlertmanagersFor(c.OrgID)
 	ams := v1.AlertManagersResult{Active: make([]v1.AlertManager, len(urls)), Dropped: make([]v1.AlertManager, len(droppedURLs))}
 	for i, url := range urls {
 		ams.Active[i].URL = url.String()
@@ -43,11 +44,11 @@ func (srv ConfigSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Respon
 }
 
 func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Response {
-	if c.OrgRole != models.ROLE_ADMIN {
+	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 
-	cfg, err := srv.store.GetAdminConfiguration(c.OrgId)
+	cfg, err := srv.store.GetAdminConfiguration(c.OrgID)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAdminConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -66,7 +67,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respon
 }
 
 func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
-	if c.OrgRole != models.ROLE_ADMIN {
+	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 
@@ -75,7 +76,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 		return response.Error(400, "Invalid alertmanager choice specified", err)
 	}
 
-	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgId)
+	externalAlertmanagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(500, "Couldn't fetch the external Alertmanagers from datasources", err)
 	}
@@ -88,7 +89,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 	cfg := &ngmodels.AdminConfiguration{
 		Alertmanagers: body.Alertmanagers,
 		SendAlertsTo:  sendAlertsTo,
-		OrgID:         c.OrgId,
+		OrgID:         c.OrgID,
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -108,11 +109,11 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 }
 
 func (srv ConfigSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
-	if c.OrgRole != models.ROLE_ADMIN {
+	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
 
-	err := srv.store.DeleteAdminConfiguration(c.OrgId)
+	err := srv.store.DeleteAdminConfiguration(c.OrgID)
 	if err != nil {
 		srv.log.Error("unable to delete configuration", "err", err)
 		return ErrResp(http.StatusInternalServerError, err, "")

@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // Typed errors
@@ -84,7 +86,7 @@ type OrgDetailsDTO struct {
 }
 
 type UserOrgDTO struct {
-	OrgId int64    `json:"orgId"`
-	Name  string   `json:"name"`
-	Role  RoleType `json:"role"`
+	OrgId int64        `json:"orgId"`
+	Name  string       `json:"name"`
+	Role  org.RoleType `json:"role"`
 }

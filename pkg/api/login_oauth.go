@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -193,7 +194,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 
-	oauthLogger.Debug("OAuthLogin: got token", "token", fmt.Sprintf("%v", token))
+	oauthLogger.Debug("OAuthLogin: got token", "token", fmt.Sprintf("%+v", token))
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
@@ -268,12 +269,12 @@ func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *socia
 		Name:       userInfo.Name,
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
-		OrgRoles:   map[int64]models.RoleType{},
+		OrgRoles:   map[int64]org.RoleType{},
 		Groups:     userInfo.Groups,
 	}
 
 	if userInfo.Role != "" && !hs.Cfg.OAuthSkipOrgRoleUpdateSync {
-		rt := models.RoleType(userInfo.Role)
+		rt := org.RoleType(userInfo.Role)
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one
 			var orgID int64

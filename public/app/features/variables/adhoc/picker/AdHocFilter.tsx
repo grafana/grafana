@@ -22,7 +22,7 @@ interface Props {
 }
 
 /**
- * Simple filtering component that automatically uses datasource APIs to get available labels and it's values, for
+ * Simple filtering component that automatically uses datasource APIs to get available labels and its values, for
  * dynamic visual filtering without need for much setup. Instead of having single onChange prop this reports all the
  * change events with separate props so it is usable with AdHocPicker.
  *

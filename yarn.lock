@@ -4737,9 +4737,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
-    "@grafana/data": 9.1.0-pre
-    "@grafana/toolkit": 9.1.0-pre
-    "@grafana/ui": 9.1.0-pre
+    "@grafana/data": 9.2.0-pre
+    "@grafana/toolkit": 9.2.0-pre
+    "@grafana/ui": 9.2.0-pre
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
     "@types/react": 17.0.30
@@ -4800,12 +4800,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@9.1.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@9.2.0-pre, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": 6.0.0
-    "@grafana/schema": 9.1.0-pre
+    "@grafana/schema": 9.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 22.0.1
     "@rollup/plugin-json": 4.1.0
@@ -4832,6 +4832,7 @@ __metadata:
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 1.4.0
     date-fns: 2.29.1
+    esbuild: ^0.14.47
     eventemitter3: 4.0.7
     history: 4.10.1
     lodash: 4.17.21
@@ -4846,8 +4847,9 @@ __metadata:
     regenerator-runtime: 0.13.9
     rimraf: 3.0.2
     rollup: 2.77.2
-    rollup-plugin-sourcemaps: 0.6.3
-    rollup-plugin-terser: 7.0.2
+    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-node-externals: ^4.1.0
     rxjs: 7.5.6
     sinon: 14.0.0
     tinycolor2: 1.4.2
@@ -4855,10 +4857,13 @@ __metadata:
     typescript: 4.7.4
     uplot: 1.6.22
     xss: 1.0.13
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0
+    react-dom: ^16.8.0 || ^17.0.0
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@9.1.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@9.2.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -4866,10 +4871,12 @@ __metadata:
     "@rollup/plugin-commonjs": 22.0.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@types/node": 16.11.45
+    esbuild: ^0.14.47
     rimraf: 3.0.2
     rollup: 2.77.2
-    rollup-plugin-sourcemaps: 0.6.3
-    rollup-plugin-terser: 7.0.2
+    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-node-externals: ^4.1.0
     tslib: 2.4.0
     typescript: 4.7.4
   languageName: unknown
@@ -4882,10 +4889,9 @@ __metadata:
     "@babel/core": 7.18.9
     "@babel/preset-env": 7.18.9
     "@cypress/webpack-preprocessor": 5.12.0
-    "@grafana/e2e-selectors": 9.1.0-pre
+    "@grafana/e2e-selectors": 9.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
-    "@rollup/plugin-commonjs": 22.0.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@types/chrome-remote-interface": 0.31.4
     "@types/lodash": 4.14.182
@@ -4898,6 +4904,7 @@ __metadata:
     cypress: 9.5.1
     cypress-file-upload: 5.0.8
     devtools-protocol: 0.0.1028580
+    esbuild: ^0.14.47
     execa: 5.1.1
     lodash: 4.17.21
     mocha: 10.0.0
@@ -4905,8 +4912,9 @@ __metadata:
     rimraf: 3.0.2
     rollup: 2.77.2
     rollup-plugin-copy: 3.4.0
-    rollup-plugin-sourcemaps: 0.6.3
-    rollup-plugin-terser: 7.0.2
+    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-node-externals: ^4.1.0
     tracelib: 1.0.1
     ts-loader: 6.2.2
     tslib: 2.4.0
@@ -4919,7 +4927,23 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/eslint-config@npm:4.0.0, @grafana/eslint-config@npm:^4.0.0":
+"@grafana/eslint-config@npm:5.0.0":
+  version: 5.0.0
+  resolution: "@grafana/eslint-config@npm:5.0.0"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": 5.16.0
+    "@typescript-eslint/parser": 5.16.0
+    eslint: 8.11.0
+    eslint-config-prettier: 8.5.0
+    eslint-plugin-jsdoc: 38.0.6
+    eslint-plugin-react: 7.29.4
+    eslint-plugin-react-hooks: 4.3.0
+    typescript: 4.6.4
+  checksum: b5ad3e34109a0abac6c6c5291f971cc45b1b3edff33584ff5d39f149e969641c21a7c93c6be2eb89b4ea04b99de76e0b38b6d7b95f357e947297fc11e8fbf430
+  languageName: node
+  linkType: hard
+
+"@grafana/eslint-config@npm:^4.0.0":
   version: 4.0.0
   resolution: "@grafana/eslint-config@npm:4.0.0"
   dependencies:
@@ -4932,6 +4956,20 @@ __metadata:
     eslint-plugin-react-hooks: 4.3.0
     typescript: 4.6.4
   checksum: ed7dbf3bff5ac38daf57dfd590696d3f48f31f216f2bbcac126c3a37619aea66e856c07677c6387531bb2ae007bdd09caf36b8f289bb88b1ac1c719b6a537ae9
+  languageName: node
+  linkType: hard
+
+"@grafana/experimental@npm:^0.0.2-canary.36":
+  version: 0.0.2-canary.36
+  resolution: "@grafana/experimental@npm:0.0.2-canary.36"
+  dependencies:
+    "@types/uuid": ^8.3.3
+    uuid: ^8.3.2
+  peerDependencies:
+    "@emotion/css": 11.1.3
+    react: 17.0.1
+    react-select: 5.2.1
+  checksum: 2aea6c2cbed323f7212c82df1b529897296c5c2938345dc0e7866cc4576c763f731f4f89803e6344ec7a3eb3940e0e8bdc4a01739b67833a5513913434130aba
   languageName: node
   linkType: hard
 
@@ -4953,15 +4991,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@9.1.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@9.2.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
     "@grafana/agent-web": ^0.4.0
-    "@grafana/data": 9.1.0-pre
-    "@grafana/e2e-selectors": 9.1.0-pre
+    "@grafana/data": 9.2.0-pre
+    "@grafana/e2e-selectors": 9.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.1.0-pre
+    "@grafana/ui": 9.2.0-pre
     "@rollup/plugin-commonjs": 22.0.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
@@ -4975,22 +5013,29 @@ __metadata:
     "@types/react": 17.0.42
     "@types/react-dom": 17.0.14
     "@types/systemjs": ^0.20.6
+    esbuild: ^0.14.47
     history: 4.10.1
     lodash: 4.17.21
     react: 17.0.2
     react-dom: 17.0.2
     rimraf: 3.0.2
     rollup: 2.77.2
+    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-node-externals: ^4.1.0
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.5.6
     systemjs: 0.20.19
     tslib: 2.4.0
     typescript: 4.7.4
+  peerDependencies:
+    react: 17.0.2
+    react-dom: 17.0.2
   languageName: unknown
   linkType: soft
 
-"@grafana/schema@9.1.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@9.2.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -4999,10 +5044,12 @@ __metadata:
     "@rollup/plugin-json": 4.1.0
     "@rollup/plugin-node-resolve": 13.3.0
     "@swc/helpers": 0.4.3
+    esbuild: ^0.14.47
     rimraf: 3.0.2
     rollup: 2.77.2
-    rollup-plugin-sourcemaps: 0.6.3
-    rollup-plugin-terser: 7.0.2
+    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-node-externals: ^4.1.0
     tslib: 2.4.0
     typescript: 4.7.4
   languageName: unknown
@@ -5037,7 +5084,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/toolkit@9.1.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@9.2.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -5053,10 +5100,10 @@ __metadata:
     "@babel/preset-env": ^7.18.9
     "@babel/preset-react": ^7.18.6
     "@babel/preset-typescript": ^7.18.6
-    "@grafana/data": 9.1.0-pre
+    "@grafana/data": 9.2.0-pre
     "@grafana/eslint-config": ^4.0.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.1.0-pre
+    "@grafana/ui": 9.2.0-pre
     "@jest/core": 27.5.1
     "@types/command-exists": ^1.2.0
     "@types/eslint": 8.4.1
@@ -5139,16 +5186,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@9.1.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@9.2.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
     "@babel/core": 7.18.9
     "@emotion/css": 11.9.0
     "@emotion/react": 11.9.3
-    "@grafana/data": 9.1.0-pre
-    "@grafana/e2e-selectors": 9.1.0-pre
-    "@grafana/schema": 9.1.0-pre
+    "@grafana/data": 9.2.0-pre
+    "@grafana/e2e-selectors": 9.2.0-pre
+    "@grafana/schema": 9.2.0-pre
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
@@ -5161,8 +5208,6 @@ __metadata:
     "@react-aria/overlays": 3.9.1
     "@react-aria/utils": 3.13.1
     "@react-stately/menu": 3.3.1
-    "@rollup/plugin-alias": ^3.1.9
-    "@rollup/plugin-commonjs": 22.0.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
     "@storybook/addon-a11y": 6.4.21
@@ -5229,6 +5274,7 @@ __metadata:
     d3: 5.15.0
     date-fns: 2.29.1
     enzyme: 3.11.0
+    esbuild: ^0.14.47
     expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
     immutable: 4.1.0
@@ -5272,9 +5318,10 @@ __metadata:
     react-window: 1.8.7
     rimraf: 3.0.2
     rollup: 2.77.2
-    rollup-plugin-sourcemaps: 0.6.3
+    rollup-plugin-dts: ^4.2.2
+    rollup-plugin-esbuild: ^4.9.1
+    rollup-plugin-node-externals: ^4.1.0
     rollup-plugin-svg-import: ^1.6.0
-    rollup-plugin-terser: 7.0.2
     rxjs: 7.5.6
     sass-loader: 13.0.2
     slate: 0.47.8
@@ -5290,6 +5337,9 @@ __metadata:
     uuid: 8.3.2
     webpack: 5.74.0
     webpack-filter-warnings-plugin: 1.2.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0
+    react-dom: ^16.8.0 || ^17.0.0
   languageName: unknown
   linkType: soft
 
@@ -5394,11 +5444,11 @@ __metadata:
   resolution: "@jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components"
   dependencies:
     "@emotion/css": 11.9.0
-    "@grafana/data": 9.1.0-pre
-    "@grafana/e2e-selectors": 9.1.0-pre
-    "@grafana/runtime": 9.1.0-pre
+    "@grafana/data": 9.2.0-pre
+    "@grafana/e2e-selectors": 9.2.0-pre
+    "@grafana/runtime": 9.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.1.0-pre
+    "@grafana/ui": 9.2.0-pre
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": 14.3.0
@@ -8468,17 +8518,6 @@ __metadata:
     react-redux:
       optional: true
   checksum: 2c932ac6fa430b982108829a6150ca0c15ff617eb121b8055b91a89ab2124e8d93a1277ccdc96ff8af680fbde9d4c7021b1f924f11e28004ee61c6a7d39915bc
-  languageName: node
-  linkType: hard
-
-"@rollup/plugin-alias@npm:^3.1.9":
-  version: 3.1.9
-  resolution: "@rollup/plugin-alias@npm:3.1.9"
-  dependencies:
-    slash: ^3.0.0
-  peerDependencies:
-    rollup: ^1.20.0||^2.0.0
-  checksum: cefae9dfb7c30f0dc78d24f4ad9ccb8a0878397b313c0fa9d0f519667394941c58a930d968d841e25aee43b0fb892d1e3f7edbb55e8197f191cce7da6a50b882
   languageName: node
   linkType: hard
 
@@ -12158,7 +12197,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uuid@npm:8.3.4":
+"@types/uuid@npm:8.3.4, @types/uuid@npm:^8.3.3":
   version: 8.3.4
   resolution: "@types/uuid@npm:8.3.4"
   checksum: 6f11f3ff70f30210edaa8071422d405e9c1d4e53abbe50fdce365150d3c698fe7bbff65c1e71ae080cbfb8fded860dbb5e174da96fdbbdfcaa3fb3daa474d20f
@@ -18985,7 +19024,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es-module-lexer@npm:^0.9.0":
+"es-module-lexer@npm:^0.9.0, es-module-lexer@npm:^0.9.3":
   version: 0.9.3
   resolution: "es-module-lexer@npm:0.9.3"
   checksum: 84bbab23c396281db2c906c766af58b1ae2a1a2599844a504df10b9e8dc77ec800b3211fdaa133ff700f5703d791198807bba25d9667392d27a5e9feda344da8
@@ -19062,6 +19101,217 @@ __metadata:
     d: ^1.0.1
     ext: ^1.1.2
   checksum: cd49722c2a70f011eb02143ef1c8c70658d2660dead6641e160b94619f408b9cf66425515787ffe338affdf0285ad54f4eae30ea5bd510e33f8659ec53bcaa70
+  languageName: node
+  linkType: hard
+
+"esbuild-android-64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-android-64@npm:0.14.47"
+  conditions: os=android & cpu=x64
+  languageName: node
+  linkType: hard
+
+"esbuild-android-arm64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-android-arm64@npm:0.14.47"
+  conditions: os=android & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"esbuild-darwin-64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-darwin-64@npm:0.14.47"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"esbuild-darwin-arm64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-darwin-arm64@npm:0.14.47"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"esbuild-freebsd-64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-freebsd-64@npm:0.14.47"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"esbuild-freebsd-arm64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-freebsd-arm64@npm:0.14.47"
+  conditions: os=freebsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"esbuild-linux-32@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-linux-32@npm:0.14.47"
+  conditions: os=linux & cpu=ia32
+  languageName: node
+  linkType: hard
+
+"esbuild-linux-64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-linux-64@npm:0.14.47"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"esbuild-linux-arm64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-linux-arm64@npm:0.14.47"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"esbuild-linux-arm@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-linux-arm@npm:0.14.47"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"esbuild-linux-mips64le@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-linux-mips64le@npm:0.14.47"
+  conditions: os=linux & cpu=mips64el
+  languageName: node
+  linkType: hard
+
+"esbuild-linux-ppc64le@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-linux-ppc64le@npm:0.14.47"
+  conditions: os=linux & cpu=ppc64
+  languageName: node
+  linkType: hard
+
+"esbuild-linux-riscv64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-linux-riscv64@npm:0.14.47"
+  conditions: os=linux & cpu=riscv64
+  languageName: node
+  linkType: hard
+
+"esbuild-linux-s390x@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-linux-s390x@npm:0.14.47"
+  conditions: os=linux & cpu=s390x
+  languageName: node
+  linkType: hard
+
+"esbuild-netbsd-64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-netbsd-64@npm:0.14.47"
+  conditions: os=netbsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"esbuild-openbsd-64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-openbsd-64@npm:0.14.47"
+  conditions: os=openbsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"esbuild-sunos-64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-sunos-64@npm:0.14.47"
+  conditions: os=sunos & cpu=x64
+  languageName: node
+  linkType: hard
+
+"esbuild-windows-32@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-windows-32@npm:0.14.47"
+  conditions: os=win32 & cpu=ia32
+  languageName: node
+  linkType: hard
+
+"esbuild-windows-64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-windows-64@npm:0.14.47"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"esbuild-windows-arm64@npm:0.14.47":
+  version: 0.14.47
+  resolution: "esbuild-windows-arm64@npm:0.14.47"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"esbuild@npm:^0.14.47":
+  version: 0.14.47
+  resolution: "esbuild@npm:0.14.47"
+  dependencies:
+    esbuild-android-64: 0.14.47
+    esbuild-android-arm64: 0.14.47
+    esbuild-darwin-64: 0.14.47
+    esbuild-darwin-arm64: 0.14.47
+    esbuild-freebsd-64: 0.14.47
+    esbuild-freebsd-arm64: 0.14.47
+    esbuild-linux-32: 0.14.47
+    esbuild-linux-64: 0.14.47
+    esbuild-linux-arm: 0.14.47
+    esbuild-linux-arm64: 0.14.47
+    esbuild-linux-mips64le: 0.14.47
+    esbuild-linux-ppc64le: 0.14.47
+    esbuild-linux-riscv64: 0.14.47
+    esbuild-linux-s390x: 0.14.47
+    esbuild-netbsd-64: 0.14.47
+    esbuild-openbsd-64: 0.14.47
+    esbuild-sunos-64: 0.14.47
+    esbuild-windows-32: 0.14.47
+    esbuild-windows-64: 0.14.47
+    esbuild-windows-arm64: 0.14.47
+  dependenciesMeta:
+    esbuild-android-64:
+      optional: true
+    esbuild-android-arm64:
+      optional: true
+    esbuild-darwin-64:
+      optional: true
+    esbuild-darwin-arm64:
+      optional: true
+    esbuild-freebsd-64:
+      optional: true
+    esbuild-freebsd-arm64:
+      optional: true
+    esbuild-linux-32:
+      optional: true
+    esbuild-linux-64:
+      optional: true
+    esbuild-linux-arm:
+      optional: true
+    esbuild-linux-arm64:
+      optional: true
+    esbuild-linux-mips64le:
+      optional: true
+    esbuild-linux-ppc64le:
+      optional: true
+    esbuild-linux-riscv64:
+      optional: true
+    esbuild-linux-s390x:
+      optional: true
+    esbuild-netbsd-64:
+      optional: true
+    esbuild-openbsd-64:
+      optional: true
+    esbuild-sunos-64:
+      optional: true
+    esbuild-windows-32:
+      optional: true
+    esbuild-windows-64:
+      optional: true
+    esbuild-windows-arm64:
+      optional: true
+  bin:
+    esbuild: bin/esbuild
+  checksum: 77a8bff8c3fe52dc9d2823448843b0f53c9a9f3701e3637a54e396270c9ca04cc46a4b08ef86cbaa8d202854e02c790f61683bfa75ebff540b1e24414f536e91
   languageName: node
   linkType: hard
 
@@ -21312,7 +21562,8 @@ __metadata:
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 4.0.0
+    "@grafana/eslint-config": 5.0.0
+    "@grafana/experimental": ^0.0.2-canary.36
     "@grafana/google-sdk": 0.0.3
     "@grafana/lezer-logql": 0.0.14
     "@grafana/runtime": "workspace:*"
@@ -24924,6 +25175,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"joycon@npm:^3.0.1":
+  version: 3.1.1
+  resolution: "joycon@npm:3.1.1"
+  checksum: 8003c9c3fc79c5c7602b1c7e9f7a2df2e9916f046b0dbad862aa589be78c15734d11beb9fe846f5e06138df22cb2ad29961b6a986ba81c4920ce2b15a7f11067
+  languageName: node
+  linkType: hard
+
 "jquery@npm:3.5.1":
   version: 3.5.1
   resolution: "jquery@npm:3.5.1"
@@ -25221,7 +25479,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonc-parser@npm:3.0.0":
+"jsonc-parser@npm:3.0.0, jsonc-parser@npm:^3.0.0":
   version: 3.0.0
   resolution: "jsonc-parser@npm:3.0.0"
   checksum: 1df2326f1f9688de30c70ff19c5b2a83ba3b89a1036160da79821d1361090775e9db502dc57a67c11b56e1186fc1ed70b887f25c5febf9a3ec4f91435836c99d
@@ -26099,6 +26357,15 @@ __metadata:
   dependencies:
     sourcemap-codec: ^1.4.4
   checksum: 727a1fb70f9610304fe384f1df0251eb7d1d9dd779c07ef1225690361b71b216f26f5d934bfb11c919b5b0e7ba50f6240c823a6f2e44cfd33d4a07d7747ca829
+  languageName: node
+  linkType: hard
+
+"magic-string@npm:^0.26.1":
+  version: 0.26.2
+  resolution: "magic-string@npm:0.26.2"
+  dependencies:
+    sourcemap-codec: ^1.4.8
+  checksum: b4db4e2b370ac8d9ffc6443a2b591b75364bf1fc9121b5a4068d5b89804abff6709d1fa4a0e0c2d54f2e61e0e44db83efdfe219a5ab0ba6d25ee1f2b51fbed55
   languageName: node
   linkType: hard
 
@@ -33113,6 +33380,49 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-dts@npm:^4.2.2":
+  version: 4.2.2
+  resolution: "rollup-plugin-dts@npm:4.2.2"
+  dependencies:
+    "@babel/code-frame": ^7.16.7
+    magic-string: ^0.26.1
+  peerDependencies:
+    rollup: ^2.55
+    typescript: ^4.1
+  dependenciesMeta:
+    "@babel/code-frame":
+      optional: true
+  checksum: cf4b45f6cca442a5f44af0f0fb567c8fc540ecb792c763571d1bcda9bf495803bcc8d4eaef451a2dd32f7f391eb822e2b96cc6b86b096db54a4d3935236fd8da
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-esbuild@npm:^4.9.1":
+  version: 4.9.1
+  resolution: "rollup-plugin-esbuild@npm:4.9.1"
+  dependencies:
+    "@rollup/pluginutils": ^4.1.1
+    debug: ^4.3.3
+    es-module-lexer: ^0.9.3
+    joycon: ^3.0.1
+    jsonc-parser: ^3.0.0
+  peerDependencies:
+    esbuild: ">=0.10.1"
+    rollup: ^1.20.0 || ^2.0.0
+  checksum: 9b74a7ccff6e1487956c2f3f79e302e96b97036e445f2e56749decccda8733e49354fb1e01698420909fc0c817d535771bdbbb8beb046d961af3e08f005741d8
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-node-externals@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "rollup-plugin-node-externals@npm:4.1.0"
+  dependencies:
+    find-up: ^5.0.0
+  peerDependencies:
+    rollup: ^2.60.0
+  checksum: 4e714dd5135ca84943b304893ed7498bac292773c056051a5fae700072257715cca48e2b5d5e3e23d1d6395eb2aaff4f8e5f6294fbbbfd6be4171049929b70ed
+  languageName: node
+  linkType: hard
+
 "rollup-plugin-sourcemaps@npm:0.6.3":
   version: 0.6.3
   resolution: "rollup-plugin-sourcemaps@npm:0.6.3"
@@ -34317,10 +34627,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map@npm:^0.7.3, source-map@npm:~0.7.2":
+"source-map@npm:^0.7.3":
   version: 0.7.3
   resolution: "source-map@npm:0.7.3"
   checksum: cd24efb3b8fa69b64bf28e3c1b1a500de77e84260c5b7f2b873f88284df17974157cc88d386ee9b6d081f08fdd8242f3fc05c953685a6ad81aad94c7393dedea
+  languageName: node
+  linkType: hard
+
+"source-map@npm:~0.7.2":
+  version: 0.7.4
+  resolution: "source-map@npm:0.7.4"
+  checksum: 01cc5a74b1f0e1d626a58d36ad6898ea820567e87f18dfc9d24a9843a351aaa2ec09b87422589906d6ff1deed29693e176194dc88bcae7c9a852dc74b311dbf5
   languageName: node
   linkType: hard
 
@@ -35478,9 +35795,9 @@ __metadata:
   version: 5.12.0
   resolution: "terser@npm:5.12.0"
   dependencies:
+    "@jridgewell/source-map": ^0.3.2
     acorn: ^8.5.0
     commander: ^2.20.0
-    source-map: ~0.7.2
     source-map-support: ~0.5.20
   bin:
     terser: bin/terser

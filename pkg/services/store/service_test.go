@@ -3,14 +3,15 @@ package store
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/stretchr/testify/mock"
@@ -23,18 +24,19 @@ var (
 			AllowUnsanitizedSvgUpload: true,
 		},
 	}
-	htmlBytes, _        = ioutil.ReadFile("testdata/page.html")
-	jpgBytes, _         = ioutil.ReadFile("testdata/image.jpg")
-	svgBytes, _         = ioutil.ReadFile("testdata/image.svg")
-	dummyUser           = &models.SignedInUser{OrgId: 1}
-	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+
+	htmlBytes, _        = os.ReadFile("testdata/page.html")
+	jpgBytes, _         = os.ReadFile("testdata/image.jpg")
+	svgBytes, _         = os.ReadFile("testdata/image.svg")
+	dummyUser           = &user.SignedInUser{OrgID: 1}
+	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		return map[string]filestorage.PathFilter{
 			ActionFilesDelete: allowAllPathFilter,
 			ActionFilesWrite:  allowAllPathFilter,
 			ActionFilesRead:   allowAllPathFilter,
 		}
 	})
-	denyAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *models.SignedInUser, storageName string) map[string]filestorage.PathFilter {
+	denyAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		return map[string]filestorage.PathFilter{
 			ActionFilesDelete: denyAllPathFilter,
 			ActionFilesWrite:  denyAllPathFilter,
@@ -117,6 +119,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	store.cfg = &GlobalStorageConfig{
 		AllowUnsanitizedSvgUpload: true,
 	}
+	store.quotaService = quotatest.NewQuotaServiceFake()
 
 	return store, mockStorage, storageName
 }

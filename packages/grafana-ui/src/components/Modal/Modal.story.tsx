@@ -6,7 +6,6 @@ import React, { useState } from 'react';
 import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 
 import { getAvailableIcons } from '../../types';
-import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Modal.mdx';
@@ -88,21 +87,15 @@ export const WithTabs: Story = (args) => {
     />
   );
   return (
-    <UseState initialState={tabs}>
-      {(state, updateState) => {
-        return (
-          <div>
-            <Modal title={modalHeader} isOpen={true}>
-              <TabContent>
-                {activeTab === state[0].value && <div>{args.body}</div>}
-                {activeTab === state[1].value && <div>Second tab content</div>}
-                {activeTab === state[2].value && <div>Third tab content</div>}
-              </TabContent>
-            </Modal>
-          </div>
-        );
-      }}
-    </UseState>
+    <div>
+      <Modal title={modalHeader} isOpen={true}>
+        <TabContent>
+          {activeTab === tabs[0].value && <div>{args.body}</div>}
+          {activeTab === tabs[1].value && <div>Second tab content</div>}
+          {activeTab === tabs[2].value && <div>Third tab content</div>}
+        </TabContent>
+      </Modal>
+    </div>
   );
 };
 WithTabs.args = {
