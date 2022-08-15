@@ -1,10 +1,12 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
+import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
+import { fetchRoleOptions, updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Team } from 'app/types';
+import { AccessControlAction, Role, Team } from 'app/types';
 
 import { updateTeam } from './state/actions';
 
@@ -21,13 +23,34 @@ export type Props = ConnectedProps<typeof connector> & OwnProps;
 
 export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
+  const currentOrgId = contextSrv.user.orgId;
+
+  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
+
+  useEffect(() => {
+    async function fetchOptions() {
+      try {
+        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+          let options = await fetchRoleOptions(currentOrgId);
+          setRoleOptions(options);
+        }
+      } catch (e) {
+        console.error('Error loading options', e);
+      }
+    }
+    if (contextSrv.licensedAccessControlEnabled()) {
+      fetchOptions();
+    }
+  }, [currentOrgId]);
 
   return (
     <VerticalGroup>
-      <FieldSet label="Team settings">
+      <FieldSet label="Team details">
         <Form
           defaultValues={{ ...team }}
           onSubmit={(formTeam: Team) => {
+            updateTeamRoles(pendingRoles, team.id);
             updateTeam(formTeam.name, formTeam.email);
           }}
           disabled={!canWriteTeamSettings}
@@ -43,6 +66,19 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
               >
                 <Input {...register('name', { required: true })} id="name-input" />
               </Field>
+
+              {contextSrv.licensedAccessControlEnabled() && (
+                <Field label="Role">
+                  <TeamRolePicker
+                    teamId={team.id}
+                    roleOptions={roleOptions}
+                    disabled={false}
+                    apply={true}
+                    onApplyRoles={setPendingRoles}
+                    pendingRoles={pendingRoles}
+                  />
+                </Field>
+              )}
 
               <Field
                 label="Email"

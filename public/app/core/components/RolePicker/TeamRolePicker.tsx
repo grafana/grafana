@@ -14,26 +14,47 @@ export interface Props {
   roleOptions: Role[];
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
+  onApplyRoles?: (newRoles: Role[]) => void;
+  pendingRoles?: Role[];
+  apply?: boolean;
 }
 
-export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled, builtinRolesDisabled }) => {
+export const TeamRolePicker: FC<Props> = ({
+  teamId,
+  roleOptions,
+  disabled,
+  builtinRolesDisabled = false,
+  onApplyRoles,
+  pendingRoles,
+  apply = false,
+}) => {
   const [{ loading, value: appliedRoles = [] }, getTeamRoles] = useAsyncFn(async () => {
     try {
-      return await fetchTeamRoles(teamId, orgId);
+      if (apply) {
+        if (pendingRoles?.length! > 0) {
+          return pendingRoles;
+        }
+      }
+      return await fetchTeamRoles(teamId);
     } catch (e) {
-      // TODO handle error
-      console.error('Error loading options');
+      console.error(e);
     }
     return [];
-  }, [orgId, teamId]);
+  }, [teamId, pendingRoles]);
 
   useEffect(() => {
+    // if (orgId) {
     getTeamRoles();
-  }, [orgId, teamId, getTeamRoles]);
+    // }
+  }, [teamId, getTeamRoles, pendingRoles]);
 
   const onRolesChange = async (roles: Role[]) => {
-    await updateTeamRoles(roles, teamId, orgId);
-    await getTeamRoles();
+    if (!apply) {
+      await updateTeamRoles(roles, teamId);
+      await getTeamRoles();
+    } else if (onApplyRoles) {
+      onApplyRoles(roles);
+    }
   };
 
   const canUpdateRoles =
@@ -49,6 +70,7 @@ export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
       canUpdateRoles={canUpdateRoles}
+      apply
     />
   );
 };
