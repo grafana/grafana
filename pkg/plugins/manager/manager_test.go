@@ -3,7 +3,6 @@ package manager
 import (
 	"archive/zip"
 	"context"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -157,15 +156,15 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 
 func TestPluginManager_Installer(t *testing.T) {
 	t.Run("Add new plugin", func(t *testing.T) {
-		testDir, err := ioutil.TempDir(os.TempDir(), "plugin-manager-test-*")
+		testDir, err := os.CreateTemp(os.TempDir(), "plugin-manager-test-*")
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			err := os.RemoveAll(testDir)
+			err := os.RemoveAll(testDir.Name())
 			assert.NoError(t, err)
 		})
 
 		p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
-			p.PluginDir = filepath.Join(testDir, p.ID)
+			p.PluginDir = filepath.Join(testDir.Name(), p.ID)
 			p.Backend = true
 		})
 
@@ -176,7 +175,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		repository := &fakePluginRepo{}
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.cfg.PluginsPath = testDir
+			pm.cfg.PluginsPath = testDir.Name()
 			pm.pluginLoader = l
 			pm.pluginStorage = fsm
 			pm.pluginRepo = repository
@@ -245,7 +244,7 @@ func TestPluginManager_Installer(t *testing.T) {
 		t.Run("Update existing plugin", func(t *testing.T) {
 			p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
 				p.Backend = true
-				p.PluginDir = filepath.Join(testDir, p.ID)
+				p.PluginDir = filepath.Join(testDir.Name(), p.ID)
 			})
 
 			l := &fakeLoader{
