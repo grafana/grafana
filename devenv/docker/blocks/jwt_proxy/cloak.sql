@@ -1687,7 +1687,8 @@ a5a8fed6-0bca-4646-9946-2fe84175353b	t	f	account	0	f	d0b8b6b6-2a02-412c-84d1-716
 77ff47f8-f578-477d-8c06-e70a846332f5	t	f	broker	0	f	589951e9-e77f-4d1d-90cd-796848190eff	\N	f	\N	f	grafana	openid-connect	0	f	f	${client_broker}	f	client-secret	\N	\N	\N	t	f	f	f
 805aebc8-9d01-42b6-bcce-6ce48ca63ef0	t	f	security-admin-console	0	t	27d2217e-9934-4971-93b8-77969e47ecf7	/admin/grafana/console/	f	\N	f	grafana	openid-connect	0	f	f	${client_security-admin-console}	f	client-secret	${authAdminUrl}	\N	\N	t	f	f	f
 6bd2d943-9800-4839-9ddc-03c04930cd9f	t	f	admin-cli	0	t	da0811c3-5031-4f35-9dc5-441050461a37	\N	f	\N	f	grafana	openid-connect	0	f	f	${client_admin-cli}	f	client-secret	\N	\N	\N	f	f	t	f
-09b79548-8426-4c0e-8e0b-7488467532c7	t	t	grafana-oauth	0	f	d17b9ea9-bcb1-43d2-b132-d339e55872a8	http://127.0.0.1:8087	f	http://127.0.0.1:8087	f	grafana	openid-connect	-1	f	f	\N	f	client-secret	http://127.0.0.1:8087	\N	\N	t	f	t	f
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	t	t	sample-iframe-project	0	t	c2ada58a-760e-40d7-8ddc-9ea69b465af2	\N	f	http://localhost:4200	f	grafana	openid-connect	-1	f	f	\N	f	client-secret	http://localhost:4200	\N	\N	t	f	t	f
+09b79548-8426-4c0e-8e0b-7488467532c7	t	t	grafana-oauth	0	f	d17b9ea9-bcb1-43d2-b132-d339e55872a8	http://env.grafana.local:8087	f	http://env.grafana.local:8087	f	grafana	openid-connect	-1	f	f	\N	f	client-secret	http://env.grafana.local:8087	\N	\N	t	f	t	f
 \.
 
 
@@ -1717,6 +1718,22 @@ COPY public.client_attributes (client_id, value, name) FROM stdin;
 09b79548-8426-4c0e-8e0b-7488467532c7	false	client_credentials.use_refresh_token
 09b79548-8426-4c0e-8e0b-7488467532c7	false	display.on.consent.screen
 09b79548-8426-4c0e-8e0b-7488467532c7		backchannel.logout.url
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	true	backchannel.logout.session.required
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	backchannel.logout.revoke.offline.tokens
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.server.signature
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.server.signature.keyinfo.ext
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.assertion.signature
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.client.signature
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.encrypt
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.authnstatement
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.onetimeuse.condition
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml_force_name_id_format
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.multivalued.roles
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.force.post.binding
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	exclude.session.state.from.auth.response
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	tls.client.certificate.bound.access.tokens
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	client_credentials.use_refresh_token
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	display.on.consent.screen
 \.
 
 
@@ -1975,6 +1992,14 @@ a8698f4f-5fa1-4baa-be05-87d03052af49	c61f5b19-c17e-49a1-91b8-a0296411b928	f
 09b79548-8426-4c0e-8e0b-7488467532c7	d4723cd4-f717-44b7-a9b0-6c32c5ecd23f	t
 09b79548-8426-4c0e-8e0b-7488467532c7	0a7c7dde-23d7-4a93-bdee-4a8963aee9a4	t
 09b79548-8426-4c0e-8e0b-7488467532c7	74daf2cd-40d4-4304-87a8-92cdca808512	t
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	d6077ed7-b265-4f82-9336-24614967bd5d	t
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	74daf2cd-40d4-4304-87a8-92cdca808512	t
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	96d521d3-facc-4b5a-a8b4-a879bae6be07	t
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	699671ab-e7c1-4fcf-beb8-ea54f1471fc1	t
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	0e98d5f9-d3f7-4b1d-9791-d442524fc2ab	f
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	a5bb3a5f-fd26-4be6-9557-26e20a03d33d	f
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	d6ffe9fc-a03c-4496-85dc-dbb5e7754587	f
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	c61f5b19-c17e-49a1-91b8-a0296411b928	f
 \.
 
 
@@ -3134,7 +3159,8 @@ eed689c6-49da-4d91-98eb-cd495bcc07a3	/realms/master/account/*
 a5a8fed6-0bca-4646-9946-2fe84175353b	/realms/grafana/account/*
 230081b5-9161-45c3-9e08-9eda5412f7f7	/realms/grafana/account/*
 805aebc8-9d01-42b6-bcce-6ce48ca63ef0	/admin/grafana/console/*
-09b79548-8426-4c0e-8e0b-7488467532c7	http://127.0.0.1:8088/oauth2/callback
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	http://localhost:4200/*
+09b79548-8426-4c0e-8e0b-7488467532c7	http://env.grafana.local:8088/oauth2/callback
 \.
 
 
@@ -3409,7 +3435,8 @@ COPY public.username_login_failure (realm_id, username, failed_login_not_before,
 COPY public.web_origins (client_id, value) FROM stdin;
 2f521d09-7304-4b5e-a94b-7cc7300b8b50	+
 805aebc8-9d01-42b6-bcce-6ce48ca63ef0	+
-09b79548-8426-4c0e-8e0b-7488467532c7	http://127.0.0.1:8087
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	http://localhost:4200
+09b79548-8426-4c0e-8e0b-7488467532c7	http://env.grafana.local:8087
 \.
 
 

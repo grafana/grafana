@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -338,7 +337,7 @@ func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
 
 type getResourcePermissionsTest struct {
 	desc              string
-	user              *models.SignedInUser
+	user              *user.SignedInUser
 	numUsers          int
 	actions           []string
 	resource          string
@@ -351,8 +350,8 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
-			user: &models.SignedInUser{
-				OrgId: 1,
+			user: &user.SignedInUser{
+				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
@@ -364,8 +363,8 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 		},
 		{
 			desc: "should return manage permissions for all resource ids",
-			user: &models.SignedInUser{
-				OrgId: 1,
+			user: &user.SignedInUser{
+				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}},
 				}},
@@ -384,7 +383,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 
 			err := sql.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				role := &accesscontrol.Role{
-					OrgID:   test.user.OrgId,
+					OrgID:   test.user.OrgID,
 					UID:     "seeded",
 					Name:    "seeded",
 					Updated: time.Now(),
@@ -419,7 +418,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 
 			seedResourcePermissions(t, store, sql, test.actions, test.resource, test.resourceID, test.resourceAttribute, test.numUsers)
 
-			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgId, types.GetResourcePermissionsQuery{
+			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgID, types.GetResourcePermissionsQuery{
 				User:              test.user,
 				Actions:           test.actions,
 				Resource:          test.resource,

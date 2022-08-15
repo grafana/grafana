@@ -2,6 +2,7 @@ import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
   isLogsQuery,
+  isQueryWithLabelFormat,
   isQueryWithParser,
   isValidQuery,
 } from './query_utils';
@@ -97,6 +98,15 @@ describe('getHighlighterExpressionsFromQuery', () => {
   it('does not remove backslash escaping if regex filter operator and backticks are used', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |~ `\\w+`')).toEqual(['\\w+']);
   });
+
+  it.each`
+    input          | expected
+    ${'`"test"`'}  | ${'"test"'}
+    ${'"`test`"'}  | ${'`test`'}
+    ${'`"test"a`'} | ${'"test"a'}
+  `('should correctly identify the type of quote used in the term', ({ input, expected }) => {
+    expect(getHighlighterExpressionsFromQuery(`{foo="bar"} |= ${input}`)).toEqual([expected]);
+  });
 });
 
 describe('getNormalizedLokiQuery', () => {
@@ -185,5 +195,23 @@ describe('isQueryWithParser', () => {
       parserCount: 1,
       queryWithParser: true,
     });
+  });
+});
+
+describe('isQueryWithLabelFormat', () => {
+  it('returns true if log query with label format', () => {
+    expect(isQueryWithLabelFormat('{job="grafana"} | label_format level=lvl')).toBe(true);
+  });
+
+  it('returns true if metrics query with label format', () => {
+    expect(isQueryWithLabelFormat('rate({job="grafana"} | label_format level=lvl [5m])')).toBe(true);
+  });
+
+  it('returns false if log query without label format', () => {
+    expect(isQueryWithLabelFormat('{job="grafana"} | json')).toBe(false);
+  });
+
+  it('returns false if metrics query without label format', () => {
+    expect(isQueryWithLabelFormat('rate({job="grafana"} [5m])')).toBe(false);
   });
 });

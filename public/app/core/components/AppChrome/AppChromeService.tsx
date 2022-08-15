@@ -8,7 +8,7 @@ import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { RouteDescriptor } from '../../navigation/types';
 
 export interface AppChromeState {
-  chromeless: boolean;
+  chromeless?: boolean;
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
@@ -20,6 +20,8 @@ const defaultSection: NavModelItem = { text: 'Grafana' };
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
+  private currentRoute?: RouteDescriptor;
+  private routeChangeHandled?: boolean;
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
@@ -27,21 +29,29 @@ export class AppChromeService {
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
   });
 
-  routeMounted(route: RouteDescriptor) {
-    this.update({
-      chromeless: route.chromeless === true,
-      sectionNav: defaultSection,
-      pageNav: undefined,
-      actions: undefined,
-    });
+  registerRouteRender(route: RouteDescriptor) {
+    if (this.currentRoute !== route) {
+      this.currentRoute = route;
+      this.routeChangeHandled = false;
+    }
   }
 
-  update(state: Partial<AppChromeState>) {
+  update(update: Partial<AppChromeState>) {
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
-      ...state,
     };
+
+    // when route change update props from route and clear fields
+    if (!this.routeChangeHandled) {
+      newState.actions = undefined;
+      newState.pageNav = undefined;
+      newState.sectionNav = defaultSection;
+      newState.chromeless = this.currentRoute?.chromeless;
+      this.routeChangeHandled = true;
+    }
+
+    Object.assign(newState, update);
 
     if (!isShallowEqual(current, newState)) {
       this.state.next(newState);
@@ -50,6 +60,10 @@ export class AppChromeService {
 
   toggleMegaMenu = () => {
     this.update({ megaMenuOpen: !this.state.getValue().megaMenuOpen });
+  };
+
+  setMegaMenu = (megaMenuOpen: boolean) => {
+    this.update({ megaMenuOpen });
   };
 
   toggleSearchBar = () => {
@@ -63,5 +77,3 @@ export class AppChromeService {
     return useObservable(this.state, this.state.getValue());
   }
 }
-
-export const appChromeService = new AppChromeService();

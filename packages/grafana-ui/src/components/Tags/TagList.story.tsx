@@ -1,13 +1,13 @@
 import { action } from '@storybook/addon-actions';
-import { Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { TagList, Props as TagListProps } from './TagList';
+import { TagList } from './TagList';
 import mdx from './TagList.mdx';
 
-export default {
+const meta: ComponentMeta<typeof TagList> = {
   title: 'Forms/Tags/TagList',
   component: TagList,
   decorators: [withCenteredStory],
@@ -23,23 +23,15 @@ export default {
     displayMax: 3,
     tags: ['datasource-test', 'gdev', 'mysql', 'mssql'],
     onClick: action('Tag clicked'),
-    showIcon: false,
   },
 };
 
-interface StoryProps extends TagListProps {
-  showIcon?: boolean;
-}
-
-export const List: Story<StoryProps> = (args) => {
+export const List: ComponentStory<typeof TagList> = (args) => {
   return (
     <div style={{ width: 300 }}>
-      <TagList
-        tags={args.tags}
-        onClick={args.onClick}
-        displayMax={args.displayMax}
-        icon={args.showIcon ? args.icon : undefined}
-      />
+      <TagList tags={args.tags} onClick={args.onClick} displayMax={args.displayMax} icon={args.icon} />
     </div>
   );
 };
+
+export default meta;

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -74,32 +74,27 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		}
 
 		azJSONModel := queryJSONModel.AzureMonitor
+		// Legacy: If only MetricDefinition is set, use it as namespace
+		if azJSONModel.MetricDefinition != "" && azJSONModel.MetricNamespace == "" {
+			azJSONModel.MetricNamespace = azJSONModel.MetricDefinition
+		}
 
 		ub := urlBuilder{
 			ResourceURI: azJSONModel.ResourceURI,
-			// Legacy, used to reconstruct resource URI if it's not present
+			// Alternative, used to reconstruct resource URI if it's not present
 			DefaultSubscription: dsInfo.Settings.SubscriptionId,
 			Subscription:        queryJSONModel.Subscription,
 			ResourceGroup:       azJSONModel.ResourceGroup,
-			MetricDefinition:    azJSONModel.MetricDefinition,
+			MetricNamespace:     azJSONModel.MetricNamespace,
 			ResourceName:        azJSONModel.ResourceName,
 		}
 
 		azJSONModel.DimensionFilters = MigrateDimensionFilters(azJSONModel.DimensionFilters)
 		azureURL := ub.BuildMetricsURL()
 
-		resourceName := azJSONModel.ResourceName
-		if resourceName == "" {
-			resourceName = extractResourceNameFromMetricsURL(azureURL)
+		if azJSONModel.ResourceName == "" {
+			azJSONModel.ResourceName = extractResourceNameFromMetricsURL(azureURL)
 		}
-
-		urlComponents := map[string]string{}
-		urlComponents["resourceURI"] = azJSONModel.ResourceURI
-		// Legacy fields used for constructing a deep link to display the query in Azure Portal.
-		urlComponents["subscription"] = queryJSONModel.Subscription
-		urlComponents["resourceGroup"] = azJSONModel.ResourceGroup
-		urlComponents["metricDefinition"] = azJSONModel.MetricDefinition
-		urlComponents["resourceName"] = resourceName
 
 		alias := azJSONModel.Alias
 
@@ -156,13 +151,14 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		}
 
 		azureMonitorQueries = append(azureMonitorQueries, &types.AzureMonitorQuery{
-			URL:           azureURL,
-			UrlComponents: urlComponents,
-			Target:        target,
-			Params:        params,
-			RefID:         query.RefID,
-			Alias:         alias,
-			TimeRange:     query.TimeRange,
+			ResourceName: azJSONModel.ResourceName,
+			ResourceURI:  ub.buildResourceURI(),
+			URL:          azureURL,
+			Target:       target,
+			Params:       params,
+			RefID:        query.RefID,
+			Alias:        alias,
+			TimeRange:    query.TimeRange,
 		})
 	}
 
@@ -238,7 +234,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo types
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.AzureMonitorResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return types.AzureMonitorResponse{}, err
 	}
@@ -288,7 +284,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			})
 		}
 		if query.Alias != "" {
-			displayName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
+			displayName := formatAzureMonitorLegendKey(query.Alias, query.ResourceName,
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
 
 			if dataField.Config != nil {
@@ -353,32 +349,20 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl string) (string,
 	}
 	escapedTime := url.QueryEscape(string(timespan))
 
-	id := query.UrlComponents["resourceURI"]
-
-	if id == "" {
-		ub := urlBuilder{
-			Subscription:     query.UrlComponents["subscription"],
-			ResourceGroup:    query.UrlComponents["resourceGroup"],
-			MetricDefinition: query.UrlComponents["metricDefinition"],
-			ResourceName:     query.UrlComponents["resourceName"],
-		}
-		id = ub.buildResourceURIFromLegacyQuery()
-	}
-
 	chartDef, err := json.Marshal(map[string]interface{}{
 		"v2charts": []interface{}{
 			map[string]interface{}{
 				"metrics": []types.MetricChartDefinition{
 					{
 						ResourceMetadata: map[string]string{
-							"id": id,
+							"id": query.ResourceURI,
 						},
 						Name:            query.Params.Get("metricnames"),
 						AggregationType: aggregationType,
 						Namespace:       query.Params.Get("metricnamespace"),
 						MetricVisualization: types.MetricVisualization{
 							DisplayName:         query.Params.Get("metricnames"),
-							ResourceDisplayName: query.UrlComponents["resourceName"],
+							ResourceDisplayName: query.ResourceName,
 						},
 					},
 				},
@@ -414,7 +398,7 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 	for k := range lowerLabels {
 		keys = append(keys, k)
 	}
-	keys = sort.StringSlice(keys)
+	sort.Strings(keys)
 
 	result := types.LegendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
@@ -461,9 +445,12 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 }
 
 // Map values from:
-//   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
+//
+//	https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
+//
 // to
-//   https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
+//
+//	https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
 	switch unit {
 	case "BitsPerSecond":

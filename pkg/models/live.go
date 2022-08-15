@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // ChannelPublisher writes data into a channel. Note that permissions are not checked.
@@ -52,10 +53,10 @@ type PublishReply struct {
 // ChannelHandler defines the core channel behavior
 type ChannelHandler interface {
 	// OnSubscribe is called when a client wants to subscribe to a channel
-	OnSubscribe(ctx context.Context, user *SignedInUser, e SubscribeEvent) (SubscribeReply, backend.SubscribeStreamStatus, error)
+	OnSubscribe(ctx context.Context, user *user.SignedInUser, e SubscribeEvent) (SubscribeReply, backend.SubscribeStreamStatus, error)
 
 	// OnPublish is called when a client writes a message to the channel websocket.
-	OnPublish(ctx context.Context, user *SignedInUser, e PublishEvent) (PublishReply, backend.PublishStreamStatus, error)
+	OnPublish(ctx context.Context, user *user.SignedInUser, e PublishEvent) (PublishReply, backend.PublishStreamStatus, error)
 }
 
 // ChannelHandlerFactory should be implemented by all core features.
@@ -71,10 +72,10 @@ type DashboardActivityChannel interface {
 	// gitops workflow that knows if the value was saved to the local database or not
 	// in many cases all direct save requests will fail, but the request should be forwarded
 	// to any gitops observers
-	DashboardSaved(orgID int64, user *UserDisplayDTO, message string, dashboard *Dashboard, err error) error
+	DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *Dashboard, err error) error
 
 	// Called when a dashboard is deleted
-	DashboardDeleted(orgID int64, user *UserDisplayDTO, uid string) error
+	DashboardDeleted(orgID int64, user *user.UserDisplayDTO, uid string) error
 
 	// Experimental! Indicate is GitOps is active.  This really means
 	// someone is subscribed to the `grafana/dashboards/gitops` channel

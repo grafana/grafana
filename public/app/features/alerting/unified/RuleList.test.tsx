@@ -30,13 +30,12 @@ import {
   somePromRules,
   someRulerRules,
 } from './mocks';
-import { getAllDataSources } from './utils/config';
+import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/buildInfo');
 jest.mock('./api/prometheus');
 jest.mock('./api/ruler');
-jest.mock('./utils/config');
 jest.mock('app/core/core', () => ({
   appEvents: {
     subscribe: () => {
@@ -46,8 +45,10 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
+jest.spyOn(config, 'getAllDataSources');
+
 const mocks = {
-  getAllDataSourcesMock: jest.mocked(getAllDataSources),
+  getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
 
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
