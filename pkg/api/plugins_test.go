@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -93,6 +94,112 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			if tc.expectedHTTPStatus == 200 {
 				require.Empty(t, pm.plugins)
 			}
+		})
+	}
+}
+
+func TestRBAC_InstallPlugin(t *testing.T) {
+	type testCase struct {
+		desc         string
+		expectedCode int
+		permissions  []accesscontrol.Permission
+	}
+
+	tests := []testCase{
+		{
+			desc: "Should be able to install plugin with correct scope",
+			permissions: []accesscontrol.Permission{
+				{Action: plugins.ActionPluginsInstall, Scope: plugins.ScopeProvider.GetResourceScope("test")},
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc: "Should be able to install plugin with wildcard scope",
+			permissions: []accesscontrol.Permission{
+				{Action: plugins.ActionPluginsInstall, Scope: plugins.ScopeProvider.GetResourceAllScope()},
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc: "Should not be able to install plugin with wrong scope",
+			permissions: []accesscontrol.Permission{
+				{Action: plugins.ActionPluginsInstall, Scope: plugins.ScopeProvider.GetResourceScope("test2")},
+			},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "Should not be able to install plugin with no permissions",
+			permissions:  []accesscontrol.Permission{},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.PluginAdminEnabled = true
+			ctx := setupHTTPServerWithCfg(t, true, cfg)
+			ctx.hs.pluginManager = &fakePluginManager{
+				plugins: make(map[string]fakePlugin),
+			}
+			setInitCtxSignedInViewer(ctx.initCtx)
+			setAccessControlPermissions(ctx.acmock, tt.permissions, ctx.initCtx.OrgID)
+
+			response := callAPI(ctx.server, http.MethodPost, "/api/plugins/test/install", strings.NewReader("{}"), t)
+			assert.Equal(t, tt.expectedCode, response.Code)
+		})
+	}
+}
+
+func TestRBAC_UninstallPlugin(t *testing.T) {
+	type testCase struct {
+		desc         string
+		expectedCode int
+		permissions  []accesscontrol.Permission
+	}
+
+	tests := []testCase{
+		{
+			desc: "Should be able to uninstall plugin with correct scope",
+			permissions: []accesscontrol.Permission{
+				{Action: plugins.ActionPluginsInstall, Scope: plugins.ScopeProvider.GetResourceScope("test")},
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc: "Should be able to uninstall plugin with wildcard scope",
+			permissions: []accesscontrol.Permission{
+				{Action: plugins.ActionPluginsInstall, Scope: plugins.ScopeProvider.GetResourceAllScope()},
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc: "Should not be able to uninstall plugin with wrong scope",
+			permissions: []accesscontrol.Permission{
+				{Action: plugins.ActionPluginsInstall, Scope: plugins.ScopeProvider.GetResourceScope("test2")},
+			},
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "Should not be able to uninstall plugin with no permissions",
+			permissions:  []accesscontrol.Permission{},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.PluginAdminEnabled = true
+			ctx := setupHTTPServerWithCfg(t, true, cfg)
+			ctx.hs.pluginManager = &fakePluginManager{
+				plugins: make(map[string]fakePlugin),
+			}
+			setInitCtxSignedInViewer(ctx.initCtx)
+			setAccessControlPermissions(ctx.acmock, tt.permissions, ctx.initCtx.OrgID)
+
+			response := callAPI(ctx.server, http.MethodPost, "/api/plugins/test/uninstall", strings.NewReader("{}"), t)
+			assert.Equal(t, tt.expectedCode, response.Code)
 		})
 	}
 }
