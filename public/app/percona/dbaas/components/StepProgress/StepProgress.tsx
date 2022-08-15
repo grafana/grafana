@@ -6,6 +6,9 @@ import { Form, FormRenderProps } from 'react-final-form';
 
 import { HorizontalGroup, useStyles } from '@grafana/ui';
 
+import { AddDBClusterFields } from '../DBCluster/AddDBClusterModal/AddDBClusterModal.types';
+import { generateUID } from '../DBCluster/AddDBClusterModal/AddDBClusterModal.utils';
+
 import { Step, StepStatus } from './Step/Step';
 import { getStyles } from './StepProgress.styles';
 
@@ -67,6 +70,11 @@ export const StepProgress: FC<StepProgressProps> = ({
     <Form
       initialValues={initialValues}
       onSubmit={onSubmit}
+      mutators={{
+        setClusterName: (databaseTypeValue: string, state, { changeValue }) => {
+          changeValue(state, `${AddDBClusterFields.name}`, () => `${databaseTypeValue}-${generateUID()}`);
+        },
+      }}
       render={({ form, handleSubmit, valid, pristine, ...props }) => (
         <form onSubmit={handleSubmit} className={styles.stepProgressWrapper} data-testid="step-progress">
           {steps.map(({ render, title, fields, dataTestId }, index) => (

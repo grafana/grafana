@@ -14,19 +14,21 @@ import { PMMServerUrlWarning } from '../../PMMServerURLWarning/PMMServerUrlWarni
 
 import { getStyles } from './AddDBClusterModal.styles';
 import { AddDBClusterModalProps, AddDBClusterFields } from './AddDBClusterModal.types';
+import { getInitialValues, updateDatabaseClusterNameInitialValue } from './AddDBClusterModal.utils';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
 
-export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
-  kubernetes,
-  isVisible,
-  setVisible,
-  onSubmit,
-  initialValues,
-}) => {
+export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({ kubernetes, isVisible, setVisible, onSubmit }) => {
   const styles = useStyles(getStyles);
   const { loading } = useSelector(getAddDbCluster);
   const [showPMMAddressWarning] = useShowPMMAddressWarning();
+
+  const initialValues = useMemo(() => getInitialValues(kubernetes), [kubernetes]);
+  const updatedItialValues = useMemo(
+    () => (isVisible ? updateDatabaseClusterNameInitialValue(initialValues) : initialValues),
+    [initialValues, isVisible]
+  );
+
   const steps = useMemo(
     () => [
       {
@@ -58,7 +60,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
           {showPMMAddressWarning && <PMMServerUrlWarning />}
           <StepProgress
             steps={steps}
-            initialValues={initialValues}
+            initialValues={updatedItialValues}
             submitButtonMessage={Messages.dbcluster.addModal.confirm}
             onSubmit={(values) => onSubmit(values, showPMMAddressWarning)}
             loading={loading}

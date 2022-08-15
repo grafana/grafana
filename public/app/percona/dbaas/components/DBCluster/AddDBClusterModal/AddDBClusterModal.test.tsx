@@ -10,7 +10,13 @@ import { StoreState } from 'app/types';
 import { kubernetesStub } from '../../Kubernetes/__mocks__/kubernetesStubs';
 
 import { AddDBClusterModal } from './AddDBClusterModal';
-import { setVisibleStub, onDBClusterAddedStub } from './__mocks__/addDBClusterModalStubs';
+import { updateDatabaseClusterNameInitialValue } from './AddDBClusterModal.utils';
+import { onDBClusterAddedStub, setVisibleStub } from './__mocks__/addDBClusterModalStubs';
+
+jest.mock('./AddDBClusterModal.utils', () => ({
+  ...jest.requireActual('./AddDBClusterModal.utils'),
+  updateDatabaseClusterNameInitialValue: jest.fn(),
+}));
 
 jest.mock('app/core/app_events');
 
@@ -39,7 +45,6 @@ describe('AddDBClusterModal::', () => {
       >
         <Router history={locationService.getHistory()}>
           <AddDBClusterModal
-            initialValues={{}}
             kubernetes={kubernetesStub}
             isVisible
             setVisible={setVisibleStub}
@@ -76,7 +81,6 @@ describe('AddDBClusterModal::', () => {
             isVisible
             setVisible={setVisibleStub}
             onSubmit={onDBClusterAddedStub}
-            initialValues={{}}
           />
         </Router>
       </Provider>
@@ -104,7 +108,6 @@ describe('AddDBClusterModal::', () => {
             isVisible
             setVisible={setVisibleStub}
             onSubmit={onDBClusterAddedStub}
-            initialValues={{}}
           />
         </Router>
       </Provider>
@@ -114,5 +117,37 @@ describe('AddDBClusterModal::', () => {
     openStep('dbcluster-advanced-options-step');
     expect(isStepActive('dbcluster-advanced-options-step')).toBeTruthy();
     expect(isStepActive('dbcluster-basic-options-step')).toBeFalsy();
+  });
+
+  it('form should have default values', () => {
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <Router history={locationService.getHistory()}>
+          <AddDBClusterModal
+            kubernetes={kubernetesStub}
+            isVisible
+            setVisible={setVisibleStub}
+            onSubmit={onDBClusterAddedStub}
+          />
+        </Router>
+      </Provider>
+    );
+
+    expect(updateDatabaseClusterNameInitialValue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        databaseType: expect.objectContaining({ value: 'mongodb' }),
+        kubernetesCluster: expect.objectContaining({
+          value: 'Cluster 1',
+        }),
+        name: expect.stringContaining('mongodb-'),
+      })
+    );
   });
 });

@@ -10,7 +10,7 @@ import {
 } from 'app/percona/shared/components/Form/FieldAdapters/FieldAdapters';
 import { Databases } from 'app/percona/shared/core';
 
-import { Operator } from '../../../Kubernetes/Kubernetes.types';
+import { Kubernetes, Operator } from '../../../Kubernetes/Kubernetes.types';
 import { getDatabaseOptionFromOperator } from '../../../Kubernetes/Kubernetes.utils';
 import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { DATABASE_OPTIONS } from '../../DBCluster.constants';
@@ -22,6 +22,20 @@ import { CLUSTER_NAME_MAX_LENGTH } from './DBClusterBasicOptions.constants';
 import { useDatabaseVersions } from './DBClusterBasicOptions.hooks';
 import { DatabaseOption, DBClusterBasicOptionsProps, Operators } from './DBClusterBasicOptions.types';
 import { getKubernetesOptions, kubernetesClusterNameValidator, optionRequired } from './DBClusterBasicOptions.utils';
+
+const getAvailableDatabaseOptions = (kubernetesCluster: Kubernetes): DatabaseOption[] => {
+  const { operators } = kubernetesCluster;
+  const availableDatabaseOptions: DatabaseOption[] = [];
+
+  Object.entries(operators).forEach(([operator, { status }]: [string, Operator]) => {
+    if (status === KubernetesOperatorStatus.ok) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      availableDatabaseOptions.push(getDatabaseOptionFromOperator(operator as Operators) as DatabaseOption);
+    }
+  });
+
+  return availableDatabaseOptions;
+};
 
 export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form }) => {
   const { required, maxLength } = validators;
@@ -35,21 +49,22 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
     }
 
     change(AddDBClusterFields.databaseType, databaseType);
+    form.mutators.setClusterName(databaseType.value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const kubernetesOptions = getKubernetesOptions(kubernetes);
 
-  const [databaseOptions, setDatabaseOptions] = useState(DATABASE_OPTIONS);
-  const onChangeCluster = useCallback((selectedKubernetes) => {
-    const { operators } = selectedKubernetes;
-    const availableDatabaseOptions: DatabaseOption[] = [];
+  const [databaseOptions, setDatabaseOptions] = useState(() => {
+    if (kubernetesCluster) {
+      const availableDatabaseOptions = getAvailableDatabaseOptions(kubernetesCluster);
+      return availableDatabaseOptions;
+    }
+    return DATABASE_OPTIONS;
+  });
 
-    Object.entries(operators as Operator).forEach(([operator, { status }]: [string, Operator]) => {
-      if (status === KubernetesOperatorStatus.ok) {
-        availableDatabaseOptions.push(getDatabaseOptionFromOperator(operator as Operators) as DatabaseOption);
-      }
-    });
+  const onChangeCluster = useCallback((selectedKubernetes) => {
+    const availableDatabaseOptions = getAvailableDatabaseOptions(selectedKubernetes);
 
     if (availableDatabaseOptions.length === 1) {
       change(AddDBClusterFields.databaseType, availableDatabaseOptions[0]);
@@ -71,11 +86,6 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
 
   return (
     <>
-      <TextInputField
-        name={AddDBClusterFields.name}
-        label={Messages.dbcluster.addModal.fields.clusterName}
-        validators={[required, kubernetesClusterNameValidator, maxLength(CLUSTER_NAME_MAX_LENGTH)]}
-      />
       <Field
         dataTestId="dbcluster-kubernetes-cluster-field"
         name={AddDBClusterFields.kubernetesCluster}
@@ -105,6 +115,11 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
         loading={loadingDatabaseVersions}
         options={databaseVersions}
         validate={optionRequired}
+      />
+      <TextInputField
+        name={AddDBClusterFields.name}
+        label={Messages.dbcluster.addModal.fields.clusterName}
+        validators={[required, kubernetesClusterNameValidator, maxLength(CLUSTER_NAME_MAX_LENGTH)]}
       />
     </>
   );

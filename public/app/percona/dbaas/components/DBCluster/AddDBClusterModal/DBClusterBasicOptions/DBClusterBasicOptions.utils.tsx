@@ -9,7 +9,7 @@ import { DatabaseVersion } from '../../DBCluster.types';
 import { OptionContent } from '../../OptionContent/OptionContent';
 
 import { DatabaseOperators, OPERATORS } from './DBClusterBasicOptions.constants';
-import { KubernetesOptionProps } from './DBClusterBasicOptions.types';
+import { KubernetesOption as KubernetesOptionInterface, KubernetesOptionProps } from './DBClusterBasicOptions.types';
 
 export const kubernetesClusterNameValidator = (value: string) => {
   const clusterNameRegexp = /^[a-z]([-a-z0-9]*[a-z0-9])?$/;
@@ -31,7 +31,7 @@ const KubernetesOption: FC<KubernetesOptionProps> = ({
   />
 );
 
-export const getKubernetesOptions = (kubernetes: Kubernetes[]) =>
+export const getKubernetesOptions = (kubernetes: Kubernetes[]): KubernetesOptionInterface[] =>
   kubernetes
     .map((kubernetesCluster) => {
       const { kubernetesClusterName, operators } = kubernetesCluster;

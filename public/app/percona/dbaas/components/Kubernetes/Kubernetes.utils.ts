@@ -1,4 +1,8 @@
-import { Operators } from '../DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions */
+import {
+  DatabaseOption,
+  Operators,
+} from '../DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { DATABASE_OPERATORS, DATABASE_OPTIONS } from '../DBCluster/DBCluster.constants';
 import { ActiveOperatorsMap } from '../DBCluster/DBCluster.types';
 
@@ -28,5 +32,5 @@ export const getActiveOperators = (kubernetes: Kubernetes[]): Operators[] => {
   return activeOperators;
 };
 
-export const getDatabaseOptionFromOperator = (operator: Operators) =>
+export const getDatabaseOptionFromOperator = (operator: Operators): DatabaseOption | undefined =>
   DATABASE_OPTIONS.find(({ value }) => value === DATABASE_OPERATORS[operator]);

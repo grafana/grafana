@@ -19,18 +19,10 @@ import { useAppDispatch } from 'app/store/store';
 
 import { AddClusterButton } from '../AddClusterButton/AddClusterButton';
 import { CHECK_OPERATOR_UPDATE_CANCEL_TOKEN, GET_KUBERNETES_CANCEL_TOKEN } from '../Kubernetes/Kubernetes.constants';
-import {
-  getActiveOperators,
-  getDatabaseOptionFromOperator,
-  isKubernetesListUnavailable,
-} from '../Kubernetes/Kubernetes.utils';
+import { isKubernetesListUnavailable } from '../Kubernetes/Kubernetes.utils';
 
 import { AddDBClusterModal } from './AddDBClusterModal/AddDBClusterModal';
-import { AddDBClusterFields } from './AddDBClusterModal/AddDBClusterModal.types';
-import {
-  INITIAL_VALUES,
-  RECHECK_INTERVAL,
-} from './AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
+import { RECHECK_INTERVAL } from './AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
 import {
   clusterStatusRender,
   connectionRender,
@@ -131,18 +123,6 @@ export const DBCluster: FC = () => {
     [setSelectedCluster, setDeleteModalVisible, getDBClusters]
   );
 
-  const [initialValues, setInitialValues] = useState<Record<string, any>>(() => {
-    const activeOperators = getActiveOperators(kubernetes);
-
-    return {
-      ...INITIAL_VALUES,
-      [AddDBClusterFields.databaseType]:
-        activeOperators.length === 1
-          ? getDatabaseOptionFromOperator(activeOperators[0])
-          : { value: undefined, label: undefined },
-    };
-  });
-
   const AddNewClusterButton = useCallback(
     () => (
       <AddClusterButton
@@ -156,7 +136,6 @@ export const DBCluster: FC = () => {
   );
 
   const addCluster = async (values: Record<string, any>, showPMMAddressWarning: boolean) => {
-    setInitialValues(values);
     try {
       await dispatch(addDbClusterAction({ values, setPMMAddress: showPMMAddressWarning })).unwrap();
       setAddModalVisible(false);
@@ -226,7 +205,6 @@ export const DBCluster: FC = () => {
               isVisible={addModalVisible}
               setVisible={setAddModalVisible}
               onSubmit={addCluster}
-              initialValues={initialValues}
             />
             <DeleteDBClusterModal
               isVisible={deleteModalVisible}
