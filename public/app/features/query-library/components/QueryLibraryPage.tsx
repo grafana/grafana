@@ -1,52 +1,46 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime/src';
-import { Alert, useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Alert, Tab, TabsBar, TabContent } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
 
-import QueryLibrarySearchTable from './QueryLibrarySearchTable';
+import { useNavModel } from '../../../core/hooks/useNavModel';
 
-const node: NavModelItem = {
-  id: 'query',
-  text: 'Query Library',
-  subTitle: 'Store, import, export and manage your team queries in an easy way.',
-  icon: 'file-search-alt', // TODO: Fix this (currently not showing up??)
-  url: 'query-library',
-};
+import { Queries } from './Queries';
+
+const initialTabs = [
+  {
+    label: 'Queries',
+    active: true,
+  },
+];
 
 const QueryLibraryPage = () => {
-  const styles = useStyles2(getStyles);
+  const navModel = useNavModel('query');
+
+  const [tabs, setTabs] = useState(initialTabs);
 
   if (!config.featureToggles.panelTitleSearch) {
     return <Alert title="Missing feature toggle: panelTitleSearch">Query library requires searchV2</Alert>;
   }
 
   return (
-    <Page navModel={{ node: node, main: node }}>
+    <Page navModel={navModel}>
       <Page.Contents>
-        <div className={styles.tableWrapper}>
-          <QueryLibrarySearchTable />
-        </div>
+        <TabsBar>
+          {tabs.map((tab, index) => (
+            <Tab
+              key={index}
+              label={tab.label}
+              active={tab.active}
+              onChangeTab={() => setTabs(tabs.map((tab, idx) => ({ ...tab, active: idx === index })))}
+            />
+          ))}
+        </TabsBar>
+        <TabContent>{tabs[0].active && <Queries />}</TabContent>
       </Page.Contents>
     </Page>
   );
 };
 
 export default QueryLibraryPage;
-
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    tableWrapper: css`
-      height: 100%;
-    `,
-    table: css`
-      width: 100%;
-      height: 100%;
-    `,
-    createQueryButton: css`
-      text-align: center;
-    `,
-  };
-};

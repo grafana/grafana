@@ -233,7 +233,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Query Library",
 			Id:         "query",
-			SubTitle:   "Explore your queries",
+			SubTitle:   "Store, import, export and manage your team queries in an easy way.",
 			Icon:       "file-search-alt",
 			SortWeight: dtos.WeightExplore,
 			Section:    dtos.NavSectionCore,
