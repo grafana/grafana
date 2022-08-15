@@ -15,7 +15,7 @@ type Props = {
 // Designed to show plugin signature information in the header on the plugin's details page
 export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const isSignatureValid = plugin.signature === PluginSignatureStatus.valid;
+  const isSignatureValid = plugin.catalogInfo?.signature === PluginSignatureStatus.valid;
 
   return (
     <div className={styles.container}>
@@ -25,11 +25,14 @@ export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElem
         rel="noreferrer"
         className={styles.link}
       >
-        <PluginSignatureBadge status={plugin.signature} />
+        <PluginSignatureBadge status={plugin.catalogInfo?.signature} />
       </a>
 
       {isSignatureValid && (
-        <PluginSignatureDetailsBadge signatureType={plugin.signatureType} signatureOrg={plugin.signatureOrg} />
+        <PluginSignatureDetailsBadge
+          signatureType={plugin.catalogInfo?.signatureType}
+          signatureOrg={plugin.catalogInfo?.signatureOrg}
+        />
       )}
     </div>
   );

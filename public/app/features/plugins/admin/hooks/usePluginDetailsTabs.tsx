@@ -17,7 +17,7 @@ type ReturnType = {
 
 export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: PluginDetailsTab[] = []): ReturnType => {
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
-  const isPublished = Boolean(plugin?.isPublished);
+  const isPublished = Boolean(plugin?.catalogInfo?.isPublished);
   const { pathname } = useLocation();
 
   const [tabs, defaultTab] = useMemo(() => {

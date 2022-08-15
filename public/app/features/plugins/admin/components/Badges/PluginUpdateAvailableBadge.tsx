@@ -14,7 +14,7 @@ export function PluginUpdateAvailableBadge({ plugin }: Props): React.ReactElemen
   const styles = useStyles2(getStyles);
 
   // Currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall.
-  if (plugin.hasUpdate && !plugin.isCore && plugin.type !== PluginType.renderer) {
+  if (plugin.catalogInfo?.hasUpdate && !plugin.catalogInfo?.isCore && plugin.type !== PluginType.renderer) {
     return <p className={styles.hasUpdate}>Update available!</p>;
   }
 

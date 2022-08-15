@@ -6,6 +6,8 @@ import {
   PluginSignatureType,
   PluginDependencies,
   PluginErrorCode,
+  PluginState,
+  PluginInclude,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
@@ -34,33 +36,70 @@ export enum PluginIconName {
   secretsmanager = 'key-skeleton-alt',
 }
 
-export interface CatalogPlugin {
-  description: string;
-  downloads: number;
-  hasUpdate: boolean;
-  id: string;
-  info: CatalogPluginInfo;
-  isDev: boolean;
-  isCore: boolean;
-  isEnterprise: boolean;
-  isInstalled: boolean;
-  isDisabled: boolean;
-  // `isPublished` is TRUE if the plugin is published to grafana.com
-  isPublished: boolean;
-  name: string;
-  orgName: string;
-  signature: PluginSignatureStatus;
-  signatureType?: PluginSignatureType;
-  signatureOrg?: string;
-  popularity: number;
-  publishedAt: string;
-  type?: PluginType;
-  updatedAt: string;
-  installedVersion?: string;
-  details?: CatalogPluginDetails;
+// The generic <T> describes how the `jsonData` object for the plugin looks like
+export interface CatalogPlugin<T = {}> {
+  id: string; // The identifier of the plugin
+  name: string; // The name of the plugin
+  orgName?: string; // The name of the organisation that published the plugin
+  category?: string; // The
+  description: string; // A short description of the plugin
+  grafanaDependency?: string; // The supported Grafana version
+  pluginDependencies?: PluginDependencies['plugins']; // Plugins that this plugin depends on
+  includes?: PluginInclude[]; // Dashboards or pages included with the plugin
+  readme?: string; // A more detailed documentation in markdown format
+  state?: PluginState; // The lifecycle state of the plugin
+  type: PluginType; // The type of the plugin, e.g. "panel", "app", etc.
+
+  // Information about the author of the plugin
+  author?: {
+    name: string;
+    url?: string;
+  };
+  // TODO: ???
+  links?: Array<{
+    name: string;
+    url: string;
+  }>;
+  // The logos that belong to the plugin
+  logos?: {
+    small: string;
+    large: string;
+  };
+
+  // Information related to the plugins catalog
+  catalogInfo?: {
+    downloads: number; // The number of times this plugin was downloaded
+    hasUpdate: boolean; // Tells if the plugin has a new version published on GCOM than the currently installed version
+    isCore: boolean; // Tells if the plugin was shipped with the core Grafana
+    isDev: boolean; // TODO: ??????
+    isEnterprise: boolean; // Tells if the plugin needs an enterprise license
+    isPublished: boolean; // Tells if the plugin is published to GCOM
+    popularity?: number; // TODO: ???
+    publishedAt: string; // The time the plugin was first published to our catalog (TODO: check if this is correct)
+    signature?: PluginSignatureStatus; // TODO: ???
+    signatureOrg?: string; // TODO: ???
+    signatureType?: PluginSignatureType; // TODO: ???
+    updatedAt: string; // The last time a new version of the plugin was published to our catalog (TODO: check if this is correct)
+    versions?: Version[]; // Available versions of the plugin in our catalog
+  };
+
+  // Information that is only available if the plugin is installed
+  settings?: {
+    baseUrl?: string; // TODO: specify this
+    defaultNavUrl?: string; // TODO: ???
+    enabled?: boolean; // Only relevant for "app" plugins
+    isDisabled: boolean; // The plugin can be visible but still disabled for various reasons, but mostly due to errors. Set by the backend.
+    isInstalled: boolean; // (TODO: is this redundant?) Tells if the plugin is installed on the current instance
+    isPinned?: boolean; // TODO: ???
+    jsonData?: T; // Plugin specific settings persisted on the backend
+    module?: string; // TODO: specify this
+    secureJsonData?: Record<string, any>; // Secure plugin specific settings persisted on the backend (This information is never sent down to the client once set)
+    version?: string; // The installed version of the plugin
+  };
+
+  // Potential errors with the plugin
   error?: PluginErrorCode;
 }
-
 export interface CatalogPluginDetails {
   readme?: string;
   versions?: Version[];
@@ -70,13 +109,6 @@ export interface CatalogPluginDetails {
   }>;
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
-}
-
-export interface CatalogPluginInfo {
-  logos: {
-    large: string;
-    small: string;
-  };
 }
 
 export type RemotePlugin = {
@@ -177,12 +209,6 @@ export interface Version {
   createdAt: string;
   isCompatible: boolean;
   grafanaDependency: string | null;
-}
-
-export interface PluginDetails {
-  remote?: RemotePlugin;
-  remoteVersions?: Version[];
-  local?: LocalPlugin;
 }
 
 export interface Org {

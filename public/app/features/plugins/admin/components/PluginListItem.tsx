@@ -23,7 +23,7 @@ export function PluginListItem({ plugin, pathName, displayMode = PluginListDispl
 
   return (
     <a href={`${pathName}/${plugin.id}`} className={cx(styles.container, { [styles.list]: isList })}>
-      <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
+      <PluginLogo src={plugin.logos?.small || ''} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>
         <p>By {plugin.orgName}</p>

@@ -22,8 +22,8 @@ type Props = {
 
 export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const latestCompatibleVersion = getLatestCompatibleVersion(plugin.details?.versions);
-  const version = plugin.installedVersion || latestCompatibleVersion?.version;
+  const latestCompatibleVersion = getLatestCompatibleVersion(plugin.catalogInfo?.versions);
+  const version = plugin.settings?.version || latestCompatibleVersion?.version;
 
   return (
     <div>
@@ -31,7 +31,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
         <div className={styles.headerContainer}>
           <PluginLogo
             alt={`${plugin.name} logo`}
-            src={plugin.info.logos.small}
+            src={plugin.logos?.small || ''}
             className={css`
               object-fit: contain;
               width: 100%;
@@ -62,17 +62,17 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
               <span>{plugin.orgName}</span>
 
               {/* Links */}
-              {plugin.details?.links.map((link: any) => (
+              {plugin.links?.map((link: any) => (
                 <a key={link.name} href={link.url}>
                   {link.name}
                 </a>
               ))}
 
               {/* Downloads */}
-              {plugin.downloads > 0 && (
+              {Number(plugin.catalogInfo?.downloads) > 0 && (
                 <span>
                   <Icon name="cloud-download" />
-                  {` ${new Intl.NumberFormat().format(plugin.downloads)}`}{' '}
+                  {` ${new Intl.NumberFormat().format(plugin.catalogInfo?.downloads || 0)}`}{' '}
                 </span>
               )}
 
@@ -82,7 +82,7 @@ export function PluginDetailsHeader({ plugin, currentUrl, parentUrl }: Props): R
               {/* Signature information */}
               <PluginDetailsHeaderSignature plugin={plugin} />
 
-              {plugin.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
+              {plugin.settings?.isDisabled && <PluginDisabledBadge error={plugin.error!} />}
             </div>
 
             <PluginDetailsHeaderDependencies

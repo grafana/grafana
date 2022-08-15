@@ -24,10 +24,11 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
   const hasPermission = isGrafanaAdmin();
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const isCompatible = Boolean(latestCompatibleVersion);
-  const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
+  const isInstallControlsDisabled =
+    plugin.catalogInfo?.isCore || plugin.settings?.isDisabled || !isInstallControlsEnabled();
 
-  const pluginStatus = plugin.isInstalled
-    ? plugin.hasUpdate
+  const pluginStatus = plugin.settings?.isInstalled
+    ? plugin.catalogInfo?.hasUpdate
       ? PluginStatus.UPDATE
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
@@ -44,7 +45,7 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
     return <div className={styles.message}>Secrets manager plugins cannot be managed by the Plugin Catalog.</div>;
   }
 
-  if (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) {
+  if (plugin.catalogInfo?.isEnterprise && !featureEnabled('enterprise.plugins')) {
     return (
       <HorizontalGroup height="auto" align="center">
         <span className={styles.message}>No valid Grafana Enterprise license detected.</span>
@@ -62,7 +63,7 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
     );
   }
 
-  if (plugin.isDev) {
+  if (plugin.catalogInfo?.isDev) {
     return (
       <div className={styles.message}>This is a development build of the plugin and can&#39;t be uninstalled.</div>
     );
@@ -73,7 +74,7 @@ export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
     return <div className={styles.message}>{message}</div>;
   }
 
-  if (!plugin.isPublished) {
+  if (!plugin.catalogInfo?.isPublished) {
     return (
       <div className={styles.message}>
         <Icon name="exclamation-triangle" /> This plugin is not published to{' '}

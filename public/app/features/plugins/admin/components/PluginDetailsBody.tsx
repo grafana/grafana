@@ -27,7 +27,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
       <div
         className={cx(styles.readme, styles.container)}
         dangerouslySetInnerHTML={{
-          __html: plugin.details?.readme ?? 'No plugin help or readme markdown file was found',
+          __html: plugin.readme ?? 'No plugin help or readme markdown file was found',
         }}
       />
     );
@@ -36,7 +36,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
   if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div className={styles.container}>
-        <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
+        <VersionList versions={plugin.catalogInfo?.versions} installedVersion={plugin.settings?.version} />
       </div>
     );
   }
