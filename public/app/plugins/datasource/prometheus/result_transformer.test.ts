@@ -389,7 +389,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[3].values.toArray()).toEqual([10, 0, 10]);
     });
 
-    it('results with heatmap format with multiple values for each bucket should be correctly transformed', () => {
+    it('results with heatmap format and multiple histograms should be grouped and de-accumulated by non-le labels', () => {
       const options = {
         targets: [
           {
