@@ -28,12 +28,12 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
-export const FNDashboard: React.Component<FNDashboardProps> = (prop) => {
+export const FNDashboard: React.Component<FNDashboardProps> = (props) => {
   return (
-    <FnAppProvider>
+    <FnAppProvider FnError={props.fnError}>
       <div className="page-dashboard">
         <AngularRoot />
-        <RenderFNDashboard {...prop} />
+        <RenderFNDashboard {...props} />
       </div>
     </FnAppProvider>
   );

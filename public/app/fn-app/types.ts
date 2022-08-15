@@ -1,5 +1,8 @@
+import { FunctionComponent } from 'react';
 export interface FNDashboardProps {
   uid: string;
   slug: string;
-  controls_container: HTMLElement;
+  controlsContainer: HTMLElement | undefined;
+  theme: string;
+  fnError: FunctionComponent;
 }

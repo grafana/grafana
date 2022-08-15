@@ -12,14 +12,16 @@ import { store } from 'app/store/store';
 
 import app from '../fn_app';
 
-export const FnAppProvider: React.Component = ({ children }) => {
+interface FnAppProviderProps {
+  fnError: React.FunctionComponent;
+}
+
+export const FnAppProvider: React.Component<FnAppProviderProps> = ({ children, FnError }) => {
   const [ready, setReady] = useState(false);
-
   navigationLogger('AppWrapper', false, 'rendering');
-
   useEffect(() => {
     loadAndInitAngularIfEnabled()
-      .then(() => {
+      .then((res) => {
         setReady(true);
         $('.preloader').remove();
       })
@@ -27,13 +29,11 @@ export const FnAppProvider: React.Component = ({ children }) => {
   }, []);
 
   if (!ready) {
-    // FN:TODO add fn loading logo
-    return <h1>App not ready</h1>;
+    return <>{FnError}</>;
   }
 
   if (!store) {
-    // FN:TODO add fn loading store
-    return <h1>No store inited</h1>;
+    return <>{FnError}</>;
   }
   return (
     <Provider store={store}>
