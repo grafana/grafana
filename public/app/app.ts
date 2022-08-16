@@ -53,6 +53,7 @@ import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
+import { FullstoryBackend } from './core/services/echo/backends/analytics/FullstoryBackend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
@@ -204,6 +205,12 @@ function initEchoSrv() {
 
   if (contextSrv.user.orgRole !== '') {
     registerEchoBackend(new PerformanceBackend({}));
+  }
+
+  if (config.featureToggles.fullstoryUserTracking && config.fullstoryOrgId) {
+    registerEchoBackend(
+      new FullstoryBackend({ orgId: config.fullstoryOrgId, devMode: process.env.NODE_ENV === 'development' })
+    );
   }
 
   if (config.sentry.enabled) {

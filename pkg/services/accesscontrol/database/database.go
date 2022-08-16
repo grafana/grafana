@@ -24,17 +24,23 @@ type AccessControlStore struct {
 func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error) {
 	result := make([]accesscontrol.Permission, 0)
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		filter, params := userRolesFilter(query.OrgID, query.UserID, query.Roles)
+		if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
+			// no permission to fetch
+			return nil
+		}
 
-		q := `SELECT
+		filter, params := userRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles)
+
+		q := `
+		SELECT
 			permission.action,
 			permission.scope
 			FROM permission
 			INNER JOIN role ON role.id = permission.role_id
 		` + filter
 
-		if query.Actions != nil {
-			q += " AND permission.action IN("
+		if len(query.Actions) > 0 {
+			q += " WHERE permission.action IN("
 			if len(query.Actions) > 0 {
 				q += "?" + strings.Repeat(",?", len(query.Actions)-1)
 			}
@@ -54,45 +60,55 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, err
 }
 
-func userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
-	params := []interface{}{}
-	q := `INNER JOIN (`
+func userRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []interface{}) {
+	var params []interface{}
+	builder := strings.Builder{}
 
 	// This is an additional security. We should never have permissions granted to userID 0.
 	// Only allow real users to get user/team permissions (anonymous/apikeys)
 	if userID > 0 {
-		q += `
-		SELECT ur.role_id
-		FROM user_role AS ur
-		WHERE ur.user_id = ?
-		AND (ur.org_id = ? OR ur.org_id = ?)
-		UNION
-		SELECT tr.role_id FROM team_role as tr
-		INNER JOIN team_member as tm ON tm.team_id = tr.team_id
-		WHERE tm.user_id = ? AND tr.org_id = ?`
-		params = []interface{}{userID, orgID, globalOrgID, userID, orgID}
+		builder.WriteString(`
+			SELECT ur.role_id
+			FROM user_role AS ur
+			WHERE ur.user_id = ?
+			AND (ur.org_id = ? OR ur.org_id = ?)
+		`)
+		params = []interface{}{userID, orgID, globalOrgID}
+	}
+
+	if len(teamIDs) > 0 {
+		if builder.Len() > 0 {
+			builder.WriteString("UNION")
+		}
+		builder.WriteString(`
+			SELECT tr.role_id FROM team_role as tr
+			WHERE tr.team_id IN(?` + strings.Repeat(", ?", len(teamIDs)-1) + `)
+			AND tr.org_id = ?
+		`)
+		for _, id := range teamIDs {
+			params = append(params, id)
+		}
+		params = append(params, orgID)
 	}
 
 	if len(roles) != 0 {
-		if userID > 0 {
-			q += `
-			UNION`
+		if builder.Len() > 0 {
+			builder.WriteString("UNION")
 		}
-		q += `
+
+		builder.WriteString(`
 			SELECT br.role_id FROM builtin_role AS br
-			WHERE br.role IN (? ` + strings.Repeat(", ?", len(roles)-1) + `)
-		`
+			WHERE br.role IN (?` + strings.Repeat(", ?", len(roles)-1) + `)
+			AND (br.org_id = ? OR br.org_id = ?)
+		`)
 		for _, role := range roles {
 			params = append(params, role)
 		}
 
-		q += `AND (br.org_id = ? OR br.org_id = ?)`
 		params = append(params, orgID, globalOrgID)
 	}
 
-	q += `) as all_role ON role.id = all_role.role_id`
-
-	return q, params
+	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
 }
 
 func deletePermissions(sess *sqlstore.DBSession, ids []int64) error {

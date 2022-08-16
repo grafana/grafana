@@ -134,6 +134,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: true,
   };
   googleAnalyticsId: undefined;
+  fullstoryOrgId: undefined;
   rudderstackWriteKey: undefined;
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
