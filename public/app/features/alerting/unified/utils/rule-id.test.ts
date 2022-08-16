@@ -49,6 +49,7 @@ describe('hashRulerRule', () => {
       data: [],
       no_data_state: GrafanaAlertStateDecision.NoData,
       exec_err_state: GrafanaAlertStateDecision.Alerting,
+      savedQueryLink: null,
     };
     const grafanaRule: RulerGrafanaRuleDTO = {
       grafana_alert: grafanaAlertDefinition,

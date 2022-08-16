@@ -67,6 +67,7 @@ export const VariablesTab = ({ savedQuery }: Props) => {
       if (v.name === variable.name) {
         return index;
       }
+      return;
     });
 
     if (varIndex) {
