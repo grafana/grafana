@@ -371,7 +371,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		ac = acmock
 	} else {
 		var err error
-		ac, err = ossaccesscontrol.ProvideService(features, cfg, database.ProvideService(db), routeRegister)
+		ac, err = ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), routeRegister)
 		require.NoError(t, err)
 	}
 
