@@ -34,7 +34,6 @@ type Store interface {
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
-	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
 	UpdateUserPermissions(userID int64, isAdmin bool) error
 	SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error
 	CreateTeam(name, email string, orgID int64) (models.Team, error)

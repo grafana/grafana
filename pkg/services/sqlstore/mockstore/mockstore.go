@@ -146,11 +146,6 @@ func (m *SQLStoreMock) GetUserOrgList(ctx context.Context, query *models.GetUser
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	query.Result = m.ExpectedSignedInUser
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	query.Result = m.ExpectedSignedInUser
 	return m.ExpectedError

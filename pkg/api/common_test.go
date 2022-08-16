@@ -285,6 +285,8 @@ type accessControlScenarioContext struct {
 	// acmock is an accesscontrol mock used to fake users rights.
 	acmock *accesscontrolmock.Mock
 
+	usermock *usertest.FakeUserService
+
 	// db is a test database initialized with InitTestDB
 	db sqlstore.Store
 
@@ -341,16 +343,19 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	}
 }
 
-func setupHTTPServer(t *testing.T, useFakeAccessControl bool) accessControlScenarioContext {
-	return setupHTTPServerWithCfg(t, useFakeAccessControl, setting.NewCfg())
+func setupHTTPServer(t *testing.T, useFakeAccessControl bool, options ...APITestServerOption) accessControlScenarioContext {
+	return setupHTTPServerWithCfg(t, useFakeAccessControl, setting.NewCfg(), options...)
 }
 
-func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
+func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, options ...APITestServerOption) accessControlScenarioContext {
 	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, featuremgmt.WithFeatures())
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, featuremgmt.WithFeatures(), options...)
 }
 
-func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
+func setupHTTPServerWithCfgDb(
+	t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore,
+	store sqlstore.Store, features *featuremgmt.FeatureManager, options ...APITestServerOption,
+) accessControlScenarioContext {
 	t.Helper()
 
 	db.Cfg.RBACEnabled = cfg.RBACEnabled
@@ -400,6 +405,10 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		userService:       userMock,
 	}
 
+	for _, o := range options {
+		o(hs)
+	}
+
 	require.NoError(t, hs.declareFixedRoles())
 	require.NoError(t, hs.AccessControl.(accesscontrol.RoleRegistry).RegisterFixedRoles(context.Background()))
 
@@ -428,6 +437,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		db:              db,
 		cfg:             cfg,
 		dashboardsStore: dashboardsStore,
+		usermock:        userMock,
 	}
 }
 

@@ -55,10 +55,13 @@ func (f *FakeUserService) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrg
 }
 
 func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
-	return f.ExpectedSignedInUser, f.ExpectedError
+	return f.GetSignedInUser(ctx, query)
 }
 
 func (f *FakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	if f.ExpectedSignedInUser == nil {
+		return &user.SignedInUser{}, f.ExpectedError
+	}
 	return f.ExpectedSignedInUser, f.ExpectedError
 }
 
