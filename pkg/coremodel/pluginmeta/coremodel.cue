@@ -61,13 +61,13 @@ seqs: [
 				#ReleaseState: "alpha" | "beta" | *"stable"
 
 				// Resources to include in plugin.
-				includes?: [...#Includes]
+				includes?: [...#Include]
 
 				// A resource to be included in a plugin.
-				#Includes: {
+				#Include: {
 					// Unique identifier of the included resource
 					uid?:  string
-					type?: #IncludeType
+					type:  #IncludeType
 					name?: string
 
 					// (Legacy) The Angular component to use for a page.
@@ -245,6 +245,20 @@ seqs: [
 				// Routes is a list of proxy routes, if any. For datasource plugins only.
 				routes?: [...#Route]
 
+				// Header describes an HTTP header that is forwarded with a proxied request for
+				// a plugin route.
+				#Header: {
+					name:    string
+					content: string
+				}
+
+				// URLParam describes query string parameters for
+				// a url in a plugin route
+				#URLParam: {
+					name:    string
+					content: string
+				}
+
 				// A proxy route used in datasource plugins for plugin authentication
 				// and adding headers to HTTP requests made by the plugin.
 				// For more information, refer to [Authentication for data source
@@ -261,13 +275,15 @@ seqs: [
 
 					// For data source plugins. Route URL is where the request is
 					// proxied to.
-					url?:         string
+					url?: string
+
+					urlParams?: [...#URLParam]
 					reqSignedIn?: bool
 					reqRole?:     string
 
 					// For data source plugins. Route headers adds HTTP headers to the
 					// proxied request.
-					headers?: [...]
+					headers?: [...#Header]
 
 					// For data source plugins. Route headers set the body content and
 					// length to the proxied request.
@@ -277,48 +293,38 @@ seqs: [
 
 					// For data source plugins. Token authentication section used with
 					// an OAuth API.
-					tokenAuth?: {
-						// URL to fetch the authentication token.
-						url?: string
-
-						// The list of scopes that your application should be granted
-						// access to.
-						scopes?: [...string]
-
-						// Parameters for the token authentication request.
-						params?: {
-							// OAuth grant type
-							grant_type?: string
-
-							// OAuth client ID
-							client_id?: string
-
-							// OAuth client secret. Usually populated by decrypting the secret
-							// from the SecureJson blob.
-							client_secret?: string
-
-							// OAuth resource
-							resource?: string
-						}
-					}
+					tokenAuth?: #TokenAuth
 
 					// For data source plugins. Token authentication section used with
 					// an JWT OAuth API.
-					jwtTokenAuth?: {
-						// URL to fetch the JWT token.
-						url?: string
+					jwtTokenAuth?: #JWTTokenAuth
+				}
 
-						// The list of scopes that your application should be granted
-						// access to.
-						scopes?: [...string]
+				// TODO docs
+				#TokenAuth: {
+					// URL to fetch the authentication token.
+					url?: string
 
-						// Parameters for the JWT token authentication request.
-						params?: {
-							token_uri?:    string
-							client_email?: string
-							private_key?:  string
-						}
-					}
+					// The list of scopes that your application should be granted
+					// access to.
+					scopes?: [...string]
+
+					// Parameters for the token authentication request.
+					params: [string]: string
+				}
+
+				// TODO docs
+				// TODO should this really be separate from TokenAuth?
+				#JWTTokenAuth: {
+					// URL to fetch the JWT token.
+					url: string
+
+					// The list of scopes that your application should be granted
+					// access to.
+					scopes: [...string]
+
+					// Parameters for the JWT token authentication request.
+					params: [string]: string
 				}
 
 				// Grafana Enerprise specific features.
