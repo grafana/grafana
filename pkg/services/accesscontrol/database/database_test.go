@@ -220,7 +220,6 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, permissions, 1)
 	})
-
 }
 
 func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*user.User, models.Team) {

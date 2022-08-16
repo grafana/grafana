@@ -133,7 +133,6 @@ func deletePermissions(sess *sqlstore.DBSession, ids []int64) error {
 
 func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-
 		roleDeleteQuery := "DELETE FROM user_role WHERE user_id = ?"
 		roleDeleteParams := []interface{}{roleDeleteQuery, userID}
 		if orgID != accesscontrol.GlobalOrgID {
