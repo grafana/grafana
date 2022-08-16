@@ -6,6 +6,7 @@ import { FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import InfluxDatasource from '../datasource';
 
 //@ts-ignore
@@ -138,9 +139,7 @@ describe('InfluxDataSource', () => {
         await lastValueFrom(ctx.ds.query({}));
       } catch (err) {
         if (err instanceof Error) {
-          expect(err.message).toBe(
-            'Browser access mode in the InfluxDB datasource is no longer available. Switch to server access mode.'
-          );
+          expect(err.message).toBe(BROWSER_MODE_DISABLED_MESSAGE);
         }
       }
     });

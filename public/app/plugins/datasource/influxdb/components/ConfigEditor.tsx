@@ -14,6 +14,7 @@ import {
 import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 
 const { Input, SecretFormField } = LegacyForms;
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
 const httpModes = [
@@ -304,7 +305,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
         {isDirectAccess && (
           <Alert title="Error" severity="error">
-            Browser access mode in the InfluxDB datasource is no longer available. Switch to server access mode.
+            {BROWSER_MODE_DISABLED_MESSAGE}
           </Alert>
         )}
 

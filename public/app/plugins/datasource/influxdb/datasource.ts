@@ -31,6 +31,7 @@ import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { FluxQueryEditor } from './components/FluxQueryEditor';
+import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { buildRawQuery } from './queryUtils';
@@ -160,9 +161,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     if (!this.isProxyAccess) {
-      const error = new Error(
-        'Browser access mode in the InfluxDB datasource is no longer available. Switch to server access mode.'
-      );
+      const error = new Error(BROWSER_MODE_DISABLED_MESSAGE);
       return throwError(() => error);
     }
     // for not-flux queries we call `this.classicQuery`, and that
