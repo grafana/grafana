@@ -1,23 +1,18 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const iconsDir = path.resolve(__dirname, '../public/img/icons/');
-const lineDestDir = path.join(iconsDir, 'unicons');
+const destIconsDir = path.resolve(__dirname, '../public/img/icons/');
+const sourceIconsDir = path.resolve(__dirname, '../packages/grafana-ui/src/icons/');
+
+const lineDestDir = path.join(destIconsDir, 'unicons');
+const solidDestDir = path.join(destIconsDir, 'solid');
 
 if (!fs.pathExistsSync(lineDestDir)) {
-  let uniconSourceDir = path.join(
-    path.dirname(require.resolve('iconscout-unicons-tarball/package.json')),
-    'unicons/svg/line'
-  );
+  let uniconSourceDir = path.join(sourceIconsDir, 'unicons');
   fs.copySync(uniconSourceDir, lineDestDir);
 }
 
-let solidDestDir = path.join(iconsDir, 'solid');
-
 if (!fs.pathExistsSync(solidDestDir)) {
-  let uniconSourceDir = path.join(
-    path.dirname(require.resolve('iconscout-unicons-tarball/package.json')),
-    'unicons/svg/solid'
-  );
+  let uniconSourceDir = path.join(sourceIconsDir, 'solid');
   fs.copySync(uniconSourceDir, solidDestDir);
 }
