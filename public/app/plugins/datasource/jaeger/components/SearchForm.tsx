@@ -12,6 +12,8 @@ import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
 import { transformToLogfmt } from '../util';
 
+const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
+
 type Props = {
   datasource: JaegerDatasource;
   query: JaegerQuery;
@@ -162,7 +164,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             id="minDuration"
             name="minDuration"
             value={query.minDuration || ''}
-            placeholder="e.g. 1.2s, 100ms, 500us"
+            placeholder={durationPlaceholder}
             onChange={(v) =>
               onChange({
                 ...query,
@@ -178,7 +180,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             id="maxDuration"
             name="maxDuration"
             value={query.maxDuration || ''}
-            placeholder="e.g. 1.2s, 100ms, 500us"
+            placeholder={durationPlaceholder}
             onChange={(v) =>
               onChange({
                 ...query,
