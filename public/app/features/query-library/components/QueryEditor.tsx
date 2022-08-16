@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { DataQuery, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
 
 type Props = {
-  queries: DataQuery[];
+  initialQueries: DataQuery[];
 };
 
-export const QueryEditor = ({ queries }: Props) => {
+export const QueryEditor = ({ initialQueries }: Props) => {
+  const [queries, setQueries] = useState(initialQueries);
   const ds_uid = queries[0].datasource?.uid;
   const dsSettings = getDataSourceSrv().getInstanceSettings(ds_uid);
 
@@ -18,15 +19,13 @@ export const QueryEditor = ({ queries }: Props) => {
     timeRange: getDefaultTimeRange(),
   };
 
-  //TODO: handle query changing
-  const onQueriesChange = (queries: DataQuery[]) => {
-    console.log('yo');
-    // this.onChange({ queries });
-    // this.setState({ queries });
+  const onQueriesChange = (newQueries: DataQuery[]) => {
+    setQueries(newQueries);
   };
 
   //TODO: add data source selector
   //TODO: add run button?
+  //TODO: handle save button
   return (
     <div>
       <QueryEditorRows
