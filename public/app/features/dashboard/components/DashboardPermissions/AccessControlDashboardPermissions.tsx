@@ -12,7 +12,7 @@ export const AccessControlDashboardPermissions = ({ dashboard, sectionNav }: Set
 
   return (
     <Page navModel={sectionNav}>
-      <Permissions title="" resource={'dashboards'} resourceId={dashboard.uid} canSetPermissions={canSetPermissions} />;
+      <Permissions resource={'dashboards'} resourceId={dashboard.uid} canSetPermissions={canSetPermissions} />
     </Page>
   );
 };
