@@ -52,19 +52,14 @@ export const VariablesTab = ({ savedQuery }: Props) => {
 
   const onAddVariable = () => {
     // NOTE: doing mutation to force re-render
-    const newVariables = savedQuery.variables.unshift({
+    savedQuery.variables.unshift({
       name: 'New var',
       current: {
         value: 'test',
       },
     });
 
-    const newSavedQuery = {
-      ...savedQuery,
-      variables: newVariables,
-    } as SavedQuery<DataQuery>;
-
-    updateSavedQuery(newSavedQuery);
+    updateSavedQuery(savedQuery);
   };
 
   const onRemoveVariable = (variable: any) => {
@@ -139,7 +134,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: 10px;
       color: ${theme.colors.text.secondary};
     `,
-    variableList: css``,
+    variableList: css`
+      padding-bottom: 20px;
+    `,
     variableListItem: css`
       list-style: none;
     `,

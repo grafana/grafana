@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { DataQuery } from '@grafana/data/src/types/query';
-import { Drawer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Drawer, IconName, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { SavedQuery } from '../api/SavedQueriesApi';
 
@@ -19,12 +19,19 @@ type Props = {
 
 const initialTabs = [
   {
-    label: 'Variables',
+    label: 'Connections',
     active: true,
+    icon: 'link',
   },
   {
-    label: 'Connections',
+    label: 'Variables',
     active: false,
+    icon: 'info-circle',
+  },
+  {
+    label: 'History',
+    active: false,
+    icon: 'history',
   },
 ];
 
@@ -45,13 +52,17 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
               key={index}
               label={tab.label}
               active={tab.active}
+              icon={tab.icon as IconName}
               onChangeTab={() => setTabs(tabs.map((tab, idx) => ({ ...tab, active: idx === index })))}
             />
           ))}
         </TabsBar>
         <TabContent>
-          {tabs[0].active && <VariablesTab savedQuery={savedQuery} />}
-          {tabs[1].active && <ConnectionsTab />}
+          <div className={styles.tabWrapper}>
+            {tabs[0].active && <ConnectionsTab />}
+            {tabs[1].active && <VariablesTab savedQuery={savedQuery} />}
+            {tabs[2].active && <div>TODO History</div>}
+          </div>
         </TabContent>
       </div>
     </Drawer>
@@ -63,6 +74,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     queryWrapper: css`
       max-height: calc(50vh);
       overflow-y: scroll;
+    `,
+    tabWrapper: css`
+      overflow-y: scroll;
+      max-height: calc(37vh);
     `,
   };
 };
