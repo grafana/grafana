@@ -476,7 +476,6 @@ describe('Receivers', () => {
   });
 
   it('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
-    mocks.api.discoverAlertmanagerFeatures.mockReset();
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
     mocks.api.fetchConfig.mockRejectedValue({ message: 'alertmanager storage object not found' });
 
