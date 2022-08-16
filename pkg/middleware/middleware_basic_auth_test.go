@@ -74,7 +74,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {
-		sc.mockSQLStore.ExpectedError = user.ErrUserNotFound
+		sc.userService.ExpectedError = user.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("user", "password")
 		sc.exec()

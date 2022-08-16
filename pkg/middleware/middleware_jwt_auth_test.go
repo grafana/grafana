@@ -108,7 +108,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Email: myEmail}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Email: myEmail}
 
 		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
 		assert.Equal(t, verifiedToken, token)
