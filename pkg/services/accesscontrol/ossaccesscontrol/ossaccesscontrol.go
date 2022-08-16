@@ -8,16 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(
-	features featuremgmt.FeatureToggles, cfg *setting.Cfg,
-	store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister,
-) (*OSSAccessControlService, error) {
+func ProvideService(cfg *setting.Cfg, store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
 	s := ProvideOSSAccessControl(cfg, store)
 	if !s.IsDisabled() {
