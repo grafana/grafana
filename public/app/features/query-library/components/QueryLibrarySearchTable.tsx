@@ -1,21 +1,21 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { of } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { DataQuery } from '@grafana/data/src/types/query';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, FilterInput, HorizontalGroup, LinkButton, ModalsController, Spinner, useStyles2 } from '@grafana/ui';
 
-import { SearchResultsTable } from '../../search/page/components/SearchResultsTable';
 import { getGrafanaSearcher, SearchQuery } from '../../search/service';
 import { SavedQuery } from '../api/SavedQueriesApi';
 import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
+import { QueryItem } from '../types';
 
 import { DatasourceTypePicker } from './DatasourceTypePicker';
 import { QueryEditorDrawer } from './QueryEditorDrawer';
+import { QueryListItem } from './QueryListItem';
 
 const QueryLibrarySearchTable = () => {
   const styles = useStyles2(getStyles);
@@ -42,8 +42,18 @@ const QueryLibrarySearchTable = () => {
     return query;
   }, [datasourceType, searchQueryBy]);
 
-  const results = useAsync(() => {
-    return getGrafanaSearcher().search(searchQuery);
+  const results = useAsync(async () => {
+    const raw = await getGrafanaSearcher().search(searchQuery);
+    return raw.view.map<QueryItem>((item) => ({
+      uid: item.uid,
+      title: item.name,
+      url: item.url,
+      uri: item.url,
+      type: item.kind,
+      id: 123, // do not use me!
+      tags: item.tags ?? [],
+      ds_uid: item.ds_uid,
+    }));
   }, [searchQuery]);
 
   useEffect(() => {
@@ -107,17 +117,27 @@ const QueryLibrarySearchTable = () => {
         </div>
       </HorizontalGroup>
 
-      <AutoSizer className={styles.table} style={{ width: '100%', height: '100%' }}>
+      <AutoSizer className={styles.autosizer} style={{ width: '100%', height: '100%' }}>
         {({ width, height }) => {
           return (
-            <SearchResultsTable
-              response={found!}
-              width={width}
-              height={height}
-              clearSelection={() => {}}
-              keyboardEvents={of()}
-              onTagSelected={() => {}}
-            />
+            <table className={cx('filter-table form-inline filter-table--hover', styles.table)}>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Status</th>
+                  <th>Name and raw query</th>
+                  <th>Data Source</th>
+                  <th>User</th>
+                  <th>Date</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {found!.map((item) => {
+                  return <QueryListItem query={item} key={item.uid} />;
+                })}
+              </tbody>
+            </table>
           );
         }}
       </AutoSizer>
@@ -137,7 +157,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flex-direction: column;
       align-items: flex-start;
     `,
-    table: css`
+    autosizer: css`
       margin-top: 40px;
     `,
     createQueryButton: css`
@@ -149,6 +169,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     searchBy: css`
       margin-right: 15px;
+    `,
+    table: css`
+      font-size: 14px;
+      &tbody {
+        &tr: {
+          background: ${theme.colors.background.secondary};
+        }
+      }
     `,
   };
 };
