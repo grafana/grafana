@@ -4,7 +4,8 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Form, Field, Input, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
-import { fetchRoleOptions, updateTeamRoles } from 'app/core/components/RolePicker/api';
+import { updateTeamRoles } from 'app/core/components/RolePicker/api';
+import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, Role } from 'app/types';
 
@@ -16,30 +17,17 @@ interface TeamDTO {
 export interface Props {}
 
 export const CreateTeam = ({}: Props): JSX.Element => {
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
-
   const currentOrgId = contextSrv.user.orgId;
+  const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
+  const [{ roleOptions }, setOrgId] = useRoleOptions(currentOrgId);
 
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
   useEffect(() => {
-    async function fetchOptions() {
-      try {
-        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-          let options = await fetchRoleOptions(currentOrgId);
-          setRoleOptions(options);
-        }
-      } catch (e) {
-        console.error('Error loading options', e);
-      }
-    }
-    if (contextSrv.licensedAccessControlEnabled()) {
-      fetchOptions();
-    }
-  }, [currentOrgId]);
+    setOrgId(currentOrgId);
+  }, [currentOrgId, setOrgId]);
 
   const createTeam = async (formModel: TeamDTO) => {
     const newTeam = await getBackendSrv().post('/api/teams', formModel);

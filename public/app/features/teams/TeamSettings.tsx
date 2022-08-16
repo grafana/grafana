@@ -3,7 +3,8 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
-import { fetchRoleOptions, updateTeamRoles } from 'app/core/components/RolePicker/api';
+import { updateTeamRoles } from 'app/core/components/RolePicker/api';
+import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, Team } from 'app/types';
@@ -25,24 +26,16 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
   const currentOrgId = contextSrv.user.orgId;
 
-  const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const [{ roleOptions }, setOrgId] = useRoleOptions(currentOrgId);
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
 
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
+
   useEffect(() => {
-    async function fetchOptions() {
-      try {
-        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-          let options = await fetchRoleOptions(currentOrgId);
-          setRoleOptions(options);
-        }
-      } catch (e) {
-        console.error('Error loading options', e);
-      }
-    }
-    if (contextSrv.licensedAccessControlEnabled()) {
-      fetchOptions();
-    }
-  }, [currentOrgId]);
+    setOrgId(currentOrgId);
+  }, [currentOrgId, setOrgId]);
 
   return (
     <VerticalGroup>
@@ -50,7 +43,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
         <Form
           defaultValues={{ ...team }}
           onSubmit={(formTeam: Team) => {
-            if (contextSrv.licensedAccessControlEnabled()) {
+            if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
               updateTeamRoles(pendingRoles, team.id);
             }
             updateTeam(formTeam.name, formTeam.email);
