@@ -2,6 +2,8 @@
 
 import { DataQuery, RelativeTimeRange } from '@grafana/data';
 
+import { SavedQueryLink } from '../features/dashboard/state/PanelModel';
+
 export type Labels = Record<string, string>;
 export type Annotations = Record<string, string>;
 
@@ -190,6 +192,7 @@ export interface PostableGrafanaRuleDefinition {
   no_data_state: GrafanaAlertStateDecision;
   exec_err_state: GrafanaAlertStateDecision;
   data: AlertQuery[];
+  savedQueryLink: SavedQueryLink | null;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;

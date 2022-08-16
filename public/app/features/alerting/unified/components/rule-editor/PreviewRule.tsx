@@ -84,7 +84,8 @@ function createPreviewRequest(values: any[]): PreviewRuleRequest {
       return {
         grafana_condition: {
           condition,
-          data: queries,
+          savedQueryLink: queries.savedQueryLink,
+          data: queries.queries,
           now: dateTimeFormatISO(Date.now()),
         },
       };

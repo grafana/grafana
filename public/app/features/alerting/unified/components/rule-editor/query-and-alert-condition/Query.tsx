@@ -52,7 +52,8 @@ export const Query: FC = () => {
             render={({ field: { ref, ...field } }) => <QueryEditor {...field} />}
             control={control}
             rules={{
-              validate: (queries) => Array.isArray(queries) && !!queries.length,
+              validate: (queries: RuleFormValues['queries']) =>
+                Array.isArray(queries?.queries) && !!queries?.queries?.length,
             }}
           />
         </Field>

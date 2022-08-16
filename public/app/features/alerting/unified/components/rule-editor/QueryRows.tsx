@@ -18,6 +18,10 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { SavedQueryLink } from '../../../../dashboard/state/PanelModel';
+import { getSavedQuerySrv } from '../../../../query-library/api/SavedQueriesSrv';
+import { SavedQueryPicker } from '../../../../query/components/SavedQueryPicker';
+
 import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { queriesWithUpdatedReferences } from './util';
 
@@ -25,14 +29,16 @@ interface Props {
   // The query configuration
   queries: AlertQuery[];
   data: Record<string, PanelData>;
+  savedQueryLink: SavedQueryLink | null;
 
   // Query editing
-  onQueriesChange: (queries: AlertQuery[]) => void;
+  onQueriesChange: (queries: AlertQuery[], savedQueryLink: SavedQueryLink | null) => void;
   onDuplicateQuery: (query: AlertQuery) => void;
   onRunQueries: () => void;
 }
 
 interface State {
+  savedQueryLink: SavedQueryLink | null;
   dataPerQuery: Record<string, PanelData>;
 }
 
@@ -40,14 +46,15 @@ export class QueryRows extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    this.state = { dataPerQuery: {} };
+    this.state = { dataPerQuery: {}, savedQueryLink: this.props.savedQueryLink };
   }
 
   onRemoveQuery = (query: DataQuery) => {
     this.props.onQueriesChange(
       this.props.queries.filter((item) => {
         return item.model.refId !== query.refId;
-      })
+      }),
+      this.state.savedQueryLink
     );
   };
 
@@ -62,7 +69,37 @@ export class QueryRows extends PureComponent<Props, State> {
           ...item,
           relativeTimeRange: timeRange,
         };
-      })
+      }),
+      this.state.savedQueryLink
+    );
+  };
+
+  onSelectedSaveQuery = async (uid: string | null) => {
+    if (!uid?.length) {
+      return;
+    }
+
+    const { onQueriesChange } = this.props;
+
+    const resp = await getSavedQuerySrv().getSavedQueryByUids([{ uid: uid }]);
+    if (!resp?.length) {
+      throw new Error('TODO error handling');
+    }
+    const savedQuery = resp[0];
+
+    onQueriesChange(
+      savedQuery.queries.map((savedQ) => ({
+        ...savedQ,
+        relativeTimeRange: {
+          // use now-15m as default
+          from: 900,
+          to: 0,
+        },
+        datasourceUid: savedQ.datasource?.uid ?? '-100',
+        model: savedQ,
+        queryType: savedQ.datasource?.uid ? 'query' : 'expression',
+      })),
+      { ref: { uid }, variables: [] }
     );
   };
 
@@ -99,7 +136,8 @@ export class QueryRows extends PureComponent<Props, State> {
           };
         }
         return query;
-      })
+      }),
+      this.state.savedQueryLink
     );
   };
 
@@ -113,7 +151,7 @@ export class QueryRows extends PureComponent<Props, State> {
 
       return copyModel(item, settings.uid);
     });
-    onQueriesChange(updatedQueries);
+    onQueriesChange(updatedQueries, this.state.savedQueryLink);
   };
 
   onChangeQuery = (query: DataQuery, index: number) => {
@@ -139,7 +177,8 @@ export class QueryRows extends PureComponent<Props, State> {
             datasource: query.datasource!,
           },
         };
-      })
+      }),
+      this.state.savedQueryLink
     );
   };
 
@@ -159,7 +198,7 @@ export class QueryRows extends PureComponent<Props, State> {
     const update = Array.from(queries);
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
-    onQueriesChange(update);
+    onQueriesChange(update, this.state.savedQueryLink);
   };
 
   onDuplicateQuery = (query: DataQuery, source: AlertQuery): void => {
@@ -222,62 +261,65 @@ export class QueryRows extends PureComponent<Props, State> {
     const thresholdByRefId = this.getThresholdsForQueries(queries);
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
-        <Droppable droppableId="alerting-queries" direction="vertical">
-          {(provided) => {
-            return (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                {queries.map((query, index) => {
-                  const data: PanelData = this.props.data?.[query.refId] ?? {
-                    series: [],
-                    state: LoadingState.NotStarted,
-                  };
-                  const dsSettings = this.getDataSourceSettings(query);
+      <div>
+        <SavedQueryPicker onChange={this.onSelectedSaveQuery} current={this.state.savedQueryLink?.ref?.uid ?? null} />
+        <DragDropContext onDragEnd={this.onDragEnd}>
+          <Droppable droppableId="alerting-queries" direction="vertical">
+            {(provided) => {
+              return (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  {queries.map((query, index) => {
+                    const data: PanelData = this.props.data?.[query.refId] ?? {
+                      series: [],
+                      state: LoadingState.NotStarted,
+                    };
+                    const dsSettings = this.getDataSourceSettings(query);
 
-                  if (!dsSettings) {
+                    if (!dsSettings) {
+                      return (
+                        <DatasourceNotFound
+                          key={`${query.refId}-${index}`}
+                          index={index}
+                          model={query.model}
+                          onUpdateDatasource={() => {
+                            const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
+                            if (defaultDataSource) {
+                              this.onChangeDataSource(defaultDataSource, index);
+                            }
+                          }}
+                          onRemoveQuery={() => {
+                            this.onRemoveQuery(query);
+                          }}
+                        />
+                      );
+                    }
+
                     return (
-                      <DatasourceNotFound
-                        key={`${query.refId}-${index}`}
+                      <QueryWrapper
                         index={index}
-                        model={query.model}
-                        onUpdateDatasource={() => {
-                          const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
-                          if (defaultDataSource) {
-                            this.onChangeDataSource(defaultDataSource, index);
-                          }
-                        }}
-                        onRemoveQuery={() => {
-                          this.onRemoveQuery(query);
-                        }}
+                        key={query.refId}
+                        dsSettings={dsSettings}
+                        data={data}
+                        query={query}
+                        onChangeQuery={this.onChangeQuery}
+                        onRemoveQuery={this.onRemoveQuery}
+                        queries={queries}
+                        onChangeDataSource={this.onChangeDataSource}
+                        onDuplicateQuery={onDuplicateQuery}
+                        onRunQueries={onRunQueries}
+                        onChangeTimeRange={this.onChangeTimeRange}
+                        thresholds={thresholdByRefId[query.refId]}
+                        onChangeThreshold={this.onChangeThreshold}
                       />
                     );
-                  }
-
-                  return (
-                    <QueryWrapper
-                      index={index}
-                      key={query.refId}
-                      dsSettings={dsSettings}
-                      data={data}
-                      query={query}
-                      onChangeQuery={this.onChangeQuery}
-                      onRemoveQuery={this.onRemoveQuery}
-                      queries={queries}
-                      onChangeDataSource={this.onChangeDataSource}
-                      onDuplicateQuery={onDuplicateQuery}
-                      onRunQueries={onRunQueries}
-                      onChangeTimeRange={this.onChangeTimeRange}
-                      thresholds={thresholdByRefId[query.refId]}
-                      onChangeThreshold={this.onChangeThreshold}
-                    />
-                  );
-                })}
-                {provided.placeholder}
-              </div>
-            );
-          }}
-        </Droppable>
-      </DragDropContext>
+                  })}
+                  {provided.placeholder}
+                </div>
+              );
+            }}
+          </Droppable>
+        </DragDropContext>
+      </div>
     );
   }
 }

@@ -20,21 +20,21 @@ export const ConditionField: FC<Props> = ({ existing = false }) => {
     formState: { errors },
   } = useFormContext<RuleFormValues>();
 
-  const queries = watch('queries');
+  const queries: RuleFormValues['queries'] = watch('queries');
   const condition = watch('condition');
 
   const expressions = useMemo(() => {
-    return queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
+    return queries?.queries?.filter((query) => query.datasourceUid === ExpressionDatasourceUID) ?? [];
   }, [queries]);
 
   const options = useMemo(
     () =>
-      queries
-        .filter((q) => !!q.refId)
+      queries?.queries
+        ?.filter((q) => !!q.refId)
         .map<SelectableValue<string>>((q) => ({
           value: q.refId,
           label: `${q.refId} - ${expressions.includes(q) ? 'expression' : 'query'}`,
-        })),
+        })) ?? [],
     [queries, expressions]
   );
 

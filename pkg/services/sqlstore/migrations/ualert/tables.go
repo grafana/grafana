@@ -251,6 +251,11 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Default:  "1",
 		},
 	))
+
+	mg.AddMigration("add column for to alert_rule _saved_query_uid",
+		migrator.NewAddColumnMigration(migrator.Table{Name: "alert_rule"},
+			&migrator.Column{Name: "saved_query_uid", Nullable: true, Type: migrator.DB_NVarchar, Length: 190}))
+
 }
 
 func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
@@ -304,6 +309,10 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			Default:  "1",
 		},
 	))
+
+	mg.AddMigration("add column for to alert_rule_saved_query_uid",
+		migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "saved_query_uid", Nullable: true, Type: migrator.DB_NVarchar, Length: 190}))
+
 }
 
 func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {

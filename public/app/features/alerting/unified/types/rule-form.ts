@@ -1,5 +1,7 @@
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
+import { SavedQueryLink } from '../../../dashboard/state/PanelModel';
+
 export enum RuleFormType {
   grafana = 'grafana',
   cloudAlerting = 'cloud-alerting',
@@ -22,7 +24,7 @@ export interface RuleFormValues {
   annotations: Array<{ key: string; value: string }>;
 
   // grafana rules
-  queries: AlertQuery[];
+  queries: { queries: AlertQuery[]; savedQueryLink: SavedQueryLink | null };
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;

@@ -101,6 +101,7 @@ func validateRuleNode(
 		Title:           ruleNode.GrafanaManagedAlert.Title,
 		Condition:       ruleNode.GrafanaManagedAlert.Condition,
 		Data:            ruleNode.GrafanaManagedAlert.Data,
+		SavedQueryUID:   ruleNode.GrafanaManagedAlert.SavedQueryLink.Ref.UID,
 		UID:             ruleNode.GrafanaManagedAlert.UID,
 		IntervalSeconds: intervalSeconds,
 		NamespaceUID:    namespace.Uid,

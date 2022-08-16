@@ -470,6 +470,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			Title:           r.Title,
 			Condition:       r.Condition,
 			Data:            r.Data,
+			SavedQueryLink:  ngmodels.SavedQueryLink{Ref: ngmodels.SavedQueryRef{UID: r.SavedQueryUID}},
 			Updated:         r.Updated,
 			IntervalSeconds: r.IntervalSeconds,
 			Version:         r.Version,

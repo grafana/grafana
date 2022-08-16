@@ -22,14 +22,16 @@ import { ExpressionQueryType } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { SavedQueryLink } from '../../../../dashboard/state/PanelModel';
 import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
+import { RuleFormValues } from '../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../utils/datasource';
 
 import { QueryRows } from './QueryRows';
 
 interface Props {
-  value?: AlertQuery[];
-  onChange: (queries: AlertQuery[]) => void;
+  value?: RuleFormValues['queries'];
+  onChange: (queries: RuleFormValues['queries']) => void;
 }
 
 interface State {
@@ -39,12 +41,14 @@ interface State {
 export class QueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
   private queries: AlertQuery[];
+  private savedQueryLink: SavedQueryLink | null;
 
   constructor(props: Props) {
     super(props);
     this.state = { panelDataByRefId: {} };
     this.runner = new AlertingQueryRunner();
-    this.queries = props.value ?? [];
+    this.queries = props.value?.queries ?? [];
+    this.savedQueryLink = props.value?.savedQueryLink ?? null;
   }
 
   componentDidMount() {
@@ -66,18 +70,19 @@ export class QueryEditor extends PureComponent<Props, State> {
     this.runner.cancel();
   };
 
-  onChangeQueries = (queries: AlertQuery[]) => {
+  onChangeQueries = (queries: AlertQuery[], savedQueryLink: SavedQueryLink | null) => {
     this.queries = queries;
-    this.props.onChange(queries);
+    this.savedQueryLink = savedQueryLink;
+    this.props.onChange({ queries, savedQueryLink });
   };
 
   onDuplicateQuery = (query: AlertQuery) => {
-    const { queries } = this;
-    this.onChangeQueries(addQuery(queries, query));
+    const { queries, savedQueryLink } = this;
+    this.onChangeQueries(addQuery(queries, query), savedQueryLink);
   };
 
   onNewAlertingQuery = () => {
-    const { queries } = this;
+    const { queries, savedQueryLink } = this;
     const datasource = getDefaultOrFirstCompatibleDataSource();
 
     if (!datasource) {
@@ -94,12 +99,13 @@ export class QueryEditor extends PureComponent<Props, State> {
             uid: datasource.uid,
           },
         },
-      })
+      }),
+      savedQueryLink
     );
   };
 
   onNewExpressionQuery = () => {
-    const { queries } = this;
+    const { queries, savedQueryLink } = this;
 
     const lastQuery = queries.at(-1);
     const defaultParams = lastQuery ? [lastQuery.refId] : [];
@@ -112,7 +118,8 @@ export class QueryEditor extends PureComponent<Props, State> {
           conditions: [{ ...defaultCondition, query: { params: defaultParams } }],
           expression: lastQuery?.refId,
         }),
-      })
+      }),
+      savedQueryLink
     );
   };
 
@@ -140,7 +147,7 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { value = [] } = this.props;
+    const { queries = [], savedQueryLink } = this.props.value ?? { queries: [], savedQueryLink: null };
     const { panelDataByRefId } = this.state;
     const styles = getStyles(config.theme2);
 
@@ -149,8 +156,9 @@ export class QueryEditor extends PureComponent<Props, State> {
     return (
       <div className={styles.container}>
         <QueryRows
+          savedQueryLink={savedQueryLink}
           data={panelDataByRefId}
-          queries={value}
+          queries={queries}
           onQueriesChange={this.onChangeQueries}
           onDuplicateQuery={this.onDuplicateQuery}
           onRunQueries={this.onRunQueries}

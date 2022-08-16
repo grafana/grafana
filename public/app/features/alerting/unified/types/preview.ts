@@ -1,6 +1,8 @@
 import { PanelData } from '@grafana/data';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { SavedQueryLink } from '../../../dashboard/state/PanelModel';
+
 import { RuleFormType } from './rule-form';
 
 export type PreviewRuleRequest = GrafanaPreviewRuleRequest | CloudPreviewRuleRequest;
@@ -8,6 +10,7 @@ export type PreviewRuleRequest = GrafanaPreviewRuleRequest | CloudPreviewRuleReq
 export type GrafanaPreviewRuleRequest = {
   grafana_condition: {
     condition: string;
+    savedQueryLink: SavedQueryLink | null;
     data: AlertQuery[];
     now: string;
   };

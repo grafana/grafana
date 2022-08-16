@@ -368,29 +368,31 @@ const (
 
 // swagger:model
 type PostableGrafanaRule struct {
-	Title        string              `json:"title" yaml:"title"`
-	Condition    string              `json:"condition" yaml:"condition"`
-	Data         []models.AlertQuery `json:"data" yaml:"data"`
-	UID          string              `json:"uid" yaml:"uid"`
-	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
+	Title          string                `json:"title" yaml:"title"`
+	Condition      string                `json:"condition" yaml:"condition"`
+	Data           []models.AlertQuery   `json:"data" yaml:"data"`
+	SavedQueryLink models.SavedQueryLink `json:"savedQueryLink" yaml:"savedQueryLink"`
+	UID            string                `json:"uid" yaml:"uid"`
+	NoDataState    NoDataState           `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState   ExecutionErrorState   `json:"exec_err_state" yaml:"exec_err_state"`
 }
 
 // swagger:model
 type GettableGrafanaRule struct {
-	ID              int64               `json:"id" yaml:"id"`
-	OrgID           int64               `json:"orgId" yaml:"orgId"`
-	Title           string              `json:"title" yaml:"title"`
-	Condition       string              `json:"condition" yaml:"condition"`
-	Data            []models.AlertQuery `json:"data" yaml:"data"`
-	Updated         time.Time           `json:"updated" yaml:"updated"`
-	IntervalSeconds int64               `json:"intervalSeconds" yaml:"intervalSeconds"`
-	Version         int64               `json:"version" yaml:"version"`
-	UID             string              `json:"uid" yaml:"uid"`
-	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
-	NamespaceID     int64               `json:"namespace_id" yaml:"namespace_id"`
-	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
-	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
-	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	Provenance      models.Provenance   `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	ID              int64                 `json:"id" yaml:"id"`
+	OrgID           int64                 `json:"orgId" yaml:"orgId"`
+	Title           string                `json:"title" yaml:"title"`
+	Condition       string                `json:"condition" yaml:"condition"`
+	Data            []models.AlertQuery   `json:"data" yaml:"data"`
+	SavedQueryLink  models.SavedQueryLink `json:"savedQueryLink" yaml:"data"`
+	Updated         time.Time             `json:"updated" yaml:"updated"`
+	IntervalSeconds int64                 `json:"intervalSeconds" yaml:"intervalSeconds"`
+	Version         int64                 `json:"version" yaml:"version"`
+	UID             string                `json:"uid" yaml:"uid"`
+	NamespaceUID    string                `json:"namespace_uid" yaml:"namespace_uid"`
+	NamespaceID     int64                 `json:"namespace_id" yaml:"namespace_id"`
+	RuleGroup       string                `json:"rule_group" yaml:"rule_group"`
+	NoDataState     NoDataState           `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState    ExecutionErrorState   `json:"exec_err_state" yaml:"exec_err_state"`
+	Provenance      models.Provenance     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 }

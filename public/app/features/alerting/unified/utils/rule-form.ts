@@ -51,7 +51,10 @@ export const getDefaultFormValues = (): RuleFormValues => {
 
     // grafana
     folder: null,
-    queries: [],
+    queries: {
+      queries: [],
+      savedQueryLink: null,
+    },
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Alerting,
@@ -93,13 +96,15 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Arr
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const { name, condition, noDataState, execErrState, evaluateFor, queries } = values;
   if (condition) {
+    console.log('converting ' + JSON.stringify(queries));
     return {
       grafana_alert: {
         title: name,
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
-        data: queries,
+        data: queries.queries,
+        savedQueryLink: queries.savedQueryLink,
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -125,7 +130,10 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,
         execErrState: ga.exec_err_state,
-        queries: ga.data,
+        queries: {
+          queries: ga.data,
+          savedQueryLink: ga.savedQueryLink,
+        },
         condition: ga.condition,
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
@@ -327,7 +335,10 @@ export const panelToRuleFormValues = async (
             title: folderTitle,
           }
         : undefined,
-    queries,
+    queries: {
+      queries,
+      savedQueryLink: panel.savedQueryLink,
+    },
     name: panel.title,
     condition: queries[queries.length - 1].refId,
     annotations: [

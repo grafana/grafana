@@ -129,6 +129,7 @@ type AlertRule struct {
 	Title           string
 	Condition       string
 	Data            []AlertQuery
+	SavedQueryUID   string `xorm:"saved_query_uid"`
 	Updated         time.Time
 	IntervalSeconds int64
 	Version         int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
@@ -298,6 +299,7 @@ type AlertRuleVersion struct {
 	Title           string
 	Condition       string
 	Data            []AlertQuery
+	SavedQueryUID   string `xorm:"saved_query_uid"`
 	IntervalSeconds int64
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState

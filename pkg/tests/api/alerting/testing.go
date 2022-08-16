@@ -152,12 +152,13 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		return nil
 	}
 	return &apimodels.PostableGrafanaRule{
-		Title:        gettable.Title,
-		Condition:    gettable.Condition,
-		Data:         gettable.Data,
-		UID:          gettable.UID,
-		NoDataState:  gettable.NoDataState,
-		ExecErrState: gettable.ExecErrState,
+		Title:          gettable.Title,
+		Condition:      gettable.Condition,
+		Data:           gettable.Data,
+		SavedQueryLink: gettable.SavedQueryLink,
+		UID:            gettable.UID,
+		NoDataState:    gettable.NoDataState,
+		ExecErrState:   gettable.ExecErrState,
 	}
 }
 

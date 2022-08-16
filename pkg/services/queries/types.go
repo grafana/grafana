@@ -1,6 +1,12 @@
 package queries
 
-import "github.com/grafana/grafana/pkg/components/simplejson"
+import (
+	"encoding/json"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+)
 
 type Time struct {
 	// From Start time in epoch timestamps in milliseconds or relative using Grafana time units.
@@ -36,4 +42,49 @@ type Query struct {
 	Queries []*simplejson.Json `json:"queries"`
 
 	Variables []*simplejson.Json `json:"variables"`
+}
+
+func getDatasourceUID(q *simplejson.Json) string {
+	uid := q.Get("datasource").Get("uid").MustString()
+
+	if uid == "" {
+		uid = q.Get("datasource").MustString()
+	}
+
+	if expr.IsDataSource(uid) {
+		return expr.DatasourceUID
+	}
+
+	return uid
+}
+
+func DeserializeAsAlertingQueries(serialized []byte) ([]ngmodels.AlertQuery, error) {
+	var query Query
+	if err := json.Unmarshal(serialized, query); err != nil {
+		return nil, err
+	}
+
+	alertingQueries := make([]ngmodels.AlertQuery, 0)
+	for _, q := range query.Queries {
+		dsUid := getDatasourceUID(q)
+
+		if expr.IsDataSource(dsUid) {
+			dsUid = "-100"
+		}
+
+		modelJSON, err := q.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+
+		alertingQueries = append(alertingQueries, ngmodels.AlertQuery{
+			RefID:     q.Get("refId").MustString("A"),
+			QueryType: q.Get("queryType").MustString(""),
+			// TODO timerange
+			DatasourceUID: dsUid,
+			Model:         modelJSON,
+		})
+	}
+
+	return alertingQueries, nil
 }
