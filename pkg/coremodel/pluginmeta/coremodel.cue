@@ -143,7 +143,7 @@ seqs: [
 					// Build information
 					build?: {
 						// Time when the plugin was built, as a Unix timestamp.
-						time?: number
+						time?: int64
 						repo?: string
 
 						// Git branch the plugin was built from.
@@ -151,10 +151,10 @@ seqs: [
 
 						// Git hash of the commit the plugin was built from
 						hash?:   string
-						"number"?: number
+						"number"?: int64
 
 						// GitHub pull request the plugin was built from
-						pr?: number
+						pr?: int32
 					}
 
 					// Description of plugin. Used on the plugins page in Grafana and

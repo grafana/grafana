@@ -192,15 +192,15 @@ type Model struct {
 			Branch *string `json:"branch,omitempty"`
 
 			// Git hash of the commit the plugin was built from
-			Hash   *string  `json:"hash,omitempty"`
-			Number *float32 `json:"number,omitempty"`
+			Hash   *string `json:"hash,omitempty"`
+			Number *int64  `json:"number,omitempty"`
 
 			// GitHub pull request the plugin was built from
-			Pr   *float32 `json:"pr,omitempty"`
-			Repo *string  `json:"repo,omitempty"`
+			Pr   *int32  `json:"pr,omitempty"`
+			Repo *string `json:"repo,omitempty"`
 
 			// Time when the plugin was built, as a Unix timestamp.
-			Time *float32 `json:"time,omitempty"`
+			Time *int64 `json:"time,omitempty"`
 		} `json:"build,omitempty"`
 
 		// Description of plugin. Used on the plugins page in Grafana and
