@@ -6,7 +6,7 @@ import { IconButton } from '../IconButton/IconButton';
 import { getSelectStyles } from './getSelectStyles';
 
 interface MultiValueContainerProps {
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
 }
 
 export const MultiValueContainer: React.FC<MultiValueContainerProps> = ({ innerProps, children }) => {
