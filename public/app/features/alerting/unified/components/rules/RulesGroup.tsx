@@ -103,7 +103,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
               data-testid="reorder-group"
               key="reorder"
               icon="exchange-alt"
-              tooltip="re-order rules"
+              tooltip="reorder rules"
               className={styles.rotate90}
               onClick={() => setIsReorderingGroup(true)}
             />
