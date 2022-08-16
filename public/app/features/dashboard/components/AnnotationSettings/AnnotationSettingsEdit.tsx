@@ -99,21 +99,16 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
             onChange={onDataSourceChange}
           />
         </Field>
-        <Field
-          label="Enabled"
-          description="When enabled the annotation query is issued every dashboard refresh"
-          horizontal
-        >
+        <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
           <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
         </Field>
         <Field
           label="Hidden"
           description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
-          horizontal
         >
           <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
         </Field>
-        <Field label="Color" description="Color to use for the annotation event markers" horizontal>
+        <Field label="Color" description="Color to use for the annotation event markers">
           <HorizontalGroup>
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
           </HorizontalGroup>
