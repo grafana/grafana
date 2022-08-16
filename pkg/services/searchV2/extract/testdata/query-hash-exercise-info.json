@@ -1,0 +1,63 @@
+{
+  "title": "query hash",
+  "tags": null,
+  "datasource": [
+    {
+      "uid": "csvx",
+      "type": "csv-datasource"
+    },
+    {
+      "uid": "${sqllite}",
+      "type": "sqlite-datasource"
+    }
+  ],
+  "panels": [
+    {
+      "id": 0,
+      "title": "first",
+      "type": "table",
+      "datasource": [
+        {
+          "uid": "${sqllite}",
+          "type": "sqlite-datasource"
+        }
+      ],
+      "query": "f58e9bd67f08"
+    },
+    {
+      "id": 0,
+      "title": "second (datasource on the panel level)",
+      "type": "table",
+      "datasource": [
+        {
+          "uid": "csvx",
+          "type": "csv-datasource"
+        }
+      ],
+      "transformer": [
+        "filterFieldsByName"
+      ],
+      "query": "38720fd23bc5"
+    },
+    {
+      "id": 0,
+      "title": "third (datasource in the target)",
+      "type": "table",
+      "datasource": [
+        {
+          "uid": "csvx",
+          "type": "csv-datasource"
+        }
+      ],
+      "transformer": [
+        "filterFieldsByName"
+      ],
+      "query": "38720fd23bc5"
+    }
+  ],
+  "schemaVersion": 36,
+  "linkCount": 0,
+  "timeFrom": "",
+  "timeTo": "",
+  "timezone": ""
+}

@@ -1,0 +1,73 @@
+{
+  "panels": [
+    {
+      "targets": [
+        {
+          "datasource": {
+            "type": "sqlite-datasource",
+            "uid": "${sqllite}"
+          },
+          "refId": "A",
+          "queryText": "same query different JSON order"
+        },
+        {
+          "refId": "A",
+          "queryText": "same query different JSON order",
+          "datasource": {
+            "type": "sqlite-datasource",
+            "uid": "${sqllite}"
+          }
+        }
+      ],
+      "title": "first",
+      "type": "table"
+    },
+    {
+      "title": "second (datasource on the panel level)",
+      "type": "table",
+      "datasource": {
+        "type": "csv-datasource",
+        "uid": "csvx"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "path": "path to file",
+          "sub": ["a", "b", "c"]
+        }
+      ],
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": "hello"
+        }
+      ]
+    },
+    {
+      "title": "third (datasource in the target)",
+      "type": "table",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": "hello"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "csv-datasource",
+            "uid": "csvx"
+          },
+          "refId": "A",
+          "path": "path to file",
+          "sub": ["a", "b", "c"]
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [],
+  "title": "query hash",
+  "uid": "hash"
+}
