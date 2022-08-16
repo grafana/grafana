@@ -104,13 +104,13 @@ const QueryLibrarySearchTable = () => {
         </div>
       </HorizontalGroup>
 
-      <AutoSizer className={styles.table}>
+      <AutoSizer className={styles.table} style={{ width: '100%', height: '100%' }}>
         {({ width, height }) => {
           return (
             <SearchResultsTable
               response={found!}
-              width={100}
-              height={100}
+              width={width}
+              height={height}
               clearSelection={() => {}}
               keyboardEvents={of()}
               onTagSelected={() => {}}
@@ -135,9 +135,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       align-items: flex-start;
     `,
     table: css`
-      margin-top: 20px;
-      width: 100%;
-      height: 100%;
+      margin-top: 40px;
     `,
     createQueryButton: css`
       text-align: center;
