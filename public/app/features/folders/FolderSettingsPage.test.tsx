@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -167,6 +167,7 @@ describe('FolderSettingsPage', () => {
 
   it('should call the publish event when the deleteButton is clicked', async () => {
     new ModalManager().init();
+    const mockDeleteFolder = jest.fn();
     const mockFolder = {
       id: 1,
       uid: '1234',
@@ -178,10 +179,14 @@ describe('FolderSettingsPage', () => {
     };
     setup({
       folder: mockFolder,
+      deleteFolder: mockDeleteFolder,
     });
     const deleteButton = screen.getByRole('button', { name: 'Delete' });
     await userEvent.click(deleteButton);
     const deleteModal = screen.getByRole('dialog', { name: 'Delete' });
     expect(deleteModal).toBeInTheDocument();
+    const deleteButtonModal = within(deleteModal).getByRole('button', { name: 'Confirm Modal Danger Button' });
+    await userEvent.click(deleteButtonModal);
+    expect(mockDeleteFolder).toHaveBeenCalledWith(mockFolder.uid);
   });
 });
