@@ -118,7 +118,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"profileEnabled":                      setting.ProfileEnabled,
 		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
 		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
-		"fullstoryOrgId":                      setting.FullstoryOrgId,
 		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
 		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
 		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,

@@ -4719,13 +4719,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fullstory/browser@npm:^1.6.1":
-  version: 1.6.1
-  resolution: "@fullstory/browser@npm:1.6.1"
-  checksum: 79bb1c05b92b6bb6163566eeceb2ddf8e7e7bf5b9d629d99a937cecc21eafc019a0149c78d968e623424cbc84e9ce10e162e8ab56e59d47d259ca8e364f5c249
-  languageName: node
-  linkType: hard
-
 "@gar/promisify@npm:^1.0.1":
   version: 1.1.2
   resolution: "@gar/promisify@npm:1.1.2"
@@ -21649,7 +21642,6 @@ __metadata:
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.3
-    "@fullstory/browser": ^1.6.1
     "@grafana/agent-core": 0.4.0
     "@grafana/agent-web": 0.4.0
     "@grafana/api-documenter": 7.11.2
