@@ -223,7 +223,7 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 		return nil
 	})
 	g.Go(func() error {
-		if err := s.accessControlStore.DeleteUserPermissions(ctx, cmd.UserID); err != nil {
+		if err := s.accessControlStore.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
 			return err
 		}
 		return nil

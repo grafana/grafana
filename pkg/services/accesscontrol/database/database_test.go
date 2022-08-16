@@ -152,7 +152,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	err = store.DeleteUserPermissions(context.Background(), user.ID)
+	err = store.DeleteUserPermissions(context.Background(), user.OrgID, user.ID)
 	require.NoError(t, err)
 
 	permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{

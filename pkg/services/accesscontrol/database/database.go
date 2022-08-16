@@ -131,7 +131,7 @@ func deletePermissions(sess *sqlstore.DBSession, ids []int64) error {
 	return nil
 }
 
-func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, userID int64) error {
+func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// Delete user role assignments
 		if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
