@@ -1,4 +1,5 @@
 import React, { FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip } from '@grafana/ui';
@@ -10,6 +11,13 @@ interface Props {
   variable: VariableModel;
   readOnly?: boolean;
 }
+
+const changeLabelStyle = (theme: string) => {
+  if (theme === 'light') {
+    return { color: '#2D333E' };
+  }
+  return { color: '#fff' };
+};
 
 export const PickerRenderer: FunctionComponent<Props> = (props) => {
   const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
@@ -30,7 +38,7 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
 
 function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | null {
   const labelOrName = useMemo(() => variable.label || variable.name, [variable]);
-
+  const { FNDashboard, theme } = useSelector((state) => state.fnGlobleState);
   if (variable.hide !== VariableHide.dontHide) {
     return null;
   }
@@ -41,6 +49,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
       <Tooltip content={variable.description} placement={'bottom'}>
         <label
           className="gf-form-label gf-form-label--variable"
+          style={FNDashboard ? changeLabelStyle(theme) : {}}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
           htmlFor={elementId}
         >
@@ -53,6 +62,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
   return (
     <label
       className="gf-form-label gf-form-label--variable"
+      style={FNDashboard ? changeLabelStyle(theme) : {}}
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
       htmlFor={elementId}
     >
