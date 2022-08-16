@@ -1,20 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { NavModel } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { ShowConfirmModalEvent } from 'app/types/events';
-
-import appEvents from '../../core/app_events';
+import { ModalManager } from 'app/core/services/ModalManager';
+import { configureStore } from 'app/store/configureStore';
 
 import { FolderSettingsPage, Props } from './FolderSettingsPage';
 import { setFolderTitle } from './state/reducers';
-
-jest.mock('../../core/app_events', () => ({
-  publish: jest.fn(),
-}));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -41,7 +37,11 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  render(<FolderSettingsPage {...props} />);
+  render(
+    <Provider store={configureStore()}>
+      <FolderSettingsPage {...props} />
+    </Provider>
+  );
 };
 
 describe('FolderSettingsPage', () => {
@@ -166,6 +166,7 @@ describe('FolderSettingsPage', () => {
   });
 
   it('should call the publish event when the deleteButton is clicked', async () => {
+    new ModalManager().init();
     const mockFolder = {
       id: 1,
       uid: '1234',
@@ -180,8 +181,7 @@ describe('FolderSettingsPage', () => {
     });
     const deleteButton = screen.getByRole('button', { name: 'Delete' });
     await userEvent.click(deleteButton);
-    expect(appEvents.publish).toHaveBeenCalledWith(
-      new ShowConfirmModalEvent(expect.objectContaining({ title: 'Delete' }))
-    );
+    const deleteModal = screen.getByRole('div', { name: 'dialog' });
+    expect(deleteModal).objectContaining({ title: 'Delete' });
   });
 });
