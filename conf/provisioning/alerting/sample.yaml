@@ -50,7 +50,27 @@ apiVersion: 1
 #    # <string, required> unique identifier for the rule
 #    uid: my_id_1
 
-# # List of notification policies
+# # List of contact points to import or update
+# contactPoints:
+#     # <int> organization id, default = 1
+#   - orgId: 1
+#     # <string, required> name of the contact point
+#     name: cp_1
+#     receivers:
+#       # <string, required> unique identifier for the receiver
+#     - uid: first_uid
+#       # <string, required> type of the receiver
+#       type: prometheus-alertmanager
+#       # <object, required> settings for the specific receiver type
+#       settings:
+#         url: http://test:9000
+
+# # List of receivers that should be deleted
+# deleteContactPoints:
+# - orgId: 1
+#   uid: first_uid
+
+# # List of notification policies to import or update
 # policies:
 #     # <int> organization id, default = 1
 #   - orgId: 1

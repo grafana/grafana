@@ -439,9 +439,347 @@ deleteRules:
 
 ### Contact points
 
+Creation
+
 ```yaml
 # config file version
 apiVersion: 1
+
+# List of contact points to import or update
+contactPoints:
+  # <int> organization id, default = 1
+  - orgId: 1
+    # <string, required> name of the contact point
+    name: cp_1
+    receivers:
+      # <string, required> unique identifier for the receiver
+      - uid: first_uid
+        # <string, required> type of the receiver
+        type: prometheus-alertmanager
+        # <object, required> settings for the specific receiver type
+        settings:
+          url: http://test:9000
+```
+
+Deletion
+
+```yaml
+# config file version
+apiVersion: 1
+
+# List of receivers that should be deleted
+deleteContactPoints:
+  - orgId: 1
+    uid: first_uid
+```
+
+#### Settings
+
+Here we showcase what kind of settings you can have for the different
+contact point types.
+
+##### DingDing
+
+```yaml
+type: dingding
+settings:
+  # <string, required>
+  url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx
+  # <string> options: link, actionCard
+  msgType: link
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### Kafka
+
+```yaml
+type: kafka
+settings:
+  # <string, required>
+  kafkaRestProxy: http://localhost:8082
+  # <string, required>
+  kafkaTopic: topic1
+```
+
+##### E-Mail
+
+```yaml
+type: email
+settings:
+  # <string, required>
+  addresses: me@example.com;you@example.com
+  # <bool>
+  singleEmail: false
+  # <string>
+  message: my optional message to include
+  # <string>
+  subject: |
+    {{ template "default.title" . }}
+```
+
+##### PagerDuty
+
+```yaml
+type: pagerduty
+settings:
+  # <string, required>
+  integrationKey: XXX
+  # <string> options: critical, error, warning, info
+  severity: critical
+  # <string>
+  class: ping failure
+  # <string>
+  component: Grafana
+  # <string>
+  group: app-stack
+  # <string>
+  summary: |
+    {{ template "default.message" . }}
+```
+
+##### VictorOps
+
+```yaml
+type: victorops
+settings:
+  # <string, required>
+  url: XXX
+  # <string> options: CRITICAL, WARNING
+  messageType: CRITICAL
+```
+
+##### Pushover
+
+```yaml
+type: pushover
+settings:
+  # <string, required>
+  apiToken: XXX
+  # <string, required>
+  userKey: user1,user2
+  # <string>
+  device: device1,device2
+  # <string> options (high to low): 2,1,0,-1,-2
+  priority: '2'
+  # <string>
+  retry: '30'
+  # <string>
+  expire: '120'
+  # <string>
+  sound: siren
+  # <string>
+  okSound: magic
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### Slack
+
+```yaml
+type: slack
+settings:
+  # <string, required>
+  recipient: alerting-dev
+  # <string, required>
+  token: xxx
+  # <string>
+  username: grafana_bot
+  # <string>
+  icon_emoji: heart
+  # <string>
+  icon_url: https://icon_url
+  # <string>
+  mentionUsers: user_1,user_2
+  # <string>
+  mentionGroups: group_1,group_2
+  # <string> options: here, channel
+  mentionChannel: here
+  # <string> Optionally provide a Slack incoming webhook URL for sending messages, in this case the token isn't necessary
+  url: https://some_webhook_url
+  # <string>
+  endpointUrl: https://custom_url/api/chat.postMessage
+  # <string>
+  title: |
+    {{ template "slack.default.title" . }}
+  text: |
+    {{ template "slack.default.text" . }}
+```
+
+##### Sensu Go
+
+```yaml
+type: sensugo
+settings:
+  # <string, required>
+  url: http://sensu-api.local:8080
+  # <string, required>
+  apikey: xxx
+  # <string>
+  entity: default
+  # <string>
+  check: default
+  # <string>
+  handler: some_handler
+  # <string>
+  namespace: default
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### Microsoft Teams
+
+```yaml
+type: teams
+settings:
+  # <string, required>
+  url: https://ms_teams_url
+  # <string>
+  title: |
+    {{ template "default.title" . }}
+  # <string>
+  sectiontitle: ''
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### Telegram
+
+```yaml
+type: telegram
+settings:
+  # <string, required>
+  bottoken: xxx
+  # <string, required>
+  chatid: some_chat_id
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### Webhook
+
+```yaml
+type: webhook
+settings:
+  # <string, required>
+  url: https://endpoint_url
+  # <string> options: POST, PUT
+  httpMethod: POST
+  # <string>
+  username: abc
+  # <string>
+  password: abc123
+  # <string>
+  authorization_scheme: Bearer
+  # <string>
+  authorization_credentials: abc123
+  # <string>
+  maxAlerts: '10'
+```
+
+##### WeCom
+
+```yaml
+type: wecom
+settings:
+  # <string, required>
+  url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+  # <string>
+  title: |
+    {{ template "default.title" . }}
+```
+
+##### Alertmanager
+
+```yaml
+type: prometheus-alertmanager
+settings:
+  # <string, required>
+  url: http://localhost:9093
+  # <string>
+  basicAuthUser: abc
+  # <string>
+  basicAuthPassword: abc123
+```
+
+##### Discord
+
+```yaml
+type: discord
+settings:
+  # <string, required>
+  url: https://discord/webhook
+  # <string>
+  avatar_url: https://my_avatar
+  # <string>
+  use_discord_username: Grafana
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### Google Hangouts Chat
+
+```yaml
+type: googlechat
+settings:
+  # <string, required>
+  url: https://google/webhook
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### LINE
+
+```yaml
+type: line
+settings:
+  # <string, required>
+  token: xxx
+```
+
+##### Threema Gateway
+
+```yaml
+type: threema
+settings:
+  # <string, required>
+  api_secret: xxx
+  # <string, required>
+  gateway_id: A5K94S9
+  # <string, required>
+  recipient_id: A9R4KL4S
+```
+
+##### OpsGenie
+
+```yaml
+type: opsgenie
+settings:
+  # <string, required>
+  apiKey: xxx
+  # <string, required>
+  apiUrl: https://api.opsgenie.com/v2/alerts
+  # <string>
+  message: |
+    {{ template "default.title" . }}
+  # <string>
+  description: some descriptive description
+  # <bool>
+  autoClose: false
+  # <bool>
+  overridePriority: false
+  # <string> options: tags, details, both
+  sendTagsAs: both
 ```
 
 ### Notification policies
