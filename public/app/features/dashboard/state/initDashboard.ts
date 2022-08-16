@@ -115,7 +115,7 @@ const getQueriesByDatasource = (
   panels.forEach((panel) => {
     if (panel.panels) {
       getQueriesByDatasource(panel.panels, queries);
-    } else {
+    } else if (panel.targets) {
       panel.targets.forEach((target) => {
         if (target.datasource?.type) {
           if (queries[target.datasource.type]) {
