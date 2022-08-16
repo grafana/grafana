@@ -22,6 +22,11 @@ export const getAllFields = memoizeOne(
     const fields = parseMessage(row.entry);
     const derivedFields = getDerivedFields(row, getFieldLinks);
     const fieldsMap = [...derivedFields, ...fields].reduce((acc, field) => {
+      if (!field.links && row.labels[field.key] !== undefined) {
+        // if this field is already in the labels-section,
+        // and the field has no links in it, ignore it.
+        return acc;
+      }
       // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
       // value is in the dataFrame it will be without the quotes. We treat them here as the same value.
       const value = field.value.replace(/(^")|("$)/g, '');
