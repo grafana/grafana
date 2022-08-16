@@ -14,9 +14,7 @@ interface TeamDTO {
   name: string;
 }
 
-export interface Props {}
-
-export const CreateTeam = ({}: Props): JSX.Element => {
+export const CreateTeam = (): JSX.Element => {
   const currentOrgId = contextSrv.user.orgId;
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const [{ roleOptions }, setOrgId] = useRoleOptions(currentOrgId);
