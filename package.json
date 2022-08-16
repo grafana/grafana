@@ -183,7 +183,7 @@
     "cypress": "9.5.1",
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.6.2",
-    "eslint": "8.20.0",
+    "eslint": "8.22.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "26.6.0",
@@ -250,6 +250,7 @@
   "dependencies": {
     "@emotion/css": "11.9.0",
     "@emotion/react": "11.9.3",
+    "@fullstory/browser": "^1.6.1",
     "@grafana/agent-core": "0.4.0",
     "@grafana/agent-web": "0.4.0",
     "@grafana/aws-sdk": "0.0.37",

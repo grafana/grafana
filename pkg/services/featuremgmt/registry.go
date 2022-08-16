@@ -262,5 +262,9 @@ var (
 			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "fullstoryUserTracking",
+			Description: "Enables Fullstory cliend SDK to do user analytics",
+		},
 	}
 )

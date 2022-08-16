@@ -170,11 +170,6 @@ func (m *SQLStoreMock) BatchDisableUsers(ctx context.Context, cmd *models.BatchD
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error {
-	m.LatestUserId = cmd.UserId
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return m.ExpectedError
 }

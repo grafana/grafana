@@ -40,6 +40,14 @@ describe('Render', () => {
       expect(screen.getByText(user.name)).toBeInTheDocument();
     });
   });
+
+  it('should render disabled flag when any of the Users are disabled', () => {
+    const usersData = getMockUsers(5);
+    usersData[0].isDisabled = true;
+    setup({ users: usersData });
+
+    expect(screen.getByText('Disabled')).toBeInTheDocument();
+  });
 });
 
 describe('Remove modal', () => {
