@@ -35,10 +35,12 @@ const QueryLibrarySearchTable = () => {
       query.ds_type = datasourceType;
     }
 
-    // @TODO searchQueryBy
+    if (searchQueryBy) {
+      query.query = searchQueryBy;
+    }
 
     return query;
-  }, [datasourceType]);
+  }, [datasourceType, searchQueryBy]);
 
   const results = useAsync(() => {
     return getGrafanaSearcher().search(searchQuery);
@@ -64,10 +66,11 @@ const QueryLibrarySearchTable = () => {
         <HorizontalGroup>
           <FilterInput
             placeholder="Search queries by name, source, or variable"
-            autoFocus={false}
+            autoFocus={true}
             value={searchQueryBy}
             onChange={setSearchByQuery}
             width={50}
+            className={styles.searchBy}
           />
           Filter by datasource type
           <DatasourceTypePicker
@@ -143,6 +146,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     filtersGroup: css`
       padding-top: 10px;
       margin-top: 30px;
+    `,
+    searchBy: css`
+      margin-right: 15px;
     `,
   };
 };

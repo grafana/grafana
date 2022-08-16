@@ -32,7 +32,7 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
   return (
     <Drawer onClose={onDismiss} width={'40%'} expandable scrollableContent>
       <div>
-        <QueryEditorDrawerHeader title={savedQuery.title} />
+        <QueryEditorDrawerHeader title={savedQuery.title} onDismiss={onDismiss} />
         <QueryEditor queries={savedQuery.queries} />
         <TabsBar>
           {tabs.map((tab, index) => (
