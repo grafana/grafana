@@ -5,7 +5,7 @@ import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_MIN_WIDTH } from './constants';
 
 export interface Props {
   builtInRole?: OrgRole;
@@ -52,7 +52,7 @@ export const RolePicker = ({
     if (!dimensions || !isOpen) {
       return;
     }
-    const { bottom, top, left, right } = dimensions;
+    const { bottom, top, left, right, width: currentRolePickerWidth } = dimensions;
     const distance = window.innerHeight - bottom;
     const offsetVertical = bottom - top + 10; // Add extra 10px to offset to account for border and outline
     const offsetHorizontal = right - left;
@@ -63,7 +63,7 @@ export const RolePicker = ({
       vertical = offsetVertical;
     }
 
-    if (window.innerWidth - right < ROLE_PICKER_WIDTH) {
+    if (window.innerWidth - right < currentRolePickerWidth && currentRolePickerWidth < 520) {
       horizontal = offsetHorizontal;
     }
 
@@ -138,7 +138,15 @@ export const RolePicker = ({
   }
 
   return (
-    <div data-testid="role-picker" style={{ position: 'relative', width: ROLE_PICKER_WIDTH }} ref={ref}>
+    <div
+      data-testid="role-picker"
+      style={{
+        position: 'relative',
+        minWidth: ROLE_PICKER_MIN_WIDTH,
+        // maxWidth: ROLE_PICKER_MAX_WIDTH,
+      }}
+      ref={ref}
+    >
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
           builtInRole={selectedBuiltInRole}

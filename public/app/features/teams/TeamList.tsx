@@ -109,7 +109,9 @@ export class TeamList extends PureComponent<Props, State> {
           )}
         </td>
         {displayRolePicker && (
-          <td>{canSeeTeamRoles && <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} />}</td>
+          <td className="max-width-23">
+            {canSeeTeamRoles && <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} />}
+          </td>
         )}
         <td className="text-right">
           <DeleteButton

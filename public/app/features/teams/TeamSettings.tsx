@@ -24,40 +24,38 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
 
   return (
     <VerticalGroup>
-      <FieldSet label="Team settings">
-        <Form
-          defaultValues={{ ...team }}
-          onSubmit={(formTeam: Team) => {
-            updateTeam(formTeam.name, formTeam.email);
-          }}
-          disabled={!canWriteTeamSettings}
-        >
-          {({ register, errors }) => (
-            <>
-              <Field
-                label="Name"
-                disabled={!canWriteTeamSettings}
-                required
-                invalid={!!errors.name}
-                error="Name is required"
-              >
-                <Input {...register('name', { required: true })} id="name-input" />
-              </Field>
+      <Form
+        defaultValues={{ ...team }}
+        onSubmit={(formTeam: Team) => {
+          updateTeam(formTeam.name, formTeam.email);
+        }}
+        disabled={!canWriteTeamSettings}
+      >
+        {({ register, errors }) => (
+          <FieldSet label="Team settings">
+            <Field
+              label="Name"
+              disabled={!canWriteTeamSettings}
+              required
+              invalid={!!errors.name}
+              error="Name is required"
+            >
+              <Input {...register('name', { required: true })} id="name-input" />
+            </Field>
 
-              <Field
-                label="Email"
-                description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
-                disabled={!canWriteTeamSettings}
-              >
-                <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
-              </Field>
-              <Button type="submit" disabled={!canWriteTeamSettings}>
-                Update
-              </Button>
-            </>
-          )}
-        </Form>
-      </FieldSet>
+            <Field
+              label="Email"
+              description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
+              disabled={!canWriteTeamSettings}
+            >
+              <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
+            </Field>
+            <Button type="submit" disabled={!canWriteTeamSettings}>
+              Update
+            </Button>
+          </FieldSet>
+        )}
+      </Form>
       <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} />
     </VerticalGroup>
   );
