@@ -194,8 +194,4 @@ const (
 	// FlagCustomBranding
 	// Replaces whitelabeling with the new custom branding feature
 	FlagCustomBranding = "customBranding"
-
-	// FlagFullstoryUserTracking
-	// Enables Fullstory cliend SDK to do user analytics
-	FlagFullstoryUserTracking = "fullstoryUserTracking"
 )
