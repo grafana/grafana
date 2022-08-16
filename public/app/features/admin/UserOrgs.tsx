@@ -215,7 +215,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   basicRole={org.role}
                   roleOptions={this.state.roleOptions}
                   onBasicRoleChange={this.onBasicRoleChange}
-                  builtinRolesDisabled={rolePickerDisabled}
+                  basicRoleDisabled={rolePickerDisabled}
                 />
               </div>
               {isExternalUser && <ExternalUserTooltip />}
@@ -385,7 +385,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
               orgId={selectedOrg?.id}
               basicRole={role}
               onBasicRoleChange={this.onOrgRoleChange}
-              builtinRolesDisabled={false}
+              basicRoleDisabled={false}
               roleOptions={roleOptions}
               apply={true}
               onApplyRoles={this.onRoleUpdate}

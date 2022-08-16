@@ -13,8 +13,8 @@ export interface Props {
   roleOptions: Role[];
   isLoading?: boolean;
   disabled?: boolean;
-  builtinRolesDisabled?: boolean;
-  showBuiltInRole?: boolean;
+  basicRoleDisabled?: boolean;
+  showBasicRole?: boolean;
   onRolesChange: (newRoles: Role[]) => void;
   onBasicRoleChange?: (newRole: OrgRole) => void;
   canUpdateRoles?: boolean;
@@ -27,8 +27,8 @@ export const RolePicker = ({
   roleOptions,
   disabled,
   isLoading,
-  builtinRolesDisabled,
-  showBuiltInRole,
+  basicRoleDisabled,
+  showBasicRole,
   onRolesChange,
   onBasicRoleChange,
   canUpdateRoles = true,
@@ -102,7 +102,7 @@ export const RolePicker = ({
     setSelectedRoles(roles);
   };
 
-  const onBuiltInRoleSelect = (role: OrgRole) => {
+  const onBasicRoleSelect = (role: OrgRole) => {
     setSelectedBuiltInRole(role);
   };
 
@@ -140,7 +140,7 @@ export const RolePicker = ({
     <div data-testid="role-picker" style={{ position: 'relative', width: ROLE_PICKER_WIDTH }} ref={ref}>
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
-          builtInRole={selectedBuiltInRole}
+          basicRole={selectedBuiltInRole}
           appliedRoles={selectedRoles}
           query={query}
           onQueryChange={onInputChange}
@@ -148,20 +148,20 @@ export const RolePicker = ({
           onClose={onClose}
           isFocused={isOpen}
           disabled={disabled}
-          showBuiltInRole={showBuiltInRole}
+          showBasicRole={showBasicRole}
         />
         {isOpen && (
           <RolePickerMenu
             options={getOptions()}
-            builtInRole={selectedBuiltInRole}
+            basicRole={selectedBuiltInRole}
             appliedRoles={appliedRoles}
-            onBuiltInRoleSelect={onBuiltInRoleSelect}
+            onBasicRoleSelect={onBasicRoleSelect}
             onSelect={onSelect}
             onUpdate={onUpdate}
             showGroups={query.length === 0 || query.trim() === ''}
-            builtinRolesDisabled={builtinRolesDisabled}
-            showBuiltInRole={showBuiltInRole}
-            updateDisabled={builtinRolesDisabled && !canUpdateRoles}
+            basicRoleDisabled={basicRoleDisabled}
+            showBasicRole={showBasicRole}
+            updateDisabled={basicRoleDisabled && !canUpdateRoles}
             apply={apply}
             offset={offset}
           />

@@ -30,7 +30,7 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
             basicRole={serviceAccount.role}
             onBasicRoleChange={onRoleChange}
             roleOptions={roleOptions}
-            builtinRolesDisabled={!canUpdateRole}
+            basicRoleDisabled={!canUpdateRole}
             disabled={serviceAccount.isDisabled}
           />
         </td>
