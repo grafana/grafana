@@ -7,10 +7,8 @@ const iconsBundleGenerator = require('../../../packages/grafana-ui/scripts/gener
 const workingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'icons-bundle'));
 const tempFile = path.join(workingDir, 'icons-bundle-generated.ts');
 
-console.log(tempFile);
-
 function IconsBundleGenerator() {
-  const iconsBundleFile = iconsBundleGenerator(tempFile);
+  const iconsBundleFile = iconsBundleGenerator({ outputPath: tempFile, verbose: false });
   return new webpack.NormalModuleReplacementPlugin(/iconBundle\.ts/, iconsBundleFile);
 }
 

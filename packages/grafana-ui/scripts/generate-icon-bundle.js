@@ -1,11 +1,12 @@
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
-const cachedListPath = path.join(__dirname, '../src/icons/cached.txt');
-const iconsBundleJsTemplatePath = path.join(__dirname, '../src/components/Icon/iconBundle.ts');
-const iconsBundleTsPath = path.join(__dirname, '../src/components/Icon/iconBundle-generated.ts');
+const cachedListPath = path.join(__dirname, '../src/components/Icon/cached.json');
+const iconsList = require(cachedListPath);
 
-const iconsList = fs.readFileSync(cachedListPath).toString().split('\n');
+const iconsBundleJsTemplatePath = path.join(__dirname, '../src/components/Icon/iconBundle.ts');
+
 const iconsBundleJsTemplate = fs.readFileSync(iconsBundleJsTemplatePath).toString();
 
 const importsStatements = [];
@@ -14,7 +15,7 @@ const cacheStatements = [];
 const grafanaIconsPublicPath = '../../../../../public/img/icons/';
 const packageIconsPath = '../../icons/';
 
-function generateIconBundle(outputPath = iconsBundleTsPath) {
+function generateIconBundle({ outputPath, verbose = false }) {
   const modulePrefix = 'u';
   let moduleNameCount = 1000;
 
@@ -42,19 +43,19 @@ function generateIconBundle(outputPath = iconsBundleTsPath) {
     .replace('//{{imports}}', importsStatements.join('\n'))
     .replace('//{{cacheItems}}', cacheStatements.join('\n'));
 
-  fs.writeFileSync(outputPath, output, (err) => {
-    if (err) {
-      console.error('There was an error writing the iconsBundle file: ', err);
-      return;
-    }
+  fs.writeFileSync(outputPath, output);
+  if (verbose) {
     console.log('The iconsBundle file was successfully written.');
-  });
+    console.log(`The file is located at ${outputPath}`);
+  }
   return outputPath;
 }
 
 // if invoked directly
 if (require.main === module) {
-  generateIconBundle(iconsBundleTsPath);
+  const workingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'icons-bundle'));
+  const tempFile = path.join(workingDir, 'icons-bundle-generated.ts');
+  generateIconBundle({ outputPath: tempFile, verbose: true });
 }
 
 module.exports = generateIconBundle;
