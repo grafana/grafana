@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { DataQuery } from '@grafana/data/src/types/query';
-import { Drawer, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Drawer, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { SavedQuery } from '../api/SavedQueriesApi';
 
@@ -27,13 +29,16 @@ const initialTabs = [
 ];
 
 export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
+  const styles = useStyles2(getStyles);
   const [tabs, setTabs] = useState(initialTabs);
 
   return (
     <Drawer onClose={onDismiss} width={'40%'} expandable scrollableContent>
       <div>
         <QueryEditorDrawerHeader savedQuery={savedQuery} onDismiss={onDismiss} />
-        <QueryEditor queries={savedQuery.queries} />
+        <div className={styles.queryWrapper}>
+          <QueryEditor queries={savedQuery.queries} />
+        </div>
         <TabsBar>
           {tabs.map((tab, index) => (
             <Tab
@@ -51,4 +56,13 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
       </div>
     </Drawer>
   );
+};
+
+export const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    queryWrapper: css`
+      max-height: calc(50vh);
+      overflow-y: scroll;
+    `,
+  };
 };
