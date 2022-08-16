@@ -11,7 +11,6 @@ export interface Props {
   builtInRole?: OrgRole;
   appliedRoles: Role[];
   roleOptions: Role[];
-  builtInRoles?: Record<string, Role[]>;
   isLoading?: boolean;
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
