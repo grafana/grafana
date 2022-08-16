@@ -9,11 +9,15 @@ import { Badge, IconButton, useStyles2 } from '@grafana/ui/src';
 import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
 import { QueryItem } from '../types';
 
+import { QueryEditorDrawer } from './QueryEditorDrawer';
+
 type QueryListItemProps = {
   query: QueryItem;
+  showModal: <T>(component: React.ComponentType<T>, props: T) => void;
+  hideModal: () => void;
 };
 
-export const QueryListItem = ({ query }: QueryListItemProps) => {
+export const QueryListItem = ({ query, showModal, hideModal }: QueryListItemProps) => {
   const styles = useStyles2(getStyles);
   const [dsInfo, setDsInfo] = useState<any>();
 
@@ -39,8 +43,11 @@ export const QueryListItem = ({ query }: QueryListItemProps) => {
     getQueryDsInstance();
   }, [query.ds_uid]);
 
-  const openDrawer = () => {
-    console.log('open drawer');
+  const openDrawer = async () => {
+    const result = await getSavedQuerySrv().getSavedQueryByUids([{ uid: query.uid }]);
+    const savedQuery = result[0];
+
+    showModal(QueryEditorDrawer, { onDismiss: hideModal, savedQuery: savedQuery });
   };
 
   const deleteQuery = async () => {
@@ -87,6 +94,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     row: css`
       height: 70px;
+      cursor: pointer;
     `,
     rowData: css``,
     iconButtons: css`
