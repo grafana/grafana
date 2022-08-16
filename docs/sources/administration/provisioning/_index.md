@@ -519,12 +519,12 @@ apiVersion: 1
 
 # List of templates to import or update
 templates:
-  # <int> optinal: organization id, default = 1
+  # <int> organization id, default = 1
   - orgID: 1
     # <string, required> name of the template, must be unique
     name: my_first_template
     # <string, required> content of the the template
-    template: Alerting with a custome text template
+    template: Alerting with a custom text template
 ```
 
 Deletion
