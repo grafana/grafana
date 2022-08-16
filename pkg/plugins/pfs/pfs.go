@@ -15,21 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/thema"
+	"github.com/grafana/thema/kernel"
 	"github.com/grafana/thema/load"
-	"github.com/grafana/thema/vmux"
 	"github.com/yalue/merged_fs"
 )
-
-// The only import statement we currently allow in any models.cue file
-const schemasPath = "github.com/grafana/grafana/packages/grafana-schema/src/schema"
-
-// CUE import paths, mapped to corresponding TS import paths. An empty value
-// indicates the import path should be dropped in the conversion to TS. Imports
-// not present in the list are not not allowed, and code generation will fail.
-var importMap = map[string]string{
-	"github.com/grafana/thema": "",
-	schemasPath:                "@grafana/schema",
-}
 
 // PermittedCUEImports returns the list of packages that may be imported in a
 // plugin models.cue file.
@@ -55,19 +44,30 @@ var allowedImportsStr string
 const pkgname = "grafanaplugin"
 
 var pm = registry.NewBase().Pluginmeta()
-var tsch thema.TypedSchema[pluginmeta.Model]
-var plugmux vmux.ValueMux[pluginmeta.Model]
 var slots = coremodel.AllSlots()
+
+var plugmux kernel.InputKernel
+
+// TODO re-enable after go1.18
+// var tsch thema.TypedSchema[pluginmeta.Model]
+// var plugmux vmux.ValueMux[pluginmeta.Model]
 
 func init() {
 	var all []string
-	for im := range importMap {
+	for _, im := range PermittedCUEImports() {
 		all = append(all, fmt.Sprintf("\t%s", im))
 	}
 	allowedImportsStr = strings.Join(all, "\n")
 }
 
 var muxonce sync.Once
+
+func loadMux() kernel.InputKernel {
+	muxonce.Do(func() {
+		plugmux = coremodel.Mux(registry.NewBase().Pluginmeta(), coremodel.Filename("plugin.json"))
+	})
+	return plugmux
+}
 
 // This used to be in init(), but that creates a risk for codegen.
 //
@@ -86,18 +86,19 @@ var muxonce sync.Once
 // called as needed to get our muxer, and internally relies on a sync.Once to avoid
 // repeated processing of thema.BindType.
 // TODO mux loading is easily generalizable in pkg/f/coremodel, shouldn't need one-off
-func loadMux() (thema.TypedSchema[pluginmeta.Model], vmux.ValueMux[pluginmeta.Model]) {
-	muxonce.Do(func() {
-		var err error
-		var t pluginmeta.Model
-		tsch, err = thema.BindType[pluginmeta.Model](pm.CurrentSchema(), t)
-		if err != nil {
-			panic(err)
-		}
-		plugmux = vmux.NewValueMux(tsch, vmux.NewJSONEndec("plugin.json"))
-	})
-	return tsch, plugmux
-}
+// TODO switch to this generic signature after go1.18
+// func loadMux() (thema.TypedSchema[pluginmeta.Model], vmux.ValueMux[pluginmeta.Model]) {
+// 	muxonce.Do(func() {
+// 		var err error
+// 		var t pluginmeta.Model
+// 		tsch, err = thema.BindType[pluginmeta.Model](pm.CurrentSchema(), t)
+// 		if err != nil {
+// 			panic(err)
+// 		}
+// 		plugmux = vmux.NewValueMux(tsch, vmux.NewJSONEndec("plugin.json"))
+// 	})
+// 	return tsch, plugmux
+// }
 
 // Tree represents the contents of a plugin filesystem tree.
 type Tree struct {
@@ -156,7 +157,8 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	if f == nil {
 		return nil, ErrEmptyFS
 	}
-	_, mux := loadMux()
+	// _, mux := loadMux()
+	mux := loadMux()
 	ctx := lib.Context()
 
 	b, err := fs.ReadFile(f, "plugin.json")
@@ -177,11 +179,12 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 
 	// Pass the raw bytes into the muxer, get the populated Model type out that we want.
 	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the pluginmeta lineage)
-	r.meta, _, err = mux(b)
+	metaany, _, err := mux.Converge(b)
 	if err != nil {
 		// TODO more nuanced error handling by class of Thema failure
 		return nil, fmt.Errorf("plugin.json was invalid: %w", err)
 	}
+	r.meta = metaany.(pluginmeta.Model)
 
 	if modbyt, err := fs.ReadFile(f, "models.cue"); err == nil {
 		// TODO introduce layered CUE dependency-injecting loader
@@ -198,7 +201,8 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 
 		// Note that this actually will load any .cue files in the fs.FS root dir in the pkgname.
 		// That's...maybe good? But not what it says on the tin
-		bi, err := load.InstancesWithThema(mfs, "", load.Package(pkgname))
+		// bi, err := load.InstancesWithThema(mfs, "", load.Package(pkgname))
+		bi, err := load.InstancesWithThema(mfs, "")
 		if err != nil {
 			return nil, fmt.Errorf("loading models.cue failed: %w", err)
 		}
