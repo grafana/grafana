@@ -578,10 +578,10 @@ func (i *searchIndex) applyEvent(ctx context.Context, orgID int64, kind store.En
 			if err := i.removeQuery(ctx, index, uid); err != nil {
 				return err
 			}
-		}
-
-		if err := i.updateQuery(ctx, index, uid, queries[0]); err != nil {
-			return err
+		} else {
+			if err := i.updateQuery(ctx, index, uid, queries[0]); err != nil {
+				return err
+			}
 		}
 
 		return nil
