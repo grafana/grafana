@@ -13,7 +13,6 @@ const importsStatements = [];
 const cacheStatements = [];
 
 const grafanaIconsPublicPath = '../../../../../public/img/icons/';
-const packageIconsPath = '../../icons/';
 
 function generateIconBundle({ outputPath, verbose = false }) {
   const modulePrefix = 'u';
@@ -25,17 +24,9 @@ function generateIconBundle({ outputPath, verbose = false }) {
       continue;
     }
 
-    const mainPath = iconEntry.split('/')[0];
-
-    // unicons are part of the grafana/ui pacakge
-    if (mainPath === 'unicons') {
-      importsStatements.push(`import ${modulePrefix}${moduleNameCount} from '${packageIconsPath}${iconEntry}.svg';`);
-    } else {
-      // other icons are part of the main grafana package
-      importsStatements.push(
-        `import ${modulePrefix}${moduleNameCount} from '${grafanaIconsPublicPath}${iconEntry}.svg';`
-      );
-    }
+    importsStatements.push(
+      `import ${modulePrefix}${moduleNameCount} from '${grafanaIconsPublicPath}${iconEntry}.svg';`
+    );
     cacheStatements.push(`  cacheItem(${modulePrefix}${moduleNameCount}, '${iconEntry}.svg');`);
     moduleNameCount++;
   }
