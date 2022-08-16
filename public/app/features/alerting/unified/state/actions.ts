@@ -25,7 +25,12 @@ import {
   RuleWithLocation,
   StateHistoryItem,
 } from 'app/types/unified-alerting';
-import { PromApplication, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  PostableRulerRuleGroupDTO,
+  PromApplication,
+  RulerRuleDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import {
@@ -740,6 +745,48 @@ export const updateLotexNamespaceAndGroupAction = createAsyncThunk(
           }
 
           // refetch all rules
+          await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
+        })()
+      ),
+      {
+        errorMessage: 'Failed to update namespace / group',
+        successMessage: 'Update successful',
+      }
+    );
+  }
+);
+
+interface UpdateRulesOrderOptions {
+  rulesSourceName: string;
+  namespaceName: string;
+  groupName: string;
+  newRules: RulerRuleDTO[];
+}
+
+export const updateRulesOrder = createAsyncThunk(
+  'unifiedalerting/updateRulesOrderForGroup',
+  async (options: UpdateRulesOrderOptions, thunkAPI): Promise<void> => {
+    return withAppEvents(
+      withSerializedError(
+        (async () => {
+          const { rulesSourceName, namespaceName, groupName, newRules } = options;
+
+          const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
+          const rulesResult = await fetchRulerRules(rulerConfig);
+
+          const existingGroup = rulesResult[namespaceName].find((group) => group.name === groupName);
+          if (!existingGroup) {
+            throw new Error(`Group "${groupName}" not found.`);
+          }
+
+          const payload: PostableRulerRuleGroupDTO = {
+            name: existingGroup.name,
+            interval: existingGroup.interval,
+            rules: newRules,
+          };
+
+          await setRulerRuleGroup(rulerConfig, namespaceName, payload);
+
           await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
         })()
       ),

@@ -11,6 +11,7 @@ type FakeUserService struct {
 	ExpectedSignedInUser     *user.SignedInUser
 	ExpectedError            error
 	ExpectedSetUsingOrgError error
+	ExpectedSearchUsers      user.SearchUserQueryResult
 }
 
 func NewUserServiceFake() *FakeUserService {
@@ -62,7 +63,7 @@ func (f *FakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSi
 }
 
 func (f *FakeUserService) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
-	return &user.SearchUserQueryResult{}, f.ExpectedError
+	return &f.ExpectedSearchUsers, f.ExpectedError
 }
 
 func (f *FakeUserService) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {

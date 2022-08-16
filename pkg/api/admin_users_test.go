@@ -90,9 +90,10 @@ func TestAdminAPIEndpoint(t *testing.T) {
 	t.Run("When a server admin attempts to enable/disable a nonexistent user", func(t *testing.T) {
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "enable",
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
-				store := sc.sqlStore.(*mockstore.SQLStoreMock)
+				userService := sc.userService.(*usertest.FakeUserService)
 				sc.authInfoService.ExpectedError = user.ErrUserNotFound
-				store.ExpectedError = user.ErrUserNotFound
+
+				userService.ExpectedError = user.ErrUserNotFound
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
@@ -101,15 +102,13 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
-
-				assert.Equal(t, int64(42), store.LatestUserId)
 			})
 
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "disable",
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
-				store := sc.sqlStore.(*mockstore.SQLStoreMock)
+				userService := sc.userService.(*usertest.FakeUserService)
 				sc.authInfoService.ExpectedError = user.ErrUserNotFound
-				store.ExpectedError = user.ErrUserNotFound
+				userService.ExpectedError = user.ErrUserNotFound
 
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
@@ -118,8 +117,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
-
-				assert.Equal(t, int64(42), store.LatestUserId)
 			})
 	})
 
@@ -353,11 +350,13 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 			SQLStore:         mockstore.NewSQLStoreMock(),
 			AuthTokenService: fakeAuthTokenService,
 			authInfoService:  authInfoService,
+			userService:      usertest.NewUserServiceFake(),
 		}
 
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
 		sc.authInfoService = authInfoService
+		sc.userService = hs.userService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID
