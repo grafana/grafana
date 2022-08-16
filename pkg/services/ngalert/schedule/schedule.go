@@ -9,7 +9,6 @@ import (
 	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -17,6 +16,8 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/benbjohnson/clock"
@@ -468,10 +469,10 @@ func (sch *schedule) getRuleExtraLabels(ctx context.Context, alertRule *ngmodels
 	extraLabels[prometheusModel.AlertNameLabel] = alertRule.Title
 	extraLabels[ngmodels.RuleUIDLabel] = alertRule.UID
 
-	user := &models.SignedInUser{
-		UserId:  0,
-		OrgRole: models.ROLE_ADMIN,
-		OrgId:   alertRule.OrgID,
+	user := &user.SignedInUser{
+		UserID:  0,
+		OrgRole: org.RoleAdmin,
+		OrgID:   alertRule.OrgID,
 	}
 
 	if !sch.disableGrafanaFolder {

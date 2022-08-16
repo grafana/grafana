@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -109,7 +110,7 @@ func RequestWithWebContext(req *http.Request, c *models.ReqContext) *http.Reques
 	return req
 }
 
-func RequestWithSignedInUser(req *http.Request, user *models.SignedInUser) *http.Request {
+func RequestWithSignedInUser(req *http.Request, user *user.SignedInUser) *http.Request {
 	return RequestWithWebContext(req, &models.ReqContext{
 		SignedInUser: user,
 		IsSignedIn:   true,

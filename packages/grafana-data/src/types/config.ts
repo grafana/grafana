@@ -176,6 +176,7 @@ export interface GrafanaConfig {
   profileEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
+  azureAuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
@@ -210,6 +211,7 @@ export interface GrafanaConfig {
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
   googleAnalyticsId: string | undefined;
+  fullstoryOrgId: string | undefined;
   rudderstackWriteKey: string | undefined;
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;

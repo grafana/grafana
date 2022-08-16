@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -88,8 +88,8 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	traceID := tracing.TraceIDFromContext(proxy.ctx.Req.Context(), false)
 	proxyErrorLogger := logger.New(
-		"userId", proxy.ctx.UserId,
-		"orgId", proxy.ctx.OrgId,
+		"userId", proxy.ctx.UserID,
+		"orgId", proxy.ctx.OrgID,
 		"uname", proxy.ctx.Login,
 		"path", proxy.ctx.Req.URL.Path,
 		"remote_addr", proxy.ctx.RemoteAddr(),
@@ -106,7 +106,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	modifyResponse := func(resp *http.Response) error {
 		if resp.StatusCode == 401 {
 			// The data source rejected the request as unauthorized, convert to 400 (bad request)
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return fmt.Errorf("failed to read data source response body: %w", err)
 			}
@@ -118,7 +118,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 			*resp = http.Response{
 				StatusCode:    400,
 				Status:        "Bad Request",
-				Body:          ioutil.NopCloser(strings.NewReader(msg)),
+				Body:          io.NopCloser(strings.NewReader(msg)),
 				ContentLength: int64(len(msg)),
 				Header:        http.Header{},
 			}
@@ -142,7 +142,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetAttributes("datasource_name", proxy.ds.Name, attribute.Key("datasource_name").String(proxy.ds.Name))
 	span.SetAttributes("datasource_type", proxy.ds.Type, attribute.Key("datasource_type").String(proxy.ds.Type))
 	span.SetAttributes("user", proxy.ctx.SignedInUser.Login, attribute.Key("user").String(proxy.ctx.SignedInUser.Login))
-	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgId, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgId))
+	span.SetAttributes("org_id", proxy.ctx.SignedInUser.OrgID, attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID))
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
 	proxy.addTraceFromHeaderValue(span, "X-Dashboard-Id", "dashboard_id")
@@ -324,16 +324,16 @@ func (proxy *DataSourceProxy) logRequest() {
 
 	var body string
 	if proxy.ctx.Req.Body != nil {
-		buffer, err := ioutil.ReadAll(proxy.ctx.Req.Body)
+		buffer, err := io.ReadAll(proxy.ctx.Req.Body)
 		if err == nil {
-			proxy.ctx.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			proxy.ctx.Req.Body = io.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
 	}
 
 	logger.Info("Proxying incoming request",
-		"userid", proxy.ctx.UserId,
-		"orgid", proxy.ctx.OrgId,
+		"userid", proxy.ctx.UserID,
+		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
 		"uri", proxy.ctx.Req.RequestURI,

@@ -3,9 +3,9 @@ package serviceaccounts
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 var (
@@ -31,16 +31,16 @@ type CreateServiceAccountForm struct {
 	// example: grafana
 	Name string `json:"name" binding:"Required"`
 	// example: Admin
-	Role *models.RoleType `json:"role"`
+	Role *org.RoleType `json:"role"`
 	// example: false
 	IsDisabled *bool `json:"isDisabled"`
 }
 
 // swagger:model
 type UpdateServiceAccountForm struct {
-	Name       *string          `json:"name"`
-	Role       *models.RoleType `json:"role"`
-	IsDisabled *bool            `json:"isDisabled"`
+	Name       *string       `json:"name"`
+	Role       *org.RoleType `json:"role"`
+	IsDisabled *bool         `json:"isDisabled"`
 }
 
 // swagger: model

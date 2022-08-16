@@ -9,8 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // AlertStore is a subset of SQLStore API to satisfy the needs of the alerting service.
@@ -34,15 +36,17 @@ type sqlStore struct {
 	db    db.DB
 	cache *localcache.CacheService
 	log   *log.ConcreteLogger
+	cfg   *setting.Cfg
 }
 
 func ProvideAlertStore(
 	db db.DB,
-	cacheService *localcache.CacheService) AlertStore {
+	cacheService *localcache.CacheService, cfg *setting.Cfg) AlertStore {
 	return &sqlStore{
 		db:    db,
 		cache: cacheService,
 		log:   log.New("alerting.store"),
+		cfg:   cfg,
 	}
 }
 
@@ -99,7 +103,7 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *sqlstore.DBSess
 
 func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		builder := sqlstore.SQLBuilder{}
+		builder := sqlstore.NewSqlBuilder(ss.cfg)
 
 		builder.Write(`SELECT
 		alert.id,
@@ -151,7 +155,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 			builder.Write(")")
 		}
 
-		if query.User.OrgRole != models.ROLE_ADMIN {
+		if query.User.OrgRole != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
 		}
 

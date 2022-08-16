@@ -3,7 +3,6 @@ package values
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -311,7 +310,7 @@ func TestValues_readFile(t *testing.T) {
 		Val StringValue `yaml:"val"`
 	}
 
-	f, err := ioutil.TempFile(os.TempDir(), "file expansion *")
+	f, err := os.CreateTemp(os.TempDir(), "file expansion *")
 	require.NoError(t, err)
 	file := f.Name()
 

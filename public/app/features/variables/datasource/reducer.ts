@@ -29,7 +29,11 @@ export const dataSourceVariableSlice = createSlice({
     ) => {
       const { sources, regex } = action.payload.data;
       const options: VariableOption[] = [];
-      const instanceState = getInstanceState<DataSourceVariableModel>(state, action.payload.id);
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (instanceState.type !== 'datasource') {
+        return;
+      }
+
       for (let i = 0; i < sources.length; i++) {
         const source = sources[i];
         // must match on type

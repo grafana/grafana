@@ -69,11 +69,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheus_azure_auth",
-			Description: "Experimental. Azure authentication for Prometheus datasource",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
@@ -266,6 +261,10 @@ var (
 			Name:        "customBranding",
 			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "fullstoryUserTracking",
+			Description: "Enables Fullstory cliend SDK to do user analytics",
 		},
 	}
 )

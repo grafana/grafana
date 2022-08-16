@@ -115,6 +115,7 @@ var (
 
 	// HTTP auth
 	SigV4AuthEnabled bool
+	AzureAuthEnabled bool
 
 	AnonymousEnabled bool
 
@@ -136,6 +137,7 @@ var (
 	// analytics
 	GoogleAnalyticsId       string
 	GoogleTagManagerId      string
+	FullstoryOrgId          string
 	RudderstackDataPlaneUrl string
 	RudderstackWriteKey     string
 	RudderstackSdkUrl       string
@@ -287,6 +289,7 @@ type Cfg struct {
 	TokenRotationIntervalMinutes int
 	SigV4AuthEnabled             bool
 	SigV4VerboseLogging          bool
+	AzureAuthEnabled             bool
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
@@ -838,9 +841,10 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Logger: log.New("settings"),
-		Raw:    ini.Empty(),
-		Azure:  &azsettings.AzureSettings{},
+		Logger:      log.New("settings"),
+		Raw:         ini.Empty(),
+		Azure:       &azsettings.AzureSettings{},
+		RBACEnabled: true,
 	}
 }
 
@@ -950,6 +954,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
+	FullstoryOrgId = analytics.Key("fullstory_org_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
@@ -1289,6 +1294,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
 	cfg.SigV4VerboseLogging = auth.Key("sigv4_verbose_logging").MustBool(false)
+
+	// Azure Auth
+	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
+	cfg.AzureAuthEnabled = AzureAuthEnabled
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)

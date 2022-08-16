@@ -11,6 +11,7 @@ Here you can find detailed release notes that list everything that is included i
 about deprecations, breaking changes as well as changes that relate to plugin development.
 
 - [Release notes for 9.1.0-beta1]({{< relref "release-notes-9-1-0-beta1" >}})
+- [Release notes for 9.0.7]({{< relref "release-notes-9-0-7" >}})
 - [Release notes for 9.0.6]({{< relref "release-notes-9-0-6" >}})
 - [Release notes for 9.0.5]({{< relref "release-notes-9-0-5" >}})
 - [Release notes for 9.0.4]({{< relref "release-notes-9-0-4" >}})
