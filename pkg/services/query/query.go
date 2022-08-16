@@ -127,6 +127,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		return nil, fmt.Errorf("failed to convert data source to instance settings: %w", err)
 	}
 
+	h := models.LogzIoHeaders{} // LOGZ.IO CHANGE :: DEV-33325 Open expressions for Grafana 8.5.1
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			OrgID:                      ds.OrgId,
@@ -134,7 +135,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 			User:                       adapters.BackendUserFromSignedInUser(user),
 			DataSourceInstanceSettings: instanceSettings,
 		},
-		Headers: map[string]string{},
+		Headers: h.GetDatasourceQueryHeader(ctx.Value(models.LogzioHeadersCtxKey).(http.Header)), // LOGZ.IO CHANGE :: DEV-33325 Open expressions for Grafana 8.5.1
 		Queries: []backend.DataQuery{},
 	}
 
