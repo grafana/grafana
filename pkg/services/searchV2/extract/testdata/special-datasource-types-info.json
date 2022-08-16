@@ -30,17 +30,20 @@
           "uid": "dgd92lq7k",
           "type": "frser-sqlite-datasource"
         }
-      ]
+      ],
+      "query": "117ce8c9e76a"
     },
     {
       "id": 8,
       "title": "Row title",
-      "type": "row"
+      "type": "row",
+      "query": "e3b0c44298fc"
     },
     {
       "id": 4,
       "title": "dashboard ds",
-      "type": "timeseries"
+      "type": "timeseries",
+      "query": "ff1d2b15c7f2"
     },
     {
       "id": 6,
@@ -51,7 +54,8 @@
           "uid": "grafana",
           "type": "datasource"
         }
-      ]
+      ],
+      "query": "ff1d2b15c7f2"
     },
     {
       "id": 2,
@@ -66,7 +70,8 @@
           "uid": "PD8C576611E62080A",
           "type": "testdata"
         }
-      ]
+      ],
+      "query": "def03646fff8"
     }
   ],
   "schemaVersion": 36,

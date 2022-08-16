@@ -13,6 +13,10 @@ type PanelInfo struct {
 	Datasource    []dslookup.DataSourceRef `json:"datasource,omitempty"`  // UIDs
 	Transformer   []string                 `json:"transformer,omitempty"` // ids of the transformation steps
 
+	// Hash of all query targets + transformations (removing the datasource UID)
+	// The value itself is not meaningful, but duplicate values will indicate two panels share the same query
+	DataHash string `json:"query,omitempty"`
+
 	// Rows define panels as sub objects
 	Collapsed []PanelInfo `json:"collapsed,omitempty"`
 }

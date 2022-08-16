@@ -30,6 +30,7 @@ const (
 	documentFieldTransformer = "transformer"
 	documentFieldDSUID       = "ds_uid"
 	documentFieldDSType      = "ds_type"
+	documentFieldQueryHash   = "query_hash"
 	DocumentFieldCreatedAt   = "created_at"
 	DocumentFieldUpdatedAt   = "updated_at"
 )
@@ -198,6 +199,11 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 			AddField(bluge.NewKeywordField(documentFieldPanelType, panel.Type).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
+
+		// Supports finding commonly used queries across instance
+		if panel.DataHash != "" {
+			doc.AddField(bluge.NewKeywordField(documentFieldQueryHash, panel.DataHash).Aggregatable())
+		}
 
 		for _, xform := range panel.Transformer {
 			doc.AddField(bluge.NewKeywordField(documentFieldTransformer, xform).Aggregatable())

@@ -19,7 +19,8 @@
           "uid": "grafana",
           "type": "datasource"
         }
-      ]
+      ],
+      "query": "ff1d2b15c7f2"
     }
   ],
   "schemaVersion": 27,

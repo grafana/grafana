@@ -29,12 +29,14 @@
           "uid": "sqlite-1",
           "type": "sqlite-datasource"
         }
-      ]
+      ],
+      "query": "660935743547"
     },
     {
       "id": 3,
       "title": "Row title",
-      "type": "row"
+      "type": "row",
+      "query": "e3b0c44298fc"
     },
     {
       "id": 1,
@@ -50,7 +52,8 @@
           "uid": "sqlite-1",
           "type": "sqlite-datasource"
         }
-      ]
+      ],
+      "query": "660935743547"
     }
   ],
   "schemaVersion": 36,

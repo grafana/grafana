@@ -7,8 +7,8 @@
   ],
   "datasource": [
     {
-      "uid": "default.uid",
-      "type": "default.type"
+      "uid": "${sqllite}",
+      "type": "sqlite-datasource"
     }
   ],
   "panels": [
@@ -19,10 +19,11 @@
       "pluginVersion": "9.1.0-pre",
       "datasource": [
         {
-          "uid": "default.uid",
-          "type": "default.type"
+          "uid": "${sqllite}",
+          "type": "sqlite-datasource"
         }
-      ]
+      ],
+      "query": "660935743547"
     }
   ],
   "schemaVersion": 36,

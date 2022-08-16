@@ -71,6 +71,7 @@ func TestReadDashboard(t *testing.T) {
 		"mixed-datasource-with-variable",
 		"special-datasource-types",
 		"panels-without-datasources",
+		"query-hash-exercise",
 	}
 
 	devdash := "../../../../devenv/dev-dashboards/"

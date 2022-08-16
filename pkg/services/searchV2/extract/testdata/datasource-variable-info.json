@@ -22,7 +22,8 @@
           "uid": "sqlite-1",
           "type": "sqlite-datasource"
         }
-      ]
+      ],
+      "query": "660935743547"
     }
   ],
   "schemaVersion": 36,

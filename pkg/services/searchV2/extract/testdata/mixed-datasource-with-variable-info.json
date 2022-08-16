@@ -38,7 +38,8 @@
           "uid": "P8045C56BDA891CB2",
           "type": "cloudwatch"
         }
-      ]
+      ],
+      "query": "156c88df0edf"
     }
   ],
   "schemaVersion": 36,

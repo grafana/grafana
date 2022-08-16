@@ -20,30 +20,35 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ]
+      ],
+      "query": "e3b0c44298fc"
     },
     {
       "id": 4,
       "title": "Last non-null",
       "type": "gauge",
-      "pluginVersion": "6.4.0-pre"
+      "pluginVersion": "6.4.0-pre",
+      "query": "e3b0c44298fc"
     },
     {
       "id": 6,
       "title": "min",
       "type": "gauge",
-      "pluginVersion": "6.4.0-pre"
+      "pluginVersion": "6.4.0-pre",
+      "query": "e3b0c44298fc"
     },
     {
       "id": 5,
       "title": "Max",
       "type": "bargauge",
-      "pluginVersion": "6.4.0-pre"
+      "pluginVersion": "6.4.0-pre",
+      "query": "e3b0c44298fc"
     },
     {
       "id": 8,
       "title": "Panel Title",
-      "type": "table"
+      "type": "table",
+      "query": "e3b0c44298fc"
     }
   ],
   "schemaVersion": 19,

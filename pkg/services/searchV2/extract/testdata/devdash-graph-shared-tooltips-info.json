@@ -22,7 +22,8 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ]
+      ],
+      "query": "6ff268e14480"
     },
     {
       "id": 13,
@@ -38,7 +39,8 @@
       "transformer": [
         "seriesToColumns",
         "organize"
-      ]
+      ],
+      "query": "c5caf8859ddd"
     },
     {
       "id": 2,
@@ -50,7 +52,8 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ]
+      ],
+      "query": "e3b0c44298fc"
     },
     {
       "id": 5,
@@ -62,7 +65,8 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ]
+      ],
+      "query": "c5caf8859ddd"
     },
     {
       "id": 9,
@@ -74,7 +78,8 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ]
+      ],
+      "query": "c5caf8859ddd"
     },
     {
       "id": 11,
@@ -86,7 +91,8 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ]
+      ],
+      "query": "c5caf8859ddd"
     },
     {
       "id": 8,
@@ -98,7 +104,8 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ]
+      ],
+      "query": "c5caf8859ddd"
     },
     {
       "id": 10,
@@ -110,7 +117,8 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ]
+      ],
+      "query": "e3b0c44298fc"
     }
   ],
   "schemaVersion": 28,

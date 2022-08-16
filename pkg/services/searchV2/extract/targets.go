@@ -1,93 +1,175 @@
 package extract
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 )
 
-type targetInfo struct {
+type queryInfo struct {
 	lookup dslookup.DatasourceLookup
-	uids   map[string]*dslookup.DataSourceRef
+
+	// panel level ref
+	ds *dslookup.DataSourceRef
+
+	// each query
+	targets []map[string]interface{}
+
+	// transforms
+	transforms []map[string]interface{}
 }
 
-func newTargetInfo(lookup dslookup.DatasourceLookup) targetInfo {
-	return targetInfo{
+type panelQueryInfo struct {
+	ds           []dslookup.DataSourceRef
+	transformers []string
+	hash         string
+}
+
+func newQueryInfo(lookup dslookup.DatasourceLookup) queryInfo {
+	return queryInfo{
 		lookup: lookup,
-		uids:   make(map[string]*dslookup.DataSourceRef),
 	}
 }
 
-func (s *targetInfo) GetDatasourceInfo() []dslookup.DataSourceRef {
-	keys := make([]dslookup.DataSourceRef, len(s.uids))
-	i := 0
-	for _, v := range s.uids {
-		keys[i] = *v
-		i++
+func (s *queryInfo) GetDatasourceInfo() panelQueryInfo {
+	info := panelQueryInfo{}
+	sha256 := sha256.New()
+	byUID := make(map[string]*dslookup.DataSourceRef)
+	var ds *dslookup.DataSourceRef
+
+	// add target info
+	for _, t := range s.targets {
+		v, ok := t["datasource"]
+		if ok {
+			ds = getDS(v, s.lookup)
+		} else {
+			ds = s.ds
+		}
+
+		// distinct UIDs
+		if ds != nil {
+			if ds.UID != "" {
+				byUID[ds.UID] = ds
+			}
+			if ds.Type != "" {
+				sha256.Write([]byte(ds.Type))
+			}
+		}
+
+		delete(t, "datasource")
+		b, err := json.Marshal(t) // sorts the keys?
+		if err != nil {
+			sha256.Write(b)
+		}
 	}
-	return keys
+
+	info.ds = make([]dslookup.DataSourceRef, 0, len(byUID))
+	for _, v := range byUID {
+		info.ds = append(info.ds, *v)
+	}
+
+	// adds the transformer info
+	for _, t := range s.transforms {
+		id, ok := t["id"]
+		if ok {
+			v, ok := id.(string)
+			if ok {
+				info.transformers = append(info.transformers, v)
+			}
+		}
+
+		b, err := json.Marshal(t) // sorts the keys?
+		if err != nil {
+			sha256.Write(b)
+		}
+	}
+
+	info.hash = hex.EncodeToString(sha256.Sum(nil)[:6]) // first few characters
+	return info
 }
 
 // the node will either be string (name|uid) OR ref
-func (s *targetInfo) addDatasource(iter *jsoniter.Iterator) {
-	switch iter.WhatIsNext() {
-	case jsoniter.StringValue:
-		key := iter.ReadString()
+func (s *queryInfo) setDatasource(val interface{}) {
+	s.ds = getDS(val, s.lookup)
+}
 
-		dsRef := &dslookup.DataSourceRef{UID: key}
-		if !isVariableRef(dsRef.UID) && !isSpecialDatasource(dsRef.UID) {
-			ds := s.lookup.ByRef(dsRef)
-			s.addRef(ds)
-		} else {
-			s.addRef(dsRef)
-		}
+func getDS(val interface{}, lookup dslookup.DatasourceLookup) *dslookup.DataSourceRef {
+	if val == nil {
+		return lookup.ByRef(nil)
+	}
 
-	case jsoniter.NilValue:
-		s.addRef(s.lookup.ByRef(nil))
-		iter.Skip()
+	dsRef := &dslookup.DataSourceRef{}
 
-	case jsoniter.ObjectValue:
-		ref := &dslookup.DataSourceRef{}
-		iter.ReadVal(ref)
+	switch v := val.(type) {
+	case string:
+		dsRef.UID = v
 
-		if !isVariableRef(ref.UID) && !isSpecialDatasource(ref.UID) {
-			s.addRef(s.lookup.ByRef(ref))
-		} else {
-			s.addRef(ref)
-		}
+	case map[string]interface{}:
+		dsRef.UID, _ = v["uid"].(string)
+		dsRef.Type, _ = v["type"].(string)
 
 	default:
-		v := iter.Read()
-		logf("[Panel.datasource.unknown] %v\n", v)
+		logf("[Panel.datasource.unknown.type] %T/%v\n", val, val)
+		return nil
 	}
-}
 
-func (s *targetInfo) addRef(ref *dslookup.DataSourceRef) {
-	if ref != nil && ref.UID != "" {
-		s.uids[ref.UID] = ref
-	}
-}
-
-func (s *targetInfo) addTarget(iter *jsoniter.Iterator) {
-	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
-		switch l1Field {
-		case "datasource":
-			s.addDatasource(iter)
-
-		case "refId":
-			iter.Skip()
-
-		default:
-			v := iter.Read()
-			logf("[Panel.TARGET] %s=%v\n", l1Field, v)
+	if !isVariableRef(dsRef.UID) && !isSpecialDatasource(dsRef.UID) {
+		ds := lookup.ByRef(dsRef)
+		if ds != nil {
+			return ds
 		}
 	}
+
+	return dsRef
 }
 
-func (s *targetInfo) addPanel(panel PanelInfo) {
-	for idx, v := range panel.Datasource {
-		if v.UID != "" {
-			s.uids[v.UID] = &panel.Datasource[idx]
+func (s *queryInfo) addTarget(iter *jsoniter.Iterator) {
+	v := iter.Read()
+	if v == nil {
+		return // ignore
+	}
+
+	m, ok := v.(map[string]interface{})
+	if !ok {
+		iter.ReportError("read", "error reading target")
+		return
+	}
+
+	s.targets = append(s.targets, m)
+}
+
+func (s *queryInfo) addTransformer(iter *jsoniter.Iterator) {
+	v := iter.Read()
+	if v == nil {
+		return // ignore
+	}
+
+	m, ok := v.(map[string]interface{})
+	if !ok {
+		iter.ReportError("read", "error reading transform")
+		return
+	}
+
+	s.transforms = append(s.transforms, m)
+}
+
+func getDistinctDatasources(dash *DashboardInfo) []dslookup.DataSourceRef {
+	byUID := make(map[string]dslookup.DataSourceRef)
+	for _, panel := range dash.Panels {
+		for idx, v := range panel.Datasource {
+			if v.UID != "" {
+				byUID[v.UID] = panel.Datasource[idx]
+			}
 		}
 	}
+
+	res := make([]dslookup.DataSourceRef, 0, len(byUID))
+	for _, v := range byUID {
+		res = append(res, v)
+	}
+	return res
 }

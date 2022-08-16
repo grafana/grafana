@@ -1,6 +1,7 @@
 package extract
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 	"strings"
@@ -11,7 +12,7 @@ import (
 )
 
 func logf(format string, a ...interface{}) {
-	//fmt.Printf(format, a...)
+	fmt.Printf(format, a...)
 }
 
 type templateVariable struct {
@@ -198,7 +199,7 @@ func ReadDashboard(stream io.Reader, lookup dslookup.DatasourceLookup) (*Dashboa
 		case "rows":
 			for iter.ReadArray() {
 				v := iter.Read()
-				logf("[DASHBOARD.ROW???] id=%s // %v\n", dash.ID, v)
+				logf("[DASHBOARD.ROW???] id=%s // %v\n", dash.UID, v)
 			}
 
 		case "annotations":
@@ -269,11 +270,7 @@ func ReadDashboard(stream io.Reader, lookup dslookup.DatasourceLookup) (*Dashboa
 	fillDefaultDatasources(dash, lookup)
 	filterOutSpecialDatasources(dash)
 
-	targets := newTargetInfo(lookup)
-	for _, panel := range dash.Panels {
-		targets.addPanel(panel)
-	}
-	dash.Datasource = targets.GetDatasourceInfo()
+	dash.Datasource = getDistinctDatasources(dash)
 
 	return dash, iter.Error
 }
@@ -358,7 +355,12 @@ func findDatasourceRefsForVariables(dsVariableRefs []dslookup.DataSourceRef, dat
 	for _, dsVariableRef := range dsVariableRefs {
 		variableName := getDataSourceVariableName(dsVariableRef)
 		refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
-		referencedDs = append(referencedDs, refs...)
+		if len(refs) > 0 {
+			referencedDs = append(referencedDs, refs...)
+		} else {
+			// Unknown datasource!
+			referencedDs = append(referencedDs, dsVariableRef)
+		}
 	}
 	return referencedDs
 }
@@ -367,13 +369,12 @@ func findDatasourceRefsForVariables(dsVariableRefs []dslookup.DataSourceRef, dat
 func readPanelInfo(iter *jsoniter.Iterator, lookup dslookup.DatasourceLookup) PanelInfo {
 	panel := PanelInfo{}
 
-	targets := newTargetInfo(lookup)
+	query := newQueryInfo(lookup)
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		if iter.WhatIsNext() == jsoniter.NilValue {
 			if l1Field == "datasource" {
-				targets.addDatasource(iter)
-				continue
+				query.setDatasource(nil)
 			}
 
 			// Skip null values so we don't need special int handling
@@ -398,17 +399,17 @@ func readPanelInfo(iter *jsoniter.Iterator, lookup dslookup.DatasourceLookup) Pa
 			panel.PluginVersion = iter.ReadString() // since 7x (the saved version for the plugin model)
 
 		case "datasource":
-			targets.addDatasource(iter)
+			query.setDatasource(iter.Read())
 
 		case "targets":
 			switch iter.WhatIsNext() {
 			case jsoniter.ArrayValue:
 				for iter.ReadArray() {
-					targets.addTarget(iter)
+					query.addTarget(iter)
 				}
 			case jsoniter.ObjectValue:
 				for f := iter.ReadObject(); f != ""; f = iter.ReadObject() {
-					targets.addTarget(iter)
+					query.addTarget(iter)
 				}
 			default:
 				iter.Skip()
@@ -416,13 +417,7 @@ func readPanelInfo(iter *jsoniter.Iterator, lookup dslookup.DatasourceLookup) Pa
 
 		case "transformations":
 			for iter.ReadArray() {
-				for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
-					if sub == "id" {
-						panel.Transformer = append(panel.Transformer, iter.ReadString())
-					} else {
-						iter.Skip()
-					}
-				}
+				query.addTransformer(iter)
 			}
 
 		// Rows have nested panels
@@ -446,7 +441,10 @@ func readPanelInfo(iter *jsoniter.Iterator, lookup dslookup.DatasourceLookup) Pa
 		}
 	}
 
-	panel.Datasource = targets.GetDatasourceInfo()
+	data := query.GetDatasourceInfo()
+	panel.Datasource = data.ds
+	panel.Transformer = data.transformers
+	panel.DataHash = data.hash
 
 	return panel
 }
