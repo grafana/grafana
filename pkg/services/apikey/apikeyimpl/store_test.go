@@ -19,7 +19,7 @@ type getStore func(*sqlstore.SQLStore) store
 
 type getApiKeysTestCase struct {
 	desc               string
-	user               *models.SignedInUser
+	user               *user.SignedInUser
 	expectedNumKeys    int
 	expectedAllNumKeys int
 }
@@ -126,15 +126,12 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 			err := ss.AddAPIKey(context.Background(), &cmd)
 			require.NoError(t, err)
 
-			query := apikey.GetByNameQuery{KeyName: "last-update-at", OrgId: 1}
-			err = ss.GetApiKeyByName(context.Background(), &query)
-			require.NoError(t, err)
 			assert.Nil(t, cmd.Result.LastUsedAt)
 
-			err = ss.UpdateAPIKeyLastUsedDate(context.Background(), query.Result.Id)
+			err = ss.UpdateAPIKeyLastUsedDate(context.Background(), cmd.Result.Id)
 			require.NoError(t, err)
 
-			query = apikey.GetByNameQuery{KeyName: "last-update-at", OrgId: 1}
+			query := apikey.GetByNameQuery{KeyName: "last-update-at", OrgId: 1}
 			err = ss.GetApiKeyByName(context.Background(), &query)
 			assert.Nil(t, err)
 			assert.NotNil(t, query.Result.LastUsedAt)
@@ -198,7 +195,6 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 			}
 			assert.True(t, found)
 		})
-
 	})
 
 	t.Run("Testing API Key errors", func(t *testing.T) {
@@ -265,6 +261,9 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 				err := store.GetAPIKeys(context.Background(), query)
 				require.NoError(t, err)
 				assert.Len(t, query.Result, tt.expectedNumKeys)
+
+				res := store.GetAllAPIKeys(context.Background(), 1)
+				assert.Equal(t, tt.expectedAllNumKeys, len(res))
 			})
 		}
 	})
