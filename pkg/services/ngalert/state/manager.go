@@ -73,7 +73,7 @@ func (st *Manager) Close(ctx context.Context) {
 
 func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("warming cache for startup")
-	st.ResetCache()
+	st.ResetAllStates()
 
 	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
@@ -149,14 +149,14 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetCache is used to ensure a clean cache on startup.
-func (st *Manager) ResetCache() {
+// ResetAllStates is used to ensure a clean cache on startup.
+func (st *Manager) ResetAllStates() {
 	st.cache.reset()
 }
 
-// RemoveByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
-	st.cache.removeByRuleUID(orgID, ruleUID)
+// ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) ResetStateByRuleUID(ruleKey ngModels.AlertRuleKey) []*State {
+	return st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.

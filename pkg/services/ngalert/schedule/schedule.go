@@ -295,9 +295,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
 	clearState := func() {
-		states := sch.stateManager.GetStatesForRuleUID(key.OrgID, key.UID)
+		states := sch.stateManager.ResetStateByRuleUID(key)
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
-		sch.stateManager.RemoveByRuleUID(key.OrgID, key.UID)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, expiredAlerts)
 		}
