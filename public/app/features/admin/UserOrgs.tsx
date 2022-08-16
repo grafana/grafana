@@ -186,7 +186,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     this.setState({ isChangingRole: false });
   };
 
-  onBuiltinRoleChange = (newRole: OrgRole) => {
+  onBasicRoleChange = (newRole: OrgRole) => {
     this.props.onOrgRoleChange(this.props.org.orgId, newRole);
   };
 
@@ -214,7 +214,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   orgId={org.orgId}
                   basicRole={org.role}
                   roleOptions={this.state.roleOptions}
-                  onBuiltinRoleChange={this.onBuiltinRoleChange}
+                  onBasicRoleChange={this.onBasicRoleChange}
                   builtinRolesDisabled={rolePickerDisabled}
                 />
               </div>
@@ -384,7 +384,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
               userId={user?.id || 0}
               orgId={selectedOrg?.id}
               basicRole={role}
-              onBuiltinRoleChange={this.onOrgRoleChange}
+              onBasicRoleChange={this.onOrgRoleChange}
               builtinRolesDisabled={false}
               roleOptions={roleOptions}
               apply={true}

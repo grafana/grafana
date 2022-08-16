@@ -16,7 +16,7 @@ export interface Props {
   builtinRolesDisabled?: boolean;
   showBuiltInRole?: boolean;
   onRolesChange: (newRoles: Role[]) => void;
-  onBuiltinRoleChange?: (newRole: OrgRole) => void;
+  onBasicRoleChange?: (newRole: OrgRole) => void;
   canUpdateRoles?: boolean;
   apply?: boolean;
 }
@@ -30,7 +30,7 @@ export const RolePicker = ({
   builtinRolesDisabled,
   showBuiltInRole,
   onRolesChange,
-  onBuiltinRoleChange,
+  onBasicRoleChange,
   canUpdateRoles = true,
   apply = false,
 }: Props): JSX.Element | null => {
@@ -107,8 +107,8 @@ export const RolePicker = ({
   };
 
   const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    if (onBuiltinRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
-      onBuiltinRoleChange(newBuiltInRole);
+    if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
+      onBasicRoleChange(newBuiltInRole);
     }
     if (canUpdateRoles) {
       onRolesChange(newRoles);

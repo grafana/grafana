@@ -11,7 +11,7 @@ export interface Props {
   basicRole: OrgRole;
   userId: number;
   orgId?: number;
-  onBuiltinRoleChange: (newRole: OrgRole) => void;
+  onBasicRoleChange: (newRole: OrgRole) => void;
   roleOptions: Role[];
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
@@ -24,7 +24,7 @@ export const UserRolePicker: FC<Props> = ({
   basicRole,
   userId,
   orgId,
-  onBuiltinRoleChange,
+  onBasicRoleChange,
   roleOptions,
   disabled,
   builtinRolesDisabled,
@@ -74,7 +74,7 @@ export const UserRolePicker: FC<Props> = ({
       appliedRoles={appliedRoles}
       basicRole={basicRole}
       onRolesChange={onRolesChange}
-      onBuiltinRoleChange={onBuiltinRoleChange}
+      onBasicRoleChange={onBasicRoleChange}
       roleOptions={roleOptions}
       isLoading={loading}
       disabled={disabled}
