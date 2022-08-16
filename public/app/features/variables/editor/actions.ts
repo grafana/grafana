@@ -24,7 +24,9 @@ import {
 export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
     const { rootStateKey } = identifier;
-    dispatch(toKeyedAction(rootStateKey, variableEditorMounted({ name: getVariable(identifier).name })));
+    dispatch(
+      toKeyedAction(rootStateKey, variableEditorMounted({ name: getVariable(identifier).name, id: identifier.id }))
+    );
   };
 };
 
