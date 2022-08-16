@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
+import { getDataSourceSrv } from '@grafana/runtime/src';
 import { Icon } from '@grafana/ui';
 import { Badge, IconButton, useStyles2 } from '@grafana/ui/src';
 
+import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
 import { QueryItem } from '../types';
 
 type QueryListItemProps = {
@@ -13,6 +15,7 @@ type QueryListItemProps = {
 
 export const QueryListItem = ({ query }: QueryListItemProps) => {
   const styles = useStyles2(getStyles);
+  const [dsInfo, setDsInfo] = useState<any>();
 
   // @TODO update with real data
   const authors = ['Drew Slobodnjak', 'Nathan Marrs', 'Artur Wierzbicki', 'Raphael Batyrbaev', 'Adela Almasan'];
@@ -27,8 +30,26 @@ export const QueryListItem = ({ query }: QueryListItemProps) => {
   ];
   const date = dates[Math.floor(Math.random() * dates.length)];
 
+  useEffect(() => {
+    const getQueryDsInstance = async () => {
+      const ds = await getDataSourceSrv().get(query.ds_uid[0]);
+      setDsInfo(ds);
+    };
+
+    getQueryDsInstance();
+  }, [query.ds_uid]);
+
   const openDrawer = () => {
     console.log('open drawer');
+  };
+
+  const deleteQuery = async () => {
+    await getSavedQuerySrv().deleteSavedQuery({ uid: query.uid });
+  };
+
+  const getDsType = () => {
+    const dsType = dsInfo?.type ?? 'datasource';
+    return dsType.charAt(0).toUpperCase() + dsType.slice(1);
   };
 
   return (
@@ -40,7 +61,7 @@ export const QueryListItem = ({ query }: QueryListItemProps) => {
         <Badge color={'green'} text={'1'} icon={'link'} />
       </td>
       <td className={styles.rowData}>{query.title}</td>
-      <td className={styles.rowData}>Loki</td>
+      <td className={styles.rowData}>{getDsType()}</td>
       <td className={styles.rowData}>
         <img
           className="filter-table__avatar"
@@ -56,7 +77,7 @@ export const QueryListItem = ({ query }: QueryListItemProps) => {
         <IconButton name="copy" className={styles.iconButtons} tooltip={'Copy'} />
         <IconButton name="upload" className={styles.iconButtons} tooltip={'Upload'} />
         <IconButton name="cog" className={styles.iconButtons} tooltip={'Settings'} />
-        <IconButton name="trash-alt" tooltip={'Delete'} />
+        <IconButton name="trash-alt" tooltip={'Delete'} onClick={deleteQuery} />
       </td>
     </tr>
   );

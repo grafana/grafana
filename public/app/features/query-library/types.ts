@@ -4,7 +4,7 @@ export interface QueryItem {
   tags: string[];
   title: string;
   type: string;
-  uid?: string;
+  uid: string;
   ds_uid: string[];
   uri: string;
   url: string;
