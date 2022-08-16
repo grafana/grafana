@@ -188,6 +188,11 @@ func GenerateUniqueAlertRules(count int, f func() *AlertRule) (map[string]*Alert
 	return uIDs, result
 }
 
+// GenerateAlertRulesSmallNonEmpty generates 1 to 5 rules using the provided generator
+func GenerateAlertRulesSmallNonEmpty(f func() *AlertRule) []*AlertRule {
+	return GenerateAlertRules(rand.Intn(4)+1, f)
+}
+
 // GenerateAlertRules generates many random alert rules. Does not guarantee that rules are unique (by UID)
 func GenerateAlertRules(count int, f func() *AlertRule) []*AlertRule {
 	result := make([]*AlertRule, 0, count)
