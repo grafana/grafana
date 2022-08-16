@@ -36,6 +36,7 @@ func newQueryInfo(lookup dslookup.DatasourceLookup) queryInfo {
 }
 
 func (s *queryInfo) GetDatasourceInfo() panelQueryInfo {
+	hasQuery := false
 	info := panelQueryInfo{}
 	sha256 := sha256.New()
 	byUID := make(map[string]*dslookup.DataSourceRef)
@@ -62,8 +63,9 @@ func (s *queryInfo) GetDatasourceInfo() panelQueryInfo {
 
 		delete(t, "datasource")
 		b, err := json.Marshal(t) // sorts the keys?
-		if err != nil {
+		if err == nil {
 			sha256.Write(b)
+			hasQuery = true
 		}
 	}
 
@@ -83,12 +85,15 @@ func (s *queryInfo) GetDatasourceInfo() panelQueryInfo {
 		}
 
 		b, err := json.Marshal(t) // sorts the keys?
-		if err != nil {
+		if err == nil {
 			sha256.Write(b)
+			hasQuery = true
 		}
 	}
 
-	info.hash = hex.EncodeToString(sha256.Sum(nil)[:6]) // first few characters
+	if hasQuery {
+		info.hash = hex.EncodeToString(sha256.Sum(nil)[:6]) // first few characters
+	}
 	return info
 }
 

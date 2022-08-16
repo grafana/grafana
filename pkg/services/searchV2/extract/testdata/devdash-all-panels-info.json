@@ -27,8 +27,7 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ],
-      "query": "e3b0c44298fc"
+      ]
     },
     {
       "id": 35,
@@ -40,14 +39,12 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ],
-      "query": "e3b0c44298fc"
+      ]
     },
     {
       "id": 32,
       "title": "Row title",
-      "type": "row",
-      "query": "e3b0c44298fc"
+      "type": "row"
     },
     {
       "id": 41,
@@ -59,7 +56,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "4b8d2d080c36"
     },
     {
       "id": 62,
@@ -71,7 +68,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "ab91d237ab2d"
     },
     {
       "id": 4,
@@ -82,8 +79,7 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ],
-      "query": "e3b0c44298fc"
+      ]
     },
     {
       "id": 28,
@@ -95,7 +91,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "ac45aa6ec944"
     },
     {
       "id": 8,
@@ -107,8 +103,7 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ],
-      "query": "e3b0c44298fc"
+      ]
     },
     {
       "id": 6,
@@ -119,8 +114,7 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ],
-      "query": "e3b0c44298fc"
+      ]
     },
     {
       "id": 26,
@@ -132,7 +126,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "b4c83b133ab6"
     },
     {
       "id": 20,
@@ -145,7 +139,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "60935b3cdaa8"
     },
     {
       "id": 24,
@@ -157,7 +151,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "053177d2eb8d"
     },
     {
       "id": 18,
@@ -170,7 +164,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "306968674752"
     },
     {
       "id": 22,
@@ -183,7 +177,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "f96a823a0d68"
     },
     {
       "id": 10,
@@ -194,8 +188,7 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ],
-      "query": "e3b0c44298fc"
+      ]
     },
     {
       "id": 16,
@@ -207,8 +200,7 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ],
-      "query": "e3b0c44298fc"
+      ]
     },
     {
       "id": 2,
@@ -220,7 +212,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "090fd5cbea1e"
     },
     {
       "id": 14,
@@ -232,7 +224,7 @@
           "type": "default.type"
         }
       ],
-      "query": "e3b0c44298fc"
+      "query": "c8478dcd4929"
     },
     {
       "id": 12,
@@ -243,8 +235,7 @@
           "uid": "default.uid",
           "type": "default.type"
         }
-      ],
-      "query": "e3b0c44298fc"
+      ]
     }
   ],
   "schemaVersion": 33,

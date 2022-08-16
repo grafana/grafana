@@ -22,6 +22,7 @@ type DashboardQuery struct {
 	Kind               []string     `json:"kind,omitempty"`
 	PanelType          string       `json:"panel_type,omitempty"`
 	UIDs               []string     `json:"uid,omitempty"`
+	QueryHash          string       `json:"query_hash,omitempty"`
 	Explain            bool         `json:"explain,omitempty"`            // adds details on why document matched
 	WithAllowedActions bool         `json:"withAllowedActions,omitempty"` // adds allowed actions per entity
 	Facet              []FacetField `json:"facet,omitempty"`

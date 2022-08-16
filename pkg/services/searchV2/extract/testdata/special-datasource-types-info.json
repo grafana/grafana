@@ -31,19 +31,18 @@
           "type": "frser-sqlite-datasource"
         }
       ],
-      "query": "117ce8c9e76a"
+      "query": "8a0276d2c8a4"
     },
     {
       "id": 8,
       "title": "Row title",
-      "type": "row",
-      "query": "e3b0c44298fc"
+      "type": "row"
     },
     {
       "id": 4,
       "title": "dashboard ds",
       "type": "timeseries",
-      "query": "ff1d2b15c7f2"
+      "query": "cb34542f3427"
     },
     {
       "id": 6,
@@ -55,7 +54,7 @@
           "type": "datasource"
         }
       ],
-      "query": "ff1d2b15c7f2"
+      "query": "d42911034160"
     },
     {
       "id": 2,
@@ -71,7 +70,7 @@
           "type": "testdata"
         }
       ],
-      "query": "def03646fff8"
+      "query": "626ca2df3e0e"
     }
   ],
   "schemaVersion": 36,

@@ -22,7 +22,7 @@
           "type": "sqlite-datasource"
         }
       ],
-      "query": "f58e9bd67f08"
+      "query": "0d3e12ad65f8"
     },
     {
       "id": 0,
@@ -37,7 +37,7 @@
       "transformer": [
         "filterFieldsByName"
       ],
-      "query": "38720fd23bc5"
+      "query": "697f732f6723"
     },
     {
       "id": 0,
@@ -52,7 +52,7 @@
       "transformer": [
         "filterFieldsByName"
       ],
-      "query": "38720fd23bc5"
+      "query": "697f732f6723"
     }
   ],
   "schemaVersion": 36,

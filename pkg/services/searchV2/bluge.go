@@ -429,6 +429,12 @@ func doSearchQuery(
 		hasConstraints = true
 	}
 
+	// Will only match panels!
+	if q.QueryHash != "" {
+		fullQuery.AddMust(bluge.NewTermQuery(q.QueryHash).SetField(documentFieldQueryHash))
+		hasConstraints = true
+	}
+
 	// Folder
 	if q.Location != "" {
 		fullQuery.AddMust(bluge.NewTermQuery(q.Location).SetField(documentFieldLocation))
