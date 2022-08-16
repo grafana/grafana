@@ -32,7 +32,7 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		query := `INSERT INTO playlist (name, "interval", org_id, uid) VALUES (?, ?, ?, ?)`
 		var err error
-		p.Id, err = session.ExecWithReturningId(ctx, query, tx, p.Name, p.Interval, p.OrgId, p.UID)
+		p.Id, err = tx.ExecWithReturningId(ctx, query, p.Name, p.Interval, p.OrgId, p.UID)
 		if err != nil {
 			return err
 		}

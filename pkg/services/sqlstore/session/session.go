@@ -11,7 +11,6 @@ import (
 type Session interface {
 	Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-	DriverName() string
 }
 
 type SessionDB struct {
@@ -34,7 +33,7 @@ func (gs *SessionDB) Exec(ctx context.Context, query string, args ...interface{}
 	return gs.sqlxdb.ExecContext(ctx, gs.sqlxdb.Rebind(query), args...)
 }
 
-func (gs *SessionDB) DriverName() string {
+func (gs *SessionDB) driverName() string {
 	return gs.sqlxdb.DriverName()
 }
 
@@ -58,6 +57,10 @@ func (gs *SessionDB) WithTransaction(ctx context.Context, callback func(*Session
 	return tx.sqlxtx.Commit()
 }
 
+func (gs *SessionDB) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
+	return execWithReturningId(ctx, gs.driverName(), query, gs, args...)
+}
+
 type SessionTx struct {
 	sqlxtx *sqlx.Tx
 }
@@ -74,14 +77,18 @@ func (gtx *SessionTx) Get(ctx context.Context, dest interface{}, query string, a
 	return gtx.sqlxtx.GetContext(ctx, dest, gtx.sqlxtx.Rebind(query), args...)
 }
 
-func (gtx *SessionTx) DriverName() string {
+func (gtx *SessionTx) driverName() string {
 	return gtx.sqlxtx.DriverName()
 }
 
-func ExecWithReturningId(ctx context.Context, query string, sess Session, args ...interface{}) (int64, error) {
+func (gtx *SessionTx) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
+	return execWithReturningId(ctx, gtx.driverName(), query, gtx, args...)
+}
+
+func execWithReturningId(ctx context.Context, driverName string, query string, sess Session, args ...interface{}) (int64, error) {
 	supported := false
 	var id int64
-	if sess.DriverName() == "postgres" {
+	if driverName == "postgres" {
 		query = fmt.Sprintf("%s RETURNING id", query)
 		supported = true
 	}
