@@ -70,6 +70,7 @@ class createMfe {
         React.createElement(component, { ...props }),
         props.container ? props.container.querySelector('#grafanaRoot') : document.getElementById('grafanaRoot')
       );
+      props.isLoading(false);
     };
   }
 
