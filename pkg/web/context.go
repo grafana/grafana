@@ -22,8 +22,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // Context represents the runtime context of current request of Macaron instance.
@@ -31,11 +29,9 @@ import (
 type Context struct {
 	mws []Middleware
 
-	*Router
 	Req      *http.Request
 	Resp     ResponseWriter
 	template *template.Template
-	logger   log.Logger
 }
 
 func (ctx *Context) run() {
@@ -69,7 +65,6 @@ func (ctx *Context) RemoteAddr() string {
 	if len(addr) > 0 {
 		if parsedIP := net.ParseIP(addr); parsedIP == nil {
 			// if parsedIP is nil we clean addr and populate with RemoteAddr below
-			ctx.logger.Warn("Received invalid IP address in request headers, removed for log forgery prevention")
 			addr = ""
 		}
 	}
