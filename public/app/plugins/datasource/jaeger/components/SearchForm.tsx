@@ -173,7 +173,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Max Duration" labelWidth={21} grow>
+        <InlineField label="Max Duration" labelWidth={14} grow>
           <Input
             id="maxDuration"
             name="maxDuration"
@@ -189,7 +189,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Limit" labelWidth={21} grow tooltip="Maximum numbers of returned results">
+        <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum numbers of returned results">
           <Input
             id="limit"
             name="limit"
