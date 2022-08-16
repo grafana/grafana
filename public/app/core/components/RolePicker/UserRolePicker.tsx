@@ -8,7 +8,7 @@ import { RolePicker } from './RolePicker';
 import { fetchUserRoles, updateUserRoles } from './api';
 
 export interface Props {
-  builtInRole: OrgRole;
+  basicRole: OrgRole;
   userId: number;
   orgId?: number;
   onBuiltinRoleChange: (newRole: OrgRole) => void;
@@ -21,7 +21,7 @@ export interface Props {
 }
 
 export const UserRolePicker: FC<Props> = ({
-  builtInRole,
+  basicRole,
   userId,
   orgId,
   onBuiltinRoleChange,
@@ -72,7 +72,7 @@ export const UserRolePicker: FC<Props> = ({
   return (
     <RolePicker
       appliedRoles={appliedRoles}
-      builtInRole={builtInRole}
+      basicRole={basicRole}
       onRolesChange={onRolesChange}
       onBuiltinRoleChange={onBuiltinRoleChange}
       roleOptions={roleOptions}

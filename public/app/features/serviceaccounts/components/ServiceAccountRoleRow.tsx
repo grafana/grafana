@@ -27,7 +27,7 @@ export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRo
           <UserRolePicker
             userId={serviceAccount.id}
             orgId={serviceAccount.orgId}
-            builtInRole={serviceAccount.role}
+            basicRole={serviceAccount.role}
             onBuiltinRoleChange={onRoleChange}
             roleOptions={roleOptions}
             builtinRolesDisabled={!canUpdateRole}

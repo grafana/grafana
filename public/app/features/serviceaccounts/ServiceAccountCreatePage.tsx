@@ -122,7 +122,7 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
                         apply
                         userId={serviceAccount.id || 0}
                         orgId={serviceAccount.orgId}
-                        builtInRole={serviceAccount.role}
+                        basicRole={serviceAccount.role}
                         onBuiltinRoleChange={onRoleChange}
                         roleOptions={roleOptions}
                         onApplyRoles={onPendingRolesUpdate}

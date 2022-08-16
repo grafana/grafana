@@ -76,7 +76,7 @@ const ServiceAccountListItem = memo(
               <UserRolePicker
                 userId={serviceAccount.id}
                 orgId={serviceAccount.orgId}
-                builtInRole={serviceAccount.role}
+                basicRole={serviceAccount.role}
                 onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 builtinRolesDisabled={!canUpdateRole}

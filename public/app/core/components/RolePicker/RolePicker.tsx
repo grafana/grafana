@@ -8,7 +8,7 @@ import { RolePickerMenu } from './RolePickerMenu';
 import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
-  builtInRole?: OrgRole;
+  basicRole?: OrgRole;
   appliedRoles: Role[];
   roleOptions: Role[];
   isLoading?: boolean;
@@ -22,7 +22,7 @@ export interface Props {
 }
 
 export const RolePicker = ({
-  builtInRole,
+  basicRole,
   appliedRoles,
   roleOptions,
   disabled,
@@ -36,15 +36,15 @@ export const RolePicker = ({
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
-  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setSelectedBuiltInRole(builtInRole);
+    setSelectedBuiltInRole(basicRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles, builtInRole]);
+  }, [appliedRoles, basicRole]);
 
   useEffect(() => {
     const dimensions = ref?.current?.getBoundingClientRect();
@@ -84,8 +84,8 @@ export const RolePicker = ({
     setOpen(false);
     setQuery('');
     setSelectedRoles(appliedRoles);
-    setSelectedBuiltInRole(builtInRole);
-  }, [appliedRoles, builtInRole]);
+    setSelectedBuiltInRole(basicRole);
+  }, [appliedRoles, basicRole]);
 
   // Only call onClose if menu is open. Prevent unnecessary calls for multiple pickers on the page.
   const onClickOutside = () => isOpen && onClose();
@@ -107,7 +107,7 @@ export const RolePicker = ({
   };
 
   const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    if (onBuiltinRoleChange && newBuiltInRole && newBuiltInRole !== builtInRole) {
+    if (onBuiltinRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
       onBuiltinRoleChange(newBuiltInRole);
     }
     if (canUpdateRoles) {

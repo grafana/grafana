@@ -212,7 +212,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                 <UserRolePicker
                   userId={user?.id || 0}
                   orgId={org.orgId}
-                  builtInRole={org.role}
+                  basicRole={org.role}
                   roleOptions={this.state.roleOptions}
                   onBuiltinRoleChange={this.onBuiltinRoleChange}
                   builtinRolesDisabled={rolePickerDisabled}
@@ -383,7 +383,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
             <UserRolePicker
               userId={user?.id || 0}
               orgId={selectedOrg?.id}
-              builtInRole={role}
+              basicRole={role}
               onBuiltinRoleChange={this.onOrgRoleChange}
               builtinRolesDisabled={false}
               roleOptions={roleOptions}

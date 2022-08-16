@@ -83,7 +83,7 @@ const UsersTable: FC<Props> = (props) => {
                       userId={user.userId}
                       orgId={orgId}
                       roleOptions={roleOptions}
-                      builtInRole={user.role}
+                      basicRole={user.role}
                       onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
                       builtinRolesDisabled={
                         !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)
