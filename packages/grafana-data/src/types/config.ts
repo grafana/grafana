@@ -176,6 +176,7 @@ export interface GrafanaConfig {
   profileEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
+  azureAuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;

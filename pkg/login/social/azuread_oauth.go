@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -122,19 +123,19 @@ func (claims *azureClaims) extractEmail() string {
 	return claims.Email
 }
 
-func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) models.RoleType {
+func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) org.RoleType {
 	if len(claims.Roles) == 0 {
 		if strictMode {
-			return models.RoleType("")
+			return org.RoleType("")
 		}
 
-		return models.RoleType(autoAssignRole)
+		return org.RoleType(autoAssignRole)
 	}
 
-	roleOrder := []models.RoleType{
-		models.ROLE_ADMIN,
-		models.ROLE_EDITOR,
-		models.ROLE_VIEWER,
+	roleOrder := []org.RoleType{
+		org.RoleAdmin,
+		org.RoleEditor,
+		org.RoleViewer,
 	}
 
 	for _, role := range roleOrder {
@@ -144,13 +145,13 @@ func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) m
 	}
 
 	if strictMode {
-		return models.RoleType("")
+		return org.RoleType("")
 	}
 
-	return models.ROLE_VIEWER
+	return org.RoleViewer
 }
 
-func hasRole(roles []string, role models.RoleType) bool {
+func hasRole(roles []string, role org.RoleType) bool {
 	for _, item := range roles {
 		if strings.EqualFold(item, string(role)) {
 			return true

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -23,6 +24,7 @@ type ServiceAccountsStoreImpl struct {
 	apiKeyService apikey.Service
 	kvStore       kvstore.KVStore
 	log           log.Logger
+	userService   user.Service
 }
 
 func ProvideServiceAccountsStore(store *sqlstore.SQLStore, apiKeyService apikey.Service, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
@@ -39,7 +41,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	generatedLogin := "sa-" + strings.ToLower(saForm.Name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
 	isDisabled := false
-	role := models.ROLE_VIEWER
+	role := org.RoleViewer
 	if saForm.IsDisabled != nil {
 		isDisabled = *saForm.IsDisabled
 	}
@@ -276,7 +278,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 
 func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(
 	ctx context.Context, orgId int64, query string, filter serviceaccounts.ServiceAccountFilter, page int, limit int,
-	signedInUser *models.SignedInUser,
+	signedInUser *user.SignedInUser,
 ) (*serviceaccounts.SearchServiceAccountsResult, error) {
 	searchResult := &serviceaccounts.SearchServiceAccountsResult{
 		TotalCount:      0,
@@ -455,7 +457,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 		}
 
 		if err := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.ID); err != nil {
-			if err := s.sqlStore.DeleteUser(ctx, &models.DeleteUserCommand{UserId: newSA.ID}); err != nil {
+			if err := s.userService.Delete(ctx, &user.DeleteUserCommand{UserID: newSA.ID}); err != nil {
 				s.log.Error("Error deleting service account", "error", err)
 			}
 			return fmt.Errorf("failed to migrate API key to service account token: %w", err)

@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -125,7 +124,7 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 	i.log.Debugf("Installing plugin\nfrom: %s\ninto: %s", pluginZipURL, pluginsDir)
 
 	// Create temp file for downloading zip file
-	tmpFile, err := ioutil.TempFile("", "*.zip")
+	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to create temporary file", err)
 	}
@@ -288,7 +287,7 @@ func (i *Installer) sendRequestGetBytes(URL string, subPaths ...string) ([]byte,
 			i.log.Warn("Failed to close stream", "err", err)
 		}
 	}()
-	return ioutil.ReadAll(bodyReader)
+	return io.ReadAll(bodyReader)
 }
 
 func (i *Installer) sendRequest(URL string, subPaths ...string) (io.ReadCloser, error) {
@@ -342,7 +341,7 @@ func (i *Installer) createRequest(URL string, subPaths ...string) (*http.Request
 
 func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 	if res.StatusCode/100 == 4 {
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		defer func() {
 			if err := res.Body.Close(); err != nil {
 				i.log.Warn("Failed to close response body", "err", err)
@@ -676,12 +675,12 @@ func toPluginDTO(pluginDir, pluginID string) (InstalledPlugin, error) {
 
 	// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 	// nolint:gosec
-	data, err := ioutil.ReadFile(distPluginDataPath)
+	data, err := os.ReadFile(distPluginDataPath)
 	if err != nil {
 		pluginDataPath := filepath.Join(pluginDir, pluginID, "plugin.json")
 		// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
 		// nolint:gosec
-		data, err = ioutil.ReadFile(pluginDataPath)
+		data, err = os.ReadFile(pluginDataPath)
 		if err != nil {
 			return InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json on  " + pluginID + " in " + pluginDir)
 		}

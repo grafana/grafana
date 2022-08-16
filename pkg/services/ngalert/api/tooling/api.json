@@ -7,27 +7,6 @@
   "Ack": {
    "type": "object"
   },
-  "AddApiKeyCommand": {
-   "description": "COMMANDS",
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "role": {
-     "enum": [
-      "Viewer",
-      "Editor",
-      "Admin"
-     ],
-     "type": "string"
-    },
-    "secondsToLive": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
   "Alert": {
    "properties": {
     "activeAt": {
@@ -162,95 +141,6 @@
    ],
    "type": "object"
   },
-  "AlertRule": {
-   "properties": {
-    "Annotations": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object"
-    },
-    "Condition": {
-     "type": "string"
-    },
-    "DashboardUID": {
-     "type": "string"
-    },
-    "Data": {
-     "items": {
-      "$ref": "#/definitions/AlertQuery"
-     },
-     "type": "array"
-    },
-    "ExecErrState": {
-     "enum": [
-      "Alerting",
-      "Error",
-      "OK"
-     ],
-     "type": "string"
-    },
-    "For": {
-     "$ref": "#/definitions/Duration"
-    },
-    "ID": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "IntervalSeconds": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Labels": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object"
-    },
-    "NamespaceUID": {
-     "type": "string"
-    },
-    "NoDataState": {
-     "enum": [
-      "Alerting",
-      "NoData",
-      "OK"
-     ],
-     "type": "string"
-    },
-    "OrgID": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "PanelID": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "RuleGroup": {
-     "type": "string"
-    },
-    "RuleGroupIndex": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "Title": {
-     "type": "string"
-    },
-    "UID": {
-     "type": "string"
-    },
-    "Updated": {
-     "format": "date-time",
-     "type": "string"
-    },
-    "Version": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "title": "AlertRule is the model for alert rules in unified alerting.",
-   "type": "object"
-  },
   "AlertRuleGroup": {
    "properties": {
     "folderUid": {
@@ -262,7 +152,7 @@
     },
     "rules": {
      "items": {
-      "$ref": "#/definitions/AlertRule"
+      "$ref": "#/definitions/ProvisionedAlertRule"
      },
      "type": "array"
     },
@@ -994,6 +884,12 @@
      },
      "type": "array"
     },
+    "telegram_configs": {
+     "items": {
+      "$ref": "#/definitions/TelegramConfig"
+     },
+     "type": "array"
+    },
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
@@ -1293,6 +1189,9 @@
     },
     "smtp_smarthost": {
      "$ref": "#/definitions/HostPort"
+    },
+    "telegram_api_url": {
+     "$ref": "#/definitions/URL"
     },
     "victorops_api_key": {
      "$ref": "#/definitions/Secret"
@@ -1977,6 +1876,12 @@
      },
      "type": "array"
     },
+    "telegram_configs": {
+     "items": {
+      "$ref": "#/definitions/TelegramConfig"
+     },
+     "type": "array"
+    },
     "victorops_configs": {
      "items": {
       "$ref": "#/definitions/VictorOpsConfig"
@@ -2467,6 +2372,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "telegram_configs": {
+     "items": {
+      "$ref": "#/definitions/TelegramConfig"
      },
      "type": "array"
     },
@@ -2979,6 +2890,37 @@
     }
    },
    "title": "TLSConfig configures the options for TLS connections.",
+   "type": "object"
+  },
+  "TelegramConfig": {
+   "properties": {
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "chat": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "disable_notifications": {
+     "type": "boolean"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "message": {
+     "type": "string"
+    },
+    "parse_mode": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "token": {
+     "$ref": "#/definitions/Secret"
+    }
+   },
+   "title": "TelegramConfig configures notifications via Telegram.",
    "type": "object"
   },
   "TestReceiverConfigResult": {
@@ -3513,7 +3455,6 @@
    "$ref": "#/definitions/Duration"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3624,7 +3565,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3735,7 +3675,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3773,6 +3712,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "name": {
      "description": "name",
@@ -4183,15 +4123,15 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroupMetadata"
+       "$ref": "#/definitions/AlertRuleGroup"
       }
      }
     ],
     "responses": {
      "200": {
-      "description": "AlertRuleGroupMetadata",
+      "description": "AlertRuleGroup",
       "schema": {
-       "$ref": "#/definitions/AlertRuleGroupMetadata"
+       "$ref": "#/definitions/AlertRuleGroup"
       }
      },
      "400": {

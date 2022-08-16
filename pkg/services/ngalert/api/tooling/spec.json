@@ -2075,15 +2075,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/AlertRuleGroupMetadata"
+              "$ref": "#/definitions/AlertRuleGroup"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "AlertRuleGroupMetadata",
+            "description": "AlertRuleGroup",
             "schema": {
-              "$ref": "#/definitions/AlertRuleGroupMetadata"
+              "$ref": "#/definitions/AlertRuleGroup"
             }
           },
           "400": {
@@ -2508,27 +2508,6 @@
     "Ack": {
       "type": "object"
     },
-    "AddApiKeyCommand": {
-      "description": "COMMANDS",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
-        },
-        "secondsToLive": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "Alert": {
       "type": "object",
       "title": "Alert has info for an alert.",
@@ -2663,95 +2642,6 @@
         }
       }
     },
-    "AlertRule": {
-      "type": "object",
-      "title": "AlertRule is the model for alert rules in unified alerting.",
-      "properties": {
-        "Annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "Condition": {
-          "type": "string"
-        },
-        "DashboardUID": {
-          "type": "string"
-        },
-        "Data": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/AlertQuery"
-          }
-        },
-        "ExecErrState": {
-          "type": "string",
-          "enum": [
-            "Alerting",
-            "Error",
-            "OK"
-          ]
-        },
-        "For": {
-          "$ref": "#/definitions/Duration"
-        },
-        "ID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "IntervalSeconds": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Labels": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "NamespaceUID": {
-          "type": "string"
-        },
-        "NoDataState": {
-          "type": "string",
-          "enum": [
-            "Alerting",
-            "NoData",
-            "OK"
-          ]
-        },
-        "OrgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "PanelID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "RuleGroup": {
-          "type": "string"
-        },
-        "RuleGroupIndex": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "Title": {
-          "type": "string"
-        },
-        "UID": {
-          "type": "string"
-        },
-        "Updated": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "Version": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "AlertRuleGroup": {
       "type": "object",
       "properties": {
@@ -2765,7 +2655,7 @@
         "rules": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/AlertRule"
+            "$ref": "#/definitions/ProvisionedAlertRule"
           }
         },
         "title": {
@@ -3499,6 +3389,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
         "victorops_configs": {
           "type": "array",
           "items": {
@@ -3798,6 +3694,9 @@
         },
         "smtp_smarthost": {
           "$ref": "#/definitions/HostPort"
+        },
+        "telegram_api_url": {
+          "$ref": "#/definitions/URL"
         },
         "victorops_api_key": {
           "$ref": "#/definitions/Secret"
@@ -4483,6 +4382,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
+          }
+        },
         "victorops_configs": {
           "type": "array",
           "items": {
@@ -4975,6 +4880,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "telegram_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TelegramConfig"
           }
         },
         "victorops_configs": {
@@ -5486,6 +5397,37 @@
         }
       }
     },
+    "TelegramConfig": {
+      "type": "object",
+      "title": "TelegramConfig configures notifications via Telegram.",
+      "properties": {
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "chat": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "disable_notifications": {
+          "type": "boolean"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "parse_mode": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "token": {
+          "$ref": "#/definitions/Secret"
+        }
+      }
+    },
     "TestReceiverConfigResult": {
       "type": "object",
       "properties": {
@@ -5910,7 +5852,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -6076,7 +6017,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -6084,7 +6024,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
