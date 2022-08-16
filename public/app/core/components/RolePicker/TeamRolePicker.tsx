@@ -5,7 +5,6 @@ import { contextSrv } from 'app/core/core';
 import { Role, AccessControlAction } from 'app/types';
 
 import { RolePicker } from './RolePicker';
-// @ts-ignore
 import { fetchTeamRoles, updateTeamRoles } from './api';
 
 export interface Props {
@@ -37,15 +36,13 @@ export const TeamRolePicker: FC<Props> = ({
       }
       return await fetchTeamRoles(teamId);
     } catch (e) {
-      console.error(e);
+      console.error('Error loading options', e);
     }
     return [];
   }, [teamId, pendingRoles]);
 
   useEffect(() => {
-    // if (orgId) {
     getTeamRoles();
-    // }
   }, [teamId, getTeamRoles, pendingRoles]);
 
   const onRolesChange = async (roles: Role[]) => {
@@ -63,6 +60,7 @@ export const TeamRolePicker: FC<Props> = ({
 
   return (
     <RolePicker
+      apply={apply}
       onRolesChange={onRolesChange}
       roleOptions={roleOptions}
       appliedRoles={appliedRoles}
@@ -70,7 +68,6 @@ export const TeamRolePicker: FC<Props> = ({
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
       canUpdateRoles={canUpdateRoles}
-      apply
     />
   );
 };

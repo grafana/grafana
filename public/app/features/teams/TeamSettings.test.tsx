@@ -7,7 +7,10 @@ import { getMockTeam } from './__mocks__/teamMocks';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
+    licensedAccessControlEnabled: () => false,
+    hasPermission: () => true,
     hasPermissionInMetadata: () => true,
+    user: { orgId: 1 },
   },
 }));
 
@@ -30,7 +33,7 @@ describe('Team settings', () => {
   it('should render component', () => {
     setup();
 
-    expect(screen.getByText('Team settings')).toBeInTheDocument();
+    expect(screen.getByText('Team details')).toBeInTheDocument();
   });
 
   it('should validate required fields', async () => {

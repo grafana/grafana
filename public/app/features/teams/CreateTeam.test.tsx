@@ -10,6 +10,15 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    licensedAccessControlEnabled: () => false,
+    hasPermission: () => true,
+    hasPermissionInMetadata: () => true,
+    user: { orgId: 1 },
+  },
+}));
+
 const mockPost = jest.fn(() => {
   return Promise.resolve({});
 });

@@ -50,7 +50,9 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
         <Form
           defaultValues={{ ...team }}
           onSubmit={(formTeam: Team) => {
-            updateTeamRoles(pendingRoles, team.id);
+            if (contextSrv.licensedAccessControlEnabled()) {
+              updateTeamRoles(pendingRoles, team.id);
+            }
             updateTeam(formTeam.name, formTeam.email);
           }}
           disabled={!canWriteTeamSettings}
