@@ -1,16 +1,26 @@
 import { css } from '@emotion/css';
 import React, { FC, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Link, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Card, Drawer, Link, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { RuleFormValues } from '../../types/rule-form';
+
+import { AmAlertPreview } from './AmAlertPreview';
 import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const NotificationsStep: FC = () => {
   const [hideFlowChart, setHideFlowChart] = useState(false);
+  const [amPreviewVisible, setAmPreviewVisible] = useToggle(false);
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
+
+  const { watch } = useFormContext<RuleFormValues>();
+
+  const alertLabels = Object.fromEntries(watch('labels').map((label) => [label.key, label.value]));
 
   return (
     <RuleEditorSection
@@ -43,6 +53,12 @@ export const NotificationsStep: FC = () => {
           </Card>
         </div>
       </div>
+      <Button onClick={setAmPreviewVisible}>Open Alertmanager preview</Button>
+      {amPreviewVisible && (
+        <Drawer onClose={setAmPreviewVisible}>
+          <AmAlertPreview alertLabels={alertLabels} />
+        </Drawer>
+      )}
     </RuleEditorSection>
   );
 };
