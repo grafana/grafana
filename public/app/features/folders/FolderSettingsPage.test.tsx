@@ -181,7 +181,7 @@ describe('FolderSettingsPage', () => {
     });
     const deleteButton = screen.getByRole('button', { name: 'Delete' });
     await userEvent.click(deleteButton);
-    const deleteModal = screen.getByRole('div', { name: 'dialog' });
-    expect(deleteModal).objectContaining({ title: 'Delete' });
+    const deleteModal = screen.getByRole('dialog', { name: 'Delete' });
+    expect(deleteModal).toBeInTheDocument();
   });
 });
