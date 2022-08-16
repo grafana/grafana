@@ -96,7 +96,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 				PlaylistId: p.Id,
 				Type:       item.Type,
 				Value:      item.Value,
-				Order:      index,
+				Order:      index + 1,
 				Title:      item.Title,
 			})
 		}
@@ -187,7 +187,7 @@ func (s *sqlxStore) GetItems(ctx context.Context, query *playlist.GetPlaylistIte
 func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *session.SessionDB, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := generateNewUid()
-		p := playlist.Playlist{}
+		p := playlist.Playlist{OrgId: orgId, UID: uid}
 		err := sess.Get(ctx, &p, "SELECT * FROM playlist WHERE uid=? AND org_id=?", uid, orgId)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
