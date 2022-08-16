@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -24,14 +24,14 @@ type TestUser struct {
 
 type TestApiKey struct {
 	Name      string
-	Role      models.RoleType
+	Role      org.RoleType
 	OrgId     int64
 	Key       string
 	IsExpired bool
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *user.User {
-	role := string(models.ROLE_VIEWER)
+	role := string(org.RoleViewer)
 	if testUser.Role != "" {
 		role = testUser.Role
 	}
@@ -47,7 +47,7 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 }
 
 func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *apikey.APIKey {
-	role := models.ROLE_VIEWER
+	role := org.RoleViewer
 	if testKey.Role != "" {
 		role = testKey.Role
 	}
@@ -103,7 +103,7 @@ func (s *ServiceAccountMock) Migrated(ctx context.Context, orgID int64) bool {
 }
 
 func SetupMockAccesscontrol(t *testing.T,
-	userpermissionsfunc func(c context.Context, siu *models.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
+	userpermissionsfunc func(c context.Context, siu *user.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
 	disableAccessControl bool) *accesscontrolmock.Mock {
 	t.Helper()
 	acmock := accesscontrolmock.New()
@@ -208,7 +208,7 @@ func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(
 	filter serviceaccounts.ServiceAccountFilter,
 	page int,
 	limit int,
-	user *models.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error) {
+	user *user.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error) {
 	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, orgID, query, page, limit, user})
 	return nil, nil
 }

@@ -11,7 +11,6 @@ export interface Props {
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
-  includeInternal?: boolean;
   disabled?: boolean;
   inputId?: string;
 }

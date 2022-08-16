@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // ModelToInstanceSettings converts a datasources.DataSource to a backend.DataSourceInstanceSettings.
@@ -45,7 +45,7 @@ func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *data
 
 // BackendUserFromSignedInUser converts Grafana's SignedInUser model
 // to the backend plugin's model.
-func BackendUserFromSignedInUser(su *models.SignedInUser) *backend.User {
+func BackendUserFromSignedInUser(su *user.SignedInUser) *backend.User {
 	if su == nil {
 		return nil
 	}

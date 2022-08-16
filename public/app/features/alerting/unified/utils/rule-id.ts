@@ -165,8 +165,8 @@ function hash(value: string): number {
   if (value.length === 0) {
     return hash;
   }
-  for (var i = 0; i < value.length; i++) {
-    var char = value.charCodeAt(i);
+  for (let i = 0; i < value.length; i++) {
+    const char = value.charCodeAt(i);
     hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32bit integer
   }

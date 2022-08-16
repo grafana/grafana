@@ -21,11 +21,14 @@
 //
 // SecurityDefinitions:
 // basic:
-//  type: basic
+//
+//	type: basic
+//
 // api_key:
-//  type: apiKey
-//  name: Authorization
-//  in: header
+//
+//	type: apiKey
+//	name: Authorization
+//	in: header
 //
 // swagger:meta
 package api
@@ -187,6 +190,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
 		r.Get("/swagger-ui", swaggerUI)
+		r.Get("/openapi3", openapi3)
 	}
 
 	// authed api

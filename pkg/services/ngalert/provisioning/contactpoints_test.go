@@ -60,7 +60,7 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, "slack", cps[1].Type)
 	})
 
-	t.Run("it's possbile to use a custom uid", func(t *testing.T) {
+	t.Run("it's possible to use a custom uid", func(t *testing.T) {
 		customUID := "1337"
 		sut := createContactPointServiceSut(secretsService)
 		newCp := createTestContactPoint()
@@ -75,7 +75,7 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, customUID, cps[1].UID)
 	})
 
-	t.Run("it's not possbile to use the same uid twice", func(t *testing.T) {
+	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {
 		customUID := "1337"
 		sut := createContactPointServiceSut(secretsService)
 		newCp := createTestContactPoint()
