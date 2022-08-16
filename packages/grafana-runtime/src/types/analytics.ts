@@ -108,6 +108,13 @@ export interface InteractionEchoEventPayload {
 export type InteractionEchoEvent = EchoEvent<EchoEventType.Interaction, InteractionEchoEventPayload>;
 
 /**
+ * Describes Fullstory custom interaction event with predefined {@link EchoEventType.EchoEventType} type.
+ *
+ * @public
+ */
+export type FullstoryEchoEvent = EchoEvent<EchoEventType.Fullstory, InteractionEchoEventPayload>;
+
+/**
  * Describes the payload of an experimentview event.
  *
  * @public
