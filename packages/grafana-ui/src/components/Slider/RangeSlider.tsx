@@ -47,6 +47,7 @@ export const RangeSlider: FunctionComponent<RangeSliderProps> = ({
         onAfterChange={onAfterChange}
         vertical={!isHorizontal}
         reverse={reverse}
+        tabIndex={[0, 1]}
       />
     </div>
   );
