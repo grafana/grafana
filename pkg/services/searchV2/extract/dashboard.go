@@ -358,7 +358,12 @@ func findDatasourceRefsForVariables(dsVariableRefs []dslookup.DataSourceRef, dat
 	for _, dsVariableRef := range dsVariableRefs {
 		variableName := getDataSourceVariableName(dsVariableRef)
 		refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
-		referencedDs = append(referencedDs, refs...)
+		if len(refs) > 0 {
+			referencedDs = append(referencedDs, refs...)
+		} else {
+			// Unknown datasource!
+			referencedDs = append(referencedDs, dsVariableRef)
+		}
 	}
 	return referencedDs
 }
