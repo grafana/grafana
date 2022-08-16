@@ -12,7 +12,6 @@ export interface Props {
   orgId?: number;
   roleOptions: Role[];
   disabled?: boolean;
-  builtinRolesDisabled?: boolean;
   onApplyRoles?: (newRoles: Role[]) => void;
   pendingRoles?: Role[];
   apply?: boolean;
@@ -22,7 +21,6 @@ export const TeamRolePicker: FC<Props> = ({
   teamId,
   roleOptions,
   disabled,
-  builtinRolesDisabled = false,
   onApplyRoles,
   pendingRoles,
   apply = false,
@@ -66,7 +64,7 @@ export const TeamRolePicker: FC<Props> = ({
       appliedRoles={appliedRoles}
       isLoading={loading}
       disabled={disabled}
-      builtinRolesDisabled={builtinRolesDisabled}
+      builtinRolesDisabled={true}
       canUpdateRoles={canUpdateRoles}
     />
   );
