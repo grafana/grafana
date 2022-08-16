@@ -18,13 +18,14 @@ import {
 describe('variableEditorReducer', () => {
   describe('when variableEditorMounted is dispatched', () => {
     it('then state should be correct', () => {
-      const payload = { name: 'A name' };
+      const payload = { name: 'A name', id: '123' };
       reducerTester<VariableEditorState>()
         .givenReducer(variableEditorReducer, { ...initialVariableEditorState })
         .whenActionIsDispatched(variableEditorMounted(payload))
         .thenStateShouldEqual({
           ...initialVariableEditorState,
           name: 'A name',
+          id: '123',
         });
     });
   });
