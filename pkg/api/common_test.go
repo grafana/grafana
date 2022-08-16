@@ -250,7 +250,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		QuotaService:       &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(store, filters.ProvideOSSSearchUserFilter()),
+		searchUsersService: searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		ldapGroups:         ldap.ProvideGroupsService(),
 	}
 
@@ -396,7 +396,7 @@ func setupHTTPServerWithCfgDb(
 		License:                &licensing.OSSLicensingService{},
 		AccessControl:          ac,
 		teamPermissionsService: teamPermissionService,
-		searchUsersService:     searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
+		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, nil, features,
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,

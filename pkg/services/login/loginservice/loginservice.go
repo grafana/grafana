@@ -126,9 +126,9 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 		if extUser.AuthModule == login.LDAPAuthModule && usr.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if errDisableUser := ls.SQLStore.DisableUser(ctx,
-				&models.DisableUserCommand{
-					UserId: cmd.Result.ID, IsDisabled: false}); errDisableUser != nil {
+			if errDisableUser := ls.userService.Disable(ctx,
+				&user.DisableUserCommand{
+					UserID: cmd.Result.ID, IsDisabled: false}); errDisableUser != nil {
 				return errDisableUser
 			}
 		}
@@ -176,12 +176,12 @@ func (ls *Implementation) DisableExternalUser(ctx context.Context, username stri
 	)
 
 	// Mark user as disabled in grafana db
-	disableUserCmd := &models.DisableUserCommand{
-		UserId:     userQuery.Result.UserId,
+	disableUserCmd := &user.DisableUserCommand{
+		UserID:     userQuery.Result.UserId,
 		IsDisabled: true,
 	}
 
-	if err := ls.SQLStore.DisableUser(ctx, disableUserCmd); err != nil {
+	if err := ls.userService.Disable(ctx, disableUserCmd); err != nil {
 		logger.Debug(
 			"Error disabling external user",
 			"user",
