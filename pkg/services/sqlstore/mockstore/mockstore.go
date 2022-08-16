@@ -146,27 +146,8 @@ func (m *SQLStoreMock) GetUserOrgList(ctx context.Context, query *models.GetUser
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	query.Result = m.ExpectedSignedInUser
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	query.Result = m.ExpectedSignedInUser
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
-	query.Result = m.ExpectedSearchUsers
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
-	m.LatestUserId = cmd.UserId
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
 	return m.ExpectedError
 }
 

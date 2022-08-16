@@ -195,7 +195,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -219,7 +219,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
@@ -631,12 +631,12 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 		sc.mockSQLStore = mockstore.NewSQLStoreMock()
 		sc.loginService = &loginservice.LoginServiceMock{}
+		sc.userService = usertest.NewUserServiceFake()
 		sc.apiKeyService = &apikeytest.Service{}
-		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService)
+		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService)
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
-		sc.userService = usertest.NewUserServiceFake()
 		sc.m.Use(OrgRedirect(sc.cfg, sc.mockSQLStore))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
@@ -666,7 +666,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	})
 }
 
-func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock, loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service) *contexthandler.ContextHandler {
+func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock, loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service, userService *usertest.FakeUserService) *contexthandler.ContextHandler {
 	t.Helper()
 
 	if cfg == nil {
@@ -683,7 +683,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.S
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, mockSQLStore)
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, usertest.NewUserServiceFake())
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService)
 }
 
 type fakeRenderService struct {
