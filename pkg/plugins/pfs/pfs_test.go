@@ -14,63 +14,92 @@ import (
 
 func TestParseTreeTestdata(t *testing.T) {
 	type tt struct {
-		tfs     fs.FS
-		subpath string // ugh that we have to do this
+		tfs fs.FS
+		// TODO could remove this by getting rid of inconsistent subdirs
+		subpath string
 		skip    string
 		err     error
-		rootid  string
+		// TODO could remove this by expecting that dirname == id
+		rootid string
 	}
 	tab := map[string]tt{
 		"app-with-child": {
+			rootid:  "myorgid-simple-app",
 			subpath: "dist",
+			skip:    "schema violation, weirdness in info.version field",
 		},
 		"duplicate-plugins": {
+			rootid:  "test-app",
 			subpath: "nested",
+			skip:    "schema violation, dependencies don't follow naming constraints",
 		},
-		"includes-symlinks": {},
+		"includes-symlinks": {
+			skip: "schema violation, dependencies don't follow naming constraints",
+		},
 		"installer": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"invalid-plugin-json": {
-			err: ErrInvalidRootFile,
+			rootid: "test-app",
+			err:    ErrInvalidRootFile,
 		},
 		"invalid-v1-signature": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"invalid-v2-extra-file": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"invalid-v2-missing-file": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"lacking-files": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"nested-plugins": {
+			rootid:  "test-ds",
 			subpath: "parent",
 		},
 		"non-pvt-with-root-url": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"symbolic-plugin-dirs": {
 			skip: "io/fs-based scanner will not traverse symlinks; caller of ParsePluginFS() must do it",
 		},
-		"test-app":               {},
-		"test-app-with-includes": {},
+		"test-app": {
+			skip:   "schema violation, dependencies don't follow naming constraints",
+			rootid: "test-app",
+		},
+		"test-app-with-includes": {
+			rootid: "test-app",
+		},
 		"unsigned-datasource": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"unsigned-panel": {
+			rootid:  "test-panel",
 			subpath: "plugin",
 		},
 		"valid-v2-pvt-signature": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"valid-v2-pvt-signature-root-url-uri": {
+			rootid:  "test",
 			subpath: "plugin",
 		},
 		"valid-v2-signature": {
+			rootid:  "test",
 			subpath: "plugin",
+		},
+		"no-rootfile": {
+			err: ErrNoRootFile,
 		},
 	}
 
@@ -114,6 +143,7 @@ func TestParseTreeTestdata(t *testing.T) {
 				require.NoError(t, err, "unexpected error while parsing plugin tree")
 			} else {
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
+				return
 			}
 
 			rootp := tree.RootPlugin()

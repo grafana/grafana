@@ -182,9 +182,10 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	metaany, _, err := mux.Converge(b)
 	if err != nil {
 		// TODO more nuanced error handling by class of Thema failure
-		return nil, fmt.Errorf("plugin.json was invalid: %w", err)
+		// return nil, fmt.Errorf("plugin.json was invalid: %w", err)
+		return nil, &errPluginValidation{err: err}
 	}
-	r.meta = metaany.(pluginmeta.Model)
+	r.meta = *metaany.(*pluginmeta.Model)
 
 	if modbyt, err := fs.ReadFile(f, "models.cue"); err == nil {
 		// TODO introduce layered CUE dependency-injecting loader
@@ -249,4 +250,16 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	}
 
 	return tree, nil
+}
+
+type errPluginValidation struct {
+	err error
+}
+
+func (e *errPluginValidation) Is(err error) bool {
+	return errors.Is(err, ErrInvalidRootFile) || errors.Is(err, e.err)
+}
+
+func (e *errPluginValidation) Error() string {
+	return fmt.Sprintf("plugin.json is invalid: %s", e.err)
 }

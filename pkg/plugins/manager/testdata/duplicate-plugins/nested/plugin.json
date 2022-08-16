@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Parent",
   "id": "test-app",
+  "builtIn": true,
   "info": {
     "description": "Parent plugin",
     "author": {

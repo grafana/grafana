@@ -1,4 +1,5 @@
 {
   "id": "test-app",
+  "builtIn": true,
   "type": "application"
 }

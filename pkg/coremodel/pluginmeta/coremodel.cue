@@ -193,7 +193,7 @@ seqs: [
 					}]
 
 					// SVG images that are used as plugin icons.
-					logos: {
+					logos?: {
 						// Link to the "small" version of the plugin logo, which must be
 						// an SVG image. "Large" and "small" logos can be the same image.
 						small: string
@@ -201,6 +201,9 @@ seqs: [
 						// Link to the "large" version of the plugin logo, which must be
 						// an SVG image. "Large" and "small" logos can be the same image.
 						large: string
+					}
+					if !builtIn {
+						logos: {...}
 					}
 
 					// An array of screenshot objects in the form `{name: 'bar', path:
