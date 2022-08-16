@@ -962,7 +962,3 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		})
 	}
 }
-
-func setupOrgUsersTest() {
-
-}
