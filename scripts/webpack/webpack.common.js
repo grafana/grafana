@@ -3,6 +3,7 @@ const path = require('path');
 const webpack = require('webpack');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
+const IconBundleGenerator = require('./plugins/IconBundleGenerator');
 
 module.exports = {
   target: 'web',
@@ -63,6 +64,7 @@ module.exports = {
         },
       ],
     }),
+    new IconBundleGenerator(),
   ],
   module: {
     rules: [
