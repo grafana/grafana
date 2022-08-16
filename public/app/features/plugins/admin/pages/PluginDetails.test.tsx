@@ -17,10 +17,10 @@ import {
   mockUserPermissions,
   Subset,
 } from '../../__mocks__';
+import { fetchRemotePlugins } from '../../state/actions';
 import { CatalogPlugin, PluginTabIds, PluginTabLabels, ReducerState, RequestStatus } from '../../types';
 import * as api from '../api';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { fetchRemotePlugins } from '../state/actions';
 
 import PluginDetailsPage from './PluginDetails';
 

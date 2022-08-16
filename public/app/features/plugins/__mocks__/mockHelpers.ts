@@ -3,7 +3,6 @@ import { merge } from 'lodash';
 import { setBackendSrv } from '@grafana/runtime';
 
 import { API_ROOT, GCOM_API_ROOT } from '../constants';
-import * as permissions from '../permissions';
 import {
   CatalogPlugin,
   LocalPlugin,
@@ -13,10 +12,11 @@ import {
   RequestStatus,
   PluginListDisplayMode,
 } from '../types';
+import * as permissions from '../utils/permissions';
 
-import catalogPluginMock from './catalogPlugin.mock';
-import localPluginMock from './localPlugin.mock';
-import remotePluginMock from './remotePlugin.mock';
+import catalogPluginMock from './mock.catalogPlugin';
+import localPluginMock from './mock.localPlugin';
+import remotePluginMock from './mock.remotePlugin';
 
 // Subset<T> allows to partially provide nested objects, too
 // TODO: should this live somewhere else?

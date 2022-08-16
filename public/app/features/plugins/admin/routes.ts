@@ -2,8 +2,7 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { RouteDescriptor } from 'app/core/navigation/types';
 
 import { PluginAdminRoutes } from '../types';
-
-import { isGrafanaAdmin } from './permissions';
+import { isGrafanaAdmin } from '../utils/permissions';
 
 const DEFAULT_ROUTES = [
   {

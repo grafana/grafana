@@ -4,7 +4,7 @@ import { getPanelOptionsWithDefaults } from 'app/features/dashboard/state/getPan
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { toPanelModelLibraryPanel } from 'app/features/library-panels/utils';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
-import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
+import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 import { ThunkResult } from 'app/types';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 

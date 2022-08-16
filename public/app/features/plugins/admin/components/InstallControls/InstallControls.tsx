@@ -6,8 +6,8 @@ import { config, featureEnabled } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 
 import { CatalogPlugin, PluginStatus, Version } from '../../../types';
+import { isGrafanaAdmin } from '../../../utils/permissions';
 import { getExternalManageLink, isInstallControlsEnabled } from '../../helpers';
-import { isGrafanaAdmin } from '../../permissions';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
 
 import { ExternallyManagedButton } from './ExternallyManagedButton';

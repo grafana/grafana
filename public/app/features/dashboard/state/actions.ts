@@ -5,7 +5,7 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { updateTimeZoneForSession, updateWeekStartForSession } from 'app/features/profile/state/reducers';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 
-import { loadPluginDashboards } from '../../plugins/admin/state/actions';
+import { loadPluginDashboards } from '../../plugins/state/actions';
 import { cancelVariables } from '../../variables/state/actions';
 import { getTimeSrv } from '../services/TimeSrv';
 

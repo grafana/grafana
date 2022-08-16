@@ -10,8 +10,8 @@ import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps
 import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock, getPluginsStateMock } from '../../__mocks__';
+import { fetchRemotePlugins } from '../../state/actions';
 import { PluginAdminRoutes, CatalogPlugin, ReducerState, RequestStatus } from '../../types';
-import { fetchRemotePlugins } from '../state/actions';
 
 import BrowsePage from './Browse';
 

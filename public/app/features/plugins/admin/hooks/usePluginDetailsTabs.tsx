@@ -5,8 +5,8 @@ import { PluginIncludeType, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { CatalogPlugin, PluginDetailsTab, PluginTabIds, PluginTabLabels } from '../../types';
+import { isOrgAdmin } from '../../utils/permissions';
 import { usePluginConfig } from '../hooks/usePluginConfig';
-import { isOrgAdmin } from '../permissions';
 
 type ReturnType = {
   error: Error | undefined;
