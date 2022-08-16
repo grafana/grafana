@@ -579,6 +579,8 @@ describe('LiveDataStream', () => {
           values: ['y'],
         },
       ]);
+      const deserializedFrame = StreamingDataFrame.deserialize(data.frame);
+      expect(deserializedFrame.length).toEqual(1);
     });
 
     it('should emit a full frame if received a status live channel event with error', async () => {
