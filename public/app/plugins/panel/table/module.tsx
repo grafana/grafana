@@ -163,6 +163,20 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         path: 'footer.enablePagination',
         name: 'Enable pagination',
         editor: PaginationEditor,
+      })
+      .addSelect({
+        path: 'source',
+        name: 'Source of data',
+        description: 'Select which data to show',
+        settings: {
+          allowCustomValue: false,
+          options: [
+            { value: 'series', label: 'Series' },
+            { value: 'annotations', label: 'Annotations' },
+          ],
+        },
+        defaultValue: 'series',
       });
   })
-  .setSuggestionsSupplier(new TableSuggestionsSupplier());
+  .setSuggestionsSupplier(new TableSuggestionsSupplier())
+  .setDataSupport({ annotations: true, alertStates: true });

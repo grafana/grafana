@@ -3,6 +3,7 @@ import { MonoTypeOperatorFunction, Observable, of, ReplaySubject, Unsubscribable
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
+  ArrayVector,
   applyFieldOverrides,
   compareArrayValues,
   compareDataFrameStructures,
@@ -15,6 +16,7 @@ import {
   DataSourceJsonData,
   DataSourceRef,
   DataTransformerConfig,
+  Field,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -88,6 +90,7 @@ export class PanelQueryRunner {
    */
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
+    const panel = this.dataConfigSource as unknown as PanelModel;
     let structureRev = 1;
     let lastData: DataFrame[] = [];
     let isFirstPacket = true;
@@ -105,6 +108,10 @@ export class PanelQueryRunner {
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
       map((data: PanelData) => {
+        if (panel?.options?.source === 'annotations') {
+            data.series = dataAnnotationsToSeries(data?.annotations ?? []);
+        }
+
         let processedData = data;
         let streamingPacketWithSameSchema = false;
 
@@ -375,3 +382,18 @@ async function getDataSource(
 
   return await getDatasourceSrv().get(datasource as string, scopedVars);
 }
+
+const dataAnnotationsToSeries = (
+  frames: DataFrame[],
+): DataFrame[] => {
+  frames = cloneDeep(frames);
+  frames.forEach((d: DataFrame) => {
+    d.fields = d.fields.filter((f: Field) => f.name === 'time' || f.name === 'text');
+    d.fields.forEach((f: Field) => {
+      if (f.values?.converter && f.values?.toArray) { // Vector type
+        f.values = new ArrayVector(f.values.toArray());
+      }
+    });
+  });
+  return frames;
+};
