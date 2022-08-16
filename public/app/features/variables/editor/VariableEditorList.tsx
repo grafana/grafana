@@ -4,6 +4,7 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
 
 import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { KeyedVariableIdentifier } from '../state/types';
@@ -81,6 +82,7 @@ export function VariableEditorList({
                 </Droppable>
               </DragDropContext>
             </table>
+            <ListNewButton onClick={onAdd}>New variable</ListNewButton>
           </div>
         )}
       </div>
