@@ -13,6 +13,7 @@ type SavedQueryMeta = {
   description: string;
   tags: string[];
   schemaVersion: number;
+  variables: any;
 };
 
 type SavedQueryData<TQuery extends DataQuery = DataQuery> = {

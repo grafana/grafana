@@ -45,7 +45,7 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
           ))}
         </TabsBar>
         <TabContent>
-          {tabs[0].active && <VariablesTab />}
+          {tabs[0].active && <VariablesTab savedQuery={savedQuery} />}
           {tabs[1].active && <ConnectionsTab />}
         </TabContent>
       </div>
