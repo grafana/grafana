@@ -18,12 +18,21 @@ export const QueryEditor = ({ queries }: Props) => {
     timeRange: getDefaultTimeRange(),
   };
 
+  //TODO: handle query changing
+  const onQueriesChange = (queries: DataQuery[]) => {
+    console.log('yo');
+    // this.onChange({ queries });
+    // this.setState({ queries });
+  };
+
+  //TODO: add data source selector
+  //TODO: add run button?
   return (
     <div>
       <QueryEditorRows
         queries={queries}
         dsSettings={dsSettings!}
-        onQueriesChange={() => {}}
+        onQueriesChange={onQueriesChange}
         onAddQuery={() => {}}
         onRunQueries={() => {}}
         data={data}
