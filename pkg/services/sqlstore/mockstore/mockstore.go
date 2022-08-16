@@ -156,20 +156,6 @@ func (m *SQLStoreMock) GetSignedInUser(ctx context.Context, query *models.GetSig
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error {
-	query.Result = m.ExpectedSearchUsers
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error {
-	m.LatestUserId = cmd.UserId
-	return m.ExpectedError
-}
-
-func (m *SQLStoreMock) BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) UpdateUserPermissions(userID int64, isAdmin bool) error {
 	return m.ExpectedError
 }

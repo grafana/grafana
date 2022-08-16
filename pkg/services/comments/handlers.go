@@ -8,7 +8,6 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -36,12 +35,12 @@ func commentToDto(comment *commentmodel.Comment, userMap map[int64]*commentmodel
 	return comment.ToDTO(u)
 }
 
-func searchUserToCommentUser(searchUser *models.UserSearchHitDTO) *commentmodel.CommentUser {
+func searchUserToCommentUser(searchUser *user.UserSearchHitDTO) *commentmodel.CommentUser {
 	if searchUser == nil {
 		return nil
 	}
 	return &commentmodel.CommentUser{
-		Id:        searchUser.Id,
+		Id:        searchUser.ID,
 		Name:      searchUser.Name,
 		Login:     searchUser.Login,
 		Email:     searchUser.Email,
@@ -122,6 +121,7 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *user.Si
 }
 
 func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, cmd GetCmd) ([]*commentmodel.CommentDto, error) {
+	var res *user.SearchUserQueryResult
 	ok, err := s.permissions.CheckReadPermissions(ctx, orgID, signedInUser, cmd.ObjectType, cmd.ObjectID)
 	if err != nil {
 		return nil, err
@@ -147,20 +147,20 @@ func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *user.Signe
 	}
 
 	// NOTE: probably replace with comment and user table join.
-	query := &models.SearchUsersQuery{
+	query := &user.SearchUsersQuery{
 		Query:        "",
 		Page:         0,
 		Limit:        len(userIds),
 		SignedInUser: signedInUser,
 		Filters:      []user.Filter{NewIDFilter(userIds)},
 	}
-	if err := s.sqlStore.SearchUsers(ctx, query); err != nil {
+	if res, err = s.userService.Search(ctx, query); err != nil {
 		return nil, err
 	}
 
-	userMap := make(map[int64]*commentmodel.CommentUser, len(query.Result.Users))
-	for _, v := range query.Result.Users {
-		userMap[v.Id] = searchUserToCommentUser(v)
+	userMap := make(map[int64]*commentmodel.CommentUser, len(res.Users))
+	for _, v := range res.Users {
+		userMap[v.ID] = searchUserToCommentUser(v)
 	}
 
 	result := commentsToDto(messages, userMap)
