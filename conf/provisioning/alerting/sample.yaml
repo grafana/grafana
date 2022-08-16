@@ -33,9 +33,9 @@ apiVersion: 1
 #       # <string> state of the alert rule when the query execution 
 #       #          fails - possible values: "Error", "Alerting", "OK"
 #       #          default = Alerting
-#       # <duration, required> how long the alert should fire before alerting
+#       # <duration, required> how long the alert condition should be breached before Firing. Before this time has elapsed, the alert is considered to be Pending
 #       for: 60s
-#       # <map<string, string>> map of strings to pass around any data 
+#       # <map<string, string>> map of strings to attach arbitrary custom data
 #       annotations:
 #         some_key: some_value
 #       # <map<string, string> map of strings to filter and 
@@ -76,7 +76,7 @@ apiVersion: 1
 #   - orgId: 1
 #     # <string> name of the receiver that should be used for this route
 #     receiver: grafana-default-email
-#     # <list> The labels by which incoming alerts are grouped together. For example,
+#     # <list<string>> The labels by which incoming alerts are grouped together. For example,
 #     #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
 #     #        be batched into a single group.
 #     # 
@@ -130,7 +130,7 @@ apiVersion: 1
 #     # <string, required> content of the the template
 #     template: Alerting with a custome text template
 
-# # List of alert rule UIDs that should be deleted
+# # List of templates that should be deleted
 # deleteTemplates:
 #    # <int> organization id, default = 1
 #  - orgId: 1

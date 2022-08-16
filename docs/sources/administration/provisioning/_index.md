@@ -794,7 +794,7 @@ apiVersion: 1
 policies:
   # <int> organization id, default = 1
   - orgId: 1
-    # <string> name of the receiver that should be used for this route
+    # <string> name of the contact point that should be used for this route
     receiver: grafana-default-email
     # <list> The labels by which incoming alerts are grouped together. For example,
     #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
@@ -921,7 +921,7 @@ deleteMuteTimes:
 
 ## Alert Notification Channels
 
-> **Note:** Alert Notification Channels are deprecated and will be removed. Use the alerting section above.
+> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed. Use Contact Points in the alerting section above.
 
 Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
