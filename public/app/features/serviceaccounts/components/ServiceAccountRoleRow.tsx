@@ -11,16 +11,9 @@ interface Props {
   serviceAccount: ServiceAccountDTO;
   onRoleChange: (role: OrgRole) => void;
   roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
 }
 
-export const ServiceAccountRoleRow = ({
-  label,
-  serviceAccount,
-  roleOptions,
-  builtInRoles,
-  onRoleChange,
-}: Props): JSX.Element => {
+export const ServiceAccountRoleRow = ({ label, serviceAccount, roleOptions, onRoleChange }: Props): JSX.Element => {
   const inputId = `${label}-input`;
   const canUpdateRole = contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsWrite, serviceAccount);
 
@@ -37,7 +30,6 @@ export const ServiceAccountRoleRow = ({
             builtInRole={serviceAccount.role}
             onBuiltinRoleChange={onRoleChange}
             roleOptions={roleOptions}
-            builtInRoles={builtInRoles}
             builtinRolesDisabled={!canUpdateRole}
             disabled={serviceAccount.isDisabled}
           />

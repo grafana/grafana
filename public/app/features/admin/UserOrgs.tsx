@@ -144,7 +144,6 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
     currentRole: this.props.org.role,
     isChangingRole: false,
     roleOptions: [],
-    builtInRoles: {},
   };
 
   componentDidMount() {
@@ -215,7 +214,6 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   orgId={org.orgId}
                   builtInRole={org.role}
                   roleOptions={this.state.roleOptions}
-                  builtInRoles={this.state.builtInRoles}
                   onBuiltinRoleChange={this.onBuiltinRoleChange}
                   builtinRolesDisabled={rolePickerDisabled}
                 />
