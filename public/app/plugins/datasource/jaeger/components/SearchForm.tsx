@@ -189,7 +189,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum numbers of returned results">
+        <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum number of returned results">
           <Input
             id="limit"
             name="limit"
