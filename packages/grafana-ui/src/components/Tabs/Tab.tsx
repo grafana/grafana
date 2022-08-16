@@ -25,7 +25,20 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   suffix?: NavModelItem['tabSuffix'];
 }
 
-export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
+interface TabButtonProps extends HTMLProps<HTMLButtonElement> {
+  label: string;
+  active?: boolean;
+  /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
+  href?: string;
+  icon?: IconName;
+  onChangeTab?: (event?: React.MouseEvent<HTMLButtonElement>) => void;
+  /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
+  counter?: number | null;
+  /** Extra content, displayed after the tab label and counter */
+  suffix?: NavModelItem['tabSuffix'];
+}
+
+export const Tab = React.forwardRef<HTMLAnchorElement, TabProps | HTMLButtonElement, TabButtonProps>(
   ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
     const theme = useTheme2();
     const tabsStyles = getTabStyles(theme);
