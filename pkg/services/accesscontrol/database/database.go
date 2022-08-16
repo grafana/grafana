@@ -155,10 +155,10 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 		}
 
 		roleQuery := "SELECT id FROM role WHERE name = ?"
-		roleParams := []interface{}{roleQuery, accesscontrol.ManagedUserRoleName(userID)}
+		roleParams := []interface{}{accesscontrol.ManagedUserRoleName(userID)}
 		if orgID != accesscontrol.GlobalOrgID {
 			roleQuery += " AND org_id = ?"
-			roleParams = []interface{}{roleQuery, accesscontrol.ManagedUserRoleName(userID), orgID}
+			roleParams = []interface{}{accesscontrol.ManagedUserRoleName(userID), orgID}
 		}
 
 		var roleIDs []int64
