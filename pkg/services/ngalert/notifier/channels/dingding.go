@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"net/url"
 
 	"github.com/prometheus/alertmanager/template"
@@ -44,11 +45,11 @@ func DingDingFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewDingDingNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewDingDingNotifier(cfg, fc.NotificationService, fc.ImageStore, fc.Template), nil
 }
 
 // NewDingDingNotifier is the constructor for the Dingding notifier
-func NewDingDingNotifier(config *DingDingConfig, ns notifications.WebhookSender, t *template.Template) *DingDingNotifier {
+func NewDingDingNotifier(config *DingDingConfig, ns notifications.WebhookSender, imageStore ImageStore, t *template.Template) *DingDingNotifier {
 	return &DingDingNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -60,6 +61,7 @@ func NewDingDingNotifier(config *DingDingConfig, ns notifications.WebhookSender,
 		MsgType: config.MsgType,
 		Message: config.Message,
 		URL:     config.URL,
+		images:  imageStore,
 		log:     log.New("alerting.notifier.dingding"),
 		tmpl:    t,
 		ns:      ns,
@@ -72,6 +74,7 @@ type DingDingNotifier struct {
 	MsgType string
 	URL     string
 	Message string
+	images  ImageStore
 	tmpl    *template.Template
 	ns      notifications.WebhookSender
 	log     log.Logger
@@ -93,7 +96,17 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	messageURL := "dingtalk://dingtalkclient/page/link?" + q.Encode()
 
 	var tmplErr error
-	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
+	tmpl, data := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
+
+	// Augment our Alert data with ImageURLs if available.
+	_ = withStoredImages(ctx, dd.log, dd.images,
+		func(index int, image ngmodels.Image) error {
+			if len(image.URL) != 0 {
+				data.Alerts[index].ImageURL = image.URL
+			}
+			return nil
+		},
+		as...)
 
 	message := tmpl(dd.Message)
 	title := tmpl(DefaultMessageTitleEmbed)
