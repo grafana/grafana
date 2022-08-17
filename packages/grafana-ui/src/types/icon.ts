@@ -1,6 +1,7 @@
 import { Field, FieldType } from '@grafana/data';
 
 import { ComponentSize } from './size';
+import { AllUnicons } from './unicons';
 
 export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
@@ -189,7 +190,7 @@ export const getAvailableIcons = () =>
 
 type BrandIconNames = 'google' | 'microsoft' | 'github' | 'gitlab' | 'okta';
 
-export type IconName = ReturnType<typeof getAvailableIcons>[number] | BrandIconNames;
+export type IconName = ReturnType<typeof getAvailableIcons>[number] | BrandIconNames | AllUnicons;
 
 /** Get the icon for a given field type */
 export function getFieldTypeIcon(field?: Field): IconName {
