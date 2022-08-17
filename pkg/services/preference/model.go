@@ -102,14 +102,12 @@ func (j *PreferenceJSONData) Scan(val interface{}) error {
 		if len(v) == 0 {
 			return nil
 		}
-		err := json.Unmarshal(v, &j)
-		return err
+		return json.Unmarshal(v, &j)
 	case string:
 		if len(v) == 0 {
 			return nil
 		}
-		err := json.Unmarshal([]byte(v), &j)
-		return err
+		return json.Unmarshal([]byte(v), &j)
 	default:
 		return fmt.Errorf("unsupported type: %T", v)
 	}
