@@ -6,7 +6,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -45,44 +44,32 @@ func main() {
 	}
 
 	wd := codegen.NewWriteDiffer()
-	parent := os.DirFS(cwd)
 	lib := cuectx.ProvideThemaLibrary()
-	ptrees := make(map[string]*pfs.Tree)
+	ptrees := make(map[string]*codegen.PluginTree)
 	for _, typ := range []string{"datasource", "panel"} {
-		ents, err := fs.ReadDir(parent, typ)
+		dir := filepath.Join(cwd, typ)
+		treeor, err := codegen.ExtractPluginTrees(os.DirFS(dir), lib)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "readdir failed on %s: %s\n", filepath.Join(cwd, typ), err)
+			fmt.Fprintf(os.Stderr, "extracting plugin trees failed for %s: %s\n", dir, err)
 			os.Exit(1)
 		}
-		for _, plugdir := range ents {
-			if skipPlugins[plugdir.Name()] {
+
+		for name, option := range treeor {
+			if skipPlugins[name] {
 				continue
 			}
-			subp := filepath.Join(typ, plugdir.Name())
-			fullp := filepath.Join(cwd, subp)
-			sub, err := fs.Sub(parent, subp)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "creating subfs failed on %s: %s\n", fullp, err)
-				os.Exit(1)
-			}
-			ptree, err := pfs.ParsePluginFS(sub, lib)
-			if err != nil {
-				if errors.Is(err, pfs.ErrNoRootFile) {
-					continue
-				}
 
-				if errors.Is(err, pfs.ErrInvalidRootFile) {
-					continue
-				}
-				fmt.Fprintf(os.Stderr, "error parsing plugin directory %s: %s\n", fullp, err)
+			if option.Tree != nil {
+				ptrees[filepath.Join(typ, name)] = option.Tree
+			} else if !errors.Is(option.Err, pfs.ErrNoRootFile) {
+				fmt.Fprintf(os.Stderr, "error parsing plugin directory %s: %s\n", filepath.Join(dir, name), option.Err)
 				os.Exit(1)
 			}
-			ptrees[fullp] = ptree
 		}
 	}
 
 	for fullp, ptree := range ptrees {
-		twd, err := codegen.CuetsifyPlugin(ptree, fullp)
+		twd, err := ptree.GenerateTS(fullp)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "generating typescript failed for %s: %s\n", fullp, err)
 			os.Exit(1)

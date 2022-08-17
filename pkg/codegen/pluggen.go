@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -50,7 +51,52 @@ func MapCUEImportToTS(path string) (string, error) {
 	return i, nil
 }
 
-func CuetsifyPlugin(t *pfs.Tree, path string) (WriteDiffer, error) {
+// ExtractPluginTrees attempts to create a *pfs.Tree for each of the top-level child
+// directories in the provided fs.FS.
+//
+// Errors returned from [pfs.ParsePluginFS] are placed in the option map. Only
+// filesystem traversal and read errors will result in a non-nil second return
+// value.
+func ExtractPluginTrees(parent fs.FS, lib thema.Library) (map[string]PluginTreeOrErr, error) {
+	ents, err := fs.ReadDir(parent, ".")
+	if err != nil {
+		return nil, fmt.Errorf("error reading fs root directory: %w", err)
+	}
+
+	ptrees := make(map[string]PluginTreeOrErr)
+	for _, plugdir := range ents {
+		subpath := plugdir.Name()
+		sub, err := fs.Sub(parent, subpath)
+		if err != nil {
+			return nil, fmt.Errorf("error creating subfs for path %s: %w", subpath, err)
+		}
+
+		var either PluginTreeOrErr
+		if ptree, err := pfs.ParsePluginFS(sub, lib); err == nil {
+			either.Tree = (*PluginTree)(ptree)
+		} else {
+			either.Err = err
+		}
+		ptrees[subpath] = either
+	}
+
+	return ptrees, nil
+}
+
+// PluginTreeOrErr represents either a *pfs.Tree, or the error that occurred
+// while trying to create one.
+// TODO replace with generic option type after go 1.18
+type PluginTreeOrErr struct {
+	Err  error
+	Tree *PluginTree
+}
+
+// PluginTree is a pfs.Tree. It exists so we can add methods for code generation to it.
+type PluginTree pfs.Tree
+
+func (pt *PluginTree) GenerateTS(path string) (WriteDiffer, error) {
+	t := (*pfs.Tree)(pt)
+
 	// TODO replace with cuetsy's TS AST
 	f := &tsFile{}
 
