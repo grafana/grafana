@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -23,7 +22,7 @@ type setUserResourcePermissionTest struct {
 	resource          string
 	resourceID        string
 	resourceAttribute string
-	seeds             []types.SetResourcePermissionCommand
+	seeds             []SetResourcePermissionCommand
 }
 
 func Teststore_SetUserResourcePermission(t *testing.T) {
@@ -44,7 +43,7 @@ func Teststore_SetUserResourcePermission(t *testing.T) {
 			resource:          "datasources",
 			resourceID:        "1",
 			resourceAttribute: "uid",
-			seeds: []types.SetResourcePermissionCommand{
+			seeds: []SetResourcePermissionCommand{
 				{
 					Actions:    []string{"datasources:query"},
 					Resource:   "datasources",
@@ -60,7 +59,7 @@ func Teststore_SetUserResourcePermission(t *testing.T) {
 			resource:          "datasources",
 			resourceID:        "1",
 			resourceAttribute: "uid",
-			seeds: []types.SetResourcePermissionCommand{
+			seeds: []SetResourcePermissionCommand{
 				{
 					Actions:    []string{"datasources:write"},
 					Resource:   "datasources",
@@ -79,7 +78,7 @@ func Teststore_SetUserResourcePermission(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetUserResourcePermission(context.Background(), test.userID, accesscontrol.User{ID: test.userID}, types.SetResourcePermissionCommand{
+			added, err := store.SetUserResourcePermission(context.Background(), test.userID, accesscontrol.User{ID: test.userID}, SetResourcePermissionCommand{
 				Actions:           test.actions,
 				Resource:          test.resource,
 				ResourceID:        test.resourceID,
@@ -105,7 +104,7 @@ type setTeamResourcePermissionTest struct {
 	resource          string
 	resourceID        string
 	resourceAttribute string
-	seeds             []types.SetResourcePermissionCommand
+	seeds             []SetResourcePermissionCommand
 }
 
 func Teststore_SetTeamResourcePermission(t *testing.T) {
@@ -127,7 +126,7 @@ func Teststore_SetTeamResourcePermission(t *testing.T) {
 			resource:          "datasources",
 			resourceID:        "1",
 			resourceAttribute: "uid",
-			seeds: []types.SetResourcePermissionCommand{
+			seeds: []SetResourcePermissionCommand{
 				{
 					Actions:           []string{"datasources:query"},
 					Resource:          "datasources",
@@ -144,7 +143,7 @@ func Teststore_SetTeamResourcePermission(t *testing.T) {
 			resource:          "datasources",
 			resourceID:        "1",
 			resourceAttribute: "uid",
-			seeds: []types.SetResourcePermissionCommand{
+			seeds: []SetResourcePermissionCommand{
 				{
 					Actions:           []string{"datasources:query"},
 					Resource:          "datasources",
@@ -164,7 +163,7 @@ func Teststore_SetTeamResourcePermission(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetTeamResourcePermission(context.Background(), test.orgID, test.teamID, types.SetResourcePermissionCommand{
+			added, err := store.SetTeamResourcePermission(context.Background(), test.orgID, test.teamID, SetResourcePermissionCommand{
 				Actions:           test.actions,
 				Resource:          test.resource,
 				ResourceID:        test.resourceID,
@@ -190,7 +189,7 @@ type setBuiltInResourcePermissionTest struct {
 	resource          string
 	resourceID        string
 	resourceAttribute string
-	seeds             []types.SetResourcePermissionCommand
+	seeds             []SetResourcePermissionCommand
 }
 
 func Teststore_SetBuiltInResourcePermission(t *testing.T) {
@@ -212,7 +211,7 @@ func Teststore_SetBuiltInResourcePermission(t *testing.T) {
 			resource:          "datasources",
 			resourceID:        "1",
 			resourceAttribute: "uid",
-			seeds: []types.SetResourcePermissionCommand{
+			seeds: []SetResourcePermissionCommand{
 				{
 					Actions:           []string{"datasources:query"},
 					Resource:          "datasources",
@@ -229,7 +228,7 @@ func Teststore_SetBuiltInResourcePermission(t *testing.T) {
 			resource:          "datasources",
 			resourceID:        "1",
 			resourceAttribute: "uid",
-			seeds: []types.SetResourcePermissionCommand{
+			seeds: []SetResourcePermissionCommand{
 				{
 					Actions:           []string{"datasources:query"},
 					Resource:          "datasources",
@@ -249,7 +248,7 @@ func Teststore_SetBuiltInResourcePermission(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			added, err := store.SetBuiltInResourcePermission(context.Background(), test.orgID, test.builtInRole, types.SetResourcePermissionCommand{
+			added, err := store.SetBuiltInResourcePermission(context.Background(), test.orgID, test.builtInRole, SetResourcePermissionCommand{
 				Actions:           test.actions,
 				Resource:          test.resource,
 				ResourceID:        test.resourceID,
@@ -271,7 +270,7 @@ type setResourcePermissionsTest struct {
 	desc              string
 	orgID             int64
 	resourceAttribute string
-	commands          []types.SetResourcePermissionsCommand
+	commands          []SetResourcePermissionsCommand
 }
 
 func Teststore_SetResourcePermissions(t *testing.T) {
@@ -280,10 +279,10 @@ func Teststore_SetResourcePermissions(t *testing.T) {
 			desc:              "should set all permissions provided",
 			orgID:             1,
 			resourceAttribute: "uid",
-			commands: []types.SetResourcePermissionsCommand{
+			commands: []SetResourcePermissionsCommand{
 				{
 					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
 						Actions:           []string{"datasources:query"},
 						Resource:          "datasources",
 						ResourceID:        "1",
@@ -292,7 +291,7 @@ func Teststore_SetResourcePermissions(t *testing.T) {
 				},
 				{
 					TeamID: 3,
-					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
 						Actions:           []string{"datasources:query"},
 						Resource:          "datasources",
 						ResourceID:        "1",
@@ -301,7 +300,7 @@ func Teststore_SetResourcePermissions(t *testing.T) {
 				},
 				{
 					BuiltinRole: "Admin",
-					SetResourcePermissionCommand: types.SetResourcePermissionCommand{
+					SetResourcePermissionCommand: SetResourcePermissionCommand{
 						Actions:           []string{"datasources:query"},
 						Resource:          "datasources",
 						ResourceID:        "1",
@@ -316,7 +315,7 @@ func Teststore_SetResourcePermissions(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, _ := setupTestEnv(t)
 
-			permissions, err := store.SetResourcePermissions(context.Background(), tt.orgID, tt.commands, types.ResourceHooks{})
+			permissions, err := store.SetResourcePermissions(context.Background(), tt.orgID, tt.commands, ResourceHooks{})
 			require.NoError(t, err)
 
 			require.Len(t, permissions, len(tt.commands))
@@ -418,7 +417,7 @@ func Teststore_GetResourcePermissions(t *testing.T) {
 
 			seedResourcePermissions(t, store, sql, test.actions, test.resource, test.resourceID, test.resourceAttribute, test.numUsers)
 
-			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgID, types.GetResourcePermissionsQuery{
+			permissions, err := store.GetResourcePermissions(context.Background(), test.user.OrgID, GetResourcePermissionsQuery{
 				User:              test.user,
 				Actions:           test.actions,
 				Resource:          test.resource,
@@ -454,7 +453,7 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 		})
 		require.NoError(t, err)
 
-		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.ID}, types.SetResourcePermissionCommand{
+		_, err = store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: u.ID}, SetResourcePermissionCommand{
 			Actions:           actions,
 			Resource:          resource,
 			ResourceID:        resourceID,

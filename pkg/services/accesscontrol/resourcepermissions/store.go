@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -50,8 +49,8 @@ func (p *flatResourcePermission) IsInherited(scope string) bool {
 
 func (s *store) SetUserResourcePermission(
 	ctx context.Context, orgID int64, usr accesscontrol.User,
-	cmd types.SetResourcePermissionCommand,
-	hook types.UserResourceHookFunc,
+	cmd SetResourcePermissionCommand,
+	hook UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	if usr.ID == 0 {
 		return nil, user.ErrUserNotFound
@@ -68,8 +67,8 @@ func (s *store) SetUserResourcePermission(
 }
 func (s *store) setUserResourcePermission(
 	sess *sqlstore.DBSession, orgID int64, user accesscontrol.User,
-	cmd types.SetResourcePermissionCommand,
-	hook types.UserResourceHookFunc,
+	cmd SetResourcePermissionCommand,
+	hook UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
 	if err != nil {
@@ -87,8 +86,8 @@ func (s *store) setUserResourcePermission(
 
 func (s *store) SetTeamResourcePermission(
 	ctx context.Context, orgID, teamID int64,
-	cmd types.SetResourcePermissionCommand,
-	hook types.TeamResourceHookFunc,
+	cmd SetResourcePermissionCommand,
+	hook TeamResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	if teamID == 0 {
 		return nil, models.ErrTeamNotFound
@@ -107,8 +106,8 @@ func (s *store) SetTeamResourcePermission(
 
 func (s *store) setTeamResourcePermission(
 	sess *sqlstore.DBSession, orgID, teamID int64,
-	cmd types.SetResourcePermissionCommand,
-	hook types.TeamResourceHookFunc,
+	cmd SetResourcePermissionCommand,
+	hook TeamResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedTeamRoleName(teamID), s.teamAdder(sess, orgID, teamID), cmd)
 	if err != nil {
@@ -126,8 +125,8 @@ func (s *store) setTeamResourcePermission(
 
 func (s *store) SetBuiltInResourcePermission(
 	ctx context.Context, orgID int64, builtInRole string,
-	cmd types.SetResourcePermissionCommand,
-	hook types.BuiltinResourceHookFunc,
+	cmd SetResourcePermissionCommand,
+	hook BuiltinResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	if !org.RoleType(builtInRole).IsValid() || builtInRole == accesscontrol.RoleGrafanaAdmin {
 		return nil, fmt.Errorf("invalid role: %s", builtInRole)
@@ -150,8 +149,8 @@ func (s *store) SetBuiltInResourcePermission(
 
 func (s *store) setBuiltInResourcePermission(
 	sess *sqlstore.DBSession, orgID int64, builtInRole string,
-	cmd types.SetResourcePermissionCommand,
-	hook types.BuiltinResourceHookFunc,
+	cmd SetResourcePermissionCommand,
+	hook BuiltinResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedBuiltInRoleName(builtInRole), s.builtInRoleAdder(sess, orgID, builtInRole), cmd)
 	if err != nil {
@@ -169,8 +168,8 @@ func (s *store) setBuiltInResourcePermission(
 
 func (s *store) SetResourcePermissions(
 	ctx context.Context, orgID int64,
-	commands []types.SetResourcePermissionsCommand,
-	hooks types.ResourceHooks,
+	commands []SetResourcePermissionsCommand,
+	hooks ResourceHooks,
 ) ([]accesscontrol.ResourcePermission, error) {
 	var err error
 	var permissions []accesscontrol.ResourcePermission
@@ -202,7 +201,7 @@ func (s *store) SetResourcePermissions(
 type roleAdder func(roleID int64) error
 
 func (s *store) setResourcePermission(
-	sess *sqlstore.DBSession, orgID int64, roleName string, adder roleAdder, cmd types.SetResourcePermissionCommand,
+	sess *sqlstore.DBSession, orgID int64, roleName string, adder roleAdder, cmd SetResourcePermissionCommand,
 ) (*accesscontrol.ResourcePermission, error) {
 	role, err := s.getOrCreateManagedRole(sess, orgID, roleName, adder)
 	if err != nil {
@@ -265,7 +264,7 @@ func (s *store) setResourcePermission(
 	return permission, nil
 }
 
-func (s *store) GetResourcePermissions(ctx context.Context, orgID int64, query types.GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+func (s *store) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	var result []accesscontrol.ResourcePermission
 
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -289,7 +288,7 @@ func (s *store) createResourcePermission(sess *sqlstore.DBSession, roleID int64,
 	return permission.ID, nil
 }
 
-func (s *store) getResourcePermissions(sess *sqlstore.DBSession, orgID int64, query types.GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
+func (s *store) getResourcePermissions(sess *sqlstore.DBSession, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
 	if len(query.Actions) == 0 {
 		return nil, nil
 	}

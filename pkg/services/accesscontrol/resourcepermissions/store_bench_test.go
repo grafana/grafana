@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -56,7 +55,7 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 func getDSPermissions(b *testing.B, store *store, dataSources []int64) {
 	dsId := dataSources[0]
 
-	permissions, err := store.GetResourcePermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcePermissionsQuery{
+	permissions, err := store.GetResourcePermissions(context.Background(), accesscontrol.GlobalOrgID, GetResourcePermissionsQuery{
 		User:              &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: {"org.users:read": {"users:*"}, "teams:read": {"teams:*"}}}},
 		Actions:           []string{dsAction},
 		Resource:          dsResource,
@@ -98,7 +97,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 				context.Background(),
 				accesscontrol.GlobalOrgID,
 				accesscontrol.User{ID: userIds[i]},
-				types.SetResourcePermissionCommand{
+				SetResourcePermissionCommand{
 					Actions:           []string{dsAction},
 					Resource:          dsResource,
 					ResourceID:        strconv.Itoa(int(dsID)),
@@ -116,7 +115,7 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 				context.Background(),
 				accesscontrol.GlobalOrgID,
 				teamIds[i],
-				types.SetResourcePermissionCommand{
+				SetResourcePermissionCommand{
 					Actions:           []string{"datasources:query"},
 					Resource:          "datasources",
 					ResourceID:        strconv.Itoa(int(dsID)),

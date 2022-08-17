@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -729,14 +728,14 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 func removeFolderPermission(t *testing.T, store resourcepermissions.Store, orgID, userID int64, role org.RoleType, uid string) {
 	t.Helper()
 	// remove user permissions on folder
-	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, types.SetResourcePermissionCommand{
+	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, resourcepermissions.SetResourcePermissionCommand{
 		Resource:          "folders",
 		ResourceID:        uid,
 		ResourceAttribute: "uid",
 	}, nil)
 
 	// remove org role permissions from folder
-	_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(role), types.SetResourcePermissionCommand{
+	_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(role), resourcepermissions.SetResourcePermissionCommand{
 		Resource:          "folders",
 		ResourceID:        uid,
 		ResourceAttribute: "uid",
@@ -744,7 +743,7 @@ func removeFolderPermission(t *testing.T, store resourcepermissions.Store, orgID
 
 	// remove org role children permissions from folder
 	for _, c := range role.Children() {
-		_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(c), types.SetResourcePermissionCommand{
+		_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(c), resourcepermissions.SetResourcePermissionCommand{
 			Resource:          "folders",
 			ResourceID:        uid,
 			ResourceAttribute: "uid",
