@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { getDataSourceSrv } from '@grafana/runtime/src';
@@ -17,7 +17,7 @@ type QueryListItemProps = {
   hideModal: () => void;
 };
 
-export const QueryListItem = ({ query, showModal, hideModal }: QueryListItemProps) => {
+export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListItemProps) => {
   const styles = useStyles2(getStyles);
   const [dsInfo, setDsInfo] = useState<any>();
 
@@ -55,7 +55,7 @@ export const QueryListItem = ({ query, showModal, hideModal }: QueryListItemProp
   };
 
   const getDsType = () => {
-    const dsType = dsInfo?.type ?? 'datasource';
+    const dsType = query.ds_uid.length > 1 ? 'mixed' : dsInfo?.type ?? 'datasource';
     return dsType.charAt(0).toUpperCase() + dsType.slice(1);
   };
 
@@ -68,14 +68,22 @@ export const QueryListItem = ({ query, showModal, hideModal }: QueryListItemProp
         <Badge color={'green'} text={'1'} icon={'link'} />
       </td>
       <td className={styles.rowData}>{query.title}</td>
-      <td className={styles.rowData}>{getDsType()}</td>
+      <td className={styles.rowData}>
+        <img
+          className="filter-table__avatar"
+          src={dsInfo?.meta.info.logos.small}
+          alt="datasource image"
+          style={{ width: '16px', height: '16px' }}
+        />
+        &nbsp;{getDsType()}
+      </td>
       <td className={styles.rowData}>
         <img
           className="filter-table__avatar"
           src={'/avatar/46d229b033af06a191ff2267bca9ae56'}
           alt={`Avatar for ${author}`}
           style={{ width: '16px', height: '16px' }}
-        />{' '}
+        />
         &nbsp;{author}
       </td>
       <td className={styles.rowData}>{date}</td>
@@ -88,7 +96,9 @@ export const QueryListItem = ({ query, showModal, hideModal }: QueryListItemProp
       </td>
     </tr>
   );
-};
+});
+
+QueryListItem.displayName = 'QueryListItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
