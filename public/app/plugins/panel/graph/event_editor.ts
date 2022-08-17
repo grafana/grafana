@@ -105,6 +105,8 @@ export function eventEditor() {
     bindToController: true,
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/annotations/partials/event_editor.html',
+    // UGGG... need help here :(
+    // how do we open the react annotation editor in a pupup
     scope: {
       panelCtrl: '=',
       event: '=',
