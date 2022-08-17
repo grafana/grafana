@@ -9,13 +9,13 @@ apiVersion: 1
 #     name: my_rule_group
 #     # <string, required> name of the folder the rule group will be stored in
 #     folder: my_first_folder
-#     # <duration, required> interval that the rule group should evaluated at 
+#     # <duration, required> interval of the rule group evaluation
 #     interval: 60s
 #     # <list, required> list of rules that are part of the rule group  
 #     rules:
 #       # <string, required> unique identifier for the rule
 #     - uid: my_id_1
-#       # <string, required> title of the rule that will be displayed in the UI
+#       # <string, required> title of the rule, will be displayed in the UI
 #       title: my_first_rule
 #       # <string, required> query used for the condition
 #       condition: A
