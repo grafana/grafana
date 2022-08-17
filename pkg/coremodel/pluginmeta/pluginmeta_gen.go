@@ -32,47 +32,9 @@ const (
 	ModelCategoryTsdb ModelCategory = "tsdb"
 )
 
-// Defines values for PluginmetaDependenciesPluginsType.
-const (
-	ModelDependenciesPluginsTypeApp ModelDependenciesPluginsType = "app"
-
-	ModelDependenciesPluginsTypeDatasource ModelDependenciesPluginsType = "datasource"
-
-	ModelDependenciesPluginsTypePanel ModelDependenciesPluginsType = "panel"
-)
-
 // Defines values for PluginmetaHideFromList.
 const (
 	ModelHideFromListFalse ModelHideFromList = false
-)
-
-// Defines values for PluginmetaIncludesRole.
-const (
-	ModelIncludesRoleAdmin ModelIncludesRole = "Admin"
-
-	ModelIncludesRoleEditor ModelIncludesRole = "Editor"
-
-	ModelIncludesRoleViewer ModelIncludesRole = "Viewer"
-)
-
-// Defines values for PluginmetaIncludesType.
-const (
-	ModelIncludesTypeDashboard ModelIncludesType = "dashboard"
-
-	ModelIncludesTypeDatasource ModelIncludesType = "datasource"
-
-	ModelIncludesTypePage ModelIncludesType = "page"
-
-	ModelIncludesTypePanel ModelIncludesType = "panel"
-)
-
-// Defines values for PluginmetaState.
-const (
-	ModelStateAlpha ModelState = "alpha"
-
-	ModelStateBeta ModelState = "beta"
-
-	ModelStateDeprecated ModelState = "deprecated"
 )
 
 // Defines values for PluginmetaType.
@@ -82,6 +44,54 @@ const (
 	ModelTypeDatasource ModelType = "datasource"
 
 	ModelTypePanel ModelType = "panel"
+
+	ModelTypeRenderer ModelType = "renderer"
+
+	ModelTypeSecretsmanager ModelType = "secretsmanager"
+)
+
+// Defines values for PluginmetaDependencyType.
+const (
+	ModelDependencyTypeApp ModelDependencyType = "app"
+
+	ModelDependencyTypeDatasource ModelDependencyType = "datasource"
+
+	ModelDependencyTypePanel ModelDependencyType = "panel"
+)
+
+// Defines values for PluginmetaIncludeRole.
+const (
+	ModelIncludeRoleAdmin ModelIncludeRole = "Admin"
+
+	ModelIncludeRoleEditor ModelIncludeRole = "Editor"
+
+	ModelIncludeRoleViewer ModelIncludeRole = "Viewer"
+)
+
+// Defines values for PluginmetaIncludeType.
+const (
+	ModelIncludeTypeApp ModelIncludeType = "app"
+
+	ModelIncludeTypeDashboard ModelIncludeType = "dashboard"
+
+	ModelIncludeTypeDatasource ModelIncludeType = "datasource"
+
+	ModelIncludeTypePanel ModelIncludeType = "panel"
+
+	ModelIncludeTypeRenderer ModelIncludeType = "renderer"
+
+	ModelIncludeTypeSecretsmanager ModelIncludeType = "secretsmanager"
+)
+
+// Defines values for PluginmetaReleaseState.
+const (
+	ModelReleaseStateAlpha ModelReleaseState = "alpha"
+
+	ModelReleaseStateBeta ModelReleaseState = "beta"
+
+	ModelReleaseStateDeprecated ModelReleaseState = "deprecated"
+
+	ModelReleaseStateStable ModelReleaseState = "stable"
 )
 
 // Pluginmeta defines model for pluginmeta.
@@ -122,12 +132,7 @@ type Model struct {
 		GrafanaVersion *string `json:"grafanaVersion,omitempty"`
 
 		// An array of required plugins on which this plugin depends.
-		Plugins *[]struct {
-			Id      string                       `json:"id"`
-			Name    string                       `json:"name"`
-			Type    ModelDependenciesPluginsType `json:"type"`
-			Version string                       `json:"version"`
-		} `json:"plugins,omitempty"`
+		Plugins *[]ModelDependency `json:"plugins,omitempty"`
 	} `json:"dependencies"`
 
 	// Grafana Enerprise specific features.
@@ -160,34 +165,9 @@ type Model struct {
 	Id string `json:"id"`
 
 	// Resources to include in plugin.
-	Includes *[]struct {
-		// Add the include to the side menu.
-		AddToNav *bool `json:"addToNav,omitempty"`
+	Includes *[]ModelInclude `json:"includes,omitempty"`
 
-		// (Legacy) The Angular component to use for a page.
-		Component *string `json:"component,omitempty"`
-
-		// Page or dashboard when user clicks the icon in the side menu.
-		DefaultNav *bool `json:"defaultNav,omitempty"`
-
-		// Icon to use in the side menu. For information on available
-		// icon, refer to [Icons
-		// Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview).
-		Icon *string `json:"icon,omitempty"`
-		Name *string `json:"name,omitempty"`
-
-		// Used for app plugins.
-		Path *string            `json:"path,omitempty"`
-		Role *ModelIncludesRole `json:"role,omitempty"`
-		Type *ModelIncludesType `json:"type,omitempty"`
-
-		// Unique identifier of the included resource
-		Uid *string `json:"uid,omitempty"`
-	} `json:"includes,omitempty"`
-
-	// Metadata for the plugin. Some fields are used on the plugins
-	// page in Grafana and others on grafana.com if the plugin is
-	// published.
+	// Metadata about the plugin.
 	Info struct {
 		// Information about the plugin author.
 		Author *struct {
@@ -200,23 +180,7 @@ type Model struct {
 			// Link to author's website.
 			Url *string `json:"url,omitempty"`
 		} `json:"author,omitempty"`
-
-		// Build information
-		Build *struct {
-			// Git branch the plugin was built from.
-			Branch *string `json:"branch,omitempty"`
-
-			// Git hash of the commit the plugin was built from
-			Hash   *string `json:"hash,omitempty"`
-			Number *int64  `json:"number,omitempty"`
-
-			// GitHub pull request the plugin was built from
-			Pr   *int32  `json:"pr,omitempty"`
-			Repo *string `json:"repo,omitempty"`
-
-			// Time when the plugin was built, as a Unix timestamp.
-			Time *int64 `json:"time,omitempty"`
-		} `json:"build,omitempty"`
+		Build *ModelBuildInfo `json:"build,omitempty"`
 
 		// Description of plugin. Used on the plugins page in Grafana and
 		// for search on grafana.com.
@@ -290,86 +254,14 @@ type Model struct {
 		MinInterval *bool `json:"minInterval,omitempty"`
 	} `json:"queryOptions,omitempty"`
 
-	// For data source plugins. Proxy routes used for plugin
-	// authentication and adding headers to HTTP requests made by the
-	// plugin. For more information, refer to [Authentication for
-	// data source
-	// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
-	Routes *[]struct {
-		// For data source plugins. Route headers set the body content and
-		// length to the proxied request.
-		Body *map[string]interface{} `json:"body,omitempty"`
-
-		// For data source plugins. Route headers adds HTTP headers to the
-		// proxied request.
-		Headers *[]interface{} `json:"headers,omitempty"`
-
-		// For data source plugins. Token authentication section used with
-		// an JWT OAuth API.
-		JwtTokenAuth *struct {
-			// Parameters for the JWT token authentication request.
-			Params *struct {
-				ClientEmail *string `json:"client_email,omitempty"`
-				PrivateKey  *string `json:"private_key,omitempty"`
-				TokenUri    *string `json:"token_uri,omitempty"`
-			} `json:"params,omitempty"`
-
-			// The list of scopes that your application should be granted
-			// access to.
-			Scopes *[]string `json:"scopes,omitempty"`
-
-			// URL to fetch the JWT token.
-			Url *string `json:"url,omitempty"`
-		} `json:"jwtTokenAuth,omitempty"`
-
-		// For data source plugins. Route method matches the HTTP verb
-		// like GET or POST. Multiple methods can be provided as a
-		// comma-separated list.
-		Method *string `json:"method,omitempty"`
-
-		// For data source plugins. The route path that is replaced by the
-		// route URL field when proxying the call.
-		Path        *string `json:"path,omitempty"`
-		ReqRole     *string `json:"reqRole,omitempty"`
-		ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
-
-		// For data source plugins. Token authentication section used with
-		// an OAuth API.
-		TokenAuth *struct {
-			// Parameters for the token authentication request.
-			Params *struct {
-				// OAuth client ID
-				ClientId *string `json:"client_id,omitempty"`
-
-				// OAuth client secret. Usually populated by decrypting the secret
-				// from the SecureJson blob.
-				ClientSecret *string `json:"client_secret,omitempty"`
-
-				// OAuth grant type
-				GrantType *string `json:"grant_type,omitempty"`
-
-				// OAuth resource
-				Resource *string `json:"resource,omitempty"`
-			} `json:"params,omitempty"`
-
-			// The list of scopes that your application should be granted
-			// access to.
-			Scopes *[]string `json:"scopes,omitempty"`
-
-			// URL to fetch the authentication token.
-			Url *string `json:"url,omitempty"`
-		} `json:"tokenAuth,omitempty"`
-
-		// For data source plugins. Route URL is where the request is
-		// proxied to.
-		Url *string `json:"url,omitempty"`
-	} `json:"routes,omitempty"`
+	// Routes is a list of proxy routes, if any. For datasource plugins only.
+	Routes *[]ModelRoute `json:"routes,omitempty"`
 
 	// For panel plugins. Hides the query editor.
 	SkipDataQuery *bool `json:"skipDataQuery,omitempty"`
 
-	// Marks a plugin as a pre-release.
-	State *ModelState `json:"state,omitempty"`
+	// ReleaseState indicates release maturity state of a plugin.
+	State *ModelReleaseState `json:"state,omitempty"`
 
 	// For data source plugins, if the plugin supports streaming.
 	Streaming *bool `json:"streaming,omitempty"`
@@ -380,7 +272,8 @@ type Model struct {
 	// For data source plugins, if the plugin supports tracing.
 	Tracing *bool `json:"tracing,omitempty"`
 
-	// Plugin type.
+	// type indicates which type of Grafana plugin this is, of the defined
+	// set of Grafana plugin types.
 	Type ModelType `json:"type"`
 }
 
@@ -390,12 +283,6 @@ type Model struct {
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type ModelCategory string
 
-// PluginmetaDependenciesPluginsType defines model for Pluginmeta.Dependencies.Plugins.Type.
-//
-// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
-// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelDependenciesPluginsType string
-
 // hideFromList excludes the plugin from listings in Grafana's UI. Only
 // allowed for builtin plugins.
 //
@@ -403,29 +290,268 @@ type ModelDependenciesPluginsType string
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type ModelHideFromList bool
 
-// PluginmetaIncludesRole defines model for Pluginmeta.Includes.Role.
-//
-// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
-// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelIncludesRole string
-
-// PluginmetaIncludesType defines model for Pluginmeta.Includes.Type.
-//
-// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
-// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelIncludesType string
-
-// Marks a plugin as a pre-release.
-//
-// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
-// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelState string
-
-// Plugin type.
+// type indicates which type of Grafana plugin this is, of the defined
+// set of Grafana plugin types.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type ModelType string
+
+// PluginmetaBuildInfo defines model for pluginmeta.BuildInfo.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelBuildInfo struct {
+	// Git branch the plugin was built from.
+	Branch *string `json:"branch,omitempty"`
+
+	// Git hash of the commit the plugin was built from
+	Hash   *string `json:"hash,omitempty"`
+	Number *int64  `json:"number,omitempty"`
+
+	// GitHub pull request the plugin was built from
+	Pr   *int32  `json:"pr,omitempty"`
+	Repo *string `json:"repo,omitempty"`
+
+	// Time when the plugin was built, as a Unix timestamp.
+	Time *int64 `json:"time,omitempty"`
+}
+
+// PluginmetaDependencies defines model for pluginmeta.Dependencies.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelDependencies struct {
+	// Required Grafana version for this plugin. Validated using
+	// https://github.com/npm/node-semver.
+	GrafanaDependency string `json:"grafanaDependency"`
+
+	// (Deprecated) Required Grafana version for this plugin, e.g.
+	// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
+	// v7.x.x.
+	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
+
+	// An array of required plugins on which this plugin depends.
+	Plugins *[]ModelDependency `json:"plugins,omitempty"`
+}
+
+// Dependency describes another plugin on which a plugin depends.
+// The id refers to the plugin package identifier, as given on
+// the grafana.com plugin marketplace.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelDependency struct {
+	Id      string              `json:"id"`
+	Name    string              `json:"name"`
+	Type    ModelDependencyType `json:"type"`
+	Version string              `json:"version"`
+}
+
+// PluginmetaDependencyType defines model for PluginmetaDependency.Type.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelDependencyType string
+
+// Header describes an HTTP header that is forwarded with a proxied request for
+// a plugin route.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelHeader struct {
+	Content string `json:"content"`
+	Name    string `json:"name"`
+}
+
+// A resource to be included in a plugin.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelInclude struct {
+	// Add the include to the side menu.
+	AddToNav *bool `json:"addToNav,omitempty"`
+
+	// (Legacy) The Angular component to use for a page.
+	Component *string `json:"component,omitempty"`
+
+	// Page or dashboard when user clicks the icon in the side menu.
+	DefaultNav *bool `json:"defaultNav,omitempty"`
+
+	// Icon to use in the side menu. For information on available
+	// icon, refer to [Icons
+	// Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview).
+	Icon *string `json:"icon,omitempty"`
+	Name *string `json:"name,omitempty"`
+
+	// Used for app plugins.
+	Path *string           `json:"path,omitempty"`
+	Role *ModelIncludeRole `json:"role,omitempty"`
+	Type ModelIncludeType  `json:"type"`
+
+	// Unique identifier of the included resource
+	Uid *string `json:"uid,omitempty"`
+}
+
+// PluginmetaIncludeRole defines model for PluginmetaInclude.Role.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelIncludeRole string
+
+// PluginmetaIncludeType defines model for PluginmetaInclude.Type.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelIncludeType string
+
+// Metadata about a Grafana plugin. Some fields are used on the plugins
+// page in Grafana and others on grafana.com, if the plugin is published.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelInfo struct {
+	// Information about the plugin author.
+	Author *struct {
+		// Author's name.
+		Email *string `json:"email,omitempty"`
+
+		// Author's name.
+		Name *string `json:"name,omitempty"`
+
+		// Link to author's website.
+		Url *string `json:"url,omitempty"`
+	} `json:"author,omitempty"`
+	Build *ModelBuildInfo `json:"build,omitempty"`
+
+	// Description of plugin. Used on the plugins page in Grafana and
+	// for search on grafana.com.
+	Description *string `json:"description,omitempty"`
+
+	// Array of plugin keywords. Used for search on grafana.com.
+	Keywords []string `json:"keywords"`
+
+	// An array of link objects to be displayed on this plugin's
+	// project page in the form `{name: 'foo', url:
+	// 'http://example.com'}`
+	Links *[]struct {
+		Name *string `json:"name,omitempty"`
+		Url  *string `json:"url,omitempty"`
+	} `json:"links,omitempty"`
+
+	// SVG images that are used as plugin icons.
+	Logos struct {
+		// Link to the "large" version of the plugin logo, which must be
+		// an SVG image. "Large" and "small" logos can be the same image.
+		Large string `json:"large"`
+
+		// Link to the "small" version of the plugin logo, which must be
+		// an SVG image. "Large" and "small" logos can be the same image.
+		Small string `json:"small"`
+	} `json:"logos"`
+
+	// An array of screenshot objects in the form `{name: 'bar', path:
+	// 'img/screenshot.png'}`
+	Screenshots *[]struct {
+		Name *string `json:"name,omitempty"`
+		Path *string `json:"path,omitempty"`
+	} `json:"screenshots,omitempty"`
+
+	// Date when this plugin was built.
+	Updated *string `json:"updated,omitempty"`
+
+	// Project version of this commit, e.g. `6.7.x`.
+	Version *string `json:"version,omitempty"`
+}
+
+// TODO docs
+// TODO should this really be separate from TokenAuth?
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelJWTTokenAuth struct {
+	// Parameters for the JWT token authentication request.
+	Params map[string]interface{} `json:"params"`
+
+	// The list of scopes that your application should be granted
+	// access to.
+	Scopes []string `json:"scopes"`
+
+	// URL to fetch the JWT token.
+	Url string `json:"url"`
+}
+
+// ReleaseState indicates release maturity state of a plugin.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelReleaseState string
+
+// A proxy route used in datasource plugins for plugin authentication
+// and adding headers to HTTP requests made by the plugin.
+// For more information, refer to [Authentication for data source
+// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelRoute struct {
+	// For data source plugins. Route headers set the body content and
+	// length to the proxied request.
+	Body *map[string]interface{} `json:"body,omitempty"`
+
+	// For data source plugins. Route headers adds HTTP headers to the
+	// proxied request.
+	Headers *[]ModelHeader `json:"headers,omitempty"`
+
+	// TODO docs
+	// TODO should this really be separate from TokenAuth?
+	JwtTokenAuth *ModelJWTTokenAuth `json:"jwtTokenAuth,omitempty"`
+
+	// For data source plugins. Route method matches the HTTP verb
+	// like GET or POST. Multiple methods can be provided as a
+	// comma-separated list.
+	Method *string `json:"method,omitempty"`
+
+	// For data source plugins. The route path that is replaced by the
+	// route URL field when proxying the call.
+	Path        *string `json:"path,omitempty"`
+	ReqRole     *string `json:"reqRole,omitempty"`
+	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
+
+	// TODO docs
+	TokenAuth *ModelTokenAuth `json:"tokenAuth,omitempty"`
+
+	// For data source plugins. Route URL is where the request is
+	// proxied to.
+	Url       *string          `json:"url,omitempty"`
+	UrlParams *[]ModelURLParam `json:"urlParams,omitempty"`
+}
+
+// TODO docs
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelTokenAuth struct {
+	// Parameters for the token authentication request.
+	Params map[string]interface{} `json:"params"`
+
+	// The list of scopes that your application should be granted
+	// access to.
+	Scopes *[]string `json:"scopes,omitempty"`
+
+	// URL to fetch the authentication token.
+	Url *string `json:"url,omitempty"`
+}
+
+// URLParam describes query string parameters for
+// a url in a plugin route
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelURLParam struct {
+	Content string `json:"content"`
+	Name    string `json:"name"`
+}
 
 //go:embed coremodel.cue
 var cueFS embed.FS

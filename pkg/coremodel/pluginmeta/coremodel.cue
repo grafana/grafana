@@ -16,8 +16,16 @@ seqs: [
 						id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
 				}
 
-				// Plugin type.
-				type: "app" | "datasource" | "panel"
+				// type indicates which type of Grafana plugin this is, of the defined
+				// set of Grafana plugin types.
+				type: #Type
+
+				// Type is a string identifier of the Grafana plugin type.
+				#Type: "app" | "datasource" | "panel" | "renderer" | "secretsmanager"
+
+				// IncludeType is a string identifier of a plugin include type, which is
+				// a superset of plugin types.
+				#IncludeType: #Type | "dashboard"
 
 				// Human-readable name of the plugin that is shown to the user in
 				// the UI.
@@ -61,13 +69,19 @@ seqs: [
 				preload?: bool
 
 				// Marks a plugin as a pre-release.
-				state?: "alpha" | "beta" | "deprecated"
+				state?: #ReleaseState
+
+				// ReleaseState indicates release maturity state of a plugin.
+				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
 
 				// Resources to include in plugin.
-				includes?: [...{
+				includes?: [...#Include]
+
+				// A resource to be included in a plugin.
+				#Include: {
 					// Unique identifier of the included resource
 					uid?:  string
-					type?: "dashboard" | "page" | "panel" | "datasource"
+					type:  #IncludeType
 					name?: string
 
 					// (Legacy) The Angular component to use for a page.
@@ -88,7 +102,7 @@ seqs: [
 					// Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview).
 					icon?: string
 					...
-				}]
+				}
 
 				// For data source plugins, if the plugin supports logs.
 				logs?: bool
@@ -118,7 +132,9 @@ seqs: [
 				autoEnabled?: bool
 
 				// Dependencies needed by the plugin.
-				dependencies: {
+				dependencies: #Dependencies
+
+				#Dependencies: {
 					// (Deprecated) Required Grafana version for this plugin, e.g.
 					// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
 					// v7.x.x.
@@ -126,25 +142,32 @@ seqs: [
 
 					// Required Grafana version for this plugin. Validated using
 					// https://github.com/npm/node-semver.
-					grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
+					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
 					if !builtIn { // required for non-core plugins
 						grafanaDependency: string
 					}
 
 					// An array of required plugins on which this plugin depends.
-					plugins?: [...{
-						id:      =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
-						type:    "app" | "datasource" | "panel"
-						name:    string
-						version: string
-						...
-					}]
+					plugins?: [...#Dependency]
 				}
 
-				// Metadata for the plugin. Some fields are used on the plugins
-				// page in Grafana and others on grafana.com if the plugin is
-				// published.
-				info: {
+				// Dependency describes another plugin on which a plugin depends.
+				// The id refers to the plugin package identifier, as given on
+				// the grafana.com plugin marketplace.
+				#Dependency: {
+					id:      =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+					type:    "app" | "datasource" | "panel"
+					name:    string
+					version: string
+					...
+				}
+
+				// Metadata about the plugin.
+				info: #Info
+
+				// Metadata about a Grafana plugin. Some fields are used on the plugins
+				// page in Grafana and others on grafana.com, if the plugin is published.
+				#Info: {
 					// Information about the plugin author.
 					author?: {
 						// Author's name.
@@ -158,21 +181,7 @@ seqs: [
 					}
 
 					// Build information
-					build?: {
-						// Time when the plugin was built, as a Unix timestamp.
-						time?: int64
-						repo?: string
-
-						// Git branch the plugin was built from.
-						branch?: string
-
-						// Git hash of the commit the plugin was built from
-						hash?:   string
-						"number"?: int64
-
-						// GitHub pull request the plugin was built from
-						pr?: int32
-					}
+					build?: #BuildInfo
 
 					// Description of plugin. Used on the plugins page in Grafana and
 					// for search on grafana.com.
@@ -220,6 +229,22 @@ seqs: [
 					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
 				}
 
+				#BuildInfo: {
+					// Time when the plugin was built, as a Unix timestamp.
+					time?: int64
+					repo?: string
+
+					// Git branch the plugin was built from.
+					branch?: string
+
+					// Git hash of the commit the plugin was built from
+					hash?:     string
+					"number"?: int64
+
+					// GitHub pull request the plugin was built from
+					pr?: int32
+				}
+
 				// For data source plugins. There is a query options section in
 				// the plugin's query editor and these options can be turned on
 				// if needed.
@@ -237,12 +262,28 @@ seqs: [
 					cacheTimeout?: bool
 				}
 
-				// For data source plugins. Proxy routes used for plugin
-				// authentication and adding headers to HTTP requests made by the
-				// plugin. For more information, refer to [Authentication for
-				// data source
+				// Routes is a list of proxy routes, if any. For datasource plugins only.
+				routes?: [...#Route]
+
+				// Header describes an HTTP header that is forwarded with a proxied request for
+				// a plugin route.
+				#Header: {
+					name:    string
+					content: string
+				}
+
+				// URLParam describes query string parameters for
+				// a url in a plugin route
+				#URLParam: {
+					name:    string
+					content: string
+				}
+
+				// A proxy route used in datasource plugins for plugin authentication
+				// and adding headers to HTTP requests made by the plugin.
+				// For more information, refer to [Authentication for data source
 				// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
-				routes?: [...{
+				#Route: {
 					// For data source plugins. The route path that is replaced by the
 					// route URL field when proxying the call.
 					path?: string
@@ -254,13 +295,15 @@ seqs: [
 
 					// For data source plugins. Route URL is where the request is
 					// proxied to.
-					url?:         string
+					url?: string
+
+					urlParams?: [...#URLParam]
 					reqSignedIn?: bool
 					reqRole?:     string
 
 					// For data source plugins. Route headers adds HTTP headers to the
 					// proxied request.
-					headers?: [...]
+					headers?: [...#Header]
 
 					// For data source plugins. Route headers set the body content and
 					// length to the proxied request.
@@ -270,49 +313,39 @@ seqs: [
 
 					// For data source plugins. Token authentication section used with
 					// an OAuth API.
-					tokenAuth?: {
-						// URL to fetch the authentication token.
-						url?: string
-
-						// The list of scopes that your application should be granted
-						// access to.
-						scopes?: [...string]
-
-						// Parameters for the token authentication request.
-						params?: {
-							// OAuth grant type
-							grant_type?: string
-
-							// OAuth client ID
-							client_id?: string
-
-							// OAuth client secret. Usually populated by decrypting the secret
-							// from the SecureJson blob.
-							client_secret?: string
-
-							// OAuth resource
-							resource?: string
-						}
-					}
+					tokenAuth?: #TokenAuth
 
 					// For data source plugins. Token authentication section used with
 					// an JWT OAuth API.
-					jwtTokenAuth?: {
-						// URL to fetch the JWT token.
-						url?: string
+					jwtTokenAuth?: #JWTTokenAuth
+				}
 
-						// The list of scopes that your application should be granted
-						// access to.
-						scopes?: [...string]
+				// TODO docs
+				#TokenAuth: {
+					// URL to fetch the authentication token.
+					url?: string
 
-						// Parameters for the JWT token authentication request.
-						params?: {
-							token_uri?:    string
-							client_email?: string
-							private_key?:  string
-						}
-					}
-				}]
+					// The list of scopes that your application should be granted
+					// access to.
+					scopes?: [...string]
+
+					// Parameters for the token authentication request.
+					params: [string]: string
+				}
+
+				// TODO docs
+				// TODO should this really be separate from TokenAuth?
+				#JWTTokenAuth: {
+					// URL to fetch the JWT token.
+					url: string
+
+					// The list of scopes that your application should be granted
+					// access to.
+					scopes: [...string]
+
+					// Parameters for the JWT token authentication request.
+					params: [string]: string
+				}
 
 				// Grafana Enerprise specific features.
 				enterpriseFeatures?: {
