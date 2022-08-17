@@ -20,7 +20,11 @@ export const NotificationsStep: FC = () => {
 
   const { watch } = useFormContext<RuleFormValues>();
 
-  const alertLabels = Object.fromEntries(watch('labels').map((label) => [label.key, label.value]));
+  const alertLabels = Object.fromEntries(
+    watch('labels')
+      .filter((label) => label.key.length > 0 && label.value.length > 0)
+      .map((label) => [label.key, label.value])
+  );
 
   return (
     <RuleEditorSection
@@ -55,7 +59,7 @@ export const NotificationsStep: FC = () => {
       </div>
       <Button onClick={setAmPreviewVisible}>Open Alertmanager preview</Button>
       {amPreviewVisible && (
-        <Drawer onClose={setAmPreviewVisible}>
+        <Drawer onClose={setAmPreviewVisible} width="50%" scrollableContent={true}>
           <AmAlertPreview alertLabels={alertLabels} />
         </Drawer>
       )}

@@ -92,7 +92,7 @@ export type Receiver = {
   [key: string]: any;
 };
 
-type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
+export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 
 export type Route = {
   receiver?: string;

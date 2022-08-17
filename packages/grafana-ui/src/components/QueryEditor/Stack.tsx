@@ -8,6 +8,7 @@ import { useStyles2 } from '../../themes';
 interface StackProps {
   direction?: CSSProperties['flexDirection'];
   alignItems?: CSSProperties['alignItems'];
+  justifyContent?: CSSProperties['justifyContent'];
   wrap?: boolean;
   gap?: number;
 }
@@ -23,6 +24,7 @@ const getStyles = (theme: GrafanaTheme2, props: StackProps) => ({
     display: 'flex',
     flexDirection: props.direction ?? 'row',
     flexWrap: props.wrap ?? true ? 'wrap' : undefined,
+    justifyContent: props.justifyContent,
     alignItems: props.alignItems,
     gap: theme.spacing(props.gap ?? 2),
   }),

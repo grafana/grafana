@@ -6,6 +6,7 @@ import {
   Matcher,
   TimeInterval,
   TimeRange,
+  ObjectMatcher,
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
@@ -177,27 +178,49 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
   return matchers;
 }
 
-export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
-  return matchers.every(({ name, value, isRegex, isEqual }) => {
-    return Object.entries(labels).some(([labelKey, labelValue]) => {
-      const nameMatches = name === labelKey;
-      let valueMatches;
-      if (isEqual && !isRegex) {
-        valueMatches = value === labelValue;
-      }
-      if (!isEqual && !isRegex) {
-        valueMatches = value !== labelValue;
-      }
-      if (isEqual && isRegex) {
-        valueMatches = new RegExp(value).test(labelValue);
-      }
-      if (!isEqual && isRegex) {
-        valueMatches = !new RegExp(value).test(labelValue);
-      }
-
-      return nameMatches && valueMatches;
-    });
+export function objectMatcherToMatcher(objectMatcher: ObjectMatcher) {
+  return matcherFieldToMatcher({
+    name: objectMatcher[0],
+    operator: objectMatcher[1],
+    value: objectMatcher[2],
   });
+}
+
+export function labelMatchesMatcher(label: [key: string, value: string], matcher: Matcher) {
+  const { name, value, isRegex, isEqual } = matcher;
+  const labelKey = label[0];
+  const labelValue = label[1];
+
+  const nameMatches = name === labelKey;
+  let valueMatches = false;
+  if (isEqual && !isRegex) {
+    valueMatches = value === labelValue;
+  }
+  if (!isEqual && !isRegex) {
+    valueMatches = value !== labelValue;
+  }
+  if (isEqual && isRegex) {
+    valueMatches = new RegExp(value).test(labelValue);
+  }
+  if (!isEqual && isRegex) {
+    valueMatches = !new RegExp(value).test(labelValue);
+  }
+
+  return nameMatches && valueMatches;
+}
+
+export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
+  return matchers.every((matcher) => {
+    return Object.entries(labels).some((label) => labelMatchesMatcher(label, matcher));
+  });
+}
+
+export function getLabelMatchingMatchers(matchers: Matcher[], label: [key: string, value: string]): Matcher[] {
+  return matchers.filter((matcher) => labelMatchesMatcher(label, matcher));
+}
+
+export function getLabelsMatchingMatcher(labels: Labels, matcher: Matcher): Array<[key: string, value: string]> {
+  return Object.entries(labels).filter((label) => labelMatchesMatcher(label, matcher));
 }
 
 export function getAllAlertmanagerDataSources() {
