@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -349,7 +349,12 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
-			sc := setupHTTPServerWithCfg(t, false, cfg)
+			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
+				hs.userService = userimpl.ProvideService(
+					hs.SQLStore, nil, nil, nil, nil,
+					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+				)
+			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -448,9 +453,14 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
-			sc := setupHTTPServerWithCfg(t, false, cfg)
-			setupOrgUsersDBForAccessControlTests(t, sc.db)
+			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
+				hs.userService = userimpl.ProvideService(
+					hs.SQLStore, nil, nil, nil, nil,
+					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+				)
+			})
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
+			setupOrgUsersDBForAccessControlTests(t, sc.db)
 
 			// Perform test
 			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
@@ -548,13 +558,12 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
-			sc := setupHTTPServerWithCfg(t, false, cfg)
-			userService := usertest.NewUserServiceFake()
-			userService.ExpectedUser = &user.User{ID: 2}
-			sc.hs.userService = userService
-			mockStore := mockstore.NewSQLStoreMock()
-			mockStore.ExpectedUser = &user.User{ID: 2}
-			sc.hs.SQLStore = mockStore
+			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
+				hs.userService = userimpl.ProvideService(
+					hs.SQLStore, nil, nil, nil, nil,
+					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+				)
+			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -674,10 +683,12 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			sc := setupHTTPServer(t, true)
-			userService := usertest.NewUserServiceFake()
-			userService.ExpectedUser = &user.User{ID: 2}
-			sc.hs.userService = userService
+			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
+				hs.userService = userimpl.ProvideService(
+					hs.SQLStore, nil, nil, nil, nil,
+					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+				)
+			})
 			setInitCtxSignedInViewer(sc.initCtx)
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
@@ -791,7 +802,12 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
-			sc := setupHTTPServerWithCfg(t, false, cfg)
+			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
+				hs.userService = userimpl.ProvideService(
+					hs.SQLStore, nil, nil, nil, nil,
+					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+				)
+			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
@@ -913,7 +929,12 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = tc.enableAccessControl
-			sc := setupHTTPServerWithCfg(t, false, cfg)
+			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
+				hs.userService = userimpl.ProvideService(
+					hs.SQLStore, nil, nil, nil, nil,
+					nil, nil, nil, nil, nil, hs.SQLStore.(*sqlstore.SQLStore),
+				)
+			})
 			setupOrgUsersDBForAccessControlTests(t, sc.db)
 			setInitCtxSignedInUser(sc.initCtx, tc.user)
 

@@ -5,6 +5,7 @@ import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 
+import { featureDiscoveryApi } from './api/featureDiscoveryApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
@@ -31,6 +32,11 @@ const Silences: FC = () => {
   const location = useLocation();
   const isRoot = location.pathname.endsWith('/alerting/silences');
 
+  const { currentData: amFeatures } = featureDiscoveryApi.useDiscoverAmFeaturesQuery(
+    { amSourceName: alertManagerSourceName ?? '' },
+    { skip: !alertManagerSourceName }
+  );
+
   useEffect(() => {
     function fetchAll() {
       if (alertManagerSourceName) {
@@ -50,6 +56,9 @@ const Silences: FC = () => {
 
   const getSilenceById = useCallback((id: string) => result && result.find((silence) => silence.id === id), [result]);
 
+  const mimirLazyInitError =
+    error?.message?.includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
+
   if (!alertManagerSourceName) {
     return isRoot ? (
       <AlertingPageWrapper pageId="silences">
@@ -68,12 +77,19 @@ const Silences: FC = () => {
         onChange={setAlertManagerSourceName}
         dataSources={alertManagers}
       />
-      {error && !loading && (
+
+      {mimirLazyInitError && (
+        <Alert title="The selected Alertmanager has no configuration" severity="warning">
+          Create a new contact point to create a configuration using the default values or contact your administrator to
+          set up the Alertmanager.
+        </Alert>
+      )}
+      {error && !loading && !mimirLazyInitError && (
         <Alert severity="error" title="Error loading silences">
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {alertsRequest?.error && !alertsRequest?.loading && (
+      {alertsRequest?.error && !alertsRequest?.loading && !mimirLazyInitError && (
         <Alert severity="error" title="Error loading Alertmanager alerts">
           {alertsRequest.error?.message || 'Unknown error.'}
         </Alert>
