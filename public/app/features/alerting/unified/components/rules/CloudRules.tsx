@@ -8,6 +8,7 @@ import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
+import { isAsyncRequestStatePending } from '../../utils/redux';
 
 import { RulesGroup } from './RulesGroup';
 
@@ -24,9 +25,16 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   const rulesDataSources = useMemo(getRulesDataSources, []);
 
   const dataSourcesLoading = useMemo(
-    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading || dsConfigs[ds.name]?.loading),
+    () =>
+      rulesDataSources.filter(
+        (ds) => isAsyncRequestStatePending(rules[ds.name]) || isAsyncRequestStatePending(dsConfigs[ds.name])
+      ),
     [rules, dsConfigs, rulesDataSources]
   );
+
+  const hasDataSourcesConfigured = rulesDataSources.length > 0;
+  const hasDataSourcesLoading = dataSourcesLoading.length > 0;
+  const hasNamespaces = namespaces.length > 0;
 
   return (
     <section className={styles.wrapper}>
@@ -53,8 +61,8 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
           />
         ));
       })}
-      {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
-      {!rulesDataSources.length && <p>There are no Prometheus or Loki datas sources configured.</p>}
+      {!hasDataSourcesConfigured && <p>There are no Prometheus or Loki data sources configured.</p>}
+      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && <p>No rules found.</p>}
     </section>
   );
 };
@@ -68,6 +76,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
   `,
   wrapper: css`
-    margin-bottom: ${theme.v1.spacing.xl};
+    margin-bottom: ${theme.spacing(4)};
   `,
 });
