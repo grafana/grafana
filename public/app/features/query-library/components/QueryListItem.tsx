@@ -50,6 +50,7 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
     showModal(QueryEditorDrawer, { onDismiss: hideModal, savedQuery: savedQuery });
   };
 
+  //@TODO refresh table
   const deleteQuery = async () => {
     await getSavedQuerySrv().deleteSavedQuery({ uid: query.uid });
   };
@@ -60,15 +61,17 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
   };
 
   return (
-    <tr key={query.uid} className={styles.row} onClick={openDrawer}>
-      <td>
+    <tr key={query.uid} className={styles.row}>
+      <td onClick={openDrawer}>
         <Icon name={'lock'} />
       </td>
-      <td className={styles.row}>
+      <td className={styles.row} onClick={openDrawer}>
         <Badge color={'green'} text={'1'} icon={'link'} />
       </td>
-      <td className={styles.rowData}>{query.title}</td>
-      <td className={styles.rowData}>
+      <td className={styles.rowData} onClick={openDrawer}>
+        {query.title}
+      </td>
+      <td className={styles.rowData} onClick={openDrawer}>
         <img
           className="filter-table__avatar"
           src={dsInfo?.meta.info.logos.small}
@@ -77,7 +80,7 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
         />
         &nbsp;{getDsType()}
       </td>
-      <td className={styles.rowData}>
+      <td className={styles.rowData} onClick={openDrawer}>
         <img
           className="filter-table__avatar"
           src={'/avatar/46d229b033af06a191ff2267bca9ae56'}
@@ -86,7 +89,9 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
         />
         &nbsp;{author}
       </td>
-      <td className={styles.rowData}>{date}</td>
+      <td className={styles.rowData} onClick={openDrawer}>
+        {date}
+      </td>
       <td className={styles.tableTr}>
         <IconButton name="share-alt" className={styles.iconButtons} tooltip={'Share'} />
         <IconButton name="copy" className={styles.iconButtons} tooltip={'Copy'} />

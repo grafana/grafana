@@ -4,12 +4,13 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { FilterInput, HorizontalGroup, LinkButton, ModalsController, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, HorizontalGroup, ModalsController, Spinner, useStyles2 } from '@grafana/ui';
 
 import { getGrafanaSearcher, SearchQuery } from '../../search/service';
 import { QueryItem } from '../types';
 
 import { DatasourceTypePicker } from './DatasourceTypePicker';
+import { QueryCreateDrawer } from './QueryCreateDrawer';
 import { QueryListItem } from './QueryListItem';
 
 const QueryLibrarySearchTable = () => {
@@ -17,6 +18,7 @@ const QueryLibrarySearchTable = () => {
 
   const [datasourceType, setDatasourceType] = useState<string | null>(null);
   const [searchQueryBy, setSearchByQuery] = useState<string>('');
+  const [reload, setReload] = useState(0);
 
   const searchQuery = useMemo<SearchQuery>(() => {
     const query: SearchQuery = {
@@ -48,7 +50,7 @@ const QueryLibrarySearchTable = () => {
       tags: item.tags ?? [],
       ds_uid: item.ds_uid,
     }));
-  }, [searchQuery]);
+  }, [searchQuery, reload]);
 
   if (results.loading) {
     return <Spinner />;
@@ -75,12 +77,28 @@ const QueryLibrarySearchTable = () => {
             }}
           />
         </HorizontalGroup>
-
-        <div className={styles.createQueryButton}>
-          <LinkButton size="md" href={`query-library/new`} icon="plus" title="Create Query">
-            {'Create Query'}
-          </LinkButton>
-        </div>
+        <ModalsController>
+          {({ showModal, hideModal }) => {
+            return (
+              <div className={styles.createQueryButton}>
+                <Button
+                  icon="plus"
+                  size="md"
+                  onClick={() => {
+                    showModal(QueryCreateDrawer, {
+                      onDismiss: hideModal,
+                      updateComponent: () => {
+                        setReload(reload + 1);
+                      },
+                    });
+                  }}
+                >
+                  Create query
+                </Button>
+              </div>
+            );
+          }}
+        </ModalsController>
       </HorizontalGroup>
 
       <ModalsController>
@@ -92,13 +110,13 @@ const QueryLibrarySearchTable = () => {
                   <table className={cx('filter-table form-inline filter-table--hover', styles.table)}>
                     <thead>
                       <tr>
-                        <th></th>
+                        <th />
                         <th>Status</th>
                         <th>Name and raw query</th>
                         <th>Data Source</th>
                         <th>User</th>
                         <th>Date</th>
-                        <th></th>
+                        <th />
                       </tr>
                     </thead>
                     <tbody>
