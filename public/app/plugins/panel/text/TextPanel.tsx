@@ -70,8 +70,8 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   interpolateString(content: string): string {
-    const { replaceVariables } = this.props;
-    return replaceVariables(content, {}, 'html');
+    const { replaceVariables, options } = this.props;
+    return replaceVariables(content, {}, options.code?.language === 'json' ? 'json' : 'html');
   }
 
   sanitizeString(content: string): string {

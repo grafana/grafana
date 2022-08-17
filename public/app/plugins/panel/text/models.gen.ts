@@ -16,7 +16,9 @@ export enum TextMode {
 
 export enum CodeLanguage {
   Go = 'go',
+  Html = 'html',
   Json = 'json',
+  Markdown = 'markdown',
   Plaintext = 'plaintext',
   Sql = 'sql',
   Typescript = 'typescript',

@@ -24,7 +24,7 @@ Panel: thema.#Lineage & {
 				{
 					TextMode: "html" | "markdown" | "code" @cuetsy(kind="enum",memberNames="HTML|Markdown|Code")
 
-					CodeLanguage: "json" | "yaml" | "xml" | "typescript" | "sql" | "go" | *"plaintext"  @cuetsy(kind="enum")
+					CodeLanguage: "json" | "yaml" | "xml" | "typescript" | "sql" | "go" | "markdown" | "html" | *"plaintext"  @cuetsy(kind="enum")
 
 					CodeOptions: {
 						// The language passed to monaco code editor
