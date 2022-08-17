@@ -1,11 +1,10 @@
 import { Global } from '@emotion/react';
 import Tree from 'rc-tree';
 import React, { Key, useEffect, useMemo, useState } from 'react';
-import SVG from 'react-inlinesvg';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, useTheme2 } from '@grafana/ui';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
@@ -86,18 +85,22 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
     setAutoExpandParent(false);
   };
 
-  const getSvgIcon = (path = '', style = {}) => <SVG src={path} title={'Node Icon'} style={{ ...style }} />;
-
   const switcherIcon = (obj: { isLeaf: boolean; expanded: boolean }) => {
     if (obj.isLeaf) {
       // TODO: Implement element specific icons
-      return getSvgIcon('');
+      return <></>;
     }
 
-    return getSvgIcon('public/img/icons/unicons/angle-right.svg', {
-      transform: `rotate(${obj.expanded ? 90 : 0}deg)`,
-      fill: theme.colors.text.primary,
-    });
+    return (
+      <Icon
+        name="angle-right"
+        title={'Node Icon'}
+        style={{
+          transform: `rotate(${obj.expanded ? 90 : 0}deg)`,
+          fill: theme.colors.text.primary,
+        }}
+      />
+    );
   };
 
   const setAllowSelection = (allow = true) => {

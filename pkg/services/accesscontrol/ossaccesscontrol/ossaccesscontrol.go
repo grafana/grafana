@@ -200,6 +200,6 @@ func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix st
 	ac.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 }
 
-func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, userID int64) error {
-	return ac.store.DeleteUserPermissions(ctx, userID)
+func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
+	return ac.store.DeleteUserPermissions(ctx, orgID, userID)
 }
