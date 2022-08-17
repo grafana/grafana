@@ -118,21 +118,21 @@ seqs: [
 				autoEnabled?: bool
 
 				// Dependencies needed by the plugin.
-				dependencies:
+				dependencies: #Dependencies
 
-					#Dependencies: {
-						// (Deprecated) Required Grafana version for this plugin, e.g.
-						// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
-						// v7.x.x.
-						grafanaVersion?: =~"^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
+				#Dependencies: {
+					// (Deprecated) Required Grafana version for this plugin, e.g.
+					// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
+					// v7.x.x.
+					grafanaVersion?: =~"^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
 
-						// Required Grafana version for this plugin. Validated using
-						// https://github.com/npm/node-semver.
-						grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
+					// Required Grafana version for this plugin. Validated using
+					// https://github.com/npm/node-semver.
+					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
 
-						// An array of required plugins on which this plugin depends.
-						plugins?: [...#Dependency]
-					}
+					// An array of required plugins on which this plugin depends.
+					plugins?: [...#Dependency]
+				}
 
 				// Dependency describes another plugin on which a plugin depends.
 				// The id refers to the plugin package identifier, as given on

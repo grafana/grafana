@@ -107,8 +107,22 @@ type Model struct {
 	Backend *bool `json:"backend,omitempty"`
 
 	// Plugin category used on the Add data source page.
-	Category     *ModelCategory         `json:"category,omitempty"`
-	Dependencies map[string]interface{} `json:"dependencies"`
+	Category *ModelCategory `json:"category,omitempty"`
+
+	// Dependencies needed by the plugin.
+	Dependencies struct {
+		// Required Grafana version for this plugin. Validated using
+		// https://github.com/npm/node-semver.
+		GrafanaDependency string `json:"grafanaDependency"`
+
+		// (Deprecated) Required Grafana version for this plugin, e.g.
+		// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
+		// v7.x.x.
+		GrafanaVersion *string `json:"grafanaVersion,omitempty"`
+
+		// An array of required plugins on which this plugin depends.
+		Plugins *[]ModelDependency `json:"plugins,omitempty"`
+	} `json:"dependencies"`
 
 	// Grafana Enerprise specific features.
 	EnterpriseFeatures *struct {
@@ -279,6 +293,24 @@ type ModelBuildInfo struct {
 
 	// Time when the plugin was built, as a Unix timestamp.
 	Time *int64 `json:"time,omitempty"`
+}
+
+// PluginmetaDependencies defines model for pluginmeta.Dependencies.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type ModelDependencies struct {
+	// Required Grafana version for this plugin. Validated using
+	// https://github.com/npm/node-semver.
+	GrafanaDependency string `json:"grafanaDependency"`
+
+	// (Deprecated) Required Grafana version for this plugin, e.g.
+	// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
+	// v7.x.x.
+	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
+
+	// An array of required plugins on which this plugin depends.
+	Plugins *[]ModelDependency `json:"plugins,omitempty"`
 }
 
 // Dependency describes another plugin on which a plugin depends.
@@ -497,24 +529,6 @@ type ModelTokenAuth struct {
 type ModelURLParam struct {
 	Content string `json:"content"`
 	Name    string `json:"name"`
-}
-
-// Dependencies needed by the plugin.
-//
-// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
-// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelDependenciesDependencies struct {
-	// Required Grafana version for this plugin. Validated using
-	// https://github.com/npm/node-semver.
-	GrafanaDependency string `json:"grafanaDependency"`
-
-	// (Deprecated) Required Grafana version for this plugin, e.g.
-	// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
-	// v7.x.x.
-	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
-
-	// An array of required plugins on which this plugin depends.
-	Plugins *[]ModelDependency `json:"plugins,omitempty"`
 }
 
 //go:embed coremodel.cue
