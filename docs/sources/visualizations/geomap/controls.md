@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: Map controls
-weight: 20
+weight: 100
 ---
 
 # Map Controls
