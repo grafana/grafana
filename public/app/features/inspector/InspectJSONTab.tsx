@@ -99,14 +99,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
       // do not include transforms and
       if (panel && data?.state === LoadingState.Done) {
-        console.log('get data without transforms');
         d = await firstValueFrom(
           panel.getQueryRunner().getData({
             withFieldConfig: false,
             withTransforms: false,
           })
         );
-        console.log('after', d);
       }
       return getPanelDataFrames(d);
     }
