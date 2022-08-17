@@ -73,7 +73,8 @@ func TestTeamsNotifier(t *testing.T) {
 				},
 				"contentType": "application/vnd.microsoft.card.adaptive",
 			}},
-			"type": "message",
+			"summary": "[FIRING:1]  (val1)",
+			"type":    "message",
 		},
 		expMsgError: nil,
 	}, {
@@ -125,7 +126,8 @@ func TestTeamsNotifier(t *testing.T) {
 				},
 				"contentType": "application/vnd.microsoft.card.adaptive",
 			}},
-			"type": "message",
+			"summary": "alert1",
+			"type":    "message",
 		},
 		expMsgError: nil,
 	}, {
