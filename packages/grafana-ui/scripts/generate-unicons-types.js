@@ -19,3 +19,5 @@ for (const file of files) {
 const iconsType = `export type AllUnicons =\n  | ${icons.join('\n  | ')};\n`;
 
 fs.writeFileSync(iconsTypeFile, iconsType);
+
+console.log('Generated icons type file:', iconsTypeFile);
