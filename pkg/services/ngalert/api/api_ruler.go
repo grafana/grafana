@@ -90,7 +90,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle s
 			return nil
 		}
 
-		var groupsToDelete = make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
+		var candidates = make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 		for _, rule := range q.Result {
 			key := rule.GetGroupKey()
 			groupsToDelete[key] = append(groupsToDelete[key], rule)
