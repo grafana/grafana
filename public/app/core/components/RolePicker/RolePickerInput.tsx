@@ -7,7 +7,7 @@ import { useStyles2, getInputStyles, sharedInputStyle, styleMixins, Tooltip, Ico
 import { Role } from '../../../types';
 
 import { ValueContainer } from './ValueContainer';
-import { ROLE_PICKER_MIN_WIDTH } from './constants';
+import { ROLE_PICKER_WIDTH } from './constants';
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
@@ -135,7 +135,7 @@ const getRolePickerInputStyles = (
         `,
       disabled && styles.inputDisabled,
       css`
-        min-width: ${ROLE_PICKER_MIN_WIDTH}px;
+        min-width: ${ROLE_PICKER_WIDTH}px;
         min-height: 32px;
         height: auto;
         flex-direction: row;

@@ -5,7 +5,7 @@ import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT, ROLE_PICKER_MIN_WIDTH } from './constants';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
   builtInRole?: OrgRole;
@@ -20,6 +20,7 @@ export interface Props {
   onBuiltinRoleChange?: (newRole: OrgRole) => void;
   canUpdateRoles?: boolean;
   apply?: boolean;
+  maxWidth?: string | number;
 }
 
 export const RolePicker = ({
@@ -34,6 +35,7 @@ export const RolePicker = ({
   onBuiltinRoleChange,
   canUpdateRoles = true,
   apply = false,
+  maxWidth = ROLE_PICKER_WIDTH,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
@@ -142,8 +144,7 @@ export const RolePicker = ({
       data-testid="role-picker"
       style={{
         position: 'relative',
-        minWidth: ROLE_PICKER_MIN_WIDTH,
-        // maxWidth: ROLE_PICKER_MAX_WIDTH,
+        maxWidth: maxWidth,
       }}
       ref={ref}
     >

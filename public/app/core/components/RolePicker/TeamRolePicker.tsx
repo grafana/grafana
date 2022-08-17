@@ -14,9 +14,10 @@ export interface Props {
   roleOptions: Role[];
   disabled?: boolean;
   builtinRolesDisabled?: boolean;
+  maxWidth?: string | number;
 }
 
-export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled, builtinRolesDisabled }) => {
+export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled, builtinRolesDisabled, maxWidth }) => {
   const [{ loading, value: appliedRoles = [] }, getTeamRoles] = useAsyncFn(async () => {
     try {
       return await fetchTeamRoles(teamId, orgId);
@@ -49,6 +50,7 @@ export const TeamRolePicker: FC<Props> = ({ teamId, orgId, roleOptions, disabled
       disabled={disabled}
       builtinRolesDisabled={builtinRolesDisabled}
       canUpdateRoles={canUpdateRoles}
+      maxWidth={maxWidth}
     />
   );
 };
