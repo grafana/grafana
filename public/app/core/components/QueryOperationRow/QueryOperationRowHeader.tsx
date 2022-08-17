@@ -3,7 +3,7 @@ import React, { MouseEventHandler } from 'react';
 import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -33,10 +33,12 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   return (
     <div className={styles.header}>
       <div className={styles.column}>
-        <Icon
+        <IconButton
           name={isContentVisible ? 'angle-down' : 'angle-right'}
+          title="Open and close query row"
           className={styles.collapseIcon}
           onClick={onRowToggle}
+          type="button"
         />
         {titleElement && (
           <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
@@ -94,10 +96,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   collapseIcon: css`
+    margin-left: ${theme.spacing(0.5)};
     color: ${theme.colors.text.disabled};
-    cursor: pointer;
-    &:hover {
-      color: ${theme.colors.text};
     }
   `,
   titleWrapper: css`
