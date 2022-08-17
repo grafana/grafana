@@ -162,7 +162,8 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
-	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
+	logger := st.log.New(alertRule.GetKey().LogContext())
+	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
@@ -171,6 +172,14 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		processedResults[s.CacheId] = s
 	}
 	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	if len(states) > 0 {
+		logger.Debug("saving new states to the database", "count", len(states))
+		for _, state := range states {
+			if err := st.saveState(ctx, state); err != nil {
+				logger.Error("failed to save alert state", "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error())
+			}
+		}
+	}
 	return states
 }
 

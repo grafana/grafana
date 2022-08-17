@@ -74,8 +74,7 @@ type schedule struct {
 
 	evaluator eval.Evaluator
 
-	ruleStore     store.RuleStore
-	instanceStore store.InstanceStore
+	ruleStore store.RuleStore
 
 	stateManager *state.Manager
 
@@ -123,7 +122,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		stopAppliedFunc:       cfg.StopAppliedFunc,
 		evaluator:             cfg.Evaluator,
 		ruleStore:             cfg.RuleStore,
-		instanceStore:         cfg.InstanceStore,
 		metrics:               cfg.Metrics,
 		appURL:                appURL,
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
@@ -321,7 +319,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		}
 
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, extraLabels)
-		sch.saveAlertStates(ctx, processedStates)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		if len(alerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, alerts)
