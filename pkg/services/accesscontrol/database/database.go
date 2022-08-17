@@ -131,20 +131,37 @@ func deletePermissions(sess *sqlstore.DBSession, ids []int64) error {
 	return nil
 }
 
-func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, userID int64) error {
+func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		roleDeleteQuery := "DELETE FROM user_role WHERE user_id = ?"
+		roleDeleteParams := []interface{}{roleDeleteQuery, userID}
+		if orgID != accesscontrol.GlobalOrgID {
+			roleDeleteQuery += " AND org_id = ?"
+			roleDeleteParams = []interface{}{roleDeleteQuery, userID, orgID}
+		}
+
 		// Delete user role assignments
-		if _, err := sess.Exec("DELETE FROM user_role WHERE user_id = ?", userID); err != nil {
+		if _, err := sess.Exec(roleDeleteParams...); err != nil {
 			return err
 		}
 
-		// Delete permissions that are scoped to user
-		if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", accesscontrol.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
-			return err
+		// only delete scopes to user if all permissions is removed (i.e. user is removed)
+		if orgID == accesscontrol.GlobalOrgID {
+			// Delete permissions that are scoped to user
+			if _, err := sess.Exec("DELETE FROM permission WHERE scope = ?", accesscontrol.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
+				return err
+			}
+		}
+
+		roleQuery := "SELECT id FROM role WHERE name = ?"
+		roleParams := []interface{}{accesscontrol.ManagedUserRoleName(userID)}
+		if orgID != accesscontrol.GlobalOrgID {
+			roleQuery += " AND org_id = ?"
+			roleParams = []interface{}{accesscontrol.ManagedUserRoleName(userID), orgID}
 		}
 
 		var roleIDs []int64
-		if err := sess.SQL("SELECT id FROM role WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
+		if err := sess.SQL(roleQuery, roleParams...).Find(&roleIDs); err != nil {
 			return err
 		}
 
@@ -152,20 +169,25 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, userID i
 			return nil
 		}
 
-		query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
-		args := make([]interface{}, 0, len(roleIDs)+1)
-		args = append(args, query)
+		permissionDeleteQuery := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+		permissionDeleteParams := make([]interface{}, 0, len(roleIDs)+1)
+		permissionDeleteParams = append(permissionDeleteParams, permissionDeleteQuery)
 		for _, id := range roleIDs {
-			args = append(args, id)
+			permissionDeleteParams = append(permissionDeleteParams, id)
 		}
 
 		// Delete managed user permissions
-		if _, err := sess.Exec(args...); err != nil {
+		if _, err := sess.Exec(permissionDeleteParams...); err != nil {
 			return err
 		}
 
+		managedRoleDeleteQuery := "DELETE FROM role WHERE id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
+		managedRoleDeleteParams := []interface{}{managedRoleDeleteQuery}
+		for _, id := range roleIDs {
+			managedRoleDeleteParams = append(managedRoleDeleteParams, id)
+		}
 		// Delete managed user roles
-		if _, err := sess.Exec("DELETE FROM role WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)); err != nil {
+		if _, err := sess.Exec(managedRoleDeleteParams...); err != nil {
 			return err
 		}
 

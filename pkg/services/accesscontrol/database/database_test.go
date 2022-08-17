@@ -141,28 +141,85 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 }
 
 func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
-	store, sql := setupTestEnv(t)
+	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
+		store, sql := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, sql, 1)
 
-	user, _ := createUserAndTeam(t, sql, 1)
+		// generate permissions in org 1
+		_, err := store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+			Actions:    []string{"dashboards:write"},
+			Resource:   "dashboards",
+			ResourceID: "1",
+		}, nil)
+		require.NoError(t, err)
 
-	_, err := store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
-		Actions:    []string{"dashboards:write"},
-		Resource:   "dashboards",
-		ResourceID: "1",
-	}, nil)
-	require.NoError(t, err)
+		// generate permissions in org 2
+		_, err = store.SetUserResourcePermission(context.Background(), 2, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+			Actions:    []string{"dashboards:write"},
+			Resource:   "dashboards",
+			ResourceID: "1",
+		}, nil)
+		require.NoError(t, err)
 
-	err = store.DeleteUserPermissions(context.Background(), user.ID)
-	require.NoError(t, err)
+		err = store.DeleteUserPermissions(context.Background(), accesscontrol.GlobalOrgID, user.ID)
+		require.NoError(t, err)
 
-	permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
-		OrgID:   1,
-		UserID:  user.ID,
-		Roles:   []string{"Admin"},
-		Actions: []string{"dashboards:write"},
+		permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+			OrgID:  1,
+			UserID: user.ID,
+			Roles:  []string{"Admin"},
+		})
+		require.NoError(t, err)
+		assert.Len(t, permissions, 0)
+
+		permissions, err = store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+			OrgID:  2,
+			UserID: user.ID,
+			Roles:  []string{"Admin"},
+		})
+		require.NoError(t, err)
+		assert.Len(t, permissions, 0)
 	})
-	require.NoError(t, err)
-	assert.Len(t, permissions, 0)
+
+	t.Run("expect permissions in org 1 to be deleted", func(t *testing.T) {
+		store, sql := setupTestEnv(t)
+		user, _ := createUserAndTeam(t, sql, 1)
+
+		// generate permissions in org 1
+		_, err := store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+			Actions:    []string{"dashboards:write"},
+			Resource:   "dashboards",
+			ResourceID: "1",
+		}, nil)
+		require.NoError(t, err)
+
+		// generate permissions in org 2
+		_, err = store.SetUserResourcePermission(context.Background(), 2, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+			Actions:    []string{"dashboards:write"},
+			Resource:   "dashboards",
+			ResourceID: "1",
+		}, nil)
+		require.NoError(t, err)
+
+		err = store.DeleteUserPermissions(context.Background(), 1, user.ID)
+		require.NoError(t, err)
+
+		permissions, err := store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+			OrgID:  1,
+			UserID: user.ID,
+			Roles:  []string{"Admin"},
+		})
+		require.NoError(t, err)
+		assert.Len(t, permissions, 0)
+
+		permissions, err = store.GetUserPermissions(context.Background(), accesscontrol.GetUserPermissionsQuery{
+			OrgID:  2,
+			UserID: user.ID,
+			Roles:  []string{"Admin"},
+		})
+		require.NoError(t, err)
+		assert.Len(t, permissions, 1)
+	})
 }
 
 func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*user.User, models.Team) {
