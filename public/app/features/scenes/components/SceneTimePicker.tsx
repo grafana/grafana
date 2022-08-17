@@ -14,7 +14,7 @@ export class SceneTimePicker extends SceneObjectBase<SceneTimePickerState> {
   static Component = SceneTimePickerRenderer;
 }
 
-function SceneTimePickerRenderer({ model }: SceneComponentProps<SceneTimePicker>) {
+export function SceneTimePickerRenderer({ model }: SceneComponentProps<SceneTimePicker>) {
   const { hidePicker } = model.useState();
   const timeRange = model.getTimeRange();
   const timeRangeState = timeRange.useState();
@@ -26,7 +26,7 @@ function SceneTimePickerRenderer({ model }: SceneComponentProps<SceneTimePicker>
   return (
     <ToolbarButtonRow>
       <TimePickerWithHistory
-        value={timeRangeState}
+        value={timeRangeState.range}
         onChange={timeRange.onTimeRangeChange}
         timeZone={'browser'}
         fiscalYearStartMonth={0}

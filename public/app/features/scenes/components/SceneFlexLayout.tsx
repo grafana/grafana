@@ -3,7 +3,8 @@ import React, { CSSProperties } from 'react';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObjectSize, SceneLayoutState, SceneComponentProps, SceneLayoutChild } from '../core/types';
+import { SceneObjectSize, SceneLayoutState, SceneComponentProps, SceneLayoutChild, SceneObject } from '../core/types';
+import { isDataProviderNode, isTimeRangeNode } from './Scene';
 
 export type FlexLayoutDirection = 'column' | 'row';
 
@@ -22,14 +23,29 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
   }
 }
 
+function renderNodes(nodes: SceneObject[], direction: FlexLayoutDirection, isEditing: boolean): React.ReactNode {
+  return nodes.map((node) => {
+    if (isDataProviderNode(node)) {
+      return renderNodes(node.state.children, direction, isEditing);
+    }
+
+    if (isTimeRangeNode(node)) {
+      return [
+        <FlexLayoutChildComponent key={node.state.key} item={node} direction={direction} isEditing={isEditing} />,
+        renderNodes(node.state.children, direction, isEditing),
+      ];
+    }
+
+    return <FlexLayoutChildComponent key={node.state.key} item={node} direction={direction} isEditing={isEditing} />;
+  });
+}
+
 function FlexLayoutRenderer({ model, isEditing }: SceneComponentProps<SceneFlexLayout>) {
   const { direction = 'row', children } = model.useState();
 
   return (
     <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '8px' }}>
-      {children.map((item) => (
-        <FlexLayoutChildComponent key={item.state.key} item={item} direction={direction} isEditing={isEditing} />
-      ))}
+      {renderNodes(children, direction, Boolean(isEditing))}
     </div>
   );
 }

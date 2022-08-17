@@ -5,21 +5,45 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObject, SceneLayoutChildState, SceneComponentProps, SceneLayout } from '../core/types';
+import { SceneLayoutChildState, SceneComponentProps, SceneLayoutState, SceneWithActionState } from '../core/types';
+import { Orientation, SceneToolboxLayout } from './SceneToolboxLayout';
 
-interface NestedSceneState extends SceneLayoutChildState {
+interface NestedSceneState extends SceneLayoutChildState, SceneLayoutState {
   title: string;
   isCollapsed?: boolean;
   canCollapse?: boolean;
   canRemove?: boolean;
-  layout: SceneLayout;
-  actions?: SceneObject[];
+  // layout: SceneLayout;
+  // actions?: SceneObject[];
 }
 
 export class NestedScene extends SceneObjectBase<NestedSceneState> {
   static Component = NestedSceneRenderer;
+  private sceneCollapser: SceneCollapser;
+
+  constructor(state: NestedSceneState) {
+    super(state);
+
+    this.sceneCollapser = new SceneCollapser({
+      canCollapse: Boolean(state.canCollapse),
+      canRemove: Boolean(state.canRemove),
+      isCollapsed: Boolean(state.isCollapsed),
+      onCollapse: this.onToggle,
+      showInToolbox: true,
+    });
+
+    const children = [
+      new SceneToolboxLayout({
+        orientation: Orientation.Vertical,
+        children: [this.sceneCollapser, ...state.children],
+      }),
+    ];
+
+    this.setState({ children });
+  }
 
   onToggle = () => {
+    this.sceneCollapser.setState({ isCollapsed: !this.state.isCollapsed });
     this.setState({
       isCollapsed: !this.state.isCollapsed,
       size: {
@@ -27,6 +51,10 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
         ySizing: this.state.isCollapsed ? 'fill' : 'content',
       },
     });
+
+    if (!this.state.isCollapsed) {
+      this.deactivate();
+    }
   };
 
   /** Removes itself from its parent's children array */
@@ -40,23 +68,29 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
   };
 }
 
+interface SceneCollapserState extends SceneLayoutChildState, SceneWithActionState {
+  canRemove: boolean;
+  canCollapse: boolean;
+  isCollapsed?: boolean;
+  onCollapse: () => void;
+}
+
+export function SceneCollapserRenderer({ model, isEditing }: SceneComponentProps<SceneCollapser>) {
+  const { isCollapsed, onCollapse } = model.useState();
+
+  return <ToolbarButton onClick={onCollapse}>{isCollapsed ? 'Expand' : 'Collapse'}</ToolbarButton>;
+}
+
+export class SceneCollapser extends SceneObjectBase<SceneCollapserState> {
+  static Component = SceneCollapserRenderer;
+}
+
 export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<NestedScene>) {
-  const { title, isCollapsed, canCollapse, canRemove, layout, actions } = model.useState();
+  const { title, isCollapsed, children } = model.useState();
+  const collapsibleState = children[0].useState();
+
+  const [collapse, ...otherChildren] = collapsibleState.children;
   const styles = useStyles2(getStyles);
-
-  const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
-
-  if (canRemove) {
-    toolbarActions.push(
-      <ToolbarButton
-        icon="times"
-        variant={'default'}
-        onClick={model.onRemove}
-        key="remove-button"
-        aria-label="Remove scene"
-      />
-    );
-  }
 
   return (
     <div className={styles.row}>
@@ -65,22 +99,10 @@ export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<Ne
           <div className={styles.title} role="heading">
             {title}
           </div>
-          {canCollapse && (
-            <div className={styles.toggle}>
-              <Button
-                size="sm"
-                icon={isCollapsed ? 'angle-down' : 'angle-up'}
-                fill="text"
-                variant="secondary"
-                aria-label={isCollapsed ? 'Expand scene' : 'Collapse scene'}
-                onClick={model.onToggle}
-              />
-            </div>
-          )}
         </Stack>
-        <div className={styles.actions}>{toolbarActions}</div>
       </div>
-      {!isCollapsed && <layout.Component model={layout} isEditing={isEditing} />}
+      <collapse.Component model={collapse} isEditing={isEditing} />
+      {!isCollapsed && otherChildren.map((child) => <child.Component model={child} isEditing={isEditing} />)}
     </div>
   );
 }

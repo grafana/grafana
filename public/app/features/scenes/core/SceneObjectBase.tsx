@@ -99,19 +99,19 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   activate() {
     this.isActive = true;
 
-    const { $data } = this.state;
-    if ($data && !$data.isActive) {
-      $data.activate();
-    }
+    // const { $data } = this.state;
+    // if ($data && !$data.isActive) {
+    //   $data.activate();
+    // }
   }
 
   deactivate(): void {
     this.isActive = false;
 
-    const { $data } = this.state;
-    if ($data && $data.isActive) {
-      $data.deactivate();
-    }
+    // const { $data } = this.state;
+    // if ($data && $data.isActive) {
+    //   $data.deactivate();
+    // }
 
     this.subs.unsubscribe();
     this.subs = new Subscription();
@@ -126,11 +126,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Will walk up the scene object graph to the closest $timeRange scene object
    */
   getTimeRange(): SceneTimeRange {
-    const { $timeRange } = this.state;
-    if ($timeRange) {
-      return $timeRange;
-    }
-
     if (this.parent) {
       return this.parent.getTimeRange();
     }
@@ -142,11 +137,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Will walk up the scene object graph to the closest $data scene object
    */
   getData(): SceneObject<SceneDataState> {
-    const { $data } = this.state;
-    if ($data) {
-      return $data;
-    }
-
     if (this.parent) {
       return this.parent.getData();
     }

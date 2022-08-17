@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { Unsubscribable } from 'rxjs';
+// import { Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
@@ -7,7 +7,6 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceRef,
-  PanelData,
   rangeUtil,
   ScopedVars,
   TimeRange,
@@ -16,11 +15,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 import { runRequest } from 'app/features/query/state/runRequest';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObjectStatePlain } from '../core/types';
-
-export interface QueryRunnerState extends SceneObjectStatePlain {
-  data?: PanelData;
+export interface QueryRunnerState {
   queries: DataQueryExtended[];
 }
 
@@ -28,43 +23,15 @@ export interface DataQueryExtended extends DataQuery {
   [key: string]: any;
 }
 
-export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
-  private querySub?: Unsubscribable;
+export class SceneQueryRunner {
+  private queries: DataQueryExtended[];
 
-  activate() {
-    super.activate();
-
-    const timeRange = this.getTimeRange();
-
-    this.subs.add(
-      timeRange.subscribe({
-        next: (timeRange) => {
-          this.runWithTimeRange(timeRange);
-        },
-      })
-    );
-
-    if (!this.state.data) {
-      this.runQueries();
-    }
+  constructor(state: QueryRunnerState) {
+    this.queries = state.queries;
   }
 
-  deactivate(): void {
-    super.deactivate();
-
-    if (this.querySub) {
-      this.querySub.unsubscribe();
-      this.querySub = undefined;
-    }
-  }
-
-  runQueries() {
-    const timeRange = this.getTimeRange();
-    this.runWithTimeRange(timeRange.state);
-  }
-
-  private async runWithTimeRange(timeRange: TimeRange) {
-    const queries = cloneDeep(this.state.queries);
+  async runWithTimeRange(timeRange: TimeRange) {
+    const queries = cloneDeep(this.queries);
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
@@ -75,7 +42,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       range: timeRange,
       interval: '1s',
       intervalMs: 1000,
-      targets: cloneDeep(this.state.queries),
+      targets: cloneDeep(this.queries),
       maxDataPoints: 500,
       scopedVars: {},
       startTime: Date.now(),
@@ -105,12 +72,7 @@ export class SceneQueryRunner extends SceneObjectBase<QueryRunnerState> {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.querySub = runRequest(ds, request).subscribe({
-        next: (data) => {
-          console.log('set data', data, data.state);
-          this.setState({ data });
-        },
-      });
+      return runRequest(ds, request);
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }
