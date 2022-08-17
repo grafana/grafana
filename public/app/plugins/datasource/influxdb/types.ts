@@ -62,7 +62,6 @@ export interface InfluxQuery extends DataQuery {
   query?: string;
   alias?: string;
   // for migrated InfluxQL annotations
-  // query?: string; // exists in the tag but duplicated above
   queryType?: string;
   fromAnnotations?: boolean;
   tagsColumn?: string;

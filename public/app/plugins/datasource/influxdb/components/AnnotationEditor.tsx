@@ -13,8 +13,8 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
 
   const [textColumn, setTextColumn] = useState<string>(query.textColumn ?? '');
   const [tagsColumn, setTagsColumn] = useState<string>(query.tagsColumn ?? '');
-  const [timeEndColumn, setTimeEndColumn] = useState<string>(query?.timeEndColumn || '');
-  const [titleColumn] = useState<string>(query?.titleColumn || '');
+  const [timeEndColumn, setTimeEndColumn] = useState<string>(query?.timeEndColumn ?? '');
+  const [titleColumn] = useState<string>(query?.titleColumn ?? '');
   const updateValue = <K extends keyof InfluxQuery, V extends InfluxQuery[K]>(key: K, val: V) => {
     onChange({
       ...query,
@@ -29,7 +29,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
         <InlineFormLabel width={12}>InfluxQL Query</InlineFormLabel>
         <Input
           value={eventQuery}
-          onChange={(e) => setEventQuery(e.currentTarget.value || '')}
+          onChange={(e) => setEventQuery(e.currentTarget.value ?? '')}
           onBlur={() => updateValue('query', eventQuery)}
           placeholder="select text from events where $timeFilter limit 1000"
         />
@@ -47,7 +47,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
             <InlineFormLabel width={12}>Text</InlineFormLabel>
             <Input
               value={textColumn}
-              onChange={(e) => setTextColumn(e.currentTarget.value || '')}
+              onChange={(e) => setTextColumn(e.currentTarget.value ?? '')}
               onBlur={() => updateValue('textColumn', textColumn)}
             />
           </div>
@@ -55,7 +55,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
             <InlineFormLabel width={12}>Tags</InlineFormLabel>
             <Input
               value={tagsColumn}
-              onChange={(e) => setTagsColumn(e.currentTarget.value || '')}
+              onChange={(e) => setTagsColumn(e.currentTarget.value ?? '')}
               onBlur={() => updateValue('tagsColumn', tagsColumn)}
             />
           </div>
@@ -63,7 +63,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
             <InlineFormLabel width={12}>TimeEnd</InlineFormLabel>
             <Input
               value={timeEndColumn}
-              onChange={(e) => setTimeEndColumn(e.currentTarget.value || '')}
+              onChange={(e) => setTimeEndColumn(e.currentTarget.value ?? '')}
               onBlur={() => updateValue('timeEndColumn', timeEndColumn)}
             />
           </div>

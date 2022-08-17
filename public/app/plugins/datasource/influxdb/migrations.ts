@@ -1,5 +1,5 @@
 type LegacyAnnotation = {
-  query?: string; // exists in the tag but duplicated above
+  query?: string;
   queryType?: string;
   fromAnnotations?: boolean;
   tagsColumn?: string;
@@ -12,14 +12,14 @@ type LegacyAnnotation = {
 // this becomes the target in the migrated annotations
 const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
   return {
-    query: json.query || '', // exists in the tag but duplicated above
+    query: json.query ?? '',
     queryType: 'tags',
     fromAnnotations: true,
-    tagsColumn: json.tagsColumn || '',
-    textColumn: json.textColumn || '',
-    timeEndColumn: json.timeEndColumn || '',
-    titleColumn: json.titleColumn || '',
-    name: json.name || '',
+    tagsColumn: json.tagsColumn ?? '',
+    textColumn: json.textColumn ?? '',
+    timeEndColumn: json.timeEndColumn ?? '',
+    titleColumn: json.titleColumn ?? '',
+    name: json.name ?? '',
   };
 };
 
