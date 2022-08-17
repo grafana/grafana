@@ -25,7 +25,7 @@ type setUserResourcePermissionTest struct {
 	seeds             []SetResourcePermissionCommand
 }
 
-func Teststore_SetUserResourcePermission(t *testing.T) {
+func TestStore_SetUserResourcePermission(t *testing.T) {
 	tests := []setUserResourcePermissionTest{
 		{
 			desc:              "should set resource permission for user",
@@ -107,7 +107,7 @@ type setTeamResourcePermissionTest struct {
 	seeds             []SetResourcePermissionCommand
 }
 
-func Teststore_SetTeamResourcePermission(t *testing.T) {
+func TestStore_SetTeamResourcePermission(t *testing.T) {
 	tests := []setTeamResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for team",
@@ -192,7 +192,7 @@ type setBuiltInResourcePermissionTest struct {
 	seeds             []SetResourcePermissionCommand
 }
 
-func Teststore_SetBuiltInResourcePermission(t *testing.T) {
+func TestStore_SetBuiltInResourcePermission(t *testing.T) {
 	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for builtin role",
@@ -273,7 +273,7 @@ type setResourcePermissionsTest struct {
 	commands          []SetResourcePermissionsCommand
 }
 
-func Teststore_SetResourcePermissions(t *testing.T) {
+func TestStore_SetResourcePermissions(t *testing.T) {
 	tests := []setResourcePermissionsTest{
 		{
 			desc:              "should set all permissions provided",
@@ -345,7 +345,7 @@ type getResourcePermissionsTest struct {
 	onlyManaged       bool
 }
 
-func Teststore_GetResourcePermissions(t *testing.T) {
+func TestStore_GetResourcePermissions(t *testing.T) {
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
