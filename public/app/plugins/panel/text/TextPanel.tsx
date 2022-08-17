@@ -6,11 +6,11 @@ import React, { PureComponent } from 'react';
 
 import { PanelProps, renderTextPanelMarkdown, textUtil } from '@grafana/data';
 // Utils
-import { CustomScrollbar, stylesFactory } from '@grafana/ui';
+import { CustomScrollbar, CodeEditor } from '@grafana/ui';
 import config from 'app/core/config';
 
 // Types
-import { PanelOptions, TextMode } from './models.gen';
+import { defaultCodeOptions, PanelOptions, TextMode } from './models.gen';
 
 export interface Props extends PanelProps<PanelOptions> {}
 
@@ -19,6 +19,13 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
+  readonly markdownClassName = cx(
+    'markdown-html',
+    css`
+      height: 100%;
+    `
+  );
+
   constructor(props: Props) {
     super(props);
 
@@ -80,6 +87,8 @@ export class TextPanel extends PureComponent<Props, State> {
 
     if (mode === TextMode.HTML) {
       return this.prepareHTML(content);
+    } else if (mode === TextMode.Code) {
+      return this.interpolateString(content);
     }
 
     return this.prepareMarkdown(content);
@@ -87,23 +96,33 @@ export class TextPanel extends PureComponent<Props, State> {
 
   render() {
     const { html } = this.state;
-    const styles = getStyles();
+    const { options } = this.props;
+
+    if (options.mode === TextMode.Code) {
+      const { width, height } = this.props;
+      const code = options.code ?? defaultCodeOptions;
+      return (
+        <CodeEditor
+          key={`${code.showLineNumbers}/${code.showMiniMap}`} // will reinit-on change
+          value={html}
+          language={code.language ?? defaultCodeOptions.language!}
+          width={width}
+          height={height}
+          showMiniMap={code.showMiniMap}
+          showLineNumbers={code.showLineNumbers}
+          readOnly={true} // future
+        />
+      );
+    }
+
     return (
       <CustomScrollbar autoHeightMin="100%">
         <DangerouslySetHtmlContent
           html={html}
-          className={cx('markdown-html', styles.content)}
+          className={this.markdownClassName}
           data-testid="TextPanel-converted-content"
         />
       </CustomScrollbar>
     );
   }
 }
-
-const getStyles = stylesFactory(() => {
-  return {
-    content: css`
-      height: 100%;
-    `,
-  };
-});
