@@ -204,7 +204,7 @@ function mockDataFrame() {
 }
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   DefaultTimeZone: 'utc',
 }));
 
@@ -214,7 +214,7 @@ describe('GraphNG utils', () => {
     const result = preparePlotConfigBuilder({
       frame: frame!,
       theme: createTheme(),
-      timeZone: DefaultTimeZone,
+      timeZones: [DefaultTimeZone],
       getTimeRange: getDefaultTimeRange,
       eventBus: new EventBusSrv(),
       sync: () => DashboardCursorSync.Tooltip,

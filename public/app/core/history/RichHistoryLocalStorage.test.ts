@@ -1,7 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import store from 'app/core/store';
 
-import { afterEach, beforeEach } from '../../../test/lib/common';
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
 import { RichHistoryQuery } from '../../types';
 import { backendSrv } from '../services/backend_srv';
@@ -72,7 +71,7 @@ describe('RichHistoryLocalStorage', () => {
     now = new Date(1970, 0, 1);
     old = new Date(1969, 0, 1);
 
-    jest.useFakeTimers('modern');
+    jest.useFakeTimers();
     jest.setSystemTime(now);
     storage = new RichHistoryLocalStorage();
     await storage.deleteAll();

@@ -2,12 +2,11 @@ import React, { SyntheticEvent } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorRow, EditorField, EditorSwitch } from '@grafana/experimental';
-import { RadioButtonGroup, Select } from '@grafana/ui';
+import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
 import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
 import { PromQuery } from '../../types';
-import { AutoSizeInput } from '../shared/AutoSizeInput';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
@@ -59,7 +58,10 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
 
   return (
     <EditorRow>
-      <QueryOptionGroup title="Options" collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel)}>
+      <QueryOptionGroup
+        title="Options"
+        collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel, app)}
+      >
         <PromQueryLegendEditor
           legendFormat={query.legendFormat}
           onChange={(legendFormat) => onChange({ ...query, legendFormat })}
@@ -91,7 +93,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
         </EditorField>
         {shouldShowExemplarSwitch(query, app) && (
           <EditorField label="Exemplars">
-            <EditorSwitch value={query.exemplar} onChange={onExemplarChange} />
+            <EditorSwitch value={query.exemplar || false} onChange={onExemplarChange} />
           </EditorField>
         )}
         {query.intervalFactor && query.intervalFactor > 1 && (
@@ -122,7 +124,7 @@ function getQueryTypeValue(query: PromQuery) {
   return query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range';
 }
 
-function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: string): string[] {
+function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: string, app?: CoreApp): string[] {
   const items: string[] = [];
 
   items.push(`Legend: ${getLegendModeLabel(query.legendFormat)}`);
@@ -130,10 +132,13 @@ function getCollapsedInfo(query: PromQuery, formatOption: string, queryType: str
   items.push(`Step: ${query.interval ?? 'auto'}`);
   items.push(`Type: ${queryType}`);
 
-  if (query.exemplar) {
-    items.push(`Exemplars: true`);
+  if (shouldShowExemplarSwitch(query, app)) {
+    if (query.exemplar) {
+      items.push(`Exemplars: true`);
+    } else {
+      items.push(`Exemplars: false`);
+    }
   }
-
   return items;
 }
 

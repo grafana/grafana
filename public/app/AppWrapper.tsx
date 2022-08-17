@@ -14,13 +14,15 @@ import { store } from 'app/store/store';
 import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
+import { AppChrome } from './core/components/AppChrome/AppChrome';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
-import { I18nProvider } from './core/localisation';
+import { GrafanaContext } from './core/context/GrafanaContext';
+import { I18nProvider } from './core/internationalization';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
-import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
+import { ThemeProvider } from './core/utils/ConfigProvider';
 import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import Close from './tour/Close';
@@ -87,7 +89,24 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
+  renderNavBar() {
+    if (config.isPublicDashboardView || !this.state.ready || config.featureToggles.topnav) {
+      return null;
+    }
+
+    return <NavBar />;
+  }
+
+  commandPaletteEnabled() {
+    return config.featureToggles.commandPalette && !config.isPublicDashboardView;
+  }
+
+  searchBarEnabled() {
+    return !config.isPublicDashboardView;
+  }
+
   render() {
+    const { app } = this.props;
     const { ready } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
@@ -95,6 +114,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     const commandPaletteActionSelected = (action: Action) => {
       reportInteraction('commandPalette_action_selected', {
         actionId: action.id,
+        actionName: action.name,
       });
     };
 
@@ -102,15 +122,15 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
       <Provider store={store}>
         <I18nProvider>
           <ErrorBoundaryAlert style="page">
-            <ConfigContext.Provider value={config}>
-              <ThemeProvider>
+            <GrafanaContext.Provider value={app.context}>
+              <ThemeProvider value={config.theme2}>
                 <KBarProvider
                   actions={[]}
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
                 >
                   <ModalsProvider>
                     <GlobalStyles />
-                    {config.featureToggles.commandPalette && <CommandPalette />}
+                    {this.commandPaletteEnabled() && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
                         <TourProvider
@@ -130,21 +150,21 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                             }),
                           }}
                         >
-                          {ready && <NavBar />}
+                          {this.renderNavBar()}
                           {ready && <PerconaBootstrapper />}
-                          <main className="main-view">
+                          <AppChrome>
                             {pageBanners.map((Banner, index) => (
                               <Banner key={index.toString()} />
                             ))}
 
                             <AngularRoot />
                             <AppNotificationList />
-                            <SearchWrapper />
+                            {this.searchBarEnabled() && <SearchWrapper />}
                             {ready && this.renderRoutes()}
                             {bodyRenderHooks.map((Hook, index) => (
                               <Hook key={index.toString()} />
                             ))}
-                          </main>
+                          </AppChrome>
                         </TourProvider>
                       </Router>
                     </div>
@@ -154,7 +174,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   </ModalsProvider>
                 </KBarProvider>
               </ThemeProvider>
-            </ConfigContext.Provider>
+            </GrafanaContext.Provider>
           </ErrorBoundaryAlert>
         </I18nProvider>
       </Provider>

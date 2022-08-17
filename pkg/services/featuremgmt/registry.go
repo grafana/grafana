@@ -2,6 +2,7 @@
 //  pkg/services/featuremgmt/registry.go
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
+// twice to generate and validate the feature flag files
 
 package featuremgmt
 
@@ -17,11 +18,6 @@ var (
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			State:       FeatureStateStable,
-		},
-		{
-			Name:        "serviceAccounts",
-			Description: "support service accounts",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "database_metrics",
@@ -67,26 +63,14 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "tempoSearch",
-			Description:  "Enable searching in tempo datasources",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
-			Name:        "tempoBackendSearch",
-			Description: "Use backend for tempo search",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:         "lokiBackendMode",
-			Description:  "Loki datasource works as backend datasource",
+			Name:         "tempoApmTable",
+			Description:  "Show APM table",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-			Expression:   "true", // Enabled by default
 		},
 		{
-			Name:        "prometheus_azure_auth",
-			Description: "Experimental. Azure authentication for Prometheus datasource",
+			Name:        "prometheusAzureOverrideAudience",
+			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
 		},
 		{
@@ -107,14 +91,18 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "publicDashboards",
-			Description:     "enables public access to dashboards",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "publicDashboards",
+			Description: "enables public access to dashboards",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiLive",
 			Description: "support websocket streaming for loki (early prototype)",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "lokiDataframeApi",
+			Description: "use experimental loki api for websocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -148,14 +136,14 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "export",
-			Description:     "Export grafana instance (to git, etc)",
+			Name:            "dashboardsFromStorage",
+			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
 		},
 		{
-			Name:            "storageLocalUpload",
-			Description:     "allow uploads to local storage",
+			Name:            "export",
+			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -184,11 +172,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "savedItems",
-			Description: "Enable Saved Items in the navbar.",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
@@ -210,10 +193,21 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:        "prometheusStreamingJSONParserTest",
+			Description: "Run both old and streaming requests and log differences",
+			State:       FeatureStateBeta,
+		},
+		{
 			Name:            "validateDashboardsOnSave",
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "autoMigrateGraphPanels",
+			Description:  "Replace the angular graph panel with timeseries",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
 		},
 		{
 			Name:        "prometheusWideSeries",
@@ -221,8 +215,56 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:         "canvasPanelNesting",
+			Description:  "Allow elements nesting",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "scenes",
+			Description:  "Experimental framework to build interactive dashboards",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "useLegacyHeatmapPanel",
+			Description: "Continue to use the angular/flot based heatmap panel",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:         "cloudMonitoringExperimentalUI",
+			Description:  "Use grafana-experimental UI in Cloud Monitoring",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "disableSecretsCompatibility",
+			Description:     "Disable duplicated secret storage in legacy tables",
+			State:           FeatureStateAlpha,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
+		},
+		{
+			Name:        "dataConnectionsConsole",
+			Description: "Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "internationalization",
+			Description: "Enables work-in-progress internationalization",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "topnav",
+			Description: "New top nav and page layouts",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "customBranding",
+			Description: "Replaces whitelabeling with the new custom branding feature",
 			State:       FeatureStateAlpha,
 		},
 	}

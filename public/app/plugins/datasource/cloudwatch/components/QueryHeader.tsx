@@ -24,14 +24,7 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
   { label: 'CloudWatch Logs', value: 'Logs' },
 ];
 
-const QueryHeader: React.FC<QueryHeaderProps> = ({
-  query,
-  sqlCodeEditorIsDirty,
-  datasource,
-  onChange,
-  onRunQuery,
-  onRegionChange,
-}) => {
+const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, datasource, onChange, onRunQuery }) => {
   const { queryMode, region } = query;
 
   const [regions, regionIsLoading] = useRegions(datasource);
@@ -47,9 +40,6 @@ const QueryHeader: React.FC<QueryHeaderProps> = ({
   };
 
   const onRegion = async ({ value }: SelectableValue<string>) => {
-    if (onRegionChange) {
-      await onRegionChange(value ?? 'default');
-    }
     onChange({
       ...query,
       region: value,

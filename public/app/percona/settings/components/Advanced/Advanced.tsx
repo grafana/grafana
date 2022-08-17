@@ -6,7 +6,7 @@ import { Field, withTypes } from 'react-final-form';
 import { useSelector } from 'react-redux';
 
 import { Button, Spinner, Icon, useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
@@ -170,8 +170,8 @@ export const Advanced: FC = () => {
   const { Form } = withTypes<AdvancedFormProps>();
 
   return (
-    <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
+      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={styles.advancedWrapper}>
             <Form
@@ -352,8 +352,8 @@ export const Advanced: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

@@ -4,8 +4,8 @@ import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
-import { InventoryDataService } from 'app/percona/inventory/Inventory.tools';
+import { OldPage } from 'app/core/components/Page/Page';
+import { InventoryDataService, Model } from 'app/percona/inventory/Inventory.tools';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
@@ -34,7 +34,7 @@ interface Service {
 export const Services = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Model[]>([]);
   const [selected, setSelectedRows] = useState([]);
   const navModel = usePerconaNavModel('inventory-services');
   const [generateToken] = useCancelToken();
@@ -87,8 +87,8 @@ export const Services = () => {
   );
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <FeatureLoader>
           <div className={styles.tableWrapper}>
             <div className={styles.actionPanel}>
@@ -164,8 +164,8 @@ export const Services = () => {
             </div>
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

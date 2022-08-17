@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Observable } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { FolderDTO } from 'app/types';
 
@@ -14,16 +14,23 @@ import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequi
 import { useSearchQuery } from '../../hooks/useSearchQuery';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { SearchLayout } from '../../types';
+import {
+  reportDashboardListViewed,
+  reportSearchResultInteraction,
+  reportSearchQueryInteraction,
+  reportSearchFailedQueryInteraction,
+} from '../reporting';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
 import { FolderSection } from './FolderSection';
 import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
+import { SearchResultsCards } from './SearchResultsCards';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
-type SearchViewProps = {
+export type SearchViewProps = {
   queryText: string; // odd that it is not from query.query
   showManage: boolean;
   folderDTO?: FolderDTO;
@@ -38,15 +45,24 @@ export const SearchView = ({
   showManage,
   folderDTO,
   queryText,
-  hidePseudoFolders,
   onQueryTextChange,
+  hidePseudoFolders,
   includePanels,
   setIncludePanels,
   keyboardEvents,
 }: SearchViewProps) => {
   const styles = useStyles2(getStyles);
 
-  const { query, onTagFilterChange, onTagAdd, onDatasourceChange, onSortChange, onLayoutChange } = useSearchQuery({});
+  const {
+    query,
+    onTagFilterChange,
+    onStarredFilterChange,
+    onTagAdd,
+    onDatasourceChange,
+    onSortChange,
+    onLayoutChange,
+    onClearStarred,
+  } = useSearchQuery({});
   query.query = queryText; // Use the query value passed in from parent rather than from URL
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
@@ -54,6 +70,7 @@ export const SearchView = ({
   const isFolders = layout === SearchLayout.Folders;
 
   const [listKey, setListKey] = useState(Date.now());
+  const eventTrackingNamespace = folderDTO ? 'manage_dashboards' : 'dashboard_search';
 
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
@@ -62,6 +79,9 @@ export const SearchView = ({
       ds_uid: query.datasource as string,
       location: folderDTO?.uid, // This will scope all results to the prefix
       sort: query.sort?.value,
+      explain: query.explain,
+      withAllowedActions: query.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
+      starred: query.starred,
     };
 
     // Only dashboards have additional properties
@@ -86,8 +106,58 @@ export const SearchView = ({
     return q;
   }, [query, queryText, folderDTO, includePanels]);
 
+  // Search usage reporting
+  useDebounce(
+    () => {
+      reportDashboardListViewed(eventTrackingNamespace, {
+        layout: query.layout,
+        starred: query.starred,
+        sortValue: query.sort?.value,
+        query: query.query,
+        tagCount: query.tag?.length,
+        includePanels,
+      });
+    },
+    1000,
+    []
+  );
+
+  const onClickItem = () => {
+    reportSearchResultInteraction(eventTrackingNamespace, {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels,
+    });
+  };
+
   const results = useAsync(() => {
-    return getGrafanaSearcher().search(searchQuery);
+    const trackingInfo = {
+      layout: query.layout,
+      starred: query.starred,
+      sortValue: query.sort?.value,
+      query: query.query,
+      tagCount: query.tag?.length,
+      includePanels,
+    };
+
+    reportSearchQueryInteraction(eventTrackingNamespace, trackingInfo);
+
+    if (searchQuery.starred) {
+      return getGrafanaSearcher()
+        .starred(searchQuery)
+        .catch((error) =>
+          reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+        );
+    }
+
+    return getGrafanaSearcher()
+      .search(searchQuery)
+      .catch((error) =>
+        reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+      );
   }, [searchQuery]);
 
   const clearSelection = useCallback(() => {
@@ -103,10 +173,6 @@ export const SearchView = ({
     [searchSelection]
   );
 
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
-  }
-
   // This gets the possible tags from within the query results
   const getTagOptions = (): Promise<TermCount[]> => {
     return getGrafanaSearcher().tags(searchQuery);
@@ -120,6 +186,13 @@ export const SearchView = ({
     // trigger again the search to the backend
     onQueryTextChange(query.query);
   };
+
+  const getStarredItems = useCallback(
+    (e) => {
+      onStarredFilterChange(e);
+    },
+    [onStarredFilterChange]
+  );
 
   const renderResults = () => {
     const value = results.value;
@@ -147,7 +220,7 @@ export const SearchView = ({
               }
             }}
           >
-            Remove search constraints
+            Clear search and filters
           </Button>
         </div>
       );
@@ -165,6 +238,7 @@ export const SearchView = ({
             renderStandaloneBody={true}
             tags={query.tag}
             key={listKey}
+            onClickItem={onClickItem}
           />
         );
       }
@@ -176,6 +250,7 @@ export const SearchView = ({
           tags={query.tag}
           onTagSelected={onTagAdd}
           hidePseudoFolders={hidePseudoFolders}
+          onClickItem={onClickItem}
         />
       );
     }
@@ -194,10 +269,15 @@ export const SearchView = ({
               onTagSelected: onTagAdd,
               keyboardEvents,
               onDatasourceChange: query.datasource ? onDatasourceChange : undefined,
+              onClickItem: onClickItem,
             };
 
             if (layout === SearchLayout.Grid) {
               return <SearchResultsGrid {...props} />;
+            }
+
+            if (width < 800) {
+              return <SearchResultsCards {...props} />;
             }
 
             return <SearchResultsTable {...props} />;
@@ -207,8 +287,19 @@ export const SearchView = ({
     );
   };
 
-  if (!config.featureToggles.panelTitleSearch) {
-    return <div className={styles.unsupported}>Unsupported</div>;
+  if (folderDTO && !results.loading && !results.value?.totalRows && !queryText.length) {
+    return (
+      <EmptyListCTA
+        title="This folder doesn't have any dashboards yet"
+        buttonIcon="plus"
+        buttonTitle="Create Dashboard"
+        buttonLink={`dashboard/new?folderId=${folderDTO.id}`}
+        proTip="Add/move dashboards to your folder at ->"
+        proTipLink="dashboards"
+        proTipLinkTitle="Manage dashboards"
+        proTipTarget=""
+      />
+    );
   }
 
   return (
@@ -222,9 +313,14 @@ export const SearchView = ({
               if (query.query) {
                 onQueryTextChange(''); // parent will clear the sort
               }
+              if (query.starred) {
+                onClearStarred();
+              }
             }
             onLayoutChange(v);
           }}
+          showStarredFilter={hidePseudoFolders}
+          onStarredFilterChange={!hidePseudoFolders ? undefined : getStarredItems}
           onSortChange={onSortChange}
           onTagFilterChange={onTagFilterChange}
           getTagOptions={getTagOptions}

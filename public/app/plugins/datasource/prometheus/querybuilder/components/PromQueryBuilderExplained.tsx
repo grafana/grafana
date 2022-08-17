@@ -20,9 +20,6 @@ export const PromQueryBuilderExplained = React.memo<Props>(({ query }) => {
 
   return (
     <Stack gap={0.5} direction="column">
-      <OperationExplainedBox>
-        <RawQuery query={query} lang={lang} />
-      </OperationExplainedBox>
       <OperationExplainedBox
         stepNumber={1}
         title={<RawQuery query={`${visQuery.metric} ${promQueryModeller.renderLabels(visQuery.labels)}`} lang={lang} />}

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -54,7 +55,9 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
         return filteredOptions;
       } catch (error) {
-        dispatch(notifyApp(createErrorNotification('Error', error)));
+        if (error instanceof Error) {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
         return [];
       } finally {
         setIsLoading((prevValue) => ({ ...prevValue, [loaderOfType]: false }));
@@ -66,23 +69,29 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   useEffect(() => {
     const getServices = async () => {
       const services = await loadOptions('/api/services', 'services');
+      if (query.service && getTemplateSrv().containsTemplate(query.service)) {
+        services.push(toOption(query.service));
+      }
       setServiceOptions(services);
     };
     getServices();
-  }, [datasource, loadOptions]);
+  }, [datasource, loadOptions, query.service]);
 
   useEffect(() => {
     const getOperations = async () => {
       const operations = await loadOptions(
-        `/api/services/${encodeURIComponent(query.service!)}/operations`,
+        `/api/services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
         'operations'
       );
+      if (query.operation && getTemplateSrv().containsTemplate(query.operation)) {
+        operations.push(toOption(query.operation));
+      }
       setOperationOptions([allOperationsOption, ...operations]);
     };
     if (query.service) {
       getOperations();
     }
-  }, [datasource, query.service, loadOptions]);
+  }, [datasource, query.service, loadOptions, query.operation]);
 
   return (
     <div className={css({ maxWidth: '500px' })}>
@@ -104,6 +113,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             menuPlacement="bottom"
             isClearable
             aria-label={'select-service-name'}
+            allowCustomValue={true}
           />
         </InlineField>
       </InlineFieldRow>
@@ -113,7 +123,10 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             inputId="operation"
             options={operationOptions}
             onOpenMenu={() =>
-              loadOptions(`/api/services/${encodeURIComponent(query.service!)}/operations`, 'operations')
+              loadOptions(
+                `/api/services/${encodeURIComponent(getTemplateSrv().replace(query.service!))}/operations`,
+                'operations'
+              )
             }
             isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
@@ -126,6 +139,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             menuPlacement="bottom"
             isClearable
             aria-label={'select-operation-name'}
+            allowCustomValue={true}
           />
         </InlineField>
       </InlineFieldRow>

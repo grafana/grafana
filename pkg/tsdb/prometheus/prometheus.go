@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
+	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -18,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/yudai/gojsondiff"
+	"github.com/yudai/gojsondiff/formatter"
 )
 
 var plog = log.New("tsdb.prometheus")
@@ -43,23 +47,29 @@ func ProvideService(httpClientProvider httpclient.Provider, cfg *setting.Cfg, fe
 
 func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]interface{}
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		// Creates a http roundTripper. Probably should be used for both buffered and streaming/querydata instances.
+		opts, err := buffered.CreateTransportOptions(settings, cfg, plog)
 		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
+			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}
-
-		b, err := buffered.New(httpClientProvider, cfg, features, tracer, settings, plog)
+		httpClient, err := httpClientProvider.New(*opts)
+		if err != nil {
+			return nil, fmt.Errorf("error creating http client: %v", err)
+		}
+		// Older version using standard Go Prometheus client
+		b, err := buffered.New(httpClient.Transport, tracer, settings, plog)
 		if err != nil {
 			return nil, err
 		}
 
-		qd, err := querydata.New(httpClientProvider, cfg, features, tracer, settings, plog)
+		// New version using custom client and better response parsing
+		qd, err := querydata.New(httpClient, features, tracer, settings, plog)
 		if err != nil {
 			return nil, err
 		}
 
-		r, err := resource.New(httpClientProvider, cfg, features, settings, plog)
+		// Resource call management using new custom client same as querydata
+		r, err := resource.New(httpClient, settings, plog)
 		if err != nil {
 			return nil, err
 		}
@@ -86,6 +96,36 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return i.queryData.Execute(ctx, req)
 	}
 
+	// To test the new client implementation this can be run and we do 2 requests and compare.
+	if s.features.IsEnabled(featuremgmt.FlagPrometheusStreamingJSONParserTest) {
+		var wg sync.WaitGroup
+		var streamData *backend.QueryDataResponse
+		var streamError error
+
+		var data *backend.QueryDataResponse
+		var err error
+
+		plog.Debug("PrometheusStreamingJSONParserTest", "req", req)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			streamData, streamError = i.queryData.Execute(ctx, req)
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			data, err = i.buffered.ExecuteTimeSeriesQuery(ctx, req)
+		}()
+
+		wg.Wait()
+
+		// Report can take a while and we don't really need to wait for it.
+		go reportDiff(data, err, streamData, streamError)
+		return data, err
+	}
+
 	return i.buffered.ExecuteTimeSeriesQuery(ctx, req)
 }
 
@@ -95,19 +135,12 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	statusCode, bytes, err := i.resource.Execute(ctx, req)
-	body := bytes
+	resp, err := i.resource.Execute(ctx, req)
 	if err != nil {
-		body = []byte(err.Error())
+		return err
 	}
 
-	return sender.Send(&backend.CallResourceResponse{
-		Status: statusCode,
-		Headers: map[string][]string{
-			"content-type": {"application/json"},
-		},
-		Body: body,
-	})
+	return sender.Send(resp)
 }
 
 func (s *Service) getInstance(pluginCtx backend.PluginContext) (*instance, error) {
@@ -132,4 +165,49 @@ func ConvertAPIError(err error) error {
 		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
 	}
 	return err
+}
+
+func reportDiff(data *backend.QueryDataResponse, err error, streamData *backend.QueryDataResponse, streamError error) {
+	if err == nil && streamError != nil {
+		plog.Debug("PrometheusStreamingJSONParserTest error in streaming client", "err", streamError)
+	}
+
+	if err != nil && streamError == nil {
+		plog.Debug("PrometheusStreamingJSONParserTest error in buffer but not streaming", "err", err)
+	}
+
+	if !reflect.DeepEqual(data, streamData) {
+		plog.Debug("PrometheusStreamingJSONParserTest buffer and streaming data are different")
+		dataJson, jsonErr := json.MarshalIndent(data, "", "\t")
+		if jsonErr != nil {
+			plog.Debug("PrometheusStreamingJSONParserTest error marshaling data", "jsonErr", jsonErr)
+		}
+		streamingJson, jsonErr := json.MarshalIndent(streamData, "", "\t")
+		if jsonErr != nil {
+			plog.Debug("PrometheusStreamingJSONParserTest error marshaling streaming data", "jsonErr", jsonErr)
+		}
+		differ := gojsondiff.New()
+		d, diffErr := differ.Compare(dataJson, streamingJson)
+		if diffErr != nil {
+			plog.Debug("PrometheusStreamingJSONParserTest diff error", "err", diffErr)
+		}
+		config := formatter.AsciiFormatterConfig{
+			ShowArrayIndex: true,
+			Coloring:       true,
+		}
+
+		var aJson map[string]interface{}
+		unmarshallErr := json.Unmarshal(dataJson, &aJson)
+		if unmarshallErr != nil {
+			plog.Debug("PrometheusStreamingJSONParserTest unmarshall error", "err", unmarshallErr)
+		}
+		formatter := formatter.NewAsciiFormatter(aJson, config)
+		diffString, diffErr := formatter.Format(d)
+		if diffErr != nil {
+			plog.Debug("PrometheusStreamingJSONParserTest diff format error", "err", diffErr)
+		}
+		fmt.Println(diffString)
+	} else {
+		plog.Debug("PrometheusStreamingJSONParserTest responses are the same")
+	}
 }

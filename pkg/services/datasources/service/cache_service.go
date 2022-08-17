@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -36,12 +37,12 @@ func (dc *CacheServiceImpl) GetDatasource(
 	datasourceID int64,
 	user *models.SignedInUser,
 	skipCache bool,
-) (*models.DataSource, error) {
+) (*datasources.DataSource, error) {
 	cacheKey := idKey(datasourceID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
-			ds := cached.(*models.DataSource)
+			ds := cached.(*datasources.DataSource)
 			if ds.OrgId == user.OrgId {
 				return ds, nil
 			}
@@ -50,7 +51,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 
 	dc.logger.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
 
-	query := &models.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
+	query := &datasources.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
 	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
@@ -70,7 +71,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	datasourceUID string,
 	user *models.SignedInUser,
 	skipCache bool,
-) (*models.DataSource, error) {
+) (*datasources.DataSource, error) {
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
 	}
@@ -81,7 +82,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(uidCacheKey); found {
-			ds := cached.(*models.DataSource)
+			ds := cached.(*datasources.DataSource)
 			if ds.OrgId == user.OrgId {
 				return ds, nil
 			}
@@ -89,7 +90,7 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	}
 
 	dc.logger.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
-	query := &models.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
+	query := &datasources.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
 	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err

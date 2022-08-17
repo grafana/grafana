@@ -7,7 +7,7 @@ import { Cell, Column, Row } from 'react-table';
 import { AppEvents } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { SilenceBell } from 'app/percona/shared/components/Elements/SilenceBell';
@@ -111,7 +111,7 @@ export const Alerts: FC = () => {
         Cell: ({ row, value }) => (
           <Severity
             severity={value}
-            className={cx({ [style.silencedSeverity]: (row.original as Alert).status === AlertStatus.SILENCED })}
+            className={cx({ [style.silencedSeverity]: row.original.status === AlertStatus.SILENCED })}
           />
         ),
         width: '5%',
@@ -197,8 +197,8 @@ export const Alerts: FC = () => {
   }, [pageSize, pageIndex]);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.integratedAlerting} featureSelector={featureSelector}>
           <div className={style.actionsWrapper}>
@@ -236,8 +236,8 @@ export const Alerts: FC = () => {
             renderExpandedRow={renderSelectedSubRow}
           />
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

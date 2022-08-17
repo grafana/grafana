@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -170,7 +171,7 @@ func TestFilter_Datasources(t *testing.T) {
 
 			// seed 10 data sources
 			for i := 1; i <= 10; i++ {
-				err := store.AddDataSource(context.Background(), &models.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
+				err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
 				require.NoError(t, err)
 			}
 
@@ -187,7 +188,7 @@ func TestFilter_Datasources(t *testing.T) {
 
 			if !tt.expectErr {
 				require.NoError(t, err)
-				var datasources []models.DataSource
+				var datasources []datasources.DataSource
 				err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
 				require.NoError(t, err)
 

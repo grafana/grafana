@@ -4,8 +4,6 @@ import { ContextSrvStub } from 'test/specs/helpers';
 import { dateTime, isDateTime } from '@grafana/data';
 import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 
-import { beforeEach } from '../../../../test/lib/common';
-
 import { TimeSrv } from './TimeSrv';
 
 jest.mock('app/core/core', () => ({

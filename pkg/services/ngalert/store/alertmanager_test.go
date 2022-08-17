@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package store
 
 import (
@@ -16,6 +13,9 @@ import (
 )
 
 func TestIntegrationAlertManagerHash(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := sqlstore.InitTestDB(t)
 	store := &DBstore{
 		SQLStore: sqlStore,

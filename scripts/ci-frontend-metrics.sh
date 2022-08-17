@@ -7,12 +7,6 @@ DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
 
-# This is also included in the betterer stats, but we maintain it to keep metric history
-ENZYME_TEST_COUNT="$(grep -l -R --include="*.test.*" "from 'enzyme'" public packages | wc -l)"
-
-STRICT_LINT_RESULTS="$(yarn run eslint --rule '@typescript-eslint/no-explicit-any: ["error"]' --format unix --ext .ts,.tsx ./public || true)"
-STRICT_LINT_EXPLICIT_ANY="$(echo "${STRICT_LINT_RESULTS}" | grep -o "no-explicit-any" | wc -l)"
-
 TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
 ## Disabled due to yarn PnP update breaking npm audit
@@ -27,14 +21,12 @@ echo -e "Accessibility errors: $ACCESSIBILITY_ERRORS"
 echo -e "Directives: $DIRECTIVES"
 echo -e "Controllers: $CONTROLLERS"
 echo -e "Legacy forms: $LEGACY_FORMS"
-echo -e "TS Explicit any: $STRICT_LINT_EXPLICIT_ANY"
 echo -e "Total bundle folder size: $TOTAL_BUNDLE"
 echo -e "Total outdated dependencies: $OUTDATED_DEPENDENCIES"
 echo -e "Low vulnerabilities: $LOW_VULNERABILITIES"
 echo -e "Med vulnerabilities: $MED_VULNERABILITIES"
 echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
 echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
-echo -e "Number of enzyme tests: $ENZYME_TEST_COUNT"
 
 BETTERER_STATS=""
 while read -r name value
@@ -50,8 +42,6 @@ echo "Metrics: {
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
-  \"grafana.ci-code.strictLint.noExplicitAny\": \"${STRICT_LINT_EXPLICIT_ANY}\",
   \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
-  \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
-  \"grafana.ci-code.enzymeTests\": \"${ENZYME_TEST_COUNT}\"
+  \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\"
 }"

@@ -5,12 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mwitkow/go-conntrack"
 )
@@ -35,6 +34,10 @@ func New(cfg *setting.Cfg, validator models.PluginRequestValidator, tracer traci
 
 	if cfg.SigV4AuthEnabled {
 		middlewares = append(middlewares, SigV4Middleware(cfg.SigV4VerboseLogging))
+	}
+
+	if httpLoggingEnabled(cfg.PluginSettings) {
+		middlewares = append(middlewares, HTTPLoggerMiddleware(cfg.PluginSettings))
 	}
 
 	setDefaultTimeoutOptions(cfg)

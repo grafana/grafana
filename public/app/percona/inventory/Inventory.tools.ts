@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
 import { orderBy } from 'lodash';
 
 import { inventoryTypes } from './Inventory.constants';
 import { CustomLabel, InventoryList, InventoryType, ServicesList } from './Inventory.types';
 
-interface Model {
+export interface Model {
   custom_labels: CustomLabel[];
   type: string;
   isDeleted: boolean;

@@ -6,11 +6,13 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // ModelToInstanceSettings converts a datasources.DataSource to a backend.DataSourceInstanceSettings.
-func ModelToInstanceSettings(ds *models.DataSource, decryptFn func(ds *models.DataSource) (map[string]string, error),
+func ModelToInstanceSettings(ds *datasources.DataSource, decryptFn func(ds *datasources.DataSource) (map[string]string, error),
 ) (*backend.DataSourceInstanceSettings, error) {
 	var jsonDataBytes json.RawMessage
 	if ds.JsonData != nil {
@@ -26,6 +28,7 @@ func ModelToInstanceSettings(ds *models.DataSource, decryptFn func(ds *models.Da
 	}
 
 	return &backend.DataSourceInstanceSettings{
+		Type:                    ds.Type,
 		ID:                      ds.Id,
 		Name:                    ds.Name,
 		URL:                     ds.Url,

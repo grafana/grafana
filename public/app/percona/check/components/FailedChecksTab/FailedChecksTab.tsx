@@ -4,7 +4,7 @@ import { Cell, Column, Row } from 'react-table';
 
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
 import { CheckService } from 'app/percona/check/Check.service';
 import { FailedCheckSummary } from 'app/percona/check/types';
@@ -82,8 +82,8 @@ export const FailedChecksTab: FC = () => {
   const featureSelector = useCallback(getPerconaSettingFlag('sttEnabled'), []);
 
   return (
-    <Page navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
-      <Page.Contents dataTestId="db-check-tab-content">
+    <OldPage navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
+      <OldPage.Contents dataTestId="db-check-tab-content">
         <FeatureLoader
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}
@@ -101,8 +101,8 @@ export const FailedChecksTab: FC = () => {
             />
           </AlertsReloadContext.Provider>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

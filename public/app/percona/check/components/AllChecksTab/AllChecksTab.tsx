@@ -4,7 +4,7 @@ import React, { FC, useEffect, useState, useCallback, useMemo } from 'react';
 import { AppEvents } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { CheckService } from 'app/percona/check/Check.service';
 import { CheckDetails, Interval } from 'app/percona/check/types';
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/integrated-alerting/components/Table';
@@ -186,8 +186,8 @@ export const AllChecksTab: FC = () => {
   const featureSelector = useCallback(getPerconaSettingFlag('sttEnabled'), []);
 
   return (
-    <Page navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
-      <Page.Contents dataTestId="db-check-tab-content">
+    <OldPage navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
+      <OldPage.Contents dataTestId="db-check-tab-content">
         <FeatureLoader
           messagedataTestId="db-check-panel-settings-link"
           featureName={mainChecksMessages.advisors}
@@ -220,8 +220,8 @@ export const AllChecksTab: FC = () => {
             />
           )}
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

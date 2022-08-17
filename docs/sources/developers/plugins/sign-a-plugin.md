@@ -6,7 +6,7 @@ title: Sign a plugin
 
 # Sign a plugin
 
-Signing a plugin allows Grafana to verify the authenticity of the plugin with [signature verification]({{< relref "../plugin-signatures/" >}}). This gives users a way to make sure plugins haven't been tampered with. All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed.
+Signing a plugin allows Grafana to verify the authenticity of the plugin with [signature verification]({{< relref "../../administration/plugin-management#plugin-signatures" >}}). This gives users a way to make sure plugins haven't been tampered with. All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed.
 
 > **Important:** Future versions of Grafana will require all plugins to be signed.
 
@@ -14,7 +14,7 @@ Before you can sign your plugin, you need to decide whether you want to sign it 
 
 If you want to make your plugin publicly available outside of your organization, you need to sign your plugin under a _community_ or _commercial_ [signature level](#plugin-signature-levels). Public plugins are available from [grafana.com/plugins](https://grafana.com/plugins) and can be installed by anyone.
 
-For more information on how to install public plugin, refer to [Install Grafana plugins]({{< relref "../installation/" >}}).
+For more information on how to install a public plugin, refer to [Install Grafana plugins]({{< relref "../../administration/plugin-management#install-a-plugin" >}}).
 
 If you intend to only use the plugin within your organization, you can to sign it under a _private_ [signature level](#plugin-signature-levels).
 

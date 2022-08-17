@@ -14,6 +14,7 @@ import (
 )
 
 type alertRule struct {
+	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
 	Title           string
 	Condition       string
@@ -23,6 +24,7 @@ type alertRule struct {
 	UID             string `xorm:"uid"`
 	NamespaceUID    string `xorm:"namespace_uid"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     string
 	ExecErrState    string
 	For             duration
@@ -36,6 +38,7 @@ type alertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -60,6 +63,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		RuleUID:          a.UID,
 		RuleNamespaceUID: a.NamespaceUID,
 		RuleGroup:        a.RuleGroup,
+		RuleGroupIndex:   a.RuleGroupIndex,
 		ParentVersion:    0,
 		RestoredFrom:     0,
 		Version:          1,

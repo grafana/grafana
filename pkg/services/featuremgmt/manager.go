@@ -166,7 +166,8 @@ func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
 }
 
 // WithFeatures is used to define feature toggles for testing.
-// The arguments are a list of strings that are optionally followed by a boolean value
+// The arguments are a list of strings that are optionally followed by a boolean value for example:
+// WithFeatures([]interface{}{"my_feature", "other_feature"}) or WithFeatures([]interface{}{"my_feature", true})
 func WithFeatures(spec ...interface{}) *FeatureManager {
 	count := len(spec)
 	enabled := make(map[string]bool, count)

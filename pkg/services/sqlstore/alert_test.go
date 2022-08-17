@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -29,6 +26,9 @@ func resetTimeNow() {
 }
 
 func TestIntegrationAlertingDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 
@@ -141,7 +141,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Viewer can read alerts", func(t *testing.T) {
 		setup(t)
-		viewerUser := &models.SignedInUser{OrgRole: models.ROLE_VIEWER, OrgId: 1}
+		viewerUser := &models.SignedInUser{OrgRole: models.ROLE_VIEWER, OrgId: 1, Permissions: map[int64]map[string][]string{1: {"dashboards:read": []string{"dashboards:*"}}}}
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 		err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 
@@ -263,6 +263,9 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 }
 
 func TestIntegrationPausingAlerts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	mockTimeNow()
 	defer resetTimeNow()
 

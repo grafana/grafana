@@ -1,10 +1,10 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.50-go1.17.12'
-build_image = 'grafana/build-container:1.5.8'
+grabpl_version = 'v2.9.54-v9.1.x'
+build_image = 'grafana/build-container:1.5.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
-alpine_image = 'alpine:3.15'
+alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
@@ -68,6 +68,9 @@ def wire_install_step():
         'image': build_image,
         'commands': [
             'make gen-go',
+        ],
+        'depends_on': [
+            'verify-gen-cue',
         ],
     }
 
@@ -203,13 +206,13 @@ def enterprise_downstream_step(edition, ver_mode):
             'params': [
                 'SOURCE_BUILD_NUMBER=${DRONE_COMMIT}',
                 'SOURCE_COMMIT=${DRONE_COMMIT}',
-                'OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}',
             ],
         },
     }
 
     if ver_mode == 'pr':
         step.update({ 'failure': 'ignore' })
+        step['settings']['params'].append('OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}')
 
     return step
 
@@ -226,6 +229,7 @@ def lint_backend_step(edition):
             'wire-install',
         ],
         'commands': [
+            # Don't use Make since it will re-download the linters
             'make lint-go',
         ],
     }
@@ -246,7 +250,7 @@ def benchmark_ldap_step():
 
 
 def build_storybook_step(edition, ver_mode):
-    if edition in ('enterprise', 'enterprise2') and ver_mode == 'release':
+    if edition in ('enterprise', 'enterprise2'):
         return None
 
     return {
@@ -337,13 +341,6 @@ def e2e_tests_artifacts(edition):
 
 
 def upload_cdn_step(edition, ver_mode, trigger=None):
-    src_dir = ''
-    if ver_mode == "release":
-        bucket = "$${PRERELEASE_BUCKET}"
-        src_dir = " --src-dir artifacts/static-assets"
-    else:
-        bucket = "grafana-static-assets"
-
     deps = []
     if edition in 'enterprise2':
         deps.extend([
@@ -363,7 +360,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
+            './bin/grabpl upload-cdn --edition {}'.format(edition),
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
@@ -379,14 +376,14 @@ def build_backend_step(edition, ver_mode, variants=None):
     # TODO: Convert number of jobs to percentage
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} ${{DRONE_TAG}}'.format(
+            './bin/build build-backend --jobs 8 --edition {} ${{DRONE_TAG}}'.format(
                 edition,
             ),
         ]
     else:
         build_no = '${DRONE_BUILD_NUMBER}'
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{}'.format(
+            './bin/build build-backend --jobs 8 --edition {} --build-id {}{}'.format(
                 edition, build_no, variants_str,
             ),
         ]
@@ -397,6 +394,7 @@ def build_backend_step(edition, ver_mode, variants=None):
         'depends_on': [
             'gen-version',
             'wire-install',
+            'compile-build-cmd',
         ],
         'commands': cmds,
     }
@@ -473,15 +471,13 @@ def build_frontend_docs_step(edition):
     }
 
 
-def build_plugins_step(edition, sign=False):
-    if sign:
+def build_plugins_step(edition, ver_mode):
+    if ver_mode!='pr':
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
         }
-        sign_args = ' --sign --signing-admin'
     else:
         env = None
-        sign_args = ''
     return {
         'name': 'build-plugins',
         'image': build_image,
@@ -492,33 +488,46 @@ def build_plugins_step(edition, sign=False):
         ],
         'commands': [
             # TODO: Use percentage for num jobs
-            './bin/grabpl build-plugins --jobs 8 --edition {}{}'.format(edition, sign_args),
+            './bin/grabpl build-plugins --jobs 8 --edition {}'.format(edition),
         ],
     }
 
 
 def test_backend_step(edition):
-    return {
-        'name': 'test-backend' + enterprise2_suffix(edition),
-        'image': build_image,
-        'depends_on': [
-            'wire-install',
-        ],
-        'commands': [
-            './bin/grabpl test-backend --edition {}'.format(edition),
-        ],
-    }
+    if edition == 'enterprise2':
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+    else:
+        return {
+            'name': 'test-backend' + enterprise2_suffix(edition),
+            'image': build_image,
+            'depends_on': [
+                'wire-install',
+            ],
+            'commands': [
+                'go test -short -covermode=atomic -timeout=30m ./pkg/...',
+            ],
+        }
+
 
 
 def test_backend_integration_step(edition):
     return {
-        'name': 'test-backend-integration' + enterprise2_suffix(edition),
+        'name': 'test-backend-integration',
         'image': build_image,
         'depends_on': [
             'wire-install',
         ],
         'commands': [
-            './bin/grabpl integration-tests --edition {}'.format(edition),
+            'go test -run Integration -covermode=atomic -timeout=30m ./pkg/...',
         ],
     }
 
@@ -534,6 +543,20 @@ def betterer_frontend_step():
         ],
         'failure': 'ignore',
     }
+
+def betterer_frontend_step():
+    return {
+        'name': 'betterer-frontend',
+        'image': build_image,
+        'depends_on': [
+            'yarn-install',
+        ],
+        'commands': [
+            'yarn betterer ci',
+        ],
+        'failure': 'ignore',
+    }
+
 
 
 def test_frontend_step():
@@ -588,7 +611,7 @@ def test_a11y_frontend_step(ver_mode, edition, port=3001):
 
     return {
         'name': 'test-a11y-frontend' + enterprise2_suffix(edition),
-        'image': 'grafana/docker-puppeteer:1.0.0',
+        'image': 'grafana/docker-puppeteer:1.1.0',
         'depends_on': [
             'grafana-server' + enterprise2_suffix(edition),
         ],
@@ -854,18 +877,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
 
 
 def postgres_integration_tests_step(edition, ver_mode):
-    deps = []
-    deps.extend(['grabpl'])
-    return {
-        'name': 'postgres-integration-tests',
-        'image': build_image,
-        'depends_on': deps,
-        'environment': {
-            'PGPASSWORD': 'grafanatest',
-            'GRAFANA_TEST_DB': 'postgres',
-            'POSTGRES_HOST': 'postgres',
-        },
-        'commands': [
+    cmds = [
             'apt-get update',
             'apt-get install -yq postgresql-client',
             'dockerize -wait tcp://postgres:5432 -timeout 120s',
@@ -873,41 +885,48 @@ def postgres_integration_tests_step(edition, ver_mode):
             'devenv/docker/blocks/postgres_tests/setup.sql',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
-            './bin/grabpl integration-tests --database postgres',
-        ],
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
+        ]
+    return {
+        'name': 'postgres-integration-tests',
+        'image': build_image,
+        'depends_on': ['wire-install'],
+        'environment': {
+            'PGPASSWORD': 'grafanatest',
+            'GRAFANA_TEST_DB': 'postgres',
+            'POSTGRES_HOST': 'postgres',
+        },
+        'commands': cmds,
     }
 
 
 def mysql_integration_tests_step(edition, ver_mode):
-    deps = []
-    deps.extend(['grabpl'])
-    return {
-        'name': 'mysql-integration-tests',
-        'image': build_image,
-        'depends_on': deps,
-        'environment': {
-            'GRAFANA_TEST_DB': 'mysql',
-            'MYSQL_HOST': 'mysql',
-        },
-        'commands': [
+    cmds = [
             'apt-get update',
             'apt-get install -yq default-mysql-client',
             'dockerize -wait tcp://mysql:3306 -timeout 120s',
             'cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass',
             # Make sure that we don't use cached results for another database
             'go clean -testcache',
-            './bin/grabpl integration-tests --database mysql',
-        ],
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=30m {}'",
+        ]
+    return {
+        'name': 'mysql-integration-tests',
+        'image': build_image,
+        'depends_on': ['wire-install'],
+        'environment': {
+            'GRAFANA_TEST_DB': 'mysql',
+            'MYSQL_HOST': 'mysql',
+        },
+        'commands': cmds,
     }
 
 
 def redis_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'redis-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'REDIS_URL': 'redis://redis:6379/0',
         },
@@ -919,12 +938,10 @@ def redis_integration_tests_step():
 
 
 def memcached_integration_tests_step():
-    deps = []
-    deps.extend(['grabpl'])
     return {
         'name': 'memcached-integration-tests',
         'image': build_image,
-        'depends_on': deps,
+        'depends_on': ['wire-install'],
         'environment': {
             'MEMCACHED_HOSTS': 'memcached:11211',
         },
@@ -965,15 +982,6 @@ def upload_packages_step(edition, ver_mode, trigger=None):
     if ver_mode == 'main' and edition in ('enterprise', 'enterprise2'):
         return None
 
-    if ver_mode == 'release':
-        packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
-    elif edition == 'enterprise2':
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(
-            edition)
-    else:
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
-
     deps = []
     if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
         deps.extend([
@@ -990,7 +998,7 @@ def upload_packages_step(edition, ver_mode, trigger=None):
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret('prerelease_bucket'),
         },
-        'commands': [cmd, ],
+        'commands': ['./bin/grabpl upload-packages --edition {}'.format(edition),],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step.update(trigger)
@@ -1014,7 +1022,7 @@ def store_packages_step(edition, ver_mode):
         'name': 'store-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'grabpl',
+            'gen-version',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
@@ -1149,36 +1157,64 @@ def get_windows_steps(edition, ver_mode):
 
     return steps
 
-
-def validate_scuemata_step():
+def verify_gen_cue_step(edition):
+    deps = []
+    if edition == "enterprise":
+        deps.extend(['init-enterprise'])
     return {
-        'name': 'validate-scuemata',
+        'name': 'verify-gen-cue',
         'image': build_image,
-        'depends_on': [
-            'build-backend',
-        ],
+        'depends_on': deps,
         'commands': [
-            './bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .',
+            '# It is required that code generated from Thema/CUE be committed and in sync with its inputs.',
+            '# The following command will fail if running code generators produces any diff in output.',
+            'CODEGEN_VERIFY=1 make gen-cue',
         ],
     }
 
-
-def ensure_cuetsified_step():
+def trigger_test_release():
     return {
-        'name': 'ensure-cuetsified',
+        'name': 'trigger-test-release',
         'image': build_image,
-        'depends_on': [
-            'validate-scuemata',
-        ],
+        'environment': {
+            'GITHUB_TOKEN': from_secret('github_token'),
+            'DOWNSTREAM_REPO': from_secret('downstream'),
+            'TEST_TAG': 'v0.0.0-test',
+        },
         'commands': [
-            '# It is required that the generated Typescript be in sync with the input CUE files.',
-            '# To enforce this, the following command will attempt to generate Typescript from all',
-            '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file the generated',
-            '# code would have been written to. It exits 1 if any diffs are found.',
-            './bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff',
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" --depth=1',
+            'cd grafana-enterprise',
+            'git fetch origin "refs/tags/*:refs/tags/*"',
+            'git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG} && git push origin $${TEST_TAG}',
+            'cd -',
+            'git fetch origin "refs/tags/*:refs/tags/*"',
+            'git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git',
+            'git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} && git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet',
         ],
+        'failure': 'ignore',
+        'when': {
+            'paths': {
+                'include': [
+                    '.drone.yml',
+                ]
+            },
+            'repo': [
+                'grafana/grafana',
+            ]
+        }
     }
 
+def artifacts_page_step():
+    return {
+        'name': 'artifacts-page',
+        'image': build_image,
+        'depends_on': [
+            'grabpl',
+        ],
+        'commands': [
+            './bin/grabpl artifacts-page',
+        ],
+    }
 
 def end_to_end_tests_deps(edition):
     if disable_tests:
@@ -1189,3 +1225,19 @@ def end_to_end_tests_deps(edition):
         'end-to-end-tests-smoke-tests-suite' + enterprise2_suffix(edition),
         'end-to-end-tests-various-suite' + enterprise2_suffix(edition),
     ]
+
+def compile_build_cmd(edition='oss'):
+    dependencies = []
+    if edition == 'enterprise':
+          dependencies = ['init-enterprise',]
+    return {
+        'name': 'compile-build-cmd',
+        'image': 'golang:1.17',
+        'commands': [
+            "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
+        ],
+        'depends_on': dependencies,
+        'environment': {
+            'CGO_ENABLED': 0,
+    },
+}

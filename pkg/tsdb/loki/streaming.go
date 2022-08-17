@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -14,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -82,13 +82,13 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	params := url.Values{}
 	params.Add("query", query.Expr)
 
-	isV1 := false
+	lokiDataframeApi := s.features.IsEnabled(featuremgmt.FlagLokiDataframeApi)
+
 	wsurl, _ := url.Parse(dsInfo.URL)
 
-	// Check if the v2alpha endpoint exists
-	wsurl.Path = "/loki/api/v2alpha/tail"
-	if !is400(dsInfo.HTTPClient, wsurl) {
-		isV1 = true
+	if lokiDataframeApi {
+		wsurl.Path = "/loki/api/v2alpha/tail"
+	} else {
 		wsurl.Path = "/loki/api/v1/tail"
 	}
 
@@ -131,7 +131,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 			}
 
 			frame := &data.Frame{}
-			if isV1 {
+			if !lokiDataframeApi {
 				frame, err = lokiBytesToLabeledFrame(message)
 			} else {
 				err = json.Unmarshal(message, &frame)
@@ -181,20 +181,4 @@ func (s *Service) PublishStream(_ context.Context, _ *backend.PublishStreamReque
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
-}
-
-// if the v2 endpoint exists it will give a 400 rather than 404/500
-func is400(client *http.Client, url *url.URL) bool {
-	req, err := http.NewRequest("GET", url.String(), nil)
-	if err != nil {
-		return false
-	}
-	rsp, err := client.Do(req)
-	if err != nil {
-		return false
-	}
-	defer func() {
-		_ = rsp.Body.Close()
-	}()
-	return rsp.StatusCode == 400 // will be true
 }

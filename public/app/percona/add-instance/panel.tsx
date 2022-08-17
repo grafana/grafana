@@ -1,10 +1,10 @@
-/* eslint-disable react/display-name */
+/* eslint-disable react/display-name,@typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
 import { cx } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { Button, useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 
@@ -65,8 +65,8 @@ const AddInstancePanel = () => {
   );
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <FeatureLoader>
           <div className={cx(styles.content)}>
             {!selectedInstance.type ? (
@@ -76,8 +76,8 @@ const AddInstancePanel = () => {
             )}
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { PageContent } from './PageContent';
 import React from 'react';
+
+import { PageContent } from './PageContent';
 
 describe('PageContent', () => {
   it('should display the noData section when no data is passed', async () => {

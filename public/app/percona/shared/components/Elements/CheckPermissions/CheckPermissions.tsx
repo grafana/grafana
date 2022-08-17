@@ -25,6 +25,7 @@ export const CheckPermissions: FC<CheckPermissionsProps> = ({
         const settings = await SettingsService.getSettings(undefined, true);
         onSettingsLoadSuccess && onSettingsLoadSuccess(settings);
       } catch (e) {
+        // @ts-ignore
         if (e.response?.status === 401) {
           setHasNoAccess(true);
         }

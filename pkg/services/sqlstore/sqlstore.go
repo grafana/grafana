@@ -28,9 +28,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -115,7 +115,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 	}
 
 	if err := ss.initEngine(engine); err != nil {
-		return nil, errutil.Wrap("failed to connect to database", err)
+		return nil, fmt.Errorf("%v: %w", "failed to connect to database", err)
 	}
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
@@ -174,7 +174,7 @@ func (ss *SQLStore) Quote(value string) string {
 	return ss.engine.Quote(value)
 }
 
-// GetDialect retrieves the dialect of the current SQL engine
+// GetDialect return the dialect
 func (ss *SQLStore) GetDialect() migrator.Dialect {
 	return ss.Dialect
 }
@@ -198,7 +198,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
-			if _, err := ss.createUser(ctx, sess, models.CreateUserCommand{
+			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminUser + "@localhost",
 				Password: ss.Cfg.AdminPassword,
@@ -285,7 +285,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 	case migrator.Postgres:
 		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
 		if err != nil {
-			return "", errutil.Wrapf(err, "Invalid host specifier '%s'", ss.dbCfg.Host)
+			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
 		}
 
 		if ss.dbCfg.Pwd == "" {
@@ -338,7 +338,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		!strings.HasPrefix(connectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
 		if err != nil {
-			return errutil.Wrapf(err, "can't check for existence of %q", ss.dbCfg.Path)
+			return fmt.Errorf("can't check for existence of %q: %w", ss.dbCfg.Path, err)
 		}
 
 		const perms = 0640
@@ -346,15 +346,15 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 			ss.log.Info("Creating SQLite database file", "path", ss.dbCfg.Path)
 			f, err := os.OpenFile(ss.dbCfg.Path, os.O_CREATE|os.O_RDWR, perms)
 			if err != nil {
-				return errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to create SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 			if err := f.Close(); err != nil {
-				return errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to create SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 		} else {
 			fi, err := os.Lstat(ss.dbCfg.Path)
 			if err != nil {
-				return errutil.Wrapf(err, "failed to stat SQLite database file %q", ss.dbCfg.Path)
+				return fmt.Errorf("failed to stat SQLite database file %q: %w", ss.dbCfg.Path, err)
 			}
 			m := fi.Mode() & os.ModePerm
 			if m|perms != perms {
@@ -672,10 +672,7 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
-		tracer, err := tracing.InitializeTracerForTest()
-		if err != nil {
-			return nil, err
-		}
+		tracer := tracing.InitializeTracerForTest()
 		bus := bus.ProvideBus(tracer)
 		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), engine, migration, bus, tracer, opts...)
 		if err != nil {

@@ -152,8 +152,7 @@ func mockNotificationService() *notificationServiceMock { return &notificationSe
 func CreateNotificationService(t *testing.T) *notifications.NotificationService {
 	t.Helper()
 
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
 
 	cfg := setting.NewCfg()

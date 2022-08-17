@@ -3,6 +3,7 @@ package login
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -10,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // getLDAPConfig gets LDAP config
@@ -36,7 +36,7 @@ var loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery, log
 
 	config, err := getLDAPConfig(query.Cfg)
 	if err != nil {
-		return true, errutil.Wrap("Failed to get LDAP config", err)
+		return true, fmt.Errorf("%v: %w", "Failed to get LDAP config", err)
 	}
 
 	externalUser, err := newLDAP(config.Servers).Login(query)

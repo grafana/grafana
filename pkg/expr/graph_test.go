@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 func TestServicebuildPipeLine(t *testing.T) {
@@ -30,7 +31,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID: "B",
-						DataSource: &models.DataSource{
+						DataSource: &datasources.DataSource{
 							Uid: "Fake",
 						},
 					},
@@ -140,7 +141,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID: "C",
-						DataSource: &models.DataSource{
+						DataSource: &datasources.DataSource{
 							Uid: "Fake",
 						},
 					},
@@ -194,7 +195,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID: "C",
-						DataSource: &models.DataSource{
+						DataSource: &datasources.DataSource{
 							Uid: "Fake",
 						},
 					},
@@ -217,7 +218,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID: "B",
-						DataSource: &models.DataSource{
+						DataSource: &datasources.DataSource{
 							Uid: "Fake",
 						},
 					},

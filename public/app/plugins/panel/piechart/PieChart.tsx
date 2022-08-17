@@ -118,7 +118,7 @@ export const PieChart: FC<PieChartProps> = ({
 
                   if (arc.data.hasLinks && arc.data.getLinks) {
                     return (
-                      <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
+                      <DataLinksContextMenu key={arc.index} links={arc.data.getLinks}>
                         {(api) => (
                           <PieSlice
                             tooltip={tooltip}
@@ -314,14 +314,19 @@ function getTooltipData(
   tooltipOptions: VizTooltipOptions
 ) {
   if (tooltipOptions.mode === 'multi') {
-    return pie.arcs.map((pieArc) => {
-      return {
-        color: pieArc.data.display.color ?? FALLBACK_COLOR,
-        label: pieArc.data.display.title,
-        value: formattedValueToString(pieArc.data.display),
-        isActive: pieArc.index === arc.index,
-      };
-    });
+    return pie.arcs
+      .filter((pa) => {
+        const field = pa.data.field;
+        return field && !field.custom?.hideFrom?.tooltip && !field.custom?.hideFrom?.viz;
+      })
+      .map((pieArc) => {
+        return {
+          color: pieArc.data.display.color ?? FALLBACK_COLOR,
+          label: pieArc.data.display.title,
+          value: formattedValueToString(pieArc.data.display),
+          isActive: pieArc.index === arc.index,
+        };
+      });
   }
   return [
     {

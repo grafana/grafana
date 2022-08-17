@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type DataSource struct {
@@ -15,7 +15,7 @@ type DataSource struct {
 	Name             string                 `json:"name"`
 	Type             string                 `json:"type"`
 	TypeLogoUrl      string                 `json:"typeLogoUrl"`
-	Access           models.DsAccess        `json:"access"`
+	Access           datasources.DsAccess   `json:"access"`
 	Url              string                 `json:"url"`
 	User             string                 `json:"user"`
 	Database         string                 `json:"database"`
@@ -31,21 +31,21 @@ type DataSource struct {
 }
 
 type DataSourceListItemDTO struct {
-	Id          int64            `json:"id"`
-	UID         string           `json:"uid"`
-	OrgId       int64            `json:"orgId"`
-	Name        string           `json:"name"`
-	Type        string           `json:"type"`
-	TypeName    string           `json:"typeName"`
-	TypeLogoUrl string           `json:"typeLogoUrl"`
-	Access      models.DsAccess  `json:"access"`
-	Url         string           `json:"url"`
-	User        string           `json:"user"`
-	Database    string           `json:"database"`
-	BasicAuth   bool             `json:"basicAuth"`
-	IsDefault   bool             `json:"isDefault"`
-	JsonData    *simplejson.Json `json:"jsonData,omitempty"`
-	ReadOnly    bool             `json:"readOnly"`
+	Id          int64                `json:"id"`
+	UID         string               `json:"uid"`
+	OrgId       int64                `json:"orgId"`
+	Name        string               `json:"name"`
+	Type        string               `json:"type"`
+	TypeName    string               `json:"typeName"`
+	TypeLogoUrl string               `json:"typeLogoUrl"`
+	Access      datasources.DsAccess `json:"access"`
+	Url         string               `json:"url"`
+	User        string               `json:"user"`
+	Database    string               `json:"database"`
+	BasicAuth   bool                 `json:"basicAuth"`
+	IsDefault   bool                 `json:"isDefault"`
+	JsonData    *simplejson.Json     `json:"jsonData,omitempty"`
+	ReadOnly    bool                 `json:"readOnly"`
 }
 
 type DataSourceList []DataSourceListItemDTO

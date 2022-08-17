@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/getting-started/get-started-grafana-ms-sql-server/
   - /docs/grafana/latest/getting-started/getting-started-sql/
   - /docs/grafana/latest/guides/getting_started/
   - /docs/grafana/latest/guides/gettingstarted/

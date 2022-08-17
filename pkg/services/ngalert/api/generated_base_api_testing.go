@@ -18,36 +18,40 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type TestingApiForkingService interface {
+type TestingApi interface {
 	RouteEvalQueries(*models.ReqContext) response.Response
 	RouteTestRuleConfig(*models.ReqContext) response.Response
 	RouteTestRuleGrafanaConfig(*models.ReqContext) response.Response
 }
 
-func (f *ForkedTestingApi) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.EvalQueriesPayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteEvalQueries(ctx, conf)
+	return f.handleRouteEvalQueries(ctx, conf)
 }
-func (f *ForkedTestingApi) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
+	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
+	return f.handleRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
 }
-func (f *ForkedTestingApi) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRouteTestRuleGrafanaConfig(ctx, conf)
+	return f.handleRouteTestRuleGrafanaConfig(ctx, conf)
 }
 
-func (api *API) RegisterTestingApiEndpoints(srv TestingApiForkingService, m *metrics.API) {
+func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Post(
 			toMacaronPath("/api/v1/eval"),

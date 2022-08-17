@@ -11,13 +11,17 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/web/webtest"
+
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 var queryDatasourceInput = `{
@@ -57,7 +61,7 @@ func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.S
 	return ts.token
 }
 
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*models.DataSource) bool {
+func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
 	return ts.passThruEnabled
 }
 
@@ -84,10 +88,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
 	})
 	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
 	})
 
 	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
@@ -130,6 +136,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	)
 	httpServer := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
+		hs.QuotaService = quotatest.NewQuotaServiceFake()
 	})
 
 	t.Run("Status code is 500 and a secrets plugin error is returned if there is a problem getting secrets from the remote plugin", func(t *testing.T) {

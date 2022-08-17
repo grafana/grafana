@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
 import { CheckboxField, logger } from '@percona/platform-core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
-import { InventoryDataService } from 'app/percona/inventory/Inventory.tools';
+import { OldPage } from 'app/core/components/Page/Page';
+import { InventoryDataService, Model } from 'app/percona/inventory/Inventory.tools';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
@@ -31,7 +32,7 @@ interface Node {
 
 export const NodesTab = () => {
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Model[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selected, setSelectedRows] = useState([]);
   const navModel = usePerconaNavModel('inventory-nodes');
@@ -94,8 +95,8 @@ export const NodesTab = () => {
   );
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <FeatureLoader>
           <div className={styles.tableWrapper}>
             <div className={styles.actionPanel}>
@@ -168,8 +169,8 @@ export const NodesTab = () => {
             </div>
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
-import { DashboardPickerByID } from 'app/core/components/editors/DashboardPickerByID';
+import { DashboardPickerByID } from 'app/core/components/OptionsUI/DashboardPickerByID';
 
 import { TagFilter } from '../../core/components/TagFilter/TagFilter';
 import { SearchSrv } from '../../core/services/search_srv';
@@ -23,7 +23,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
   const { name, interval, items: propItems } = playlist;
   const { items, addById, addByTag, deleteItem, moveDown, moveUp } = usePlaylistItems(propItems);
   return (
-    <>
+    <div>
       <Form onSubmit={(list: Playlist) => onSubmit({ ...list, items })} validateOn={'onBlur'}>
         {({ register, errors }) => {
           const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
@@ -81,6 +81,6 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
           );
         }}
       </Form>
-    </>
+    </div>
   );
 };

@@ -1,12 +1,10 @@
 import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
 
 import { AppEvents } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
+import { FetchError, isFetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { PERCONA_CANCELLED_ERROR_NAME } from 'app/percona/shared/core';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
-
-import { isFetchError } from './alertmanager';
 
 export interface AsyncRequestState<T> {
   result?: T;

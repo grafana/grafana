@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { Cell, Column, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 
 import { Table } from '../integrated-alerting/components/Table';
@@ -95,8 +95,8 @@ export const TicketsPage: FC = () => {
   });
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents dataTestId="page-wrapper-tickets">
+    <OldPage navModel={navModel}>
+      <OldPage.Contents dataTestId="page-wrapper-tickets">
         <PlatformConnectedLoader>
           <Table
             data={data}
@@ -108,8 +108,8 @@ export const TicketsPage: FC = () => {
             getCellProps={getCellProps}
           ></Table>
         </PlatformConnectedLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

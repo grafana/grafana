@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -14,6 +11,9 @@ import (
 )
 
 func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	sqlStore := InitTestDB(t)
 	userId := int64(1)
 	orgId := int64(0)

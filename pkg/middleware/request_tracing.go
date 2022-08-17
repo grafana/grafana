@@ -73,11 +73,9 @@ func RequestTracing(tracer tracing.Tracer) web.Handler {
 		rw := res.(web.ResponseWriter)
 
 		wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
-		ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
+		ctx, span := tracer.Start(wireContext, fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
 
 		c.Req = req.WithContext(ctx)
-		c.Map(c.Req)
-
 		c.Next()
 
 		// Only call span.Finish when a route operation name have been set,

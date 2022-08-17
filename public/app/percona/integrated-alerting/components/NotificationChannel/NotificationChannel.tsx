@@ -3,7 +3,7 @@ import { logger } from '@percona/platform-core';
 import React, { FC, useMemo, useState, useEffect, useCallback } from 'react';
 
 import { Button, useStyles } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -70,7 +70,7 @@ export const NotificationChannel: FC = () => {
         {
           page_params: {
             index: pageIndex,
-            page_size: pageSize as number,
+            page_size: pageSize,
           },
         },
         generateToken(GET_CHANNELS_CANCEL_TOKEN)
@@ -105,8 +105,8 @@ export const NotificationChannel: FC = () => {
   }, [pageSize, pageIndex]);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={IAMessages.integratedAlerting} featureSelector={featureSelector}>
           <NotificationChannelProvider.Provider
@@ -151,12 +151,12 @@ export const NotificationChannel: FC = () => {
             <DeleteNotificationChannelModal
               isVisible={deleteModalVisible}
               setVisible={setDeleteModalVisible}
-              notificationChannel={selectedNotificationChannel as Channel}
+              notificationChannel={selectedNotificationChannel!}
             />
           </NotificationChannelProvider.Provider>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

@@ -55,8 +55,8 @@ type AlertRuleService interface {
 	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance, userID int64) (alerting_models.AlertRule, error)
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
 	DeleteAlertRule(ctx context.Context, orgID int64, ruleUID string, provenance alerting_models.Provenance) error
-	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error)
-	UpdateRuleGroup(ctx context.Context, orgID int64, folderUID, rulegroup string, interval int64) error
+	GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroup, error)
+	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *models.ReqContext) response.Response {
@@ -253,15 +253,22 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID str
 	return response.JSON(http.StatusOK, definitions.NewAlertRule(rule, provenace))
 }
 
-func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.AlertRule) response.Response {
-	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI, c.UserId)
+func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
+	upstreamModel, err := ar.UpstreamModel()
+	if err != nil {
+		ErrResp(http.StatusBadRequest, err, "")
+	}
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.ProvenanceAPI, c.UserId)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
-	if errors.Is(err, alerting_models.ErrQuotaReached) {
-		return ErrResp(http.StatusForbidden, err, "")
-	}
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
+		if errors.Is(err, alerting_models.ErrQuotaReached) {
+			return ErrResp(http.StatusForbidden, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	ar.ID = createdAlertRule.ID
@@ -270,10 +277,13 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	return response.JSON(http.StatusCreated, ar)
 }
 
-func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.AlertRule, UID string) response.Response {
-	updated := ar.UpstreamModel()
+func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule, UID string) response.Response {
+	updated, err := ar.UpstreamModel()
+	if err != nil {
+		ErrResp(http.StatusBadRequest, err, "")
+	}
 	updated.UID = UID
-	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), ar.UpstreamModel(), alerting_models.ProvenanceAPI)
+	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -281,6 +291,9 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	ar.Updated = updatedAlertRule.Updated
@@ -303,12 +316,24 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *models.ReqContext, folder 
 		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, g)
+	return response.JSON(http.StatusOK, definitions.NewAlertRuleGroupFromModel(g))
 }
 
-func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroupMetadata, folderUID string, group string) response.Response {
-	err := srv.alertRules.UpdateRuleGroup(c.Req.Context(), c.OrgId, folderUID, group, ag.Interval)
+func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag definitions.AlertRuleGroup, folderUID string, group string) response.Response {
+	ag.FolderUID = folderUID
+	ag.Title = group
+	groupModel, err := ag.ToModel()
 	if err != nil {
+		ErrResp(http.StatusBadRequest, err, "")
+	}
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgId, groupModel, c.UserId, alerting_models.ProvenanceAPI)
+	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
+		return ErrResp(http.StatusBadRequest, err, "")
+	}
+	if err != nil {
+		if errors.Is(err, store.ErrOptimisticLock) {
+			return ErrResp(http.StatusConflict, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ag)

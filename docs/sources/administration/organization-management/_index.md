@@ -42,7 +42,7 @@ The following table summarizes the resources you can share and/or isolate using 
 
 The member of one organization cannot view dashboards assigned to another organization. However, a user can belong to multiple organizations.
 
-Grafana Server Administrators are responsible for creating organizations. For more information about the Grafana Server Administrator role, refer to [Grafana server administrators]({{< relref "../roles-and-permissions/#Grafana server administrators" >}}).
+Grafana Server Administrators are responsible for creating organizations. For more information about the Grafana Server Administrator role, refer to [Grafana server administrators]({{< relref "../roles-and-permissions/#grafana-server-administrators" >}}).
 
 ## View a list of organizations
 

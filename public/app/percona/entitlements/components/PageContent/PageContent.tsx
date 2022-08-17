@@ -1,5 +1,7 @@
 import React, { FC } from 'react';
+
 import { EmptyBlock } from 'app/percona/shared/components/Elements/EmptyBlock';
+
 import { PageContentProps } from './PageContent.types';
 
 export const PageContent: FC<PageContentProps> = ({ hasData, emptyMessage, loading, children }) =>

@@ -28,7 +28,6 @@ function getDefaultEditorMode(expr: string) {
   switch (value) {
     case QueryEditorMode.Builder:
     case QueryEditorMode.Code:
-    case QueryEditorMode.Explain:
       return value;
     default:
       return QueryEditorMode.Builder;

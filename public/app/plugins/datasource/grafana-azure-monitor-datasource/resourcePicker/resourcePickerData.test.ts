@@ -93,7 +93,11 @@ describe('AzureMonitor resourcePickerData', () => {
         await resourcePickerData.getSubscriptions();
         throw Error('expected getSubscriptions to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('No subscriptions were found');
+        if (err instanceof Error) {
+          expect(err.message).toEqual('No subscriptions were found');
+        } else {
+          throw err;
+        }
       }
     });
   });
@@ -179,7 +183,11 @@ describe('AzureMonitor resourcePickerData', () => {
         await resourcePickerData.getResourceGroupsBySubscriptionId('123', 'logs');
         throw Error('expected getResourceGroupsBySubscriptionId to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('unable to fetch resource groups');
+        if (err instanceof Error) {
+          expect(err.message).toEqual('unable to fetch resource groups');
+        } else {
+          throw err;
+        }
       }
     });
 
@@ -245,7 +253,11 @@ describe('AzureMonitor resourcePickerData', () => {
         await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
         throw Error('expected getResourcesForResourceGroup to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('unable to fetch resource details');
+        if (err instanceof Error) {
+          expect(err.message).toEqual('unable to fetch resource details');
+        } else {
+          throw err;
+        }
       }
     });
 
@@ -341,7 +353,11 @@ describe('AzureMonitor resourcePickerData', () => {
         await resourcePickerData.search('dev', 'logs');
         throw Error('expected search test to fail but it succeeded');
       } catch (err) {
-        expect(err.message).toEqual('unable to fetch resource details');
+        if (err instanceof Error) {
+          expect(err.message).toEqual('unable to fetch resource details');
+        } else {
+          throw err;
+        }
       }
     });
   });

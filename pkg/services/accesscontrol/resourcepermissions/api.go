@@ -29,30 +29,6 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 	return &api{ac, router, manager, permissions}
 }
 
-func (a *api) getEvaluators(actionRead, actionWrite, scope string) (read, write accesscontrol.Evaluator) {
-	if a.service.options.InheritedScopesSolver == nil || a.service.options.InheritedScopePrefixes == nil {
-		read = accesscontrol.EvalPermission(actionRead, scope)
-		write = accesscontrol.EvalPermission(actionWrite, scope)
-	} else {
-		// Add inherited scopes to the evaluators protecting the endpoint.
-		// Scopes in the request context parameters are to be added by solveInheritedScopes.
-		// If a user got actionRead on any of the inherited scopes, they will be granted access to the endpoint.
-		// Ex: a user inherits dashboards:read from the containing folder (folders:uid:BCeknZL7k)
-		inheritedRead := []accesscontrol.Evaluator{accesscontrol.EvalPermission(actionRead, scope)}
-		inheritedWrite := []accesscontrol.Evaluator{accesscontrol.EvalPermission(actionWrite, scope)}
-		for _, scopePrefix := range a.service.options.InheritedScopePrefixes {
-			inheritedRead = append(inheritedRead,
-				accesscontrol.EvalPermission(actionRead, accesscontrol.Parameter(scopePrefix)))
-			inheritedWrite = append(inheritedWrite,
-				accesscontrol.EvalPermission(actionWrite, accesscontrol.Parameter(scopePrefix)))
-		}
-
-		read = accesscontrol.EvalAny(inheritedRead...)
-		write = accesscontrol.EvalAny(inheritedWrite...)
-	}
-	return
-}
-
 func (a *api) registerEndpoints() {
 	auth := accesscontrol.Middleware(a.ac)
 	disable := disableMiddleware(a.ac.IsDisabled())
@@ -62,17 +38,16 @@ func (a *api) registerEndpoints() {
 		actionRead := fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
 		actionWrite := fmt.Sprintf("%s.permissions:write", a.service.options.Resource)
 		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
-		readEvaluator, writeEvaluator := a.getEvaluators(actionRead, actionWrite, scope)
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
-		r.Get("/:resourceID", inheritanceSolver, auth(disable, readEvaluator), routing.Wrap(a.getPermissions))
+		r.Get("/:resourceID", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
 		if a.service.options.Assignments.Users {
-			r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setUserPermission))
+			r.Post("/:resourceID/users/:userID", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
 		if a.service.options.Assignments.Teams {
-			r.Post("/:resourceID/teams/:teamID", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setTeamPermission))
+			r.Post("/:resourceID/teams/:teamID", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
 		}
 		if a.service.options.Assignments.BuiltInRoles {
-			r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, writeEvaluator), routing.Wrap(a.setBuiltinRolePermission))
+			r.Post("/:resourceID/builtInRoles/:builtInRole", inheritanceSolver, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
 		}
 	})
 }

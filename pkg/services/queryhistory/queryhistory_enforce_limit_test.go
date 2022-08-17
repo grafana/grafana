@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package queryhistory
 
 import (
@@ -11,6 +8,9 @@ import (
 )
 
 func TestIntegrationEnforceRowLimitInQueryHistory(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testScenarioWithQueryInQueryHistory(t, "Enforce limit for query_history",
 		func(t *testing.T, sc scenarioContext) {
 			limit := 0

@@ -61,7 +61,6 @@ describe('<TraceTimelineViewer>', () => {
   beforeEach(() => {
     wrapper = shallow(<TraceTimelineViewer {...props} />)
       .dive()
-      .dive()
       .dive();
   });
 

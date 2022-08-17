@@ -38,7 +38,7 @@ describe('QueryEditorRowHeader', () => {
     fireEvent.change(input, { target: { value: 'new name' } });
     fireEvent.blur(input);
 
-    expect((scenario.props.onChange as any).mock.calls[0][0].refId).toBe('new name');
+    expect(jest.mocked(scenario.props.onChange).mock.calls[0][0].refId).toBe('new name');
   });
 
   it('Show error when other query with same name exists', async () => {

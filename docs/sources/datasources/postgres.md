@@ -462,7 +462,7 @@ datasources:
       timescaledb: false
 ```
 
-> **Note:** In the above code, the `postgresVersion` value of `10` refers to version PotgreSQL 10 and above.
+> **Note:** In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
 
 If you encounter metric request errors or other issues:
 

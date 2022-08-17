@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -140,7 +141,7 @@ func (s *AuthInfoStore) duplicateUserEntriesSQL(ctx context.Context) string {
 }
 
 func (s *AuthInfoStore) mixedCasedUsers(ctx context.Context) string {
-	userDialect := s.sqlStore.GetDialect().Quote("user")
+	userDialect := db.DB.GetDialect(s.sqlStore).Quote("user")
 	// this query counts how many users have upper case and lower case login or emails.
 	// why
 	// users login via IDP or service providers get upper cased domains at times :shrug:

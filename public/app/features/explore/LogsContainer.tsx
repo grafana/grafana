@@ -19,7 +19,7 @@ import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { splitOpen } from './state/main';
-import { addResultsToCache, clearCache } from './state/query';
+import { addResultsToCache, clearCache, loadLogsVolumeData } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
@@ -81,6 +81,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       logsMeta,
       logsSeries,
       logsQueries,
+      logsVolumeData,
+      loadLogsVolumeData,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -91,6 +93,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       scanning,
       range,
       width,
+      splitOpen,
       isLive,
       exploreId,
       addResultsToCache,
@@ -137,10 +140,13 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
               logRows={logRows}
               logsMeta={logsMeta}
               logsSeries={logsSeries}
+              logsVolumeData={logsVolumeData}
               logsQueries={logsQueries}
               width={width}
+              splitOpen={splitOpen}
               loading={loading}
               loadingState={loadingState}
+              loadLogsVolumeData={loadLogsVolumeData}
               onChangeTime={this.onChangeTime}
               onClickFilterLabel={onClickFilterLabel}
               onClickFilterOutLabel={onClickFilterOutLabel}
@@ -206,6 +212,7 @@ const mapDispatchToProps = {
   splitOpen,
   addResultsToCache,
   clearCache,
+  loadLogsVolumeData,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

@@ -86,9 +86,9 @@ describe('TraceViewContainer', () => {
   it('can select next/prev results', async () => {
     renderTraceViewContainer();
     await userEvent.type(screen.getByPlaceholderText('Find...'), 'logproto');
-    const nextResultButton = screen.getByTestId('trace-page-search-bar-next-result-button');
-    const prevResultButton = screen.getByTestId('trace-page-search-bar-prev-result-button');
-    const suffix = screen.getByTestId('trace-page-search-bar-suffix');
+    const nextResultButton = screen.getByRole('button', { name: 'Next results button' });
+    const prevResultButton = screen.getByRole('button', { name: 'Prev results button' });
+    const suffix = screen.getByLabelText('Search bar suffix');
 
     await userEvent.click(nextResultButton);
     expect(suffix.textContent).toBe('1 of 2');

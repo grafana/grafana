@@ -4,7 +4,7 @@ import React, { FC, useEffect, useCallback, useState, useMemo } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Severity } from 'app/percona/integrated-alerting/components/Severity';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
@@ -151,8 +151,8 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
   }, [fetchChecks]);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents dataTestId="db-service-checks">
+    <OldPage navModel={navModel}>
+      <OldPage.Contents dataTestId="db-service-checks">
         <h3 data-testid="page-service">{Messages.pageTitle(serviceName)}</h3>
         <Table
           showPagination
@@ -168,8 +168,8 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
           pendingRequest={pending}
           emptyMessage={Messages.noChecks}
         />
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

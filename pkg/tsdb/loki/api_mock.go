@@ -41,5 +41,5 @@ func makeMockedAPIWithUrl(url string, statusCode int, contentType string, respon
 		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, log.New("test"), "")
+	return newLokiAPI(&client, url, log.New("test"), nil)
 }

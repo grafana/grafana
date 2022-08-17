@@ -79,7 +79,7 @@ function mockDataFrame() {
 }
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as any),
+  ...jest.requireActual('@grafana/data'),
   DefaultTimeZone: 'utc',
 }));
 
@@ -94,6 +94,7 @@ describe('BarChart utils', () => {
       showValue: VisibilityMode.Always,
       legend: {
         displayMode: LegendDisplayMode.List,
+        showLegend: true,
         placement: 'bottom',
         calcs: [],
       },
@@ -116,7 +117,7 @@ describe('BarChart utils', () => {
         orientation: v,
         frame: frame!,
         theme: createTheme(),
-        timeZone: DefaultTimeZone,
+        timeZones: [DefaultTimeZone],
         getTimeRange: getDefaultTimeRange,
         eventBus: new EventBusSrv(),
         allFrames: [frame],
@@ -131,7 +132,7 @@ describe('BarChart utils', () => {
           showValue: v,
           frame: frame!,
           theme: createTheme(),
-          timeZone: DefaultTimeZone,
+          timeZones: [DefaultTimeZone],
           getTimeRange: getDefaultTimeRange,
           eventBus: new EventBusSrv(),
           allFrames: [frame],
@@ -146,7 +147,7 @@ describe('BarChart utils', () => {
           stacking: v,
           frame: frame!,
           theme: createTheme(),
-          timeZone: DefaultTimeZone,
+          timeZones: [DefaultTimeZone],
           getTimeRange: getDefaultTimeRange,
           eventBus: new EventBusSrv(),
           allFrames: [frame],

@@ -216,7 +216,10 @@ export function preparePlotData2(
 
     // apply transforms
     if (custom.transform === GraphTransform.Constant) {
-      vals = Array(vals.length).fill(vals[0]);
+      let firstValIdx = vals.findIndex((v) => v != null);
+      let firstVal = vals[firstValIdx];
+      vals = Array(vals.length).fill(undefined);
+      vals[firstValIdx] = firstVal;
     } else {
       vals = vals.slice();
 

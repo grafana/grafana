@@ -53,17 +53,28 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
 
 -- **Data source -** Target data source.
+-- **Tags -** You can use tags in the linked queries. The key is the span attribute name. The optional value is the corresponding metric label name (for example, map `k8s.pod` to `pod`). You may interpolate these tags into your queries using the `$__tags` keyword.
 
 Each linked query consists of:
 
 -- **Link Label -** (Optional) Descriptive label for the linked query.
--- **Query -** Query that runs when navigating from a trace to the metrics data source.
+-- **Query -** Query that runs when navigating from a trace to the metrics data source. Interpolate tags using the `$__tags` keyword. For example, when you configure the query `requests_total{$__tags}`with the tags `k8s.pod=pod` and `cluster`, it results in `requests_total{pod="nginx-554b9", cluster="us-east-1"}`.
 
 ### Node Graph
 
 This is a configuration for the beta Node Graph visualization. The Node Graph is shown after the trace view is loaded and is disabled by default.
 
 -- **Enable Node Graph -** Enables the Node Graph visualization.
+
+### Span bar label
+
+You can configure the span bar label. The span bar label allows you add additional information to the span bar row.
+
+Select one of the following four options. The default selection is Duration.
+
+- **None -** Do not show any additional information on the span bar row.
+- **Duration -** Show the span duration on the span bar row.
+- **Tag -** Show the span tag on the span bar row. Note: You will also need to specify the tag key to use to get the tag value. For example, `span.kind`.
 
 ## Query traces
 
@@ -175,6 +186,12 @@ datasources:
         spanEndTimeShift: '1h'
         filterByTraceID: false
         filterBySpanID: false
+      tracesToMetrics:
+        datasourceUid: 'prom'
+        tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
+        queries:
+          - name: 'Sample query'
+            query: 'sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))'
     secureJsonData:
       basicAuthPassword: my_password
 ```

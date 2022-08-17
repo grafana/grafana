@@ -21,10 +21,11 @@ export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
+export { InlineToast } from './InlineToast/InlineToast';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
-export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
+export { ColorPickerInput } from './ColorPicker/ColorPickerInput';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
@@ -80,6 +81,7 @@ export { TableCellDisplayMode, TableSortByFieldState } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
+export { VerticalTab } from './Tabs/VerticalTab';
 export { TabContent } from './Tabs/TabContent';
 export { Counter } from './Tabs/Counter';
 
@@ -175,19 +177,12 @@ export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 export { RangeSlider } from './Slider/RangeSlider';
 
-// TODO: namespace!!
-export { StringValueEditor } from './OptionsUI/string';
-export { StringArrayEditor } from './OptionsUI/strings';
-export { NumberValueEditor } from './OptionsUI/number';
-export { SliderValueEditor } from './OptionsUI/slider';
-export { SelectValueEditor } from './OptionsUI/select';
-export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
-
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { sharedInputStyle } from './Forms/commonStyles';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow, ButtonProps } from './Button';
+export { Button, LinkButton, ButtonVariant, ButtonGroup, ButtonProps } from './Button';
+export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
@@ -216,8 +211,11 @@ export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 export { RadioButtonList } from './Forms/RadioButtonList/RadioButtonList';
 
 export { Input, getInputStyles } from './Input/Input';
+export { AutoSizeInput } from './Input/AutoSizeInput';
 export { FilterInput } from './FilterInput/FilterInput';
 export { FormInputSize } from './Forms/types';
+export * from './SecretInput';
+export * from './SecretTextArea';
 
 export { Switch, InlineSwitch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
@@ -231,6 +229,7 @@ export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 export { ButtonSelect } from './Dropdown/ButtonSelect';
+export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
 // Export this until we've figured out a good approach to inline form styles.

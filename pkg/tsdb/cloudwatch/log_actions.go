@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -141,7 +140,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQuer
 		data, err = e.handleGetLogEvents(ctx, logsClient, model)
 	}
 	if err != nil {
-		return nil, errutil.Wrapf(err, "failed to execute log action with subtype: %s", model.SubType)
+		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", model.SubType, err)
 	}
 
 	return data, nil

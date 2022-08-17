@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -13,6 +10,9 @@ import (
 )
 
 func TestIntegrationPluginSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := InitTestDB(t)
 
 	t.Run("Existing plugin settings", func(t *testing.T) {

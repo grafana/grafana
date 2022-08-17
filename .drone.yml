@@ -1,6 +1,49 @@
 ---
 depends_on: []
 kind: pipeline
+name: pr-verify-drone
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.15.6
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - scripts/drone/**
+    - .drone.yml
+    - .drone.star
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: pr-test-frontend
 node:
   type: no-parallel
@@ -11,11 +54,11 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -23,14 +66,21 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - yarn run prettier:check
   - yarn run lint
@@ -40,14 +90,14 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-frontend
 - commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
   failure: ignore
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -55,16 +105,20 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-frontend
 trigger:
   event:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    - pkg/**
+    - packaging/**
+    - go.sum
+    - go.mod
+    include: []
 type: docker
 volumes:
 - host:
@@ -83,30 +137,42 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
-  - make gen-go
-  image: grafana/build-container:1.5.8
-  name: wire-install
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
 - commands:
-  - ./bin/grabpl verify-drone
+  - make gen-go
   depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
+  name: wire-install
 - commands:
   - |-
     echo -e "unknwon
@@ -117,13 +183,13 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
   - make lint-go
@@ -131,28 +197,35 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-backend
 - commands:
-  - ./bin/grabpl test-backend --edition oss
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend-integration
 trigger:
   event:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    include:
+    - pkg/**
+    - packaging/**
+    - .drone.yml
+    - conf/**
+    - go.sum
+    - go.mod
+    - public/app/plugins/**/plugin.json
 type: docker
 volumes:
 - host:
@@ -171,29 +244,47 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
   - make gen-go
-  image: grafana/build-container:1.5.8
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - failure: ignore
   image: grafana/drone-downstream
@@ -209,12 +300,12 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
+  - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - wire-install
-  image: grafana/build-container:1.5.8
+  - compile-build-cmd
+  image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -223,7 +314,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -232,7 +323,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
   - ./bin/grabpl build-plugins --jobs 8 --edition oss
@@ -240,27 +331,8 @@ steps:
   - gen-version
   - yarn-install
   environment: null
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-plugins
-- commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.8
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.8
-  name: ensure-cuetsified
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss
     --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
@@ -270,7 +342,7 @@ steps:
   - build-frontend
   - build-frontend-packages
   environment: null
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: package
 - commands:
   - ./scripts/grafana-server/start-server
@@ -283,7 +355,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -361,8 +433,15 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-storybook
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - package
+  image: grafana/build-container:1.5.9
+  name: copy-packages-for-docker
 - commands:
   - yarn wait-on http://$HOST:$PORT
   - pa11y-ci --config .pa11yci-pr.conf.js
@@ -374,15 +453,8 @@ steps:
     HOST: grafana-server
     PORT: 3001
   failure: always
-  image: grafana/docker-puppeteer:1.0.0
+  image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
-- commands:
-  - ls dist/*.tar.gz*
-  - cp dist/*.tar.gz* packaging/docker/
-  depends_on:
-  - package
-  image: grafana/build-container:1.5.8
-  name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss -archs amd64
   depends_on:
@@ -441,28 +513,51 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
+  name: wire-install
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -471,22 +566,30 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: mysql-integration-tests
 trigger:
   event:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    include:
+    - pkg/**
+    - packaging/**
+    - .drone.yml
+    - conf/**
+    - go.sum
+    - go.mod
+    - public/app/plugins/**/plugin.json
 type: docker
 volumes:
 - host:
@@ -511,25 +614,25 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
   - |-
@@ -541,7 +644,7 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: codespell
 - commands:
   - yarn run prettier:checkDocs
@@ -549,7 +652,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-docs
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -558,13 +661,13 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - build-frontend-packages
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana
@@ -574,6 +677,13 @@ steps:
   - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 trigger:
   event:
   - pull_request
@@ -601,25 +711,25 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
   - |-
@@ -631,7 +741,7 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: codespell
 - commands:
   - yarn run prettier:checkDocs
@@ -639,7 +749,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-docs
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -648,13 +758,13 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - build-frontend-packages
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana
@@ -664,6 +774,13 @@ steps:
   - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 trigger:
   branch: main
   event:
@@ -686,11 +803,11 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -698,14 +815,21 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - yarn run prettier:check
   - yarn run lint
@@ -715,14 +839,14 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-frontend
 - commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
   failure: ignore
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -730,7 +854,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-frontend
 trigger:
   branch: main
@@ -754,30 +878,42 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
-  - make gen-go
-  image: grafana/build-container:1.5.8
-  name: wire-install
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
 - commands:
-  - ./bin/grabpl verify-drone
+  - make gen-go
   depends_on:
-  - grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: lint-drone
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
+  name: wire-install
 - commands:
   - |-
     echo -e "unknwon
@@ -788,13 +924,13 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: codespell
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
   - make lint-go
@@ -802,20 +938,26 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-backend
 - commands:
-  - ./bin/grabpl test-backend --edition oss
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend-integration
+- commands:
+  - ./bin/grabpl verify-drone
+  depends_on:
+  - grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: lint-drone
 trigger:
   branch: main
   event:
@@ -838,29 +980,47 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
   - make gen-go
-  image: grafana/build-container:1.5.8
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -881,7 +1041,7 @@ steps:
       from_secret: github_token
     TEST_TAG: v0.0.0-test
   failure: ignore
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: trigger-test-release
   when:
     paths:
@@ -895,18 +1055,18 @@ steps:
     params:
     - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
     - SOURCE_COMMIT=${DRONE_COMMIT}
-    - OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}
     repositories:
     - grafana/grafana-enterprise@main
     server: https://drone.grafana.net
     token:
       from_secret: drone_token
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - wire-install
-  image: grafana/build-container:1.5.8
+  - compile-build-cmd
+  image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -915,7 +1075,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -924,37 +1084,18 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-plugins
-- commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.8
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.8
-  name: ensure-cuetsified
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
   depends_on:
@@ -971,7 +1112,7 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: package
 - commands:
   - ./scripts/grafana-server/start-server
@@ -984,7 +1125,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -1062,8 +1203,28 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-storybook
+- commands:
+  - ls dist/*.tar.gz*
+  - cp dist/*.tar.gz* packaging/docker/
+  depends_on:
+  - package
+  image: grafana/build-container:1.5.9
+  name: copy-packages-for-docker
+- commands:
+  - yarn wait-on http://$HOST:$PORT
+  - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
+  depends_on:
+  - grafana-server
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+    HOST: grafana-server
+    PORT: 3001
+  failure: ignore
+  image: grafana/docker-puppeteer:1.1.0
+  name: test-a11y-frontend
 - commands:
   - ./bin/grabpl store-storybook --deployment canary --src-bucket grafana-storybook
   depends_on:
@@ -1083,19 +1244,6 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - yarn wait-on http://$HOST:$PORT
-  - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
-  depends_on:
-  - grafana-server
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
-    HOST: grafana-server
-    PORT: 3001
-  failure: ignore
-  image: grafana/docker-puppeteer:1.0.0
-  name: test-a11y-frontend
-- commands:
   - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   depends_on:
   - test-a11y-frontend
@@ -1103,18 +1251,11 @@ steps:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: publish-frontend-metrics
   when:
     repo:
     - grafana/grafana
-- commands:
-  - ls dist/*.tar.gz*
-  - cp dist/*.tar.gz* packaging/docker/
-  depends_on:
-  - package
-  image: grafana/build-container:1.5.8
-  name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss
   depends_on:
@@ -1191,13 +1332,13 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: release-canary-npm-packages
   when:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
+  - ./bin/grabpl upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1214,7 +1355,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -1236,12 +1377,6 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
-- name: postgres
-  temp:
-    medium: memory
-- name: mysql
-  temp:
-    medium: memory
 ---
 depends_on: []
 kind: pipeline
@@ -1275,28 +1410,51 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
+  name: wire-install
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -1305,13 +1463,14 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: mysql-integration-tests
 trigger:
   branch: main
@@ -1348,7 +1507,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -1436,19 +1595,32 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.9
+  name: gen-version
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - ./bin/grabpl store-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
     ${DRONE_BUILD_NUMBER}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -1517,11 +1689,11 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1529,24 +1701,43 @@ steps:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
   - make gen-go
-  image: grafana/build-container:1.5.8
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss ${DRONE_TAG}
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
+  - ./bin/build build-backend --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
   - gen-version
   - wire-install
-  image: grafana/build-container:1.5.8
+  - compile-build-cmd
+  image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss ${DRONE_TAG}
@@ -1555,7 +1746,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
@@ -1564,37 +1755,18 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-plugins
-- commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.8
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.8
-  name: ensure-cuetsified
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss  --sign ${DRONE_TAG}
   depends_on:
@@ -1611,14 +1783,14 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss --shouldSave
@@ -1655,7 +1827,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -1733,11 +1905,10 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --src-bucket "$${PRERELEASE_BUCKET}" --src-dir
-    artifacts/static-assets
+  - ./bin/grabpl upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -1748,7 +1919,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -1823,11 +1994,11 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1835,23 +2006,41 @@ steps:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
   - make gen-go
-  image: grafana/build-container:1.5.8
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
   - |-
@@ -1863,7 +2052,7 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: codespell
 - commands:
   - make lint-go
@@ -1871,7 +2060,7 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -1882,19 +2071,19 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-frontend
 - commands:
-  - ./bin/grabpl test-backend --edition oss
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -1902,7 +2091,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-frontend
 trigger:
   event:
@@ -1951,28 +2140,44 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
+  name: wire-install
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -1981,13 +2186,14 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: mysql-integration-tests
 trigger:
   event:
@@ -2028,7 +2234,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -2087,13 +2293,13 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -2102,7 +2308,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -2118,32 +2324,51 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: init-enterprise
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
+  - ./bin/build build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
   - gen-version
   - wire-install
-  image: grafana/build-container:1.5.8
+  - compile-build-cmd
+  image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
@@ -2152,7 +2377,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
@@ -2161,43 +2386,25 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise
   depends_on:
   - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-plugins
 - commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.8
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.8
-  name: ensure-cuetsified
-- commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 ${DRONE_TAG}
+  - ./bin/build build-backend --jobs 8 --edition enterprise2 ${DRONE_TAG}
   depends_on:
   - gen-version
   - wire-install
-  image: grafana/build-container:1.5.8
+  - compile-build-cmd
+  image: grafana/build-container:1.5.9
   name: build-backend-enterprise2
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise  --sign ${DRONE_TAG}
@@ -2216,14 +2423,14 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition enterprise --shouldSave
@@ -2261,7 +2468,7 @@ steps:
     ARCH: linux-amd64
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -2332,8 +2539,7 @@ steps:
     - success
     - failure
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --src-bucket "$${PRERELEASE_BUCKET}"
-    --src-dir artifacts/static-assets
+  - ./bin/grabpl upload-cdn --edition enterprise
   depends_on:
   - package
   environment:
@@ -2344,7 +2550,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: upload-cdn-assets
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads
+  - ./bin/grabpl upload-packages --edition enterprise
   depends_on:
   - package
   environment:
@@ -2382,11 +2588,10 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --src-bucket "$${PRERELEASE_BUCKET}"
-    --src-dir artifacts/static-assets
+  - ./bin/grabpl upload-cdn --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -2397,7 +2602,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket $${PRERELEASE_BUCKET}/artifacts/downloads-enterprise2
+  - ./bin/grabpl upload-packages --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -2444,13 +2649,13 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -2459,7 +2664,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -2475,26 +2680,44 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: init-enterprise
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
   - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
 - commands:
   - |-
     echo -e "unknwon
@@ -2505,7 +2728,7 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: codespell
 - commands:
   - make lint-go
@@ -2513,7 +2736,7 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -2524,19 +2747,19 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-frontend
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -2544,7 +2767,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-frontend
 - commands:
   - make lint-go
@@ -2552,20 +2775,14 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-backend-enterprise2
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise2
+  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend-enterprise2
-- commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.8
-  name: test-backend-integration-enterprise2
 trigger:
   event:
     exclude:
@@ -2623,13 +2840,13 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -2638,7 +2855,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -2654,22 +2871,39 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: init-enterprise
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
+  name: wire-install
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -2678,31 +2912,32 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: mysql-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: memcached-integration-tests
 trigger:
   event:
@@ -2747,7 +2982,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2822,7 +3057,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2900,7 +3135,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2961,7 +3196,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3040,7 +3275,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3102,7 +3337,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3140,7 +3375,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3178,7 +3413,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3186,7 +3421,7 @@ steps:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
   - ./bin/grabpl artifacts npm retrieve --tag v${TAG}
@@ -3206,7 +3441,7 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: release-npm-packages
 trigger:
   event:
@@ -3234,15 +3469,21 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.9
+  name: gen-version
+- commands:
   - ./bin/grabpl store-packages --edition oss --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3282,15 +3523,21 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - ./bin/grabpl gen-version ${DRONE_TAG}
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.9
+  name: gen-version
+- commands:
   - ./bin/grabpl store-packages --edition enterprise --packages-bucket grafana-downloads
     --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
-  - grabpl
+  - gen-version
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3317,6 +3564,38 @@ volumes:
 ---
 depends_on: []
 kind: pipeline
+name: publish-artifacts-page
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - ./bin/grabpl artifacts-page
+  depends_on:
+  - grabpl
+  image: grafana/build-container:1.5.9
+  name: artifacts-page
+trigger:
+  event:
+  - promote
+  target: security
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+depends_on: []
+kind: pipeline
 name: release-branch-oss-build-e2e-publish
 node:
   type: no-parallel
@@ -3327,11 +3606,11 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3339,24 +3618,43 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
   - make gen-go
-  image: grafana/build-container:1.5.8
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
+- commands:
+  - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - wire-install
-  image: grafana/build-container:1.5.8
+  - compile-build-cmd
+  image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -3365,7 +3663,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -3374,37 +3672,18 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition oss
   depends_on:
   - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-plugins
-- commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.8
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.8
-  name: ensure-cuetsified
 - commands:
   - ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
   depends_on:
@@ -3421,14 +3700,14 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition oss --shouldSave
@@ -3465,7 +3744,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -3543,10 +3822,10 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-storybook
 - commands:
-  - ./bin/grabpl upload-cdn --edition oss --src-bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition oss
   depends_on:
   - grafana-server
   environment:
@@ -3560,7 +3839,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition oss --packages-bucket grafana-downloads
+  - ./bin/grabpl upload-packages --edition oss
   depends_on:
   - end-to-end-tests-dashboards-suite
   - end-to-end-tests-panels-suite
@@ -3603,11 +3882,11 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3615,23 +3894,41 @@ steps:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
   - make gen-go
-  image: grafana/build-container:1.5.8
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - ./bin/grabpl shellcheck
   depends_on:
   - grabpl
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: shellcheck
 - commands:
   - |-
@@ -3643,7 +3940,7 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: codespell
 - commands:
   - make lint-go
@@ -3651,7 +3948,7 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -3662,19 +3959,19 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-frontend
 - commands:
-  - ./bin/grabpl test-backend --edition oss
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition oss
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -3682,7 +3979,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-frontend
 trigger:
   ref:
@@ -3725,28 +4022,44 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
+  name: wire-install
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -3755,13 +4068,14 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - grabpl
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: mysql-integration-tests
 trigger:
   ref:
@@ -3796,7 +4110,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -3844,13 +4158,13 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -3859,7 +4173,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -3872,32 +4186,51 @@ steps:
   depends_on:
   - clone-enterprise
   environment: {}
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: init-enterprise
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
 - commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
+  - ./bin/build build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - gen-version
   - wire-install
-  image: grafana/build-container:1.5.8
+  - compile-build-cmd
+  image: grafana/build-container:1.5.9
   name: build-backend
 - commands:
   - ./bin/grabpl build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -3906,7 +4239,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise --build-id
@@ -3916,44 +4249,26 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise --sign --signing-admin
+  - ./bin/grabpl build-plugins --jobs 8 --edition enterprise
   depends_on:
   - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: build-plugins
 - commands:
-  - ./bin/linux-amd64/grafana-cli cue validate-schema --grafana-root .
-  depends_on:
-  - build-backend
-  image: grafana/build-container:1.5.8
-  name: validate-scuemata
-- commands:
-  - '# It is required that the generated Typescript be in sync with the input CUE
-    files.'
-  - '# To enforce this, the following command will attempt to generate Typescript
-    from all'
-  - '# appropriate .cue files, then compare with the corresponding (*.gen.ts) file
-    the generated'
-  - '# code would have been written to. It exits 1 if any diffs are found.'
-  - ./bin/linux-amd64/grafana-cli cue gen-ts --grafana-root . --diff
-  depends_on:
-  - validate-scuemata
-  image: grafana/build-container:1.5.8
-  name: ensure-cuetsified
-- commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64
   depends_on:
   - gen-version
   - wire-install
-  image: grafana/build-container:1.5.8
+  - compile-build-cmd
+  image: grafana/build-container:1.5.9
   name: build-backend-enterprise2
 - commands:
   - ./bin/grabpl package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -3973,14 +4288,14 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: copy-packages-for-docker
 - commands:
   - ./bin/grabpl build-docker --edition enterprise --shouldSave
@@ -4018,7 +4333,7 @@ steps:
     ARCH: linux-amd64
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: grafana-server
 - commands:
   - apt-get install -y netcat
@@ -4089,17 +4404,7 @@ steps:
     - success
     - failure
 - commands:
-  - yarn storybook:build
-  - ./bin/grabpl verify-storybook
-  depends_on:
-  - build-frontend
-  - build-frontend-packages
-  environment:
-    NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.5.8
-  name: build-storybook
-- commands:
-  - ./bin/grabpl upload-cdn --edition enterprise --src-bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise
   depends_on:
   - package
   environment:
@@ -4113,7 +4418,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise --packages-bucket grafana-downloads
+  - ./bin/grabpl upload-packages --edition enterprise
   depends_on:
   - package
   environment:
@@ -4144,10 +4449,10 @@ steps:
       from_secret: gpg_pub_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: package-enterprise2
 - commands:
-  - ./bin/grabpl upload-cdn --edition enterprise2 --src-bucket "grafana-static-assets"
+  - ./bin/grabpl upload-cdn --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -4158,7 +4463,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl upload-packages --edition enterprise2 --packages-bucket grafana-downloads-enterprise2
+  - ./bin/grabpl upload-packages --edition enterprise2
   depends_on:
   - package-enterprise2
   environment:
@@ -4199,13 +4504,13 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -4214,7 +4519,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -4227,26 +4532,44 @@ steps:
   depends_on:
   - clone-enterprise
   environment: {}
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: init-enterprise
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on:
+  - init-enterprise
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.17
+  name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: gen-version
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
 - commands:
   - |-
     echo -e "unknwon
@@ -4257,7 +4580,7 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: codespell
 - commands:
   - make lint-go
@@ -4265,7 +4588,7 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-backend
 - commands:
   - yarn run prettier:check
@@ -4276,19 +4599,19 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-frontend
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise
+  - go test -short -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend
 - commands:
-  - ./bin/grabpl integration-tests --edition enterprise
+  - go test -run Integration -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend-integration
 - commands:
   - yarn run ci:test-frontend
@@ -4296,7 +4619,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-frontend
 - commands:
   - make lint-go
@@ -4304,20 +4627,14 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: lint-backend-enterprise2
 - commands:
-  - ./bin/grabpl test-backend --edition enterprise2
+  - go test -tags=pro -covermode=atomic -timeout=30m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: test-backend-enterprise2
-- commands:
-  - ./bin/grabpl integration-tests --edition enterprise2
-  depends_on:
-  - wire-install
-  image: grafana/build-container:1.5.8
-  name: test-backend-integration-enterprise2
 trigger:
   ref:
   - refs/heads/v[0-9]*
@@ -4369,13 +4686,13 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -4384,7 +4701,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -4397,22 +4714,39 @@ steps:
   depends_on:
   - clone-enterprise
   environment: {}
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: init-enterprise
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - init-enterprise
+  image: grafana/build-container:1.5.9
+  name: verify-gen-cue
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.5.9
+  name: wire-install
 - commands:
   - apt-get update
   - apt-get install -yq postgresql-client
   - dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -4421,31 +4755,32 @@ steps:
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root
     -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=30m {}'
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: mysql-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
   - ./bin/grabpl integration-tests
   depends_on:
-  - init-enterprise
+  - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.5.8
+  image: grafana/build-container:1.5.9
   name: memcached-integration-tests
 trigger:
   ref:
@@ -4484,7 +4819,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.50-go1.17.12/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.54-v9.1.x/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -4681,6 +5016,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 59b735b27c828713734eebda3af27333d57d6d8173e935d5e031f073b2039a6d
+hmac: 710e3af4e83d49bce6403c31135075bbd2fbc302b985e0dea201157950805924
 
 ...

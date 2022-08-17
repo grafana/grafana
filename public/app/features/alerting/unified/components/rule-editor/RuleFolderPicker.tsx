@@ -14,7 +14,7 @@ export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialT
   folderPermissions?: AccessControlAction[];
 }
 
-export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, folderPermissions = [], ...props }) => {
+export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, ...props }) => {
   return (
     <FolderPicker
       showRoot={false}

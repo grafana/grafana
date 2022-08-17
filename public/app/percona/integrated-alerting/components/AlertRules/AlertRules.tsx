@@ -4,7 +4,7 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
 import { Button, useStyles } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
@@ -61,7 +61,7 @@ export const AlertRules: FC = () => {
         {
           page_params: {
             index: pageIndex,
-            page_size: pageSize as number,
+            page_size: pageSize,
           },
         },
         generateToken(GET_ALERT_RULES_CANCEL_TOKEN)
@@ -104,7 +104,7 @@ export const AlertRules: FC = () => {
       {
         Header: severityColumn,
         accessor: 'severity',
-        Cell: ({ value }) => <SeverityComp severity={value as Severity} />,
+        Cell: ({ value }: { value: Severity }) => <SeverityComp severity={value} />,
         width: '5%',
       },
       {
@@ -173,8 +173,8 @@ export const AlertRules: FC = () => {
   }, [pageSize, pageIndex]);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.integratedAlerting} featureSelector={featureSelector}>
           <AlertRulesProvider.Provider value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule }}>
@@ -198,7 +198,7 @@ export const AlertRules: FC = () => {
               showPagination
               totalItems={totalItems}
               totalPages={totalPages}
-              pageSize={pageSize as number}
+              pageSize={pageSize}
               pageIndex={pageIndex}
               onPaginationChanged={onPaginationChanged}
               renderExpandedRow={renderSelectedSubRow}
@@ -210,8 +210,8 @@ export const AlertRules: FC = () => {
             />
           </AlertRulesProvider.Provider>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

@@ -19,7 +19,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { withTheme, useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { Themeable } from '../../types';
-import { ButtonGroup, ToolbarButton } from '../Button';
+import { ButtonGroup } from '../Button';
+import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';

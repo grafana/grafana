@@ -107,8 +107,6 @@ Gradient color is generated based on the hue of the line color.
 
 Choose which of the [standard calculations]({{< relref "../panels/calculation-types/" >}}) to show in the legend. You can have more than one.
 
-For more information about the legend, refer to [Configure a legend](../configure-legend/).
-
 ## Text size
 
 Enter a **Value** to change the size of the text on your bar chart.

@@ -62,6 +62,10 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
     [config, existing]
   );
 
+  // this basically checks if we can manage the selected alert manager data source, either because it's a Grafana Managed one
+  // or a Mimir-based AlertManager
+  const isManageableAlertManagerDataSource = !isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
+
   return (
     <>
       {!isVanillaAM && (
@@ -70,6 +74,8 @@ export const CloudReceiverForm: FC<Props> = ({ existing, alertManagerSourceName,
         </Alert>
       )}
       <ReceiverForm<CloudChannelValues>
+        isEditable={isManageableAlertManagerDataSource}
+        isTestable={isManageableAlertManagerDataSource}
         config={config}
         onSubmit={onSubmit}
         initialValues={existingValue}

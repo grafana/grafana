@@ -3,7 +3,7 @@ import { logger } from '@percona/platform-core';
 import React, { FC, useState, useMemo, useEffect, useCallback } from 'react';
 import { Column, Row } from 'react-table';
 
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
@@ -97,8 +97,8 @@ export const RestoreHistory: FC = () => {
   }, []);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <Table
@@ -110,8 +110,8 @@ export const RestoreHistory: FC = () => {
             renderExpandedRow={renderSelectedSubRow}
           />
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

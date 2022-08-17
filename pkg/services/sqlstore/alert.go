@@ -66,7 +66,7 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 
 func (ss *SQLStore) HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
-		builder := SQLBuilder{}
+		builder := NewSqlBuilder(ss.Cfg)
 
 		builder.Write(`SELECT
 		alert.id,

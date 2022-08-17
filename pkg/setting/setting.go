@@ -115,6 +115,7 @@ var (
 
 	// HTTP auth
 	SigV4AuthEnabled bool
+	AzureAuthEnabled bool
 
 	AnonymousEnabled bool
 
@@ -287,6 +288,7 @@ type Cfg struct {
 	TokenRotationIntervalMinutes int
 	SigV4AuthEnabled             bool
 	SigV4VerboseLogging          bool
+	AzureAuthEnabled             bool
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
@@ -316,6 +318,7 @@ type Cfg struct {
 	// JWT Auth
 	JWTAuthEnabled       bool
 	JWTAuthHeaderName    string
+	JWTAuthURLLogin      bool
 	JWTAuthEmailClaim    string
 	JWTAuthUsernameClaim string
 	JWTAuthExpectClaims  string
@@ -360,6 +363,7 @@ type Cfg struct {
 	// User
 	UserInviteMaxLifetime time.Duration
 	HiddenUsers           map[string]struct{}
+	CaseInsensitiveLogin  bool // Login and Email will be considered case insensitive
 
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
@@ -369,6 +373,9 @@ type Cfg struct {
 
 	// Sentry config
 	Sentry Sentry
+
+	// GrafanaJavascriptAgent config
+	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
 	// Data sources
 	DataSourceLimit int
@@ -397,8 +404,9 @@ type Cfg struct {
 
 	Quota QuotaSettings
 
-	DefaultTheme string
-	HomePage     string
+	DefaultTheme  string
+	DefaultLocale string
+	HomePage      string
 
 	AutoAssignOrg              bool
 	AutoAssignOrgId            int
@@ -437,6 +445,8 @@ type Cfg struct {
 	QueryHistoryEnabled bool
 
 	DashboardPreviews DashboardPreviewsSettings
+
+	Storage StorageSettings
 
 	// Access Control
 	RBACEnabled         bool
@@ -1009,6 +1019,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.readDataSourcesSettings()
 
 	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
+	cfg.Storage = readStorageSettings(iniFile)
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
@@ -1052,6 +1063,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
+	cfg.readGrafanaJavascriptAgentConfig()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
 		return err
@@ -1280,6 +1292,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.SigV4AuthEnabled = SigV4AuthEnabled
 	cfg.SigV4VerboseLogging = auth.Key("sigv4_verbose_logging").MustBool(false)
 
+	// Azure Auth
+	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
+	cfg.AzureAuthEnabled = AzureAuthEnabled
+
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousEnabled = AnonymousEnabled
@@ -1296,6 +1312,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authJWT := iniFile.Section("auth.jwt")
 	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
 	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthURLLogin = authJWT.Key("url_login").MustBool(false)
 	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
 	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
 	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
@@ -1353,9 +1370,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
+
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
+	cfg.DefaultLocale = valueAsString(users, "default_locale", "")
 	cfg.HomePage = valueAsString(users, "home_page", "")
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")

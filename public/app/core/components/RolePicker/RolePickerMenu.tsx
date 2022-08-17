@@ -40,8 +40,8 @@ interface RolePickerMenuProps {
   onSelect: (roles: Role[]) => void;
   onBuiltInRoleSelect?: (role: OrgRole) => void;
   onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
-  onClear?: () => void;
   updateDisabled?: boolean;
+  apply?: boolean;
   offset: { vertical: number; horizontal: number };
 }
 
@@ -55,9 +55,9 @@ export const RolePickerMenu = ({
   onSelect,
   onBuiltInRoleSelect,
   onUpdate,
-  onClear,
   updateDisabled,
   offset,
+  apply,
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
@@ -118,14 +118,15 @@ export const RolePickerMenu = ({
     const group = optionGroups.find((g) => {
       return g.value === value;
     });
-    if (groupSelected(value)) {
+    if (groupSelected(value) || groupPartiallySelected(value)) {
       if (group) {
         setSelectedOptions(selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid)));
       }
     } else {
       if (group) {
+        const groupOptions = group.options.filter((role) => role.delegatable);
         const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-        setSelectedOptions([...restOptions, ...group.options]);
+        setSelectedOptions([...restOptions, ...groupOptions]);
       }
     }
   };
@@ -152,9 +153,6 @@ export const RolePickerMenu = ({
   };
 
   const onClearInternal = async () => {
-    if (onClear) {
-      onClear();
-    }
     setSelectedOptions([]);
   };
 
@@ -271,11 +269,11 @@ export const RolePickerMenu = ({
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
           <HorizontalGroup justify="flex-end">
-            <Button size="sm" fill="text" onClick={onClearInternal}>
+            <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
               Clear all
             </Button>
-            <Button size="sm" onClick={onUpdateInternal}>
-              {updateDisabled ? `Apply` : `Update`}
+            <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>
+              {apply ? `Apply` : `Update`}
             </Button>
           </HorizontalGroup>
         </div>

@@ -17,7 +17,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 		desc         string
 		url          string
 		method       string
-		permissions  []*accesscontrol.Permission
+		permissions  []accesscontrol.Permission
 		input        string
 	}
 	tests := []accessControlTestCase2{
@@ -26,7 +26,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			desc:         "org viewer with the correct permissions can invite an existing user to his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
-			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -34,7 +34,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			desc:         "org viewer with missing permissions cannot invite an existing user to his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
-			permissions:  []*accesscontrol.Permission{},
+			permissions:  []accesscontrol.Permission{},
 			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -42,7 +42,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			desc:         "org viewer with the wrong scope cannot invite an existing user to his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
-			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:id:100"}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:id:100"}},
 			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -50,7 +50,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			desc:         "org viewer with the correct permissions can invite a new user to his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
-			permissions:  []*accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
+			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
 			input:        `{"loginOrEmail": "new user", "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 		{
@@ -58,7 +58,7 @@ func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
 			desc:         "org viewer with missing permissions cannot invite a new user to his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
-			permissions:  []*accesscontrol.Permission{},
+			permissions:  []accesscontrol.Permission{},
 			input:        `{"loginOrEmail": "new user", "role": "` + string(models.ROLE_VIEWER) + `"}`,
 		},
 	}

@@ -8,6 +8,11 @@ import (
 	"testing"
 	"time"
 
+	prometheus "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/timeinterval"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	gfcore "github.com/grafana/grafana/pkg/models"
@@ -18,10 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	prometheus "github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/timeinterval"
-	"github.com/stretchr/testify/require"
 )
 
 func TestProvisioningApi(t *testing.T) {
@@ -240,11 +243,13 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				insertRule(t, sut, createTestAlertRule("rule", 1))
-				rule := createInvalidAlertRule()
+				uid := "123123"
+				rule := createTestAlertRule("rule", 1)
+				rule.UID = uid
+				insertRule(t, sut, rule)
+				rule = createInvalidAlertRule()
 
-				response := sut.RoutePutAlertRule(&rc, rule, "rule")
-
+				response := sut.RoutePutAlertRule(&rc, rule, uid)
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
@@ -296,6 +301,37 @@ func TestProvisioningApi(t *testing.T) {
 
 			require.Equal(t, 404, response.Status())
 		})
+
+		t.Run("are invalid at group level", func(t *testing.T) {
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+				group := createInvalidAlertRuleGroup()
+				group.Interval = 0
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+			})
+		})
+
+		t.Run("are invalid at rule level", func(t *testing.T) {
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRule("rule", 1))
+				group := createInvalidAlertRuleGroup()
+
+				response := sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+			})
+		})
 	})
 }
 
@@ -322,8 +358,10 @@ func createTestEnv(t *testing.T) testEnvironment {
 		})
 	sqlStore := sqlstore.InitTestDB(t)
 	store := store.DBstore{
-		SQLStore:     sqlStore,
-		BaseInterval: time.Second * 10,
+		SQLStore: sqlStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: time.Second * 10,
+		},
 	}
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -468,12 +506,20 @@ func createInvalidMuteTiming() definitions.MuteTimeInterval {
 	}
 }
 
-func createInvalidAlertRule() definitions.AlertRule {
-	return definitions.AlertRule{}
+func createInvalidAlertRule() definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{}
 }
 
-func createTestAlertRule(title string, orgID int64) definitions.AlertRule {
-	return definitions.AlertRule{
+func createInvalidAlertRuleGroup() definitions.AlertRuleGroup {
+	return definitions.AlertRuleGroup{
+		Title:    "invalid",
+		Interval: 10,
+		Rules:    []definitions.ProvisionedAlertRule{{}},
+	}
+}
+
+func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{
 		OrgID:     orgID,
 		Title:     title,
 		Condition: "A",
@@ -489,13 +535,13 @@ func createTestAlertRule(title string, orgID int64) definitions.AlertRule {
 		},
 		RuleGroup:    "my-cool-group",
 		FolderUID:    "folder-uid",
-		For:          time.Second * 60,
+		For:          model.Duration(60),
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
 	}
 }
 
-func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.AlertRule) {
+func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.ProvisionedAlertRule) {
 	t.Helper()
 
 	rc := createTestRequestCtx()

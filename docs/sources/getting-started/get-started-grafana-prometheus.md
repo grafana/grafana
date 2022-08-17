@@ -1,5 +1,6 @@
 ---
 aliases:
+  - /docs/grafana/latest/getting-started/get-started-grafana-prometheus/
   - /docs/grafana/latest/getting-started/getting-started-prometheus/
   - /docs/grafana/latest/guides/getting_started/
   - /docs/grafana/latest/guides/gettingstarted/

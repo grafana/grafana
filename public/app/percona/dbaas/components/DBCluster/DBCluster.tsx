@@ -5,7 +5,7 @@ import React, { FC, useCallback, useMemo, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
 import { useStyles } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Table } from 'app/percona/shared/components/Elements/Table';
@@ -192,8 +192,8 @@ export const DBCluster: FC = () => {
   );
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.dbaas} featureSelector={featureSelector}>
           <div>
@@ -246,8 +246,8 @@ export const DBCluster: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

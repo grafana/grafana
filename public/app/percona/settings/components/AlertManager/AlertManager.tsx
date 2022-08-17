@@ -4,7 +4,7 @@ import { Field, Form } from 'react-final-form';
 import { useSelector } from 'react-redux';
 
 import { Button, Input, Spinner, TextArea, useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
@@ -75,8 +75,8 @@ export const AlertManager: FC = () => {
   };
 
   return (
-    <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
+      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={cx(settingsStyles.wrapper, styles.alertManagerWrapper)}>
             <Form
@@ -138,8 +138,8 @@ export const AlertManager: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

@@ -6,7 +6,7 @@ import { Column, Row } from 'react-table';
 import { AppEvents } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
@@ -57,11 +57,7 @@ export const StorageLocations: FC = () => {
         Header: Messages.storageLocations.table.columns.actions,
         accessor: 'locationID',
         Cell: ({ row }) => (
-          <StorageLocationsActions
-            onUpdate={handleUpdate}
-            onDelete={onDeleteCLick}
-            location={row.original as StorageLocation}
-          />
+          <StorageLocationsActions onUpdate={handleUpdate} onDelete={onDeleteCLick} location={row.original} />
         ),
         width: '130px',
       },
@@ -82,7 +78,7 @@ export const StorageLocations: FC = () => {
   };
 
   const renderSelectedSubRow = React.useCallback(
-    (row: Row) => <StorageLocationDetails location={row.original as StorageLocation} />,
+    (row: Row<StorageLocation>) => <StorageLocationDetails location={row.original} />,
     []
   );
 
@@ -151,8 +147,8 @@ export const StorageLocations: FC = () => {
   }, []);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.backupManagement} featureSelector={featureSelector}>
           <div className={styles.addWrapper}>
@@ -193,8 +189,8 @@ export const StorageLocations: FC = () => {
             onDelete={handleDelete}
           />
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

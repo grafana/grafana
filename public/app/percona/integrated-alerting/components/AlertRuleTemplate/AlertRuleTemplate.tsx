@@ -4,7 +4,7 @@ import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Column } from 'react-table';
 
 import { Button, useStyles } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -47,7 +47,7 @@ export const AlertRuleTemplate: FC = () => {
         {
           page_params: {
             index: pageIndex,
-            page_size: pageSize as number,
+            page_size: pageSize,
           },
         },
         generateToken(GET_TEMPLATES_CANCEL_TOKEN)
@@ -110,8 +110,8 @@ export const AlertRuleTemplate: FC = () => {
   }, [pageSize, pageIndex]);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.integratedAlerting} featureSelector={featureSelector}>
           <div className={styles.actionsWrapper}>
@@ -143,8 +143,8 @@ export const AlertRuleTemplate: FC = () => {
             emptyMessage={noData}
           />
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

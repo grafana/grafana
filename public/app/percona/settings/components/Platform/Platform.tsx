@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppEvents } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
@@ -66,8 +66,8 @@ export const Platform: FC = () => {
   };
 
   return (
-    <Page navModel={navModel} vertical tabsDataTestId="settings-tabs">
-      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <OldPage navModel={navModel} vertical tabsDataTestId="settings-tabs">
+      <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           {result?.isConnectedToPortal ? (
             <Connected />
@@ -75,8 +75,8 @@ export const Platform: FC = () => {
             <Connect initialValues={initialValues} onConnect={handleConnect} connecting={connecting} />
           )}
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

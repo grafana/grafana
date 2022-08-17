@@ -445,6 +445,10 @@ func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId in
 	return nil
 }
 
+func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
+	return nil, nil
+}
+
 type scenarioInput struct {
 	storedPluginSettings []*pluginsettings.DTO
 	installedPlugins     []plugins.PluginDTO
@@ -469,8 +473,7 @@ type scenarioContext struct {
 func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenarioContext)) {
 	t.Helper()
 
-	tracer, err := tracing.InitializeTracerForTest()
-	require.NoError(t, err)
+	tracer := tracing.InitializeTracerForTest()
 
 	sCtx := &scenarioContext{
 		t:                              t,

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const genericOAuthModule = "oauth_generic_oauth"
@@ -28,7 +29,7 @@ func ProvideAuthInfoService(userProtectionService login.UserProtectionService, a
 	return s
 }
 
-func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUserByAuthInfoQuery) (bool, *models.User, *models.UserAuth, error) {
+func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUserByAuthInfoQuery) (bool, *user.User, *models.UserAuth, error) {
 	authQuery := &models.GetAuthInfoQuery{}
 
 	// Try to find the user by auth module and id first
@@ -37,7 +38,7 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 		authQuery.AuthId = query.AuthId
 
 		err := s.authInfoStore.GetAuthInfo(ctx, authQuery)
-		if !errors.Is(err, models.ErrUserNotFound) {
+		if !errors.Is(err, user.ErrUserNotFound) {
 			if err != nil {
 				return false, nil, nil, err
 			}
@@ -52,11 +53,11 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 					s.logger.Error("Error removing user_auth entry", "error", err)
 				}
 
-				return false, nil, nil, models.ErrUserNotFound
+				return false, nil, nil, user.ErrUserNotFound
 			} else {
-				user, err := s.authInfoStore.GetUserById(ctx, authQuery.Result.UserId)
+				usr, err := s.authInfoStore.GetUserById(ctx, authQuery.Result.UserId)
 				if err != nil {
-					if errors.Is(err, models.ErrUserNotFound) {
+					if errors.Is(err, user.ErrUserNotFound) {
 						// if the user has been deleted then remove the entry
 						if errDel := s.authInfoStore.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
 							UserAuth: authQuery.Result,
@@ -64,53 +65,53 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 							s.logger.Error("Error removing user_auth entry", "error", errDel)
 						}
 
-						return false, nil, nil, models.ErrUserNotFound
+						return false, nil, nil, user.ErrUserNotFound
 					}
 
 					return false, nil, nil, err
 				}
 
-				return true, user, authQuery.Result, nil
+				return true, usr, authQuery.Result, nil
 			}
 		}
 	}
 
-	return false, nil, nil, models.ErrUserNotFound
+	return false, nil, nil, user.ErrUserNotFound
 }
 
-func (s *Implementation) LookupByOneOf(ctx context.Context, params *models.UserLookupParams) (*models.User, error) {
-	var user *models.User
+func (s *Implementation) LookupByOneOf(ctx context.Context, params *models.UserLookupParams) (*user.User, error) {
+	var usr *user.User
 	var err error
 
 	// If not found, try to find the user by id
 	if params.UserID != nil && *params.UserID != 0 {
-		user, err = s.authInfoStore.GetUserById(ctx, *params.UserID)
-		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+		usr, err = s.authInfoStore.GetUserById(ctx, *params.UserID)
+		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
 	}
 
 	// If not found, try to find the user by email address
-	if user == nil && params.Email != nil && *params.Email != "" {
-		user, err = s.authInfoStore.GetUserByEmail(ctx, *params.Email)
-		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+	if usr == nil && params.Email != nil && *params.Email != "" {
+		usr, err = s.authInfoStore.GetUserByEmail(ctx, *params.Email)
+		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
 	}
 
 	// If not found, try to find the user by login
-	if user == nil && params.Login != nil && *params.Login != "" {
-		user, err = s.authInfoStore.GetUserByLogin(ctx, *params.Login)
-		if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+	if usr == nil && params.Login != nil && *params.Login != "" {
+		usr, err = s.authInfoStore.GetUserByLogin(ctx, *params.Login)
+		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
 	}
 
-	if user == nil {
-		return nil, models.ErrUserNotFound
+	if usr == nil {
+		return nil, user.ErrUserNotFound
 	}
 
-	return user, nil
+	return usr, nil
 }
 
 func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule string, authId string, userID int64) (*models.UserAuth, error) {
@@ -129,29 +130,29 @@ func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule stri
 	return nil, nil
 }
 
-func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
+func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error) {
 	// 1. LookupAndFix = auth info, user, error
 	// TODO: Not a big fan of the fact that we are deleting auth info here, might want to move that
-	foundUser, user, authInfo, err := s.LookupAndFix(ctx, query)
-	if err != nil && !errors.Is(err, models.ErrUserNotFound) {
+	foundUser, usr, authInfo, err := s.LookupAndFix(ctx, query)
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		return nil, err
 	}
 
 	// 2. FindByUserDetails
 	if !foundUser {
-		user, err = s.LookupByOneOf(ctx, &query.UserLookupParams)
+		usr, err = s.LookupByOneOf(ctx, &query.UserLookupParams)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if err := s.UserProtectionService.AllowUserMapping(user, query.AuthModule); err != nil {
+	if err := s.UserProtectionService.AllowUserMapping(usr, query.AuthModule); err != nil {
 		return nil, err
 	}
 
 	// Special case for generic oauth duplicates
-	ai, err := s.GenericOAuthLookup(ctx, query.AuthModule, query.AuthId, user.Id)
-	if !errors.Is(err, models.ErrUserNotFound) {
+	ai, err := s.GenericOAuthLookup(ctx, query.AuthModule, query.AuthId, usr.ID)
+	if !errors.Is(err, user.ErrUserNotFound) {
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +164,7 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 	if query.AuthModule != "" {
 		if authInfo == nil {
 			cmd := &models.SetAuthInfoCommand{
-				UserId:     user.Id,
+				UserId:     usr.ID,
 				AuthModule: query.AuthModule,
 				AuthId:     query.AuthId,
 			}
@@ -177,7 +178,7 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 		}
 	}
 
-	return user, nil
+	return usr, nil
 }
 
 func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {

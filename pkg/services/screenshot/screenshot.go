@@ -171,7 +171,7 @@ func (s *ObservableScreenshotService) Take(ctx context.Context, opts ScreenshotO
 
 	screenshot, err := s.service.Take(ctx, opts)
 	if err != nil {
-		if errors.Is(err, models.ErrDashboardNotFound) {
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
 			defer s.failures.With(prometheus.Labels{
 				"reason": "dashboard_not_found",
 			}).Inc()

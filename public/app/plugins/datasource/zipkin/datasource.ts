@@ -12,6 +12,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 
 import { serializeParams } from '../../../core/utils/fetch';
@@ -28,6 +29,7 @@ export interface ZipkinJsonData extends DataSourceJsonData {
 export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
+  spanBar?: SpanBarOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<ZipkinJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()

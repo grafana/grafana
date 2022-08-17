@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Column } from 'react-table';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Table } from 'app/percona/shared/components/Elements/Table';
@@ -152,8 +152,8 @@ export const KubernetesInventory: FC = () => {
   }, []);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <OldPage navModel={navModel}>
+      <OldPage.Contents>
         <TechnicalPreview />
         <FeatureLoader featureName={Messages.dbaas} featureSelector={featureSelector}>
           <div>
@@ -229,8 +229,8 @@ export const KubernetesInventory: FC = () => {
           </div>
         </FeatureLoader>
         {kubernetes.length === 0 && <PortalK8sFreeClusterPromotingMessage />}
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

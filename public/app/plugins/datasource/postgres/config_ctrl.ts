@@ -6,7 +6,7 @@ import {
   createChangeHandler,
   createResetHandler,
   PasswordFieldEnum,
-} from '../../../features/datasources/utils/passwordHandlers';
+} from '../../../features/datasources/passwordHandlers';
 
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';

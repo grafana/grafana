@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 
 import { useStyles2 } from '@grafana/ui';
 import { CollapsableSection } from '@grafana/ui/src/components';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { StoreState } from 'app/types';
 
@@ -54,8 +54,8 @@ const EntitlementsPage: FC = () => {
   }, [isConnectedToPortal]);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents dataTestId="page-wrapper-entitlements">
+    <OldPage navModel={navModel}>
+      <OldPage.Contents dataTestId="page-wrapper-entitlements">
         <PlatformConnectedLoader>
           <Overlay dataTestId="entitlements-loading" isPending={pendingRequest}>
             <PageContent hasData={data.length > 0} emptyMessage={Messages.noData} loading={pendingRequest}>
@@ -72,8 +72,8 @@ const EntitlementsPage: FC = () => {
             </PageContent>
           </Overlay>
         </PlatformConnectedLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

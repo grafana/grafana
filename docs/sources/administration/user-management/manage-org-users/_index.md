@@ -34,7 +34,7 @@ You can see a list of users with accounts in your Grafana organization. If neces
 
 ![Org Admin user list](/static/img/docs/manage-users/org-user-list-7-3.png)
 
-> **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [view a global list of users]({{< relref "../../manage-users-and-permissions/manage-server-users/view-list-users/" >}}) in the Server Admin section of Grafana.
+> **Note:** If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [view a global list of users]({{< relref "../server-user-management#view-a-list-of-users" >}}) in the Server Admin section of Grafana.
 
 ## Change a user's organization permissions
 

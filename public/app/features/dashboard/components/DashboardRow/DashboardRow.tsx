@@ -94,7 +94,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
             />
-            <a className="pointer" onClick={this.onDelete}>
+            <a className="pointer" onClick={this.onDelete} role="button" aria-label="Delete row">
               <Icon name="trash-alt" />
             </a>
           </div>
@@ -104,7 +104,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
             &nbsp;
           </div>
         )}
-        {canEdit && <div className="dashboard-row__drag grid-drag-handle" />}
+        {canEdit && <div data-testid="dashboard-row-drag" className="dashboard-row__drag grid-drag-handle" />}
       </div>
     );
   }

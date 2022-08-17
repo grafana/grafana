@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { OldPage } from 'app/core/components/Page/Page';
 
 import { PlatformConnectedLoader } from '../shared/components/Elements/PlatformConnectedLoader';
 import { usePerconaNavModel } from '../shared/components/hooks/perconaNavModel';
@@ -14,15 +14,15 @@ export const EnvironmentOverview = () => {
   const navModel = usePerconaNavModel('environment-overview');
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents dataTestId="page-wrapper-environment-overview">
+    <OldPage navModel={navModel}>
+      <OldPage.Contents dataTestId="page-wrapper-environment-overview">
         <PlatformConnectedLoader>
           <div className={styles.widgetsWrapper}>
             <Contact />
           </div>
         </PlatformConnectedLoader>
-      </Page.Contents>
-    </Page>
+      </OldPage.Contents>
+    </OldPage>
   );
 };
 

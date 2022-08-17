@@ -1,4 +1,5 @@
-import axios, { CancelToken, AxiosInstance, AxiosError } from 'axios';
+/* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
+import axios, { CancelToken, AxiosInstance } from 'axios';
 
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
@@ -96,7 +97,7 @@ export const translateApiError = (error: ApiErrorCode): ApiVerboseError | undefi
   return translatedError;
 };
 
-export const apiErrorParser = (e: AxiosError): ApiVerboseError[] => {
+export const apiErrorParser = (e: any): ApiVerboseError[] => {
   const errorData: ApiError = e.response?.data as ApiError;
   let result: ApiVerboseError[] = [];
 

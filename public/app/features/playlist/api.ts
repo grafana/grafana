@@ -33,6 +33,8 @@ async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playli
     await apiCall();
     dispatch(notifyApp(createSuccessNotification(message)));
   } catch (e) {
-    dispatch(notifyApp(createErrorNotification('Unable to save playlist', e)));
+    if (e instanceof Error) {
+      dispatch(notifyApp(createErrorNotification('Unable to save playlist', e)));
+    }
   }
 }

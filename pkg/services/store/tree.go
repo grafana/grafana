@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -11,7 +12,7 @@ import (
 
 type nestedTree struct {
 	rootsByOrgId map[int64][]storageRuntime
-	lookup       map[int64]map[string]filestorage.FileStorage
+	lookup       map[int64]map[string]storageRuntime
 
 	orgInitMutex          sync.Mutex
 	initializeOrgStorages func(orgId int64) []storageRuntime
@@ -21,10 +22,10 @@ var (
 	_ storageTree = (*nestedTree)(nil)
 )
 
-func asNameToFileStorageMap(storages []storageRuntime) map[string]filestorage.FileStorage {
-	lookup := make(map[string]filestorage.FileStorage)
+func asNameToFileStorageMap(storages []storageRuntime) map[string]storageRuntime {
+	lookup := make(map[string]storageRuntime)
 	for _, storage := range storages {
-		lookup[storage.Meta().Config.Prefix] = storage.Store()
+		lookup[storage.Meta().Config.Prefix] = storage
 	}
 	return lookup
 }
@@ -33,7 +34,7 @@ func (t *nestedTree) init() {
 	t.orgInitMutex.Lock()
 	defer t.orgInitMutex.Unlock()
 
-	t.lookup = make(map[int64]map[string]filestorage.FileStorage, len(t.rootsByOrgId))
+	t.lookup = make(map[int64]map[string]storageRuntime, len(t.rootsByOrgId))
 
 	for orgId, storages := range t.rootsByOrgId {
 		t.lookup[orgId] = asNameToFileStorageMap(storages)
@@ -50,7 +51,7 @@ func (t *nestedTree) assureOrgIsInitialized(orgId int64) {
 	}
 }
 
-func (t *nestedTree) getRoot(orgId int64, path string) (filestorage.FileStorage, string) {
+func (t *nestedTree) getRoot(orgId int64, path string) (storageRuntime, string) {
 	t.assureOrgIsInitialized(orgId)
 
 	if path == "" {
@@ -77,47 +78,74 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 	if path == "" {
 		return nil, nil // not found
 	}
-
 	root, path := t.getRoot(orgId, path)
 	if root == nil {
 		return nil, nil // not found (or not ready)
 	}
-	return root.Get(ctx, path)
+	store := root.Store()
+	if store == nil {
+		return nil, fmt.Errorf("store not ready")
+	}
+	return store.Get(ctx, path)
 }
 
-func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (*data.Frame, error) {
+func (t *nestedTree) getStorages(orgId int64) []storageRuntime {
+	globalStorages := make([]storageRuntime, 0)
+	globalStorages = append(globalStorages, t.rootsByOrgId[ac.GlobalOrgID]...)
+
+	if orgId == ac.GlobalOrgID {
+		return globalStorages
+	}
+
+	orgPrefixes := make(map[string]bool)
+	storages := make([]storageRuntime, 0)
+
+	for _, s := range t.rootsByOrgId[orgId] {
+		storages = append(storages, s)
+		orgPrefixes[s.Meta().Config.Prefix] = true
+	}
+
+	for _, s := range globalStorages {
+		// prefer org-specific storage over global with the same prefix
+		if ok := orgPrefixes[s.Meta().Config.Prefix]; !ok {
+			storages = append(storages, s)
+		}
+	}
+
+	return storages
+}
+
+func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*StorageListFrame, error) {
 	if path == "" || path == "/" {
 		t.assureOrgIsInitialized(orgId)
 
-		count := len(t.rootsByOrgId[ac.GlobalOrgID])
-		if orgId != ac.GlobalOrgID {
-			count += len(t.rootsByOrgId[orgId])
-		}
+		idx := 0
 
-		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		storages := t.getStorages(orgId)
+		count := len(storages)
+
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		title := data.NewFieldFromFieldType(data.FieldTypeString, count)
+		descr := data.NewFieldFromFieldType(data.FieldTypeString, count)
 		mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
-		title.Name = "title"
-		names.Name = "name"
-		mtype.Name = "mediaType"
-		for i, f := range t.rootsByOrgId[ac.GlobalOrgID] {
-			names.Set(i, f.Meta().Config.Prefix)
-			title.Set(i, f.Meta().Config.Name)
-			mtype.Set(i, "directory")
-		}
-		if orgId != ac.GlobalOrgID {
-			for i, f := range t.rootsByOrgId[orgId] {
-				names.Set(i, f.Meta().Config.Prefix)
-				title.Set(i, f.Meta().Config.Name)
-				mtype.Set(i, "directory")
-			}
+		title.Name = titleListFrameField
+		names.Name = nameListFrameField
+		descr.Name = descriptionListFrameField
+		mtype.Name = mediaTypeListFrameField
+		for _, f := range storages {
+			meta := f.Meta()
+			names.Set(idx, meta.Config.Prefix)
+			title.Set(idx, meta.Config.Name)
+			descr.Set(idx, meta.Config.Description)
+			mtype.Set(idx, "directory")
+			idx++
 		}
 
-		frame := data.NewFrame("", names, title, mtype)
+		frame := data.NewFrame("", names, title, descr, mtype)
 		frame.SetMeta(&data.FrameMeta{
 			Type: data.FrameTypeDirectoryListing,
 		})
-		return frame, nil
+		return &StorageListFrame{frame}, nil
 	}
 
 	root, path := t.getRoot(orgId, path)
@@ -125,7 +153,17 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 		return nil, nil // not found (or not ready)
 	}
 
-	listResponse, err := root.List(ctx, path, nil, &filestorage.ListOptions{Recursive: false, WithFolders: true, WithFiles: true})
+	store := root.Store()
+	if store == nil {
+		return nil, fmt.Errorf("store not ready")
+	}
+
+	listResponse, err := store.List(ctx, path, nil, &filestorage.ListOptions{
+		Recursive:   false,
+		WithFolders: true,
+		WithFiles:   true,
+		Filter:      accessFilter,
+	})
 
 	if err != nil {
 		return nil, err
@@ -135,9 +173,9 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
-	names.Name = "name"
-	mtype.Name = "mediaType"
-	fsize.Name = "size"
+	names.Name = nameListFrameField
+	mtype.Name = mediaTypeListFrameField
+	fsize.Name = sizeListFrameField
 	fsize.Config = &data.FieldConfig{
 		Unit: "bytes",
 	}
@@ -153,5 +191,5 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string) (
 			"HasMore": listResponse.HasMore,
 		},
 	})
-	return frame, nil
+	return &StorageListFrame{frame}, nil
 }

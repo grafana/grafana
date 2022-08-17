@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { mount } from 'enzyme';
 import React from 'react';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -8,7 +7,7 @@ import { PanelModel } from '../../state/PanelModel';
 import { DashboardRow } from './DashboardRow';
 
 describe('DashboardRow', () => {
-  let wrapper: any, panel: PanelModel, dashboardMock: any;
+  let panel: PanelModel, dashboardMock: any;
 
   beforeEach(() => {
     dashboardMock = {
@@ -21,12 +20,13 @@ describe('DashboardRow', () => {
     };
 
     panel = new PanelModel({ collapsed: false });
-    wrapper = mount(<DashboardRow panel={panel} dashboard={dashboardMock} />);
   });
 
   it('Should not have collapsed class when collaped is false', () => {
-    expect(wrapper.find('.dashboard-row')).toHaveLength(1);
-    expect(wrapper.find('.dashboard-row--collapsed')).toHaveLength(0);
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    const row = screen.getByTestId('dashboard-row-container');
+    expect(row).toBeInTheDocument();
+    expect(row).not.toHaveClass('dashboard-row--collapsed');
   });
 
   it('Should collapse when the panel is collapsed', async () => {
@@ -43,23 +43,28 @@ describe('DashboardRow', () => {
   });
 
   it('Should subscribe to event during mount', () => {
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
     expect(dashboardMock.events.subscribe.mock.calls).toHaveLength(1);
   });
 
-  it('should have two actions as admin', () => {
-    expect(wrapper.find('.dashboard-row__actions .pointer')).toHaveLength(2);
+  it('should have a row options and delete row button', () => {
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    expect(screen.getByRole('button', { name: 'Delete row' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Row options' })).toBeInTheDocument();
   });
 
   it('should not show row drag handle when cannot edit', () => {
     dashboardMock.meta.canEdit = false;
-    wrapper = mount(<DashboardRow panel={panel} dashboard={dashboardMock} />);
-    expect(wrapper.find('.dashboard-row__drag')).toHaveLength(0);
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    expect(screen.queryByTestId('dashboard-row-container')).toBeInTheDocument();
+    expect(screen.queryByTestId('dashboard-row-drag')).not.toBeInTheDocument();
   });
 
   it('should have zero actions when cannot edit', () => {
     dashboardMock.meta.canEdit = false;
     panel = new PanelModel({ collapsed: false });
-    wrapper = mount(<DashboardRow panel={panel} dashboard={dashboardMock} />);
-    expect(wrapper.find('.dashboard-row__actions .pointer')).toHaveLength(0);
+    render(<DashboardRow panel={panel} dashboard={dashboardMock} />);
+    expect(screen.queryByRole('button', { name: 'Delete row' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Row options' })).not.toBeInTheDocument();
   });
 });

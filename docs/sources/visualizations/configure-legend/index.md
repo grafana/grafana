@@ -1,9 +1,9 @@
 ---
 aliases:
   - /docs/grafana/latest/panels/working-with-panels/configure-legend/
-  - /docs/grafana/latest/visualizations/configure-legend/
+  - /docs/sources/panels/working-with-panels/configure-legend/
 title: Configure a legend
-weight: 1300
+weight: 70
 ---
 
 # Configure a legend
@@ -67,7 +67,7 @@ By default, Grafana specifies the color of your series data, which you can chang
 
 ## Sort series
 
-You can change legend mode to **Table** and choose [calculations]({{< relref "../../panels/calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+Change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
 The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
 
