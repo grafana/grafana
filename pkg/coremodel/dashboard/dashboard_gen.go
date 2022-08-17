@@ -17,139 +17,139 @@ import (
 
 // Defines values for DashboardGraphTooltip.
 const (
-	ModelGraphTooltipN0 ModelGraphTooltip = 0
+	GraphTooltipN0 GraphTooltip = 0
 
-	ModelGraphTooltipN1 ModelGraphTooltip = 1
+	GraphTooltipN1 GraphTooltip = 1
 
-	ModelGraphTooltipN2 ModelGraphTooltip = 2
+	GraphTooltipN2 GraphTooltip = 2
 )
 
 // Defines values for DashboardStyle.
 const (
-	ModelStyleDark ModelStyle = "dark"
+	StyleDark Style = "dark"
 
-	ModelStyleLight ModelStyle = "light"
+	StyleLight Style = "light"
 )
 
 // Defines values for DashboardTimezone.
 const (
-	ModelTimezoneBrowser ModelTimezone = "browser"
+	TimezoneBrowser Timezone = "browser"
 
-	ModelTimezoneEmpty ModelTimezone = ""
+	TimezoneEmpty Timezone = ""
 
-	ModelTimezoneUtc ModelTimezone = "utc"
+	TimezoneUtc Timezone = "utc"
 )
 
 // Defines values for DashboardDashboardCursorSync.
 const (
-	ModelDashboardCursorSyncN0 ModelDashboardCursorSync = 0
+	DashboardCursorSyncN0 DashboardCursorSync = 0
 
-	ModelDashboardCursorSyncN1 ModelDashboardCursorSync = 1
+	DashboardCursorSyncN1 DashboardCursorSync = 1
 
-	ModelDashboardCursorSyncN2 ModelDashboardCursorSync = 2
+	DashboardCursorSyncN2 DashboardCursorSync = 2
 )
 
 // Defines values for DashboardDashboardLinkType.
 const (
-	ModelDashboardLinkTypeDashboards ModelDashboardLinkType = "dashboards"
+	DashboardLinkTypeDashboards DashboardLinkType = "dashboards"
 
-	ModelDashboardLinkTypeLink ModelDashboardLinkType = "link"
+	DashboardLinkTypeLink DashboardLinkType = "link"
 )
 
 // Defines values for DashboardFieldColorModeId.
 const (
-	ModelFieldColorModeIdContinuousGrYlRd ModelFieldColorModeId = "continuous-GrYlRd"
+	FieldColorModeIdContinuousGrYlRd FieldColorModeId = "continuous-GrYlRd"
 
-	ModelFieldColorModeIdFixed ModelFieldColorModeId = "fixed"
+	FieldColorModeIdFixed FieldColorModeId = "fixed"
 
-	ModelFieldColorModeIdPaletteClassic ModelFieldColorModeId = "palette-classic"
+	FieldColorModeIdPaletteClassic FieldColorModeId = "palette-classic"
 
-	ModelFieldColorModeIdPaletteSaturated ModelFieldColorModeId = "palette-saturated"
+	FieldColorModeIdPaletteSaturated FieldColorModeId = "palette-saturated"
 
-	ModelFieldColorModeIdThresholds ModelFieldColorModeId = "thresholds"
+	FieldColorModeIdThresholds FieldColorModeId = "thresholds"
 )
 
 // Defines values for DashboardFieldColorSeriesByMode.
 const (
-	ModelFieldColorSeriesByModeLast ModelFieldColorSeriesByMode = "last"
+	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
 
-	ModelFieldColorSeriesByModeMax ModelFieldColorSeriesByMode = "max"
+	FieldColorSeriesByModeMax FieldColorSeriesByMode = "max"
 
-	ModelFieldColorSeriesByModeMin ModelFieldColorSeriesByMode = "min"
+	FieldColorSeriesByModeMin FieldColorSeriesByMode = "min"
 )
 
 // Defines values for DashboardGraphPanelType.
 const (
-	ModelGraphPanelTypeGraph ModelGraphPanelType = "graph"
+	GraphPanelTypeGraph GraphPanelType = "graph"
 )
 
 // Defines values for DashboardHeatmapPanelType.
 const (
-	ModelHeatmapPanelTypeHeatmap ModelHeatmapPanelType = "heatmap"
+	HeatmapPanelTypeHeatmap HeatmapPanelType = "heatmap"
 )
 
 // Defines values for DashboardPanelRepeatDirection.
 const (
-	ModelPanelRepeatDirectionH ModelPanelRepeatDirection = "h"
+	PanelRepeatDirectionH PanelRepeatDirection = "h"
 
-	ModelPanelRepeatDirectionV ModelPanelRepeatDirection = "v"
+	PanelRepeatDirectionV PanelRepeatDirection = "v"
 )
 
 // Defines values for DashboardRowPanelType.
 const (
-	ModelRowPanelTypeRow ModelRowPanelType = "row"
+	RowPanelTypeRow RowPanelType = "row"
 )
 
 // Defines values for DashboardThresholdsConfigMode.
 const (
-	ModelThresholdsConfigModeAbsolute ModelThresholdsConfigMode = "absolute"
+	ThresholdsConfigModeAbsolute ThresholdsConfigMode = "absolute"
 
-	ModelThresholdsConfigModePercentage ModelThresholdsConfigMode = "percentage"
+	ThresholdsConfigModePercentage ThresholdsConfigMode = "percentage"
 )
 
 // Defines values for DashboardThresholdsMode.
 const (
-	ModelThresholdsModeAbsolute ModelThresholdsMode = "absolute"
+	ThresholdsModeAbsolute ThresholdsMode = "absolute"
 
-	ModelThresholdsModePercentage ModelThresholdsMode = "percentage"
+	ThresholdsModePercentage ThresholdsMode = "percentage"
 )
 
 // Defines values for DashboardVariableModelType.
 const (
-	ModelVariableModelTypeAdhoc ModelVariableModelType = "adhoc"
+	VariableModelTypeAdhoc VariableModelType = "adhoc"
 
-	ModelVariableModelTypeConstant ModelVariableModelType = "constant"
+	VariableModelTypeConstant VariableModelType = "constant"
 
-	ModelVariableModelTypeCustom ModelVariableModelType = "custom"
+	VariableModelTypeCustom VariableModelType = "custom"
 
-	ModelVariableModelTypeDatasource ModelVariableModelType = "datasource"
+	VariableModelTypeDatasource VariableModelType = "datasource"
 
-	ModelVariableModelTypeInterval ModelVariableModelType = "interval"
+	VariableModelTypeInterval VariableModelType = "interval"
 
-	ModelVariableModelTypeQuery ModelVariableModelType = "query"
+	VariableModelTypeQuery VariableModelType = "query"
 
-	ModelVariableModelTypeSystem ModelVariableModelType = "system"
+	VariableModelTypeSystem VariableModelType = "system"
 
-	ModelVariableModelTypeTextbox ModelVariableModelType = "textbox"
+	VariableModelTypeTextbox VariableModelType = "textbox"
 )
 
 // Defines values for DashboardVariableType.
 const (
-	ModelVariableTypeAdhoc ModelVariableType = "adhoc"
+	VariableTypeAdhoc VariableType = "adhoc"
 
-	ModelVariableTypeConstant ModelVariableType = "constant"
+	VariableTypeConstant VariableType = "constant"
 
-	ModelVariableTypeCustom ModelVariableType = "custom"
+	VariableTypeCustom VariableType = "custom"
 
-	ModelVariableTypeDatasource ModelVariableType = "datasource"
+	VariableTypeDatasource VariableType = "datasource"
 
-	ModelVariableTypeInterval ModelVariableType = "interval"
+	VariableTypeInterval VariableType = "interval"
 
-	ModelVariableTypeQuery ModelVariableType = "query"
+	VariableTypeQuery VariableType = "query"
 
-	ModelVariableTypeSystem ModelVariableType = "system"
+	VariableTypeSystem VariableType = "system"
 
-	ModelVariableTypeTextbox ModelVariableType = "textbox"
+	VariableTypeTextbox VariableType = "textbox"
 )
 
 // Dashboard defines model for dashboard.
@@ -158,7 +158,8 @@ const (
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Model struct {
 	Annotations *struct {
-		List []ModelAnnotationQuery `json:"list"`
+		// TODO docs
+		List []AnnotationQuery `json:"list"`
 	} `json:"annotations,omitempty"`
 
 	// Description of dashboard.
@@ -168,16 +169,16 @@ type Model struct {
 	Editable bool `json:"editable"`
 
 	// TODO docs
-	FiscalYearStartMonth *int              `json:"fiscalYearStartMonth,omitempty"`
-	GnetId               *string           `json:"gnetId,omitempty"`
-	GraphTooltip         ModelGraphTooltip `json:"graphTooltip"`
+	FiscalYearStartMonth *int         `json:"fiscalYearStartMonth,omitempty"`
+	GnetId               *string      `json:"gnetId,omitempty"`
+	GraphTooltip         GraphTooltip `json:"graphTooltip"`
 
 	// Unique numeric identifier for the dashboard.
 	// TODO must isolate or remove identifiers local to a Grafana instance...?
 	Id *int64 `json:"id,omitempty"`
 
 	// TODO docs
-	Links *[]ModelDashboardLink `json:"links,omitempty"`
+	Links *[]DashboardLink `json:"links,omitempty"`
 
 	// TODO docs
 	LiveNow *bool          `json:"liveNow,omitempty"`
@@ -192,12 +193,13 @@ type Model struct {
 	SchemaVersion int `json:"schemaVersion"`
 
 	// Theme of dashboard.
-	Style ModelStyle `json:"style"`
+	Style Style `json:"style"`
 
 	// Tags associated with dashboard.
 	Tags       *[]string `json:"tags,omitempty"`
 	Templating *struct {
-		List []ModelVariableModel `json:"list"`
+		// TODO docs
+		List []VariableModel `json:"list"`
 	} `json:"templating,omitempty"`
 
 	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
@@ -220,10 +222,13 @@ type Model struct {
 
 		// Selectable intervals for auto-refresh.
 		RefreshIntervals []string `json:"refresh_intervals"`
+
+		// TODO docs
+		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
 	// Timezone of dashboard,
-	Timezone *ModelTimezone `json:"timezone,omitempty"`
+	Timezone *Timezone `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
@@ -242,26 +247,26 @@ type Model struct {
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelGraphTooltip int
+type GraphTooltip int
 
 // Theme of dashboard.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelStyle string
+type Style string
 
 // Timezone of dashboard,
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelTimezone string
+type Timezone string
 
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelAnnotationQuery struct {
+type AnnotationQuery struct {
 	BuiltIn int `json:"builtIn"`
 
 	// Datasource to use for annotation.
@@ -293,8 +298,8 @@ type ModelAnnotationQuery struct {
 	// with types derived from plugins in the Instance variant.
 	// When working directly from CUE, importers can extend this
 	// type directly to achieve the same effect.
-	Target *ModelTarget `json:"target,omitempty"`
-	Type   string       `json:"type"`
+	Target *Target `json:"target,omitempty"`
+	Type   string  `json:"type"`
 }
 
 // 0 for no shared crosshair or tooltip (default).
@@ -303,37 +308,37 @@ type ModelAnnotationQuery struct {
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelDashboardCursorSync int
+type DashboardCursorSync int
 
 // FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 // TODO docs
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelDashboardLink struct {
-	AsDropdown  bool                   `json:"asDropdown"`
-	Icon        *string                `json:"icon,omitempty"`
-	IncludeVars bool                   `json:"includeVars"`
-	KeepTime    bool                   `json:"keepTime"`
-	Tags        []string               `json:"tags"`
-	TargetBlank bool                   `json:"targetBlank"`
-	Title       string                 `json:"title"`
-	Tooltip     *string                `json:"tooltip,omitempty"`
-	Type        ModelDashboardLinkType `json:"type"`
-	Url         *string                `json:"url,omitempty"`
+type DashboardLink struct {
+	AsDropdown  bool              `json:"asDropdown"`
+	Icon        *string           `json:"icon,omitempty"`
+	IncludeVars bool              `json:"includeVars"`
+	KeepTime    bool              `json:"keepTime"`
+	Tags        []string          `json:"tags"`
+	TargetBlank bool              `json:"targetBlank"`
+	Title       string            `json:"title"`
+	Tooltip     *string           `json:"tooltip,omitempty"`
+	Type        DashboardLinkType `json:"type"`
+	Url         *string           `json:"url,omitempty"`
 }
 
 // DashboardDashboardLinkType defines model for DashboardDashboardLink.Type.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelDashboardLinkType string
+type DashboardLinkType string
 
 // TODO docs
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelFieldColor struct {
+type FieldColor struct {
 	// Stores the fixed color value if mode is fixed
 	FixedColor *string `json:"fixedColor,omitempty"`
 
@@ -341,41 +346,41 @@ type ModelFieldColor struct {
 	Mode interface{} `json:"mode"`
 
 	// TODO docs
-	SeriesBy *ModelFieldColorSeriesByMode `json:"seriesBy,omitempty"`
+	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
 
 // TODO docs
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelFieldColorModeId string
+type FieldColorModeId string
 
 // TODO docs
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelFieldColorSeriesByMode string
+type FieldColorSeriesByMode string
 
 // DashboardGraphPanel defines model for dashboard.GraphPanel.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelGraphPanel struct {
+type GraphPanel struct {
 	// Support for legacy graph and heatmap panels.
-	Type ModelGraphPanelType `json:"type"`
+	Type GraphPanelType `json:"type"`
 }
 
 // Support for legacy graph and heatmap panels.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelGraphPanelType string
+type GraphPanelType string
 
 // DashboardGridPos defines model for dashboard.GridPos.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelGridPos struct {
+type GridPos struct {
 	// Panel
 	H int `json:"h"`
 
@@ -396,15 +401,15 @@ type ModelGridPos struct {
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelHeatmapPanel struct {
-	Type ModelHeatmapPanelType `json:"type"`
+type HeatmapPanel struct {
+	Type HeatmapPanelType `json:"type"`
 }
 
 // DashboardHeatmapPanelType defines model for DashboardHeatmapPanel.Type.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelHeatmapPanelType string
+type HeatmapPanelType string
 
 // Dashboard panels. Panels are canonically defined inline
 // because they share a version timeline with the dashboard
@@ -412,7 +417,7 @@ type ModelHeatmapPanelType string
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelPanel struct {
+type Panel struct {
 	// The datasource used in all targets.
 	Datasource *struct {
 		Type *string `json:"type,omitempty"`
@@ -424,7 +429,7 @@ type ModelPanel struct {
 	FieldConfig struct {
 		Defaults struct {
 			// TODO docs
-			Color *ModelFieldColor `json:"color,omitempty"`
+			Color *FieldColor `json:"color,omitempty"`
 
 			// custom is specified by the PanelFieldConfig field
 			// in panel plugin schemas.
@@ -470,8 +475,8 @@ type ModelPanel struct {
 			//
 			// When defined, this value can be used as an identifier within the datasource scope, and
 			// may be used to update the results
-			Path       *string                `json:"path,omitempty"`
-			Thresholds *ModelThresholdsConfig `json:"thresholds,omitempty"`
+			Path       *string           `json:"path,omitempty"`
+			Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
 
 			// Numeric Options
 			Unit *string `json:"unit,omitempty"`
@@ -490,7 +495,7 @@ type ModelPanel struct {
 			} `json:"properties"`
 		} `json:"overrides"`
 	} `json:"fieldConfig"`
-	GridPos *ModelGridPos `json:"gridPos,omitempty"`
+	GridPos *GridPos `json:"gridPos,omitempty"`
 
 	// TODO docs
 	Id *int `json:"id,omitempty"`
@@ -501,7 +506,7 @@ type ModelPanel struct {
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?
-	Links *[]ModelDashboardLink `json:"links,omitempty"`
+	Links *[]DashboardLink `json:"links,omitempty"`
 
 	// TODO docs
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
@@ -518,13 +523,13 @@ type ModelPanel struct {
 
 	// Direction to repeat in if 'repeat' is set.
 	// "h" for horizontal, "v" for vertical.
-	RepeatDirection ModelPanelRepeatDirection `json:"repeatDirection"`
+	RepeatDirection PanelRepeatDirection `json:"repeatDirection"`
 
 	// TODO docs
 	Tags *[]string `json:"tags,omitempty"`
 
 	// TODO docs
-	Targets *[]ModelTarget `json:"targets,omitempty"`
+	Targets *[]Target `json:"targets,omitempty"`
 
 	// TODO docs - seems to be an old field from old dashboard alerts?
 	Thresholds *[]interface{} `json:"thresholds,omitempty"`
@@ -559,13 +564,13 @@ type ModelPanel struct {
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelPanelRepeatDirection string
+type PanelRepeatDirection string
 
 // Row panel
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelRowPanel struct {
+type RowPanel struct {
 	Collapsed bool `json:"collapsed"`
 
 	// Name of default datasource.
@@ -573,21 +578,21 @@ type ModelRowPanel struct {
 		Type *string `json:"type,omitempty"`
 		Uid  *string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
-	GridPos *ModelGridPos `json:"gridPos,omitempty"`
+	GridPos *GridPos      `json:"gridPos,omitempty"`
 	Id      int           `json:"id"`
 	Panels  []interface{} `json:"panels"`
 
 	// Name of template variable to repeat for.
-	Repeat *string           `json:"repeat,omitempty"`
-	Title  *string           `json:"title,omitempty"`
-	Type   ModelRowPanelType `json:"type"`
+	Repeat *string      `json:"repeat,omitempty"`
+	Title  *string      `json:"title,omitempty"`
+	Type   RowPanelType `json:"type"`
 }
 
 // DashboardRowPanelType defines model for DashboardRowPanel.Type.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelRowPanelType string
+type RowPanelType string
 
 // Schema for panel targets is specified by datasource
 // plugins. We use a placeholder definition, which the Go
@@ -599,13 +604,13 @@ type ModelRowPanelType string
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelTarget map[string]interface{}
+type Target map[string]interface{}
 
 // TODO docs
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelThreshold struct {
+type Threshold struct {
 	// TODO docs
 	Color string `json:"color"`
 
@@ -623,8 +628,8 @@ type ModelThreshold struct {
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelThresholdsConfig struct {
-	Mode ModelThresholdsConfigMode `json:"mode"`
+type ThresholdsConfig struct {
+	Mode ThresholdsConfigMode `json:"mode"`
 
 	// Must be sorted by 'value', first value is always -Infinity
 	Steps []struct {
@@ -646,20 +651,20 @@ type ModelThresholdsConfig struct {
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelThresholdsConfigMode string
+type ThresholdsConfigMode string
 
 // DashboardThresholdsMode defines model for dashboard.ThresholdsMode.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelThresholdsMode string
+type ThresholdsMode string
 
 // TODO docs
 // FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelTransformation struct {
+type Transformation struct {
 	Id      string                 `json:"id"`
 	Options map[string]interface{} `json:"options"`
 }
@@ -671,17 +676,17 @@ type ModelTransformation struct {
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelVariableModel struct {
-	Label *string                `json:"label,omitempty"`
-	Name  string                 `json:"name"`
-	Type  ModelVariableModelType `json:"type"`
+type VariableModel struct {
+	Label *string           `json:"label,omitempty"`
+	Name  string            `json:"name"`
+	Type  VariableModelType `json:"type"`
 }
 
 // DashboardVariableModelType defines model for DashboardVariableModel.Type.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelVariableModelType string
+type VariableModelType string
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
 // TODO docs
@@ -689,7 +694,7 @@ type ModelVariableModelType string
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type ModelVariableType string
+type VariableType string
 
 //go:embed coremodel.cue
 var cueFS embed.FS

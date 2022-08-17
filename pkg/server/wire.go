@@ -74,6 +74,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login_attempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -313,6 +314,7 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	tempuserimpl.ProvideService,
+	loginattemptimpl.ProvideService,
 	datasourceservice.ProvideDataSourceMigrationService,
 	secretsStore.ProvidePluginSecretMigrationService,
 	secretsMigrations.ProvideSecretMigrationService,

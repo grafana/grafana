@@ -165,7 +165,7 @@ import u1121 from '../../../../../public/img/icons/unicons/wrap-text.svg';
 import u1135 from '../../../../../public/img/icons/unicons/x.svg';
 
 export let cacheInitialized = false;
-export let iconRoot = 'public/img/icons';
+export let iconRoot = 'public/img/icons/';
 
 function cacheItem(content: string, path: string) {
   cacheStore[iconRoot + path] = { content, status: 'loaded' };
