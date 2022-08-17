@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func newStore(sql *sqlstore.SQLStore) *store {
+func NewStore(sql *sqlstore.SQLStore) *store {
 	return &store{sql}
 }
 

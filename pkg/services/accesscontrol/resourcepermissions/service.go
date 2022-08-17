@@ -74,7 +74,7 @@ func New(
 	s := &Service{
 		ac:          ac,
 		cfg:         cfg,
-		store:       newStore(sqlStore),
+		store:       NewStore(sqlStore),
 		options:     options,
 		license:     license,
 		permissions: permissions,

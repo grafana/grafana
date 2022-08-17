@@ -466,5 +466,5 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 
 func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
 	sql := sqlstore.InitTestDB(t)
-	return newStore(sql), sql
+	return NewStore(sql), sql
 }
