@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
@@ -26,25 +26,21 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
   const currentOrgId = contextSrv.user.orgId;
 
-  const [{ roleOptions }, setOrgId] = useRoleOptions(currentOrgId);
+  const [{ roleOptions }] = useRoleOptions(currentOrgId);
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
 
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
-  useEffect(() => {
-    setOrgId(currentOrgId);
-  }, [currentOrgId, setOrgId]);
-
   return (
     <VerticalGroup>
       <FieldSet label="Team details">
         <Form
           defaultValues={{ ...team }}
-          onSubmit={(formTeam: Team) => {
+          onSubmit={async (formTeam: Team) => {
             if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
-              updateTeamRoles(pendingRoles, team.id);
+              await updateTeamRoles(pendingRoles, team.id);
             }
             updateTeam(formTeam.name, formTeam.email);
           }}

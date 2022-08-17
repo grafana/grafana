@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import * as hooks from 'app/core/components/RolePicker/hooks';
+
 import { Props, TeamSettings } from './TeamSettings';
 import { getMockTeam } from './__mocks__/teamMocks';
 
@@ -25,6 +27,8 @@ const setup = (propOverrides?: object) => {
   };
 
   Object.assign(props, propOverrides);
+
+  jest.spyOn(hooks, 'useRoleOptions').mockReturnValue([{ roleOptions: [] }, jest.fn()]);
 
   render(<TeamSettings {...props} />);
 };

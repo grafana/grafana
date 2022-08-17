@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Form, Field, Input, FieldSet } from '@grafana/ui';
@@ -17,15 +17,11 @@ interface TeamDTO {
 export const CreateTeam = (): JSX.Element => {
   const currentOrgId = contextSrv.user.orgId;
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
-  const [{ roleOptions }, setOrgId] = useRoleOptions(currentOrgId);
+  const [{ roleOptions }] = useRoleOptions(currentOrgId);
 
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
-
-  useEffect(() => {
-    setOrgId(currentOrgId);
-  }, [currentOrgId, setOrgId]);
 
   const createTeam = async (formModel: TeamDTO) => {
     const newTeam = await getBackendSrv().post('/api/teams', formModel);
@@ -36,14 +32,10 @@ export const CreateTeam = (): JSX.Element => {
           await updateTeamRoles(pendingRoles, newTeam.teamId, newTeam.orgId);
         }
       } catch (e) {
-        console.log(e);
+        console.error(e);
       }
       locationService.push(`/org/teams/edit/${newTeam.teamId}`);
     }
-  };
-
-  const onPendingRolesUpdate = (roles: Role[]) => {
-    setPendingRoles(roles);
   };
 
   return (
@@ -62,7 +54,7 @@ export const CreateTeam = (): JSX.Element => {
                     roleOptions={roleOptions}
                     disabled={false}
                     apply={true}
-                    onApplyRoles={onPendingRolesUpdate}
+                    onApplyRoles={setPendingRoles}
                     pendingRoles={pendingRoles}
                   />
                 </Field>
