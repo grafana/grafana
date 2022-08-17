@@ -382,7 +382,7 @@ apiVersion: 1
 
 # List of rule groups to import or update
 groups:
-  # <int> organization id, default = 1
+  # <int> organization ID, default = 1
   - orgId: 1
     # <string, required> name of the rule group
     name: my_rule_group
@@ -431,7 +431,7 @@ apiVersion: 1
 
 # List of alert rule UIDs that should be deleted
 deleteRules:
-  # <int> organization id, default = 1
+  # <int> organization ID, default = 1
   - orgId: 1
     # <string, required> unique identifier for the rule
     uid: my_id_1
@@ -447,7 +447,7 @@ apiVersion: 1
 
 # List of contact points to import or update
 contactPoints:
-  # <int> organization id, default = 1
+  # <int> organization ID, default = 1
   - orgId: 1
     # <string, required> name of the contact point
     name: cp_1
@@ -469,7 +469,9 @@ apiVersion: 1
 
 # List of receivers that should be deleted
 deleteContactPoints:
+  # <int> organization ID, default = 1
   - orgId: 1
+    # <string, required> unique identifier for the receiver
     uid: first_uid
 ```
 
@@ -792,7 +794,7 @@ apiVersion: 1
 
 # List of notification policies
 policies:
-  # <int> organization id, default = 1
+  # <int> organization ID, default = 1
   - orgId: 1
     # <string> name of the contact point that should be used for this route
     receiver: grafana-default-email
@@ -857,7 +859,7 @@ apiVersion: 1
 
 # List of templates to import or update
 templates:
-  # <int> organization id, default = 1
+  # <int> organization ID, default = 1
   - orgID: 1
     # <string, required> name of the template, must be unique
     name: my_first_template
@@ -873,7 +875,7 @@ apiVersion: 1
 
 # List of alert rule UIDs that should be deleted
 deleteTemplates:
-  # <int> organization id, default = 1
+  # <int> organization ID, default = 1
   - orgId: 1
     # <string, required> name of the template, must be unique
     name: my_first_template
@@ -889,7 +891,7 @@ apiVersion: 1
 
 # List of mute time intervals to import or update
 muteTimes:
-  # <int> organization id, default = 1
+  # <int> organization ID, default = 1
   - orgId: 1
     # <string, required> name of the mute time interval, must be unique
     name: mti_1
@@ -913,7 +915,7 @@ apiVersion: 1
 
 # List of mute time intervals that should be deleted
 deleteMuteTimes:
-  # <int> organization id, default = 1
+  # <int> organization ID, default = 1
   - orgId: 1
     # <string, required> name of the mute time interval, must be unique
     name: mti_1
