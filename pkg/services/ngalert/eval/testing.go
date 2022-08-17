@@ -18,7 +18,7 @@ func RandomState() State {
 		Alerting,
 		NoData,
 		Error,
-	}[rand.Intn(3)]
+	}[rand.Intn(4)]
 }
 
 func GenerateResults(count int, generator func() Result) Results {
@@ -36,7 +36,7 @@ func ResultGen(mutators ...ResultMutator) func() Result {
 		if state == Error {
 			err = fmt.Errorf("result_error")
 		}
-		return Result{
+		result := Result{
 			Instance:           models.GenerateAlertLabels(rand.Intn(5)+1, "result_"),
 			State:              state,
 			Error:              err,
@@ -45,6 +45,10 @@ func ResultGen(mutators ...ResultMutator) func() Result {
 			EvaluationString:   "",
 			Values:             nil,
 		}
+		for _, mutator := range mutators {
+			mutator(&result)
+		}
+		return result
 	}
 }
 
