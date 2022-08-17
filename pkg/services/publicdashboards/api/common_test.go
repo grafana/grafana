@@ -62,7 +62,7 @@ func setupTestServer(
 	}
 
 	var err error
-	ac, err := ossaccesscontrol.ProvideService(features, cfg, database.ProvideService(db), rr)
+	ac, err := ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), rr)
 	require.NoError(t, err)
 
 	// build mux
@@ -139,7 +139,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	)
 }
 
-//copied from pkg/api/metrics_test.go
+// copied from pkg/api/metrics_test.go
 type fakePluginRequestValidator struct {
 	err error
 }
