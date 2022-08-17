@@ -258,11 +258,15 @@ require (
 require (
 	cloud.google.com/go v0.100.2 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
+	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
+	github.com/grafadruid/go-druid v0.0.5 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
+	github.com/hashicorp/go-retryablehttp v0.6.7 // indirect
 	github.com/hashicorp/memberlist v0.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect

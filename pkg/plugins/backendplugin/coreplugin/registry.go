@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
+	"github.com/grafana/grafana/pkg/tsdb/druid"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -34,6 +35,7 @@ const (
 	InfluxDB        = "influxdb"
 	Loki            = "loki"
 	OpenTSDB        = "opentsdb"
+	Druid           = "grafadruid-druid-datasource"
 	Prometheus      = "prometheus"
 	Tempo           = "tempo"
 	TestData        = "testdata"
@@ -62,7 +64,7 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service) *Registry {
+	ms *mssql.Service, graf *grafanads.Service, dr *druid.Service) *Registry {
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
 		CloudWatch:      asBackendPlugin(cw.Executor),
 		CloudMonitoring: asBackendPlugin(cm),
@@ -72,6 +74,7 @@ func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchServ
 		InfluxDB:        asBackendPlugin(idb),
 		Loki:            asBackendPlugin(lk),
 		OpenTSDB:        asBackendPlugin(otsdb),
+		Druid:           asBackendPlugin(dr),
 		Prometheus:      asBackendPlugin(pr),
 		Tempo:           asBackendPlugin(t),
 		TestData:        asBackendPlugin(td),
