@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -633,7 +633,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
-	permissionsStore := acdb.ProvideService(store)
+	permissionsStore := resourcepermissions.NewStore(store)
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")
@@ -726,7 +726,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }
 
-func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role org.RoleType, uid string) {
+func removeFolderPermission(t *testing.T, store resourcepermissions.Store, orgID, userID int64, role org.RoleType, uid string) {
 	t.Helper()
 	// remove user permissions on folder
 	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, types.SetResourcePermissionCommand{
