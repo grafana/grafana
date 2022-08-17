@@ -478,6 +478,19 @@ deleteContactPoints:
 Here we showcase what kind of settings you can have for the different
 contact point types.
 
+##### Alertmanager
+
+```yaml
+type: prometheus-alertmanager
+settings:
+  # <string, required>
+  url: http://localhost:9093
+  # <string>
+  basicAuthUser: abc
+  # <string>
+  basicAuthPassword: abc123
+```
+
 ##### DingDing
 
 ```yaml
@@ -492,15 +505,20 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### Kafka
+##### Discord
 
 ```yaml
-type: kafka
+type: discord
 settings:
   # <string, required>
-  kafkaRestProxy: http://localhost:8082
-  # <string, required>
-  kafkaTopic: topic1
+  url: https://discord/webhook
+  # <string>
+  avatar_url: https://my_avatar
+  # <string>
+  use_discord_username: Grafana
+  # <string>
+  message: |
+    {{ template "default.message" . }}
 ```
 
 ##### E-Mail
@@ -517,6 +535,77 @@ settings:
   # <string>
   subject: |
     {{ template "default.title" . }}
+```
+
+##### Google Hangouts Chat
+
+```yaml
+type: googlechat
+settings:
+  # <string, required>
+  url: https://google/webhook
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### Kafka
+
+```yaml
+type: kafka
+settings:
+  # <string, required>
+  kafkaRestProxy: http://localhost:8082
+  # <string, required>
+  kafkaTopic: topic1
+```
+
+##### LINE
+
+```yaml
+type: line
+settings:
+  # <string, required>
+  token: xxx
+```
+
+##### Microsoft Teams
+
+```yaml
+type: teams
+settings:
+  # <string, required>
+  url: https://ms_teams_url
+  # <string>
+  title: |
+    {{ template "default.title" . }}
+  # <string>
+  sectiontitle: ''
+  # <string>
+  message: |
+    {{ template "default.message" . }}
+```
+
+##### OpsGenie
+
+```yaml
+type: opsgenie
+settings:
+  # <string, required>
+  apiKey: xxx
+  # <string, required>
+  apiUrl: https://api.opsgenie.com/v2/alerts
+  # <string>
+  message: |
+    {{ template "default.title" . }}
+  # <string>
+  description: some descriptive description
+  # <bool>
+  autoClose: false
+  # <bool>
+  overridePriority: false
+  # <string> options: tags, details, both
+  sendTagsAs: both
 ```
 
 ##### PagerDuty
@@ -537,17 +626,6 @@ settings:
   # <string>
   summary: |
     {{ template "default.message" . }}
-```
-
-##### VictorOps
-
-```yaml
-type: victorops
-settings:
-  # <string, required>
-  url: XXX
-  # <string> options: CRITICAL, WARNING
-  messageType: CRITICAL
 ```
 
 ##### Pushover
@@ -630,23 +708,6 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### Microsoft Teams
-
-```yaml
-type: teams
-settings:
-  # <string, required>
-  url: https://ms_teams_url
-  # <string>
-  title: |
-    {{ template "default.title" . }}
-  # <string>
-  sectiontitle: ''
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
 ##### Telegram
 
 ```yaml
@@ -659,6 +720,30 @@ settings:
   # <string>
   message: |
     {{ template "default.message" . }}
+```
+
+##### Threema Gateway
+
+```yaml
+type: threema
+settings:
+  # <string, required>
+  api_secret: xxx
+  # <string, required>
+  gateway_id: A5K94S9
+  # <string, required>
+  recipient_id: A9R4KL4S
+```
+
+##### VictorOps
+
+```yaml
+type: victorops
+settings:
+  # <string, required>
+  url: XXX
+  # <string> options: CRITICAL, WARNING
+  messageType: CRITICAL
 ```
 
 ##### Webhook
@@ -695,91 +780,6 @@ settings:
   # <string>
   title: |
     {{ template "default.title" . }}
-```
-
-##### Alertmanager
-
-```yaml
-type: prometheus-alertmanager
-settings:
-  # <string, required>
-  url: http://localhost:9093
-  # <string>
-  basicAuthUser: abc
-  # <string>
-  basicAuthPassword: abc123
-```
-
-##### Discord
-
-```yaml
-type: discord
-settings:
-  # <string, required>
-  url: https://discord/webhook
-  # <string>
-  avatar_url: https://my_avatar
-  # <string>
-  use_discord_username: Grafana
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### Google Hangouts Chat
-
-```yaml
-type: googlechat
-settings:
-  # <string, required>
-  url: https://google/webhook
-  # <string>
-  message: |
-    {{ template "default.message" . }}
-```
-
-##### LINE
-
-```yaml
-type: line
-settings:
-  # <string, required>
-  token: xxx
-```
-
-##### Threema Gateway
-
-```yaml
-type: threema
-settings:
-  # <string, required>
-  api_secret: xxx
-  # <string, required>
-  gateway_id: A5K94S9
-  # <string, required>
-  recipient_id: A9R4KL4S
-```
-
-##### OpsGenie
-
-```yaml
-type: opsgenie
-settings:
-  # <string, required>
-  apiKey: xxx
-  # <string, required>
-  apiUrl: https://api.opsgenie.com/v2/alerts
-  # <string>
-  message: |
-    {{ template "default.title" . }}
-  # <string>
-  description: some descriptive description
-  # <bool>
-  autoClose: false
-  # <bool>
-  overridePriority: false
-  # <string> options: tags, details, both
-  sendTagsAs: both
 ```
 
 ### Notification policies
