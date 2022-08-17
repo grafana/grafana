@@ -354,8 +354,6 @@ func (m *migration) generateChannelUID() (string, error) {
 func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
 	keys := []string{}
 	switch chanType {
-	case "sns":
-		keys = []string{"accessKey", "secretKey"}
 	case "slack":
 		keys = []string{"url", "token"}
 	case "pagerduty":
