@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FC, useCallback, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocalStorage } from 'react-use';
 
@@ -48,13 +48,6 @@ export const VisualizationSelectPane: FC<Props> = ({ panel, data }) => {
     },
     [dispatch, panel]
   );
-
-  // Give Search input focus when using radio button switch list mode
-  useEffect(() => {
-    if (searchRef.current) {
-      searchRef.current.focus();
-    }
-  }, [listMode]);
 
   const onCloseVizPicker = () => {
     dispatch(toggleVizPicker(false));
