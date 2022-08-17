@@ -155,8 +155,18 @@ func (st *Manager) ResetAllStates() {
 }
 
 // ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByRuleUID(ruleKey ngModels.AlertRuleKey) []*State {
-	return st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
+	logger := st.log.New(ruleKey.LogContext()...)
+	logger.Debug("resetting state of the rule")
+	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
+	if len(states) > 0 {
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+		if err != nil {
+			logger.Error("failed to delete states that belong to a rule from database", ruleKey.LogContext()...)
+		}
+	}
+	logger.Info("rules state was reset", "deleted_states", len(states))
+	return states
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
