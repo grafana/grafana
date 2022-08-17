@@ -51,6 +51,8 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		urlStr = ""
 	}
 
+	urlStr = channels.ToLogzioAppPath(urlStr) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+
 	if alertState.State == eval.NoData {
 		return noDataAlert(nL, nA, alertState, urlStr)
 	}
@@ -65,7 +67,7 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 		EndsAt:      strfmt.DateTime(alertState.EndsAt),
 		Alert: models.Alert{
 			Labels:       models.LabelSet(nL),
-			GeneratorURL: strfmt.URI(channels.ToLogzioAppPath(urlStr)), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+			GeneratorURL: strfmt.URI(urlStr),
 		},
 	}
 }
