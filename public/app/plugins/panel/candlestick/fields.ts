@@ -5,7 +5,7 @@ import {
   FieldType,
   getFieldDisplayName,
   GrafanaTheme2,
-  outerJoinDataFrames,
+  joinDataFrames,
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
@@ -113,7 +113,7 @@ export function prepareCandlestickFields(
           series[0],
           series[0].fields.findIndex((f) => f.type === FieldType.time)
         )
-      : outerJoinDataFrames({ frames: series });
+      : joinDataFrames({ frames: series });
   if (!aligned?.length) {
     return null;
   }

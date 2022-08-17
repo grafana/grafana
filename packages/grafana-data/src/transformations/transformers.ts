@@ -9,6 +9,7 @@ import { filterByValueTransformer } from './transformers/filterByValue';
 import { groupByTransformer } from './transformers/groupBy';
 import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
 import { histogramTransformer } from './transformers/histogram';
+import { innerJoinTransformer } from './transformers/innerJoin';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { limitTransformer } from './transformers/limit';
 import { mergeTransformer } from './transformers/merge';
@@ -47,4 +48,5 @@ export const standardTransformers = {
   convertFieldTypeTransformer,
   groupingToMatrixTransformer,
   limitTransformer,
+  innerJoinTransformer,
 };

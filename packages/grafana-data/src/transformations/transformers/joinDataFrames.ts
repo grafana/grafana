@@ -39,6 +39,11 @@ export interface JoinOptions {
   frames: DataFrame[];
 
   /**
+   * @internal -- Optionally specify if the join should be an inner join
+   */
+  innerJoin?: boolean;
+
+  /**
    * The field to join -- frames that do not have this field will be droppped
    */
   joinBy?: FieldMatcher;
@@ -77,7 +82,7 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
-export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
+export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (!options.frames?.length) {
     return;
   }
@@ -211,7 +216,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     allData.push(a);
   }
 
-  const joined = join(allData, nullModes);
+  const joined = join(allData, nullModes, options.innerJoin);
 
   return {
     // ...options.data[0], // keep name, meta?
@@ -272,16 +277,29 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-export function join(tables: AlignedData[], nullModes?: number[][]) {
+export function join(tables: AlignedData[], nullModes?: number[][], innerJoin?: boolean) {
   const xVals = new Set<number>();
 
   for (let ti = 0; ti < tables.length; ti++) {
     let t = tables[ti];
     let xs = t[0];
     let len = xs.length;
+    const xsSet = new Set(xs);
 
     for (let i = 0; i < len; i++) {
-      xVals.add(xs[i]);
+      if (innerJoin) {
+        if (ti === 0) {
+          xVals.add(xs[i]);
+        } else {
+          for (const xVal of xVals) {
+            if (!xsSet.has(xVal)) {
+              xVals.delete(xVal);
+            }
+          }
+        }
+      } else {
+        xVals.add(xs[i]);
+      }
     }
   }
 

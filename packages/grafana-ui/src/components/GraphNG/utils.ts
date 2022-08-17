@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, Field, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
+import { ArrayVector, DataFrame, Field, FieldConfig, FieldType, joinDataFrames, TimeRange } from '@grafana/data';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -94,7 +94,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
     });
   }
 
-  let alignedFrame = outerJoinDataFrames({
+  let alignedFrame = joinDataFrames({
     frames,
     joinBy: dimFields.x,
     keep: dimFields.y,

@@ -11,7 +11,7 @@ import {
   getFieldColorModeForField,
   getFieldSeriesColor,
   GrafanaTheme2,
-  outerJoinDataFrames,
+  joinDataFrames,
   reduceField,
   VizOrientation,
 } from '@grafana/data';
@@ -322,7 +322,7 @@ export function prepareBarChartDisplayValues(
           series[0],
           series[0].fields.findIndex((f) => f.type === FieldType.time)
         )
-      : outerJoinDataFrames({ frames: series });
+      : joinDataFrames({ frames: series });
   if (!frame) {
     return { warn: 'Unable to join data' };
   }
