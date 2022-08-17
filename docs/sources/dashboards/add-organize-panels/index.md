@@ -104,7 +104,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    - [Format data using value mapping]({{< relref "../../panels/format-data/about-value-mapping/" >}})
    - [Visualization-specific options]({{< relref "../../visualizations/" >}})
-   - [Override field values]({{< relref "../../panels/override-field-values/about-field-overrides/" >}})
+   - [Override field values]({{< relref "../../panels/configure-overrides/" >}})
    - [Configure thresholds]({{< relref "../../panels/configure-thresholds/" >}})
    - [Configure standard options]({{< relref "../../panels/configure-standard-options/" >}})
 
