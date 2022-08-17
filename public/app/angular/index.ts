@@ -17,7 +17,6 @@ import './misc';
 import './bsTooltip';
 import './bsTypeahead';
 import './ng_model_on_blur';
-import './tags';
 import './rebuild_on_change';
 import './give_focus';
 import './diff-view';
