@@ -401,7 +401,30 @@ groups:
         # <list, required> list of query objects that should be executed on each
         #                  evaluation - should be obtained trough the API
         data:
-          - ...
+          - refId: A
+            datasourceUid: '-100'
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 3
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: '-100'
+              expression: 1==0
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+              type: math
         # <string> UID of a dashboard that the alert rule should be linked to
         dashboardUid: my_dashboard
         # <int> ID of the panel that the alert rule should be linked to
