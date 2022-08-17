@@ -13,13 +13,6 @@ export function getRoutes(): RouteDescriptor[] {
             import(/* webpackChunkName: "QueryLibraryPage" */ 'app/features/query-library/components/QueryLibraryPage')
         ),
       },
-      {
-        path: `/query-library/new`,
-        exact: true,
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "QueryLibraryPage" */ 'app/features/query-library/components/NewQueryPage')
-        ),
-      },
     ];
   }
 
