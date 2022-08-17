@@ -40,7 +40,7 @@ export const OldPage: PageType = ({
     <div className={cx(styles.wrapper, className)}>
       {layout === PageLayoutType.Default && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className="page-scrollbar-content">
+          <div className={cx('page-scrollbar-content', { 'vertical-content': !!vertical })}>
             {pageHeaderNav && (
               <PageHeader tabsDataTestId={tabsDataTestId} vertical={vertical} navItem={pageHeaderNav} />
             )}
