@@ -238,7 +238,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should render panel editor', () => {
-      expect(screen.getByTitle('Apply changes and go back to dashboard')).toBeInTheDocument();
+      expect(screen.getByLabelText('Apply changes and go back to dashboard')).toBeInTheDocument();
     });
 
     it('Should reset state when leaving', () => {

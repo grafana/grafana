@@ -123,7 +123,7 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
-    applyButton: 'panel editor apply',
+    applyButton: 'Apply changes and go back to dashboard',
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
     toggleTableView: 'toggle-table-view',
