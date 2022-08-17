@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/queries"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -470,7 +471,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			Title:           r.Title,
 			Condition:       r.Condition,
 			Data:            r.Data,
-			SavedQueryLink:  ngmodels.SavedQueryLink{Ref: ngmodels.SavedQueryRef{UID: r.SavedQueryUID}},
+			SavedQueryLink:  queries.SavedQueryLink{Ref: queries.SavedQueryRef{UID: r.SavedQueryUID}},
 			Updated:         r.Updated,
 			IntervalSeconds: r.IntervalSeconds,
 			Version:         r.Version,

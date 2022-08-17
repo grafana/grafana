@@ -88,3 +88,11 @@ func DeserializeAsAlertingQueries(serialized []byte) ([]ngmodels.AlertQuery, err
 
 	return alertingQueries, nil
 }
+
+type SavedQueryRef struct {
+	UID string `json:"uid"`
+}
+
+type SavedQueryLink struct {
+	Ref SavedQueryRef `json:"ref"`
+}

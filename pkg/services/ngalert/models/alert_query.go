@@ -77,14 +77,6 @@ func (rtr *RelativeTimeRange) ToTimeRange(now time.Time) backend.TimeRange {
 	}
 }
 
-type SavedQueryRef struct {
-	UID string `json:"uid"`
-}
-
-type SavedQueryLink struct {
-	Ref SavedQueryRef `json:"ref"`
-}
-
 // AlertQuery represents a single query associated with an alert definition.
 type AlertQuery struct {
 	// RefID is the unique identifier of the query, set by the frontend call.
