@@ -923,7 +923,7 @@ deleteMuteTimes:
 
 ## Alert Notification Channels
 
-> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed. Use Contact Points in the alerting section above.
+> **Note:** Alert Notification Channels are part of legacy alerting, which is deprecated and will be removed in Grafana 10. Use Contact Points in the alerting section above.
 
 Alert Notification Channels can be provisioned by adding one or more YAML config files in the [`provisioning/notifiers`](/administration/configuration/#provisioning) directory.
 
