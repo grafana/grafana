@@ -296,7 +296,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		}
 
 		if ss.Cfg.IsFeatureToggleEnabled("mysqlAnsiQuotes") || ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
-			cnnstr += "&sql_mode='ANSI_QUOTES'"
+			cnnstr += "&sql_mode='ANSI_QUOTES'&parseTime=true"
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
