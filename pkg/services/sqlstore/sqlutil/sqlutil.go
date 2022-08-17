@@ -28,10 +28,7 @@ func MySQLTestDB() TestDB {
 	if port == "" {
 		port = "3306"
 	}
-	conn_str := fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_tests?collation=utf8mb4_unicode_ci", host, port)
-	if _, present := os.LookupEnv("MYSQL_ANSI_QUOTES"); present {
-		conn_str += "&sql_mode='ANSI_QUOTES'"
-	}
+	conn_str := fmt.Sprintf("grafana:password@tcp(%s:%s)/grafana_tests?collation=utf8mb4_unicode_ci&sql_mode='ANSI_QUOTES'", host, port)
 	return TestDB{
 		DriverName: "mysql",
 		ConnStr:    conn_str,
