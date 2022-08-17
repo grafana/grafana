@@ -27,10 +27,16 @@ func (s Slot) MetaSchema() cue.Value {
 // provide a slot implementation (first return value), and for those types that
 // may, whether they must produce one (second return value).
 //
+// Expected values here are those in the set of
+// ["github.com/grafana/grafana/pkg/coremodel/pluginmeta".Type], though passing
+// a string not in that set will harmlessly return {false, false}. That type is
+// not used here to avoid import cycles.
+//
 // Note that, at least for now, plugins are not required to provide any slot
-// implementations, by simply not containing a models.cue file. Consequently,
-// the "must" return value here is best understood as, "IF a plugin provides
-// a models.cue file, it MUST contain an implementation of this slot."
+// implementations, and do so by simply not containing a models.cue file.
+// Consequently, the "must" return value here is best understood as, "IF a
+// plugin provides a models.cue file, it MUST contain an implementation of this
+// slot."
 func (s Slot) ForPluginType(plugintype string) (may, must bool) {
 	must, may = s.plugins[plugintype]
 	return
