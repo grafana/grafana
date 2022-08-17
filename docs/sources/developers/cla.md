@@ -31,9 +31,7 @@ for the license granted herein to Grafana Labs and recipients of
 software distributed by Grafana Labs, You reserve all right, title,
 and interest in and to Your Contributions.
 
-## 1. Definitions.
-
-"You" (or "Your") shall mean the copyright owner or legal entity
+1. Definitions. "You" (or "Your") shall mean the copyright owner or legal entity
 authorized by the copyright owner that is making this Agreement
 with Grafana Labs. For legal entities, the entity making a
 Contribution and all other entities that control, are controlled by,
@@ -56,18 +54,14 @@ purpose of discussing and improving the Work, but excluding
 communication that is conspicuously marked or otherwise designated
 in writing by You as "Not a Contribution."
 
-## 2. Grant of Copyright License. Subject to the terms and conditions
-
-of this Agreement, You hereby grant to Grafana Labs and to
+1. Grant of Copyright License. Subject to the terms and conditions of this Agreement, You hereby grant to Grafana Labs and to
 recipients of software distributed by Grafana Labs a perpetual,
 worldwide, non-exclusive, no-charge, royalty-free, irrevocable
 copyright license to reproduce, prepare derivative works of,
 publicly display, publicly perform, sublicense, and distribute
 Your Contributions and such derivative works.
 
-## 3. Grant of Patent License. Subject to the terms and conditions of
-
-this Agreement, You hereby grant to Grafana Labs and to recipients
+1. Grant of Patent License. Subject to the terms and conditions of this Agreement, You hereby grant to Grafana Labs and to recipients
 of software distributed by Grafana Labs a perpetual, worldwide,
 non-exclusive, no-charge, royalty-free, irrevocable (except as
 stated in this section) patent license to make, have made, use,
@@ -83,21 +77,15 @@ direct or contributory patent infringement, then any patent licenses
 granted to that entity under this Agreement for that Contribution or
 Work shall terminate as of the date such litigation is filed.
 
-## 4. You represent that You are legally entitled to grant the above
-
-license. If You are an individual, and if Your employer(s) has rights to intellectual property
+1. You represent that You are legally entitled to grant the above license. If You are an individual, and if Your employer(s) has rights to intellectual property
 that you create that includes Your Contributions, you represent
 that You have received permission to make Contributions on behalf
 of that employer, or that Your employer has waived such rights for
 your Contributions to Grafana Labs. If You are a Corporation, any individual who makes a contribution from an account associated with You will be considered authorized to Contribute on Your behalf.
 
-## 5. You represent that each of Your Contributions is Your original
+1. You represent that each of Your Contributions is Your original creation (see section 7 for submissions on behalf of others).
 
-creation (see section 7 for submissions on behalf of others).
-
-## 6. You are not expected to provide support for Your Contributions,
-
-except to the extent You desire to provide support. You may provide
+1. You are not expected to provide support for Your Contributions,except to the extent You desire to provide support. You may provide
 support for free, for a fee, or not at all. Unless required by
 applicable law or agreed to in writing, You provide Your
 Contributions on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
@@ -105,9 +93,7 @@ OF ANY KIND, either express or implied, including, without
 limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT,
 MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE.
 
-## 7. Should You wish to submit work that is not Your original creation,
-
-You may submit it to Grafana Labs separately from any
+1. Should You wish to submit work that is not Your original creation, You may submit it to Grafana Labs separately from any
 Contribution, identifying the complete details of its source and
 of any license or other restriction (including, but not limited
 to, related patents, trademarks, and license agreements) of which
