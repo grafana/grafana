@@ -92,7 +92,7 @@ func newID() string {
 
 type OrgIDGetter func(c *models.ReqContext) (int64, error)
 type userCache interface {
-	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
+	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
 func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handler, OrgIDGetter, Evaluator) web.Handler {
@@ -114,15 +114,15 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 				userCopy.OrgName = ""
 				userCopy.OrgRole = ""
 			} else {
-				query := models.GetSignedInUserQuery{UserId: c.UserID, OrgId: orgID}
-				err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
+				query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: orgID}
+				queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 					return
 				}
-				userCopy.OrgID = query.Result.OrgID
-				userCopy.OrgName = query.Result.OrgName
-				userCopy.OrgRole = query.Result.OrgRole
+				userCopy.OrgID = queryResult.OrgID
+				userCopy.OrgName = queryResult.OrgName
+				userCopy.OrgRole = queryResult.OrgRole
 			}
 
 			authorize(c, ac, &userCopy, evaluator)
