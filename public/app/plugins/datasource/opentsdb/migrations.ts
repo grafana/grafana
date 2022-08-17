@@ -10,9 +10,9 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
   // return the target annotation
   let annotation: LegacyAnnotation = {
     fromAnnotations: true,
-    target: json.target || '',
-    name: json.name || '',
-    isGlobal: json.isGlobal || false,
+    target: json.target ?? '',
+    name: json.name ?? '',
+    isGlobal: json.isGlobal ?? false,
   };
 
   return annotation;

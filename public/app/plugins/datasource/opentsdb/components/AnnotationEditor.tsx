@@ -32,7 +32,7 @@ export const AnnotationEditor = (props: QueryEditorProps<OpenTsDatasource, OpenT
         <InlineFormLabel width={12}>OpenTSDB metrics query</InlineFormLabel>
         <Input
           value={target}
-          onChange={(e) => setTarget(e.currentTarget.value || '')}
+          onChange={(e) => setTarget(e.currentTarget.value ?? '')}
           onBlur={() => updateValue('target', target)}
           placeholder="events.eventname"
         />
