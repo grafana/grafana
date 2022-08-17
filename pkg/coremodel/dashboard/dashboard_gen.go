@@ -158,6 +158,7 @@ const (
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Model struct {
 	Annotations *struct {
+		// TODO docs
 		List []ModelAnnotationQuery `json:"list"`
 	} `json:"annotations,omitempty"`
 
@@ -197,6 +198,7 @@ type Model struct {
 	// Tags associated with dashboard.
 	Tags       *[]string `json:"tags,omitempty"`
 	Templating *struct {
+		// TODO docs
 		List []ModelVariableModel `json:"list"`
 	} `json:"templating,omitempty"`
 
@@ -220,6 +222,9 @@ type Model struct {
 
 		// Selectable intervals for auto-refresh.
 		RefreshIntervals []string `json:"refresh_intervals"`
+
+		// TODO docs
+		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
 	// Timezone of dashboard,
