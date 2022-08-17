@@ -1,7 +1,7 @@
 import { t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import {
   AppEvents,
@@ -43,8 +43,11 @@ const options: Array<SelectableValue<ShowContent>> = [
     value: ShowContent.PanelData,
   },
   {
-    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON' }),
-    description: t({ id: 'dashboard.inspect-json.dataframe-description', message: 'JSON formatted DataFrames' }),
+    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON (from Query)' }),
+    description: t({
+      id: 'dashboard.inspect-json.dataframe-description',
+      message: 'Raw data without transformations and field config applied. ',
+    }),
     value: ShowContent.DataFrames,
   },
 ];
