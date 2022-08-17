@@ -419,7 +419,7 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.Remov
 
 	// This should be called from appropriate service when moved
 	if err := hs.AccessControl.DeleteUserPermissions(ctx, cmd.OrgId, cmd.UserId); err != nil {
-		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", cmd.OrgId)
+		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", cmd.OrgId, "err", err)
 	}
 
 	return response.Success("User removed from organization")
