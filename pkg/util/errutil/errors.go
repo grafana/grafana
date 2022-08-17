@@ -174,7 +174,6 @@ func (e Error) Is(other error) bool {
 	default:
 		return false
 	}
-
 }
 
 // PublicError is derived from Error and only contains information
