@@ -1,4 +1,4 @@
-package database
+package resourcepermissions
 
 import (
 	"context"
@@ -53,7 +53,7 @@ func benchmarkDSPermissions(b *testing.B, dsNum, usersNum int) {
 	}
 }
 
-func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int64) {
+func getDSPermissions(b *testing.B, store *store, dataSources []int64) {
 	dsId := dataSources[0]
 
 	permissions, err := store.GetResourcePermissions(context.Background(), accesscontrol.GlobalOrgID, types.GetResourcePermissionsQuery{
@@ -67,13 +67,13 @@ func getDSPermissions(b *testing.B, store *AccessControlStore, dataSources []int
 	assert.GreaterOrEqual(b, len(permissions), 2)
 }
 
-func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*AccessControlStore, []int64) {
+func setupResourceBenchmark(b *testing.B, dsNum, usersNum int) (*store, []int64) {
 	ac, sql := setupTestEnv(b)
 	dataSources := GenerateDatasourcePermissions(b, sql, ac, dsNum, usersNum, permissionsPerDs)
 	return ac, dataSources
 }
 
-func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *AccessControlStore, dsNum, usersNum, permissionsPerDs int) []int64 {
+func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *store, dsNum, usersNum, permissionsPerDs int) []int64 {
 	dataSources := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
 		addDSCommand := &datasources.AddDataSourceCommand{

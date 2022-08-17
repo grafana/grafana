@@ -49,8 +49,8 @@ type Store interface {
 }
 
 func New(
-	options Options, cfg *setting.Cfg, router routing.RouteRegister, license models.Licensing,
-	ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore,
+	options Options, cfg *setting.Cfg, router routing.RouteRegister,
+	license models.Licensing, ac accesscontrol.AccessControl, sqlStore *sqlstore.SQLStore,
 ) (*Service, error) {
 	var permissions []string
 	actionSet := make(map[string]struct{})
@@ -74,7 +74,7 @@ func New(
 	s := &Service{
 		ac:          ac,
 		cfg:         cfg,
-		store:       store,
+		store:       newStore(sqlStore),
 		options:     options,
 		license:     license,
 		permissions: permissions,

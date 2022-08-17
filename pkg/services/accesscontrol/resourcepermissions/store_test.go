@@ -1,4 +1,4 @@
-package database
+package resourcepermissions
 
 import (
 	"context"
@@ -26,7 +26,7 @@ type setUserResourcePermissionTest struct {
 	seeds             []types.SetResourcePermissionCommand
 }
 
-func TestAccessControlStore_SetUserResourcePermission(t *testing.T) {
+func Teststore_SetUserResourcePermission(t *testing.T) {
 	tests := []setUserResourcePermissionTest{
 		{
 			desc:              "should set resource permission for user",
@@ -108,7 +108,7 @@ type setTeamResourcePermissionTest struct {
 	seeds             []types.SetResourcePermissionCommand
 }
 
-func TestAccessControlStore_SetTeamResourcePermission(t *testing.T) {
+func Teststore_SetTeamResourcePermission(t *testing.T) {
 	tests := []setTeamResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for team",
@@ -193,7 +193,7 @@ type setBuiltInResourcePermissionTest struct {
 	seeds             []types.SetResourcePermissionCommand
 }
 
-func TestAccessControlStore_SetBuiltInResourcePermission(t *testing.T) {
+func Teststore_SetBuiltInResourcePermission(t *testing.T) {
 	tests := []setBuiltInResourcePermissionTest{
 		{
 			desc:              "should add new resource permission for builtin role",
@@ -274,7 +274,7 @@ type setResourcePermissionsTest struct {
 	commands          []types.SetResourcePermissionsCommand
 }
 
-func TestAccessControlStore_SetResourcePermissions(t *testing.T) {
+func Teststore_SetResourcePermissions(t *testing.T) {
 	tests := []setResourcePermissionsTest{
 		{
 			desc:              "should set all permissions provided",
@@ -346,7 +346,7 @@ type getResourcePermissionsTest struct {
 	onlyManaged       bool
 }
 
-func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
+func Teststore_GetResourcePermissions(t *testing.T) {
 	tests := []getResourcePermissionsTest{
 		{
 			desc: "should return permissions for resource id",
@@ -437,7 +437,7 @@ func TestAccessControlStore_GetResourcePermissions(t *testing.T) {
 	}
 }
 
-func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlstore.SQLStore, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
+func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
 	for i := 0; i < numUsers; i++ {
 		org, _ := sql.GetOrgByName("test")
@@ -462,4 +462,9 @@ func seedResourcePermissions(t *testing.T, store *AccessControlStore, sql *sqlst
 		}, nil)
 		require.NoError(t, err)
 	}
+}
+
+func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
+	sql := sqlstore.InitTestDB(t)
+	return newStore(sql), sql
 }
