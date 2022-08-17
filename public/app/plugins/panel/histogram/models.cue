@@ -1,4 +1,4 @@
-// Copyright 2021 Grafana Labs
+// Copyright 2022 Grafana Labs
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,11 +29,16 @@ Panel: thema.#Lineage & {
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
 						bucketSize?:  int
-						bucketOffset: int | *0
+						bucketOffset?: int | *0
 						combine?:     bool
 					} @cuetsy(kind="interface")
 
-					PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
+					PanelFieldConfig: {
+						ui.HideableFieldConfig
+						lineWidth?:    int32 & >= 0 & <= 10 | *1
+						fillOpacity?:  int32 & >= 0 & <= 100 | *80
+						gradientMode?: ui.GraphGradientMode | *"none"
+					} @cuetsy(kind="interface")
 				},
 			]
 		},
