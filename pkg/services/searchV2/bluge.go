@@ -17,21 +17,22 @@ import (
 )
 
 const (
-	documentFieldUID         = "_id" // actually UID!! but bluge likes "_id"
-	documentFieldKind        = "kind"
-	documentFieldTag         = "tag"
-	documentFieldURL         = "url"
-	documentFieldName        = "name"
-	documentFieldName_sort   = "name_sort"
-	documentFieldName_ngram  = "name_ngram"
-	documentFieldDescription = "description"
-	documentFieldLocation    = "location" // parent path
-	documentFieldPanelType   = "panel_type"
-	documentFieldTransformer = "transformer"
-	documentFieldDSUID       = "ds_uid"
-	documentFieldDSType      = "ds_type"
-	DocumentFieldCreatedAt   = "created_at"
-	DocumentFieldUpdatedAt   = "updated_at"
+	documentFieldUID           = "_id" // actually UID!! but bluge likes "_id"
+	documentFieldKind          = "kind"
+	documentFieldTag           = "tag"
+	documentFieldURL           = "url"
+	documentFieldName          = "name"
+	documentFieldName_sort     = "name_sort"
+	documentFieldName_ngram    = "name_ngram"
+	documentFieldDescription   = "description"
+	documentFieldLocation      = "location" // parent path
+	documentFieldPanelType     = "panel_type"
+	documentFieldTransformer   = "transformer"
+	documentFieldDSUID         = "ds_uid"
+	documentFieldSavedQueryUID = "saved_query_uid"
+	documentFieldDSType        = "ds_type"
+	DocumentFieldCreatedAt     = "created_at"
+	DocumentFieldUpdatedAt     = "updated_at"
 )
 
 func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc, queries []query) (*orgIndex, error) {
@@ -231,6 +232,13 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 		}
 	}
 
+	for _, sq := range dash.info.SavedQuery {
+		doc.AddField(bluge.NewKeywordField(documentFieldSavedQueryUID, sq.Ref.UID).
+			StoreValue().
+			Aggregatable().
+			SearchTermPositions())
+	}
+
 	return doc
 }
 
@@ -267,6 +275,12 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 					Aggregatable().
 					SearchTermPositions())
 			}
+		}
+		for _, sq := range panel.SavedQuery {
+			doc.AddField(bluge.NewKeywordField(documentFieldSavedQueryUID, sq.Ref.UID).
+				StoreValue().
+				Aggregatable().
+				SearchTermPositions())
 		}
 
 		docs = append(docs, doc)
@@ -480,6 +494,11 @@ func doSearchQuery(
 		hasConstraints = true
 	}
 
+	if q.SavedQuery != "" {
+		fullQuery.AddMust(bluge.NewTermQuery(q.SavedQuery).SetField(documentFieldSavedQueryUID))
+		hasConstraints = true
+	}
+
 	// Folder
 	if q.Location != "" {
 		fullQuery.AddMust(bluge.NewTermQuery(q.Location).SetField(documentFieldLocation))
@@ -554,6 +573,7 @@ func doSearchQuery(
 	fLocation := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
 	fDSUIDs := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
+	fLinkedEntities := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
 	fExplain := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
 
 	fScore.Name = "score"
@@ -569,10 +589,11 @@ func doSearchQuery(
 	}
 	fPType.Name = "panel_type"
 	fDSUIDs.Name = "ds_uid"
+	fLinkedEntities.Name = "linked_entity" // TODO replace ds_uid with linked_entity
 	fTags.Name = "tags"
 	fExplain.Name = "explain"
 
-	frame := data.NewFrame("Query results", fKind, fUID, fName, fPType, fURL, fTags, fDSUIDs, fLocation)
+	frame := data.NewFrame("Query results", fKind, fUID, fName, fPType, fURL, fTags, fDSUIDs, fLinkedEntities, fLocation)
 	if q.Explain {
 		frame.Fields = append(frame.Fields, fScore, fExplain)
 	}
@@ -596,6 +617,7 @@ func doSearchQuery(
 		url := ""
 		loc := ""
 		var dsUIDs []string
+		var savedQueryUIDs []string
 		var tags []string
 
 		err = match.VisitStoredFields(func(field string, value []byte) bool {
@@ -614,6 +636,9 @@ func doSearchQuery(
 				loc = string(value)
 			case documentFieldDSUID:
 				dsUIDs = append(dsUIDs, string(value))
+			case documentFieldSavedQueryUID:
+				fmt.Println("visiting " + string(value) + " for uid " + uid)
+				savedQueryUIDs = append(savedQueryUIDs, string(value))
 			case documentFieldTag:
 				tags = append(tags, string(value))
 			default:
@@ -656,6 +681,26 @@ func doSearchQuery(
 		js, _ := json.Marshal(dsUIDs)
 		jsb := json.RawMessage(js)
 		fDSUIDs.Append(jsb)
+
+		linkedEntities := make([]LinkedEntity, 0)
+		for _, dsUID := range dsUIDs {
+			linkedEntities = append(linkedEntities, LinkedEntity{
+				Kind:           string(entityKindDatasource),
+				UID:            dsUID,
+				AllowedActions: make([]string, 0),
+			})
+		}
+
+		for _, savedQueryUID := range savedQueryUIDs {
+			linkedEntities = append(linkedEntities, LinkedEntity{
+				Kind:           string(entityKindQuery),
+				UID:            savedQueryUID,
+				AllowedActions: make([]string, 0),
+			})
+		}
+
+		jsL, _ := json.Marshal(linkedEntities)
+		fLinkedEntities.Append(json.RawMessage(jsL))
 
 		if q.Explain {
 			if isMatchAllQuery {

@@ -1,6 +1,7 @@
 package extract
 
 import (
+	"github.com/grafana/grafana/pkg/services/queries"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
 )
 
@@ -14,7 +15,8 @@ type PanelInfo struct {
 	Transformer   []string                 `json:"transformer,omitempty"` // ids of the transformation steps
 
 	// Rows define panels as sub objects
-	Collapsed []PanelInfo `json:"collapsed,omitempty"`
+	Collapsed  []PanelInfo              `json:"collapsed,omitempty"`
+	SavedQuery []queries.SavedQueryLink `json:"savedQuery,omitempty"` // UIDs
 }
 
 type DashboardInfo struct {
@@ -25,6 +27,7 @@ type DashboardInfo struct {
 	Tags          []string                 `json:"tags"`
 	TemplateVars  []string                 `json:"templateVars,omitempty"` // the keys used
 	Datasource    []dslookup.DataSourceRef `json:"datasource,omitempty"`   // UIDs
+	SavedQuery    []queries.SavedQueryLink `json:"savedQuery,omitempty"`   // UIDs
 	Panels        []PanelInfo              `json:"panels"`                 // nesed documents
 	SchemaVersion int64                    `json:"schemaVersion"`
 	LinkCount     int64                    `json:"linkCount"`

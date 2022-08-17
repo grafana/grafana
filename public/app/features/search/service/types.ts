@@ -11,6 +11,7 @@ export interface SearchQuery {
   location?: string;
   sort?: string;
   ds_uid?: string;
+  saved_query_uid?: string;
   ds_type?: string;
   tags?: string[];
   kind?: string[];

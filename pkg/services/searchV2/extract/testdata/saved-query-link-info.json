@@ -1,0 +1,63 @@
+{
+  "id": 266,
+  "title": "222222",
+  "tags": null,
+  "datasource": [
+    {
+      "uid": "grafana",
+      "type": "datasource"
+    },
+    {
+      "uid": "PD8C576611E62080A",
+      "type": "testdata"
+    }
+  ],
+  "savedQuery": [
+    {
+      "ref": {
+        "uid": "system/queries/fancy.json"
+      }
+    }
+  ],
+  "panels": [
+    {
+      "id": 4,
+      "title": "Panel Title",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "PD8C576611E62080A",
+          "type": "testdata"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Panel Title",
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "grafana",
+          "type": "datasource"
+        },
+        {
+          "uid": "PD8C576611E62080A",
+          "type": "testdata"
+        }
+      ],
+      "savedQuery": [
+        {
+          "ref": {
+            "uid": "system/queries/fancy.json"
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 37,
+  "linkCount": 0,
+  "timeFrom": "now-30s",
+  "timeTo": "now",
+  "timezone": ""
+}

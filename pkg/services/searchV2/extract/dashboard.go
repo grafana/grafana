@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/queries"
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
@@ -275,6 +276,12 @@ func ReadDashboard(stream io.Reader, lookup dslookup.DatasourceLookup) (*Dashboa
 	}
 	dash.Datasource = targets.GetDatasourceInfo()
 
+	savedQueries := make([]queries.SavedQueryLink, 0)
+	for _, panel := range dash.Panels {
+		savedQueries = append(savedQueries, panel.SavedQuery...)
+	}
+	dash.SavedQuery = savedQueries
+
 	return dash, iter.Error
 }
 
@@ -366,6 +373,7 @@ func findDatasourceRefsForVariables(dsVariableRefs []dslookup.DataSourceRef, dat
 // will always return strings for now
 func readPanelInfo(iter *jsoniter.Iterator, lookup dslookup.DatasourceLookup) PanelInfo {
 	panel := PanelInfo{}
+	panel.SavedQuery = make([]queries.SavedQueryLink, 0)
 
 	targets := newTargetInfo(lookup)
 
@@ -399,6 +407,22 @@ func readPanelInfo(iter *jsoniter.Iterator, lookup dslookup.DatasourceLookup) Pa
 
 		case "datasource":
 			targets.addDatasource(iter)
+
+		case "savedQueryLink":
+			for sub := iter.ReadObject(); sub != ""; sub = iter.ReadObject() {
+				if sub == "ref" {
+					for subInLink := iter.ReadObject(); subInLink != ""; subInLink = iter.ReadObject() {
+						if subInLink == "uid" {
+							panel.SavedQuery = append(panel.SavedQuery, queries.SavedQueryLink{Ref: queries.SavedQueryRef{UID: iter.ReadString()}})
+						} else {
+							iter.Skip()
+						}
+					}
+				} else {
+					iter.Skip()
+				}
+			}
+			panel.SavedQuery = append(panel.SavedQuery)
 
 		case "targets":
 			switch iter.WhatIsNext() {

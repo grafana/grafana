@@ -13,11 +13,18 @@ type FacetField struct {
 	Limit int    `json:"limit,omitempty"` // explicit page size
 }
 
+type LinkedEntity struct {
+	Kind           string   `json:"kind"`
+	UID            string   `json:"uid"`
+	AllowedActions []string `json:"allowedActions"`
+}
+
 type DashboardQuery struct {
 	Query              string       `json:"query"`
-	Location           string       `json:"location,omitempty"` // parent folder ID
-	Sort               string       `json:"sort,omitempty"`     // field ASC/DESC
-	Datasource         string       `json:"ds_uid,omitempty"`   // "datasource" collides with the JSON value at the same leel :()
+	Location           string       `json:"location,omitempty"`        // parent folder ID
+	Sort               string       `json:"sort,omitempty"`            // field ASC/DESC
+	Datasource         string       `json:"ds_uid,omitempty"`          // "datasource" collides with the JSON value at the same leel :()
+	SavedQuery         string       `json:"saved_query_uid,omitempty"` // "datasource" collides with the JSON value at the same leel :()
 	Tags               []string     `json:"tags,omitempty"`
 	Kind               []string     `json:"kind,omitempty"`
 	PanelType          string       `json:"panel_type,omitempty"`

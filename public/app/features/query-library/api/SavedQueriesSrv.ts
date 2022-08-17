@@ -6,7 +6,11 @@ import { SavedQuery, SavedQueryRef } from './SavedQueriesApi';
 export class SavedQuerySrv {
   getSavedQueryByUids = async (refs: SavedQueryRef[]): Promise<SavedQuery[]> => {
     const storage = getGrafanaStorage();
-    return Promise.all(refs.map((ref) => storage.get<SavedQuery>(ref.uid)));
+    return Promise.all(
+      refs.map((ref) => {
+        return storage.get<SavedQuery>(ref.uid).then((res) => ({ ...res, uid: ref.uid }));
+      })
+    );
   };
 
   deleteSavedQuery = async (ref: SavedQueryRef): Promise<void> => {
