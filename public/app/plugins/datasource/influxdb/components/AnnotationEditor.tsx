@@ -34,13 +34,18 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
           placeholder="select text from events where $timeFilter limit 1000"
         />
       </div>
-      <h5 className="section-heading">
+      <InlineFormLabel
+        width={12}
+        tooltip={
+          <div>
+            If your influxdb query returns more than one field you need to specify the column names below. An annotation
+            event is composed of a title, tags, and an additional text field. Optionally you can map the timeEnd column
+            for region annotation usage.
+          </div>
+        }
+      >
         Field mappings
-        <i
-          className="grafana-tip fa fa-question-circle"
-          bs-tooltip="If your influxdb query returns more than one field you need to specify the column names below. An annotation event is composed of a title, tags, and an additional text field. Optionally you can map the timeEnd column for region annotation usage."
-        />
-      </h5>
+      </InlineFormLabel>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
