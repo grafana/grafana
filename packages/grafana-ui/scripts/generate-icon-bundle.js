@@ -5,7 +5,8 @@ const path = require('path');
 const cachedListPath = path.join(__dirname, '../src/components/Icon/cached.json');
 const iconsList = require(cachedListPath);
 
-const iconsBundleJsTemplatePath = path.join(__dirname, '../src/components/Icon/iconBundle.ts');
+const iconsBundleJsTemplatePath = path.join(__dirname, '../src/components/Icon/iconBundle.ts.template');
+const iconsBundleJsPath = path.join(__dirname, '../src/components/Icon/iconBundle.ts');
 
 const iconsBundleJsTemplate = fs.readFileSync(iconsBundleJsTemplatePath).toString();
 
@@ -44,9 +45,7 @@ function generateIconBundle({ outputPath, verbose = false }) {
 
 // if invoked directly
 if (require.main === module) {
-  const workingDir = fs.mkdtempSync(path.join(os.tmpdir(), 'icons-bundle'));
-  const tempFile = path.join(workingDir, 'icons-bundle-generated.ts');
-  generateIconBundle({ outputPath: tempFile, verbose: true });
+  generateIconBundle({ outputPath: iconsBundleJsPath, verbose: true });
 }
 
 module.exports = generateIconBundle;
