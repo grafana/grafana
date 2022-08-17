@@ -161,5 +161,3 @@ apiVersion: 1
 # - orgId: 1
 #   # <string, required> name of the mute time interval, must be unique
 #   name: mti_1
-
-
