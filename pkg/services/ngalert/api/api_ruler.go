@@ -90,40 +90,35 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle s
 			return nil
 		}
 
-		var candidates = make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
+		var deletionCandidates = make(map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule)
 		for _, rule := range q.Result {
 			key := rule.GetGroupKey()
-			groupsToDelete[key] = append(groupsToDelete[key], rule)
+			deletionCandidates[key] = append(deletionCandidates[key], rule)
 		}
 		rulesToDelete := make([]string, 0, len(q.Result))
-		for groupKey, rules := range groupsToDelete {
+		for groupKey, rules := range deletionCandidates {
 			if !authorizeAccessToRuleGroup(rules, hasAccess) {
 				unauthz = true
 				break
 			}
-			canDelete := true
+			if containsProvisionedAlerts(provenances, rules) {
+				provisioned = true
+				break
+			}
 			uid := make([]string, 0, len(rules))
 			keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 			for _, rule := range rules {
-				provenance, exists := provenances[rule.UID]
-				// if at least one rule is provisioned do not allow to delete via regular api
-				if exists && provenance != ngmodels.ProvenanceNone {
-					provisioned = true
-					canDelete = false
-					break
-				}
 				uid = append(uid, rule.UID)
 				keys = append(keys, rule.GetKey())
 			}
-			if canDelete {
-				rulesToDelete = append(rulesToDelete, uid...)
-				deletedGroups[groupKey] = keys
-			}
+			rulesToDelete = append(rulesToDelete, uid...)
+			deletedGroups[groupKey] = keys
 		}
 		if len(rulesToDelete) > 0 {
 			return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgID, rulesToDelete...)
 		}
 		// if none rules were deleted return an error.
+		// Check whether provisioned check failed first because if it is true, then all rules that the user can access (actually read via GET API) are provisioned.
 		if provisioned {
 			return errProvisionedResource
 		}
@@ -511,16 +506,13 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 	}
 	errorMsg := strings.Builder{}
 	for group, alertRules := range ch.AffectedGroups {
-		for _, rule := range alertRules {
-			if provenance, exists := provenances[rule.UID]; (exists && provenance == ngmodels.ProvenanceNone) || !exists {
-				continue
-			}
-			if errorMsg.Len() > 0 {
-				errorMsg.WriteRune(',')
-			}
-			errorMsg.WriteString(group.String())
-			break
+		if !containsProvisionedAlerts(provenances, alertRules) {
+			continue
 		}
+		if errorMsg.Len() > 0 {
+			errorMsg.WriteRune(',')
+		}
+		errorMsg.WriteString(group.String())
 	}
 	if errorMsg.Len() == 0 {
 		return nil
