@@ -28,15 +28,22 @@ Panel: thema.#Lineage & {
 					PanelOptions: {
 						ui.OptionsWithLegend
 						ui.OptionsWithTooltip
+						//Size of each bucket
 						bucketSize?:  int
+						//Offset buckets by this amount 
 						bucketOffset?: int | *0
+						//Combines multiple series into a single histogram
 						combine?:     bool
 					} @cuetsy(kind="interface")
 
 					PanelFieldConfig: {
 						ui.HideableFieldConfig
+						// Controls line width of the bars.
 						lineWidth?:    int32 & >= 0 & <= 10 | *1
+						// Controls the fill opacity of the bars.
 						fillOpacity?:  int32 & >= 0 & <= 100 | *80
+						// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
+            // Gradient appearance is influenced by the Fill opacity setting.
 						gradientMode?: ui.GraphGradientMode | *"none"
 					} @cuetsy(kind="interface")
 				},
