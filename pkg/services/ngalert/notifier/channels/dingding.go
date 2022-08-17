@@ -98,7 +98,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	var tmplErr error
 	tmpl, data := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
-	// Augment our Alert data with ImageURLs if available.
+	// Augment our Alert data with ImageURLs if available
 	_ = withStoredImages(ctx, dd.log, dd.images,
 		func(index int, image ngmodels.Image) error {
 			if len(image.URL) != 0 {
