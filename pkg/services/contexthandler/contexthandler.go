@@ -425,8 +425,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
-		// if response has already been written, skip.
 		if w.Written() {
+			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
 			return
 		}
 
