@@ -125,6 +125,19 @@ const QueryLibrarySearchTable = () => {
                       </tr>
                     </thead>
                     <tbody>
+                      {found?.length === 0 && (
+                        <tr className={styles.transparentBg}>
+                          <td />
+                          <td />
+                          <td />
+                          <td>
+                            <div className={styles.noData}>No data</div>
+                          </td>
+                          <td />
+                          <td />
+                          <th />
+                        </tr>
+                      )}
                       {found!.map((item, key) => {
                         return (
                           <QueryListItem
@@ -181,6 +194,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
           background: ${theme.colors.background.secondary};
         }
       }
+    `,
+    noData: css`
+      color: ${theme.colors.text.secondary};
+    `,
+    transparentBg: css`
+      background: transparent !important;
     `,
   };
 };
