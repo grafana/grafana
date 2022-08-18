@@ -41,7 +41,7 @@ func FileSystem(logger logger.Logger, pluginsDir string) *FS {
 
 func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadCloser) (
 	*ExtractedPluginArchive, error) {
-	pluginDir, err := fs.extractFiles(ctx, pluginArchive, pluginID, fs.pluginsDir)
+	pluginDir, err := fs.extractFiles(ctx, pluginArchive, pluginID)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
@@ -97,8 +97,8 @@ func (fs *FS) Remove(_ context.Context, pluginID string) error {
 	return os.RemoveAll(pluginDir)
 }
 
-func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID, destPath string) (string, error) {
-	installDir := filepath.Join(destPath, pluginID)
+func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string) (string, error) {
+	installDir := filepath.Join(fs.pluginsDir, pluginID)
 	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
 		fs.log.Debugf("Removing existing installation of plugin %s", installDir)
 		err = os.RemoveAll(installDir)
@@ -116,18 +116,18 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 	for _, zf := range pluginArchive.File {
 		// We can ignore gosec G305 here since we check for the ZipSlip vulnerability below
 		// nolint:gosec
-		fullPath := filepath.Join(destPath, zf.Name)
+		fullPath := filepath.Join(fs.pluginsDir, zf.Name)
 
 		// Check for ZipSlip. More Info: http://bit.ly/2MsjAWE
 		if filepath.IsAbs(zf.Name) ||
-			!strings.HasPrefix(fullPath, filepath.Clean(destPath)+string(os.PathSeparator)) ||
+			!strings.HasPrefix(fullPath, filepath.Clean(fs.pluginsDir)+string(os.PathSeparator)) ||
 			strings.HasPrefix(zf.Name, ".."+string(os.PathSeparator)) {
 			return "", fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
-				zf.Name, destPath)
+				zf.Name, fs.pluginsDir)
 		}
 
-		dstPath := filepath.Clean(filepath.Join(destPath, removeGitBuildFromName(zf.Name, pluginID)))
+		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginID)))
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
