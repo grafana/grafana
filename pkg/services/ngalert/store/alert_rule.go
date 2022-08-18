@@ -384,8 +384,8 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			return err
 		}
 
-		for i := range query.Result {
-			if _, err := st.updateWithSavedQueries(ctx, query.Result[i]); err != nil {
+		for i := range alertRules {
+			if _, err := st.updateWithSavedQueries(ctx, alertRules[i]); err != nil {
 				return err
 			}
 		}

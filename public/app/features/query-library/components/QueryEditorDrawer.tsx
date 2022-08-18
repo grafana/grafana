@@ -36,16 +36,18 @@ const initialTabs = [
   },
 ];
 
-export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
+export const QueryEditorDrawer = (props: Props) => {
+  const { onDismiss } = props;
   const styles = useStyles2(getStyles);
   const [tabs, setTabs] = useState(initialTabs);
+  const [query, setSavedQuery] = useState(props.savedQuery);
 
   return (
-    <Drawer onClose={onDismiss} width={'40%'} expandable scrollableContent>
+    <Drawer onClose={onDismiss} width={'50%'} expandable scrollableContent>
       <div>
-        <QueryEditorDrawerHeader savedQuery={savedQuery} onDismiss={onDismiss} />
+        <QueryEditorDrawerHeader onSavedQueryChange={setSavedQuery} savedQuery={query} onDismiss={onDismiss} />
         <div className={styles.queryWrapper}>
-          <QueryEditor savedQuery={savedQuery} />
+          <QueryEditor onSavedQueryChange={setSavedQuery} savedQuery={query} />
         </div>
         <TabsBar>
           {tabs.map((tab, index) => (
@@ -60,8 +62,8 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
         </TabsBar>
         <TabContent>
           <div className={styles.tabWrapper}>
-            {tabs[0].active && <UsagesTab savedQuery={savedQuery} />}
-            {tabs[1].active && <VariablesTab savedQuery={savedQuery} />}
+            {tabs[0].active && <UsagesTab savedQuery={query} />}
+            {tabs[1].active && <VariablesTab savedQuery={query} />}
             {tabs[2].active && <HistoryTab />}
           </div>
         </TabContent>
@@ -73,13 +75,13 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     queryWrapper: css`
-      max-height: calc(50vh);
+      max-height: calc(60vh);
       overflow-y: scroll;
       margin-bottom: 50px;
     `,
     tabWrapper: css`
       overflow-y: scroll;
-      max-height: calc(37vh);
+      max-height: calc(27vh);
     `,
   };
 };

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { DataQuery, GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { Button, ButtonCascader, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { SavedQuery } from '../api/SavedQueriesApi';
@@ -10,11 +10,12 @@ import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
 import { QueryName } from './QueryName';
 
 type Props = {
-  savedQuery: SavedQuery<DataQuery>;
+  onSavedQueryChange: (newQuery: SavedQuery) => void;
+  savedQuery: SavedQuery;
   onDismiss: () => void;
 };
 
-export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss }: Props) => {
+export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryChange }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [queryName, setQueryName] = useState(savedQuery.title);
@@ -38,12 +39,14 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss }: Props) => {
   // @TODO update when Save is implemented
   const onQueryNameChange = (name: string) => {
     setQueryName(name);
-    savedQuery.title = name;
+    onSavedQueryChange({
+      ...savedQuery,
+      title: name,
+    });
   };
 
-  const onQuerySave = () => {
-    // TODO: implement save
-    onDismiss();
+  const onQuerySave = async () => {
+    await getSavedQuerySrv().updateSavedQuery(savedQuery);
   };
 
   return (
