@@ -73,13 +73,14 @@ export function SLOQueryEditor({
         onChange={onChange}
       ></Selector>
 
-      <LookbackPeriodSelect
-        refId={refId}
-        onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
-        selectorName={query.selectorName}
-        current={query.lookbackPeriod}
-        templateVariableOptions={variableOptionGroup.options}
-      />
+      {query.selectorName === 'select_slo_burn_rate' && (
+        <LookbackPeriodSelect
+          refId={refId}
+          onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
+          current={query.lookbackPeriod}
+          templateVariableOptions={variableOptionGroup.options}
+        />
+      )}
 
       <QueryEditorRow label="Alignment period" htmlFor={`${refId}-alignment-period`}>
         <PeriodSelect
