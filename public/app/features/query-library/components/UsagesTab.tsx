@@ -14,18 +14,18 @@ type Props = {
   savedQuery: SavedQuery<DataQuery>;
 };
 
-export const UsagesTab = (props: Props) => {
+export const UsagesTab = ({ savedQuery }: Props) => {
   const styles = useStyles2(getStyles);
 
   const searchQuery = useMemo<SearchQuery>(() => {
     const query: SearchQuery = {
       query: '*',
       kind: ['dashboard'],
-      saved_query_uid: props.savedQuery.uid,
+      saved_query_uid: savedQuery.uid,
     };
 
     return query;
-  }, [props.savedQuery.uid]);
+  }, [savedQuery.uid]);
 
   const results = useAsync(async () => {
     const raw = await getGrafanaSearcher().search(searchQuery);

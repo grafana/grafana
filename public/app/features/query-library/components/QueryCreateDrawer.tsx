@@ -17,7 +17,7 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
   return (
     <Drawer
       title="Add new query"
-      subtitle="You can store query from builder or upload from file"
+      subtitle="You can create a new query from builder or import from file"
       onClose={onDismiss}
       width={'40%'}
       expandable
