@@ -285,7 +285,8 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
   let xVals: Set<number>;
 
   if (mode === JoinMode.inner) {
-    xVals = new Set(intersect(tables.map((t) => Array.from(t[0]))));
+    // @ts-ignore
+    xVals = new Set(intersect(tables.map((t) => t[0])));
   } else {
     xVals = new Set();
 

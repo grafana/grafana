@@ -6,7 +6,7 @@ import {
   DataFrameType,
   FieldType,
   DataTransformerID,
-  joinDataFrames,
+  outerJoinDataFrames,
   fieldMatchers,
   FieldMatcherID,
   Field,
@@ -299,7 +299,7 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
 
     return (data: DataFrame[]) => {
       // Join by the first frame
-      const frame = joinDataFrames({
+      const frame = outerJoinDataFrames({
         frames: data,
         joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
         keepOriginIndices: true,

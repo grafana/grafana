@@ -575,27 +575,298 @@ describe('SeriesToColumns Transformer', () => {
       `);
       });
     });
+  });
 
-    describe('inner join', () => {
-      const seriesA = toDataFrame({
-        name: 'A',
+  describe('inner join', () => {
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'temperature', type: FieldType.number, values: [10.3, 10.4, 10.5, 10.6] },
+        { name: 'humidity', type: FieldType.number, values: [10000.3, 10000.4, 10000.5, 10000.6] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      name: 'B',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 3000, 5000, 7000] },
+        { name: 'temperature', type: FieldType.number, values: [11.1, 10.3, 10.5, 11.7] },
+        { name: 'humidity', type: FieldType.number, values: [11000.1, 10000.3, 10000.5, 11000.7] },
+      ],
+    });
+
+    it('inner joins by time field', async () => {
+      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: {
+          byField: 'time',
+          mode: JoinMode.inner,
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "time",
+            "state": Object {},
+            "type": "time",
+            "values": Array [
+              3000,
+              5000,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "A",
+            },
+            "name": "temperature",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10.3,
+              10.5,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "A",
+            },
+            "name": "humidity",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10000.3,
+              10000.5,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "B",
+            },
+            "name": "temperature",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10.3,
+              10.5,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "B",
+            },
+            "name": "humidity",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10000.3,
+              10000.5,
+            ],
+          },
+        ]
+      `);
+      });
+    });
+
+    it('inner joins by temperature field', async () => {
+      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: {
+          byField: 'temperature',
+          mode: JoinMode.inner,
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "temperature",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10.3,
+              10.5,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "A",
+            },
+            "name": "time",
+            "state": Object {
+              "multipleFrames": true,
+            },
+            "type": "time",
+            "values": Array [
+              3000,
+              5000,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "A",
+            },
+            "name": "humidity",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10000.3,
+              10000.5,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "B",
+            },
+            "name": "time",
+            "state": Object {
+              "multipleFrames": true,
+            },
+            "type": "time",
+            "values": Array [
+              3000,
+              5000,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "B",
+            },
+            "name": "humidity",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10000.3,
+              10000.5,
+            ],
+          },
+        ]
+      `);
+      });
+    });
+
+    it('inner joins by time field in reverse order', async () => {
+      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: {
+          byField: 'time',
+          mode: JoinMode.inner,
+        },
+      };
+
+      seriesA.fields[0].values = new ArrayVector(seriesA.fields[0].values.toArray().reverse());
+      seriesA.fields[1].values = new ArrayVector(seriesA.fields[1].values.toArray().reverse());
+      seriesA.fields[2].values = new ArrayVector(seriesA.fields[2].values.toArray().reverse());
+
+      await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "config": Object {},
+            "name": "time",
+            "state": Object {
+              "multipleFrames": true,
+            },
+            "type": "time",
+            "values": Array [
+              3000,
+              5000,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "A",
+            },
+            "name": "temperature",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10.3,
+              10.5,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "A",
+            },
+            "name": "humidity",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10000.3,
+              10000.5,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "B",
+            },
+            "name": "temperature",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10.3,
+              10.5,
+            ],
+          },
+          Object {
+            "config": Object {},
+            "labels": Object {
+              "name": "B",
+            },
+            "name": "humidity",
+            "state": Object {},
+            "type": "number",
+            "values": Array [
+              10000.3,
+              10000.5,
+            ],
+          },
+        ]
+      `);
+      });
+    });
+
+    describe('Field names', () => {
+      const seriesWithSameFieldAndDataFrameName = toDataFrame({
+        name: 'temperature',
         fields: [
-          { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-          { name: 'temperature', type: FieldType.number, values: [10.3, 10.4, 10.5, 10.6] },
-          { name: 'humidity', type: FieldType.number, values: [10000.3, 10000.4, 10000.5, 10000.6] },
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
         ],
       });
 
       const seriesB = toDataFrame({
         name: 'B',
         fields: [
-          { name: 'time', type: FieldType.time, values: [1000, 3000, 5000, 7000] },
-          { name: 'temperature', type: FieldType.number, values: [11.1, 10.3, 10.5, 11.7] },
-          { name: 'humidity', type: FieldType.number, values: [11000.1, 10000.3, 10000.5, 11000.7] },
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'temperature', type: FieldType.number, values: [2, 4, 6, 8] },
         ],
       });
 
-      it('inner joins by time field', async () => {
+      it('when dataframe and field share the same name then use the field name', async () => {
         const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
           id: DataTransformerID.seriesToColumns,
           options: {
@@ -604,281 +875,11 @@ describe('SeriesToColumns Transformer', () => {
           },
         };
 
-        await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
-          const data = received[0];
-          const filtered = data[0];
-          expect(filtered.fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "config": Object {},
-            "name": "time",
-            "state": Object {},
-            "type": "time",
-            "values": Array [
-              3000,
-              5000,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "A",
-            },
-            "name": "temperature",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10.3,
-              10.5,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "A",
-            },
-            "name": "humidity",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10000.3,
-              10000.5,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "B",
-            },
-            "name": "temperature",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10.3,
-              10.5,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "B",
-            },
-            "name": "humidity",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10000.3,
-              10000.5,
-            ],
-          },
-        ]
-      `);
-        });
-      });
-
-      it('inner joins by temperature field', async () => {
-        const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
-          id: DataTransformerID.seriesToColumns,
-          options: {
-            byField: 'temperature',
-            mode: JoinMode.inner,
-          },
-        };
-
-        await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
-          const data = received[0];
-          const filtered = data[0];
-          expect(filtered.fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "config": Object {},
-            "name": "temperature",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10.3,
-              10.5,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "A",
-            },
-            "name": "time",
-            "state": Object {
-              "multipleFrames": true,
-            },
-            "type": "time",
-            "values": Array [
-              3000,
-              5000,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "A",
-            },
-            "name": "humidity",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10000.3,
-              10000.5,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "B",
-            },
-            "name": "time",
-            "state": Object {
-              "multipleFrames": true,
-            },
-            "type": "time",
-            "values": Array [
-              3000,
-              5000,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "B",
-            },
-            "name": "humidity",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10000.3,
-              10000.5,
-            ],
-          },
-        ]
-      `);
-        });
-      });
-
-      it('inner joins by time field in reverse order', async () => {
-        const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
-          id: DataTransformerID.seriesToColumns,
-          options: {
-            byField: 'time',
-            mode: JoinMode.inner,
-          },
-        };
-
-        seriesA.fields[0].values = new ArrayVector(seriesA.fields[0].values.toArray().reverse());
-        seriesA.fields[1].values = new ArrayVector(seriesA.fields[1].values.toArray().reverse());
-        seriesA.fields[2].values = new ArrayVector(seriesA.fields[2].values.toArray().reverse());
-
-        await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
-          const data = received[0];
-          const filtered = data[0];
-          expect(filtered.fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "config": Object {},
-            "name": "time",
-            "state": Object {
-              "multipleFrames": true,
-            },
-            "type": "time",
-            "values": Array [
-              3000,
-              5000,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "A",
-            },
-            "name": "temperature",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10.3,
-              10.5,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "A",
-            },
-            "name": "humidity",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10000.3,
-              10000.5,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "B",
-            },
-            "name": "temperature",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10.3,
-              10.5,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "name": "B",
-            },
-            "name": "humidity",
-            "state": Object {},
-            "type": "number",
-            "values": Array [
-              10000.3,
-              10000.5,
-            ],
-          },
-        ]
-      `);
-        });
-      });
-
-      describe('Field names', () => {
-        const seriesWithSameFieldAndDataFrameName = toDataFrame({
-          name: 'temperature',
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
-          ],
-        });
-
-        const seriesB = toDataFrame({
-          name: 'B',
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-            { name: 'temperature', type: FieldType.number, values: [2, 4, 6, 8] },
-          ],
-        });
-
-        it('when dataframe and field share the same name then use the field name', async () => {
-          const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
-            id: DataTransformerID.seriesToColumns,
-            options: {
-              byField: 'time',
-              mode: JoinMode.inner,
-            },
-          };
-
-          await expect(transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB])).toEmitValuesWith(
-            (received) => {
-              const data = received[0];
-              const filtered = data[0];
-              expect(filtered.fields).toMatchInlineSnapshot(`
+        await expect(transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB])).toEmitValuesWith(
+          (received) => {
+            const data = received[0];
+            const filtered = data[0];
+            expect(filtered.fields).toMatchInlineSnapshot(`
             Array [
               Object {
                 "config": Object {},
@@ -924,45 +925,45 @@ describe('SeriesToColumns Transformer', () => {
               },
             ]
           `);
-            }
-          );
-        });
+          }
+        );
+      });
+    });
+
+    it('joins if fields are missing', async () => {
+      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: {
+          byField: 'time',
+          mode: JoinMode.inner,
+        },
+      };
+
+      const frame1 = toDataFrame({
+        name: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'temperature', type: FieldType.number, values: [10, 11, 12] },
+        ],
       });
 
-      it('joins if fields are missing', async () => {
-        const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
-          id: DataTransformerID.seriesToColumns,
-          options: {
-            byField: 'time',
-            mode: JoinMode.inner,
-          },
-        };
+      const frame2 = toDataFrame({
+        name: 'B',
+        fields: [],
+      });
 
-        const frame1 = toDataFrame({
-          name: 'A',
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-            { name: 'temperature', type: FieldType.number, values: [10, 11, 12] },
-          ],
-        });
+      const frame3 = toDataFrame({
+        name: 'C',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'temperature', type: FieldType.number, values: [20, 22, 24] },
+        ],
+      });
 
-        const frame2 = toDataFrame({
-          name: 'B',
-          fields: [],
-        });
-
-        const frame3 = toDataFrame({
-          name: 'C',
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1, 2, 3] },
-            { name: 'temperature', type: FieldType.number, values: [20, 22, 24] },
-          ],
-        });
-
-        await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toEmitValuesWith((received) => {
-          const data = received[0];
-          const filtered = data[0];
-          expect(filtered.fields).toMatchInlineSnapshot(`
+      await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields).toMatchInlineSnapshot(`
         Array [
           Object {
             "config": Object {},
@@ -1005,36 +1006,36 @@ describe('SeriesToColumns Transformer', () => {
           },
         ]
       `);
-        });
+      });
+    });
+
+    it('handles duplicate field name', async () => {
+      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: {
+          byField: 'time',
+          mode: JoinMode.inner,
+        },
+      };
+
+      const frame1 = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1] },
+          { name: 'temperature', type: FieldType.number, values: [10] },
+        ],
       });
 
-      it('handles duplicate field name', async () => {
-        const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
-          id: DataTransformerID.seriesToColumns,
-          options: {
-            byField: 'time',
-            mode: JoinMode.inner,
-          },
-        };
+      const frame2 = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1] },
+          { name: 'temperature', type: FieldType.number, values: [20] },
+        ],
+      });
 
-        const frame1 = toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1] },
-            { name: 'temperature', type: FieldType.number, values: [10] },
-          ],
-        });
-
-        const frame2 = toDataFrame({
-          fields: [
-            { name: 'time', type: FieldType.time, values: [1] },
-            { name: 'temperature', type: FieldType.number, values: [20] },
-          ],
-        });
-
-        await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith((received) => {
-          const data = received[0];
-          const filtered = data[0];
-          expect(filtered.fields).toMatchInlineSnapshot(`
+      await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields).toMatchInlineSnapshot(`
         Array [
           Object {
             "config": Object {},
@@ -1067,7 +1068,6 @@ describe('SeriesToColumns Transformer', () => {
           },
         ]
       `);
-        });
       });
     });
   });

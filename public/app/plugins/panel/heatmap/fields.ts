@@ -6,7 +6,7 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   GrafanaTheme2,
-  joinDataFrames,
+  outerJoinDataFrames,
   PanelData,
   ValueFormatter,
 } from '@grafana/data';
@@ -76,7 +76,7 @@ export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme
   if (!rowsHeatmap) {
     if (frames.length > 1) {
       rowsHeatmap = [
-        joinDataFrames({
+        outerJoinDataFrames({
           frames,
         })!,
       ][0];
