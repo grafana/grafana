@@ -7,43 +7,64 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { SeriesToColumnsOptions } from '@grafana/data/src/transformations/transformers/seriesToColumns';
-import { Select } from '@grafana/ui';
+import { SeriesToColumnsOptions, JoinMode } from '@grafana/data/src/transformations/transformers/seriesToColumns';
+import { Select, InlineFieldRow, InlineField, RadioButtonGroup } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
-export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<SeriesToColumnsOptions>> = ({
+const modes = [
+  { value: JoinMode.outer, label: 'OUTER', description: 'Keep all rows that match' },
+  { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match' },
+];
+
+export function SeriesToFieldsTransformerEditor({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<SeriesToColumnsOptions>) {
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
 
   const onSelectField = useCallback(
     (value: SelectableValue<string>) => {
       onChange({
         ...options,
-        byField: value.value,
+        byField: value?.value,
+      });
+    },
+    [onChange, options]
+  );
+
+  const onSetMode = useCallback(
+    (mode: JoinMode) => {
+      onChange({
+        ...options,
+        mode,
       });
     },
     [onChange, options]
   );
 
   return (
-    <div className="gf-form-inline">
-      <div className="gf-form gf-form--grow">
-        <div className="gf-form-label width-8">Field name</div>
-        <Select options={fieldNames} value={options.byField} onChange={onSelectField} isClearable />
-      </div>
-    </div>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Mode" labelWidth={8}>
+          <RadioButtonGroup options={modes} value={options.mode ?? JoinMode.outer} onChange={onSetMode} />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Field" labelWidth={8}>
+          <Select options={fieldNames} value={options.byField} onChange={onSelectField} isClearable />
+        </InlineField>
+      </InlineFieldRow>
+    </>
   );
-};
+}
 
 export const seriesToFieldsTransformerRegistryItem: TransformerRegistryItem<SeriesToColumnsOptions> = {
-  id: DataTransformerID.seriesToColumns,
+  id: DataTransformerID.join,
+  aliasIds: [DataTransformerID.seriesToColumns],
   editor: SeriesToFieldsTransformerEditor,
   transformation: standardTransformers.seriesToColumnsTransformer,
-  name: 'Outer join',
-  description:
-    'Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.',
+  name: standardTransformers.seriesToColumnsTransformer.name,
+  description: standardTransformers.seriesToColumnsTransformer.description,
 };

@@ -145,6 +145,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
   onTransformationAdd = (selectable: SelectableValue<string>) => {
     const { transformations } = this.state;
+    console.log('ADD', selectable);
 
     const nextId = this.getTransformationNextId(selectable.value!);
     this.setState({ search: '', showPicker: false });

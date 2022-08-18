@@ -18,9 +18,11 @@ export interface SeriesToColumnsOptions {
 }
 
 export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesToColumnsOptions> = {
-  id: DataTransformerID.seriesToColumns,
-  name: 'Series as columns', // Called 'Outer join' in the UI!
-  description: 'Groups series by field and returns values as columns',
+  id: DataTransformerID.join,
+  aliasIds: [DataTransformerID.seriesToColumns],
+  name: 'Join by field', // Called 'Outer join' in the UI!
+  description:
+    'Combine rows from two or more tables, based on a related field between them.  This can be used to outer join multiple time series on the _time_ field to show many time series in one table.',
   defaultOptions: {
     byField: undefined, // DEFAULT_KEY_FIELD,
     mode: JoinMode.outer,

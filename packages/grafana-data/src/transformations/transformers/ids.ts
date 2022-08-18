@@ -1,5 +1,5 @@
 export enum DataTransformerID {
-  // join = 'join', // Pick a field and merge all series based on that field
+  join = 'join',
   append = 'append',
   //  rotate = 'rotate', // Columns to rows
   reduce = 'reduce',
@@ -7,6 +7,7 @@ export enum DataTransformerID {
   organize = 'organize',
   rename = 'rename',
   calculateField = 'calculateField',
+  /** @deprecated use join */
   seriesToColumns = 'seriesToColumns',
   seriesToRows = 'seriesToRows',
   merge = 'merge',

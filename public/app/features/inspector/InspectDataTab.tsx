@@ -355,7 +355,7 @@ function buildTransformationOptions() {
         message: 'Series joined by time',
       }),
       transformer: {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.join,
         options: { byField: 'Time' },
       },
     },
