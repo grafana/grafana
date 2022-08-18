@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"sort"
 	"testing"
 	"time"
@@ -2007,6 +2008,34 @@ func TestProcessEvalResults(t *testing.T) {
 			}, time.Second, 100*time.Millisecond, "%d annotations are present, expected %d. We have %+v", fakeAnnoRepo.Len(), tc.expectedAnnotations, printAllAnnotations(fakeAnnoRepo.Items))
 		})
 	}
+
+	t.Run("should save state to database", func(t *testing.T) {
+		fakeAnnoRepo := store.NewFakeAnnotationsRepo()
+		annotations.SetRepository(fakeAnnoRepo)
+		instanceStore := &store.FakeInstanceStore{}
+		clk := clock.New()
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk)
+		rule := models.AlertRuleGen()()
+		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
+
+		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels))
+
+		require.NotEmpty(t, states)
+
+		savedStates := make(map[string]models.SaveAlertInstanceCommand)
+		for _, op := range instanceStore.RecordedOps {
+			switch q := op.(type) {
+			case models.SaveAlertInstanceCommand:
+				cacheId, err := q.Labels.StringKey()
+				require.NoError(t, err)
+				savedStates[cacheId] = q
+			}
+		}
+		require.Len(t, savedStates, len(states))
+		for _, s := range states {
+			require.Contains(t, savedStates, s.CacheId)
+		}
+	})
 }
 
 func printAllAnnotations(annos []*annotations.Item) string {

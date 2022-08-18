@@ -74,10 +74,15 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     let hardMaxOnly = softMax == null && hardMax != null;
 
     // uPlot range function
-    const rangeFn = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
+    const rangeFn = (u: uPlot, dataMin: number | null, dataMax: number | null, scaleKey: string) => {
       const scale = u.scales[scaleKey];
 
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
+
+      // happens when all series on a scale are `show: false`, re-returning nulls will auto-disable axis
+      if (dataMin == null || dataMax == null) {
+        return minMax;
+      }
 
       if (scale.distr === 1 || scale.distr === 2) {
         if (centeredZero) {

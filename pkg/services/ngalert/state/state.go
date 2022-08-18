@@ -36,6 +36,13 @@ type State struct {
 	Error                error
 }
 
+func (a *State) GetRuleKey() models.AlertRuleKey {
+	return models.AlertRuleKey{
+		OrgID: a.OrgID,
+		UID:   a.AlertRuleUID,
+	}
+}
+
 type Evaluation struct {
 	EvaluationTime  time.Time
 	EvaluationState eval.State

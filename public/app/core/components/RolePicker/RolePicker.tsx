@@ -18,6 +18,9 @@ export interface Props {
   onRolesChange: (newRoles: Role[]) => void;
   onBasicRoleChange?: (newRole: OrgRole) => void;
   canUpdateRoles?: boolean;
+  /**
+   * Set {@link RolePickerMenu}'s button to display either `Apply` (apply=true) or `Update` (apply=false)
+   */
   apply?: boolean;
 }
 
