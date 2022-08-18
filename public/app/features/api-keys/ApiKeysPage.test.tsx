@@ -13,12 +13,25 @@ import { ApiKeysPageUnconnected, Props } from './ApiKeysPage';
 import { getMultipleMockKeys } from './__mocks__/apiKeysMock';
 import { setSearchQuery } from './state/reducers';
 
+jest.mock('app/core/core', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+      hasPermissionInMetadata: () => true,
+    },
+  };
+});
+
 const setup = (propOverrides: Partial<Props>) => {
   const loadApiKeysMock = jest.fn();
   const deleteApiKeyMock = jest.fn();
+  const migrateApiKeyMock = jest.fn();
   const addApiKeyMock = jest.fn();
+  const migrateAllMock = jest.fn();
   const toggleIncludeExpiredMock = jest.fn();
   const setSearchQueryMock = mockToolkitActionCreator(setSearchQuery);
+  const getApiKeysMigrationStatusMock = jest.fn();
+  const hideApiKeysMock = jest.fn();
   const props: Props = {
     navModel: {
       main: {
@@ -35,14 +48,17 @@ const setup = (propOverrides: Partial<Props>) => {
     deleteApiKey: deleteApiKeyMock,
     setSearchQuery: setSearchQueryMock,
     addApiKey: addApiKeyMock,
+    getApiKeysMigrationStatus: getApiKeysMigrationStatusMock,
+    migrateApiKey: migrateApiKeyMock,
+    migrateAll: migrateAllMock,
+    hideApiKeys: hideApiKeysMock,
     apiKeysCount: 0,
     timeZone: 'utc',
     includeExpired: false,
     includeExpiredDisabled: false,
     toggleIncludeExpired: toggleIncludeExpiredMock,
-    canRead: true,
     canCreate: true,
-    canDelete: true,
+    apiKeysMigrated: false,
   };
 
   Object.assign(props, propOverrides);

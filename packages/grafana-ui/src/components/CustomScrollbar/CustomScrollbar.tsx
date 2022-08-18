@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import { isNil } from 'lodash';
 import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
@@ -12,6 +11,7 @@ export type ScrollbarPosition = positionValues;
 
 interface Props {
   className?: string;
+  testId?: string;
   autoHide?: boolean;
   autoHideTimeout?: number;
   autoHeightMax?: string;
@@ -33,6 +33,7 @@ export const CustomScrollbar: FC<Props> = ({
   autoHideTimeout = 200,
   setScrollTop,
   className,
+  testId,
   autoHeightMin = '0',
   autoHeightMax = '100%',
   hideTracksWhenNotNeeded = false,
@@ -44,28 +45,24 @@ export const CustomScrollbar: FC<Props> = ({
   children,
 }) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
-  useEffect(() => {
-    if (ref.current) {
-      scrollRefCallback?.(ref.current.view);
-    }
-  }, [ref, scrollRefCallback]);
   const styles = useStyles2(getStyles);
 
-  const updateScroll = () => {
-    if (ref.current && !isNil(scrollTop)) {
-      ref.current.scrollTop(scrollTop);
+  useEffect(() => {
+    if (ref.current && scrollRefCallback) {
+      scrollRefCallback(ref.current.view);
     }
-  };
+  }, [ref, scrollRefCallback]);
 
   useEffect(() => {
-    updateScroll();
-  });
+    if (ref.current && scrollTop != null) {
+      ref.current.scrollTop(scrollTop);
+    }
+  }, [scrollTop]);
 
   /**
    * Special logic for doing a update a few milliseconds after mount to check for
    * updated height due to dynamic content
    */
-
   useEffect(() => {
     if (!updateAfterMountMs) {
       return;
@@ -118,6 +115,7 @@ export const CustomScrollbar: FC<Props> = ({
 
   return (
     <Scrollbars
+      data-testid={testId}
       ref={ref}
       className={classNames(styles.customScrollbar, className)}
       onScrollStop={onScrollStop}

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-
-import { SelectableValue } from '../../../../../packages/grafana-data/src';
 
 import { RuleSettingsEditor } from './RuleSettingsEditor';
 import { RuleType, RuleSetting, PipeLineEntitiesInfo } from './types';
@@ -39,7 +38,6 @@ export const RuleSettingsArray: React.FC<Props> = ({ onChange, value, ruleType, 
     <>
       <Select
         placeholder="Select an index"
-        menuShouldPortal={true}
         options={indexArr}
         value={index}
         onChange={(index) => {

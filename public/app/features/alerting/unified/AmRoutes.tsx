@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Redirect } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
@@ -11,10 +10,13 @@ import { useCleanup } from '../../../core/hooks/useCleanup';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
+import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { AmRootRoute } from './components/amroutes/AmRootRoute';
 import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { AmRouteReceiver, FormAmRoute } from './types/amroutes';
@@ -26,9 +28,8 @@ const AmRoutes: FC = () => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const [isRootRouteEditMode, setIsRootRouteEditMode] = useState(false);
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
-
-  const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : true;
+  const alertManagers = useAlertManagersByPermission('notification');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -54,6 +55,8 @@ const AmRoutes: FC = () => {
   const receivers = stringsToSelectableValues(
     (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
   ) as AmRouteReceiver[];
+
+  const isProvisioned = useMemo(() => Boolean(config?.route?.provenance), [config?.route]);
 
   const enterRootRouteEditMode = () => {
     setIsRootRouteEditMode(true);
@@ -100,21 +103,35 @@ const AmRoutes: FC = () => {
   };
 
   if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/routes" />;
+    return (
+      <AlertingPageWrapper pageId="am-routes">
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
+      </AlertingPageWrapper>
+    );
   }
+
+  const readOnly = alertManagerSourceName
+    ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) || isProvisioned
+    : true;
 
   return (
     <AlertingPageWrapper pageId="am-routes">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <AlertManagerPicker
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        dataSources={alertManagers}
+      />
       {resultError && !resultLoading && (
         <Alert severity="error" title="Error loading Alertmanager config">
           {resultError.message || 'Unknown error.'}
         </Alert>
       )}
+      {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
       {resultLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
       {result && !resultLoading && !resultError && (
         <>
           <AmRootRoute
+            readOnly={readOnly}
             alertManagerSourceName={alertManagerSourceName}
             isEditMode={isRootRouteEditMode}
             onSave={handleSave}

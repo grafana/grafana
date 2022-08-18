@@ -79,8 +79,8 @@ type dashRenderer interface {
 type thumbnailRepo interface {
 	updateThumbnailState(ctx context.Context, state models.ThumbnailState, meta models.DashboardThumbnailMeta) error
 	doThumbnailsExist(ctx context.Context) (bool, error)
-	saveFromFile(ctx context.Context, filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
-	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int) (int64, error)
+	saveFromFile(ctx context.Context, filePath string, meta models.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
+	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta models.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
 	getThumbnail(ctx context.Context, meta models.DashboardThumbnailMeta) (*models.DashboardThumbnail, error)
 	findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, thumbnailKind models.ThumbnailKind) ([]*models.DashboardWithStaleThumbnail, error)
 }

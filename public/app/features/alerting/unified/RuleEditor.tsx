@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
@@ -75,7 +75,7 @@ const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
 
   const { canCreateGrafanaRules, canCreateCloudRules, canEditRules } = useRulesAccess();
 
-  if (!canCreateGrafanaRules && !canCreateCloudRules) {
+  if (!identifier && !canCreateGrafanaRules && !canCreateCloudRules) {
     return <AlertWarning title="Cannot create rules">Sorry! You are not allowed to create rules.</AlertWarning>;
   }
 

@@ -68,11 +68,11 @@ export class InputQueryEditor extends PureComponent<Props, State> {
       <div>
         <InlineField label="Data" labelWidth={8}>
           <>
-            <Select menuShouldPortal width={20} options={options} value={selected} onChange={this.onSourceChange} />
+            <Select width={20} options={options} value={selected} onChange={this.onSourceChange} />
             {query.data ? (
               <div style={{ alignSelf: 'center' }}>{describeDataFrame(query.data)}</div>
             ) : (
-              <LinkButton variant="link" href={`datasources/edit/${uid}/`}>
+              <LinkButton fill="text" href={`datasources/edit/${uid}/`}>
                 {name}: {describeDataFrame(datasource.data)} &nbsp;&nbsp;
                 <Icon name="pen" />
               </LinkButton>

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
-import { useForm, FormProvider, UseFormWatch } from 'react-hook-form';
+import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, PageToolbar, Spinner, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -15,15 +15,15 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
+import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
-import { AlertTypeStep } from './AlertTypeStep';
-import { CloudConditionsStep } from './CloudConditionsStep';
+import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
-import { GrafanaConditionsStep } from './GrafanaConditionsStep';
-import { QueryStep } from './QueryStep';
+import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
+import { NotificationsStep } from './NotificationsStep';
 import { RuleInspector } from './RuleInspector';
+import { QueryAndAlertConditionStep } from './query-and-alert-condition/QueryAndAlertConditionStep';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -151,12 +151,12 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
-              <AlertTypeStep editingExistingRule={!!existing} />
+              <QueryAndAlertConditionStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
-                  <QueryStep />
-                  {type === RuleFormType.grafana ? <GrafanaConditionsStep /> : <CloudConditionsStep />}
-                  <DetailsStep />
+                  {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
+                  <DetailsStep initialFolder={defaultValues.folder} />
+                  <NotificationsStep />
                 </>
               )}
             </div>

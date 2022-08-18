@@ -157,16 +157,22 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
       return addRuleToNamespaceAndGroup(namespace, groupSpec, newRule);
     }
 
-    const sameNamespace = existingRule.namespace === namespace;
-    const sameGroup = existingRule.group.name === values.group;
+    // we'll fetch the existing group again, someone might have updated it while we were editing a rule
+    const freshExisting = await findEditableRule(ruleId.fromRuleWithLocation(existingRule));
+    if (!freshExisting) {
+      throw new Error('Rule not found.');
+    }
+
+    const sameNamespace = freshExisting.namespace === namespace;
+    const sameGroup = freshExisting.group.name === values.group;
     const sameLocation = sameNamespace && sameGroup;
 
     if (sameLocation) {
       // we're update a rule in the same namespace and group
-      return updateGrafanaRule(existingRule, newRule, evaluateEvery);
+      return updateGrafanaRule(freshExisting, newRule, evaluateEvery);
     } else {
       // we're moving a rule to either a different group or namespace
-      return moveGrafanaRule(namespace, groupSpec, existingRule, newRule);
+      return moveGrafanaRule(namespace, groupSpec, freshExisting, newRule);
     }
   };
 
@@ -216,11 +222,16 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     // make sure our updated alert has the same UID as before
     copyGrafanaUID(existingRule, newRule);
 
-    // create the new array of rules we want to send to the group
-    const newRules = existingRule.group.rules
-      .filter((rule): rule is RulerGrafanaRuleDTO => isGrafanaRulerRule(rule))
-      .filter((rule) => rule.grafana_alert.uid !== existingRule.rule.grafana_alert.uid)
-      .concat(newRule as RulerGrafanaRuleDTO);
+    // create the new array of rules we want to send to the group. Keep the order of alerts in the group.
+    const newRules = existingRule.group.rules.map((rule) => {
+      if (!isGrafanaRulerRule(rule)) {
+        return rule;
+      }
+      if (rule.grafana_alert.uid === existingRule.rule.grafana_alert.uid) {
+        return newRule;
+      }
+      return rule;
+    });
 
     await setRulerRuleGroup(rulerConfig, existingRule.namespace, {
       name: existingRule.group.name,

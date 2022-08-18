@@ -61,7 +61,7 @@ export const VerifyEmail: FC = () => {
             />
           </Field>
           <HorizontalGroup>
-            <Button>Send verification email</Button>
+            <Button type="submit">Send verification email</Button>
             <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
               Back to login
             </LinkButton>

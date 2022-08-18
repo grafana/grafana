@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 
 	"github.com/go-openapi/strfmt"
@@ -35,10 +36,13 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
 	sqlStore := sqlstore.InitTestDB(t)
 	s := &store.DBstore{
-		BaseInterval:    10 * time.Second,
-		DefaultInterval: 60 * time.Second,
-		SQLStore:        sqlStore,
-		Logger:          log.New("alertmanager-test"),
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval:                  10 * time.Second,
+			DefaultRuleEvaluationInterval: 60 * time.Second,
+		},
+		SQLStore:         sqlStore,
+		Logger:           log.New("alertmanager-test"),
+		DashboardService: dashboards.NewFakeDashboardService(t),
 	}
 
 	kvStore := NewFakeKVStore(t)

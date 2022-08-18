@@ -2,7 +2,6 @@ import { debounce } from 'lodash';
 import React, { useCallback, useMemo } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, CodeEditor } from '@grafana/ui';
 
 import AzureMonitorDatasource from '../../datasource';
@@ -16,11 +15,10 @@ import {
 import useLastError from '../../utils/useLastError';
 import ArgQueryEditor from '../ArgQueryEditor';
 import LogsQueryEditor from '../LogsQueryEditor';
-import MetricsQueryEditor from '../MetricsQueryEditor';
-import NewMetricsQueryEditor from '../NewMetricsQueryEditor/MetricsQueryEditor';
+import NewMetricsQueryEditor from '../MetricsQueryEditor/MetricsQueryEditor';
+import { QueryHeader } from '../QueryHeader';
 import { Space } from '../Space';
 
-import QueryTypeField from './QueryTypeField';
 import usePreparedQuery from './usePreparedQuery';
 
 export type AzureMonitorQueryEditorProps = QueryEditorProps<
@@ -34,6 +32,7 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
   datasource,
   onChange,
   onRunQuery: baseOnRunQuery,
+  data,
 }) => {
   const [errorMessage, setError] = useLastError();
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
@@ -56,9 +55,10 @@ const QueryEditor: React.FC<AzureMonitorQueryEditorProps> = ({
 
   return (
     <div data-testid="azure-monitor-query-editor">
-      <QueryTypeField query={query} onQueryChange={onQueryChange} />
+      <QueryHeader query={query} onQueryChange={onQueryChange} />
 
       <EditorForQueryType
+        data={data}
         subscriptionId={subscriptionId}
         query={query}
         datasource={datasource}
@@ -86,6 +86,7 @@ interface EditorForQueryTypeProps extends Omit<AzureMonitorQueryEditorProps, 'on
 }
 
 const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
+  data,
   subscriptionId,
   query,
   datasource,
@@ -95,20 +96,9 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
 }) => {
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
-      if (config.featureToggles.azureMonitorResourcePickerForMetrics) {
-        return (
-          <NewMetricsQueryEditor
-            query={query}
-            datasource={datasource}
-            onChange={onChange}
-            variableOptionGroup={variableOptionGroup}
-            setError={setError}
-          />
-        );
-      }
       return (
-        <MetricsQueryEditor
-          subscriptionId={subscriptionId}
+        <NewMetricsQueryEditor
+          data={data}
           query={query}
           datasource={datasource}
           onChange={onChange}
@@ -162,8 +152,6 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
         </Alert>
       );
   }
-
-  return null;
 };
 
 export default QueryEditor;

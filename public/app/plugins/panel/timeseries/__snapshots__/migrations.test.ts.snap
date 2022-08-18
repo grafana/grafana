@@ -12,7 +12,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -44,6 +44,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -72,6 +73,7 @@ Object {
       ],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "single",
@@ -98,6 +100,7 @@ Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "single",
@@ -120,7 +123,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -141,6 +144,21 @@ Object {
           },
         ],
       },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(16, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
     ],
   },
   "options": Object {
@@ -154,6 +172,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -176,7 +195,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -197,6 +216,21 @@ Object {
           },
         ],
       },
+      Object {
+        "matcher": Object {
+          "id": "byRegexp",
+          "options": "/.*Status: 2[0-9]+.*/i",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(16, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
     ],
   },
   "options": Object {
@@ -210,6 +244,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -238,6 +273,7 @@ Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "single",
@@ -259,7 +295,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
         "stacking": Object {
           "group": "A",
           "mode": "normal",
@@ -325,6 +361,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -346,7 +383,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
         "stacking": Object {
           "group": "A",
           "mode": "normal",
@@ -382,6 +419,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -404,7 +442,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "displayName": "DISPLAY NAME",
       "nullValueMode": "null",
@@ -423,6 +461,7 @@ Object {
       ],
       "displayMode": "table",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -444,7 +483,7 @@ Object {
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -472,6 +511,7 @@ Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",
@@ -554,7 +594,7 @@ Object {
           "type": "log",
         },
         "showPoints": "never",
-        "spanNulls": true,
+        "spanNulls": false,
       },
       "decimals": 3,
       "max": 1000,
@@ -608,6 +648,7 @@ Object {
       "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
+      "showLegend": true,
     },
     "tooltip": Object {
       "mode": "multi",

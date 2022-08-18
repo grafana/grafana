@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { dataFrameToLogsModel } from '../../../core/logs_model';
+import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
 import { preProcessPanelData } from '../../query/state/runRequest';

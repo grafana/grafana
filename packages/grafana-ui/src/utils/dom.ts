@@ -1,5 +1,5 @@
 // Node.closest() polyfill
-if ('Element' in window && !Element.prototype.closest) {
+if (typeof window !== 'undefined' && 'Element' in window && !Element.prototype.closest) {
   Element.prototype.closest = function (this: any, s: string) {
     const matches = (this.document || this.ownerDocument).querySelectorAll(s);
     let el = this;

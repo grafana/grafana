@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 import GraphTicks from './GraphTicks';
 
-describe('<GraphTicks>', () => {
+const setup = (propOverrides) => {
   const defaultProps = {
     items: [
       { valueWidth: 100, valueOffset: 25, serviceName: 'a' },
@@ -25,20 +25,27 @@ describe('<GraphTicks>', () => {
     ],
     valueWidth: 200,
     numTicks: 4,
+    ...propOverrides,
   };
 
-  let ticksG;
+  return render(
+    <svg>
+      <GraphTicks {...defaultProps} />
+    </svg>
+  );
+};
 
-  beforeEach(() => {
-    const wrapper = shallow(<GraphTicks {...defaultProps} />);
-    ticksG = wrapper.find('[data-test="ticks"]');
-  });
-
+describe('GraphTicks tests', () => {
   it('creates a <g> for ticks', () => {
-    expect(ticksG.length).toBe(1);
+    setup();
+
+    expect(screen.getByTestId('ticks')).toBeInTheDocument();
   });
 
   it('creates a line for each ticks excluding the first and last', () => {
-    expect(ticksG.find('line').length).toBe(defaultProps.numTicks - 1);
+    setup({ numTicks: 6 });
+
+    // defaultProps.numTicks - 1 === expect
+    expect(screen.getByTestId('ticks').children).toHaveLength(5);
   });
 });

@@ -11,6 +11,10 @@ export interface Dimensions {
   [key: string]: string | string[];
 }
 
+export interface MultiFilters {
+  [key: string]: string[];
+}
+
 export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
 
 export enum MetricQueryType {
@@ -42,7 +46,9 @@ export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
 
   //common props
   id: string;
+
   alias?: string;
+  label?: string;
 
   // Math expression query
   expression?: string;
@@ -115,6 +121,7 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
+  defaultLogGroups?: string[];
 }
 
 export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonData {
@@ -192,6 +199,7 @@ export interface GetLogEventsRequest {
    * If the value is true, the earliest log events are returned first. If the value is false, the latest log events are returned first. The default value is false. If you are using nextToken in this operation, you must specify true for startFromHead.
    */
   startFromHead?: boolean;
+  region?: string;
 }
 
 export interface GetQueryResultsResponse {
@@ -370,6 +378,21 @@ export enum VariableQueryType {
   EC2InstanceAttributes = 'ec2InstanceAttributes',
   ResourceArns = 'resourceARNs',
   Statistics = 'statistics',
+  LogGroups = 'logGroups',
+}
+
+export interface OldVariableQuery extends DataQuery {
+  queryType: VariableQueryType;
+  namespace: string;
+  region: string;
+  metricName: string;
+  dimensionKey: string;
+  dimensionFilters: string;
+  ec2Filters: string;
+  instanceID: string;
+  attributeName: string;
+  resourceType: string;
+  tags: string;
 }
 
 export interface VariableQuery extends DataQuery {
@@ -379,11 +402,12 @@ export interface VariableQuery extends DataQuery {
   metricName: string;
   dimensionKey: string;
   dimensionFilters?: Dimensions;
-  ec2Filters: string;
+  ec2Filters?: MultiFilters;
   instanceID: string;
   attributeName: string;
   resourceType: string;
-  tags: string;
+  tags?: MultiFilters;
+  logGroupPrefix?: string;
 }
 
 export interface LegacyAnnotationQuery extends MetricStat, DataQuery {

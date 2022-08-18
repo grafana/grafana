@@ -13,12 +13,13 @@ import (
 //     Responses:
 //       200: RuleResponse
 
-// swagger:route GET /api/prometheus/{DatasourceID}/api/v1/rules prometheus RouteGetRuleStatuses
+// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/rules prometheus RouteGetRuleStatuses
 //
 // gets the evaluation statuses of all rules
 //
 //     Responses:
 //       200: RuleResponse
+//       404: NotFound
 
 // swagger:route GET /api/prometheus/grafana/api/v1/alerts prometheus RouteGetGrafanaAlertStatuses
 //
@@ -27,12 +28,13 @@ import (
 //     Responses:
 //       200: AlertResponse
 
-// swagger:route GET /api/prometheus/{DatasourceID}/api/v1/alerts prometheus RouteGetAlertStatuses
+// swagger:route GET /api/prometheus/{DatasourceUID}/api/v1/alerts prometheus RouteGetAlertStatuses
 //
 // gets the current alerts
 //
 //     Responses:
 //       200: AlertResponse
+//       404: NotFound
 
 // swagger:model
 type RuleResponse struct {

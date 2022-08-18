@@ -107,7 +107,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.bodySmall.lineHeight};
     background-color: ${theme.colors.background.secondary};
-    color: ${theme.colors.text};
+    color: ${theme.colors.text.primary};
     white-space: nowrap;
     text-shadow: none;
     padding: ${theme.spacing(0.5)};
@@ -139,8 +139,8 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
   `,
   matchHighLight: css`
     background: inherit;
-    color: ${theme.colors.primary.text};
-    background-color: ${theme.colors.primary.transparent};
+    color: ${theme.components.textHighlight.text};
+    background-color: ${theme.components.textHighlight.background};
   `,
   hidden: css`
     opacity: 0.6;

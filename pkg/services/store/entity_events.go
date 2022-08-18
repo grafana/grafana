@@ -24,6 +24,9 @@ type EntityType string
 
 const (
 	EntityTypeDashboard EntityType = "dashboard"
+	EntityTypeFolder    EntityType = "folder"
+	EntityTypeImage     EntityType = "image"
+	EntityTypeJSON      EntityType = "json"
 )
 
 // CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables
@@ -51,13 +54,14 @@ type SaveEventCmd struct {
 	EventType EntityEventType
 }
 
+type EventHandler func(ctx context.Context, e *EntityEvent) error
+
 // EntityEventsService is a temporary solution to support change notifications in an HA setup
 // With this service each system can query for any events that have happened since a fixed time
 //go:generate mockery --name EntityEventsService --structname MockEntityEventsService --inpackage --filename entity_events_mock.go
 type EntityEventsService interface {
 	registry.BackgroundService
 	registry.CanBeDisabled
-	SaveEvent(ctx context.Context, cmd SaveEventCmd) error
 	GetLastEvent(ctx context.Context) (*EntityEvent, error)
 	GetAllEventsAfter(ctx context.Context, id int64) ([]*EntityEvent, error)
 
@@ -70,27 +74,18 @@ func ProvideEntityEventsService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, f
 	}
 
 	return &entityEventService{
-		sql:      sqlStore,
-		features: features,
-		log:      log.New("entity-events"),
+		sql:           sqlStore,
+		features:      features,
+		log:           log.New("entity-events"),
+		eventHandlers: make([]EventHandler, 0),
 	}
 }
 
 type entityEventService struct {
-	sql      *sqlstore.SQLStore
-	log      log.Logger
-	features featuremgmt.FeatureToggles
-}
-
-func (e *entityEventService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
-	return e.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Insert(&EntityEvent{
-			EventType: cmd.EventType,
-			EntityId:  cmd.EntityId,
-			Created:   time.Now().Unix(),
-		})
-		return err
-	})
+	sql           *sqlstore.SQLStore
+	log           log.Logger
+	features      featuremgmt.FeatureToggles
+	eventHandlers []EventHandler
 }
 
 func (e *entityEventService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {
@@ -158,10 +153,6 @@ func (d dummyEntityEventsService) Run(ctx context.Context) error {
 
 func (d dummyEntityEventsService) IsDisabled() bool {
 	return false
-}
-
-func (d dummyEntityEventsService) SaveEvent(ctx context.Context, cmd SaveEventCmd) error {
-	return nil
 }
 
 func (d dummyEntityEventsService) GetLastEvent(ctx context.Context) (*EntityEvent, error) {

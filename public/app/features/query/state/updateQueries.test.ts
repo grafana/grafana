@@ -44,6 +44,7 @@ describe('updateQueries', () => {
   it('Should update all queries except expression query when changing data source with same type', async () => {
     const updated = await updateQueries(
       newUidSameTypeDS,
+      'new-uid-same-type',
       [
         {
           refId: 'A',
@@ -64,9 +65,29 @@ describe('updateQueries', () => {
     expect(updated[1].datasource).toEqual(ExpressionDatasourceRef);
   });
 
+  it('Should update all to uid string passed in even when different from real current ds uid', async () => {
+    const updated = await updateQueries(
+      newUidSameTypeDS,
+      '${ds}',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'old-uid',
+            type: 'old-type',
+          },
+        },
+      ],
+      oldUidDS
+    );
+
+    expect(updated[0].datasource).toEqual({ type: 'old-type', uid: '${ds}' });
+  });
+
   it('Should clear queries when changing type', async () => {
     const updated = await updateQueries(
       newUidDS,
+      'new-uid',
       [
         {
           refId: 'A',
@@ -93,6 +114,7 @@ describe('updateQueries', () => {
   it('Should preserve query data source when changing to mixed', async () => {
     const updated = await updateQueries(
       mixedDS,
+      'mixed',
       [
         {
           refId: 'A',
@@ -119,6 +141,7 @@ describe('updateQueries', () => {
   it('should change nothing mixed updated to mixed', async () => {
     const updated = await updateQueries(
       mixedDS,
+      'mixed',
       [
         {
           refId: 'A',
@@ -192,7 +215,12 @@ describe('updateQueries with import', () => {
         },
       ];
 
-      const updated = await updateQueries(newUidDSWithAbstract as any, queries, oldUidDSWithAbstract as any);
+      const updated = await updateQueries(
+        newUidDSWithAbstract as any,
+        (newUidDSWithAbstract as any).uid,
+        queries,
+        oldUidDSWithAbstract as any
+      );
 
       expect(exportSpy).toBeCalledWith(queries);
       expect(importSpy).toBeCalledWith(queries.map((q) => ({ ...q, exported: true })));
@@ -262,7 +290,12 @@ describe('updateQueries with import', () => {
         },
       ];
 
-      const updated = await updateQueries(newUidDSWithAbstract as any, queries, oldUidDSWithAbstract as any);
+      const updated = await updateQueries(
+        newUidDSWithAbstract as any,
+        (newUidDSWithAbstract as any).uid,
+        queries,
+        oldUidDSWithAbstract as any
+      );
 
       expect(updated.length).toEqual(1);
       expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
@@ -311,7 +344,7 @@ describe('updateQueries with import', () => {
         },
       ];
 
-      const updated = await updateQueries(newUidDSWithImport, queries, oldUidDS);
+      const updated = await updateQueries(newUidDSWithImport, newUidDSWithImport.uid, queries, oldUidDS);
 
       expect(importSpy).toBeCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
 
@@ -374,7 +407,7 @@ describe('updateQueries with import', () => {
         },
       ];
 
-      const updated = await updateQueries(newUidDSWithImport, queries, oldUidDS);
+      const updated = await updateQueries(newUidDSWithImport, 'new-uid', queries, oldUidDS);
 
       expect(updated.length).toEqual(1);
       expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });

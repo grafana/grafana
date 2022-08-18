@@ -50,6 +50,7 @@ export const Pages = {
        */
       nav: 'Dashboard navigation',
       navV2: 'data-testid Dashboard navigation',
+      publicDashboardTag: 'data-testid public dashboard tag',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -177,13 +178,27 @@ export const Pages = {
   SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
   },
+  ShareDashboardModal: {
+    shareButton: 'Share dashboard or panel',
+    PublicDashboard: {
+      Tab: 'Tab Public Dashboard',
+      WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
+      LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
+      CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
+      EnableSwitch: 'data-testid public dashboard on off switch',
+      SaveConfigButton: 'data-testid public dashboard save config button',
+      CopyUrlInput: 'data-testid public dashboard copy url input',
+      CopyUrlButton: 'data-testid public dashboard copy url button',
+      TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
+    },
+  },
   Explore: {
     url: '/explore',
     General: {
       container: 'data-testid Explore',
       graph: 'Explore Graph',
       table: 'Explore Table',
-      scrollBar: () => '.scrollbar-view',
+      scrollView: 'data-testid explorer scroll view',
     },
   },
   SoloPanel: {

@@ -1,13 +1,18 @@
 package expr
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
@@ -88,4 +93,52 @@ func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 			require.Equal(t, test.expectedMapper, cmd.seriesMapper)
 		})
 	}
+}
+
+func TestReduceExecute(t *testing.T) {
+	varToReduce := util.GenerateShortUID()
+	cmd, err := NewReduceCommand(util.GenerateShortUID(), randomReduceFunc(), varToReduce, nil)
+	require.NoError(t, err)
+
+	t.Run("should noop if Number", func(t *testing.T) {
+		var numbers mathexp.Values = []mathexp.Value{
+			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+			mathexp.GenerateNumber(ptr.Float64(rand.Float64())),
+		}
+
+		vars := map[string]mathexp.Results{
+			varToReduce: {
+				Values: numbers,
+			},
+		}
+
+		execute, err := cmd.Execute(context.Background(), vars)
+		require.NoError(t, err)
+
+		require.Len(t, execute.Values, len(numbers))
+		for i, value := range execute.Values {
+			expected := numbers[i]
+			require.Equal(t, expected.Type(), value.Type())
+			require.Equal(t, expected.GetLabels(), value.GetLabels())
+
+			expectedValue := expected.Value().(*mathexp.Number).GetFloat64Value()
+			actualValue := value.Value().(*mathexp.Number).GetFloat64Value()
+			require.Equal(t, expectedValue, actualValue)
+		}
+
+		t.Run("should add warn notices to every frame", func(t *testing.T) {
+			frames := execute.Values.AsDataFrames("test")
+			for _, frame := range frames {
+				require.Len(t, frame.Meta.Notices, 1)
+				notice := frame.Meta.Notices[0]
+				require.Equal(t, data.NoticeSeverityWarning, notice.Severity)
+			}
+		})
+	})
+}
+
+func randomReduceFunc() string {
+	res := mathexp.GetSupportedReduceFuncs()
+	return res[rand.Intn(len(res)-1)]
 }

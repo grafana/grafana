@@ -387,7 +387,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a selector. This is cached by it's args but also by the global timeRange currently selected as
+   * Fetch labels for a selector. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name
    */
@@ -439,7 +439,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string): Promise<string[]> {
-    const interpolatedKey = this.datasource.interpolateString(key);
+    const interpolatedKey = encodeURIComponent(this.datasource.interpolateString(key));
+
     const url = `label/${interpolatedKey}/values`;
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;

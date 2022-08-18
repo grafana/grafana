@@ -3,7 +3,7 @@ import React, { ChangeEvent } from 'react';
 
 import { dateTime } from '@grafana/data';
 
-import { useStyles } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 import { Props as InputProps, Input } from '../../Input/Input';
 import { DatePicker } from '../DatePicker/DatePicker';
 
@@ -12,6 +12,7 @@ export const formatDate = (date: Date | string) => dateTime(date).format('L');
 /** @public */
 export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
   value?: Date | string;
+  minDate?: Date;
   onChange: (value: Date | string) => void;
   /** Hide the calendar when date is selected */
   closeOnSelect?: boolean;
@@ -21,13 +22,14 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'valu
 /** @public */
 export const DatePickerWithInput = ({
   value,
+  minDate,
   onChange,
   closeOnSelect,
   placeholder = 'Date',
   ...rest
 }: DatePickerWithInputProps) => {
   const [open, setOpen] = React.useState(false);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
@@ -49,6 +51,7 @@ export const DatePickerWithInput = ({
       <DatePicker
         isOpen={open}
         value={value && typeof value !== 'string' ? value : dateTime().toDate()}
+        minDate={minDate}
         onChange={(ev) => {
           onChange(ev);
           if (closeOnSelect) {

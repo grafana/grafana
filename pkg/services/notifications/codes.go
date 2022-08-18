@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -54,8 +54,8 @@ func createTimeLimitCode(payload string, minutes int, startStr string) (string, 
 }
 
 // verify time limit code
-func validateUserEmailCode(cfg *setting.Cfg, user *models.User, code string) (bool, error) {
-	if len(code) < timeLimitCodeLength {
+func validateUserEmailCode(cfg *setting.Cfg, user *user.User, code string) (bool, error) {
+	if len(code) <= 18 {
 		return false, nil
 	}
 
@@ -69,8 +69,8 @@ func validateUserEmailCode(cfg *setting.Cfg, user *models.User, code string) (bo
 		return false, fmt.Errorf("invalid time limit code: %v", err)
 	}
 
-	// verify code
-	payload := strconv.FormatInt(user.Id, 10) + user.Email + user.Login + user.Password + user.Rands
+	// right active code
+	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
 	expectedCode, err := createTimeLimitCode(payload, minutes, startStr)
 	if err != nil {
 		return false, err
@@ -101,9 +101,9 @@ func getLoginForEmailCode(code string) string {
 	return string(b)
 }
 
-func createUserEmailCode(cfg *setting.Cfg, user *models.User, startStr string) (string, error) {
+func createUserEmailCode(cfg *setting.Cfg, user *user.User, startStr string) (string, error) {
 	minutes := cfg.EmailCodeValidMinutes
-	payload := strconv.FormatInt(user.Id, 10) + user.Email + user.Login + user.Password + user.Rands
+	payload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
 	code, err := createTimeLimitCode(payload, minutes, startStr)
 	if err != nil {
 		return "", err

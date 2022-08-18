@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import {
   KBarAnimator,
   KBarPortal,
@@ -33,6 +34,7 @@ import getGlobalActions from './actions/global.static.actions';
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
   const [actions, setActions] = useState<Action[]>([]);
+  const [staticActions, setStaticActions] = useState<Action[]>([]);
   const { query, showing } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
   }));
@@ -45,19 +47,21 @@ export const CommandPalette = () => {
   });
 
   useEffect(() => {
-    (async () => {
-      if (isNotLogin) {
-        const staticActions = getGlobalActions(navBarTree);
-        const dashAct = await getDashboardNavActions('go/dashboard');
-        setActions([...staticActions, ...dashAct]);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNotLogin]);
+    if (isNotLogin) {
+      const staticActionsResp = getGlobalActions(navBarTree);
+      setStaticActions(staticActionsResp);
+      setActions([...staticActionsResp]);
+    }
+  }, [isNotLogin, navBarTree]);
 
   useEffect(() => {
     if (showing) {
       reportInteraction('commandPalette_opened');
+
+      // Do dashboard search on demand
+      getDashboardNavActions('go/dashboard').then((dashAct) => {
+        setActions([...staticActions, ...dashAct]);
+      });
 
       keybindingSrv.bindGlobal('esc', () => {
         query.setVisualState(VisualState.animatingOut);
@@ -78,8 +82,10 @@ export const CommandPalette = () => {
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
-          <KBarSearch className={styles.search} />
-          <RenderResults />
+          <FocusScope contain>
+            <KBarSearch className={styles.search} />
+            <RenderResults />
+          </FocusScope>
         </KBarAnimator>
       </KBarPositioner>
     </KBarPortal>

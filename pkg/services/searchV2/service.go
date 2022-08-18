@@ -2,21 +2,52 @@ package searchV2
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/searchV2/extract"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
+)
+
+var (
+	namespace                             = "grafana"
+	subsystem                             = "search"
+	dashboardSearchFailureRequestsCounter = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "dashboard_search_failures_total",
+			Help:      "A counter for failed dashboard search requests",
+		},
+		[]string{"reason"},
+	)
+	dashboardSearchSuccessRequestsDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_search_successes_duration_seconds",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
+	dashboardSearchFailureRequestsDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_search_failures_duration_seconds",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
 )
 
 type StandardSearchService struct {
@@ -25,21 +56,35 @@ type StandardSearchService struct {
 	cfg  *setting.Cfg
 	sql  *sqlstore.SQLStore
 	auth FutureAuthService // eventually injected from elsewhere
+	ac   accesscontrol.AccessControl
 
 	logger         log.Logger
-	dashboardIndex *dashboardIndex
+	dashboardIndex *searchIndex
+	extender       DashboardIndexExtender
+	reIndexCh      chan struct{}
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService) SearchService {
-	return &StandardSearchService{
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
+	extender := &NoopExtender{}
+	s := &StandardSearchService{
 		cfg: cfg,
 		sql: sql,
+		ac:  ac,
 		auth: &simpleSQLAuthService{
 			sql: sql,
+			ac:  ac,
 		},
-		dashboardIndex: newDashboardIndex(&sqlDashboardLoader{sql: sql}, entityEventStore),
-		logger:         log.New("searchV2"),
+		dashboardIndex: newSearchIndex(
+			newSQLDashboardLoader(sql),
+			entityEventStore,
+			extender.GetDocumentExtender(),
+			newFolderIDLookup(sql),
+		),
+		logger:    log.New("searchV2"),
+		extender:  extender,
+		reIndexCh: make(chan struct{}, 1),
 	}
+	return s
 }
 
 func (s *StandardSearchService) IsDisabled() bool {
@@ -50,249 +95,158 @@ func (s *StandardSearchService) IsDisabled() bool {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
-	return s.dashboardIndex.run(ctx)
+	orgQuery := &models.SearchOrgsQuery{}
+	err := s.sql.SearchOrgs(ctx, orgQuery)
+	if err != nil {
+		return fmt.Errorf("can't get org list: %w", err)
+	}
+	orgIDs := make([]int64, 0, len(orgQuery.Result))
+	for _, org := range orgQuery.Result {
+		orgIDs = append(orgIDs, org.Id)
+	}
+	return s.dashboardIndex.run(ctx, orgIDs, s.reIndexCh)
 }
 
-func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgId int64, _ DashboardQuery) *backend.DataResponse {
+func (s *StandardSearchService) TriggerReIndex() {
+	select {
+	case s.reIndexCh <- struct{}{}:
+	default:
+		// channel is full => re-index will happen soon anyway.
+	}
+}
+
+func (s *StandardSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
+	s.extender = ext
+	s.dashboardIndex.extender = ext.GetDocumentExtender()
+}
+
+func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backend.User, orgId int64) (*user.SignedInUser, error) {
+	// TODO: get user & user's permissions from the request context
+
+	var usr *user.SignedInUser
+	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
+		orga, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
+		if err != nil {
+			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.AnonymousOrgName, "error", err)
+			return nil, err
+		}
+
+		usr = &user.SignedInUser{
+			OrgID:       orga.Id,
+			OrgName:     orga.Name,
+			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
+			IsAnonymous: true,
+		}
+	} else {
+		getSignedInUserQuery := &models.GetSignedInUserQuery{
+			Login: backendUser.Login,
+			Email: backendUser.Email,
+			OrgId: orgId,
+		}
+		err := s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+		if err != nil {
+			s.logger.Error("Error while retrieving user", "error", err, "email", backendUser.Email, "login", getSignedInUserQuery.Login)
+			return nil, errors.New("auth error")
+		}
+
+		if getSignedInUserQuery.Result == nil {
+			s.logger.Error("No user found", "email", backendUser.Email)
+			return nil, errors.New("auth error")
+		}
+
+		usr = getSignedInUserQuery.Result
+	}
+
+	if s.ac.IsDisabled() {
+		return usr, nil
+	}
+
+	if usr.Permissions == nil {
+		usr.Permissions = make(map[int64]map[string][]string)
+	}
+
+	if _, ok := usr.Permissions[orgId]; ok {
+		// permissions as part of the `s.sql.GetSignedInUser` query - return early
+		return usr, nil
+	}
+
+	// TODO: ensure this is cached
+	permissions, err := s.ac.GetUserPermissions(ctx, usr,
+		accesscontrol.Options{ReloadCache: false})
+	if err != nil {
+		s.logger.Error("failed to retrieve user permissions", "error", err, "email", backendUser.Email)
+		return nil, errors.New("auth error")
+	}
+
+	usr.Permissions[orgId] = accesscontrol.GroupScopesByAction(permissions)
+	return usr, nil
+}
+
+func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
+	start := time.Now()
+	query := s.doDashboardQuery(ctx, user, orgID, q)
+
+	duration := time.Since(start).Seconds()
+	if query.Error != nil {
+		dashboardSearchFailureRequestsDuration.Observe(duration)
+	} else {
+		dashboardSearchSuccessRequestsDuration.Observe(duration)
+	}
+
+	return query
+}
+
+func (s *StandardSearchService) doDashboardQuery(ctx context.Context, user *backend.User, orgID int64, q DashboardQuery) *backend.DataResponse {
 	rsp := &backend.DataResponse{}
-
-	dash, err := s.dashboardIndex.getDashboards(ctx, orgId)
+	signedInUser, err := s.getUser(ctx, user, orgID)
 	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_user_error",
+		}).Inc()
 		rsp.Error = err
 		return rsp
 	}
 
-	// TODO - get user from context?
-	getSignedInUserQuery := &models.GetSignedInUserQuery{
-		Login: user.Login,
-		Email: user.Email,
-		OrgId: orgId,
-	}
-
-	err = s.sql.GetSignedInUser(ctx, getSignedInUserQuery)
+	filter, err := s.auth.GetDashboardReadFilter(signedInUser)
 	if err != nil {
-		s.logger.Error("Error while retrieving user", "error", err)
-		rsp.Error = fmt.Errorf("auth error")
-		return rsp
-	}
-
-	if getSignedInUserQuery.Result == nil {
-		s.logger.Error("No user found", "email", user.Email)
-		rsp.Error = fmt.Errorf("auth error")
-		return rsp
-	}
-
-	dash, err = s.applyAuthFilter(getSignedInUserQuery.Result, dash)
-	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_dashboard_filter_error",
+		}).Inc()
 		rsp.Error = err
 		return rsp
 	}
 
-	rsp.Frames = metaToFrame(dash)
-
-	return rsp
-}
-
-func (s *StandardSearchService) applyAuthFilter(user *models.SignedInUser, dash []dashboard) ([]dashboard, error) {
-	filter, err := s.auth.GetDashboardReadFilter(user)
+	index, err := s.dashboardIndex.getOrCreateOrgIndex(ctx, orgID)
 	if err != nil {
-		return nil, err
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "get_index_error",
+		}).Inc()
+		rsp.Error = err
+		return rsp
 	}
 
-	// create a list of all viewable dashboards for this user
-	res := make([]dashboard, 0, len(dash))
-	for _, dash := range dash {
-		if filter(dash.info.UID) || (dash.isFolder && dash.info.UID == "") { // include the "General" folder
-			res = append(res, dash)
-		}
-	}
-	return res, nil
-}
-
-type simpleCounter struct {
-	values map[string]int64
-}
-
-func (c *simpleCounter) add(key string) {
-	v, ok := c.values[key]
-	if !ok {
-		v = 0
-	}
-	c.values[key] = v + 1
-}
-
-func (c *simpleCounter) toFrame(name string) *data.Frame {
-	key := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	val := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	for k, v := range c.values {
-		key.Append(k)
-		val.Append(v)
-	}
-	return data.NewFrame(name, key, val)
-}
-
-// UGLY... but helpful for now
-func metaToFrame(meta []dashboard) data.Frames {
-	folderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	folderUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	folderName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	folderDashCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-
-	folderID.Name = "id"
-	folderUID.Name = "uid"
-	folderName.Name = "name"
-	folderDashCount.Name = "DashCount"
-
-	dashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	dashUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	dashURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	dashFolderID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	dashName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	dashDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	dashCreated := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-	dashUpdated := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-	dashSchemaVersion := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	dashTags := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
-	dashPanelCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	dashVarCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	dashDSList := data.NewFieldFromFieldType(data.FieldTypeNullableString, 0)
-
-	dashID.Name = "id"
-	dashUID.Name = "uid"
-	dashFolderID.Name = "folderID"
-	dashName.Name = "name"
-	dashDescr.Name = "description"
-	dashTags.Name = "tags"
-	dashSchemaVersion.Name = "SchemaVersion"
-	dashCreated.Name = "Created"
-	dashUpdated.Name = "Updated"
-	dashURL.Name = "url"
-	dashURL.Config = &data.FieldConfig{
-		Links: []data.DataLink{
-			{Title: "link", URL: "${__value.text}"},
-		},
-	}
-	dashPanelCount.Name = "panelCount"
-	dashVarCount.Name = "varCount"
-	dashDSList.Name = "datasource"
-
-	dashTags.Config = &data.FieldConfig{
-		Custom: map[string]interface{}{
-			// Table panel default styling
-			"displayMode": "json-view",
-		},
+	err = s.dashboardIndex.sync(ctx)
+	if err != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "dashboard_index_sync_error",
+		}).Inc()
+		rsp.Error = err
+		return rsp
 	}
 
-	panelDashID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	panelID := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	panelName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	panelDescr := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	panelType := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	response := doSearchQuery(ctx, s.logger, index, filter, q, s.extender.GetQueryExtender(q), s.cfg.AppSubURL)
 
-	panelDashID.Name = "dashboardID"
-	panelID.Name = "id"
-	panelName.Name = "name"
-	panelDescr.Name = "description"
-	panelType.Name = "type"
-
-	panelTypeCounter := simpleCounter{
-		values: make(map[string]int64, 30),
-	}
-
-	schemaVersionCounter := simpleCounter{
-		values: make(map[string]int64, 30),
-	}
-
-	folderCounter := make(map[int64]int64, 20)
-
-	for _, row := range meta {
-		if row.isFolder {
-			folderID.Append(row.id)
-			folderUID.Append(row.info.UID)
-			folderName.Append(row.info.Title)
-			folderDashCount.Append(int64(0)) // filled in later
-			continue
-		}
-
-		dashID.Append(row.id)
-		dashUID.Append(row.info.UID)
-		dashFolderID.Append(row.folderID)
-		dashName.Append(row.info.Title)
-		dashDescr.Append(row.info.Title)
-		dashSchemaVersion.Append(row.info.SchemaVersion)
-		dashCreated.Append(row.created)
-		dashUpdated.Append(row.updated)
-
-		// Increment the folder counter
-		fcount, ok := folderCounter[row.folderID]
-		if !ok {
-			fcount = 0
-		}
-		folderCounter[row.folderID] = fcount + 1
-
-		url := fmt.Sprintf("/d/%s/%s", row.info.UID, row.slug)
-		dashURL.Append(url)
-
-		// stats
-		schemaVersionCounter.add(strconv.FormatInt(row.info.SchemaVersion, 10))
-
-		dashTags.Append(toJSONString(row.info.Tags))
-		dashPanelCount.Append(int64(len(row.info.Panels)))
-		dashVarCount.Append(int64(len(row.info.TemplateVars)))
-		dashDSList.Append(dsAsJSONString(row.info.Datasource))
-
-		// Row for each panel
-		for _, panel := range row.info.Panels {
-			panelDashID.Append(row.id)
-			panelID.Append(panel.ID)
-			panelName.Append(panel.Title)
-			panelDescr.Append(panel.Description)
-			panelType.Append(panel.Type)
-			panelTypeCounter.add(panel.Type)
+	if q.WithAllowedActions {
+		if err := s.addAllowedActionsField(ctx, orgID, signedInUser, response); err != nil {
+			s.logger.Error("error when adding the allowedActions field", "err", err)
 		}
 	}
 
-	// Update the folder counts
-	for i := 0; i < folderID.Len(); i++ {
-		id, ok := folderID.At(i).(int64)
-		if ok {
-			folderDashCount.Set(i, folderCounter[id])
-		}
+	if response.Error != nil {
+		dashboardSearchFailureRequestsCounter.With(prometheus.Labels{
+			"reason": "search_query_error",
+		}).Inc()
 	}
 
-	return data.Frames{
-		data.NewFrame("folders", folderID, folderUID, folderName, folderDashCount),
-		data.NewFrame("dashboards", dashID, dashUID, dashURL, dashFolderID,
-			dashName, dashDescr, dashTags,
-			dashSchemaVersion,
-			dashPanelCount, dashVarCount, dashDSList,
-			dashCreated, dashUpdated),
-		data.NewFrame("panels", panelDashID, panelID, panelName, panelDescr, panelType),
-		panelTypeCounter.toFrame("panel-type-counts"),
-		schemaVersionCounter.toFrame("schema-version-counts"),
-	}
-}
-
-func toJSONString(vals []string) *string {
-	if len(vals) < 1 {
-		return nil
-	}
-	b, err := json.Marshal(vals)
-	if err == nil {
-		s := string(b)
-		return &s
-	}
-	return nil
-}
-
-func dsAsJSONString(vals []extract.DataSourceRef) *string {
-	if len(vals) < 1 {
-		return nil
-	}
-	b, err := json.Marshal(vals)
-	if err == nil {
-		s := string(b)
-		return &s
-	}
-	return nil
+	return response
 }

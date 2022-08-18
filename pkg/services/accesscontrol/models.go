@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // RoleRegistration stores a role and its assignments to built-in roles
@@ -211,6 +211,7 @@ type GetUserPermissionsQuery struct {
 	UserID  int64 `json:"userId"`
 	Roles   []string
 	Actions []string
+	TeamIDs []int64
 }
 
 // ScopeParams holds the parameters used to fill in scope templates
@@ -272,8 +273,8 @@ const (
 	GlobalOrgID        = 0
 	FixedRolePrefix    = "fixed:"
 	ManagedRolePrefix  = "managed:"
-	BasicRolePrefix    = "grafana:builtins:"
-	BasicRoleUIDPrefix = "grafana_builtins_"
+	BasicRolePrefix    = "basic:"
+	BasicRoleUIDPrefix = "basic_"
 	RoleGrafanaAdmin   = "Grafana Admin"
 
 	GeneralFolderUID = "general"
@@ -285,32 +286,31 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead     = "users:read"
-	ActionUsersWrite    = "users:write"
-	ActionUsersTeamRead = "users.teams:read"
+	ActionUsersRead  = "users:read"
+	ActionUsersWrite = "users:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersAuthTokenList = "users.authtoken:list"
+	ActionUsersAuthTokenList = "users.authtoken:read"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersAuthTokenUpdate = "users.authtoken:update"
+	ActionUsersAuthTokenUpdate = "users.authtoken:write"
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
-	ActionUsersPasswordUpdate    = "users.password:update"
+	ActionUsersPasswordUpdate    = "users.password:write"
 	ActionUsersDelete            = "users:delete"
 	ActionUsersCreate            = "users:create"
 	ActionUsersEnable            = "users:enable"
 	ActionUsersDisable           = "users:disable"
-	ActionUsersPermissionsUpdate = "users.permissions:update"
+	ActionUsersPermissionsUpdate = "users.permissions:write"
 	ActionUsersLogout            = "users:logout"
-	ActionUsersQuotasList        = "users.quotas:list"
-	ActionUsersQuotasUpdate      = "users.quotas:update"
+	ActionUsersQuotasList        = "users.quotas:read"
+	ActionUsersQuotasUpdate      = "users.quotas:write"
 
 	// Org actions
-	ActionOrgUsersRead       = "org.users:read"
-	ActionOrgUsersAdd        = "org.users:add"
-	ActionOrgUsersRemove     = "org.users:remove"
-	ActionOrgUsersRoleUpdate = "org.users.role:update"
+	ActionOrgUsersRead   = "org.users:read"
+	ActionOrgUsersAdd    = "org.users:add"
+	ActionOrgUsersRemove = "org.users:remove"
+	ActionOrgUsersWrite  = "org.users:write"
 
 	// LDAP actions
 	ActionLDAPUsersRead    = "ldap.user:read"
@@ -326,9 +326,6 @@ const (
 
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
-
-	// Plugin actions
-	ActionPluginsManage = "plugins:manage"
 
 	// Global Scopes
 	ScopeGlobalUsersAll = "global.users:*"
@@ -359,17 +356,6 @@ const (
 	ActionAnnotationsRead   = "annotations:read"
 	ActionAnnotationsWrite  = "annotations:write"
 
-	// Dashboard actions
-	ActionDashboardsCreate           = "dashboards:create"
-	ActionDashboardsRead             = "dashboards:read"
-	ActionDashboardsWrite            = "dashboards:write"
-	ActionDashboardsDelete           = "dashboards:delete"
-	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
-	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
-
-	// Dashboard scopes
-	ScopeDashboardsAll = "dashboards:*"
-
 	// Alert scopes are divided into two groups. The internal (to Grafana) and the external ones.
 	// For the Grafana ones, given we have ACID control we're able to provide better granularity by defining CRUD options.
 	// For the external ones, we only have read and write permissions due to the lack of atomicity control of the external system.
@@ -377,19 +363,17 @@ const (
 	// Alerting rules actions
 	ActionAlertingRuleCreate = "alert.rules:create"
 	ActionAlertingRuleRead   = "alert.rules:read"
-	ActionAlertingRuleUpdate = "alert.rules:update"
+	ActionAlertingRuleUpdate = "alert.rules:write"
 	ActionAlertingRuleDelete = "alert.rules:delete"
 
 	// Alerting instances (+silences) actions
 	ActionAlertingInstanceCreate = "alert.instances:create"
-	ActionAlertingInstanceUpdate = "alert.instances:update"
+	ActionAlertingInstanceUpdate = "alert.instances:write"
 	ActionAlertingInstanceRead   = "alert.instances:read"
 
 	// Alerting Notification policies actions
-	ActionAlertingNotificationsCreate = "alert.notifications:create"
-	ActionAlertingNotificationsRead   = "alert.notifications:read"
-	ActionAlertingNotificationsUpdate = "alert.notifications:update"
-	ActionAlertingNotificationsDelete = "alert.notifications:delete"
+	ActionAlertingNotificationsRead  = "alert.notifications:read"
+	ActionAlertingNotificationsWrite = "alert.notifications:write"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
@@ -402,6 +386,10 @@ const (
 	// External alerting notifications actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingNotificationsExternalWrite = "alert.notifications.external:write"
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
+
+	// Alerting provisioning actions
+	ActionAlertingProvisioningRead  = "alert.provisioning:read"
+	ActionAlertingProvisioningWrite = "alert.provisioning:write"
 )
 
 var (
@@ -423,7 +411,7 @@ func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
 	for _, br := range builtInRoles {
 		res[br] = struct{}{}
 		if br != RoleGrafanaAdmin {
-			for _, parent := range models.RoleType(br).Parents() {
+			for _, parent := range org.RoleType(br).Parents() {
 				res[string(parent)] = struct{}{}
 			}
 		}

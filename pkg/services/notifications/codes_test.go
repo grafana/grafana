@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -15,10 +15,10 @@ import (
 func TestTimeLimitCodes(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.EmailCodeValidMinutes = 120
-	user := &models.User{Id: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
+	user := &user.User{ID: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
 
 	format := "200601021504"
-	mailPayload := strconv.FormatInt(user.Id, 10) + user.Email + user.Login + user.Password + user.Rands
+	mailPayload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
 	tenMinutesAgo := time.Now().Add(-time.Minute * 10)
 
 	tests := []struct {
@@ -125,7 +125,7 @@ func TestEmailCodes(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.EmailCodeValidMinutes = 120
 
-		user := &models.User{Id: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
+		user := &user.User{ID: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
 		code, err := createUserEmailCode(cfg, user, "")
 		require.NoError(t, err)
 

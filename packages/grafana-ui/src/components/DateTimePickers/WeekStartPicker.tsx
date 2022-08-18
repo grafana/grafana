@@ -11,7 +11,6 @@ export interface Props {
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
-  includeInternal?: boolean;
   disabled?: boolean;
   inputId?: string;
 }
@@ -47,7 +46,6 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
       onChange={onChangeWeekStart}
       onBlur={onBlur}
       disabled={disabled}
-      menuShouldPortal={true}
     />
   );
 };

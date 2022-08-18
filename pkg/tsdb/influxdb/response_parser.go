@@ -207,14 +207,14 @@ func parseTimestamp(value interface{}) (time.Time, error) {
 	if !ok {
 		return time.Time{}, fmt.Errorf("timestamp-value has invalid type: %#v", value)
 	}
-	timestampFloat, err := timestampNumber.Float64()
+	timestampInMilliseconds, err := timestampNumber.Int64()
 	if err != nil {
 		return time.Time{}, err
 	}
 
 	// currently in the code the influxdb-timestamps are requested with
-	// seconds-precision, meaning these values are seconds
-	t := time.Unix(int64(timestampFloat), 0).UTC()
+	// milliseconds-precision, meaning these values are milliseconds
+	t := time.UnixMilli(timestampInMilliseconds).UTC()
 
 	return t, nil
 }

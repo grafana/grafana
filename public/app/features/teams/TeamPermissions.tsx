@@ -11,7 +11,6 @@ type TeamPermissionsProps = {
 
 // TeamPermissions component replaces TeamMembers component when the accesscontrol feature flag is set
 const TeamPermissions = (props: TeamPermissionsProps) => {
-  const canListUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const canSetPermissions = contextSrv.hasPermissionInMetadata(
     AccessControlAction.ActionTeamsPermissionsWrite,
     props.team
@@ -19,12 +18,11 @@ const TeamPermissions = (props: TeamPermissionsProps) => {
 
   return (
     <Permissions
-      title="Members"
+      title=""
       addPermissionTitle="Add member"
       buttonLabel="Add member"
       resource="teams"
       resourceId={props.team.id}
-      canListUsers={canListUsers}
       canSetPermissions={canSetPermissions}
     />
   );

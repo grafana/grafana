@@ -34,6 +34,7 @@ import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse'
 export const ExpressionDatasourceRef = Object.freeze({
   type: '__expr__',
   uid: '__expr__',
+  name: 'Expression',
 });
 
 /**
@@ -47,7 +48,7 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   return v === ExpressionDatasourceRef.type || v === '-100'; // -100 was a legacy accident that should be removed
 }
 
-class HealthCheckError extends Error {
+export class HealthCheckError extends Error {
   details: HealthCheckResultDetails;
 
   constructor(message: string, details: HealthCheckResultDetails) {

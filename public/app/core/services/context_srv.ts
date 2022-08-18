@@ -109,11 +109,11 @@ export class ContextSrv {
   }
 
   accessControlEnabled(): boolean {
-    return Boolean(config.featureToggles['accesscontrol']);
+    return config.rbacEnabled;
   }
 
   licensedAccessControlEnabled(): boolean {
-    return featureEnabled('accesscontrol') && Boolean(config.featureToggles['accesscontrol']);
+    return featureEnabled('accesscontrol') && config.rbacEnabled;
   }
 
   // Checks whether user has required permission
@@ -162,7 +162,7 @@ export class ContextSrv {
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 
-  hasAccess(action: string, fallBack: boolean) {
+  hasAccess(action: string, fallBack: boolean): boolean {
     if (!this.accessControlEnabled()) {
       return fallBack;
     }
@@ -170,7 +170,7 @@ export class ContextSrv {
   }
 
   hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
-    if (!config.featureToggles['accesscontrol']) {
+    if (!this.accessControlEnabled()) {
       return fallBack;
     }
     return this.hasPermissionInMetadata(action, object);

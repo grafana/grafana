@@ -20,8 +20,10 @@ import {
   DataFrame,
   GrafanaTheme2,
   LoadingState,
+  SplitOpen,
+  DataQueryResponse,
 } from '@grafana/data';
-import { TooltipDisplayMode } from '@grafana/schema';
+import { reportInteraction } from '@grafana/runtime';
 import {
   RadioButtonGroup,
   LogRows,
@@ -33,13 +35,13 @@ import {
   Themeable2,
 } from '@grafana/ui';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
+import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExploreId } from 'app/types/explore';
 
-import { ExploreGraph } from './ExploreGraph';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
+import { LogsVolumePanel } from './LogsVolumePanel';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -51,6 +53,7 @@ const SETTINGS_KEYS = {
 
 interface Props extends Themeable2 {
   width: number;
+  splitOpen: SplitOpen;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
@@ -64,6 +67,9 @@ interface Props extends Themeable2 {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   exploreId: ExploreId;
+  datasourceType?: string;
+  logsVolumeData: DataQueryResponse | undefined;
+  loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -138,6 +144,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
+    reportInteraction('grafana_explore_logs_deduplication_clicked', {
+      deduplicationType: dedupStrategy,
+      datasourceType: this.props.datasourceType,
+    });
     this.setState({ dedupStrategy });
   };
 
@@ -163,7 +173,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  onChangewrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  onChangeWrapLogMessage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { target } = event;
     if (target) {
       const wrapLogMessage = target.checked;
@@ -249,15 +259,32 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return filterLogLevels(logRows, new Set(hiddenLogLevels));
   });
 
+  createNavigationRange = memoizeOne((logRows: LogRowModel[]): { from: number; to: number } | undefined => {
+    if (!logRows || logRows.length === 0) {
+      return undefined;
+    }
+    const firstTimeStamp = logRows[0].timeEpochMs;
+    const lastTimeStamp = logRows[logRows.length - 1].timeEpochMs;
+
+    if (lastTimeStamp < firstTimeStamp) {
+      return { from: lastTimeStamp, to: firstTimeStamp };
+    }
+
+    return { from: firstTimeStamp, to: lastTimeStamp };
+  });
+
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
   render() {
     const {
       width,
+      splitOpen,
       logRows,
       logsMeta,
       logsSeries,
       visibleRange,
+      logsVolumeData,
+      loadLogsVolumeData,
       loading = false,
       loadingState,
       onClickFilterLabel,
@@ -295,30 +322,31 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
     const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
+    const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+
     return (
       <>
-        {logsSeries && logsSeries.length ? (
-          <>
-            <div className={styles.infoText}>
-              This datasource does not support full-range histograms. The graph is based on the logs seen in the
-              response.
-            </div>
-            <ExploreGraph
-              graphStyle="lines"
-              data={logsSeries}
-              height={150}
-              width={width}
-              tooltipDisplayMode={TooltipDisplayMode.Multi}
-              absoluteRange={visibleRange || absoluteRange}
-              timeZone={timeZone}
-              loadingState={loadingState}
-              onChangeTime={onChangeTime}
-              onHiddenSeriesChanged={this.onToggleLogLevel}
-            />
-          </>
-        ) : undefined}
+        <LogsVolumePanel
+          absoluteRange={absoluteRange}
+          width={width}
+          logsVolumeData={logsVolumeData}
+          logLinesBasedData={
+            logsSeries
+              ? {
+                  data: logsSeries,
+                  state: loadingState,
+                }
+              : undefined
+          }
+          logLinesBasedDataVisibleRange={visibleRange}
+          onUpdateTimeRange={onChangeTime}
+          timeZone={timeZone}
+          splitOpen={splitOpen}
+          onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
+          onHiddenSeriesChanged={this.onToggleLogLevel}
+        />
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
@@ -342,7 +370,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
               <InlineSwitch
                 value={wrapLogMessage}
-                onChange={this.onChangewrapLogMessage}
+                onChange={this.onChangeWrapLogMessage}
                 className={styles.horizontalInlineSwitch}
                 transparent
                 id={`wrap-lines_${exploreId}`}
@@ -430,7 +458,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           </div>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={visibleRange ?? absoluteRange}
+            visibleRange={navigationRange ?? absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}
@@ -449,7 +477,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
             </Button>
           </div>
         )}
-
         {scanning && (
           <div className={styles.noData}>
             <span>{scanText}</span>
@@ -506,10 +533,6 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
       overflow-y: visible;
       width: 100%;
-    `,
-    infoText: css`
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.text.secondary};
     `,
   };
 };

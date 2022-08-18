@@ -11,24 +11,28 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type State struct {
-	AlertRuleUID         string
-	OrgID                int64
-	CacheId              string
+	AlertRuleUID string
+	OrgID        int64
+	CacheId      string
+
+	StartsAt   time.Time
+	EndsAt     time.Time
+	LastSentAt time.Time
+
 	State                eval.State
-	Resolved             bool
-	Results              []Evaluation
+	StateReason          string
 	LastEvaluationString string
-	StartsAt             time.Time
-	EndsAt               time.Time
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
-	LastSentAt           time.Time
+	Results              []Evaluation
+	Resolved             bool
 	Annotations          map[string]string
 	Labels               data.Labels
+	Image                *models.Image
 	Error                error
 }
 
@@ -52,7 +56,7 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func (a *State) resultNormal(_ *ngModels.AlertRule, result eval.Result) {
+func (a *State) resultNormal(_ *models.AlertRule, result eval.Result) {
 	a.Error = nil // should be nil since state is not error
 	if a.State != eval.Normal {
 		a.EndsAt = result.EvaluatedAt
@@ -61,7 +65,7 @@ func (a *State) resultNormal(_ *ngModels.AlertRule, result eval.Result) {
 	a.State = eval.Normal
 }
 
-func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) {
+func (a *State) resultAlerting(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error // should be nil since the state is not an error
 
 	switch a.State {
@@ -85,14 +89,14 @@ func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result
 	}
 }
 
-func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
+func (a *State) resultError(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
 	execErrState := eval.Error
 	switch alertRule.ExecErrState {
-	case ngModels.AlertingErrState:
+	case models.AlertingErrState:
 		execErrState = eval.Alerting
-	case ngModels.ErrorErrState:
+	case models.ErrorErrState:
 		// If the evaluation failed because a query returned an error then
 		// update the state with the Datasource UID as a label and the error
 		// message as an annotation so other code can use this metadata to
@@ -109,7 +113,7 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 			a.Annotations["Error"] = queryError.Error()
 		}
 		execErrState = eval.Error
-	case ngModels.OkErrState:
+	case models.OkErrState:
 		a.resultNormal(alertRule, result)
 		return
 	default:
@@ -118,6 +122,12 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 
 	switch a.State {
 	case eval.Alerting, eval.Error:
+		// We must set the state here as the state can change both from Alerting
+		// to Error and from Error to Alerting. This can happen when the datasource
+		// is unavailable or queries against the datasource returns errors, and is
+		// then resolved as soon as the datasource is available and queries return
+		// without error
+		a.State = execErrState
 		a.setEndsAt(alertRule, result)
 	case eval.Pending:
 		if result.EvaluatedAt.Sub(a.StartsAt) >= alertRule.For {
@@ -138,7 +148,7 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) {
 	}
 }
 
-func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) {
+func (a *State) resultNoData(alertRule *models.AlertRule, result eval.Result) {
 	a.Error = result.Error
 
 	if a.StartsAt.IsZero() {
@@ -147,11 +157,11 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 	a.setEndsAt(alertRule, result)
 
 	switch alertRule.NoDataState {
-	case ngModels.Alerting:
+	case models.Alerting:
 		a.State = eval.Alerting
-	case ngModels.NoData:
+	case models.NoData:
 		a.State = eval.NoData
-	case ngModels.OK:
+	case models.OK:
 		a.State = eval.Normal
 	}
 }
@@ -177,7 +187,7 @@ func (a *State) Equals(b *State) bool {
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }
 
-func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
+func (a *State) TrimResults(alertRule *models.AlertRule) {
 	numBuckets := int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds
 	if numBuckets == 0 {
 		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
@@ -195,7 +205,7 @@ func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
 // The internal Alertmanager will use this time to know when it should automatically resolve the alert
 // in case it hasn't received additional alerts. Under regular operations the scheduler will continue to send the
 // alert with an updated EndsAt, if the alert is resolved then a last alert is sent with EndsAt = last evaluation time.
-func (a *State) setEndsAt(alertRule *ngModels.AlertRule, result eval.Result) {
+func (a *State) setEndsAt(alertRule *models.AlertRule, result eval.Result) {
 	ends := ResendDelay
 	if alertRule.IntervalSeconds > int64(ResendDelay.Seconds()) {
 		ends = time.Second * time.Duration(alertRule.IntervalSeconds)
@@ -204,7 +214,7 @@ func (a *State) setEndsAt(alertRule *ngModels.AlertRule, result eval.Result) {
 	a.EndsAt = result.EvaluatedAt.Add(ends * 3)
 }
 
-func (a *State) GetLabels(opts ...ngModels.LabelOption) map[string]string {
+func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
 	labels := a.Labels.Copy()
 
 	for _, opt := range opts {

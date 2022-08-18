@@ -8,7 +8,7 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { DashboardInitPhase, DashboardRoutes } from 'app/types';
@@ -103,6 +103,8 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         setupFn = fn;
       },
       mount: (propOverrides?: Partial<Props>) => {
+        config.bootData.navTree = [{ text: 'Dashboards', id: 'dashboards' }];
+
         const store = configureStore();
         const props: Props = {
           ...getRouteComponentProps({
@@ -189,7 +191,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should update title', () => {
-      expect(document.title).toBe('My dashboard - Grafana');
+      expect(document.title).toBe('My dashboard - Dashboards - Grafana');
     });
   });
 
@@ -295,6 +297,22 @@ describe('DashboardPage', () => {
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });
+    });
+
+    it('should not render page toolbar and submenu', () => {
+      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+    });
+  });
+
+  dashboardPageScenario('When dashboard is public', (ctx) => {
+    ctx.setup(() => {
+      locationService.partial({ kiosk: false });
+      ctx.mount({
+        queryParams: {},
+        dashboard: getTestDashboard(),
+      });
+      ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
     });
 
     it('should not render page toolbar and submenu', () => {

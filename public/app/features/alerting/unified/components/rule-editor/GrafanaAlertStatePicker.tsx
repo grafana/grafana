@@ -27,5 +27,5 @@ export const GrafanaAlertStatePicker: FC<Props> = ({ includeNoData, includeError
     }
     return options;
   }, [includeNoData, includeError]);
-  return <Select menuShouldPortal options={opts} {...props} />;
+  return <Select options={opts} {...props} />;
 };

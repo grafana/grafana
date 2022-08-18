@@ -59,7 +59,6 @@ export const SelectWithAdd: FC<Props> = ({
   } else {
     return (
       <Select
-        menuShouldPortal
         aria-label={ariaLabel}
         width={width}
         options={_options}

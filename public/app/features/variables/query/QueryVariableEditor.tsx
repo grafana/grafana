@@ -201,6 +201,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
               onChange={this.onRegExChange}
               onBlur={this.onRegExBlur}
               labelWidth={20}
+              interactive={true}
               tooltip={
                 <div>
                   Optional, if you want to extract part of a series name or metric node segment. Named capture groups

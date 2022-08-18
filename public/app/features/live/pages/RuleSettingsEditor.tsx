@@ -15,7 +15,6 @@ export const RuleSettingsEditor: React.FC<Props> = ({ onChange, value, ruleType,
   return (
     <>
       <Select
-        menuShouldPortal={true}
         key={ruleType}
         options={entitiesInfo[ruleType]}
         placeholder="Select an option"

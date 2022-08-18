@@ -157,7 +157,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               Authentication
             </InlineFormLabel>
             <Select
-              menuShouldPortal
               className="width-15"
               value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
               options={authTypeOptions}
@@ -175,7 +174,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   Azure Cloud
                 </InlineFormLabel>
                 <Select
-                  menuShouldPortal
                   className="width-15"
                   value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                   options={azureCloudOptions}
@@ -248,7 +246,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
               <div className="width-25">
                 <Select
-                  menuShouldPortal
                   value={
                     credentials.defaultSubscriptionId
                       ? subscriptions.find((opt) => opt.value === credentials.defaultSubscriptionId)

@@ -30,6 +30,7 @@ type fakeCWLogsClient struct {
 
 type logsQueryCalls struct {
 	startQueryWithContext []*cloudwatchlogs.StartQueryInput
+	getEventsWithContext  []*cloudwatchlogs.GetLogEventsInput
 }
 
 func (m *fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -58,16 +59,27 @@ func (m *fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, inp
 	return &m.logGroupFields, nil
 }
 
+func (m *fakeCWLogsClient) GetLogEventsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogEventsInput, option ...request.Option) (*cloudwatchlogs.GetLogEventsOutput, error) {
+	m.calls.getEventsWithContext = append(m.calls.getEventsWithContext, input)
+
+	return &cloudwatchlogs.GetLogEventsOutput{
+		Events: []*cloudwatchlogs.OutputLogEvent{},
+	}, nil
+}
+
 type fakeCWClient struct {
 	cloudwatchiface.CloudWatchAPI
 	cloudwatch.GetMetricDataOutput
 
-	Metrics []*cloudwatch.Metric
-
+	Metrics        []*cloudwatch.Metric
 	MetricsPerPage int
+
+	callsGetMetricDataWithContext []*cloudwatch.GetMetricDataInput
 }
 
-func (c *fakeCWClient) GetMetricDataWithContext(aws.Context, *cloudwatch.GetMetricDataInput, ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+func (c *fakeCWClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+	c.callsGetMetricDataWithContext = append(c.callsGetMetricDataWithContext, input)
+
 	return &c.GetMetricDataOutput, nil
 }
 

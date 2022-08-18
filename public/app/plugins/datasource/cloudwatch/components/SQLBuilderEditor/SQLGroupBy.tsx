@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { AccessoryButton, EditorList, InputGroup, Select } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { QueryEditorExpressionType, QueryEditorGroupByExpression, QueryEditorPropertyType } from '../../expressions';
@@ -100,7 +99,6 @@ const GroupByItem: React.FC<GroupByItemProps> = (props) => {
         options={options}
         allowCustomValue
         onChange={({ value }) => value && onChange(setGroupByField(value))}
-        menuShouldPortal
       />
 
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />

@@ -14,6 +14,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ fetch }),
 }));
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+  },
+}));
+
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,

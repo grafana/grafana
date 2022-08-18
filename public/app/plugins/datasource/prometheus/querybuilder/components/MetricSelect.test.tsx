@@ -59,39 +59,39 @@ describe('MetricSelect', () => {
   });
 
   it('highlights matching string', async () => {
-    const { container } = render(<MetricSelect {...props} />);
+    render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more');
-    await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(1));
+    await waitFor(() => expect(document.querySelectorAll('mark')).toHaveLength(1));
   });
 
   it('highlights multiple matching strings in 1 input row', async () => {
-    const { container } = render(<MetricSelect {...props} />);
+    render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'more metric');
-    await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(2));
+    await waitFor(() => expect(document.querySelectorAll('mark')).toHaveLength(2));
   });
 
   it('highlights multiple matching strings in multiple input rows', async () => {
-    const { container } = render(<MetricSelect {...props} />);
+    render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'unique metric');
-    await waitFor(() => expect(container.querySelectorAll('mark')).toHaveLength(4));
+    await waitFor(() => expect(document.querySelectorAll('mark')).toHaveLength(4));
   });
 
   it('does not highlight matching string in create option', async () => {
-    const { container } = render(<MetricSelect {...props} />);
+    render(<MetricSelect {...props} />);
     await openMetricSelect();
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'new');
-    await waitFor(() => expect(container.querySelector('mark')).not.toBeInTheDocument());
+    await waitFor(() => expect(document.querySelector('mark')).not.toBeInTheDocument());
   });
 });
 
 async function openMetricSelect() {
-  const select = await screen.getByText('Select metric').parentElement!;
+  const select = screen.getByText('Select metric').parentElement!;
   await userEvent.click(select);
 }

@@ -3,10 +3,11 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 import { rangeUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -14,19 +15,28 @@ import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, NewApiKey, StoreState } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { APIKeysMigratedCard } from './APIKeysMigratedCard';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysAddedModal } from './ApiKeysAddedModal';
 import { ApiKeysController } from './ApiKeysController';
 import { ApiKeysForm } from './ApiKeysForm';
 import { ApiKeysTable } from './ApiKeysTable';
-import { addApiKey, deleteApiKey, loadApiKeys, toggleIncludeExpired } from './state/actions';
+import { MigrateToServiceAccountsCard } from './MigrateToServiceAccountsCard';
+import {
+  addApiKey,
+  deleteApiKey,
+  migrateApiKey,
+  migrateAll,
+  loadApiKeys,
+  toggleIncludeExpired,
+  getApiKeysMigrationStatus,
+  hideApiKeys,
+} from './state/actions';
 import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
-  const canRead = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysRead, true);
   const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
-  const canDelete = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysDelete, true);
 
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
@@ -37,18 +47,21 @@ function mapStateToProps(state: StoreState) {
     timeZone: getTimeZone(state.user),
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
-    canRead: canRead,
     canCreate: canCreate,
-    canDelete: canDelete,
+    apiKeysMigrated: state.apiKeys.apiKeysMigrated,
   };
 }
 
 const mapDispatchToProps = {
   loadApiKeys,
   deleteApiKey,
+  migrateApiKey,
+  migrateAll,
   setSearchQuery,
   toggleIncludeExpired,
   addApiKey,
+  getApiKeysMigrationStatus,
+  hideApiKeys,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -68,6 +81,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchApiKeys();
+    this.props.getApiKeysMigrationStatus();
   }
 
   async fetchApiKeys() {
@@ -76,6 +90,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   onDeleteApiKey = (key: ApiKey) => {
     this.props.deleteApiKey(key.id!);
+  };
+
+  onMigrateAll = () => {
+    this.props.migrateAll();
+  };
+
+  onMigrateApiKey = (key: ApiKey) => {
+    this.props.migrateApiKey(key.id!);
   };
 
   onSearchQueryChange = (value: string) => {
@@ -120,6 +142,17 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     }
   };
 
+  onHideApiKeys = async () => {
+    try {
+      await this.props.hideApiKeys();
+      let serviceAccountsUrl = '/org/serviceaccounts';
+      locationService.push(serviceAccountsUrl);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   render() {
     const {
       hasFetched,
@@ -130,9 +163,8 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       timeZone,
       includeExpired,
       includeExpiredDisabled,
-      canRead,
       canCreate,
-      canDelete,
+      apiKeysMigrated,
     } = this.props;
 
     if (!hasFetched) {
@@ -148,10 +180,12 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
         <Page.Contents isLoading={false}>
           <ApiKeysController>
             {({ isAdding, toggleIsAdding }) => {
-              const showCTA = !isAdding && apiKeysCount === 0;
+              const showCTA = !isAdding && apiKeysCount === 0 && !apiKeysMigrated;
               const showTable = apiKeysCount > 0;
               return (
                 <>
+                  {!apiKeysMigrated && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
+                  {apiKeysMigrated && <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."
@@ -184,9 +218,8 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                       <ApiKeysTable
                         apiKeys={apiKeys}
                         timeZone={timeZone}
+                        onMigrate={this.onMigrateApiKey}
                         onDelete={this.onDeleteApiKey}
-                        canRead={canRead}
-                        canDelete={canDelete}
                       />
                     </VerticalGroup>
                   ) : null}

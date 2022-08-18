@@ -3,10 +3,10 @@ import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import 'mousetrap/plugins/global-bind/mousetrap-global-bind';
 import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
-import { SaveDashboardProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardProxy';
+import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -47,6 +47,10 @@ export class KeybindingSrv {
 
     this.bind('t t', () => toggleTheme(false));
     this.bind('t r', () => toggleTheme(true));
+
+    if (process.env.NODE_ENV === 'development') {
+      this.bind('t n', () => this.toggleNav());
+    }
   }
 
   globalEsc() {
@@ -73,6 +77,12 @@ export class KeybindingSrv {
 
     // ok no focused input or editor that should block this, let exist!
     this.exit();
+  }
+
+  toggleNav() {
+    window.location.href = locationUtil.getUrlForPartial(locationService.getLocation(), {
+      '__feature.topnav': (!config.featureToggles.topnav).toString(),
+    });
   }
 
   private openSearch() {
@@ -204,7 +214,7 @@ export class KeybindingSrv {
       if (dashboard.meta.canSave) {
         appEvents.publish(
           new ShowModalReactEvent({
-            component: SaveDashboardProxy,
+            component: SaveDashboardDrawer,
             props: {
               dashboard,
             },
@@ -227,6 +237,16 @@ export class KeybindingSrv {
     this.bindWithPanelId('v', (panelId) => {
       const isViewing = locationService.getSearchObject().viewPanel !== undefined;
       locationService.partial({ viewPanel: isViewing ? null : panelId });
+    });
+
+    //toggle legend
+    this.bindWithPanelId('p l', (panelId) => {
+      const panel = dashboard.getPanelById(panelId)!;
+      const newOptions = { ...panel.options };
+
+      newOptions.legend.showLegend ? (newOptions.legend.showLegend = false) : (newOptions.legend.showLegend = true);
+
+      panel.updateOptions(newOptions);
     });
 
     this.bindWithPanelId('i', (panelId) => {
@@ -283,14 +303,6 @@ export class KeybindingSrv {
     });
 
     // toggle panel legend
-    this.bindWithPanelId('p l', (panelId) => {
-      const panelInfo = dashboard.getPanelInfoById(panelId)!;
-
-      if (panelInfo.panel.legend) {
-        panelInfo.panel.legend.show = !panelInfo.panel.legend.show;
-        panelInfo.panel.render();
-      }
-    });
 
     // toggle all panel legends
     this.bind('d l', () => {

@@ -86,7 +86,7 @@ export default function AccordianText(props: AccordianTextProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={className || ''}>
-      <div className={cx(styles.header, headerClassName)} {...headerProps} data-test-id="AccordianText--header">
+      <div className={cx(styles.header, headerClassName)} {...headerProps} data-testid="AccordianText--header">
         {arrow}
         <strong>{label}</strong> ({data.length})
       </div>

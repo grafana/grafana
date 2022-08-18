@@ -177,18 +177,22 @@ function getStyles(theme: GrafanaTheme2) {
       code {
         border: none;
         display: inline;
-        background: ${colorManipulator.darken(tooltipBg, 0.3)};
+        background: ${colorManipulator.darken(tooltipBg, 0.1)};
         color: ${tooltipText};
       }
 
-      strong,
-      em {
-        color: ${colorManipulator.emphasize(tooltipBg)};
+      pre {
+        background: ${colorManipulator.darken(tooltipBg, 0.1)};
+        color: ${tooltipText};
       }
 
       a {
-        color: ${theme.colors.text.link};
+        color: ${tooltipText};
         text-decoration: underline;
+      }
+
+      a:hover {
+        text-decoration: none;
       }
     `;
   }

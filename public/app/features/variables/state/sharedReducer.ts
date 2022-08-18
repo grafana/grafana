@@ -5,7 +5,8 @@ import { LoadingState, VariableType } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
-import { VariableModel, VariableOption, VariableWithOptions } from '../types';
+import { hasOptions } from '../guard';
+import { VariableModel, VariableOption } from '../types';
 import { ensureStringValues } from '../utils';
 
 import { getInstanceState, getNextVariableIndex } from './selectors';
@@ -123,13 +124,18 @@ const sharedReducerSlice = createSlice({
         return;
       }
 
-      const instanceState = getInstanceState<VariableWithOptions>(state, action.payload.id);
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (!hasOptions(instanceState)) {
+        return;
+      }
+
       const { option } = action.payload.data;
       const current = { ...option, text: ensureStringValues(option?.text), value: ensureStringValues(option?.value) };
 
       instanceState.current = current;
       instanceState.options = instanceState.options.map((option) => {
         option.value = ensureStringValues(option.value);
+        option.text = ensureStringValues(option.text);
         let selected = false;
         if (Array.isArray(current.value)) {
           for (let index = 0; index < current.value.length; index++) {

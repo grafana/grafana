@@ -1,6 +1,6 @@
 import { DataSourceSettings } from '@grafana/data';
 
-import { createDatasourceSettings } from '../../../features/datasources/mocks';
+import { getMockDataSource } from '../../../features/datasources/__mocks__';
 
 import { LokiDatasource } from './datasource';
 import { LokiOptions } from './types';
@@ -18,7 +18,8 @@ interface SeriesForSelector {
 }
 
 export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesForSelector): LokiDatasource {
-  const lokiLabelsAndValuesEndpointRegex = /^label\/(\w*)\/values/;
+  // added % to allow urlencoded labelKeys. Note, that this is not confirm with Loki, as loki does not allow specialcharacters in labelKeys, but needed for tests.
+  const lokiLabelsAndValuesEndpointRegex = /^label\/([%\w]*)\/values/;
   const lokiSeriesEndpointRegex = /^series/;
 
   const lokiLabelsEndpoint = 'labels';
@@ -50,7 +51,7 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
 }
 
 export function createDefaultConfigOptions(): DataSourceSettings<LokiOptions> {
-  return createDatasourceSettings<LokiOptions>({
-    maxLines: '531',
+  return getMockDataSource<LokiOptions>({
+    jsonData: { maxLines: '531' },
   });
 }

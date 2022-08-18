@@ -1,7 +1,8 @@
 import { keys as _keys } from 'lodash';
 
+import { contextSrv } from 'app/core/services/context_srv';
+
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
-import { expect } from '../../../../test/lib/common';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';
@@ -10,7 +11,9 @@ import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
-jest.mock('app/core/services/context_srv', () => ({}));
+jest.mock('app/core/services/context_srv');
+
+const mockContextSrv = jest.mocked(contextSrv, true);
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -368,9 +371,18 @@ describe('DashboardModel', () => {
       dashboard.toggleRow(dashboard.panels[1]);
     });
 
+    it('should not impact hasUnsavedChanges', () => {
+      expect(dashboard.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('should impact hasUnsavedChanges if panels have changes when row is collapsed', () => {
+      dashboard.panels[0].setProperty('title', 'new title');
+      expect(dashboard.hasUnsavedChanges()).toBe(true);
+    });
+
     it('should remove panels and put them inside collapsed row', () => {
       expect(dashboard.panels.length).toBe(3);
-      expect(dashboard.panels[1].panels.length).toBe(2);
+      expect(dashboard.panels[1].panels?.length).toBe(2);
     });
 
     describe('and when removing row and its panels', () => {
@@ -852,20 +864,160 @@ describe('DashboardModel', () => {
 
   describe('canAddAnnotations', () => {
     it.each`
-      canEdit  | canMakeEditable | expected
-      ${false} | ${false}        | ${false}
-      ${false} | ${true}         | ${true}
-      ${true}  | ${false}        | ${true}
-      ${true}  | ${true}         | ${true}
+      canEdit  | canMakeEditable | canAdd   | expected
+      ${false} | ${true}         | ${true}  | ${true}
+      ${true}  | ${false}        | ${true}  | ${true}
+      ${true}  | ${true}         | ${true}  | ${true}
+      ${false} | ${false}        | ${true}  | ${false}
+      ${false} | ${true}         | ${false} | ${false}
+      ${true}  | ${false}        | ${false} | ${false}
+      ${true}  | ${true}         | ${false} | ${false}
+      ${false} | ${false}        | ${false} | ${false}
     `(
-      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable} and expected:{$expected}',
-      ({ canEdit, canMakeEditable, expected }) => {
-        const dashboard = new DashboardModel({});
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canAdd:{$canAdd} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, canAdd, expected }) => {
+        const dashboard = new DashboardModel(
+          {},
+          {
+            annotationsPermissions: {
+              dashboard: { canAdd, canEdit: true, canDelete: true },
+              organization: { canAdd: false, canEdit: false, canDelete: false },
+            },
+          }
+        );
+
         dashboard.meta.canEdit = canEdit;
         dashboard.meta.canMakeEditable = canMakeEditable;
+        mockContextSrv.accessControlEnabled.mockReturnValue(true);
+        const result = dashboard.canAddAnnotations();
+        expect(result).toBe(expected);
+      }
+    );
+  });
 
-        const result = dashboard.canEditDashboard();
+  describe('canEditAnnotations', () => {
+    it.each`
+      canEdit  | canMakeEditable | canEditWithOrgPermission | expected
+      ${false} | ${true}         | ${true}                  | ${true}
+      ${true}  | ${false}        | ${true}                  | ${true}
+      ${true}  | ${true}         | ${true}                  | ${true}
+      ${false} | ${false}        | ${true}                  | ${false}
+      ${false} | ${true}         | ${false}                 | ${false}
+      ${true}  | ${false}        | ${false}                 | ${false}
+      ${true}  | ${true}         | ${false}                 | ${false}
+      ${false} | ${false}        | ${false}                 | ${false}
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canEditWithOrgPermission:{$canEditWithOrgPermission} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, canEditWithOrgPermission, expected }) => {
+        const dashboard = new DashboardModel(
+          {},
+          {
+            annotationsPermissions: {
+              dashboard: { canAdd: false, canEdit: false, canDelete: true },
+              organization: { canAdd: false, canEdit: canEditWithOrgPermission, canDelete: false },
+            },
+          }
+        );
 
+        dashboard.meta.canEdit = canEdit;
+        dashboard.meta.canMakeEditable = canMakeEditable;
+        mockContextSrv.accessControlEnabled.mockReturnValue(true);
+        const result = dashboard.canEditAnnotations();
+        expect(result).toBe(expected);
+      }
+    );
+
+    it.each`
+      canEdit  | canMakeEditable | canEditWithDashboardPermission | expected
+      ${false} | ${true}         | ${true}                        | ${true}
+      ${true}  | ${false}        | ${true}                        | ${true}
+      ${true}  | ${true}         | ${true}                        | ${true}
+      ${false} | ${false}        | ${true}                        | ${false}
+      ${false} | ${true}         | ${false}                       | ${false}
+      ${true}  | ${false}        | ${false}                       | ${false}
+      ${true}  | ${true}         | ${false}                       | ${false}
+      ${false} | ${false}        | ${false}                       | ${false}
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canEditWithDashboardPermission:{$canEditWithDashboardPermission} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, canEditWithDashboardPermission, expected }) => {
+        const dashboard = new DashboardModel(
+          {},
+          {
+            annotationsPermissions: {
+              dashboard: { canAdd: false, canEdit: canEditWithDashboardPermission, canDelete: true },
+              organization: { canAdd: false, canEdit: false, canDelete: false },
+            },
+          }
+        );
+
+        dashboard.meta.canEdit = canEdit;
+        dashboard.meta.canMakeEditable = canMakeEditable;
+        mockContextSrv.accessControlEnabled.mockReturnValue(true);
+        const result = dashboard.canEditAnnotations('testDashboardUID');
+        expect(result).toBe(expected);
+      }
+    );
+  });
+
+  describe('canDeleteAnnotations', () => {
+    it.each`
+      canEdit  | canMakeEditable | canDeleteWithOrgPermission | expected
+      ${false} | ${true}         | ${true}                    | ${true}
+      ${true}  | ${false}        | ${true}                    | ${true}
+      ${true}  | ${true}         | ${true}                    | ${true}
+      ${false} | ${false}        | ${true}                    | ${false}
+      ${false} | ${true}         | ${false}                   | ${false}
+      ${true}  | ${false}        | ${false}                   | ${false}
+      ${true}  | ${true}         | ${false}                   | ${false}
+      ${false} | ${false}        | ${false}                   | ${false}
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canDeleteWithOrgPermission:{$canDeleteWithOrgPermission} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, canDeleteWithOrgPermission, expected }) => {
+        const dashboard = new DashboardModel(
+          {},
+          {
+            annotationsPermissions: {
+              dashboard: { canAdd: false, canEdit: false, canDelete: false },
+              organization: { canAdd: false, canEdit: false, canDelete: canDeleteWithOrgPermission },
+            },
+          }
+        );
+
+        dashboard.meta.canEdit = canEdit;
+        dashboard.meta.canMakeEditable = canMakeEditable;
+        mockContextSrv.accessControlEnabled.mockReturnValue(true);
+        const result = dashboard.canDeleteAnnotations();
+        expect(result).toBe(expected);
+      }
+    );
+
+    it.each`
+      canEdit  | canMakeEditable | canDeleteWithDashboardPermission | expected
+      ${false} | ${true}         | ${true}                          | ${true}
+      ${true}  | ${false}        | ${true}                          | ${true}
+      ${true}  | ${true}         | ${true}                          | ${true}
+      ${false} | ${false}        | ${true}                          | ${false}
+      ${false} | ${true}         | ${false}                         | ${false}
+      ${true}  | ${false}        | ${false}                         | ${false}
+      ${true}  | ${true}         | ${false}                         | ${false}
+      ${false} | ${false}        | ${false}                         | ${false}
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canDeleteWithDashboardPermission:{$canDeleteWithDashboardPermission} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, canDeleteWithDashboardPermission, expected }) => {
+        const dashboard = new DashboardModel(
+          {},
+          {
+            annotationsPermissions: {
+              dashboard: { canAdd: false, canEdit: false, canDelete: canDeleteWithDashboardPermission },
+              organization: { canAdd: false, canEdit: false, canDelete: false },
+            },
+          }
+        );
+
+        dashboard.meta.canEdit = canEdit;
+        dashboard.meta.canMakeEditable = canMakeEditable;
+        mockContextSrv.accessControlEnabled.mockReturnValue(true);
+        const result = dashboard.canDeleteAnnotations('testDashboardUID');
         expect(result).toBe(expected);
       }
     );
@@ -968,7 +1120,7 @@ describe('exitViewPanel', () => {
 });
 
 describe('exitPanelEditor', () => {
-  function getTestContext(setPreviousAutoRefresh = false) {
+  function getTestContext(pauseAutoRefresh = false) {
     const panel: any = { destroy: jest.fn() };
     const dashboard = new DashboardModel({});
     const timeSrvMock = {
@@ -978,8 +1130,8 @@ describe('exitPanelEditor', () => {
     } as unknown as TimeSrv;
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
-    if (setPreviousAutoRefresh) {
-      timeSrvMock.previousAutoRefresh = '5s';
+    if (pauseAutoRefresh) {
+      timeSrvMock.autoRefreshPaused = true;
     }
     setTimeSrv(timeSrvMock);
     return { dashboard, panel, timeSrvMock };

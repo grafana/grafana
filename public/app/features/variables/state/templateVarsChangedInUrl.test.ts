@@ -1,11 +1,12 @@
+import { TypedVariableModel } from '@grafana/data';
+
 import { DashboardState, StoreState } from '../../../types';
-import { DashboardModel } from '../../dashboard/state';
+import { DashboardModel, PanelModel } from '../../dashboard/state';
 import { initialState } from '../../dashboard/state/reducers';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { constantBuilder, customBuilder } from '../shared/testing/builders';
-import { VariableModel } from '../types';
 import { ExtendedUrlQueryMap } from '../utils';
 
 import { templateVarsChangedInUrl } from './actions';
@@ -16,7 +17,10 @@ const dashboardModel = new DashboardModel({});
 
 variableAdapters.setInit(() => [createCustomVariableAdapter(), createConstantVariableAdapter()]);
 
-async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: VariableModel | undefined = undefined) {
+async function getTestContext(
+  urlQueryMap: ExtendedUrlQueryMap = {},
+  variable: TypedVariableModel | undefined = undefined
+) {
   jest.clearAllMocks();
 
   const key = 'key';
@@ -30,8 +34,61 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: V
       .build();
   }
 
+  const variableB = customBuilder()
+    .withId('variableB')
+    .withRootStateKey(key)
+    .withName('variableB')
+    .withCurrent(['B'])
+    .withOptions('A', 'B', 'C')
+    .build();
+
   const setValueFromUrlMock = jest.fn();
   variableAdapters.get(variable.type).setValueFromUrl = setValueFromUrlMock;
+
+  const modelJson = {
+    id: 1,
+    type: 'table',
+    maxDataPoints: 100,
+    interval: '5m',
+    showColumns: true,
+    targets: [{ refId: 'A', queryType: '${variable}' }, { noRefId: true }],
+    options: null,
+    fieldConfig: {
+      defaults: {
+        unit: 'mpg',
+        thresholds: {
+          mode: 'absolute',
+          steps: [
+            { color: 'green', value: null },
+            { color: 'red', value: 80 },
+          ],
+        },
+      },
+      overrides: [
+        {
+          matcher: {
+            id: '1',
+            options: {},
+          },
+          properties: [
+            {
+              id: 'thresholds',
+              value: {
+                mode: 'absolute',
+                steps: [
+                  { color: 'green', value: null },
+                  { color: 'red', value: 80 },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  const panelModelA = new PanelModel(modelJson);
+  const panelModelB = new PanelModel({ ...modelJson, id: 2, targets: [{ refId: 'B', queryType: '${variableB}' }] });
 
   const templateVariableValueUpdatedMock = jest.fn();
   const startRefreshMock = jest.fn();
@@ -41,11 +98,12 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: V
       dashboardModel.templateVariableValueUpdated = templateVariableValueUpdatedMock;
       dashboardModel.startRefresh = startRefreshMock;
       dashboardModel.templating = { list: [variable] };
+      dashboardModel.panels = [panelModelA, panelModelB];
       return dashboardModel;
     },
   };
 
-  const variables: VariablesState = { variable };
+  const variables: VariablesState = { variable, variableB };
   const state: Partial<StoreState> = {
     dashboard,
     ...getPreloadedState(key, { variables }),
@@ -57,7 +115,7 @@ async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: V
 
   await thunk(dispatch, getState, undefined);
 
-  return { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, variable };
+  return { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, variable, variableB };
 }
 
 describe('templateVarsChangedInUrl', () => {
@@ -107,6 +165,20 @@ describe('templateVarsChangedInUrl', () => {
         expect(setValueFromUrlMock).toHaveBeenCalledWith(variable, 'B');
         expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(1);
         expect(startRefreshMock).toHaveBeenCalledTimes(1);
+        expect(startRefreshMock).toHaveBeenCalledWith({ refreshAll: false, panelIds: [1] });
+      });
+
+      it('should update URL value and only refresh panels with variableB dependency', async () => {
+        const { setValueFromUrlMock, templateVariableValueUpdatedMock, startRefreshMock, variableB } =
+          await getTestContext({
+            'var-variableB': { value: 'A' },
+          });
+
+        expect(setValueFromUrlMock).toHaveBeenCalledTimes(1);
+        expect(setValueFromUrlMock).toHaveBeenCalledWith(variableB, 'A');
+        expect(templateVariableValueUpdatedMock).toHaveBeenCalledTimes(1);
+        expect(startRefreshMock).toHaveBeenCalledTimes(1);
+        expect(startRefreshMock).toHaveBeenCalledWith({ refreshAll: false, panelIds: [2] });
       });
 
       describe('but the values in url query map were removed', () => {

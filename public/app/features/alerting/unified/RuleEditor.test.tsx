@@ -3,24 +3,26 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
-import { selectOptionInTest } from '@grafana/ui';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
+import { backendSrv } from '../../../core/services/backend_srv';
+import { AccessControlAction } from '../../../types';
 
 import RuleEditor from './RuleEditor';
-import { fetchBuildInfo } from './api/buildInfo';
+import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockDataSource, MockDataSourceSrv } from './mocks';
-import { getAllDataSources } from './utils/config';
+import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mocks';
+import * as config from './utils/config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { getDefaultQueries } from './utils/rule-form';
 
@@ -33,7 +35,6 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
-jest.mock('./utils/config');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
@@ -43,11 +44,13 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
   QueryEditorRow: () => <p>hi</p>,
 }));
 
+jest.spyOn(config, 'getAllDataSources');
+
 const mocks = {
-  getAllDataSources: jest.mocked(getAllDataSources),
+  getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
-    fetchBuildInfo: jest.mocked(fetchBuildInfo),
+    discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
@@ -98,7 +101,10 @@ describe('RuleEditor', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     contextSrv.isEditor = true;
+    contextSrv.hasEditPermissionInFolders = true;
   });
+
+  disableRBAC();
 
   it('can create a new cloud alert', async () => {
     const dataSources = {
@@ -136,8 +142,8 @@ describe('RuleEditor', () => {
     });
     mocks.searchFolders.mockResolvedValue([]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
-      application: PromApplication.Cortex,
+    mocks.api.discoverFeatures.mockResolvedValue({
+      application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: true,
       },
@@ -145,18 +151,20 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
 
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
-    await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
-    await userEvent.click(await ui.buttons.lotexAlert.get());
+    await userEvent.click(await ui.buttons.lotexAlert.find());
+
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
+
+    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
+
+    await userEvent.type(ui.inputs.name.get(), 'my great new rule');
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
-
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
 
     await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
@@ -235,7 +243,7 @@ describe('RuleEditor', () => {
       },
     ] as DashboardSearchHit[]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
+    mocks.api.discoverFeatures.mockResolvedValue({
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
@@ -245,7 +253,7 @@ describe('RuleEditor', () => {
     // fill out the form
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
 
     await userEvent.type(await ui.inputs.name.find(), 'my great new rule');
 
@@ -329,8 +337,8 @@ describe('RuleEditor', () => {
     });
     mocks.searchFolders.mockResolvedValue([]);
 
-    mocks.api.fetchBuildInfo.mockResolvedValue({
-      application: PromApplication.Cortex,
+    mocks.api.discoverFeatures.mockResolvedValue({
+      application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: true,
       },
@@ -338,7 +346,7 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor();
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
     await userEvent.click(await ui.buttons.lotexRecordingRule.get());
 
@@ -350,7 +358,7 @@ describe('RuleEditor', () => {
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    await userEvent.type(ui.inputs.expr.get(), 'up == 1');
+    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
 
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
     await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
@@ -399,10 +407,7 @@ describe('RuleEditor', () => {
       uid: 'abcd',
       id: 1,
     };
-    const getFolderByUid = jest.fn().mockResolvedValue({
-      ...folder,
-      canSave: true,
-    });
+
     const dataSources = {
       default: mockDataSource({
         type: 'prometheus',
@@ -411,10 +416,13 @@ describe('RuleEditor', () => {
       }),
     };
 
-    const backendSrv = {
-      getFolderByUid,
-    } as any as BackendSrv;
-    setBackendSrv(backendSrv);
+    jest.spyOn(backendSrv, 'getFolderByUid').mockResolvedValue({
+      ...mockFolder(),
+      accessControl: {
+        [AccessControlAction.AlertingRuleUpdate]: true,
+      },
+    });
+
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
@@ -449,7 +457,7 @@ describe('RuleEditor', () => {
 
     await renderRuleEditor(uid);
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
     // check that it's filled in
@@ -551,10 +559,10 @@ describe('RuleEditor', () => {
       ),
     };
 
-    mocks.api.fetchBuildInfo.mockImplementation(async (dataSourceName) => {
+    mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
       if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
         return {
-          application: PromApplication.Cortex,
+          application: PromApplication.Lotex,
           features: {
             rulerApiEnabled: true,
             alertManagerConfigApi: false,
@@ -565,7 +573,7 @@ describe('RuleEditor', () => {
       }
       if (dataSourceName === 'loki with local rule store') {
         return {
-          application: PromApplication.Cortex,
+          application: PromApplication.Lotex,
           features: {
             rulerApiEnabled: false,
             alertManagerConfigApi: false,
@@ -576,7 +584,7 @@ describe('RuleEditor', () => {
       }
       if (dataSourceName === 'cortex without ruler api') {
         return {
-          application: PromApplication.Cortex,
+          application: PromApplication.Lotex,
           features: {
             rulerApiEnabled: false,
             alertManagerConfigApi: false,
@@ -613,7 +621,7 @@ describe('RuleEditor', () => {
 
     // render rule editor, select mimir/loki managed alerts
     await renderRuleEditor();
-    await waitFor(() => expect(mocks.api.fetchBuildInfo).toHaveBeenCalled());
+    await waitFor(() => expect(mocks.api.discoverFeatures).toHaveBeenCalled());
     await waitFor(() => expect(mocks.searchFolders).toHaveBeenCalled());
 
     await ui.inputs.name.find();

@@ -18,14 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -168,8 +169,8 @@ func TestAlertmanagerConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
-				OrgId: 12,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 12,
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -185,8 +186,8 @@ func TestAlertmanagerConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
-				OrgId: 1,
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -202,8 +203,8 @@ func TestAlertmanagerConfig(t *testing.T) {
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
-			SignedInUser: &models.SignedInUser{
-				OrgId: 3, // Org 3 was initialized with broken config.
+			SignedInUser: &user.SignedInUser{
+				OrgID: 3, // Org 3 was initialized with broken config.
 			},
 		}
 		request := createAmConfigRequest(t)
@@ -231,6 +232,15 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 			body := asGettableUserConfig(t, response)
 			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+		})
+		t.Run("templates from GET config have no provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.Nil(t, body.TemplateFileProvenances)
 		})
 	})
 
@@ -264,6 +274,18 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body = asGettableUserConfig(t, response)
 
 			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+		})
+		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
+			sut := createSut(t, nil)
+			rc := createRequestCtxInOrg(1)
+			setTemplateProvenance(t, 1, "a", sut.mam.ProvStore)
+
+			response := sut.RouteGetAlertingConfig(rc)
+
+			body := asGettableUserConfig(t, response)
+			require.NotNil(t, body.TemplateFileProvenances)
+			require.Len(t, body.TemplateFileProvenances, 1)
+			require.Equal(t, ngmodels.ProvenanceAPI, body.TemplateFileProvenances["a"])
 		})
 	})
 }
@@ -311,9 +333,9 @@ func TestSilenceCreate(t *testing.T) {
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
-				SignedInUser: &models.SignedInUser{
-					OrgRole: models.ROLE_EDITOR,
-					OrgId:   1,
+				SignedInUser: &user.SignedInUser{
+					OrgRole: org.RoleEditor,
+					OrgID:   1,
 				},
 			}
 
@@ -333,7 +355,7 @@ func TestRouteCreateSilence(t *testing.T) {
 		name           string
 		silence        func() apimodels.PostableSilence
 		accessControl  func() accesscontrol.AccessControl
-		role           models.RoleType
+		role           org.RoleType
 		expectedStatus int
 	}{
 		{
@@ -348,7 +370,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			name:    "new silence, role-based access control is enabled, authorized",
 			silence: silenceGen(withEmptyID),
 			accessControl: func() accesscontrol.AccessControl {
-				return acMock.New().WithPermissions([]*accesscontrol.Permission{
+				return acMock.New().WithPermissions([]accesscontrol.Permission{
 					{Action: accesscontrol.ActionAlertingInstanceCreate},
 				})
 			},
@@ -360,7 +382,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_VIEWER,
+			role:           org.RoleViewer,
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
@@ -369,7 +391,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_EDITOR,
+			role:           org.RoleEditor,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -378,7 +400,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_ADMIN,
+			role:           org.RoleAdmin,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -393,7 +415,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			name:    "update silence, role-based access control is enabled, authorized",
 			silence: silenceGen(),
 			accessControl: func() accesscontrol.AccessControl {
-				return acMock.New().WithPermissions([]*accesscontrol.Permission{
+				return acMock.New().WithPermissions([]accesscontrol.Permission{
 					{Action: accesscontrol.ActionAlertingInstanceUpdate},
 				})
 			},
@@ -405,7 +427,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_VIEWER,
+			role:           org.RoleViewer,
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
@@ -414,7 +436,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_EDITOR,
+			role:           org.RoleEditor,
 			expectedStatus: http.StatusAccepted,
 		},
 		{
@@ -423,7 +445,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			accessControl: func() accesscontrol.AccessControl {
 				return acMock.New().WithDisabled()
 			},
-			role:           models.ROLE_ADMIN,
+			role:           org.RoleAdmin,
 			expectedStatus: http.StatusAccepted,
 		},
 	}
@@ -437,9 +459,9 @@ func TestRouteCreateSilence(t *testing.T) {
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					OrgRole: tesCase.role,
-					OrgId:   1,
+					OrgID:   1,
 				},
 			}
 
@@ -510,9 +532,6 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 			DefaultConfiguration:           setting.GetAlertmanagerDefaultConfiguration(),
 			DisabledOrgs:                   map[int64]struct{}{5: {}},
 		}, // do not poll in tests.
-		IsFeatureToggleEnabled: func(key string) bool {
-			return key == featuremgmt.FlagAlertProvisioning
-		},
 	}
 
 	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
@@ -522,7 +541,29 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	return mam
 }
 
-var validConfig = setting.GetAlertmanagerDefaultConfiguration()
+var validConfig = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
 
 var brokenConfig = `
 	"alertmanager_config": {
@@ -585,8 +626,8 @@ func createRequestCtxInOrg(org int64) *models.ReqContext {
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
-		SignedInUser: &models.SignedInUser{
-			OrgId: org,
+		SignedInUser: &user.SignedInUser{
+			OrgID: org,
 		},
 	}
 }
@@ -602,6 +643,13 @@ func setRouteProvenance(t *testing.T, orgID int64, ps provisioning.ProvisioningS
 func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisioning.ProvisioningStore) {
 	t.Helper()
 	err := ps.SetProvenance(context.Background(), &apimodels.EmbeddedContactPoint{UID: UID}, orgID, ngmodels.ProvenanceAPI)
+	require.NoError(t, err)
+}
+
+// setTemplateProvenance marks a template as provisioned.
+func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
+	t.Helper()
+	err := ps.SetProvenance(context.Background(), &apimodels.MessageTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 
