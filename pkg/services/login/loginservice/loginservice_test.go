@@ -11,9 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,6 +34,7 @@ func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) 
 		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
+		userService:     usertest.NewUserServiceFake(),
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
@@ -56,6 +59,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 		SQLStore:        store,
+		userService:     usertest.NewUserServiceFake(),
 	}
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
@@ -127,17 +131,17 @@ func createUserOrgDTO() []*models.UserOrgDTO {
 		{
 			OrgId: 1,
 			Name:  "Bar",
-			Role:  models.ROLE_VIEWER,
+			Role:  org.RoleViewer,
 		},
 		{
 			OrgId: 10,
 			Name:  "Foo",
-			Role:  models.ROLE_ADMIN,
+			Role:  org.RoleAdmin,
 		},
 		{
 			OrgId: 11,
 			Name:  "Stuff",
-			Role:  models.ROLE_VIEWER,
+			Role:  org.RoleViewer,
 		},
 	}
 	return users
@@ -146,8 +150,8 @@ func createUserOrgDTO() []*models.UserOrgDTO {
 func createSimpleExternalUser() models.ExternalUserInfo {
 	externalUser := models.ExternalUserInfo{
 		AuthModule: login.LDAPAuthModule,
-		OrgRoles: map[int64]models.RoleType{
-			1: models.ROLE_VIEWER,
+		OrgRoles: map[int64]org.RoleType{
+			1: org.RoleViewer,
 		},
 	}
 

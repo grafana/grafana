@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
@@ -159,9 +160,9 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
-			sc.context.UserId = userId
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = userId
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.RevokeUserAuthToken(c)
 		})
@@ -185,9 +186,9 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = userId
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = userId
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.GetUserAuthTokens(c)
 		})
@@ -208,9 +209,9 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 		sc := setupScenarioContext(t, "/")
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 
 			return hs.logoutUserFromAllDevicesInternal(context.Background(), userId)
 		})
@@ -235,9 +236,9 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 			sc.context.UserToken = token
 
 			return hs.revokeUserAuthTokenInternal(c, userId, cmd)
@@ -260,9 +261,9 @@ func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
-			sc.context.OrgRole = models.ROLE_ADMIN
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.OrgRole = org.RoleAdmin
 			sc.context.UserToken = token
 
 			return hs.getUserAuthTokensInternal(c, testUserID)

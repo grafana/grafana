@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -97,14 +98,14 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *mod
 // HasEditPermissionInFolders validates that an user have access to a certain folder
 func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		if query.SignedInUser.HasRole(models.ROLE_EDITOR) {
+		if query.SignedInUser.HasRole(org.RoleEditor) {
 			query.Result = true
 			return nil
 		}
 
 		builder := sqlstore.NewSqlBuilder(d.sqlStore.Cfg)
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
-			query.SignedInUser.OrgId, d.dialect.BooleanStr(true))
+			query.SignedInUser.OrgID, d.dialect.BooleanStr(true))
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
 
 		type folderCount struct {
@@ -125,13 +126,13 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 
 func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	return d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		if query.SignedInUser.HasRole(models.ROLE_ADMIN) {
+		if query.SignedInUser.HasRole(org.RoleAdmin) {
 			query.Result = true
 			return nil
 		}
 
 		builder := sqlstore.NewSqlBuilder(d.sqlStore.Cfg)
-		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgId)
+		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
 
 		type folderCount struct {

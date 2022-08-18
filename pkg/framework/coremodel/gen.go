@@ -6,7 +6,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -42,7 +41,7 @@ func main() {
 	cmroot := filepath.Join(groot, "pkg", "coremodel")
 	tsroot := filepath.Join(groot, "packages", "grafana-schema", "src", "schema")
 
-	items, err := ioutil.ReadDir(cmroot)
+	items, err := os.ReadDir(cmroot)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not read coremodels parent dir %s: %s\n", cmroot, err)
 		os.Exit(1)

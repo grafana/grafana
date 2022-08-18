@@ -19,6 +19,7 @@ import { RuleLocation } from '../RuleLocation';
 
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
+import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
 
@@ -38,6 +39,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
 
   const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
+  const [isReorderingGroup, setIsReorderingGroup] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
   const { canEditRules } = useRulesAccess();
@@ -95,6 +97,17 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
               onClick={() => setIsEditingGroup(true)}
             />
           );
+          actionIcons.push(
+            <ActionIcon
+              aria-label="re-order rules"
+              data-testid="reorder-group"
+              key="reorder"
+              icon="exchange-alt"
+              tooltip="reorder rules"
+              className={styles.rotate90}
+              onClick={() => setIsReorderingGroup(true)}
+            />
+          );
         }
         if (isListView) {
           actionIcons.push(
@@ -132,6 +145,17 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
           icon="pen"
           tooltip="edit rule group"
           onClick={() => setIsEditingGroup(true)}
+        />
+      );
+      actionIcons.push(
+        <ActionIcon
+          aria-label="re-order rules"
+          data-testid="reorder-group"
+          key="reorder"
+          icon="exchange-alt"
+          tooltip="re-order rules"
+          className={styles.rotate90}
+          onClick={() => setIsReorderingGroup(true)}
         />
       );
     }
@@ -193,6 +217,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
       )}
       {isEditingGroup && (
         <EditCloudGroupModal group={group} namespace={namespace} onClose={() => setIsEditingGroup(false)} />
+      )}
+      {isReorderingGroup && (
+        <ReorderCloudGroupModal group={group} namespace={namespace} onClose={() => setIsReorderingGroup(false)} />
       )}
       <ConfirmModal
         isOpen={isDeletingGroup}
@@ -277,5 +304,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   rulesTable: css`
     margin-top: ${theme.spacing(3)};
+  `,
+  rotate90: css`
+    transform: rotate(90deg);
   `,
 });

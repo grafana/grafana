@@ -91,6 +91,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	logger := log.New("ngalert.api")
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
+		ac:        api.AccessControl,
 	}
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.

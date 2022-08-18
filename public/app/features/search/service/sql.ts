@@ -3,7 +3,8 @@ import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { DashboardSearchHit } from '../types';
+import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
+import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
 import { LocationInfo } from './types';
 import { replaceCurrentFolderQuery } from './utils';
@@ -15,7 +16,7 @@ interface APIQuery {
   tag?: string[];
   limit?: number;
   page?: number;
-  type?: string;
+  type?: DashboardSearchItemType;
   // DashboardIds []int64
   dashboardUID?: string[];
   folderIds?: number[];
@@ -38,36 +39,46 @@ export class SQLSearcher implements GrafanaSearcher {
     },
   }; // share location info with everyone
 
-  async search(query: SearchQuery): Promise<QueryResponse> {
-    if (query.facet?.length) {
-      throw new Error('facets not supported!');
-    }
-    const q: APIQuery = {
-      limit: query.limit ?? 1000, // default 1k max values
-      tag: query.tags,
-      sort: query.sort,
-    };
+  private async composeQuery(apiQuery: APIQuery, searchOptions: SearchQuery): Promise<APIQuery> {
+    const query = await replaceCurrentFolderQuery(searchOptions);
 
-    query = await replaceCurrentFolderQuery(query);
     if (query.query === '*') {
-      if (query.kind?.length === 1 && query.kind[0] === 'folder') {
-        q.type = 'dash-folder';
+      if (query.kind?.length === 1 && TYPE_KIND_MAP[query.kind[0]]) {
+        apiQuery.type = TYPE_KIND_MAP[query.kind[0]];
       }
     } else if (query.query?.length) {
-      q.query = query.query;
+      apiQuery.query = query.query;
     }
 
     if (query.uid) {
-      q.dashboardUID = query.uid;
+      apiQuery.dashboardUID = query.uid;
     } else if (query.location?.length) {
       let info = this.locationInfo[query.location];
       if (!info) {
         // This will load all folder folders
-        await this.doAPIQuery({ type: 'dash-folder', limit: 999 });
+        await this.doAPIQuery({ type: DashboardSearchItemType.DashFolder, limit: 999 });
         info = this.locationInfo[query.location];
       }
-      q.folderIds = [info.folderId ?? 0];
+      apiQuery.folderIds = [info?.folderId ?? 0];
     }
+
+    return apiQuery;
+  }
+
+  async search(query: SearchQuery): Promise<QueryResponse> {
+    if (query.facet?.length) {
+      throw new Error('facets not supported!');
+    }
+
+    const q = await this.composeQuery(
+      {
+        limit: query.limit ?? DEFAULT_MAX_VALUES, // default 1k max values
+        tag: query.tags,
+        sort: query.sort,
+      },
+      query
+    );
+
     return this.doAPIQuery(q);
   }
 
@@ -75,33 +86,17 @@ export class SQLSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    const q: APIQuery = {
-      limit: query.limit ?? 1000, // default 1k max values
-      tag: query.tags,
-      sort: query.sort,
-      starred: query.starred,
-    };
 
-    query = await replaceCurrentFolderQuery(query);
-    if (query.query === '*') {
-      if (query.kind?.length === 1 && query.kind[0] === 'folder') {
-        q.type = 'dash-folder';
-      }
-    } else if (query.query?.length) {
-      q.query = query.query;
-    }
+    const q = await this.composeQuery(
+      {
+        limit: query.limit ?? DEFAULT_MAX_VALUES, // default 1k max values
+        tag: query.tags,
+        sort: query.sort,
+        starred: query.starred,
+      },
+      query
+    );
 
-    if (query.uid) {
-      q.dashboardUID = query.uid;
-    } else if (query.location?.length) {
-      let info = this.locationInfo[query.location];
-      if (!info) {
-        // This will load all folder folders
-        await this.doAPIQuery({ type: 'dash-folder', limit: 999 });
-        info = this.locationInfo[query.location];
-      }
-      q.folderIds = [info.folderId ?? 0];
-    }
     return this.doAPIQuery(q);
   }
 
