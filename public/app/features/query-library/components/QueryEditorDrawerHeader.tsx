@@ -42,7 +42,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss }: Props) => {
   };
 
   const onQuerySave = () => {
-    // TODO: implement save (maybe)
+    // TODO: implement save
     onDismiss();
   };
 

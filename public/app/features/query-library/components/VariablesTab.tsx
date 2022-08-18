@@ -53,9 +53,9 @@ export const VariablesTab = ({ savedQuery }: Props) => {
   const onAddVariable = () => {
     // NOTE: doing mutation to force re-render
     savedQuery.variables.unshift({
-      name: 'New var',
+      name: 'New variable',
       current: {
-        value: 'test',
+        value: 'General',
       },
     });
 
