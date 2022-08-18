@@ -8,13 +8,13 @@ import {
   TransformerUIProps,
 } from '@grafana/data';
 import { SeriesToColumnsOptions, JoinMode } from '@grafana/data/src/transformations/transformers/seriesToColumns';
-import { Select, InlineFieldRow, InlineField, RadioButtonGroup } from '@grafana/ui';
+import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 const modes = [
-  { value: JoinMode.outer, label: 'OUTER', description: 'Keep all rows that match' },
-  { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match' },
+  { value: JoinMode.outer, label: 'OUTER', description: 'Keep all rows from any table with a value' },
+  { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables' },
 ];
 
 export function SeriesToFieldsTransformerEditor({
@@ -35,10 +35,10 @@ export function SeriesToFieldsTransformerEditor({
   );
 
   const onSetMode = useCallback(
-    (mode: JoinMode) => {
+    (value: SelectableValue<JoinMode>) => {
       onChange({
         ...options,
-        mode,
+        mode: value?.value,
       });
     },
     [onChange, options]
@@ -47,13 +47,19 @@ export function SeriesToFieldsTransformerEditor({
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Mode" labelWidth={8}>
-          <RadioButtonGroup options={modes} value={options.mode ?? JoinMode.outer} onChange={onSetMode} />
+        <InlineField label="Mode" labelWidth={8} grow>
+          <Select options={modes} value={options.mode ?? JoinMode.outer} onChange={onSetMode} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Field" labelWidth={8}>
-          <Select options={fieldNames} value={options.byField} onChange={onSelectField} isClearable />
+        <InlineField label="Field" labelWidth={8} grow>
+          <Select
+            options={fieldNames}
+            value={options.byField}
+            onChange={onSelectField}
+            placeholder="time"
+            isClearable
+          />
         </InlineField>
       </InlineFieldRow>
     </>
