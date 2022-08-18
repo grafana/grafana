@@ -397,8 +397,11 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
-		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
+		reqContext.Logger.Warn("Failed to look up user based on cookie", "error", err)
+		// Burn the cookie in case of failure
+		reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 		reqContext.LookupTokenErr = err
+
 		return false
 	}
 
@@ -418,6 +421,18 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext, h.AuthTokenService, token))
 
 	return true
+}
+
+func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
+		if w.Written() {
+			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
+			return
+		}
+
+		reqContext.Logger.Debug("Expiring invalid cookie")
+		cookies.DeleteCookie(reqContext.Resp, h.Cfg.LoginCookieName, nil)
+	}
 }
 
 func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
