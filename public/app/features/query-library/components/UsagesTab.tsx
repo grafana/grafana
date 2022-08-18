@@ -59,7 +59,7 @@ export const UsagesTab = ({ savedQuery }: Props) => {
         icon = 'folder';
         break;
       case 'alert':
-        icon = 'folder';
+        icon = 'bell';
         break;
       default:
         icon = 'question-circle';
