@@ -3,6 +3,8 @@ package models
 import (
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Folder struct {
@@ -17,7 +19,7 @@ type Folder struct {
 
 	UpdatedBy int64
 	CreatedBy int64
-	HasAcl    bool
+	HasACL    bool
 }
 
 // NewFolder creates a new Folder
@@ -35,7 +37,7 @@ func DashboardToFolder(dash *Dashboard) *Folder {
 		Id:        dash.Id,
 		Uid:       dash.Uid,
 		Title:     dash.Title,
-		HasAcl:    dash.HasAcl,
+		HasACL:    dash.HasACL,
 		Url:       dash.GetUrl(),
 		Version:   dash.Version,
 		Created:   dash.Created,
@@ -91,11 +93,11 @@ type UpdateFolderCommand struct {
 //
 
 type HasEditPermissionInFoldersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       bool
 }
 
 type HasAdminPermissionInDashboardsOrFoldersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       bool
 }

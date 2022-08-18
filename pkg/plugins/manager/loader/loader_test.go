@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -335,6 +335,38 @@ func TestLoader_Load(t *testing.T) {
 				PluginsAllowUnsigned: []string{"test"},
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
+			want:        []*plugins.Plugin{},
+			pluginErrors: map[string]*plugins.Error{
+				"test": {
+					PluginID:  "test",
+					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
+			name:  "Load a plugin with manifest which has a file not found in plugin folder",
+			class: plugins.External,
+			cfg: &plugins.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
+			want:        []*plugins.Plugin{},
+			pluginErrors: map[string]*plugins.Error{
+				"test": {
+					PluginID:  "test",
+					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
+			name:  "Load a plugin with file which is missing from the manifest",
+			class: plugins.External,
+			cfg: &plugins.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test"},
+			},
+			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test": {
@@ -1032,10 +1064,10 @@ func TestLoader_readPluginJSON(t *testing.T) {
 					},
 				},
 				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: models.ROLE_VIEWER},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: models.ROLE_VIEWER},
-					{Name: "Nginx Panel", Type: "panel", Role: models.ROLE_VIEWER},
-					{Name: "Nginx Datasource", Type: "datasource", Role: models.ROLE_VIEWER},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
+					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
+					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
 				},
 				Backend: false,
 			},

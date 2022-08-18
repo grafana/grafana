@@ -8,6 +8,8 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getGrafanaStorage } from 'app/features/storage/storage';
+import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 
@@ -39,6 +41,8 @@ export class DashboardLoaderSrv {
       promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
+    } else if (type === DashboardRoutes.Path) {
+      promise = getGrafanaStorage().getDashboard(slug!);
     } else if (type === 'ds') {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else if (type === 'public') {
@@ -65,9 +69,9 @@ export class DashboardLoaderSrv {
         });
     }
 
-    promise.then((result: any) => {
+    promise.then((result: DashboardDTO) => {
       if (result.meta.dashboardNotFound !== true) {
-        impressionSrv.addDashboardImpression(result.dashboard.id);
+        impressionSrv.addDashboardImpression(result.dashboard.uid);
       }
 
       return result;

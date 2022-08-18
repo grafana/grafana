@@ -3,9 +3,9 @@ package cloudmonitoring
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net/url"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -459,6 +459,19 @@ func TestTimeSeriesFilter(t *testing.T) {
 			}, *res.Frames[0].Meta)
 		})
 	})
+
+	t.Run("when data comes from a slo query, it should skip the link", func(t *testing.T) {
+		data, err := loadTestFile("./test-data/3-series-response-distribution-exponential.json")
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(data.TimeSeries))
+
+		res := &backend.DataResponse{}
+		query := &cloudMonitoringTimeSeriesFilter{Params: url.Values{}, Slo: "yes"}
+		err = query.parseResponse(res, data, "")
+		require.NoError(t, err)
+		frames := res.Frames
+		assert.Equal(t, len(frames[0].Fields[1].Config.Links), 0)
+	})
 }
 
 func loadTestFile(path string) (cloudMonitoringResponse, error) {
@@ -466,7 +479,7 @@ func loadTestFile(path string) (cloudMonitoringResponse, error) {
 
 	// Can ignore gosec warning G304 here since it's a test path
 	// nolint:gosec
-	jsonBody, err := ioutil.ReadFile(path)
+	jsonBody, err := os.ReadFile(path)
 	if err != nil {
 		return data, err
 	}

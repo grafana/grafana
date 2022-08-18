@@ -26,6 +26,7 @@ export type SearchResultsProps = {
   clearSelection: () => void;
   onTagSelected: (tag: string) => void;
   onDatasourceChange?: (datasource?: string) => void;
+  onClickItem?: (event: React.MouseEvent<HTMLElement>) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
 };
 
@@ -45,6 +46,7 @@ export const SearchResultsTable = React.memo(
     clearSelection,
     onTagSelected,
     onDatasourceChange,
+    onClickItem,
     keyboardEvents,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
@@ -121,14 +123,14 @@ export const SearchResultsTable = React.memo(
                   cell={cell}
                   columnIndex={index}
                   columnCount={row.cells.length}
-                  userProps={{ href: url }}
+                  userProps={{ href: url, onClick: onClickItem }}
                 />
               );
             })}
           </div>
         );
       },
-      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles]
+      [rows, prepareRow, response.view.fields.url?.values, highlightIndex, styles, tableStyles, onClickItem]
     );
 
     if (!rows.length) {
@@ -281,6 +283,11 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
     sortedItems: css`
       text-align: right;
       padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+    `,
+    explainItem: css`
+      text-align: right;
+      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+      cursor: pointer;
     `,
     locationCellStyle: css`
       padding-top: ${theme.spacing(1)};

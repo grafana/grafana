@@ -1,12 +1,8 @@
 import React, { FC } from 'react';
-import { connect, MapStateToProps } from 'react-redux';
 
-import { NavModel } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { StoreState } from 'app/types';
 
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 
@@ -16,17 +12,13 @@ import { getPlaylistStyles } from './styles';
 import { Playlist } from './types';
 import { usePlaylist } from './usePlaylist';
 
-interface ConnectedProps {
-  navModel: NavModel;
-}
-
 export interface RouteParams {
   uid: string;
 }
 
-interface Props extends ConnectedProps, GrafanaRouteComponentProps<RouteParams> {}
+interface Props extends GrafanaRouteComponentProps<RouteParams> {}
 
-export const PlaylistEditPage: FC<Props> = ({ navModel, match }) => {
+export const PlaylistEditPage: FC<Props> = ({ match }) => {
   const styles = useStyles2(getPlaylistStyles);
   const { playlist, loading } = usePlaylist(match.params.uid);
   const onSubmit = async (playlist: Playlist) => {
@@ -35,7 +27,7 @@ export const PlaylistEditPage: FC<Props> = ({ navModel, match }) => {
   };
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="dashboards/playlists">
       <Page.Contents isLoading={loading}>
         <h3 className={styles.subHeading}>Edit playlist</h3>
 
@@ -50,8 +42,4 @@ export const PlaylistEditPage: FC<Props> = ({ navModel, match }) => {
   );
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'playlists'),
-});
-
-export default connect(mapStateToProps)(PlaylistEditPage);
+export default PlaylistEditPage;

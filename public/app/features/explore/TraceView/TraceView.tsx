@@ -139,6 +139,7 @@ export function TraceView(props: Props) {
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
+  const datasourceType = datasource ? datasource?.type : 'unknown';
 
   return (
     <>
@@ -162,6 +163,7 @@ export function TraceView(props: Props) {
             scrollToFirstVisibleSpan={noop}
             findMatchesIDs={spanFindMatches}
             trace={traceProp}
+            datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}
             traceTimeline={traceTimeline}
             updateNextViewRangeTime={updateNextViewRangeTime}

@@ -12,14 +12,7 @@ import {
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
 } from '@grafana/data/src/transformations/transformers/histogram';
-import {
-  VizLegendOptions,
-  LegendDisplayMode,
-  ScaleDistribution,
-  AxisPlacement,
-  ScaleDirection,
-  ScaleOrientation,
-} from '@grafana/schema';
+import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
   Themeable2,
   UPlotConfigBuilder,
@@ -48,6 +41,7 @@ export interface HistogramProps extends Themeable2 {
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
+  rawSeries?: DataFrame[];
   children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
 }
 
@@ -151,10 +145,15 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     theme,
   });
 
+  // assumes BucketMax is [1]
+  let countField = frame.fields[2];
+  let dispY = countField.display;
+
   builder.addAxis({
     scaleKey: 'y',
     isTime: false,
     placement: AxisPlacement.Left,
+    formatValue: (v, decimals) => formattedValueToString(dispY!(v, countField.config.decimals ?? decimals)),
     //splits: config.xSplits,
     //values: config.xValues,
     //grid: false,
@@ -200,7 +199,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       colorMode,
       pathBuilder,
       //pointsBuilder: config.drawPoints,
-      show: !customConfig.hideFrom?.vis,
+      show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 
@@ -211,8 +210,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: {
-        fieldIndex: i,
-        frameIndex: 0,
+        fieldIndex: 1,
+        frameIndex: i - 2,
       },
     });
   }
@@ -273,11 +272,11 @@ export class Histogram extends React.Component<HistogramProps, State> {
 
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
-    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!config || legend.showLegend === false || !this.props.rawSeries) {
       return null;
     }
 
-    return <PlotLegend data={[this.props.alignedFrame]} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    return <PlotLegend data={this.props.rawSeries} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {

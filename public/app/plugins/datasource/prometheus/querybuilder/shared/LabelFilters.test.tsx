@@ -11,7 +11,8 @@ import { QueryBuilderLabelFilter } from './types';
 describe('LabelFilters', () => {
   it('renders empty input without labels', async () => {
     setup();
-    expect(screen.getAllByText(/Choose/)).toHaveLength(2);
+    expect(screen.getAllByText('Select label')).toHaveLength(1);
+    expect(screen.getAllByText('Select value')).toHaveLength(1);
     expect(screen.getByText(/=/)).toBeInTheDocument();
     expect(getAddButton()).toBeInTheDocument();
   });
@@ -31,10 +32,26 @@ describe('LabelFilters', () => {
     expect(getAddButton()).toBeInTheDocument();
   });
 
+  it('renders multiple values for regex selectors', async () => {
+    setup([
+      { label: 'bar', op: '!~', value: 'baz|bat|bau' },
+      { label: 'foo', op: '!~', value: 'fop|for|fos' },
+    ]);
+    expect(screen.getByText(/bar/)).toBeInTheDocument();
+    expect(screen.getByText(/baz/)).toBeInTheDocument();
+    expect(screen.getByText(/bat/)).toBeInTheDocument();
+    expect(screen.getByText(/bau/)).toBeInTheDocument();
+    expect(screen.getByText(/foo/)).toBeInTheDocument();
+    expect(screen.getByText(/for/)).toBeInTheDocument();
+    expect(screen.getByText(/fos/)).toBeInTheDocument();
+    expect(getAddButton()).toBeInTheDocument();
+  });
+
   it('adds new label', async () => {
     const { onChange } = setup([{ label: 'foo', op: '=', value: 'bar' }]);
     await userEvent.click(getAddButton());
-    expect(screen.getAllByText(/Choose/)).toHaveLength(2);
+    expect(screen.getAllByText('Select label')).toHaveLength(1);
+    expect(screen.getAllByText('Select value')).toHaveLength(1);
     const { name, value } = getLabelSelects(1);
     await selectOptionInTest(name, 'baz');
     await selectOptionInTest(value, 'qux');
@@ -57,7 +74,8 @@ describe('LabelFilters', () => {
     rerender(
       <LabelFilters onChange={jest.fn()} onGetLabelNames={jest.fn()} onGetLabelValues={jest.fn()} labelsFilters={[]} />
     );
-    expect(screen.getAllByText(/Choose/)).toHaveLength(2);
+    expect(screen.getAllByText('Select label')).toHaveLength(1);
+    expect(screen.getAllByText('Select value')).toHaveLength(1);
     expect(screen.getByText(/=/)).toBeInTheDocument();
     expect(getAddButton()).toBeInTheDocument();
   });

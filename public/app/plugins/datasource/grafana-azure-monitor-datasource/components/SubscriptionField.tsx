@@ -36,7 +36,6 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         newQuery.azureMonitor = {
           ...newQuery.azureMonitor,
           resourceGroup: undefined,
-          metricDefinition: undefined,
           metricNamespace: undefined,
           resourceName: undefined,
           metricName: undefined,

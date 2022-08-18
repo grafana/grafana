@@ -1,4 +1,5 @@
 import { action } from '@storybook/addon-actions';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { ToolbarButton, VerticalGroup } from '@grafana/ui';
@@ -9,7 +10,7 @@ import { IconButton } from '../IconButton/IconButton';
 
 import { PageToolbar } from './PageToolbar';
 
-export default {
+const meta: ComponentMeta<typeof PageToolbar> = {
   title: 'Layout/PageToolbar',
   component: PageToolbar,
   decorators: [withCenteredStory],
@@ -54,3 +55,5 @@ export const Examples = () => {
     </VerticalGroup>
   );
 };
+
+export default meta;

@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 
-import { getBackendSrv } from '@grafana/runtime';
-import { Form, Button, Input, Field } from '@grafana/ui';
+import { getBackendSrv, locationService } from '@grafana/runtime';
+import { Form, Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { fetchBuiltinRoles, fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
+import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgRole, Role, ServiceAccountCreateApiResponse, ServiceAccountDTO } from 'app/types';
 
@@ -24,7 +23,6 @@ const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
 
 export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
 
   const currentOrgId = contextSrv.user.orgId;
@@ -47,14 +45,6 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
           let options = await fetchRoleOptions(currentOrgId);
           setRoleOptions(options);
         }
-
-        if (
-          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
-          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
-        ) {
-          const builtInRoles = await fetchBuiltinRoles(currentOrgId);
-          setBuiltinRoles(builtInRoles);
-        }
       } catch (e) {
         console.error('Error loading options', e);
       }
@@ -63,8 +53,6 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       fetchOptions();
     }
   }, [currentOrgId]);
-
-  const history = useHistory();
 
   const onSubmit = useCallback(
     async (data: ServiceAccountDTO) => {
@@ -92,9 +80,9 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
       } catch (e) {
         console.error(e);
       }
-      history.push('/org/serviceaccounts/');
+      locationService.push(`/org/serviceaccounts/${response.id}`);
     },
-    [history, serviceAccount.role, pendingRoles]
+    [serviceAccount.role, pendingRoles]
   );
 
   const onRoleChange = (role: OrgRole) => {
@@ -110,39 +98,41 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   };
 
   return (
-    <Page navId="serviceaccounts">
+    <Page navId="serviceaccounts" pageNav={{ text: 'Create service account' }}>
       <Page.Contents>
-        <h1>Create service account</h1>
+        <Page.OldNavOnly>
+          <h3 className="page-sub-heading">Create service account</h3>
+        </Page.OldNavOnly>
         <Form onSubmit={onSubmit} validateOn="onSubmit">
           {({ register, errors }) => {
             return (
               <>
-                <Field
-                  label="Display name"
-                  required
-                  invalid={!!errors.name}
-                  error={errors.name ? 'Display name is required' : undefined}
-                >
-                  <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
-                </Field>
-                <Field label="Role">
-                  {contextSrv.licensedAccessControlEnabled() ? (
-                    <UserRolePicker
-                      userId={serviceAccount.id || 0}
-                      orgId={serviceAccount.orgId}
-                      builtInRole={serviceAccount.role}
-                      builtInRoles={builtinRoles}
-                      onBuiltinRoleChange={onRoleChange}
-                      builtinRolesDisabled={false}
-                      roleOptions={roleOptions}
-                      updateDisabled={true}
-                      onApplyRoles={onPendingRolesUpdate}
-                      pendingRoles={pendingRoles}
-                    />
-                  ) : (
-                    <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />
-                  )}
-                </Field>
+                <FieldSet>
+                  <Field
+                    label="Display name"
+                    required
+                    invalid={!!errors.name}
+                    error={errors.name ? 'Display name is required' : undefined}
+                  >
+                    <Input id="display-name-input" {...register('name', { required: true })} autoFocus />
+                  </Field>
+                  <Field label="Role">
+                    {contextSrv.licensedAccessControlEnabled() ? (
+                      <UserRolePicker
+                        apply
+                        userId={serviceAccount.id || 0}
+                        orgId={serviceAccount.orgId}
+                        basicRole={serviceAccount.role}
+                        onBasicRoleChange={onRoleChange}
+                        roleOptions={roleOptions}
+                        onApplyRoles={onPendingRolesUpdate}
+                        pendingRoles={pendingRoles}
+                      />
+                    ) : (
+                      <OrgRolePicker aria-label="Role" value={serviceAccount.role} onChange={onRoleChange} />
+                    )}
+                  </Field>
+                </FieldSet>
                 <Button type="submit">Create</Button>
               </>
             );

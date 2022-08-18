@@ -14,11 +14,7 @@ export const ScenePage: FC<Props> = (props) => {
     return <h2>Scene not found</h2>;
   }
 
-  return (
-    <div style={{ height: '100%', display: 'flex', width: '100%' }}>
-      <scene.Component model={scene} />
-    </div>
-  );
+  return <scene.Component model={scene} />;
 };
 
 export default ScenePage;

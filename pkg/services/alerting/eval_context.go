@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -38,25 +39,27 @@ type EvalContext struct {
 
 	Ctx context.Context
 
-	Store            AlertStore
-	dashboardService dashboards.DashboardService
+	Store             AlertStore
+	dashboardService  dashboards.DashboardService
+	DatasourceService datasources.DataSourceService
 }
 
 // NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator,
-	sqlStore AlertStore, dashboardService dashboards.DashboardService) *EvalContext {
+	alertStore AlertStore, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService) *EvalContext {
 	return &EvalContext{
-		Ctx:              alertCtx,
-		StartTime:        time.Now(),
-		Rule:             rule,
-		Logs:             make([]*ResultLogEntry, 0),
-		EvalMatches:      make([]*EvalMatch, 0),
-		AllMatches:       make([]*EvalMatch, 0),
-		Log:              log.New("alerting.evalContext"),
-		PrevAlertState:   rule.State,
-		RequestValidator: requestValidator,
-		Store:            sqlStore,
-		dashboardService: dashboardService,
+		Ctx:               alertCtx,
+		StartTime:         time.Now(),
+		Rule:              rule,
+		Logs:              make([]*ResultLogEntry, 0),
+		EvalMatches:       make([]*EvalMatch, 0),
+		AllMatches:        make([]*EvalMatch, 0),
+		Log:               log.New("alerting.evalContext"),
+		PrevAlertState:    rule.State,
+		RequestValidator:  requestValidator,
+		Store:             alertStore,
+		dashboardService:  dashboardService,
+		DatasourceService: dsService,
 	}
 }
 
@@ -218,6 +221,10 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 	c.Rule.Name = ruleName
 
 	return nil
+}
+
+func (c *EvalContext) GetDataSource(ctx context.Context, q *datasources.GetDataSourceQuery) error {
+	return c.DatasourceService.GetDataSource(ctx, q)
 }
 
 // getTemplateMatches returns the values we should use to parse the templates

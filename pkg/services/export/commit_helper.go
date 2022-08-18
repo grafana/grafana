@@ -3,7 +3,6 @@ package export
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -26,6 +25,9 @@ type commitHelper struct {
 	users         map[int64]*userInfo
 	stopRequested bool
 	broadcast     func(path string)
+	exporter      string // key for the current exporter
+
+	counter int
 }
 
 type commitBody struct {
@@ -105,7 +107,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 			}
 		}
 
-		err = ioutil.WriteFile(b.fpath, body, 0644)
+		err = os.WriteFile(b.fpath, body, 0644)
 		if err != nil {
 			return err
 		}
@@ -124,6 +126,7 @@ func (ch *commitHelper) add(opts commitOptions) error {
 			fmt.Printf("STATUS: %+v\n", status)
 			return fmt.Errorf("unable to add file: %s (%d)", sub, len(b.body))
 		}
+		ch.counter++
 	}
 
 	copts := &git.CommitOptions{
