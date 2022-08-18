@@ -217,11 +217,11 @@ describe('Wrapper', () => {
       right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
     };
     setupExplore({ urlParams });
-    const closeButtons = await screen.findAllByLabelText(/Close split panel/i);
+    const closeButtons = await screen.findAllByLabelText(/Close split pane/i);
     await userEvent.click(closeButtons[1]);
 
     await waitFor(() => {
-      const logsPanels = screen.queryAllByLabelText(/Close split panel/i);
+      const logsPanels = screen.queryAllByLabelText(/Close split pane/i);
       expect(logsPanels.length).toBe(0);
     });
   });

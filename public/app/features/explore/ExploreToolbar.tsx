@@ -155,11 +155,11 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         >
           <ToolbarButtonRow>
             {!splitted ? (
-              <ToolbarButton tooltip="Split the panel" onClick={() => split()} icon="columns" disabled={isLive}>
+              <ToolbarButton tooltip="Split the pane" onClick={() => split()} icon="columns" disabled={isLive}>
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton tooltip="Close split panel" onClick={() => closeSplit(exploreId)} icon="times">
+              <ToolbarButton tooltip="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
                 Close
               </ToolbarButton>
             )}
