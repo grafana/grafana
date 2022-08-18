@@ -19,6 +19,6 @@ export const RuleFolderPicker: FC<Props> = ({ value, ...props }) => (
     initialTitle={value?.title}
     initialFolderId={value?.id}
     {...props}
-    permissionLevel={PermissionLevelString.View}
+    permissionLevel={PermissionLevelString.Edit}
   />
 );

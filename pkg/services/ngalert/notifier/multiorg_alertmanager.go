@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -114,12 +115,20 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, 
 func (moa *MultiOrgAlertmanager) Run(ctx context.Context) error {
 	moa.logger.Info("starting MultiOrg Alertmanager")
 
+	//LOGZ.IO GRAFANA CHANGE :: Put random interval for sync config goroutine
+	rand.Seed(time.Now().UnixNano())
+	maxRandomDelay := 10
+	minRandomDelay := 0
+	delay := rand.Intn(maxRandomDelay-minRandomDelay+1) + minRandomDelay
+	syncInterval := moa.settings.UnifiedAlerting.AlertmanagerConfigPollInterval + time.Duration(delay)*time.Second
+	//LOGZ.IO GRAFANA CHANGE :: end
+
 	for {
 		select {
 		case <-ctx.Done():
 			moa.StopAndWait()
 			return nil
-		case <-time.After(moa.settings.UnifiedAlerting.AlertmanagerConfigPollInterval):
+		case <-time.After(syncInterval):
 			if err := moa.LoadAndSyncAlertmanagersForOrgs(ctx); err != nil {
 				moa.logger.Error("error while synchronizing Alertmanager orgs", "err", err)
 			}
