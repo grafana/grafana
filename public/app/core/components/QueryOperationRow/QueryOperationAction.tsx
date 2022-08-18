@@ -26,7 +26,7 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
     <div className={cx(styles.icon, active && styles.active)}>
       <IconButton
         name={icon}
-        title={title}
+        tooltip={title}
         className={styles.icon}
         disabled={!!disabled}
         onClick={onClick}
