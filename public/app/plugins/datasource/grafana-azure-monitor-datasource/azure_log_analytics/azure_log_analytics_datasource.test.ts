@@ -1,10 +1,14 @@
+import { get, set } from 'lodash';
+
 import { toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import createMockQuery from '../__mocks__/query';
+import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+import { AzureMonitorQuery, AzureQueryType } from '../types';
+
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 
@@ -28,6 +32,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   beforeEach(() => {
     templateSrv.init([singleVariable]);
+    templateSrv.getVariables = jest.fn().mockReturnValue([singleVariable]);
     ctx.instanceSettings = {
       jsonData: { subscriptionId: 'xxx' },
       url: 'http://azureloganalyticsapi',
@@ -35,45 +40,6 @@ describe('AzureLogAnalyticsDatasource', () => {
     };
 
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-  });
-
-  describe('When performing testDatasource', () => {
-    beforeEach(() => {
-      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
-    });
-
-    describe('and an error is returned', () => {
-      const error = {
-        data: {
-          error: {
-            code: 'InvalidApiVersionParameter',
-            message: `An error message.`,
-          },
-        },
-        status: 400,
-        statusText: 'Bad Request',
-      };
-
-      beforeEach(() => {
-        ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockRejectedValue(error);
-      });
-
-      it('should return error status and a detailed error message', () => {
-        return ctx.ds.azureLogAnalyticsDatasource.testDatasource().then((result: DatasourceValidationResult) => {
-          expect(result.status).toEqual('error');
-          expect(result.message).toEqual(
-            'Azure Log Analytics requires access to Azure Monitor but had the following error: Bad Request: InvalidApiVersionParameter. An error message.'
-          );
-        });
-      });
-    });
-
-    it('should not include double slashes when getting the resource', async () => {
-      ctx.ds.azureLogAnalyticsDatasource.firstWorkspace = '/foo/bar';
-      ctx.ds.azureLogAnalyticsDatasource.getResource = jest.fn().mockResolvedValue(true);
-      await ctx.ds.azureLogAnalyticsDatasource.testDatasource();
-      expect(ctx.ds.azureLogAnalyticsDatasource.getResource).toHaveBeenCalledWith('loganalytics/v1/foo/bar/metadata');
-    });
   });
 
   describe('When performing getSchema', () => {
@@ -119,6 +85,24 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should interpolate variables when making a request for a schema with a uri that contains template variables', async () => {
       await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace/$var1');
       expect(ctx.mockGetResource).lastCalledWith('loganalytics/v1myWorkspace/var1-foo/metadata');
+    });
+
+    it('should include macros as suggested functions', async () => {
+      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
+      expect(result.database.functions.map((f: { name: string }) => f.name)).toEqual([
+        'Func1',
+        '_AzureBackup_GetVaults',
+        '$__timeFilter',
+        '$__timeFrom',
+        '$__timeTo',
+        '$__escapeMulti',
+        '$__contains',
+      ]);
+    });
+
+    it('should include template variables as global parameters', async () => {
+      const result = await ctx.ds.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
+      expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
     });
   });
 
@@ -347,6 +331,40 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       expect(laDatasource.filterQuery(query)).toBeFalsy();
+    });
+  });
+
+  describe('When performing interpolateVariablesInQueries for azure_log_analytics', () => {
+    beforeEach(() => {
+      templateSrv.init([]);
+    });
+
+    it('should return a query unchanged if no template variables are provided', () => {
+      const query = createMockQuery();
+      query.queryType = AzureQueryType.LogAnalytics;
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toEqual(query);
+    });
+
+    it('should return a query with any template variables replaced', () => {
+      const templateableProps = ['resource', 'workspace', 'query'];
+      const templateVariables = createTemplateVariables(templateableProps);
+      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const query = createMockQuery();
+      const azureLogAnalytics: { [index: string]: any } = {};
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        set(azureLogAnalytics, path, `$${templateVariable.variableName}`);
+      }
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureLogAnalytics = {
+        ...query.azureLogAnalytics,
+        ...azureLogAnalytics,
+      };
+      const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0]).toHaveProperty('datasource');
+      for (const [path, templateVariable] of templateVariables.entries()) {
+        expect(get(templatedQuery[0].azureLogAnalytics, path)).toEqual(templateVariable.templateVariable.current.value);
+      }
     });
   });
 });

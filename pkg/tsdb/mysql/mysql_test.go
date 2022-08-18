@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package mysql
 
 import (
@@ -28,7 +25,10 @@ import (
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
-func TestMySQL(t *testing.T) {
+func TestIntegrationMySQL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	// change to true to run the MySQL tests
 	runMySQLTests := false
 	// runMySqlTests := true

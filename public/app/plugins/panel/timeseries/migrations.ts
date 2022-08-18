@@ -1,3 +1,5 @@
+import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
+
 import {
   ConfigOverrideRule,
   DynamicConfigValue,
@@ -29,9 +31,9 @@ import {
   SortOrder,
   GraphTransform,
 } from '@grafana/schema';
-import { TimeSeriesOptions } from './types';
-import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
+
 import { defaultGraphConfig } from './config';
+import { TimeSeriesOptions } from './types';
 
 /**
  * This is called when the panel changes from another panel
@@ -117,7 +119,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       if (!seriesOverride.alias) {
         continue; // the matcher config
       }
-      const aliasIsRegex = seriesOverride.alias.startsWith('/') && seriesOverride.alias.endsWith('/');
+      const aliasIsRegex = /^([/~@;%#'])(.*?)\1([gimsuy]*)$/.test(seriesOverride.alias);
       const rule: ConfigOverrideRule = {
         matcher: {
           id: aliasIsRegex ? FieldMatcherID.byRegexp : FieldMatcherID.byName,
@@ -294,7 +296,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.fillOpacity = angular.fillGradient * 10; // fill is 0-10
   }
 
-  graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
+  graph.spanNulls = angular.nullPointMode === NullValueMode.Ignore;
 
   if (angular.steppedLine) {
     graph.lineInterpolation = LineInterpolation.StepAfter;
@@ -317,6 +319,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   const options: TimeSeriesOptions = {
     legend: {
       displayMode: LegendDisplayMode.List,
+      showLegend: true,
       placement: 'bottom',
       calcs: [],
     },
@@ -332,7 +335,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     if (legendConfig.show) {
       options.legend.displayMode = legendConfig.alignAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List;
     } else {
-      options.legend.displayMode = LegendDisplayMode.Hidden;
+      options.legend.showLegend = false;
     }
 
     if (legendConfig.rightSide) {
@@ -342,6 +345,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     if (angular.legend.values) {
       const enabledLegendValues = pickBy(angular.legend);
       options.legend.calcs = getReducersFromLegend(enabledLegendValues);
+    }
+
+    if (angular.legend.sideWidth) {
+      options.legend.width = angular.legend.sideWidth;
     }
   }
 
@@ -405,7 +412,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             value: threshold.value,
             color: 'transparent',
           });
-          // if next is a lt we need to use it's color
+          // if next is a lt we need to use its color
         } else if (next && next.op === 'lt') {
           steps.push({
             value: threshold.value,

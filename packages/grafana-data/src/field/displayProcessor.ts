@@ -2,16 +2,17 @@
 import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } from 'lodash';
 
 // Types
-import { Field, FieldType } from '../types/dataFrame';
-import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
-import { getValueMappingResult } from '../utils/valueMappings';
-import { dateTime, dateTimeParse } from '../datetime';
-import { KeyValue, TimeZone } from '../types';
-import { getScaleCalculator } from './scale';
-import { GrafanaTheme2 } from '../themes/types';
-import { anyToNumber } from '../utils/anyToNumber';
 import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { toUtc, dateTimeParse } from '../datetime';
+import { GrafanaTheme2 } from '../themes/types';
+import { KeyValue, TimeZone } from '../types';
+import { Field, FieldType } from '../types/dataFrame';
+import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
+import { anyToNumber } from '../utils/anyToNumber';
+import { getValueMappingResult } from '../utils/valueMappings';
+import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
+
+import { getScaleCalculator } from './scale';
 
 interface DisplayProcessorOptions {
   field: Partial<Field>;
@@ -67,17 +68,19 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     if (!isBooleanUnit(unit)) {
       unit = 'bool';
     }
+  } else if (!unit && field.type === FieldType.string) {
+    unit = 'string';
   }
 
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: any) => {
+  return (value: any, decimals?: DecimalCount) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
     if (hasDateUnit && typeof value === 'string') {
-      value = dateTime(value).valueOf();
+      value = toUtc(value).valueOf();
     }
 
     let numeric = isStringUnit ? NaN : anyToNumber(value);
@@ -108,7 +111,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     if (!isNaN(numeric)) {
       if (text == null && !isBoolean(value)) {
-        const v = formatFunc(numeric, config.decimals, null, options.timeZone, showMs);
+        const v = formatFunc(numeric, decimals ?? config.decimals, null, options.timeZone, showMs);
         text = v.text;
         suffix = v.suffix;
         prefix = v.prefix;

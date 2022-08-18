@@ -1,11 +1,14 @@
 import React, { memo } from 'react';
+
 import { CoreApp } from '@grafana/data';
-import { LokiQueryEditorProps } from './types';
+import { config } from '@grafana/runtime';
+
+import { LokiQueryEditorSelector } from '../querybuilder/components/LokiQueryEditorSelector';
+
+import { LokiExploreQueryEditor } from './LokiExploreQueryEditor';
 import { LokiQueryEditor } from './LokiQueryEditor';
 import { LokiQueryEditorForAlerting } from './LokiQueryEditorForAlerting';
-import { LokiExploreQueryEditor } from './LokiExploreQueryEditor';
-import { LokiQueryEditorSelector } from '../querybuilder/components/LokiQueryEditorSelector';
-import { config } from '@grafana/runtime';
+import { LokiQueryEditorProps } from './types';
 
 export function LokiQueryEditorByApp(props: LokiQueryEditorProps) {
   const { app } = props;

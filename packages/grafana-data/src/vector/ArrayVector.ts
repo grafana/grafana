@@ -1,4 +1,5 @@
 import { MutableVector } from '../types/vector';
+
 import { FunctionalVector } from './FunctionalVector';
 
 /**

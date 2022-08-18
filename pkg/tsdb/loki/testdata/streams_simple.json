@@ -5,8 +5,8 @@
     "result": [
       {
         "stream": {
-          "level": "error",
-          "location": "moon"
+          "code": "one\",",
+          "location": "moon🌙"
         },
         "values": [
           [
@@ -17,13 +17,17 @@
       },
       {
         "stream": {
-          "level": "info",
-          "location": "moon"
+          "code": "\",two",
+          "location": "moon🌙"
         },
         "values": [
           [
             "1645030247027735040",
 						"log line info 1"
+          ],
+          [
+            "1645030246277587968",
+						"log line info 2"
           ],
           [
             "1645030246277587968",

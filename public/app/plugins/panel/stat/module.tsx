@@ -1,16 +1,14 @@
-import {
-  BigValueColorMode,
-  BigValueTextMode,
-  commonOptionsBuilder,
-  sharedSingleStatMigrationHandler,
-} from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { addOrientationOption, addStandardDataReduceOptions, StatPanelOptions } from './types';
-import { StatPanel } from './StatPanel';
+import { BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from '@grafana/schema';
+import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
+
 import { statPanelChangedHandler } from './StatMigrations';
+import { StatPanel } from './StatPanel';
+import { addStandardDataReduceOptions, addOrientationOption } from './common';
+import { defaultPanelOptions, PanelOptions } from './models.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
+export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
@@ -33,7 +31,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
           { value: BigValueTextMode.None, label: 'None' },
         ],
       },
-      defaultValue: 'auto',
+      defaultValue: defaultPanelOptions.textMode,
     });
 
     builder
@@ -55,23 +53,23 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         name: 'Graph mode',
         description: 'Stat panel graph / sparkline mode',
         category: mainCategory,
-        defaultValue: 'area',
+        defaultValue: defaultPanelOptions.graphMode,
         settings: {
           options: [
-            { value: 'none', label: 'None' },
-            { value: 'area', label: 'Area' },
+            { value: BigValueGraphMode.None, label: 'None' },
+            { value: BigValueGraphMode.Area, label: 'Area' },
           ],
         },
       })
       .addRadio({
         path: 'justifyMode',
         name: 'Text alignment',
-        defaultValue: 'auto',
+        defaultValue: defaultPanelOptions.justifyMode,
         category: mainCategory,
         settings: {
           options: [
-            { value: 'auto', label: 'Auto' },
-            { value: 'center', label: 'Center' },
+            { value: BigValueJustifyMode.Auto, label: 'Auto' },
+            { value: BigValueJustifyMode.Center, label: 'Center' },
           ],
         },
       });

@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
+
 import {
   BucketAggregation,
   BucketAggregationType,

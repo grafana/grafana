@@ -35,7 +35,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: plugins.NewCfg(),
-			log: &fakeLogger{},
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -65,7 +65,37 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: plugins.NewCfg(),
-			log: fakeLogger{},
+			log: log.NewNopLogger(),
+			backendProvider: &fakeBackendProvider{
+				plugin: p,
+			},
+		}
+
+		err := i.Initialize(context.Background(), p)
+		assert.NoError(t, err)
+
+		c, exists := p.Client()
+		assert.True(t, exists)
+		assert.NotNil(t, c)
+	})
+
+	t.Run("secretsmanager", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "test",
+				Type: plugins.SecretsManager,
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: ">=8.x",
+				},
+				Backend: true,
+			},
+			PluginDir: absCurPath,
+			Class:     plugins.External,
+		}
+
+		i := &Initializer{
+			cfg: plugins.NewCfg(),
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -88,7 +118,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: &plugins.Cfg{},
-			log: fakeLogger{},
+			log: log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -126,7 +156,7 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
-			log:     fakeLogger{},
+			log:     log.NewNopLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -143,10 +173,6 @@ func TestInitializer_envVars(t *testing.T) {
 }
 
 func TestInitializer_getAWSEnvironmentVariables(t *testing.T) {
-
-}
-
-func TestInitializer_getAzureEnvironmentVariables(t *testing.T) {
 
 }
 
@@ -209,18 +235,6 @@ func (*testLicensingService) EnabledFeatures() map[string]bool {
 
 func (*testLicensingService) FeatureEnabled(feature string) bool {
 	return false
-}
-
-type fakeLogger struct {
-	*log.ConcreteLogger
-}
-
-func (f fakeLogger) New(_ ...interface{}) *log.ConcreteLogger {
-	return &log.ConcreteLogger{}
-}
-
-func (f fakeLogger) Warn(_ string, _ ...interface{}) {
-
 }
 
 type fakeBackendProvider struct {

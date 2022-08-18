@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+
 import { LinkButton, FilterInput } from '@grafana/ui';
 
 export interface Props {

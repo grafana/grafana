@@ -1,4 +1,7 @@
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+import { TransactionStatus } from '../types';
+
 import {
   addVariable,
   changeVariableOrder,
@@ -7,7 +10,6 @@ import {
   duplicateVariable,
   removeVariable,
 } from './sharedReducer';
-import { TransactionStatus } from '../types';
 
 export interface TransactionState {
   uid: string | undefined | null;

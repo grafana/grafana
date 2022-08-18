@@ -1,10 +1,12 @@
-import React from 'react';
-import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
-import { Story, Meta } from '@storybook/react';
-import { Button } from '../Button/Button';
 import { action } from '@storybook/addon-actions';
+import { Story, Meta } from '@storybook/react';
+import React from 'react';
 
-export default {
+import { Button } from '../Button/Button';
+
+import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
+
+const meta: Meta = {
   title: 'Layout/CallToActionCard',
   component: CallToActionCard,
   parameters: {
@@ -15,7 +17,7 @@ export default {
   argTypes: {
     Element: { control: { type: 'select', options: ['button', 'custom'] } },
   },
-} as Meta;
+};
 
 interface StoryProps extends Partial<CallToActionCardProps> {
   Element: string;
@@ -45,3 +47,5 @@ Basic.args = {
   H1Text: 'This is just H1 tag, you can any component as CTA element',
   buttonText: 'Add datasource',
 };
+
+export default meta;

@@ -5,13 +5,15 @@ import {
   identityOverrideProcessor,
   PanelPlugin,
 } from '@grafana/data';
-import { StateTimelinePanel } from './StateTimelinePanel';
-import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
 import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+
+import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
+
+import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
 import { StatTimelineSuggestionsSupplier } from './suggestions';
-import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
+import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
@@ -105,4 +107,5 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
     commonOptionsBuilder.addLegendOptions(builder, false);
     commonOptionsBuilder.addTooltipOptions(builder, true);
   })
-  .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier());
+  .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier())
+  .setDataSupport({ annotations: true });

@@ -1,4 +1,5 @@
 import { FieldColorModeId, FieldConfigSource, FieldMatcherID } from '@grafana/data';
+
 import { changeSeriesColorConfigFactory } from './colorSeriesConfigFactory';
 
 describe('changeSeriesColorConfigFactory', () => {

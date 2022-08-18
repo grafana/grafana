@@ -1,8 +1,10 @@
 import React from 'react';
 import Loadable from 'react-loadable';
-import { LoadingChunkPlaceHolder } from './LoadingChunkPlaceHolder';
-import { ErrorLoadingChunk } from './ErrorLoadingChunk';
+
 import { GrafanaRouteComponent } from 'app/core/navigation/types';
+
+import { ErrorLoadingChunk } from './ErrorLoadingChunk';
+import { LoadingChunkPlaceHolder } from './LoadingChunkPlaceHolder';
 
 export const loadComponentHandler = (props: { error: Error; pastDelay: boolean }) => {
   const { error, pastDelay } = props;

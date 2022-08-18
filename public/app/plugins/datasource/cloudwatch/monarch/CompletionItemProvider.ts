@@ -1,11 +1,12 @@
-import type { Monaco, monacoTypes } from '@grafana/ui';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import type { Monaco, monacoTypes } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../datasource';
-import { linkedTokenBuilder } from './linkedTokenBuilder';
 
 import { LinkedToken } from './LinkedToken';
+import { linkedTokenBuilder } from './linkedTokenBuilder';
 import { LanguageDefinition } from './register';
-import { StatementPosition, SuggestionKind, TokenTypes } from './types';
+import { Completeable, StatementPosition, SuggestionKind, TokenTypes } from './types';
 
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
@@ -16,7 +17,7 @@ CompletionItemProvider is an extendable class which needs to implement :
 - getSuggestionKinds
 - getSuggestions
 */
-export class CompletionItemProvider {
+export class CompletionItemProvider implements Completeable {
   templateVariables: string[];
   datasource: CloudWatchDatasource;
   templateSrv: TemplateSrv;

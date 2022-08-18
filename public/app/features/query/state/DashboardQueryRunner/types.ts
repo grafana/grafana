@@ -1,4 +1,5 @@
 import { Observable } from 'rxjs';
+
 import { AlertStateInfo, AnnotationEvent, AnnotationQuery, DataSourceApi, TimeRange } from '@grafana/data';
 
 import { DashboardModel } from '../../../dashboard/state';

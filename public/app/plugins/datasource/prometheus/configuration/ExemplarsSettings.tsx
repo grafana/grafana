@@ -1,8 +1,11 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { Button } from '@grafana/ui';
-import React from 'react';
+
 import { ExemplarTraceIdDestination } from '../types';
+
 import ExemplarSetting from './ExemplarSetting';
 
 type Props = {

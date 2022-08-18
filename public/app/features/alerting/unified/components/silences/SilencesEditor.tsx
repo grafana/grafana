@@ -1,6 +1,10 @@
-import { MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+import { css, cx } from '@emotion/css';
+import { pickBy } from 'lodash';
 import React, { FC, useMemo, useState } from 'react';
-import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
+import { useForm, FormProvider } from 'react-hook-form';
+import { useDispatch } from 'react-redux';
+import { useDebounce } from 'react-use';
+
 import {
   DefaultTimeZone,
   parseDuration,
@@ -10,23 +14,22 @@ import {
   isValidDate,
   GrafanaTheme2,
 } from '@grafana/data';
-import { useDebounce } from 'react-use';
 import { config } from '@grafana/runtime';
-import { pickBy } from 'lodash';
-import MatchersField from './MatchersField';
-import { MatchedSilencedRules } from './MatchedSilencedRules';
-import { useForm, FormProvider } from 'react-hook-form';
-import { SilenceFormFields } from '../../types/silence-form';
-import { useDispatch } from 'react-redux';
-import { createOrUpdateSilenceAction } from '../../state/actions';
-import { SilencePeriod } from './SilencePeriod';
-import { css, cx } from '@emotion/css';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { makeAMLink } from '../../utils/misc';
+import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { parseQueryParamMatchers } from '../../utils/matchers';
-import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
+import { MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { createOrUpdateSilenceAction } from '../../state/actions';
+import { SilenceFormFields } from '../../types/silence-form';
+import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
+import { parseQueryParamMatchers } from '../../utils/matchers';
+import { makeAMLink } from '../../utils/misc';
+
+import { MatchedSilencedRules } from './MatchedSilencedRules';
+import MatchersField from './MatchersField';
+import { SilencePeriod } from './SilencePeriod';
 
 interface Props {
   silence?: Silence;

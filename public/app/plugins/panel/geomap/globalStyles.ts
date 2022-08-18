@@ -1,7 +1,9 @@
 import { css } from '@emotion/react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 
 import 'ol/ol.css';
+import 'ol-ext/dist/ol-ext.css';
 
 /**
  * Will be loaded *after* the css above
@@ -54,10 +56,10 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
       color: ${theme.colors.text.primary}; //  #eee;
     }
     .ol-control {
-      background-color: ${theme.colors.background.secondary}; //rgba(255,255,255,0.4);
+      background-color: ${theme.colors.background.primary}; //rgba(255,255,255,0.4);
     }
     .ol-control:hover {
-      background-color: ${theme.colors.action.hover}; // rgba(255,255,255,0.6);
+      background-color: ${theme.colors.background.secondary}; // rgba(255,255,255,0.6);
     }
     .ol-control button {
       color: ${theme.colors.secondary.text}; // white;

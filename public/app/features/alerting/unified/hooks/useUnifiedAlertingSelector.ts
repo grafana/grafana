@@ -1,5 +1,7 @@
-import { StoreState } from 'app/types';
 import { useSelector } from 'react-redux';
+
+import { StoreState } from 'app/types';
+
 import { UnifiedAlertingState } from '../state/reducers';
 
 export function useUnifiedAlertingSelector<TSelected = unknown>(

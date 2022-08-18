@@ -1,4 +1,5 @@
 import { marked } from 'marked';
+
 import { sanitize, sanitizeTextPanelContent } from './sanitize';
 
 let hasInitialized = false;

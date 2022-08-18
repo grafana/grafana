@@ -1,5 +1,6 @@
-import { parseRSSFeed } from './rss';
 import fs from 'fs';
+
+import { parseRSSFeed } from './rss';
 
 describe('RSS feed parser', () => {
   it('should successfully parse an rss feed', async () => {

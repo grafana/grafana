@@ -1,4 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
+
 import { selectors } from './reducers';
 
 export const { selectAll, selectById, selectTotal } = selectors;

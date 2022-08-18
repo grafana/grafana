@@ -14,10 +14,12 @@
 
 import { uniq as _uniq } from 'lodash';
 import memoize from 'lru-memoize';
-import { getConfigValue } from '../utils/config/get-config';
-import { getParent } from './span';
+
 import { TNil } from '../types';
 import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '../types/trace';
+import { getConfigValue } from '../utils/config/get-config';
+
+import { getParent } from './span';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 

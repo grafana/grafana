@@ -6,16 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/validations"
-
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/services/validations"
 )
 
 func TestStateIsUpdatedWhenNeeded(t *testing.T) {
-	ctx := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil)
+	ctx := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 
 	t.Run("ok -> alerting", func(t *testing.T) {
 		ctx.PrevAlertState = models.AlertStateOK
@@ -200,7 +199,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil)
+		evalContext := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
 
 		tc.applyFn(evalContext)
 		newState := evalContext.GetNewState()
@@ -337,6 +336,70 @@ func TestEvaluateTemplate(t *testing.T) {
 			result, err := evaluateTemplate(tc.message, tc.data)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
+		})
+	}
+}
+
+func TestEvaluateNotificationTemplateFields(t *testing.T) {
+	tests := []struct {
+		name            string
+		evalMatches     []*EvalMatch
+		allMatches      []*EvalMatch
+		expectedName    string
+		expectedMessage string
+	}{
+		{
+			"with evaluation matches",
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value2": "test2"},
+			}},
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value2": "test2"},
+			}},
+			"Rule name: test1",
+			"Rule message: test2",
+		},
+		{
+			"missing key",
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value3": "test2"},
+			}},
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value3": "test2"},
+			}},
+			"Rule name: test1",
+			"Rule message: ${value2}",
+		},
+		{
+			"no evaluation matches, with series",
+			[]*EvalMatch{},
+			[]*EvalMatch{{
+				Tags: map[string]string{"value1": "test1", "value2": "test2"},
+			}},
+			"Rule name: test1",
+			"Rule message: test2",
+		},
+		{
+			"no evaluation matches, no series",
+			[]*EvalMatch{},
+			[]*EvalMatch{},
+			"Rule name: ${value1}",
+			"Rule message: ${value2}",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			evalContext := NewEvalContext(context.Background(), &Rule{Name: "Rule name: ${value1}", Message: "Rule message: ${value2}",
+				Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil, nil)
+			evalContext.EvalMatches = test.evalMatches
+			evalContext.AllMatches = test.allMatches
+
+			err := evalContext.evaluateNotificationTemplateFields()
+
+			require.NoError(tt, err)
+			require.Equal(tt, test.expectedName, evalContext.Rule.Name)
+			require.Equal(tt, test.expectedMessage, evalContext.Rule.Message)
 		})
 	}
 }

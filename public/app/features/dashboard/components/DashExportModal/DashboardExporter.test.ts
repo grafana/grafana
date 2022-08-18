@@ -1,13 +1,16 @@
 import { find } from 'lodash';
-import config from 'app/core/config';
-import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
-import { DashboardModel } from '../../state/DashboardModel';
+
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta } from '@grafana/data';
+import config from 'app/core/config';
+
+import { LibraryElementKind } from '../../../library-panels/types';
 import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
-import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
-import { LibraryElementKind } from '../../../library-panels/types';
+import { createQueryVariableAdapter } from '../../../variables/query/adapter';
+import { DashboardModel } from '../../state/DashboardModel';
+
+import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 
 jest.mock('app/core/store', () => {
   return {
@@ -43,116 +46,6 @@ variableAdapters.register(createDataSourceVariableAdapter());
 
 it('handles a default datasource in a template variable', async () => {
   const dashboard: any = {
-    annotations: {
-      list: [
-        {
-          builtIn: 1,
-          datasource: '-- Grafana --',
-          enable: true,
-          hide: true,
-          iconColor: 'rgba(0, 211, 255, 1)',
-          name: 'Annotations & Alerts',
-          target: {
-            limit: 100,
-            matchAny: false,
-            tags: [],
-            type: 'dashboard',
-          },
-          type: 'dashboard',
-        },
-      ],
-    },
-    editable: true,
-    fiscalYearStartMonth: 0,
-    graphTooltip: 0,
-    id: 331,
-    iteration: 1642157860116,
-    links: [],
-    liveNow: false,
-    panels: [
-      {
-        fieldConfig: {
-          defaults: {
-            color: {
-              mode: 'palette-classic',
-            },
-            custom: {
-              axisLabel: '',
-              axisPlacement: 'auto',
-              barAlignment: 0,
-              drawStyle: 'line',
-              fillOpacity: 0,
-              gradientMode: 'none',
-              hideFrom: {
-                legend: false,
-                tooltip: false,
-                viz: false,
-              },
-              lineInterpolation: 'linear',
-              lineWidth: 1,
-              pointSize: 5,
-              scaleDistribution: {
-                type: 'linear',
-              },
-              showPoints: 'auto',
-              spanNulls: false,
-              stacking: {
-                group: 'A',
-                mode: 'none',
-              },
-              thresholdsStyle: {
-                mode: 'off',
-              },
-            },
-            mappings: [],
-            thresholds: {
-              mode: 'absolute',
-              steps: [
-                {
-                  color: 'green',
-                  value: null,
-                },
-                {
-                  color: 'red',
-                  value: 80,
-                },
-              ],
-            },
-          },
-          overrides: [],
-        },
-        gridPos: {
-          h: 9,
-          w: 12,
-          x: 0,
-          y: 0,
-        },
-        id: 2,
-        options: {
-          legend: {
-            calcs: [],
-            displayMode: 'list',
-            placement: 'bottom',
-          },
-          tooltip: {
-            mode: 'single',
-            sort: 'none',
-          },
-        },
-        targets: [
-          {
-            datasource: {
-              type: 'testdata',
-              uid: 'PD8C576611E62080A',
-            },
-            expr: '{filename="/var/log/system.log"}',
-            refId: 'A',
-          },
-        ],
-        title: 'Panel Title',
-        type: 'timeseries',
-      },
-    ],
     templating: {
       list: [
         {
@@ -181,6 +74,27 @@ it('handles a default datasource in a template variable', async () => {
   const exporter = new DashboardExporter();
   const exported: any = await exporter.makeExportable(dashboardModel);
   expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
+});
+
+it('If a panel queries has no datasource prop ignore it', async () => {
+  const dashboard: any = {
+    panels: [
+      {
+        id: 1,
+        type: 'graph',
+        datasource: {
+          uid: 'other',
+          type: 'other',
+        },
+        targets: [{ refId: 'A', a: 'A' }],
+      },
+    ],
+  };
+  const dashboardModel = new DashboardModel(dashboard, {}, () => []);
+  const exporter = new DashboardExporter();
+  const exported: any = await exporter.makeExportable(dashboardModel);
+  expect(exported.panels[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
+  expect(exported.panels[0].targets[0].datasource).toEqual({ uid: '${DS_OTHER}', type: 'other' });
 });
 
 describe('given dashboard with repeated panels', () => {
@@ -276,6 +190,10 @@ describe('given dashboard with repeated panels', () => {
             },
           ],
         },
+        {
+          id: 5,
+          targets: [{ scenarioId: 'random_walk', refId: 'A' }],
+        },
       ],
     };
 
@@ -310,6 +228,23 @@ describe('given dashboard with repeated panels', () => {
   it('should replace datasource refs', () => {
     const panel = exported.panels[0];
     expect(panel.datasource.uid).toBe('${DS_GFDB}');
+  });
+
+  it('should explicitly specify default datasources', () => {
+    const panel = exported.panels[7];
+    expect(exported.__inputs.some((ds: Record<string, string>) => ds.name === 'DS_GFDB')).toBeTruthy();
+    expect(panel.datasource.uid).toBe('${DS_GFDB}');
+    expect(panel.targets[0].datasource).toEqual({ type: 'testdb', uid: '${DS_GFDB}' });
+  });
+
+  it('should not include default datasource in __inputs unnecessarily', async () => {
+    const testJson: any = {
+      panels: [{ id: 1, datasource: { uid: 'other', type: 'other' }, type: 'graph' }],
+    };
+    const testDash = new DashboardModel(testJson);
+    const exporter = new DashboardExporter();
+    const exportedJson: any = await exporter.makeExportable(testDash);
+    expect(exportedJson.__inputs.some((ds: Record<string, string>) => ds.name === 'DS_GFDB')).toBeFalsy();
   });
 
   it('should replace datasource refs in collapsed row', () => {
@@ -402,26 +337,21 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add library panels as elements', () => {
-    const element: LibraryElementExport = exported.__elements.find(
-      (element: LibraryElementExport) => element.uid === 'ah8NqyDPs'
-    );
+    const element: LibraryElementExport = exported.__elements['ah8NqyDPs'];
     expect(element.name).toBe('Library Panel 2');
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
-      id: 17,
       datasource: { type: 'other2', uid: '$ds' },
+      targets: [{ refId: 'A', datasource: { type: 'other2', uid: '$ds' } }],
       type: 'graph',
     });
   });
 
   it('should add library panels in collapsed rows as elements', () => {
-    const element: LibraryElementExport = exported.__elements.find(
-      (element: LibraryElementExport) => element.uid === 'jL6MrxCMz'
-    );
+    const element: LibraryElementExport = exported.__elements['jL6MrxCMz'];
     expect(element.name).toBe('Library Panel');
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
-      id: 16,
       type: 'graph',
       datasource: {
         type: 'testdb',
@@ -453,7 +383,7 @@ stubs['other2'] = {
   meta: { id: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' },
 };
 
-stubs['-- Mixed --'] = {
+stubs['mixed'] = {
   name: 'mixed',
   meta: {
     id: 'mixed',
@@ -463,7 +393,7 @@ stubs['-- Mixed --'] = {
   },
 };
 
-stubs['-- Grafana --'] = {
+stubs['grafana'] = {
   name: '-- Grafana --',
   meta: {
     id: 'grafana',

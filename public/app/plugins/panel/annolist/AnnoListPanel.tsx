@@ -1,7 +1,8 @@
-// Libraries
+import { css } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import React, { PureComponent } from 'react';
-// Types
-import { AnnoOptions } from './types';
+import { Subscription } from 'rxjs';
+
 import {
   AnnotationChangeEvent,
   AnnotationEvent,
@@ -13,14 +14,13 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
-import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import appEvents from 'app/core/app_events';
-import { AnnotationListItem } from './AnnotationListItem';
 import { CustomScrollbar, stylesFactory, TagList } from '@grafana/ui';
-import { css } from '@emotion/css';
-import { Subscription } from 'rxjs';
-import { FocusScope } from '@react-aria/focus';
+import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
+import appEvents from 'app/core/app_events';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
+import { AnnotationListItem } from './AnnotationListItem';
+import { PanelOptions } from './models.gen';
 
 interface UserInfo {
   id?: number;
@@ -28,7 +28,7 @@ interface UserInfo {
   email?: string;
 }
 
-export interface Props extends PanelProps<AnnoOptions> {}
+export interface Props extends PanelProps<PanelOptions> {}
 interface State {
   annotations: AnnotationEvent[];
   timeInfo: string;
@@ -97,7 +97,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     };
 
     if (options.onlyFromThisDashboard) {
-      params.dashboardId = getDashboardSrv().getCurrent()?.id;
+      params.dashboardUID = getDashboardSrv().getCurrent()?.uid;
     }
 
     let timeInfo = '';
@@ -148,13 +148,13 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       params.viewPanel = anno.panelId;
     }
 
-    if (current?.id === anno.dashboardId) {
+    if (current?.uid === anno.dashboardUID) {
       locationService.partial(params);
       return;
     }
 
-    const result = await getBackendSrv().get('/api/search', { dashboardIds: anno.dashboardId });
-    if (result && result.length && result[0].id === anno.dashboardId) {
+    const result = await getBackendSrv().get('/api/search', { dashboardUIDs: anno.dashboardUID });
+    if (result && result.length && result[0].uid === anno.dashboardUID) {
       const dash = result[0];
       const url = new URL(dash.url, window.location.origin);
       url.searchParams.set('from', params.from);
@@ -162,7 +162,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       locationService.push(locationUtil.stripBaseFromUrl(url.toString()));
       return;
     }
-    appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardId]);
+    appEvents.emit(AppEvents.alertWarning, ['Unknown Dashboard: ' + anno.dashboardUID]);
   };
 
   _timeOffset(time: number, offset: string, subtract = false): number {

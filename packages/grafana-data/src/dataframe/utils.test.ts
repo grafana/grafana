@@ -1,5 +1,6 @@
-import { toDataFrame } from './processDataFrame';
 import { FieldType } from '../types';
+
+import { toDataFrame } from './processDataFrame';
 import { anySeriesWithTimeField } from './utils';
 
 describe('anySeriesWithTimeField', () => {

@@ -1,13 +1,15 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+
+import { useTheme2 } from '../../themes/ThemeContext';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { IconName, IconSize, IconType } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { getSvgSize } from '../Icon/utils';
-import { IconName, IconSize, IconType } from '../../types/icon';
-import { stylesFactory } from '../../themes/stylesFactory';
-import { css, cx } from '@emotion/css';
-import { useTheme2 } from '../../themes/ThemeContext';
-import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { TooltipPlacement, PopoverContent, Tooltip } from '../Tooltip';
-import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
@@ -16,8 +18,6 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   name: IconName;
   /** Icon size */
   size?: IconSize;
-  /** @deprecated */
-  surface?: SurfaceType;
   /** Type od the icon - mono or default */
   iconType?: IconType;
   /** Tooltip content to display on hover */
@@ -29,8 +29,6 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Text avilable ony for screenscreen readers. Will use tooltip text as fallback. */
   ariaLabel?: string;
 }
-
-type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
   (
@@ -152,7 +150,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size: IconSize, variant: 
       }
     `,
     icon: css`
-      margin-bottom: 0;
       vertical-align: baseline;
       display: flex;
     `,

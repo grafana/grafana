@@ -1,18 +1,20 @@
 import { monacoTypes } from '@grafana/ui';
-import MonacoMock from '../../__mocks__/monarch/Monaco';
-import TextModel from '../../__mocks__/monarch/TextModel';
+
 import {
   multiLineFullQuery,
   singleLineFullQuery,
   singleLineTwoQueries,
   multiLineIncompleteQueryWithoutNamespace,
 } from '../../__mocks__/cloudwatch-sql-test-data';
+import MonacoMock from '../../__mocks__/monarch/Monaco';
+import TextModel from '../../__mocks__/monarch/TextModel';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { linkedTokenBuilder } from '../../monarch/linkedTokenBuilder';
-import { SQLTokenTypes } from './types';
-import { getMetricNameToken, getNamespaceToken, getSelectStatisticToken, getSelectToken } from './tokenUtils';
-import { SELECT } from '../language';
 import cloudWatchSqlLanguageDefinition from '../definition';
+import { SELECT } from '../language';
+
+import { getMetricNameToken, getNamespaceToken, getSelectStatisticToken, getSelectToken } from './tokenUtils';
+import { SQLTokenTypes } from './types';
 
 const getToken = (
   query: string,

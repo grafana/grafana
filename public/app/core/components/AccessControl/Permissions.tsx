@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { sortBy } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
 import { PermissionTarget, ResourcePermission, SetPermission, Description } from './types';
@@ -28,8 +29,6 @@ export type Props = {
   addPermissionTitle?: string;
   resource: string;
   resourceId: ResourceId;
-
-  canListUsers: boolean;
   canSetPermissions: boolean;
 };
 
@@ -38,7 +37,6 @@ export const Permissions = ({
   buttonLabel = 'Add a permission',
   resource,
   resourceId,
-  canListUsers,
   canSetPermissions,
   addPermissionTitle,
 }: Props) => {
@@ -144,7 +142,6 @@ export const Permissions = ({
             onAdd={onAdd}
             permissions={desc.permissions}
             assignments={desc.assignments}
-            canListUsers={canListUsers}
             onCancel={() => setIsAdding(false)}
           />
         </SlideDown>

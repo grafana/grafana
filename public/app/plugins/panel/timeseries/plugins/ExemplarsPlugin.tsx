@@ -1,3 +1,6 @@
+import React, { useCallback, useLayoutEffect, useRef } from 'react';
+import uPlot from 'uplot';
+
 import {
   DataFrame,
   DataFrameFieldIndex,
@@ -8,9 +11,8 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
-import React, { useCallback, useLayoutEffect, useRef } from 'react';
+
 import { ExemplarMarker } from './ExemplarMarker';
-import uPlot from 'uplot';
 
 interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;

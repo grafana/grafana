@@ -63,6 +63,8 @@ func TestPatchLibraryElement(t *testing.T) {
 					},
 					Version: 2,
 					Meta: LibraryElementDTOMeta{
+						FolderName:          "NewFolder",
+						FolderUID:           "NewFolder",
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
@@ -102,6 +104,8 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
+			sc.initialResult.Result.Meta.FolderName = "NewFolder"
+			sc.initialResult.Result.Meta.FolderUID = "NewFolder"
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -286,7 +290,7 @@ func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := PatchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(models.PanelElement)}
-			sc.reqContext.UserId = 2
+			sc.reqContext.UserID = 2
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp := sc.service.patchHandler(sc.reqContext)
@@ -343,7 +347,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				Version:  1,
 				Kind:     int64(models.PanelElement),
 			}
-			sc.reqContext.OrgId = 2
+			sc.reqContext.OrgID = 2
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp := sc.service.patchHandler(sc.reqContext)

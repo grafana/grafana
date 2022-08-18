@@ -1,10 +1,11 @@
 import { map } from 'rxjs/operators';
 
-import { noopTransformer } from './noop';
 import { DataFrame, Field } from '../../types/dataFrame';
-import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { getFieldMatcher, getFrameMatchers } from '../matchers';
+
+import { DataTransformerID } from './ids';
+import { noopTransformer } from './noop';
 
 export interface FilterOptions {
   include?: MatcherConfig;
@@ -21,9 +22,23 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options: FilterOptions) => (source) => {
+  operator: (options: FilterOptions, replace) => (source) => {
     if (!options.include && !options.exclude) {
-      return source.pipe(noopTransformer.operator({}));
+      return source.pipe(noopTransformer.operator({}, replace));
+    }
+
+    if (replace) {
+      if (typeof options.include?.options === 'string') {
+        options.include.options = replace(options.include?.options);
+      } else if (typeof options.include?.options?.pattern === 'string') {
+        options.include.options.pattern = replace(options.include?.options.pattern);
+      }
+
+      if (typeof options.exclude?.options === 'string') {
+        options.exclude.options = replace(options.exclude?.options);
+      } else if (typeof options.exclude?.options?.pattern === 'string') {
+        options.exclude.options.pattern = replace(options.exclude?.options.pattern);
+      }
     }
 
     return source.pipe(

@@ -2,10 +2,9 @@ package notifications
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -20,7 +19,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 		setting.BuildVersion = "4.0.0"
 
 		ns := &NotificationService{}
-		ns.Bus = bus.New()
+		ns.Bus = newBus(t)
 		ns.Cfg = setting.NewCfg()
 		ns.Cfg.Smtp.Enabled = true
 		ns.Cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
@@ -63,9 +62,9 @@ func TestEmailIntegrationTest(t *testing.T) {
 			sentMsg := <-ns.mailQueue
 			require.Equal(t, sentMsg.From, "Grafana Admin <from@address.com>")
 			require.Equal(t, sentMsg.To[0], "asdf@asdf.com")
-			err = ioutil.WriteFile("../../../tmp/test_email.html", []byte(sentMsg.Body["text/html"]), 0777)
+			err = os.WriteFile("../../../tmp/test_email.html", []byte(sentMsg.Body["text/html"]), 0777)
 			require.NoError(t, err)
-			err = ioutil.WriteFile("../../../tmp/test_email.txt", []byte(sentMsg.Body["text/plain"]), 0777)
+			err = os.WriteFile("../../../tmp/test_email.txt", []byte(sentMsg.Body["text/plain"]), 0777)
 			require.NoError(t, err)
 		})
 	})

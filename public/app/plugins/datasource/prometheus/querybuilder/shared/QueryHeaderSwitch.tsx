@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Switch, useStyles2 } from '@grafana/ui';
 import { uniqueId } from 'lodash';
 import React, { HTMLProps, useRef } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Switch, Stack, useStyles2 } from '@grafana/ui';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value' | 'ref'> {
   value?: boolean;
@@ -11,7 +11,8 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value' | 'ref'
 }
 
 export function QueryHeaderSwitch({ label, ...inputProps }: Props) {
-  const switchIdRef = useRef(uniqueId(`switch-${label}`));
+  const dashedLabel = label.replace(' ', '-');
+  const switchIdRef = useRef(uniqueId(`switch-${dashedLabel}`));
   const styles = useStyles2(getStyles);
 
   return (

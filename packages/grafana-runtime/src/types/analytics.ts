@@ -11,6 +11,7 @@ export interface DashboardInfo {
   dashboardUid: string;
   dashboardName: string;
   folderName?: string;
+  publicDashboardUid?: string;
 }
 
 /**
@@ -55,6 +56,8 @@ export interface DashboardViewEventPayload extends DashboardInfo {
  */
 export interface DataRequestEventPayload extends DataRequestInfo {
   eventName: MetaAnalyticsEventName.DataRequest;
+  totalQueries?: number;
+  cachedQueries?: number;
 }
 
 /**

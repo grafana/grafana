@@ -16,10 +16,12 @@ import { shallow } from 'enzyme';
 import React from 'react';
 import IoChevronRight from 'react-icons/lib/io/chevron-right';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
+
 import { createTheme } from '@grafana/data';
 
-import SpanTreeOffset, { getStyles } from './SpanTreeOffset';
 import spanAncestorIdsSpy from '../utils/span-ancestor-ids';
+
+import SpanTreeOffset, { getStyles } from './SpanTreeOffset';
 
 jest.mock('../utils/span-ancestor-ids');
 
@@ -54,13 +56,13 @@ describe('SpanTreeOffset', () => {
       wrapper = shallow(<SpanTreeOffset {...props} />)
         .dive()
         .dive();
-      const indentGuides = wrapper.find('[data-test-id="SpanTreeOffset--indentGuide"]');
+      const indentGuides = wrapper.find('[data-testid="SpanTreeOffset--indentGuide"]');
       expect(indentGuides.length).toBe(1);
       expect(indentGuides.prop('data-ancestor-id')).toBe(specialRootID);
     });
 
     it('renders one .SpanTreeOffset--indentGuide per ancestor span, plus one for entire trace', () => {
-      const indentGuides = wrapper.find('[data-test-id="SpanTreeOffset--indentGuide"]');
+      const indentGuides = wrapper.find('[data-testid="SpanTreeOffset--indentGuide"]');
       expect(indentGuides.length).toBe(3);
       expect(indentGuides.at(0).prop('data-ancestor-id')).toBe(specialRootID);
       expect(indentGuides.at(1).prop('data-ancestor-id')).toBe(rootSpanID);
@@ -138,13 +140,13 @@ describe('SpanTreeOffset', () => {
     });
 
     it('calls props.addHoverIndentGuideId on mouse enter', () => {
-      wrapper.find('[data-test-id="icon-wrapper"]').simulate('mouseenter', {});
+      wrapper.find('[data-testid="icon-wrapper"]').simulate('mouseenter', {});
       expect(props.addHoverIndentGuideId).toHaveBeenCalledTimes(1);
       expect(props.addHoverIndentGuideId).toHaveBeenCalledWith(ownSpanID);
     });
 
     it('calls props.removeHoverIndentGuideId on mouse leave', () => {
-      wrapper.find('[data-test-id="icon-wrapper"]').simulate('mouseleave', {});
+      wrapper.find('[data-testid="icon-wrapper"]').simulate('mouseleave', {});
       expect(props.removeHoverIndentGuideId).toHaveBeenCalledTimes(1);
       expect(props.removeHoverIndentGuideId).toHaveBeenCalledWith(ownSpanID);
     });

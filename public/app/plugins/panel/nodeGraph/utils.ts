@@ -3,12 +3,14 @@ import {
   DataFrame,
   Field,
   FieldCache,
+  FieldColorModeId,
   FieldType,
   GrafanaTheme2,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
-import { EdgeDatum, NodeDatum } from './types';
+
+import { EdgeDatum, NodeDatum, NodeGraphOptions } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
@@ -35,13 +37,17 @@ export function shortenLine(line: Line, length: number): Line {
 }
 
 export function getNodeFields(nodes: DataFrame) {
-  const fieldsCache = new FieldCache(nodes);
+  const normalizedFrames = {
+    ...nodes,
+    fields: nodes.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
+  };
+  const fieldsCache = new FieldCache(normalizedFrames);
   return {
-    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id),
-    title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title),
-    subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat),
+    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
+    title: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.title.toLowerCase()),
+    subTitle: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.subTitle.toLowerCase()),
+    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
+    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     arc: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.arc),
     details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
@@ -49,14 +55,18 @@ export function getNodeFields(nodes: DataFrame) {
 }
 
 export function getEdgeFields(edges: DataFrame) {
-  const fieldsCache = new FieldCache(edges);
+  const normalizedFrames = {
+    ...edges,
+    fields: edges.fields.map((field) => ({ ...field, name: field.name.toLowerCase() })),
+  };
+  const fieldsCache = new FieldCache(normalizedFrames);
   return {
-    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id),
-    source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source),
-    target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target),
-    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat),
-    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat),
-    details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail),
+    id: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id.toLowerCase()),
+    source: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase()),
+    target: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.target.toLowerCase()),
+    mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
+    secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
+    details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
   };
 }
 
@@ -172,11 +182,11 @@ function makeNode(index: number) {
   return {
     id: index.toString(),
     title: `service:${index}`,
-    subTitle: 'service',
+    subtitle: 'service',
     arc__success: 0.5,
     arc__errors: 0.5,
-    mainStat: 0.1,
-    secondaryStat: 2,
+    mainstat: 0.1,
+    secondarystat: 2,
     color: 0.5,
   };
 }
@@ -318,19 +328,106 @@ export function graphBounds(nodes: NodeDatum[]): Bounds {
   };
 }
 
-export function getNodeGraphDataFrames(frames: DataFrame[]) {
+export function getNodeGraphDataFrames(frames: DataFrame[], options?: NodeGraphOptions) {
   // TODO: this not in sync with how other types of responses are handled. Other types have a query response
   //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
   //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
   //  and lazy processing here. Needs bigger refactor so keeping nodeGraph and Traces as they are for now.
-  return frames.filter((frame) => {
+  let nodeGraphFrames = frames.filter((frame) => {
     if (frame.meta?.preferredVisualisationType === 'nodeGraph') {
       return true;
     }
-    if (frame.name === 'nodes' || frame.name === 'edges') {
+
+    if (frame.name === 'nodes' || frame.name === 'edges' || frame.refId === 'nodes' || frame.refId === 'edges') {
+      return true;
+    }
+
+    const fieldsCache = new FieldCache(frame);
+    if (fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.id)) {
       return true;
     }
 
     return false;
   });
+
+  // If panel options are provided, interpolate their values in to the data frames
+  if (options) {
+    nodeGraphFrames = applyOptionsToFrames(nodeGraphFrames, options);
+  }
+  return nodeGraphFrames;
 }
+
+export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOptions): DataFrame[] => {
+  return frames.map((frame) => {
+    const fieldsCache = new FieldCache(frame);
+
+    // Edges frame has source which can be used to identify nodes vs edges frames
+    if (fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.source.toLowerCase())) {
+      if (options?.edges?.mainStatUnit) {
+        const field = frame.fields.find((field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.mainStat);
+        if (field) {
+          field.config = { ...field.config, unit: options.edges.mainStatUnit };
+        }
+      }
+      if (options?.edges?.secondaryStatUnit) {
+        const field = frame.fields.find(
+          (field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.secondaryStat
+        );
+        if (field) {
+          field.config = { ...field.config, unit: options.edges.secondaryStatUnit };
+        }
+      }
+    } else {
+      if (options?.nodes?.mainStatUnit) {
+        const field = frame.fields.find((field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.mainStat);
+        if (field) {
+          field.config = { ...field.config, unit: options.nodes.mainStatUnit };
+        }
+      }
+      if (options?.nodes?.secondaryStatUnit) {
+        const field = frame.fields.find(
+          (field) => field.name.toLowerCase() === NodeGraphDataFrameFieldNames.secondaryStat
+        );
+        if (field) {
+          field.config = { ...field.config, unit: options.nodes.secondaryStatUnit };
+        }
+      }
+      if (options?.nodes?.arcs?.length) {
+        for (const arc of options.nodes.arcs) {
+          const field = frame.fields.find((field) => field.name.toLowerCase() === arc.field);
+          if (field && arc.color) {
+            field.config = { ...field.config, color: { fixedColor: arc.color, mode: FieldColorModeId.Fixed } };
+          }
+        }
+      }
+    }
+    return frame;
+  });
+};
+
+// Returns an array of node ids which are connected to a given edge
+export const findConnectedNodesForEdge = (nodes: NodeDatum[], edges: EdgeDatum[], edgeId: string): string[] => {
+  const edge = edges.find((edge) => edge.id === edgeId);
+  if (edge) {
+    return [
+      ...new Set(nodes.filter((node) => edge.source === node.id || edge.target === node.id).map((node) => node.id)),
+    ];
+  }
+  return [];
+};
+
+// Returns an array of node ids which are connected to a given node
+export const findConnectedNodesForNode = (nodes: NodeDatum[], edges: EdgeDatum[], nodeId: string): string[] => {
+  const node = nodes.find((node) => node.id === nodeId);
+  if (node) {
+    const linkedEdges = edges.filter((edge) => edge.source === node.id || edge.target === node.id);
+    return [
+      ...new Set(
+        linkedEdges.flatMap((edge) =>
+          nodes.filter((n) => edge.source === n.id || edge.target === n.id).map((n) => n.id)
+        )
+      ),
+    ];
+  }
+  return [];
+};

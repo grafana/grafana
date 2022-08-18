@@ -1,15 +1,16 @@
-import React, { CSSProperties, ReactNode, useState, useEffect } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
-import RcDrawer from 'rc-drawer';
 import { css } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
+import RcDrawer from 'rc-drawer';
+import React, { CSSProperties, ReactNode, useState, useEffect } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { useStyles2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
-import { useStyles2 } from '../../themes';
-import { FocusScope } from '@react-aria/focus';
-import { useDialog } from '@react-aria/dialog';
-import { useOverlay } from '@react-aria/overlays';
 
 export interface Props {
   children: ReactNode;
@@ -53,7 +54,9 @@ export function Drawer({
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
-      isDismissable: true,
+      isDismissable: false,
+      isOpen,
+      onClose,
     },
     overlayRef
   );
@@ -64,6 +67,10 @@ export function Drawer({
   }, []);
 
   const content = <div className={drawerStyles.content}>{children}</div>;
+  const style: CSSProperties = {};
+  if (inline) {
+    style.position = 'absolute';
+  }
 
   return (
     <RcDrawer
@@ -75,7 +82,7 @@ export function Drawer({
       placement="right"
       width={currentWidth}
       getContainer={inline ? undefined : 'body'}
-      style={{ position: `${inline && 'absolute'}` } as CSSProperties}
+      style={style}
       className={drawerStyles.drawer}
       aria-label={
         typeof title === 'string'
@@ -93,7 +100,6 @@ export function Drawer({
                     name="angle-left"
                     size="xl"
                     onClick={() => setIsExpanded(true)}
-                    surface="header"
                     aria-label={selectors.components.Drawer.General.expand}
                   />
                 )}
@@ -102,7 +108,6 @@ export function Drawer({
                     name="angle-right"
                     size="xl"
                     onClick={() => setIsExpanded(false)}
-                    surface="header"
                     aria-label={selectors.components.Drawer.General.contract}
                   />
                 )}
@@ -110,7 +115,6 @@ export function Drawer({
                   name="times"
                   size="xl"
                   onClick={onClose}
-                  surface="header"
                   aria-label={selectors.components.Drawer.General.close}
                 />
               </div>

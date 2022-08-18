@@ -1,10 +1,12 @@
-import { SelectableValue } from '@grafana/data';
 import React, { FC } from 'react';
 
-import { AlignmentFunction, AlignmentPeriod, AlignmentPeriodLabel, QueryEditorField, QueryEditorRow } from '.';
-import { SELECT_WIDTH } from '../constants';
+import { SelectableValue } from '@grafana/data';
+
+import { ALIGNMENT_PERIODS, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { CustomMetaData, MetricQuery, SLOQuery } from '../types';
+
+import { AlignmentFunction, PeriodSelect, AlignmentPeriodLabel, QueryEditorField, QueryEditorRow } from '.';
 
 export interface Props {
   refId: string;
@@ -37,12 +39,13 @@ export const Alignment: FC<Props> = ({
         onChange={onChange}
       />
       <QueryEditorField label="Alignment period" htmlFor={`${refId}-alignment-period`}>
-        <AlignmentPeriod
+        <PeriodSelect
           inputId={`${refId}-alignment-period`}
           selectWidth={SELECT_WIDTH}
           templateVariableOptions={templateVariableOptions}
-          query={query}
-          onChange={onChange}
+          current={query.alignmentPeriod}
+          onChange={(period) => onChange({ ...query, alignmentPeriod: period })}
+          aligmentPeriods={ALIGNMENT_PERIODS}
         />
       </QueryEditorField>
     </QueryEditorRow>

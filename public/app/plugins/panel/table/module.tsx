@@ -6,13 +6,16 @@ import {
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
-import { TablePanel } from './TablePanel';
-import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { TableFieldOptions } from '@grafana/schema';
-import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
-import { TableSuggestionsSupplier } from './suggestions';
+
 import { PaginationEditor } from './PaginationEditor';
+import { TablePanel } from './TablePanel';
+import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
+import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { TableSuggestionsSupplier } from './suggestions';
+
+const footerCategory = 'Table footer';
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
@@ -109,21 +112,18 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
     builder
       .addBooleanSwitch({
         path: 'showHeader',
-        category: ['Header and footer'],
-        name: 'Show header',
-        description: "To display table's header or not to display",
+        name: 'Show table header',
         defaultValue: defaultPanelOptions.showHeader,
       })
       .addBooleanSwitch({
         path: 'footer.show',
-        category: ['Header and footer'],
-        name: 'Show Footer',
-        description: "To display table's footer or not to display",
+        category: [footerCategory],
+        name: 'Show table footer',
         defaultValue: defaultPanelOptions.footer?.show,
       })
       .addCustomEditor({
         id: 'footer.reducer',
-        category: ['Header and footer'],
+        category: [footerCategory],
         path: 'footer.reducer',
         name: 'Calculation',
         description: 'Choose a reducer function / calculation',
@@ -133,7 +133,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
       })
       .addMultiSelect({
         path: 'footer.fields',
-        category: ['Header and footer'],
+        category: [footerCategory],
         name: 'Fields',
         description: 'Select the fields that should be calculated',
         settings: {
@@ -160,7 +160,6 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
       })
       .addCustomEditor({
         id: 'footer.enablePagination',
-        category: ['Header and footer'],
         path: 'footer.enablePagination',
         name: 'Enable pagination',
         editor: PaginationEditor,

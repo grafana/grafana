@@ -1,7 +1,8 @@
-import React, { PureComponent } from 'react';
-import { InfluxQuery } from '../types';
-import { SelectableValue } from '@grafana/data';
 import { cx, css } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
+import { SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import {
   InlineFormLabel,
   LinkButton,
@@ -11,8 +12,9 @@ import {
   CodeEditorSuggestionItem,
   CodeEditorSuggestionItemKind,
 } from '@grafana/ui';
-import { getTemplateSrv } from '@grafana/runtime';
+
 import InfluxDatasource from '../datasource';
+import { InfluxQuery } from '../types';
 
 type Props = {
   onChange: (query: InfluxQuery) => void;

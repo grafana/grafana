@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -61,8 +62,8 @@ func (p *teamPermissionMigrator) setRolePermissions(roleID int64, permissions []
 	return nil
 }
 
-// mapPermissionToFGAC translates the legacy membership (Member or Admin) into FGAC permissions
-func (p *teamPermissionMigrator) mapPermissionToFGAC(permission models.PermissionType, teamID int64) []accesscontrol.Permission {
+// mapPermissionToRBAC translates the legacy membership (Member or Admin) into RBAC permissions
+func (p *teamPermissionMigrator) mapPermissionToRBAC(permission models.PermissionType, teamID int64) []accesscontrol.Permission {
 	teamIDScope := accesscontrol.Scope("teams", "id", strconv.FormatInt(teamID, 10))
 	switch permission {
 	case 0:
@@ -209,7 +210,7 @@ func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships [
 		// only admins or editors (when editorsCanAdmin option is enabled)
 		// can access team administration endpoints
 		if m.Permission == models.PERMISSION_ADMIN {
-			if userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_VIEWER) || (userRolesByOrg[m.OrgId][m.UserId] == string(models.ROLE_EDITOR) && !p.editorsCanAdmin) {
+			if userRolesByOrg[m.OrgId][m.UserId] == string(org.RoleViewer) || (userRolesByOrg[m.OrgId][m.UserId] == string(org.RoleEditor) && !p.editorsCanAdmin) {
 				m.Permission = 0
 
 				if _, err := p.sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", m.OrgId, m.TeamId, m.UserId).Update(m); err != nil {
@@ -222,7 +223,7 @@ func (p *teamPermissionMigrator) generateAssociatedPermissions(teamMemberships [
 		if !initialized {
 			userPermissions = map[int64][]accesscontrol.Permission{}
 		}
-		userPermissions[m.UserId] = append(userPermissions[m.UserId], p.mapPermissionToFGAC(m.Permission, m.TeamId)...)
+		userPermissions[m.UserId] = append(userPermissions[m.UserId], p.mapPermissionToRBAC(m.Permission, m.TeamId)...)
 		userPermissionsByOrg[m.OrgId] = userPermissions
 	}
 

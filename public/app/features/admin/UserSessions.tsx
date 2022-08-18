@@ -1,9 +1,10 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { ConfirmButton, ConfirmModal, Button } from '@grafana/ui';
-import { AccessControlAction, UserSession } from 'app/types';
-import { contextSrv } from 'app/core/core';
 import { withI18n, withI18nProps } from '@lingui/react';
+import React, { PureComponent } from 'react';
+
+import { ConfirmButton, ConfirmModal, Button } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, UserSession } from 'app/types';
 
 interface Props extends withI18nProps {
   sessions: UserSession[];

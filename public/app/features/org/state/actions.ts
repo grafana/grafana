@@ -1,7 +1,8 @@
-import { ThunkResult } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
-import { organizationLoaded, userOrganizationsLoaded } from './reducers';
 import { updateConfigurationSubtitle } from 'app/core/actions';
+import { ThunkResult } from 'app/types';
+
+import { organizationLoaded, userOrganizationsLoaded } from './reducers';
 
 type OrganizationDependencies = { getBackendSrv: typeof getBackendSrv };
 

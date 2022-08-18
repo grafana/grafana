@@ -3,10 +3,11 @@ package azuremonitor
 import (
 	"fmt"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 )
 
 // Azure cloud names specific to Azure Monitor
@@ -107,6 +108,9 @@ func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJson
 		cloud, err := getAzureCloud(cfg, jsonData)
 		if err != nil {
 			return nil, err
+		}
+		if secureJsonData["clientSecret"] == "" {
+			return nil, fmt.Errorf("unable to instantiate credentials, clientSecret must be set")
 		}
 		credentials := &azcredentials.AzureClientSecretCredentials{
 			AzureCloud:   cloud,

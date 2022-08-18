@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { NavModelItem } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 

@@ -1,6 +1,8 @@
 import React, { FC } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+
 import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerMode, reducerTypes } from '../types';
 
 interface Props {
@@ -67,13 +69,13 @@ export const Reduce: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
   return (
     <InlineFieldRow>
       <InlineField label="Function" labelWidth={labelWidth}>
-        <Select menuShouldPortal options={reducerTypes} value={reducer} onChange={onSelectReducer} width={25} />
+        <Select options={reducerTypes} value={reducer} onChange={onSelectReducer} width={25} />
       </InlineField>
       <InlineField label="Input" labelWidth={labelWidth}>
-        <Select menuShouldPortal onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+        <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
       </InlineField>
       <InlineField label="Mode" labelWidth={labelWidth}>
-        <Select menuShouldPortal onChange={onModeChanged} options={reducerMode} value={mode} width={25} />
+        <Select onChange={onModeChanged} options={reducerMode} value={mode} width={25} />
       </InlineField>
       {replaceWithNumber()}
     </InlineFieldRow>

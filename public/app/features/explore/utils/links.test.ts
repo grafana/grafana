@@ -1,4 +1,3 @@
-import { getFieldLinksForExplore } from './links';
 import {
   ArrayVector,
   DataLink,
@@ -10,8 +9,11 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
-import { setLinkSrv } from '../../panel/panellinks/link_srv';
+
 import { setContextSrv } from '../../../core/services/context_srv';
+import { setLinkSrv } from '../../panel/panellinks/link_srv';
+
+import { getFieldLinksForExplore } from './links';
 
 describe('getFieldLinksForExplore', () => {
   beforeEach(() => {
@@ -71,7 +73,7 @@ describe('getFieldLinksForExplore', () => {
 
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
       )}`
     );
     expect(links[0].title).toBe('test_ds');

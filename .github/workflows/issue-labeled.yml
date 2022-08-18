@@ -1,0 +1,56 @@
+name: Notify Slack channel based on issue label
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Download teams.yml to know which label is for which team"
+        run: wget https://raw.githubusercontent.com/grafana/grafana/main/.github/teams.yml
+
+      - name: "Determine which team to notify"
+        run: |
+          # Default to null values.
+          CHANNEL="null"
+
+          echo "${{ github.event.label.name }} label added"
+          export CURRENT_LABEL="${{ github.event.label.name }}" # Enable the use of the label in yq evaluations
+          # yq is installed by default in ubuntu-latest
+          if [[ $(yq e 'keys | .[] | select(. == env(CURRENT_LABEL))' teams.yml ) ]]; then
+            # Check if we have a channel set to notify on comments.
+            if [[ $(yq '.[env(CURRENT_LABEL)] | has("channel-label")' teams.yml ) == true ]]; then
+              CHANNEL=$(yq '.[env(CURRENT_LABEL)].channel-label' teams.yml)
+            fi
+          fi
+
+          # set environment for next step
+          echo "CHANNEL=${CHANNEL}" >> $GITHUB_ENV
+
+          # Debug logging
+          echo "Ready to send issue to channel ID ${CHANNEL}"
+
+      - name: "Prepare payload"
+        uses: frabert/replace-string-action@v2.0
+        id: preparePayload
+        with:
+          # replace double quotes with single quotes to avoid breaking the JSON payload sent to Slack
+          string: ${{ github.event.issue.title }}
+          pattern: '"'
+          replace-with: "'"
+          flags: 'g'
+
+      - name: "Send Slack notification"
+        uses: slackapi/slack-github-action@v1.14.0
+        with:
+          payload: >
+            {
+              "icon_emoji": ":grafana:",
+              "username": "Grafana issue labeled",
+              "text": "Issue \"${{ steps.preparePayload.outputs.replaced }}\" labeled \"${{ github.event.label.name }}\": ${{ github.event.issue.html_url }}",
+              "channel": "${{ env.CHANNEL }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -1,7 +1,7 @@
 import { countBy, chain, escapeRegExp } from 'lodash';
 
-import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser, LogsModel, LogsSortOrder } from '../types/logs';
 import { DataFrame, FieldType } from '../types/index';
+import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser, LogsModel, LogsSortOrder } from '../types/logs';
 import { ArrayVector } from '../vector/ArrayVector';
 
 // This matches:

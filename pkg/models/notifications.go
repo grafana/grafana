@@ -1,6 +1,10 @@
 package models
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/grafana/grafana/pkg/services/user"
+)
 
 var ErrInvalidEmailCode = errors.New("invalid or expired email code")
 var ErrSmtpNotEnabled = errors.New("SMTP not configured, check your grafana.ini config file's [smtp] section")
@@ -37,13 +41,14 @@ type SendWebhookSync struct {
 	HttpMethod  string
 	HttpHeader  map[string]string
 	ContentType string
+	Validation  func(body []byte, statusCode int) error
 }
 
 type SendResetPasswordEmailCommand struct {
-	User *User
+	User *user.User
 }
 
 type ValidateResetPasswordCodeQuery struct {
 	Code   string
-	Result *User
+	Result *user.User
 }

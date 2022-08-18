@@ -20,8 +20,7 @@
     {
       "type": "dashboard",
       "name": "Nginx Memory",
-      "path": "dashboards/memory.json",
-      "defaultNav": true
+      "path": "dashboards/memory.json"
     },
     {
       "type": "page",

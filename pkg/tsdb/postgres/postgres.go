@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var logger = log.New("tsdb.postgres")
@@ -131,7 +130,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 				var err error
 				port, err = strconv.Atoi(sp[1])
 				if err != nil {
-					return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
 				}
 
 				logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
@@ -140,16 +139,16 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 			}
 		} else {
 			if index == v6Index+1 {
-				host = dsInfo.URL[0:index]
+				host = dsInfo.URL[1 : index-1]
 				var err error
 				port, err = strconv.Atoi(dsInfo.URL[index+1:])
 				if err != nil {
-					return "", errutil.Wrapf(err, "invalid port in host specifier %q", dsInfo.URL[index+1:])
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
 				}
 
 				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
 			} else {
-				host = dsInfo.URL
+				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
 				logger.Debug("Generating ipv6 connection string with network host", "host", host)
 			}
 		}

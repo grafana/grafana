@@ -1,7 +1,10 @@
-import { Stack } from '@grafana/experimental';
 import React from 'react';
+
+import { Stack } from '@grafana/ui';
+
 import { PrometheusDatasource } from '../../datasource';
 import { PromVisualQuery, PromVisualQueryBinary } from '../types';
+
 import { NestedQuery } from './NestedQuery';
 
 export interface Props {
@@ -9,9 +12,11 @@ export interface Props {
   datasource: PrometheusDatasource;
   onChange: (query: PromVisualQuery) => void;
   onRunQuery: () => void;
+  showExplain: boolean;
 }
 
-export function NestedQueryList({ query, datasource, onChange, onRunQuery }: Props) {
+export function NestedQueryList(props: Props) {
+  const { query, datasource, onChange, onRunQuery, showExplain } = props;
   const nestedQueries = query.binaryQueries ?? [];
 
   const onNestedQueryUpdate = (index: number, update: PromVisualQueryBinary) => {
@@ -36,6 +41,7 @@ export function NestedQueryList({ query, datasource, onChange, onRunQuery }: Pro
           datasource={datasource}
           onRemove={onRemove}
           onRunQuery={onRunQuery}
+          showExplain={showExplain}
         />
       ))}
     </Stack>

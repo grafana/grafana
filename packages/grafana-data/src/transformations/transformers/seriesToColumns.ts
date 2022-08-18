@@ -1,13 +1,20 @@
 import { map } from 'rxjs/operators';
 
 import { DataFrame, SynchronousDataTransformerInfo, FieldMatcher } from '../../types';
-import { DataTransformerID } from './ids';
-import { outerJoinDataFrames } from './joinDataFrames';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
+import { DataTransformerID } from './ids';
+import { joinDataFrames } from './joinDataFrames';
+
+export enum JoinMode {
+  outer = 'outer',
+  inner = 'inner',
+}
+
 export interface SeriesToColumnsOptions {
   byField?: string; // empty will pick the field automatically
+  mode?: JoinMode;
 }
 
 export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesToColumnsOptions> = {
@@ -16,6 +23,7 @@ export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesTo
   description: 'Groups series by field and returns values as columns',
   defaultOptions: {
     byField: undefined, // DEFAULT_KEY_FIELD,
+    mode: JoinMode.outer,
   },
 
   operator: (options) => (source) => source.pipe(map((data) => seriesToColumnsTransformer.transformer(options)(data))),
@@ -27,7 +35,7 @@ export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesTo
         if (options.byField && !joinBy) {
           joinBy = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
         }
-        const joined = outerJoinDataFrames({ frames: data, joinBy });
+        const joined = joinDataFrames({ frames: data, joinBy, mode: options.mode });
         if (joined) {
           return [joined];
         }

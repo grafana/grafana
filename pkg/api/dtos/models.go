@@ -3,12 +3,14 @@ package dtos
 import (
 	"crypto/md5"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,6 +30,7 @@ type LoginCommand struct {
 type CurrentUser struct {
 	IsSignedIn                 bool               `json:"isSignedIn"`
 	Id                         int64              `json:"id"`
+	ExternalUserId             string             `json:"externalUserId"`
 	Login                      string             `json:"login"`
 	Email                      string             `json:"email"`
 	Name                       string             `json:"name"`
@@ -35,13 +38,13 @@ type CurrentUser struct {
 	OrgCount                   int                `json:"orgCount"`
 	OrgId                      int64              `json:"orgId"`
 	OrgName                    string             `json:"orgName"`
-	OrgRole                    models.RoleType    `json:"orgRole"`
+	OrgRole                    org.RoleType       `json:"orgRole"`
 	IsGrafanaAdmin             bool               `json:"isGrafanaAdmin"`
 	GravatarUrl                string             `json:"gravatarUrl"`
 	Timezone                   string             `json:"timezone"`
 	WeekStart                  string             `json:"weekStart"`
 	Locale                     string             `json:"locale"`
-	HelpFlags1                 models.HelpFlags1  `json:"helpFlags1"`
+	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
 }
@@ -67,6 +70,20 @@ type MetricRequest struct {
 	Queries []*simplejson.Json `json:"queries"`
 	// required: false
 	Debug bool `json:"debug"`
+
+	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
+
+	HTTPRequest *http.Request `json:"-"`
+}
+
+func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
+	return MetricRequest{
+		From:        mr.From,
+		To:          mr.To,
+		Queries:     queries,
+		Debug:       mr.Debug,
+		HTTPRequest: mr.HTTPRequest,
+	}
 }
 
 func GetGravatarUrl(text string) string {
@@ -78,11 +95,20 @@ func GetGravatarUrl(text string) string {
 		return ""
 	}
 
+	hash, _ := GetGravatarHash(text)
+	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hash)
+}
+
+func GetGravatarHash(text string) ([]byte, bool) {
+	if text == "" {
+		return make([]byte, 0), false
+	}
+
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
 		mlog.Warn("Failed to hash text", "err", err)
 	}
-	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
+	return hasher.Sum(nil), true
 }
 
 func GetGravatarUrlWithDefault(text string, defaultText string) string {
@@ -95,7 +121,7 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 	return GetGravatarUrl(text)
 }
 
-func IsHiddenUser(userLogin string, signedInUser *models.SignedInUser, cfg *setting.Cfg) bool {
+func IsHiddenUser(userLogin string, signedInUser *user.SignedInUser, cfg *setting.Cfg) bool {
 	if userLogin == "" || signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
 		return false
 	}

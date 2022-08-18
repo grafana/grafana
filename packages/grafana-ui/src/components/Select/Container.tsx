@@ -1,12 +1,14 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
+import { components, ContainerProps, GroupBase } from 'react-select';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory } from '../../themes';
 import { useTheme2 } from '../../themes/ThemeContext';
+import { focusCss } from '../../themes/mixins';
 import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
-import { css, cx } from '@emotion/css';
-import { stylesFactory } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
-import { focusCss } from '../../themes/mixins';
-import { components, ContainerProps, GroupBase } from 'react-select';
 
 export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
   props: ContainerProps<Option, isMulti, Group> & { isFocused: boolean }

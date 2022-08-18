@@ -1,4 +1,5 @@
 import store from 'app/core/store';
+
 import { QueryEditorMode } from '../../prometheus/querybuilder/shared/types';
 import { LokiQuery, LokiQueryType } from '../types';
 
@@ -23,7 +24,6 @@ export function getDefaultEditorMode(expr: string) {
   switch (value) {
     case QueryEditorMode.Builder:
     case QueryEditorMode.Code:
-    case QueryEditorMode.Explain:
       return value;
     default:
       return QueryEditorMode.Builder;

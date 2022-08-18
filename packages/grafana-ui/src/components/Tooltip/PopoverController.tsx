@@ -1,5 +1,6 @@
-import React from 'react';
 import { Placement } from '@popperjs/core';
+import { Component } from 'react';
+
 import { PopoverContent } from './types';
 
 type PopperControllerRenderProp = (
@@ -24,7 +25,7 @@ interface State {
   show: boolean;
 }
 
-class PopoverController extends React.Component<Props, State> {
+class PopoverController extends Component<Props, State> {
   private hideTimeout: any;
   state = { show: false };
 

@@ -1,10 +1,10 @@
 import { Subject } from 'rxjs';
 
-import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
-import { ResponseQueue } from './ResponseQueue';
-import { FetchQueueWorker } from './FetchQueueWorker';
-import { expect } from '../../../test/lib/common';
 import { GrafanaBootConfig } from '@grafana/runtime';
+
+import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
+import { FetchQueueWorker } from './FetchQueueWorker';
+import { ResponseQueue } from './ResponseQueue';
 
 const getTestContext = (http2Enabled = false) => {
   const config: GrafanaBootConfig = { http2Enabled } as unknown as GrafanaBootConfig;

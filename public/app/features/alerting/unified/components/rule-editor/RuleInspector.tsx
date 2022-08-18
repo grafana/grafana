@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
+import { dump, load } from 'js-yaml';
 import React, { FC, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { dump, load } from 'js-yaml';
-import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, Drawer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+
 import { RuleFormValues } from '../../types/rule-form';
 
 interface Props {

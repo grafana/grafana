@@ -1,8 +1,9 @@
-import React from 'react';
 import { css, keyframes } from '@emotion/css';
-import { Button, HorizontalGroup, Spinner, useStyles, VerticalGroup } from '@grafana/ui';
-import { locationService } from '@grafana/runtime';
+import React from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { Button, HorizontalGroup, Spinner, useStyles, VerticalGroup } from '@grafana/ui';
 import { DashboardInitPhase } from 'app/types';
 
 export interface Props {

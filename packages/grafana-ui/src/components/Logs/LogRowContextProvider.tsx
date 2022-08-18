@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from 'react';
+import useAsync from 'react-use/lib/useAsync';
+
 import {
   LogRowModel,
   toDataFrame,
@@ -7,8 +10,6 @@ import {
   DataQueryResponse,
   DataQueryError,
 } from '@grafana/data';
-import React, { useState, useEffect } from 'react';
-import useAsync from 'react-use/lib/useAsync';
 
 export interface RowContextOptions {
   direction?: 'BACKWARD' | 'FORWARD';

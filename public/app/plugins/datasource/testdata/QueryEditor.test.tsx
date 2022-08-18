@@ -1,9 +1,10 @@
-import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { defaultQuery } from './constants';
+import React from 'react';
+
 import { QueryEditor, Props } from './QueryEditor';
 import { scenarios } from './__mocks__/scenarios';
+import { defaultQuery } from './constants';
 import { defaultStreamQuery } from './runStreams';
 
 beforeEach(() => {

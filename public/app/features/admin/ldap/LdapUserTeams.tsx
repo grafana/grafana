@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+
 import { Tooltip, Icon } from '@grafana/ui';
 import { LdapTeam } from 'app/types';
 

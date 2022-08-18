@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
@@ -23,6 +22,8 @@ func (s *Service) registerRoutes() *http.ServeMux {
 	mux.Handle("/test", createJSONHandler(s.logger))
 	mux.Handle("/test/json", createJSONHandler(s.logger))
 	mux.HandleFunc("/boom", s.testPanicHandler)
+	mux.HandleFunc("/sims", s.sims.GetSimulationHandler)
+	mux.HandleFunc("/sim/", s.sims.GetSimulationHandler)
 	return mux
 }
 
@@ -116,7 +117,7 @@ func createJSONHandler(logger log.Logger) http.Handler {
 					logger.Warn("Failed to close response body", "err", err)
 				}
 			}()
-			b, err := ioutil.ReadAll(req.Body)
+			b, err := io.ReadAll(req.Body)
 			if err != nil {
 				logger.Error("Failed to read request body to bytes", "error", err)
 			} else {

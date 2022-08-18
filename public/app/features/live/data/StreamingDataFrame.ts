@@ -110,6 +110,8 @@ export class StreamingDataFrame implements DataFrame {
       values: (f.values as unknown[]).slice(numberOfItemsToRemove),
     }));
 
+    const length = dataFrameDTO.fields[0]?.values?.length ?? 0
+
     return {
       ...dataFrameDTO,
       // TODO: Labels and schema are not filtered by field
@@ -119,7 +121,7 @@ export class StreamingDataFrame implements DataFrame {
       name: this.name,
       refId: this.refId,
       meta: this.meta,
-      length: this.length,
+      length,
       timeFieldIndex: this.timeFieldIndex,
       pushMode: this.pushMode,
       packetInfo: this.packetInfo,
@@ -301,7 +303,7 @@ export class StreamingDataFrame implements DataFrame {
       if (values.length !== this.fields.length) {
         if (this.fields.length) {
           throw new Error(
-            `push message mismatch.  Expected: ${this.fields.length}, recieved: ${values.length} (labels=${
+            `push message mismatch.  Expected: ${this.fields.length}, received: ${values.length} (labels=${
               this.pushMode === PushMode.labels
             })`
           );

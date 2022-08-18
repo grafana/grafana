@@ -1,13 +1,15 @@
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React from 'react';
-import { Story, Meta } from '@storybook/react';
-import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
-import mdx from './Button.mdx';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
-import { ButtonGroup } from './ButtonGroup';
+
 import { ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-export default {
+import { allButtonVariants, allButtonFills, Button } from './Button';
+import mdx from './Button.mdx';
+import { ButtonGroup } from './ButtonGroup';
+
+const meta: ComponentMeta<typeof Button> = {
   title: 'Buttons/Button',
   component: Button,
   parameters: {
@@ -15,9 +17,9 @@ export default {
       page: mdx,
     },
   },
-} as Meta;
+};
 
-export const Variants: Story<ButtonProps> = () => {
+export const Variants: ComponentStory<typeof Button> = () => {
   const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
   return (
     <VerticalGroup>
@@ -85,3 +87,5 @@ export const Variants: Story<ButtonProps> = () => {
     </VerticalGroup>
   );
 };
+
+export default meta;

@@ -1,23 +1,27 @@
-import React, { FC, useEffect, useCallback } from 'react';
-import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
-
+import React, { FC, useCallback, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
+
+import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
+import { Silence } from 'app/plugins/datasource/alertmanager/types';
+
+import { featureDiscoveryApi } from './api/featureDiscoveryApi';
+import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
+import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
-import SilencesEditor from './components/silences/SilencesEditor';
-import { AlertManagerPicker } from './components/AlertManagerPicker';
-import { Silence } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
-import { Authorize } from './components/Authorize';
 
 const Silences: FC = () => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
+  const alertManagers = useAlertManagersByPermission('instance');
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+
   const dispatch = useDispatch();
   const silences = useUnifiedAlertingSelector((state) => state.silences);
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
@@ -27,6 +31,11 @@ const Silences: FC = () => {
 
   const location = useLocation();
   const isRoot = location.pathname.endsWith('/alerting/silences');
+
+  const { currentData: amFeatures } = featureDiscoveryApi.useDiscoverAmFeaturesQuery(
+    { amSourceName: alertManagerSourceName ?? '' },
+    { skip: !alertManagerSourceName }
+  );
 
   useEffect(() => {
     function fetchAll() {
@@ -47,21 +56,40 @@ const Silences: FC = () => {
 
   const getSilenceById = useCallback((id: string) => result && result.find((silence) => silence.id === id), [result]);
 
+  const mimirLazyInitError =
+    error?.message?.includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
+
   if (!alertManagerSourceName) {
-    return <Redirect to="/alerting/silences" />;
+    return isRoot ? (
+      <AlertingPageWrapper pageId="silences">
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
+      </AlertingPageWrapper>
+    ) : (
+      <Redirect to="/alerting/silences" />
+    );
   }
 
   return (
     <AlertingPageWrapper pageId="silences">
-      <Authorize actions={[AccessControlAction.AlertingInstancesExternalRead]}>
-        <AlertManagerPicker disabled={!isRoot} current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      </Authorize>
-      {error && !loading && (
+      <AlertManagerPicker
+        disabled={!isRoot}
+        current={alertManagerSourceName}
+        onChange={setAlertManagerSourceName}
+        dataSources={alertManagers}
+      />
+
+      {mimirLazyInitError && (
+        <Alert title="The selected Alertmanager has no configuration" severity="warning">
+          Create a new contact point to create a configuration using the default values or contact your administrator to
+          set up the Alertmanager.
+        </Alert>
+      )}
+      {error && !loading && !mimirLazyInitError && (
         <Alert severity="error" title="Error loading silences">
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {alertsRequest?.error && !alertsRequest?.loading && (
+      {alertsRequest?.error && !alertsRequest?.loading && !mimirLazyInitError && (
         <Alert severity="error" title="Error loading Alertmanager alerts">
           {alertsRequest.error?.message || 'Unknown error.'}
         </Alert>

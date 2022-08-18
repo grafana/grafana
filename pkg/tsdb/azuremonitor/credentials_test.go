@@ -3,10 +3,11 @@ package azuremonitor
 import (
 	"testing"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -195,6 +196,14 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 
 			// Azure Monitor datasource doesn't support custom IdP authorities (Authority is always empty)
 			assert.Equal(t, "", clientSecretCredentials.Authority)
+		})
+
+		t.Run("should error if no client secret is set", func(t *testing.T) {
+			cfg := &setting.Cfg{}
+			_, err := getAzureCredentials(cfg, jsonData, map[string]string{
+				"clientSecret": "",
+			})
+			require.ErrorContains(t, err, "clientSecret must be set")
 		})
 	})
 }

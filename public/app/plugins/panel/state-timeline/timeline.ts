@@ -1,11 +1,13 @@
 import uPlot, { Cursor, Series } from 'uplot';
-import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
-import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
-import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
-import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
+
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { VisibilityMode } from '@grafana/schema';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
+import { VisibilityMode } from '@grafana/schema';
+import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
+import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
+import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
+
+import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 
 const { round, min, ceil } = Math;
 

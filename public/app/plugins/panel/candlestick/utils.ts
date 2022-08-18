@@ -1,6 +1,8 @@
-import { VizDisplayMode, ColorStrategy, CandleStyle } from './models.gen';
 import uPlot from 'uplot';
+
 import { colorManipulator } from '@grafana/data';
+
+import { VizDisplayMode, ColorStrategy, CandleStyle } from './models.gen';
 
 const { alpha } = colorManipulator;
 

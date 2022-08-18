@@ -1,9 +1,11 @@
 import { each } from 'lodash';
-import TableModel from 'app/core/table_model';
-import { TableRenderer } from '../renderer';
+
 import { ScopedVars, TimeZone } from '@grafana/data';
-import { ColumnRender } from '../types';
 import { getTheme } from '@grafana/ui';
+import TableModel from 'app/core/TableModel';
+
+import { TableRenderer } from '../renderer';
+import { ColumnRender } from '../types';
 
 const utc: TimeZone = 'utc';
 

@@ -1,12 +1,14 @@
+import { lastValueFrom } from 'rxjs';
+
+import { BackendSrvRequest } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
-import { DashboardModel } from '../state/DashboardModel';
-import { removePanel } from '../utils/panel';
-import { DashboardMeta } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
+import { DashboardMeta } from 'app/types';
+
 import { RemovePanelEvent } from '../../../types/events';
-import { BackendSrvRequest } from '@grafana/runtime';
-import { lastValueFrom } from 'rxjs';
+import { DashboardModel } from '../state/DashboardModel';
+import { removePanel } from '../utils/panel';
 
 export interface SaveDashboardOptions {
   /** The complete dashboard model. If `dashboard.id` is not set a new dashboard will be created. */

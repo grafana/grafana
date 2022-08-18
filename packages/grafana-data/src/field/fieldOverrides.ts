@@ -1,6 +1,14 @@
+import { isNumber, set, unset, get, cloneDeep } from 'lodash';
+
+import { guessFieldTypeForField } from '../dataframe';
+import { getTimeField } from '../dataframe/processDataFrame';
+import { asHexString } from '../themes/colorManipulator';
+import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import {
   ApplyFieldOverrideOptions,
   DataFrame,
+  DataLink,
+  DecimalCount,
   DisplayProcessor,
   DisplayValue,
   DynamicConfigValue,
@@ -17,21 +25,17 @@ import {
   TimeZone,
   ValueLinkConfig,
 } from '../types';
-import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
-import { isNumber, set, unset, get, cloneDeep } from 'lodash';
-import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
-import { guessFieldTypeForField } from '../dataframe';
-import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
-import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { DataLinkBuiltInVars, locationUtil } from '../utils';
-import { formattedValueToString } from '../valueFormats';
-import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
-import { getFrameDisplayName } from './fieldState';
-import { getTimeField } from '../dataframe/processDataFrame';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
+import { formattedValueToString } from '../valueFormats';
+
+import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getFrameDisplayName } from './fieldState';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
+import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { getTemplateProxyForField } from './templateProxies';
-import { asHexString } from '../themes/colorManipulator';
 
 interface OverrideProps {
   match: FieldMatcher;
@@ -210,9 +214,18 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 // 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
 // 3. sufficently optimize text formatting and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
-  const cache = new Map<any, DisplayValue>();
+  type dispCache = Map<any, DisplayValue>;
+  // decimals -> cache mapping, -1 is unspecified decimals
+  const caches = new Map<number, dispCache>();
 
-  return (value: any) => {
+  // pre-init caches for up to 15 decimals
+  for (let i = -1; i <= 15; i++) {
+    caches.set(i, new Map());
+  }
+
+  return (value: any, decimals?: DecimalCount) => {
+    let cache = caches.get(decimals ?? -1)!;
+
     let v = cache.get(value);
 
     if (!v) {
@@ -221,7 +234,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
         cache.clear();
       }
 
-      v = disp(value);
+      v = disp(value, decimals);
 
       // convert to hex6 or hex8 so downstream we can cheaply test for alpha (and set new alpha)
       // via a simple length check (in colorManipulator) rather using slow parsing via tinycolor
@@ -352,7 +365,7 @@ export const getLinksSupplier =
     const timeRangeUrl = locationUtil.getTimeRangeUrlParams();
     const { timeField } = getTimeField(frame);
 
-    return field.config.links.map((link) => {
+    return field.config.links.map((link: DataLink) => {
       const variablesQuery = locationUtil.getVariablesUrlParams();
       let dataFrameVars = {};
       let valueVars = {};
@@ -438,7 +451,7 @@ export const getLinksSupplier =
       }
 
       let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
-      href = replaceVariables(href, variables, encodeURIComponent);
+      href = replaceVariables(href, variables);
       href = locationUtil.processUrl(href);
 
       const info: LinkModel<Field> = {

@@ -1,6 +1,7 @@
-import React from 'react';
-import { GraphSeriesXY } from '@grafana/data';
 import { difference, isEqual } from 'lodash';
+import React, { Component } from 'react';
+
+import { GraphSeriesXY } from '@grafana/data';
 
 export interface GraphSeriesTogglerAPI {
   onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;
@@ -18,7 +19,7 @@ export interface GraphSeriesTogglerState {
   toggledSeries: GraphSeriesXY[];
 }
 
-export class GraphSeriesToggler extends React.Component<GraphSeriesTogglerProps, GraphSeriesTogglerState> {
+export class GraphSeriesToggler extends Component<GraphSeriesTogglerProps, GraphSeriesTogglerState> {
   constructor(props: GraphSeriesTogglerProps) {
     super(props);
 

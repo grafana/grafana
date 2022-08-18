@@ -2,6 +2,7 @@ import { DataFrame, Field, FieldColorMode } from '@grafana/data';
 import { LineStyle, VisibilityMode } from '@grafana/schema';
 import { VizLegendItem } from '@grafana/ui';
 import { ScaleDimensionConfig } from 'app/features/dimensions';
+
 import { ScatterLineMode } from './models.gen';
 
 /**

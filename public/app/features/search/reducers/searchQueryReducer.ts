@@ -1,4 +1,5 @@
 import { DashboardQuery, SearchQueryParams, SearchAction, SearchLayout } from '../types';
+
 import {
   ADD_TAG,
   CLEAR_FILTERS,
@@ -16,9 +17,6 @@ export const defaultQuery: DashboardQuery = {
   query: '',
   tag: [],
   starred: false,
-  skipRecent: false,
-  skipStarred: false,
-  folderIds: [],
   sort: null,
   layout: SearchLayout.Folders,
   prevSort: null,

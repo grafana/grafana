@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
 import React, { FunctionComponent, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
@@ -78,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   icon: css`
     label: collapse__icon;
-    margin: ${theme.spacing(0, 1, 0, -1)};
+    margin: ${theme.spacing(0.25, 1, 0, -1)};
   `,
 });
 

@@ -4,11 +4,12 @@ import (
 	"context"
 	"strings"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/aztokenprovider"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/aztokenprovider"
 )
 
 type azureAccessTokenProvider struct {

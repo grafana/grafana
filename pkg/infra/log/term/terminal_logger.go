@@ -11,15 +11,18 @@ import (
 	"time"
 
 	gokitlog "github.com/go-kit/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
+	"github.com/go-kit/log/level"
+)
+
+var (
+	timeFormat     = time.RFC3339Nano
+	termTimeFormat = "01-02|15:04:05"
 )
 
 const (
-	timeFormat     = "2006-01-02T15:04:05-0700"
-	termTimeFormat = "01-02|15:04:05"
-	floatFormat    = 'f'
-	termMsgJust    = 40
-	errorKey       = "LOG15_ERROR"
+	floatFormat = 'f'
+	termMsgJust = 40
+	errorKey    = "LOG15_ERROR"
 )
 
 type terminalLogger struct {
@@ -45,7 +48,10 @@ func (l terminalLogger) Log(keyvals ...interface{}) error {
 	r := getRecord(keyvals)
 
 	b := &bytes.Buffer{}
-	lvl := strings.ToUpper(r.level.String())
+
+	// To make the log output more readable, we make all log levels 5 characters long
+	lvl := fmt.Sprintf("%-5s", strings.ToUpper(r.level.String()))
+
 	if r.color > 0 {
 		fmt.Fprintf(b, "\x1b[%dm%s\x1b[0m[%s] %s ", r.color, lvl, r.time.Format(termTimeFormat), r.msg) // lgtm[go/log-injection]
 	} else {
@@ -86,17 +92,22 @@ func getRecord(keyvals ...interface{}) *record {
 	if len(keyvals)%2 == 1 {
 		keyvals = append(keyvals, nil)
 	}
-
 	for i := 0; i < len(keyvals); i += 2 {
 		k, v := keyvals[i], keyvals[i+1]
 
 		if k == "t" {
 			t, ok := v.(fmt.Stringer)
 			if ok {
-				time, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
+				parsedTime, err := time.Parse("2006-01-02T15:04:05.999999999-0700", t.String())
 				if err == nil {
-					r.time = time
+					r.time = parsedTime
 					continue
+				} else {
+					parsedTime, err := time.Parse(time.RFC3339Nano, t.String())
+					if err == nil {
+						r.time = parsedTime
+						continue
+					}
 				}
 			}
 

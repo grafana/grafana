@@ -1,8 +1,10 @@
-import React, { FunctionComponent } from 'react';
-import { Range as RangeComponent, createSliderWithTooltip } from 'rc-slider';
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
+import { Range as RangeComponent, createSliderWithTooltip } from 'rc-slider';
+import React, { FunctionComponent } from 'react';
+
 import { useTheme2 } from '../../themes/ThemeContext';
+
 import { getStyles } from './styles';
 import { RangeSliderProps } from './types';
 
@@ -45,6 +47,8 @@ export const RangeSlider: FunctionComponent<RangeSliderProps> = ({
         onAfterChange={onAfterChange}
         vertical={!isHorizontal}
         reverse={reverse}
+        // TODO: The following is a temporary work around for making content after the slider accessible and it will be removed when fixing the slider in public/app/features/explore/RichHistory/RichHistoryQueriesTab.tsx.
+        tabIndex={[0, 1]}
       />
     </div>
   );

@@ -1,12 +1,14 @@
 // Libraries
-import React, { PureComponent } from 'react';
-import { PanelProps } from '@grafana/data';
-import { Button, Spinner, stylesFactory } from '@grafana/ui';
-import { config } from '@grafana/runtime';
 import { css, cx } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
+import { PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Button, Spinner, stylesFactory } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
 import { Step } from './components/Step';
 import { getSteps } from './steps';
 import { Card, SetupStep } from './types';

@@ -1,8 +1,9 @@
 package plugins
 
 import (
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azsettings"
 )
 
 type Cfg struct {

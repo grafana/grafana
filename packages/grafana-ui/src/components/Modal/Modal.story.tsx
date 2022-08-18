@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { oneLineTrim } from 'common-tags';
-import { Story, Meta } from '@storybook/react';
-import { getAvailableIcons } from '../../types';
-import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
+import { Story, Meta } from '@storybook/react';
+import { oneLineTrim } from 'common-tags';
+import React, { useState } from 'react';
 
+import { Button, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+
+import { getAvailableIcons } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
+
 import mdx from './Modal.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Overlays/Modal',
   component: Modal,
   decorators: [withCenteredStory],
@@ -45,7 +46,7 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
 export const Basic: Story = ({ body, title, ...args }) => {
   return (
@@ -86,21 +87,15 @@ export const WithTabs: Story = (args) => {
     />
   );
   return (
-    <UseState initialState={tabs}>
-      {(state, updateState) => {
-        return (
-          <div>
-            <Modal title={modalHeader} isOpen={true}>
-              <TabContent>
-                {activeTab === state[0].value && <div>{args.body}</div>}
-                {activeTab === state[1].value && <div>Second tab content</div>}
-                {activeTab === state[2].value && <div>Third tab content</div>}
-              </TabContent>
-            </Modal>
-          </div>
-        );
-      }}
-    </UseState>
+    <div>
+      <Modal title={modalHeader} isOpen={true}>
+        <TabContent>
+          {activeTab === tabs[0].value && <div>{args.body}</div>}
+          {activeTab === tabs[1].value && <div>Second tab content</div>}
+          {activeTab === tabs[2].value && <div>Third tab content</div>}
+        </TabContent>
+      </Modal>
+    </div>
   );
 };
 WithTabs.args = {
@@ -127,3 +122,5 @@ UsingContentClassName.args = {
   closeOnEscape: false,
   iconTooltip: 'icon tooltip',
 };
+
+export default meta;

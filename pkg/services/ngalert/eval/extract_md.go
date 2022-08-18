@@ -20,7 +20,6 @@ func extractEvalString(frame *data.Frame) (s string) {
 	if evalMatches, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
 		sb := strings.Builder{}
 
-		// TODO: Should we simplify when we only have one match and use the name notation of $labels.A?
 		for i, m := range evalMatches {
 			sb.WriteString("[ ")
 			sb.WriteString(fmt.Sprintf("var='%s%v' ", frame.RefID, i))

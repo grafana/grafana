@@ -1,5 +1,6 @@
-import React from 'react';
 import { shallow } from 'enzyme';
+import React from 'react';
+
 import ConfigEditor, { Props } from './ConfigEditor';
 
 jest.mock('lodash', () => {
@@ -25,12 +26,10 @@ const setup = (propOverrides?: object) => {
       typeLogoUrl: '',
       access: 'proxy',
       url: '',
-      password: '',
       user: '',
       database: '',
       basicAuth: false,
       basicAuthUser: '',
-      basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
       jsonData: {

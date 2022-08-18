@@ -1,8 +1,11 @@
-import React from 'react';
 import { mount } from 'enzyme';
-import { ConfigEditor } from './ConfigEditor';
-import { createDefaultConfigOptions } from '../mocks';
+import React from 'react';
+
 import { DataSourceHttpSettings } from '@grafana/ui';
+
+import { createDefaultConfigOptions } from '../mocks';
+
+import { ConfigEditor } from './ConfigEditor';
 import { DerivedFields } from './DerivedFields';
 
 describe('ConfigEditor', () => {
@@ -21,7 +24,7 @@ describe('ConfigEditor', () => {
     const onChangeMock = jest.fn();
     const wrapper = mount(<ConfigEditor onOptionsChange={onChangeMock} options={createDefaultConfigOptions()} />);
     const inputWrapper = wrapper.find({ label: 'Maximum lines' }).find('input');
-    (inputWrapper.getDOMNode() as any).value = 42;
+    inputWrapper.getDOMNode<HTMLInputElement>().value = '42';
     inputWrapper.simulate('change');
     expect(onChangeMock.mock.calls[0][0].jsonData.maxLines).toBe('42');
   });

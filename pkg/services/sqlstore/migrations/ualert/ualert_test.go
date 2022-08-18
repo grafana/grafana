@@ -1,19 +1,39 @@
 package ualert
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"sort"
 	"testing"
 
-	"xorm.io/xorm"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 )
+
+var MigTitle = migTitle
+var RmMigTitle = rmMigTitle
+var ClearMigrationEntryTitle = clearMigrationEntryTitle
+
+type RmMigration = rmMigration
+
+func (m *Matchers) UnmarshalJSON(data []byte) error {
+	var lines []string
+	if err := json.Unmarshal(data, &lines); err != nil {
+		return err
+	}
+	for _, line := range lines {
+		pm, err := labels.ParseMatchers(line)
+		if err != nil {
+			return err
+		}
+		*m = append(*m, pm...)
+	}
+	sort.Sort(labels.Matchers(*m))
+	return nil
+}
 
 func Test_validateAlertmanagerConfig(t *testing.T) {
 	tc := []struct {
@@ -78,99 +98,6 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	}
 }
 
-func TestCheckUnifiedAlertingEnabledByDefault(t *testing.T) {
-	testDB := sqlutil.SQLite3TestDB()
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-	require.NoError(t, err)
-	_, err = x.Exec("CREATE TABLE alert ( id bigint )")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		_, err = x.Exec("DROP TABLE alert")
-		require.NoError(t, err)
-	})
-
-	tests := []struct {
-		title                   string
-		legacyAlertExists       bool
-		legacyIsDefined         bool
-		legacyValue             bool
-		expectedUnifiedAlerting bool
-	}{
-		{
-			title:                   "enable unified alerting when there are no legacy alerts",
-			legacyIsDefined:         false,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are no legacy alerts and legacy enabled",
-			legacyIsDefined:         true,
-			legacyValue:             true,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are no legacy alerts and legacy disabled",
-			legacyIsDefined:         true,
-			legacyValue:             false,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are legacy alerts but legacy disabled",
-			legacyIsDefined:         true,
-			legacyValue:             false,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "disable unified alerting when there are legacy alerts",
-			legacyIsDefined:         false,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: false,
-		},
-		{
-			title:                   "disable unified alerting when there are legacy alerts and it is enabled",
-			legacyIsDefined:         true,
-			legacyValue:             true,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.title, func(t *testing.T) {
-			setting.AlertingEnabled = nil
-			if test.legacyIsDefined {
-				value := test.legacyValue
-				setting.AlertingEnabled = &value
-			}
-
-			if test.legacyAlertExists {
-				_, err := x.Exec("INSERT INTO alert VALUES (1)")
-				require.NoError(t, err)
-			} else {
-				_, err := x.Exec("DELETE FROM alert")
-				require.NoError(t, err)
-			}
-
-			cfg := setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: nil,
-				},
-			}
-			mg := migrator.NewMigrator(x, &cfg)
-
-			err := CheckUnifiedAlertingEnabledByDefault(mg)
-			require.NoError(t, err)
-			require.NotNil(t, setting.AlertingEnabled)
-			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
-			require.Equal(t, *cfg.UnifiedAlerting.Enabled, test.expectedUnifiedAlerting)
-			require.Equal(t, *setting.AlertingEnabled, !test.expectedUnifiedAlerting)
-		})
-	}
-}
-
 func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *PostableUserConfig {
 	t.Helper()
 
@@ -181,6 +108,18 @@ func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *Po
 			},
 		},
 	}
+}
+
+func (c *PostableUserConfig) EncryptSecureSettings() error {
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		for _, gr := range r.GrafanaManagedReceivers {
+			encryptedData := GetEncryptedJsonData(gr.SecureSettings)
+			for k, v := range encryptedData {
+				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(v)
+			}
+		}
+	}
+	return nil
 }
 
 const invalidUri = "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh![ę�	���`csB�!��OSxP�{�"

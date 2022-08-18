@@ -1,8 +1,10 @@
 import { setTemplateSrv } from '@grafana/runtime';
-import { variableAdapters } from './adapters';
-import { createQueryVariableAdapter } from './query/adapter';
-import { getVariablesUrlParams } from './getAllVariableValuesForUrl';
+
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
+
+import { variableAdapters } from './adapters';
+import { getVariablesUrlParams } from './getAllVariableValuesForUrl';
+import { createQueryVariableAdapter } from './query/adapter';
 
 const key = 'key';
 

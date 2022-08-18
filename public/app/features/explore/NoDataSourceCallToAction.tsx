@@ -1,7 +1,7 @@
-import React from 'react';
 import { css } from '@emotion/css';
-import { LinkButton, CallToActionCard, Icon, useTheme2 } from '@grafana/ui';
+import React from 'react';
 
+import { LinkButton, CallToActionCard, Icon, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 

@@ -1,10 +1,13 @@
+import { Meta, Story } from '@storybook/react';
 import React from 'react';
+
+import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
-import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
+
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
-import { Meta, Story } from '@storybook/react';
 
 export default {
   title: 'Forms/FieldArray',
