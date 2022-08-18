@@ -2,8 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import * as hooks from 'app/core/components/RolePicker/hooks';
-
 import { Props, TeamSettings } from './TeamSettings';
 import { getMockTeam } from './__mocks__/teamMocks';
 
@@ -20,6 +18,10 @@ jest.mock('app/core/components/SharedPreferences/SharedPreferences', () => {
   return { SharedPreferences: () => <div /> };
 });
 
+jest.mock('app/core/components/RolePicker/hooks', () => ({
+  useRoleOptions: jest.fn().mockReturnValue([{ roleOptions: [] }, jest.fn()]),
+}));
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     team: getMockTeam(),
@@ -27,8 +29,6 @@ const setup = (propOverrides?: object) => {
   };
 
   Object.assign(props, propOverrides);
-
-  jest.spyOn(hooks, 'useRoleOptions').mockReturnValue([{ roleOptions: [] }, jest.fn()]);
 
   render(<TeamSettings {...props} />);
 };

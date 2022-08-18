@@ -14,6 +14,17 @@ export interface Props {
   disabled?: boolean;
   onApplyRoles?: (newRoles: Role[]) => void;
   pendingRoles?: Role[];
+  /**
+   * Set whether the component should send a request with the new roles to the
+   * backend in TeamRolePicker.onRolesChange (apply=false), or call {@link onApplyRoles}
+   * with the updated list of roles (apply=true).
+   *
+   * Besides it sets the RolePickerMenu's Button title to
+   *   * `Update` in case apply equals false
+   *   * `Apply` in case apply equals true
+   *
+   * @default false
+   */
   apply?: boolean;
 }
 
@@ -27,10 +38,8 @@ export const TeamRolePicker: FC<Props> = ({
 }) => {
   const [{ loading, value: appliedRoles = [] }, getTeamRoles] = useAsyncFn(async () => {
     try {
-      if (apply) {
-        if (pendingRoles?.length! > 0) {
-          return pendingRoles;
-        }
+      if (apply && pendingRoles?.length! > 0) {
+        return pendingRoles;
       }
       return await fetchTeamRoles(teamId);
     } catch (e) {

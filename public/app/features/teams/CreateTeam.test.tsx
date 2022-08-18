@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
-import * as hooks from 'app/core/components/RolePicker/hooks';
 
 import { CreateTeam } from './CreateTeam';
 
@@ -20,6 +19,10 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
+jest.mock('app/core/components/RolePicker/hooks', () => ({
+  useRoleOptions: jest.fn().mockReturnValue([{ roleOptions: [] }, jest.fn()]),
+}));
+
 const mockPost = jest.fn(() => {
   return Promise.resolve({});
 });
@@ -29,7 +32,6 @@ setBackendSrv({
 } as any as BackendSrv);
 
 const setup = () => {
-  jest.spyOn(hooks, 'useRoleOptions').mockReturnValue([{ roleOptions: [] }, jest.fn()]);
   return render(<CreateTeam />);
 };
 
