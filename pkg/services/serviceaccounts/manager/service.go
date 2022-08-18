@@ -16,17 +16,13 @@ import (
 )
 
 const (
-	metricsCollectionInterval      = time.Minute * 30
-	defaultTokenCollectionInterval = time.Minute * 5
+	metricsCollectionInterval = time.Minute * 30
 )
 
 type ServiceAccountsService struct {
 	store         serviceaccounts.Store
 	log           log.Logger
 	backgroundLog log.Logger
-
-	checkTokenLeaks    bool
-	checkTokenInterval time.Duration
 }
 
 func ProvideServiceAccountsService(
