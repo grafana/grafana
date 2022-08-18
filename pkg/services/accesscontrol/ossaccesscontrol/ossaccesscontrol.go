@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(cfg *setting.Cfg, store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
+func ProvideService(cfg *setting.Cfg, store accesscontrol.Store, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
 	s := ProvideOSSAccessControl(cfg, store)
 	if !s.IsDisabled() {
@@ -29,7 +29,7 @@ func ProvideService(cfg *setting.Cfg, store accesscontrol.PermissionsStore, rout
 	return s, errDeclareRoles
 }
 
-func ProvideOSSAccessControl(cfg *setting.Cfg, store accesscontrol.PermissionsStore) *OSSAccessControlService {
+func ProvideOSSAccessControl(cfg *setting.Cfg, store accesscontrol.Store) *OSSAccessControlService {
 	s := &OSSAccessControlService{
 		cfg:            cfg,
 		store:          store,
@@ -46,7 +46,7 @@ type OSSAccessControlService struct {
 	log            log.Logger
 	cfg            *setting.Cfg
 	scopeResolvers accesscontrol.ScopeResolvers
-	store          accesscontrol.PermissionsStore
+	store          accesscontrol.Store
 	registrations  accesscontrol.RegistrationList
 	roles          map[string]*accesscontrol.RoleDTO
 }

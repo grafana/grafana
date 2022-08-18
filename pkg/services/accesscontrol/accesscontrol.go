@@ -46,7 +46,7 @@ type RoleRegistry interface {
 	RegisterFixedRoles(ctx context.Context) error
 }
 
-type PermissionsStore interface {
+type Store interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
