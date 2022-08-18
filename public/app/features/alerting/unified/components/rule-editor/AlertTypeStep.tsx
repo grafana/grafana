@@ -52,7 +52,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const folder = watch('folder');
   const group = watch('group');
   const folderFilter = (hits: DashboardSearchHit[]) => {
-    hits.filter(hit => !blackListedFolderUids.includes(hit.uid))
+    return hits.filter(hit => !blackListedFolderUids.includes(hit.uid))
   }
 
   if(group !== '' && newName !== null) {
