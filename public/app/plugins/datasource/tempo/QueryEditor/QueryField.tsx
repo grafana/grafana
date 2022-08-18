@@ -35,7 +35,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
 
   // Set the default query type when the component mounts.
   // Also do this if queryType is 'clear' (which is the case when the user changes the query type)
-  // so the default query type is also set if the user changes the query type & refreshes the page.
+  // otherwise if the user changes the query type and refreshes the page, no query type will be selected
+  // which is inconsistent with how the UI was originally when they selected the Tempo data source.
   async componentDidMount() {
     if (!this.props.query.queryType || this.props.query.queryType === 'clear') {
       this.props.onChange({
