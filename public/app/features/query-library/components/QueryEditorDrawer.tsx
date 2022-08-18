@@ -7,6 +7,7 @@ import { Drawer, IconName, Tab, TabContent, TabsBar, useStyles2 } from '@grafana
 
 import { SavedQuery } from '../api/SavedQueriesApi';
 
+import { HistoryTab } from './HistoryTab';
 import { QueryEditor } from './QueryEditor';
 import { QueryEditorDrawerHeader } from './QueryEditorDrawerHeader';
 import { UsagesTab } from './UsagesTab';
@@ -61,7 +62,7 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
           <div className={styles.tabWrapper}>
             {tabs[0].active && <UsagesTab savedQuery={savedQuery} />}
             {tabs[1].active && <VariablesTab savedQuery={savedQuery} />}
-            {tabs[2].active && <div>TODO History</div>}
+            {tabs[2].active && <HistoryTab />}
           </div>
         </TabContent>
       </div>
@@ -74,6 +75,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     queryWrapper: css`
       max-height: calc(50vh);
       overflow-y: scroll;
+      margin-bottom: 50px;
     `,
     tabWrapper: css`
       overflow-y: scroll;

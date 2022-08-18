@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataQuery, GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, IconButton, useStyles2 } from '@grafana/ui';
+import { Button, Card, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
 import { SavedQuery, useUpdateSavedQueryMutation } from '../api/SavedQueriesApi';
@@ -79,13 +79,17 @@ export const VariablesTab = ({ savedQuery }: Props) => {
 
   return (
     <div className={styles.tabWrapper}>
-      <div className={styles.tabDescription}>
-        Variables enable more interactive and dynamic queries. Instead of hard-coding things like server or sensor names
-        in your metric queries you can use variables in their place.
+      <div className={styles.variablesHeader}>
+        <HorizontalGroup width="100%" justify="space-between" spacing={'md'} height={25}>
+          <div className={styles.tabDescription}>
+            Variables enable more interactive and dynamic queries. Instead of hard-coding things like server or sensor
+            names in your metric queries you can use variables in their place.
+          </div>
+          <Button icon="plus" size="md" className={styles.addVariableButton} onClick={onAddVariable}>
+            Add variable
+          </Button>
+        </HorizontalGroup>
       </div>
-      <Button className={styles.addVariableButton} onClick={onAddVariable}>
-        Add new
-      </Button>
       <div className={styles.variableList}>
         <ul>
           {savedQuery &&
@@ -108,13 +112,15 @@ export const VariablesTab = ({ savedQuery }: Props) => {
                     />
                   </Card.Description>
                   <Card.Tags>
-                    <IconButton
-                      className={styles.deleteButton}
-                      key="delete"
-                      name="trash-alt"
+                    <Button
+                      icon="trash-alt"
+                      size="sm"
+                      variant={'secondary'}
                       tooltip="Delete this variable"
                       onClick={() => onRemoveVariable(variable)}
-                    />
+                    >
+                      Delete
+                    </Button>
                   </Card.Tags>
                 </Card>
               </li>
@@ -129,10 +135,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     tabWrapper: css`
       flex: 1;
+      padding: 20px 5px 5px 5px;
     `,
     tabDescription: css`
-      margin-top: 10px;
-      margin-bottom: 10px;
       color: ${theme.colors.text.secondary};
     `,
     variableList: css`
@@ -141,15 +146,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
     variableListItem: css`
       list-style: none;
     `,
-    deleteButton: css`
-      display: flex;
-      align-self: flex-end;
-    `,
     addVariableButton: css`
       display: flex;
       align-self: center;
       margin: auto;
       margin-bottom: 15px;
+    `,
+    variablesHeader: css`
+      margin-top: 15px;
+      margin-bottom: 20px;
     `,
   };
 };

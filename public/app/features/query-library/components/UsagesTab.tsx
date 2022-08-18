@@ -97,7 +97,6 @@ export const UsagesTab = (props: Props) => {
                   <Icon name="folder" className={styles.cardDescriptionIcon} />
                 </a>
                 {item.location}
-                {/*<Icon name={'folder'} className={styles.folderIcon}/>{item.location}*/}
               </Card.Description>
               <Card.Figure className={styles.cardFigure}>
                 <Icon name={getIconForKind(item.type)} />
@@ -143,7 +142,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       width: 13px;
       height: 13px;
       color: ${theme.colors.text.secondary};
-      margin-top: -3px;
+      display: flex;
+      align-self: center;
     `,
     usagesDescription: css`
       color: ${theme.colors.text.secondary};

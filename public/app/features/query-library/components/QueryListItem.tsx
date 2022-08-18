@@ -50,7 +50,6 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
     showModal(QueryEditorDrawer, { onDismiss: hideModal, savedQuery: savedQuery });
   };
 
-  //@TODO refresh table
   const deleteQuery = async () => {
     await getSavedQuerySrv().deleteSavedQuery({ uid: query.uid });
   };
@@ -65,13 +64,11 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
       <td onClick={openDrawer}>
         <Icon name={'lock'} />
       </td>
-      <td className={styles.row} onClick={openDrawer}>
+      <td onClick={openDrawer}>
         <Badge color={'green'} text={'1'} icon={'link'} />
       </td>
-      <td className={styles.rowData} onClick={openDrawer}>
-        {query.title}
-      </td>
-      <td className={styles.rowData} onClick={openDrawer}>
+      <td onClick={openDrawer}>{query.title}</td>
+      <td onClick={openDrawer}>
         <img
           className="filter-table__avatar"
           src={dsInfo?.meta.info.logos.small}
@@ -80,7 +77,7 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
         />
         &nbsp;{getDsType()}
       </td>
-      <td className={styles.rowData} onClick={openDrawer}>
+      <td onClick={openDrawer}>
         <img
           className="filter-table__avatar"
           src={'/avatar/46d229b033af06a191ff2267bca9ae56'}
@@ -89,14 +86,12 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
         />
         &nbsp;{author}
       </td>
-      <td className={styles.rowData} onClick={openDrawer}>
-        {date}
-      </td>
+      <td onClick={openDrawer}>{date}</td>
       <td className={styles.tableTr}>
-        <IconButton name="share-alt" className={styles.iconButtons} tooltip={'Share'} />
-        <IconButton name="copy" className={styles.iconButtons} tooltip={'Copy'} />
-        <IconButton name="upload" className={styles.iconButtons} tooltip={'Upload'} />
-        <IconButton name="cog" className={styles.iconButtons} tooltip={'Settings'} />
+        <IconButton name="share-alt" tooltip={'Share'} />
+        <IconButton name="copy" tooltip={'Copy'} />
+        <IconButton name="upload" tooltip={'Upload'} />
+        <IconButton name="cog" tooltip={'Settings'} />
         <IconButton name="trash-alt" tooltip={'Delete'} onClick={deleteQuery} />
       </td>
     </tr>
@@ -110,10 +105,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     row: css`
       height: 70px;
       cursor: pointer;
-    `,
-    rowData: css``,
-    iconButtons: css`
-      // margin-right: 25px;
     `,
     tableTr: css`
       display: flex;
