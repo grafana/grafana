@@ -31,7 +31,7 @@ export const createMockSLOQuery: (overrides?: Partial<SLOQuery>) => SLOQuery = (
     serviceName: '',
     sloId: '',
     sloName: '',
-    lookbackPeriod: '1h',
+    lookbackPeriod: '',
     ...overrides,
   };
 };
