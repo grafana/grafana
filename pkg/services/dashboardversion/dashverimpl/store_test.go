@@ -16,12 +16,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationGetDashboardVersion(t *testing.T) {
+type getStore func(*sqlstore.SQLStore) store
+
+func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	ss := sqlstore.InitTestDB(t)
-	dashVerStore := sqlStore{db: ss}
+	dashVerStore := fn(ss)
 
 	t.Run("Get a Dashboard ID and version ID", func(t *testing.T) {
 		savedDash := insertTestDashboard(t, ss, "test dash 26", 1, 0, false, "diff")
@@ -60,21 +62,12 @@ func TestIntegrationGetDashboardVersion(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, dashver.ErrDashboardVersionNotFound, err)
 	})
-}
-
-func TestIntegrationDeleteExpiredVersions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	versionsToWrite := 10
-	ss := sqlstore.InitTestDB(t)
-	dashVerStore := sqlStore{db: ss}
-
-	for i := 0; i < versionsToWrite-1; i++ {
-		insertTestDashboard(t, ss, "test dash 53", 1, int64(i), false, "diff-all")
-	}
 
 	t.Run("Clean up old dashboard versions", func(t *testing.T) {
+		versionsToWrite := 10
+		for i := 0; i < versionsToWrite-1; i++ {
+			insertTestDashboard(t, ss, "test dash 53", 1, int64(i), false, "diff-all")
+		}
 		versionIDsToDelete := []interface{}{1, 2, 3, 4}
 		res, err := dashVerStore.DeleteBatch(
 			context.Background(),
@@ -84,16 +77,8 @@ func TestIntegrationDeleteExpiredVersions(t *testing.T) {
 		require.Nil(t, err)
 		assert.EqualValues(t, 4, res)
 	})
-}
 
-func TestIntegrationListDashboardVersions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	ss := sqlstore.InitTestDB(t)
-	dashVerStore := sqlStore{db: ss, dialect: ss.Dialect}
 	savedDash := insertTestDashboard(t, ss, "test dash 43", 1, 0, false, "diff-all")
-
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{
 			DashboardID: savedDash.Id,
