@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/queries"
+	"github.com/grafana/grafana/pkg/services/searchV2/alert_store"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -217,6 +218,7 @@ var wireBasicSet = wire.NewSet(
 	jwt.ProvideService,
 	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
+	wire.Bind(new(ngstore.RuleStore), new(*ngstore.DBstore)),
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
@@ -289,6 +291,7 @@ var wireBasicSet = wire.NewSet(
 	comments.ProvideService,
 	guardian.ProvideService,
 	sanitizer.ProvideService,
+	alert_store.ProvideService,
 	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
 	authproxy.ProvideAuthProxy,

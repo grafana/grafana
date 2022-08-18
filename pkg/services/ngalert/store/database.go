@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,23 +30,27 @@ type AlertingStore interface {
 
 // DBstore stores the alert definitions and instances in the database.
 type DBstore struct {
-	Cfg              setting.UnifiedAlertingSettings
-	SQLStore         *sqlstore.SQLStore
-	Logger           log.Logger
-	FolderService    dashboards.FolderService
-	AccessControl    accesscontrol.AccessControl
-	DashboardService dashboards.DashboardService
+	Cfg                setting.UnifiedAlertingSettings
+	SQLStore           *sqlstore.SQLStore
+	Logger             log.Logger
+	FolderService      dashboards.FolderService
+	AccessControl      accesscontrol.AccessControl
+	DashboardService   dashboards.DashboardService
+	StorageService     store.StorageService
+	EntityEventService store.EntityEventsService
 }
 
 func ProvideDBStore(
 	cfg *setting.Cfg, sqlstore *sqlstore.SQLStore, folderService dashboards.FolderService,
-	access accesscontrol.AccessControl, dashboards dashboards.DashboardService) *DBstore {
+	access accesscontrol.AccessControl, dashboards dashboards.DashboardService, storage store.StorageService, entityEvents store.EntityEventsService) *DBstore {
 	return &DBstore{
-		Cfg:              cfg.UnifiedAlerting,
-		SQLStore:         sqlstore,
-		Logger:           log.New("dbstore"),
-		FolderService:    folderService,
-		AccessControl:    access,
-		DashboardService: dashboards,
+		Cfg:                cfg.UnifiedAlerting,
+		SQLStore:           sqlstore,
+		Logger:             log.New("dbstore"),
+		FolderService:      folderService,
+		AccessControl:      access,
+		DashboardService:   dashboards,
+		StorageService:     storage,
+		EntityEventService: entityEvents,
 	}
 }

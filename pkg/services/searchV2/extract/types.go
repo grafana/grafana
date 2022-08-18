@@ -49,3 +49,15 @@ type QueryInfo struct {
 
 	Datasource []dslookup.DataSourceRef `json:"datasource,omitempty"` // UIDs
 }
+
+type AlertInfo struct {
+	UID           string   `json:"uid"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
+	Tags          []string `json:"tags"`
+	TimeFrom      string   `json:"timeFrom"`
+	TimeTo        string   `json:"timeTo"`
+	SchemaVersion int64    `json:"schemaVersion"`
+
+	SavedQuery []queries.SavedQueryLink `json:"savedQuery,omitempty"` // UIDs
+}

@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/queries"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -61,6 +64,43 @@ type RuleStore interface {
 	IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersion, error)
 }
 
+func (st DBstore) updateWithSavedQueries(ctx context.Context, alertRule *ngmodels.AlertRule) (*ngmodels.AlertRule, error) {
+	if alertRule == nil || alertRule.SavedQueryUID == "" {
+		return alertRule, nil
+	}
+
+	savedQueryRaw, err := st.StorageService.Read(ctx, store.QueriesSearch, alertRule.SavedQueryUID)
+	if err != nil {
+		return alertRule, err
+	}
+
+	if savedQueryRaw == nil || savedQueryRaw.Contents == nil {
+		return alertRule, nil
+	}
+
+	savedAlertingQueries, err := queries.DeserializeAsAlertingQueries(savedQueryRaw.Contents)
+	if err != nil {
+		return alertRule, err
+	}
+
+	queriesByRefId := make(map[string]ngmodels.AlertQuery)
+	for i, q := range alertRule.Data {
+		queriesByRefId[q.RefID] = alertRule.Data[i]
+	}
+
+	for i := range savedAlertingQueries {
+		if _, ok := queriesByRefId[savedAlertingQueries[i].RefID]; ok {
+			savedAlertingQueries[i].RelativeTimeRange = queriesByRefId[savedAlertingQueries[i].RefID].RelativeTimeRange
+		} else {
+			// no relative time range - should not happen
+		}
+	}
+
+	alertRule.Data = savedAlertingQueries
+
+	return alertRule, nil
+}
+
 func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int64) (*ngmodels.AlertRule, error) {
 	// we consider optionally enabling some caching
 	alertRule := ngmodels.AlertRule{OrgID: orgID, UID: alertRuleUID}
@@ -95,6 +135,10 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			return err
 		}
 		logger.Debug("deleted alert instances", "count", rows)
+
+		for _, uid := range ruleUID {
+			_, _ = sess.Insert(createEntityEvent(uid, orgID, store.EntityEventTypeDelete))
+		}
 		return nil
 	})
 }
@@ -132,6 +176,7 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 		if err != nil {
 			return err
 		}
+		alertRule, _ = st.updateWithSavedQueries(ctx, alertRule)
 		query.Result = alertRule
 		return nil
 	})
@@ -148,6 +193,12 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 		if err != nil {
 			return err
 		}
+
+		for i := range query.Result {
+			if _, err := st.updateWithSavedQueries(ctx, query.Result[i]); err != nil {
+				return err
+			}
+		}
 		query.Result = result
 		return nil
 	})
@@ -155,6 +206,13 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 
 // InsertAlertRules is a handler for creating/updating alert rules.
 func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) (map[string]int64, error) {
+	updatedRules := make([]ngmodels.AlertRule, 0)
+	for i := range rules {
+		rule, _ := st.updateWithSavedQueries(ctx, &rules[i])
+		updatedRules = append(updatedRules, *rule)
+	}
+	rules = updatedRules
+
 	ids := make(map[string]int64, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		newRules := make([]ngmodels.AlertRule, 0, len(rules))
@@ -207,6 +265,8 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
 				ids[newRules[i].UID] = newRules[i].ID
+
+				_, _ = sess.Insert(createEntityEvent(newRules[i].UID, newRules[i].OrgID, store.EntityEventTypeUpdate))
 			}
 		}
 
@@ -221,6 +281,17 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 
 // UpdateAlertRules is a handler for updating alert rules.
 func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) error {
+
+	updatedRules := make([]UpdateRule, 0)
+	for i := range rules {
+		rule, _ := st.updateWithSavedQueries(ctx, &rules[i].New)
+		updatedRules = append(updatedRules, UpdateRule{
+			Existing: rules[i].Existing,
+			New:      *rule,
+		})
+	}
+	rules = updatedRules
+
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
@@ -243,6 +314,8 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []UpdateRule) erro
 				}
 				return fmt.Errorf("%w: alert rule UID %s version %d", ErrOptimisticLock, r.New.UID, r.New.Version)
 			}
+			_, _ = sess.Insert(createEntityEvent(r.Existing.UID, r.Existing.OrgID, store.EntityEventTypeUpdate))
+
 			parentVersion = r.Existing.Version
 			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
 				RuleOrgID:        r.New.OrgID,
@@ -311,6 +384,11 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			return err
 		}
 
+		for i := range query.Result {
+			if _, err := st.updateWithSavedQueries(ctx, query.Result[i]); err != nil {
+				return err
+			}
+		}
 		query.Result = alertRules
 		return nil
 	})
@@ -503,4 +581,12 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: field `for` cannot be negative", ngmodels.ErrAlertRuleFailedValidation)
 	}
 	return nil
+}
+
+func createEntityEvent(uid string, orgId int64, eventType store.EntityEventType) *store.EntityEvent {
+	return &store.EntityEvent{
+		EventType: eventType,
+		EntityId:  store.CreateDatabaseEntityId(uid, orgId, store.EntityTypeAlert),
+		Created:   time.Now().Unix(),
+	}
 }

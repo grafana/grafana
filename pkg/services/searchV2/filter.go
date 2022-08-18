@@ -23,14 +23,15 @@ const (
 	entityKindQuery      entityKind = "query"
 	entityKindFolder     entityKind = "folder"
 	entityKindDatasource entityKind = "datasource"
+	entityKindAlert      entityKind = "alert"
 )
 
 func (r entityKind) IsValid() bool {
-	return r == entityKindPanel || r == entityKindDashboard || r == entityKindFolder || r == entityKindQuery
+	return r == entityKindPanel || r == entityKindDashboard || r == entityKindFolder || r == entityKindQuery || r == entityKindAlert
 }
 
 func (r entityKind) supportsAuthzCheck() bool {
-	return r == entityKindPanel || r == entityKindDashboard || r == entityKindFolder || r == entityKindQuery
+	return r == entityKindPanel || r == entityKindDashboard || r == entityKindFolder || r == entityKindQuery || r == entityKindAlert
 }
 
 var (
@@ -72,6 +73,8 @@ func (q *PermissionFilter) canAccess(kind entityKind, id string) bool {
 	// TODO add `kind` to the `ResourceFilter` interface so that we can move the switch out of here
 	//
 	switch kind {
+	case entityKindAlert:
+		return true
 	case entityKindQuery:
 		return true
 	case entityKindFolder:

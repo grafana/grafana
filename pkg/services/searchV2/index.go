@@ -84,6 +84,7 @@ type searchIndex struct {
 	mu             sync.RWMutex
 	loader         dashboardLoader
 	queryLoader    *storageQueriesLoader
+	alertsLoader   *sqlAlertsLoader
 	perOrgIndex    map[int64]*orgIndex
 	eventStore     eventStore
 	logger         log.Logger
@@ -94,10 +95,11 @@ type searchIndex struct {
 	sql            *sqlstore.SQLStore
 }
 
-func newSearchIndex(dashLoader dashboardLoader, queryLoader *storageQueriesLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, sql *sqlstore.SQLStore) *searchIndex {
+func newSearchIndex(dashLoader dashboardLoader, queryLoader *storageQueriesLoader, alertsLoader *sqlAlertsLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup, sql *sqlstore.SQLStore) *searchIndex {
 	return &searchIndex{
 		loader:         dashLoader,
 		queryLoader:    queryLoader,
+		alertsLoader:   alertsLoader,
 		eventStore:     evStore,
 		perOrgIndex:    map[int64]*orgIndex{},
 		logger:         log.New("searchIndex"),
@@ -402,13 +404,19 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	dashboards, err := i.loader.LoadDashboards(ctx, orgID, "")
 	queries, err := i.queryLoader.LoadQueries(ctx, orgID, "", lookup)
 	if err != nil {
-		return 0, fmt.Errorf("error loading dashboards: %w", err)
+		return 0, fmt.Errorf("error loading queries: %w", err)
 	}
+
+	alerts, err := i.alertsLoader.LoadAlerts(ctx, orgID, "", lookup)
+	if err != nil {
+		return 0, fmt.Errorf("error loading alarms: %w", err)
+	}
+
 	orgSearchIndexLoadTime := time.Since(started)
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
-	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender, queries)
+	index, err := initOrgIndex(dashboards, i.logger, dashboardExtender, queries, alerts)
 	if err != nil {
 		return 0, fmt.Errorf("error initializing index: %w", err)
 	}
@@ -558,6 +566,12 @@ func (i *searchIndex) applyEvent(ctx context.Context, orgID int64, kind store.En
 		}
 		queries, err = i.queryLoader.LoadQueries(ctx, orgID, uid, lookup)
 	}
+
+	var alerts []alert
+	if kind == store.EntityTypeAlert {
+		alerts, _ = i.alertsLoader.LoadAlerts(ctx, orgID, uid, nil)
+	}
+
 	// Both dashboard and folder share same DB table.
 	dbDashboards, err := i.loader.LoadDashboards(ctx, orgID, uid)
 	if err != nil {
@@ -580,6 +594,20 @@ func (i *searchIndex) applyEvent(ctx context.Context, orgID int64, kind store.En
 			}
 		} else {
 			if err := i.updateQuery(ctx, index, uid, queries[0]); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	if kind == store.EntityTypeAlert {
+		if len(alerts) == 0 {
+			if err := i.removeAlert(ctx, index, uid); err != nil {
+				return err
+			}
+		} else {
+			if err := i.updateAlert(ctx, index, uid, alerts[0]); err != nil {
 				return err
 			}
 		}
@@ -758,6 +786,27 @@ func getQueryLocation(index *orgIndex, dashboardUID string) (string, bool, error
 		match, err = documentMatchIterator.Next()
 	}
 	return queryLocation, found, err
+}
+
+func (i *searchIndex) updateAlert(ctx context.Context, index *orgIndex, uid string, a alert) error {
+	writer := index.writerForIndex(indexTypeDashboard)
+
+	batch := bluge.NewBatch()
+
+	location := a.namespaceUID
+	doc := getAlertDoc(a, location)
+
+	batch.Update(doc.ID(), doc)
+
+	return writer.Batch(batch)
+}
+
+func (i *searchIndex) removeAlert(ctx context.Context, index *orgIndex, uid string) error {
+	writer := index.writerForIndex(indexTypeDashboard)
+
+	batch := bluge.NewBatch()
+	batch.Delete(bluge.NewDocument(uid).ID())
+	return writer.Batch(batch)
 }
 
 func (i *searchIndex) updateQuery(ctx context.Context, index *orgIndex, uid string, q query) error {

@@ -25,6 +25,7 @@ type EntityType string
 const (
 	EntityTypeDashboard EntityType = "dashboard"
 	EntityTypeQuery     EntityType = "query"
+	EntityTypeAlert     EntityType = "alert"
 	EntityTypeFolder    EntityType = "folder"
 	EntityTypeImage     EntityType = "image"
 	EntityTypeJSON      EntityType = "json"
@@ -32,7 +33,7 @@ const (
 
 func IsValidType(candidate string) bool {
 	casted := EntityType(candidate)
-	return casted == EntityTypeDashboard || casted == EntityTypeQuery || casted == EntityTypeFolder || casted == EntityTypeImage || casted == EntityTypeJSON
+	return casted == EntityTypeDashboard || casted == EntityTypeQuery || casted == EntityTypeFolder || casted == EntityTypeImage || casted == EntityTypeJSON || casted == EntityTypeAlert
 }
 
 // CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables

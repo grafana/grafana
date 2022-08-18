@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	entityStore "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,7 +42,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
 	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
-	bus bus.Bus) (*AlertNG, error) {
+	bus bus.Bus, storageService entityStore.StorageService, entityEventService entityStore.EntityEventsService) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                 cfg,
 		DataSourceCache:     dataSourceCache,
@@ -61,6 +62,8 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		dashboardService:    dashboardService,
 		renderService:       renderService,
 		bus:                 bus,
+		storageService:      storageService,
+		entityEventService:  entityEventService,
 	}
 
 	if ng.IsDisabled() {
@@ -101,19 +104,23 @@ type AlertNG struct {
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
 
-	bus bus.Bus
+	bus                bus.Bus
+	storageService     entityStore.StorageService
+	entityEventService entityStore.EntityEventsService
 }
 
 func (ng *AlertNG) init() error {
 	var err error
 
 	store := &store.DBstore{
-		Cfg:              ng.Cfg.UnifiedAlerting,
-		SQLStore:         ng.SQLStore,
-		Logger:           ng.Log,
-		FolderService:    ng.folderService,
-		AccessControl:    ng.accesscontrol,
-		DashboardService: ng.dashboardService,
+		Cfg:                ng.Cfg.UnifiedAlerting,
+		SQLStore:           ng.SQLStore,
+		Logger:             ng.Log,
+		FolderService:      ng.folderService,
+		AccessControl:      ng.accesscontrol,
+		DashboardService:   ng.dashboardService,
+		StorageService:     ng.storageService,
+		EntityEventService: ng.entityEventService,
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue

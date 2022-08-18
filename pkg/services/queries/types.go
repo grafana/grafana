@@ -59,7 +59,7 @@ func getDatasourceUID(q *simplejson.Json) string {
 }
 
 func DeserializeAsAlertingQueries(serialized []byte) ([]ngmodels.AlertQuery, error) {
-	var query Query
+	query := &Query{}
 	if err := json.Unmarshal(serialized, query); err != nil {
 		return nil, err
 	}

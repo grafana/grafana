@@ -35,7 +35,7 @@ const (
 	DocumentFieldUpdatedAt     = "updated_at"
 )
 
-func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc, queries []query) (*orgIndex, error) {
+func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDashboardFunc, queries []query, alerts []alert) (*orgIndex, error) {
 	dashboardWriter, err := bluge.OpenWriter(bluge.InMemoryOnlyConfig())
 	if err != nil {
 		return nil, fmt.Errorf("error opening writer: %v", err)
@@ -135,6 +135,17 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 		}
 	}
 
+	// Then each query.
+	for _, alert := range alerts {
+		location := alert.namespaceUID
+
+		doc := getAlertDoc(alert, location)
+		batch.Insert(doc)
+		if err := flushIfRequired(false); err != nil {
+			return nil, err
+		}
+	}
+
 	// Flush docs in batch with force as we are in the end.
 	if err := flushIfRequired(true); err != nil {
 		return nil, err
@@ -163,6 +174,25 @@ func getFolderDashboardDoc(dash dashboard) *bluge.Document {
 		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindFolder)).Aggregatable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, dash.created).Sortable().StoreValue()).
 		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, dash.updated).Sortable().StoreValue())
+}
+
+func getAlertDoc(alert alert, location string) *bluge.Document {
+	url := fmt.Sprintf("/alerting/%s/edit", alert.uid)
+	// Alert document
+	doc := newSearchDocument(alert.uid, alert.info.Title, alert.info.Description, url).
+		AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindAlert)).Aggregatable().StoreValue()).
+		AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
+		AddField(bluge.NewDateTimeField(DocumentFieldCreatedAt, alert.created).Sortable().StoreValue()).
+		AddField(bluge.NewDateTimeField(DocumentFieldUpdatedAt, alert.updated).Sortable().StoreValue())
+
+	for _, sq := range alert.info.SavedQuery {
+		doc.AddField(bluge.NewKeywordField(documentFieldSavedQueryUID, sq.Ref.UID).
+			StoreValue().
+			Aggregatable().
+			SearchTermPositions())
+	}
+
+	return doc
 }
 
 func getQueryDoc(query query, location string) *bluge.Document {
@@ -637,7 +667,6 @@ func doSearchQuery(
 			case documentFieldDSUID:
 				dsUIDs = append(dsUIDs, string(value))
 			case documentFieldSavedQueryUID:
-				fmt.Println("visiting " + string(value) + " for uid " + uid)
 				savedQueryUIDs = append(savedQueryUIDs, string(value))
 			case documentFieldTag:
 				tags = append(tags, string(value))
