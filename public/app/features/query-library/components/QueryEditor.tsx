@@ -63,9 +63,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     dataSourceHeader: css`
       font-size: ${theme.typography.size.sm};
+      margin-top: 5px;
       margin-bottom: 20px;
     `,
     dataSourcePickerWrapper: css`
+      margin-top: 5px;
       margin-bottom: 20px;
     `,
   };
