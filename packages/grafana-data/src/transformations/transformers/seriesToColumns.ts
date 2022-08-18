@@ -19,7 +19,7 @@ export interface SeriesToColumnsOptions {
 
 export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesToColumnsOptions> = {
   id: DataTransformerID.seriesToColumns,
-  name: 'Series as columns', // Used for 'Outer join' and 'Inner join' in the UI!
+  name: 'Series as columns', // Called 'Outer join' in the UI!
   description: 'Groups series by field and returns values as columns',
   defaultOptions: {
     byField: undefined, // DEFAULT_KEY_FIELD,
