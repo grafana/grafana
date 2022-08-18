@@ -1,50 +1,46 @@
 import memoizeOne from 'memoize-one';
 
-import { PanelPlugin } from '@grafana/data';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { PanelModel } from 'app/features/dashboard/state';
 
 import { PanelEditorTab, PanelEditorTabId } from '../types';
 
-export const getPanelEditorTabs = memoizeOne((tab?: string, plugin?: PanelPlugin) => {
-  const tabs: PanelEditorTab[] = [];
-
-  if (!plugin) {
-    return tabs;
-  }
-
-  let defaultTab = PanelEditorTabId.Visualize;
-
-  if (plugin.meta.skipDataQuery) {
+export function getPanelEditorTabs(tab?: string, panel?: PanelModel): PanelEditorTab[] {
+  if (!panel?.supportsDataQuery) {
     return [];
   }
+  return getPanelEditorTabsMemo(tab, panel);
+}
 
-  if (!plugin.meta.skipDataQuery) {
-    defaultTab = PanelEditorTabId.Query;
+// Only called when a query exists
+const getPanelEditorTabsMemo = memoizeOne((tab?: string, panel?: PanelModel) => {
+  const tabs: PanelEditorTab[] = [];
+  const defaultTab = PanelEditorTabId.Query;
 
-    tabs.push({
-      id: PanelEditorTabId.Query,
-      text: 'Query',
-      icon: 'database',
-      active: false,
-    });
+  tabs.push({
+    id: PanelEditorTabId.Query,
+    text: 'Query',
+    icon: 'database',
+    active: false,
+  });
 
-    tabs.push({
-      id: PanelEditorTabId.Transform,
-      text: 'Transform',
-      icon: 'process',
-      active: false,
-    });
-  }
+  tabs.push({
+    id: PanelEditorTabId.Transform,
+    text: 'Transform',
+    icon: 'process',
+    active: false,
+  });
 
   const { alertingEnabled, unifiedAlertingEnabled } = getConfig();
   const hasRuleReadPermissions = contextSrv.hasPermission(getRulesPermissions(GRAFANA_RULES_SOURCE_NAME).read);
   const isAlertingAvailable = alertingEnabled || (unifiedAlertingEnabled && hasRuleReadPermissions);
 
-  const isGraph = plugin.meta.id === 'graph';
-  const isTimeseries = plugin.meta.id === 'timeseries';
+  const type = panel?.type;
+  const isGraph = type === 'graph';
+  const isTimeseries = type === 'timeseries';
 
   if ((isAlertingAvailable && isGraph) || isTimeseries) {
     tabs.push({

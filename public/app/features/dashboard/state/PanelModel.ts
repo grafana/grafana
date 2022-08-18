@@ -275,6 +275,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     return this.configRev > 0;
   }
 
+  get supportsDataQuery(): boolean {
+    if (!this.plugin) {
+      return false;
+    }
+    return !this.plugin.isSkipDataQuery(this.options);
+  }
+
   updateOptions(options: object) {
     this.options = options;
     this.configRev++;

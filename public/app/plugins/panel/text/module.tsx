@@ -27,6 +27,15 @@ export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
         description: 'Content of the panel',
         editor: TextPanelEditor,
         defaultValue: defaultPanelOptions.content,
+      })
+      .addBooleanSwitch({
+        path: 'query',
+        name: 'Execute query',
+        description: 'Run a query and include the results in template variable context',
+        defaultValue: defaultPanelOptions.query,
       });
+  })
+  .setSkipDataQuery((opts?: PanelOptions) => {
+    return opts?.query !== true;
   })
   .setMigrationHandler(textPanelMigrationHandler);

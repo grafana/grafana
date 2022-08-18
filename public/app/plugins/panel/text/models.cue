@@ -30,6 +30,9 @@ Panel: thema.#Lineage & {
 
                     For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
                     """
+
+						// Execute a query and add results to variable context
+						query: bool | *false 
 					} @cuetsy(kind="interface")
 				},
 			]

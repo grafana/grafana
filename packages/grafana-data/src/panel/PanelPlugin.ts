@@ -379,4 +379,13 @@ export class PanelPlugin<
   hasPluginId(pluginId: string) {
     return this.meta.id === pluginId;
   }
+
+  isSkipDataQuery = (opts?: TOptions): boolean => {
+    return Boolean(this.meta.skipDataQuery);
+  };
+
+  setSkipDataQuery(fn: (opts?: TOptions) => boolean) {
+    this.isSkipDataQuery = fn;
+    return this;
+  }
 }

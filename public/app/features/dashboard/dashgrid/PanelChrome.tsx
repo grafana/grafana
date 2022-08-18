@@ -406,7 +406,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get wantsQueryExecution() {
-    return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
+    return this.props.panel.supportsDataQuery && !this.hasPanelSnapshot;
   }
 
   onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {

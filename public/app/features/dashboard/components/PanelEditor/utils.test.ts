@@ -1,6 +1,6 @@
 import { FieldConfig, FieldConfigSource, PanelPlugin, standardFieldConfigEditorRegistry } from '@grafana/data';
 
-import { setOptionImmutably, supportsDataQuery, updateDefaultFieldConfigValue } from './utils';
+import { setOptionImmutably, updateDefaultFieldConfigValue } from './utils';
 
 describe('standardFieldConfigEditorRegistry', () => {
   const dummyConfig: FieldConfig = {

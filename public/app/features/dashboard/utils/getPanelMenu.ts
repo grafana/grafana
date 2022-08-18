@@ -131,7 +131,9 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
+  const hasDataQuery = panel.plugin && !panel.plugin.isSkipDataQuery(panel.options);
+
+  if (contextSrv.hasAccessToExplore() && hasDataQuery) {
     menu.push({
       text: 'Explore',
       iconClassName: 'compass',
@@ -150,7 +152,7 @@ export function getPanelMenu(
   const inspectMenu: PanelMenuItem[] = [];
 
   // Only show these inspect actions for data plugins
-  if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+  if (hasDataQuery) {
     const dataTextTranslation = t({
       id: 'panel.header-menu.inspect-data',
       message: `Data`,

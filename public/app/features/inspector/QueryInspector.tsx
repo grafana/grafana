@@ -7,7 +7,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, RefreshEvent } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { PanelModel } from 'app/features/dashboard/state';
 
 import { getPanelInspectorStyles } from './styles';
@@ -254,7 +253,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     const styles = getPanelInspectorStyles();
     const haveData = Object.keys(response).length > 0;
 
-    if (panel && !supportsDataQuery(panel.plugin)) {
+    if (panel && !panel.supportsDataQuery) {
       return null;
     }
 

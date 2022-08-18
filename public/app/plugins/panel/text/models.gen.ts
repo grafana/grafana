@@ -16,6 +16,7 @@ export enum TextMode {
 export interface PanelOptions {
   content: string;
   mode: TextMode;
+  query: boolean;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
@@ -23,4 +24,5 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,
   mode: TextMode.Markdown,
+  query: false,
 };

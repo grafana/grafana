@@ -2,12 +2,10 @@ import { t } from '@lingui/macro';
 import { useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { DataQueryError, DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
+import { DataQueryError, DataSourceApi, PanelData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
-
-import { supportsDataQuery } from '../PanelEditor/utils';
 
 import { PanelInspectActionSupplier } from './PanelInspectActions';
 
@@ -41,13 +39,12 @@ export const useDatasourceMetadata = (data?: PanelData) => {
 export const useInspectTabs = (
   panel: PanelModel,
   dashboard: DashboardModel,
-  plugin: PanelPlugin | undefined | null,
   error?: DataQueryError,
   metaDs?: DataSourceApi
 ) => {
   return useMemo(() => {
     const tabs = [];
-    if (supportsDataQuery(plugin)) {
+    if (panel.supportsDataQuery) {
       tabs.push({ label: t({ id: 'dashboard.inspect.data-tab', message: 'Data' }), value: InspectTab.Data });
       tabs.push({ label: t({ id: 'dashboard.inspect.stats-tab', message: 'Stats' }), value: InspectTab.Stats });
     }
@@ -72,9 +69,9 @@ export const useInspectTabs = (
       });
     }
 
-    if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
+    if (dashboard.meta.canEdit && panel.supportsDataQuery) {
       tabs.push({ label: t({ id: 'dashboard.inspect.query-tab', message: 'Query' }), value: InspectTab.Query });
     }
     return tabs;
-  }, [panel, plugin, metaDs, dashboard, error]);
+  }, [panel, metaDs, dashboard, error]);
 };
