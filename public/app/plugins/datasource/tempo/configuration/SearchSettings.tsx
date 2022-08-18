@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, GrafanaTheme, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles } from '@grafana/ui';
 
 import { TempoJsonData } from '../datasource';
@@ -32,7 +32,7 @@ export function SearchSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = () => ({
   container: css`
     label: container;
     width: 100%;

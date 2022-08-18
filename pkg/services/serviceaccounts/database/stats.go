@@ -3,15 +3,13 @@ package database
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	ExporterName              = "grafana"
-	metricsCollectionInterval = time.Minute * 30
+	ExporterName = "grafana"
 )
 
 var (
@@ -44,25 +42,6 @@ func InitMetrics() {
 			MStatTotalServiceAccountTokens,
 		)
 	})
-}
-
-func (s *ServiceAccountsStoreImpl) RunMetricsCollection(ctx context.Context) error {
-	if _, err := s.GetUsageMetrics(ctx); err != nil {
-		s.log.Warn("Failed to get usage metrics", "error", err.Error())
-	}
-	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
-	defer updateStatsTicker.Stop()
-
-	for {
-		select {
-		case <-updateStatsTicker.C:
-			if _, err := s.GetUsageMetrics(ctx); err != nil {
-				s.log.Warn("Failed to get usage metrics", "error", err.Error())
-			}
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
 }
 
 func (s *ServiceAccountsStoreImpl) GetUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
