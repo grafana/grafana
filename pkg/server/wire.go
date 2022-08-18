@@ -53,9 +53,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
-	dashsnapstore "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
-	dashsnapsvc "github.com/grafana/grafana/pkg/services/dashboardsnapshots/service"
+	dashsnapshot "github.com/grafana/grafana/pkg/services/dashboardsnapshot"
+	dashsnapimpl "github.com/grafana/grafana/pkg/services/dashboardsnapshot/dashsnapimpl"
 	"github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -249,10 +248,8 @@ var wireBasicSet = wire.NewSet(
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	grafanads.ProvideService,
-	wire.Bind(new(dashboardsnapshots.Store), new(*dashsnapstore.DashboardSnapshotStore)),
-	dashsnapstore.ProvideStore,
-	wire.Bind(new(dashboardsnapshots.Service), new(*dashsnapsvc.ServiceImpl)),
-	dashsnapsvc.ProvideService,
+	wire.Bind(new(dashsnapshot.Service), new(*dashsnapimpl.ServiceImpl)),
+	dashsnapimpl.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	pluginSettings.ProvideService,

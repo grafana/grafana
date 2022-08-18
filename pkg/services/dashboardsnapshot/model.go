@@ -1,11 +1,14 @@
-package dashboardsnapshots
+package dashsnapshot
 
 import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+var ErrBaseNotFound = errutil.NewBase(errutil.StatusNotFound, "dashboardsnapshots.not-found", errutil.WithPublicMessage("Snapshot not found"))
 
 // DashboardSnapshot model
 type DashboardSnapshot struct {

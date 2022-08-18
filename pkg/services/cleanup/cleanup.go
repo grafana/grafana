@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	dashsnapshot "github.com/grafana/grafana/pkg/services/dashboardsnapshot"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
@@ -23,7 +23,7 @@ import (
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore *sqlstore.SQLStore, queryHistoryService queryhistory.Service,
-	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService) *CleanUpService {
+	dashboardVersionService dashver.Service, dashSnapSvc dashsnapshot.Service, deleteExpiredImageService *image.DeleteExpiredService) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		ServerLockService:         serverLockService,
@@ -46,7 +46,7 @@ type CleanUpService struct {
 	ShortURLService           shorturls.Service
 	QueryHistoryService       queryhistory.Service
 	dashboardVersionService   dashver.Service
-	dashboardSnapshotService  dashboardsnapshots.Service
+	dashboardSnapshotService  dashsnapshot.Service
 	deleteExpiredImageService *image.DeleteExpiredService
 }
 
@@ -148,7 +148,7 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 }
 
 func (srv *CleanUpService) deleteExpiredSnapshots(ctx context.Context) {
-	cmd := dashboardsnapshots.DeleteExpiredSnapshotsCommand{}
+	cmd := dashsnapshot.DeleteExpiredSnapshotsCommand{}
 	if err := srv.dashboardSnapshotService.DeleteExpiredSnapshots(ctx, &cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {

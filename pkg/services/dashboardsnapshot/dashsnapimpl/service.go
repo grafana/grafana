@@ -1,31 +1,30 @@
-package service
+package dashsnapimpl
 
 import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	dashsnapshot "github.com/grafana/grafana/pkg/services/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type ServiceImpl struct {
-	store          dashboardsnapshots.Store
+	store          store
 	secretsService secrets.Service
 }
 
-// ServiceImpl implements the dashboardsnapshots Service interface
-var _ dashboardsnapshots.Service = (*ServiceImpl)(nil)
+func ProvideService(db db.DB, secretsService secrets.Service) *ServiceImpl {
 
-func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Service) *ServiceImpl {
 	s := &ServiceImpl{
-		store:          store,
+		store:          ProvideStore(db),
 		secretsService: secretsService,
 	}
 
 	return s
 }
 
-func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) error {
+func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashsnapshot.CreateDashboardSnapshotCommand) error {
 	marshalledData, err := cmd.Dashboard.Encode()
 	if err != nil {
 		return err
@@ -41,7 +40,7 @@ func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboar
 	return s.store.CreateDashboardSnapshot(ctx, cmd)
 }
 
-func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) error {
+func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *dashsnapshot.GetDashboardSnapshotQuery) error {
 	err := s.store.GetDashboardSnapshot(ctx, query)
 	if err != nil {
 		return err
@@ -64,14 +63,14 @@ func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *dashboard
 	return err
 }
 
-func (s *ServiceImpl) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.DeleteDashboardSnapshotCommand) error {
+func (s *ServiceImpl) DeleteDashboardSnapshot(ctx context.Context, cmd *dashsnapshot.DeleteDashboardSnapshotCommand) error {
 	return s.store.DeleteDashboardSnapshot(ctx, cmd)
 }
 
-func (s *ServiceImpl) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) error {
+func (s *ServiceImpl) SearchDashboardSnapshots(ctx context.Context, query *dashsnapshot.GetDashboardSnapshotsQuery) error {
 	return s.store.SearchDashboardSnapshots(ctx, query)
 }
 
-func (s *ServiceImpl) DeleteExpiredSnapshots(ctx context.Context, cmd *dashboardsnapshots.DeleteExpiredSnapshotsCommand) error {
+func (s *ServiceImpl) DeleteExpiredSnapshots(ctx context.Context, cmd *dashsnapshot.DeleteExpiredSnapshotsCommand) error {
 	return s.store.DeleteExpiredSnapshots(ctx, cmd)
 }

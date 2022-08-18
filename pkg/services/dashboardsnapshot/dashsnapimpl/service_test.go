@@ -1,4 +1,4 @@
-package service
+package dashsnapimpl
 
 import (
 	"context"
@@ -7,8 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
-	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
+	dashsnapshot "github.com/grafana/grafana/pkg/services/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -16,10 +15,9 @@ import (
 )
 
 func TestDashboardSnapshotsService(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
-	dsStore := dashsnapdb.ProvideStore(sqlStore)
-	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-	s := ProvideService(dsStore, secretsService)
+	ss := sqlstore.InitTestDB(t)
+	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(ss))
+	s := ProvideService(ss, secretsService)
 
 	origSecret := setting.SecretKey
 	setting.SecretKey = "dashboard_snapshot_service_test"
@@ -36,7 +34,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	t.Run("create dashboard snapshot should encrypt the dashboard", func(t *testing.T) {
 		ctx := context.Background()
 
-		cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
+		cmd := dashsnapshot.CreateDashboardSnapshotCommand{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
 			Dashboard: dashboard,
@@ -54,7 +52,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 	t.Run("get dashboard snapshot should return the dashboard decrypted", func(t *testing.T) {
 		ctx := context.Background()
 
-		query := dashboardsnapshots.GetDashboardSnapshotQuery{
+		query := dashsnapshot.GetDashboardSnapshotQuery{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
 		}
