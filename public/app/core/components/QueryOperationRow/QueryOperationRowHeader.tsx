@@ -35,7 +35,8 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
       <div className={styles.column}>
         <IconButton
           name={isContentVisible ? 'angle-down' : 'angle-right'}
-          title="Open and close query row"
+          title="toggle collapse and expand"
+          aria-label="toggle collapse and expand query row"
           className={styles.collapseIcon}
           onClick={onRowToggle}
           type="button"
