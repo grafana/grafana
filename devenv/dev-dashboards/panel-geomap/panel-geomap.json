@@ -24,7 +24,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 83,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -78,6 +77,7 @@
           "mouseWheelZoom": true,
           "showAttribution": true,
           "showDebug": false,
+          "showMeasure": false,
           "showScale": false,
           "showZoom": true
         },
@@ -107,6 +107,9 @@
             "type": "markers"
           }
         ],
+        "tooltip": {
+          "mode": "details"
+        },
         "view": {
           "id": "coords",
           "lat": 38.297683,
@@ -115,7 +118,7 @@
           "zoom": 3.98
         }
       },
-      "pluginVersion": "9.0.0-pre",
+      "pluginVersion": "9.2.0-pre",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -180,6 +183,7 @@
           "mouseWheelZoom": true,
           "showAttribution": true,
           "showDebug": false,
+          "showMeasure": false,
           "showScale": false,
           "showZoom": true
         },
@@ -209,6 +213,9 @@
             "type": "markers"
           }
         ],
+        "tooltip": {
+          "mode": "details"
+        },
         "view": {
           "id": "coords",
           "lat": 38.297683,
@@ -217,7 +224,7 @@
           "zoom": 3.98
         }
       },
-      "pluginVersion": "9.0.0-pre",
+      "pluginVersion": "9.2.0-pre",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -278,6 +285,7 @@
           "mouseWheelZoom": true,
           "showAttribution": true,
           "showDebug": false,
+          "showMeasure": false,
           "showScale": false,
           "showZoom": true
         },
@@ -302,6 +310,9 @@
             "type": "heatmap"
           }
         ],
+        "tooltip": {
+          "mode": "details"
+        },
         "view": {
           "id": "coords",
           "lat": 38.251497,
@@ -310,7 +321,7 @@
           "zoom": 4.15
         }
       },
-      "pluginVersion": "9.0.0-pre",
+      "pluginVersion": "9.2.0-pre",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -374,6 +385,7 @@
           "mouseWheelZoom": true,
           "showAttribution": true,
           "showDebug": false,
+          "showMeasure": false,
           "showScale": false,
           "showZoom": true
         },
@@ -402,6 +414,9 @@
             "type": "markers"
           }
         ],
+        "tooltip": {
+          "mode": "details"
+        },
         "view": {
           "id": "coords",
           "lat": 40.159084,
@@ -410,7 +425,7 @@
           "zoom": 3.83
         }
       },
-      "pluginVersion": "9.0.0-pre",
+      "pluginVersion": "9.2.0-pre",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -423,11 +438,12 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 36,
+  "schemaVersion": 37,
   "style": "dark",
   "tags": [
     "gdev",
-    "panel-tests"
+    "panel-tests",
+    "geomap"
   ],
   "templating": {
     "list": []
@@ -452,6 +468,6 @@
   "timezone": "",
   "title": "Panel Tests - Geomap",
   "uid": "2xuwrgV7z",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }

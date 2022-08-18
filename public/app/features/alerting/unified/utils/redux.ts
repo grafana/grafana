@@ -169,6 +169,10 @@ export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>)
   return Object.values(slice).some(isAsyncRequestStatePending);
 }
 
-export function isAsyncRequestStatePending<T>(state: AsyncRequestState<T>): boolean {
+export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
+  if (!state) {
+    return false;
+  }
+
   return state.dispatched && state.loading;
 }

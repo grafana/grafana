@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -34,7 +35,7 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *models.ReqContext) response.Resp
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	return hs.addOrgUserHelper(c, cmd)
 }
 
@@ -113,7 +114,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *models.ReqContext, cmd models.AddOrgUs
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
 	result, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
@@ -142,7 +143,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
 	orgUsers, err := hs.getOrgUsersHelper(c, &models.GetOrgUsersQuery{
-		OrgId:                    c.OrgId,
+		OrgId:                    c.OrgID,
 		Query:                    c.Query("query"),
 		Limit:                    c.QueryInt("limit"),
 		User:                     c.SignedInUser,
@@ -201,7 +202,7 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
+func (hs *HTTPServer) getOrgUsersHelper(c *models.ReqContext, query *models.GetOrgUsersQuery, signedInUser *user.SignedInUser) ([]*models.OrgUserDTO, error) {
 	if err := hs.SQLStore.GetOrgUsers(c.Req.Context(), query); err != nil {
 		return nil, err
 	}
@@ -244,7 +245,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Re
 	}
 
 	query := &models.SearchOrgUsersQuery{
-		OrgID: c.OrgId,
+		OrgID: c.OrgID,
 		Query: c.Query("query"),
 		Page:  page,
 		Limit: perPage,
@@ -290,7 +291,7 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *models.ReqContext) response.
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	var err error
 	cmd.UserId, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
@@ -367,7 +368,7 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *models.ReqContext) response.
 
 	return hs.removeOrgUserHelper(c.Req.Context(), &models.RemoveOrgUserCommand{
 		UserId:                   userId,
-		OrgId:                    c.OrgId,
+		OrgId:                    c.OrgID,
 		ShouldDeleteOrphanedUser: true,
 	})
 }
@@ -409,7 +410,16 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.Remov
 	}
 
 	if cmd.UserWasDeleted {
+		// This should be called from appropriate service when moved
+		if err := hs.AccessControl.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserId); err != nil {
+			hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", accesscontrol.GlobalOrgID, "err", err)
+		}
 		return response.Success("User deleted")
+	}
+
+	// This should be called from appropriate service when moved
+	if err := hs.AccessControl.DeleteUserPermissions(ctx, cmd.OrgId, cmd.UserId); err != nil {
+		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", cmd.OrgId, "err", err)
 	}
 
 	return response.Success("User removed from organization")

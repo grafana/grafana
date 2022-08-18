@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,13 +53,13 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		service.Cfg.QueryHistoryEnabled = true
 
-		usr := models.SignedInUser{
-			UserId:     testUserID,
+		usr := user.SignedInUser{
+			UserID:     testUserID,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
 			Email:      "signed.in.user@test.com",
-			OrgId:      testOrgID,
-			OrgRole:    models.ROLE_VIEWER,
+			OrgID:      testOrgID,
+			OrgRole:    org.RoleViewer,
 			LastSeenAt: time.Now(),
 		}
 

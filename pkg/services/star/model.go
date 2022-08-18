@@ -5,9 +5,9 @@ import "errors"
 var ErrCommandValidationFailed = errors.New("command missing required fields")
 
 type Star struct {
-	ID          int64 `xorm:"pk autoincr 'id'"`
-	UserID      int64 `xorm:"user_id"`
-	DashboardID int64 `xorm:"dashboard_id"`
+	ID          int64 `xorm:"pk autoincr 'id'" db:"id"`
+	UserID      int64 `xorm:"user_id" db:"user_id"`
+	DashboardID int64 `xorm:"dashboard_id" db:"dashboard_id"`
 }
 
 // ----------------------

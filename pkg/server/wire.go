@@ -74,6 +74,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login_attempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -114,6 +115,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
+	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -311,6 +313,8 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	tempuserimpl.ProvideService,
+	loginattemptimpl.ProvideService,
 	datasourceservice.ProvideDataSourceMigrationService,
 	secretsStore.ProvidePluginSecretMigrationService,
 	secretsMigrations.ProvideSecretMigrationService,
