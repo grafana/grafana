@@ -51,7 +51,11 @@ export function RadioButtonList<T>({
             key={itemId}
             id={itemId}
             name={name}
-            label={option.label}
+            label={
+              <>
+                {option.label} {option.component && <option.component />}
+              </>
+            }
             description={option.description}
             checked={isChecked}
             disabled={isDisabled}

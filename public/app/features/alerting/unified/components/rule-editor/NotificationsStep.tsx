@@ -26,6 +26,9 @@ export const NotificationsStep: FC = () => {
       .map((label) => [label.key, label.value])
   );
 
+  const queries = watch('queries');
+  const alertCondition = watch('condition');
+
   return (
     <RuleEditorSection
       stepNo={4}
@@ -59,8 +62,8 @@ export const NotificationsStep: FC = () => {
       </div>
       <Button onClick={setAmPreviewVisible}>Open Alertmanager preview</Button>
       {amPreviewVisible && (
-        <Drawer onClose={setAmPreviewVisible} width="50%" scrollableContent={true}>
-          <AmAlertPreview alertLabels={alertLabels} />
+        <Drawer onClose={setAmPreviewVisible} width="100%" scrollableContent={true}>
+          <AmAlertPreview alertLabels={alertLabels} queries={queries} alertCondition={alertCondition} />
         </Drawer>
       )}
     </RuleEditorSection>

@@ -2,14 +2,17 @@ import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAsync } from 'react-use';
+import { lastValueFrom } from 'rxjs';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { Icon, LoadingPlaceholder, Stack, Tag, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { DataFrameJSON, GrafanaTheme2, SelectableValue } from '@grafana/data/src';
+import { Icon, LoadingPlaceholder, RadioButtonList, Stack, Tag, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 import { Matcher, Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
 
-import { Labels } from '../../../../../types/unified-alerting-dto';
+import { getBackendSrv } from '../../../../../core/services/backend_srv';
+import { AlertQuery, Labels } from '../../../../../types/unified-alerting-dto';
 import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { AlertingQueryResponse } from '../../state/AlertingQueryRunner';
 import { fetchAlertManagerConfigAction } from '../../state/actions';
 import {
   getLabelsMatchingMatcher,
@@ -21,11 +24,14 @@ import { AlertManagerPicker } from '../AlertManagerPicker';
 
 interface AmAlertPreviewProps {
   alertLabels: Labels;
+  queries: AlertQuery[];
+  alertCondition: string | null;
 }
 
-export function AmAlertPreview({ alertLabels }: AmAlertPreviewProps) {
+export function AmAlertPreview({ alertLabels, queries, alertCondition }: AmAlertPreviewProps) {
   const dispatch = useDispatch();
   const styles = useStyles2(getRouteLabelsMatchStyles);
+  const [selectedInstance, setSelectedInstance] = useState<Labels>({});
 
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertmanagerName, setAlertmanagerName] = useState<string | undefined>(alertManagers[0]?.name);
@@ -43,6 +49,18 @@ export function AmAlertPreview({ alertLabels }: AmAlertPreviewProps) {
 
   const receivers = new Map(amConfig?.alertmanager_config.receivers?.map((receiver) => [receiver.name, receiver]));
 
+  const { value: queryEvaluationResult } = useAsync(() => {
+    const request = {
+      data: { data: queries },
+      url: '/api/v1/eval',
+      method: 'POST',
+    };
+
+    return lastValueFrom(getBackendSrv().fetch<AlertingQueryResponse>(request));
+  });
+
+  const evalFrames = alertCondition ? queryEvaluationResult?.data?.results[alertCondition]?.frames ?? [] : [];
+
   return (
     <Stack gap={2} direction="column">
       <AlertManagerPicker
@@ -53,30 +71,84 @@ export function AmAlertPreview({ alertLabels }: AmAlertPreviewProps) {
       />
       {amConfigState.loading && <LoadingPlaceholder text="Loading Alertmanager configuration" />}
 
-      <h5>Alert Labels</h5>
-      <TagList tags={Object.entries(alertLabels).map((label) => labelToString(label))} />
+      <Stack gap={2} direction="row">
+        <div
+          className={css`
+            flex: 1;
+          `}
+        >
+          <h5>Possible alert instances</h5>
+          <AlertInstancesPreview
+            dataFrames={evalFrames ?? []}
+            selectedInstance={selectedInstance}
+            onChange={setSelectedInstance}
+          />
+        </div>
 
-      <h5>Matching Notification policies</h5>
-      <Stack direction="column" gap={2}>
-        {amRoutes.map((route, index) => {
-          // TODO This requires consideration of previous routes and the continue flag
-          const isMatchingRoute = labelsMatchMatchers(
-            alertLabels,
-            route.object_matchers?.map(objectMatcherToMatcher) ?? []
-          );
-          return (
-            <RouteLabelsMatch
-              key={index}
-              className={cx(styles.route, { [styles.matchingRoute]: isMatchingRoute })}
-              isMatchingRoute={isMatchingRoute}
-              labels={alertLabels}
-              route={route}
-              routeIndex={index + 1}
-              receivers={receivers}
-            />
-          );
-        })}
+        <div
+          className={css`
+            flex: 1;
+          `}
+        >
+          <h5>Matching Notification policies</h5>
+          <Stack direction="column" gap={2}>
+            {amRoutes.map((route, index) => {
+              // TODO This requires consideration of previous routes and the continue flag
+              const isMatchingRoute = labelsMatchMatchers(
+                selectedInstance,
+                route.object_matchers?.map(objectMatcherToMatcher) ?? []
+              );
+              return (
+                <RouteLabelsMatch
+                  key={index}
+                  className={cx(styles.route, { [styles.matchingRoute]: isMatchingRoute })}
+                  isMatchingRoute={isMatchingRoute}
+                  labels={selectedInstance}
+                  route={route}
+                  routeIndex={index + 1}
+                  receivers={receivers}
+                />
+              );
+            })}
+          </Stack>
+        </div>
       </Stack>
+    </Stack>
+  );
+}
+
+interface AlertInstancesPreviewProps {
+  dataFrames: DataFrameJSON[];
+  selectedInstance?: Labels;
+  onChange?: (labels: Labels) => void;
+}
+
+function AlertInstancesPreview({ dataFrames, selectedInstance, onChange }: AlertInstancesPreviewProps) {
+  const uniqLabelsCombinations = dataFrames
+    .flatMap((frame) => frame.schema?.fields ?? [])
+    .map((field) => field.labels)
+    .filter((labels): labels is Labels => !!labels);
+
+  const labelOptions = uniqLabelsCombinations.map<SelectableValue<Labels>>((labels) => ({
+    value: labels,
+    component: () => (
+      <TagList
+        tags={Object.entries(labels).map(labelToString)}
+        className={css`
+          justify-content: flex-start;
+        `}
+      />
+    ),
+  }));
+
+  return (
+    <Stack gap={1}>
+      <RadioButtonList
+        name="available-alert-instances"
+        options={labelOptions}
+        value={selectedInstance}
+        onChange={onChange}
+      />
     </Stack>
   );
 }
@@ -100,11 +172,12 @@ function RouteLabelsMatch({ isMatchingRoute, labels, route, receivers = new Map(
       <Stack justifyContent="space-between">
         {receiver ? (
           <div>
-            {receiver.name} ({receiver.grafana_managed_receiver_configs?.map((gmc) => gmc.type).join(', ')})
+            <Icon name="message" /> {receiver.name} (
+            {receiver.grafana_managed_receiver_configs?.map((gmc) => gmc.type).join(', ')})
           </div>
         ) : (
           <div>
-            <Icon name="exclamation-triangle" /> Contact point not defined
+            <Icon name="exclamation-triangle" /> --Contact point not defined--
           </div>
         )}
       </Stack>
@@ -157,18 +230,22 @@ function RouteLabelsMatch({ isMatchingRoute, labels, route, receivers = new Map(
 }
 
 function getRouteLabelsMatchStyles(theme: GrafanaTheme2) {
+  const matchBackground = theme.colors.emphasize(theme.colors.background.secondary, 0.1);
+
   return {
     amPicker: css`
       margin-bottom: ${theme.spacing(0)};
     `,
     route: css`
       padding: ${theme.spacing(1)};
-      border: 2px solid ${theme.colors.secondary.border};
+      //border: 2px solid ${theme.colors.border.weak};
       border-radius: ${theme.shape.borderRadius(2)};
       background-color: ${theme.colors.background.secondary};
     `,
     matchingRoute: css`
-      border: 2px solid ${theme.colors.primary.border};
+      color: ${theme.colors.getContrastText(matchBackground)};
+      //border: 2px solid ${theme.colors.border.strong};
+      background-color: ${matchBackground};
     `,
     nestedRoutes: css`
       position: relative;
