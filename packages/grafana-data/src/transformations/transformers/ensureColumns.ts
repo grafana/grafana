@@ -5,7 +5,7 @@ import { DataFrame } from '../../types/dataFrame';
 import { SynchronousDataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
-import { seriesToColumnsTransformer } from './seriesToColumns';
+import { joinByFieldTransformer } from './joinByField';
 
 export const ensureColumnsTransformer: SynchronousDataTransformerInfo = {
   id: DataTransformerID.ensureColumns,
@@ -19,7 +19,7 @@ export const ensureColumnsTransformer: SynchronousDataTransformerInfo = {
     const timeFieldName = findConsistentTimeFieldName(frames);
 
     if (frames.length > 1 && timeFieldName) {
-      return seriesToColumnsTransformer.transformer({
+      return joinByFieldTransformer.transformer({
         byField: timeFieldName,
       })(frames);
     }

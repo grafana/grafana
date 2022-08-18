@@ -7,7 +7,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { SeriesToColumnsOptions, JoinMode } from '@grafana/data/src/transformations/transformers/seriesToColumns';
+import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/seriesToColumns';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -17,11 +17,7 @@ const modes = [
   { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables' },
 ];
 
-export function SeriesToFieldsTransformerEditor({
-  input,
-  options,
-  onChange,
-}: TransformerUIProps<SeriesToColumnsOptions>) {
+export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
 
   const onSelectField = useCallback(
@@ -66,11 +62,11 @@ export function SeriesToFieldsTransformerEditor({
   );
 }
 
-export const seriesToFieldsTransformerRegistryItem: TransformerRegistryItem<SeriesToColumnsOptions> = {
+export const seriesToFieldsTransformerRegistryItem: TransformerRegistryItem<JoinByFieldOptions> = {
   id: DataTransformerID.join,
   aliasIds: [DataTransformerID.seriesToColumns],
   editor: SeriesToFieldsTransformerEditor,
-  transformation: standardTransformers.seriesToColumnsTransformer,
-  name: standardTransformers.seriesToColumnsTransformer.name,
-  description: standardTransformers.seriesToColumnsTransformer.description,
+  transformation: standardTransformers.joinByFieldTransformer,
+  name: standardTransformers.joinByFieldTransformer.name,
+  description: standardTransformers.joinByFieldTransformer.description,
 };

@@ -4,8 +4,8 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 import { ArrayVector } from '../../vector';
 
 import { calculateFieldTransformer } from './calculateField';
+import { JoinMode } from './joinByField';
 import { isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
-import { JoinMode } from './seriesToColumns';
 
 describe('align frames', () => {
   beforeAll(() => {
