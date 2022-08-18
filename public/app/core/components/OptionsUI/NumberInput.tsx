@@ -126,7 +126,12 @@ export class NumberInput extends PureComponent<Props, State> {
         range = `> ${max}`;
       }
       return (
-        <Field invalid={inputCorrected} error={`Value out of range ${range} `}>
+        <Field
+          invalid={inputCorrected}
+          error={`Out of range ${range}`}
+          validationMessageHorizontalOverflow={true}
+          style={{ direction: 'rtl' }}
+        >
           {this.renderInput()}
         </Field>
       );

@@ -8,7 +8,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -79,7 +79,7 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 		return nil, fmt.Errorf("could not open lineage file at %s: %w", path, err)
 	}
 
-	byt, err := ioutil.ReadAll(f)
+	byt, err := io.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}
@@ -182,8 +182,7 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 	if err != nil {
 		return nil, fmt.Errorf("generated go file parsing failed: %w", err)
 	}
-	m := makeReplacer(lin.Name())
-	ast.Walk(m, gf)
+	ast.Walk(prefixDropper(strings.Title(lin.Name())), gf)
 
 	var buf bytes.Buffer
 	err = format.Node(&buf, fset, gf)
@@ -223,7 +222,7 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 		return nil, fmt.Errorf("cuetsy parts gen failed: %w", err)
 	}
 
-	top, err := cuetsy.GenerateSingleAST(string(makeReplacer(ls.Lineage.Name())), schv, cuetsy.TypeInterface)
+	top, err := cuetsy.GenerateSingleAST(strings.Title(ls.Lineage.Name()), schv, cuetsy.TypeInterface)
 	if err != nil {
 		return nil, fmt.Errorf("cuetsy top gen failed: %w", err)
 	}
@@ -260,29 +259,23 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 	return wd, nil
 }
 
-type modelReplacer string
+type prefixDropper string
 
-func makeReplacer(name string) modelReplacer {
-	return modelReplacer(fmt.Sprintf("%s%s", string(strings.ToUpper(name)[0]), name[1:]))
-}
-
-func (m modelReplacer) Visit(n ast.Node) ast.Visitor {
+func (d prefixDropper) Visit(n ast.Node) ast.Visitor {
+	asstr := string(d)
 	switch x := n.(type) {
 	case *ast.Ident:
-		x.Name = m.replacePrefix(x.Name)
+		if x.Name != asstr {
+			x.Name = strings.TrimPrefix(x.Name, asstr)
+		} else {
+			x.Name = "Model"
+		}
 	}
-	return m
+	return d
 }
 
-func (m modelReplacer) replacePrefix(str string) string {
-	if len(str) >= len(m) && str[:len(m)] == string(m) {
-		return strings.Replace(str, string(m), "Model", 1)
-	}
-	return str
-}
-
-// GenerateCoremodelRegistry produces Go files that define a static registry
-// with references to all the Go code that is expected to be generated from the
+// GenerateCoremodelRegistry produces Go files that define a registry with
+// references to all the Go code that is expected to be generated from the
 // provided lineages.
 func GenerateCoremodelRegistry(path string, ecl []*ExtractedLineage) (WriteDiffer, error) {
 	var cml []tplVars
@@ -346,7 +339,7 @@ var currentVersion = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
 // This is the base variant of the schema. It does not include any composed
 // plugin schemas.{{ end }}
 func Lineage(lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "dashboard"), cueFS, lib, opts...)
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("pkg", "coremodel", "{{ .Name }}"), cueFS, lib, opts...)
 }
 
 var _ thema.LineageFactory = Lineage
@@ -358,7 +351,7 @@ type Coremodel struct {
 	lin thema.Lineage
 }
 
-// Lineage returns the canonical dashboard Lineage.
+// Lineage returns the canonical {{ .Name }} Lineage.
 func (c *Coremodel) Lineage() thema.Lineage {
 	return c.lin
 }
@@ -409,6 +402,7 @@ var tmplRegistry = template.Must(template.New("registry").Parse(`
 package registry
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/google/wire"
@@ -419,25 +413,17 @@ import (
 	"github.com/grafana/thema"
 )
 
-// CoremodelSet contains all of the wire-style providers related to coremodels.
-var CoremodelSet = wire.NewSet(
-	ProvideStatic,
-	ProvideGeneric,
-)
-
-var (
-	staticOnce       sync.Once
-	defaultStatic    *Static
-	defaultStaticErr error
-
-	genericOnce       sync.Once
-	defaultGeneric    *Generic
-	defaultGenericErr error
-)
-
-// Static is a registry that provides access to individual coremodels via
-// explicit method calls, to aid with static analysis.
-type Static struct {
+// Base is a registry of coremodel.Interface. It provides two modes for accessing
+// coremodels: individually via literal named methods, or as a slice returned from All().
+//
+// Prefer the individual named methods for use cases where the particular coremodel(s) that
+// are needed are known to the caller. For example, a dashboard linter can know that it
+// specifically wants the dashboard coremodel.
+//
+// Prefer All() when performing operations generically across all coremodels. For example,
+// a validation HTTP middleware for any coremodel-schematized object type.
+type Base struct {
+	all []coremodel.Interface
 	{{- range .Coremodels }}
 	{{ .Name }} *{{ .Name }}.Coremodel{{end}}
 }
@@ -451,51 +437,23 @@ var (
 {{range .Coremodels }}
 // {{ .TitleName }} returns the {{ .Name }} coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
-func (s *Static) {{ .TitleName }}() *{{ .Name }}.Coremodel {
+func (s *Base) {{ .TitleName }}() *{{ .Name }}.Coremodel {
 	return s.{{ .Name }}
 }
 {{end}}
 
-func provideStatic(lib *thema.Library) (*Static, error) {
-	if lib == nil {
-		staticOnce.Do(func() {
-			defaultStatic, defaultStaticErr = doProvideStatic(cuectx.ProvideThemaLibrary())
-		})
-		return defaultStatic, defaultStaticErr
-	}
-
-	return doProvideStatic(*lib)
-}
-
-func doProvideStatic(lib thema.Library) (*Static, error) {
+func doProvideBase(lib thema.Library) *Base {
 	var err error
-	reg := &Static{}
+	reg := &Base{}
 
 {{range .Coremodels }}
 	reg.{{ .Name }}, err = {{ .Name }}.New(lib)
 	if err != nil {
-		return nil, err
+		panic(fmt.Sprintf("error while initializing {{ .Name }} coremodel: %s", err))
 	}
+    reg.all = append(reg.all, reg.{{ .Name }})
 {{end}}
 
-	return reg, nil
-}
-
-func provideGeneric() (*Generic, error) {
-	ereg, err := provideStatic(nil)
-	if err != nil {
-		return nil, err
-	}
-
-	genericOnce.Do(func() {
-		defaultGeneric, defaultGenericErr = doProvideGeneric(ereg)
-	})
-	return defaultGeneric, defaultGenericErr
-}
-
-func doProvideGeneric(ereg *Static) (*Generic, error) {
-	return NewRegistry({{ range .Coremodels }}
-		ereg.{{ .TitleName }}(),{{ end }}
-	)
+	return reg
 }
 `))

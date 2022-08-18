@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
@@ -11,10 +10,10 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -68,7 +67,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 				return nil, errors.New("epic hard drive failure")
 			}
 			if strings.HasSuffix(path, "foo.js.map") {
-				f, err := ioutil.ReadFile("./frontendlogging/test-data/foo.js.map")
+				f, err := os.ReadFile("./frontendlogging/test-data/foo.js.map")
 				require.NoError(t, err)
 				return f, nil
 			}
@@ -140,7 +139,7 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 				return nil, errors.New("epic hard drive failure")
 			}
 			if strings.HasSuffix(path, "foo.js.map") {
-				f, err := ioutil.ReadFile("./frontendlogging/test-data/foo.js.map")
+				f, err := os.ReadFile("./frontendlogging/test-data/foo.js.map")
 				require.NoError(t, err)
 				return f, nil
 			}
@@ -258,7 +257,7 @@ func TestFrontendLoggingEndpointSentry(t *testing.T) {
 				assert.Len(t, logs, 10)
 				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "msg", "hello world")
-				assertContextContains(t, logs, "lvl", level.InfoValue())
+				assertContextContains(t, logs, level.Key().(string), level.InfoValue())
 				assertContextContains(t, logs, "logger", "frontend")
 				assertContextContains(t, logs, "url", messageEvent.Request.URL)
 				assertContextContains(t, logs, "user_agent", messageEvent.Request.Headers["User-Agent"])

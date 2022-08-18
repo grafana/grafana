@@ -13,17 +13,10 @@ interface Props {
   serviceAccount: ServiceAccountDTO;
   timeZone: TimeZone;
   roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
   onChange: (serviceAccount: ServiceAccountDTO) => void;
 }
 
-export function ServiceAccountProfile({
-  serviceAccount,
-  timeZone,
-  roleOptions,
-  builtInRoles,
-  onChange,
-}: Props): JSX.Element {
+export function ServiceAccountProfile({ serviceAccount, timeZone, roleOptions, onChange }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
 
@@ -37,7 +30,7 @@ export function ServiceAccountProfile({
 
   return (
     <div className={styles.section}>
-      <h4>Information</h4>
+      <h3>Information</h3>
       <table className="filter-table">
         <tbody>
           <ServiceAccountProfileRow
@@ -51,7 +44,6 @@ export function ServiceAccountProfile({
             label="Roles"
             serviceAccount={serviceAccount}
             onRoleChange={onRoleChange}
-            builtInRoles={builtInRoles}
             roleOptions={roleOptions}
           />
           <ServiceAccountProfileRow

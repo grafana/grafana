@@ -19,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -267,6 +267,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = anonSect.NewKey("plugin_admin_enabled", "true")
 			require.NoError(t, err)
 		}
+		if o.PluginAdminExternalManageEnabled {
+			anonSect, err := cfg.NewSection("plugins")
+			require.NoError(t, err)
+			_, err = anonSect.NewKey("plugin_admin_external_manage_enabled", "true")
+			require.NoError(t, err)
+		}
 		if o.ViewersCanEdit {
 			usersSection, err := cfg.NewSection("users")
 			require.NoError(t, err)
@@ -315,13 +321,14 @@ type GrafanaOpts struct {
 	EnableFeatureToggles                  []string
 	NGAlertAdminConfigPollInterval        time.Duration
 	NGAlertAlertmanagerConfigPollInterval time.Duration
-	AnonymousUserRole                     models.RoleType
+	AnonymousUserRole                     org.RoleType
 	EnableQuota                           bool
 	DashboardOrgQuota                     *int64
 	DisableAnonymous                      bool
 	CatalogAppEnabled                     bool
 	ViewersCanEdit                        bool
 	PluginAdminEnabled                    bool
+	PluginAdminExternalManageEnabled      bool
 	AppModeProduction                     bool
 	DisableLegacyAlerting                 bool
 	EnableUnifiedAlerting                 bool

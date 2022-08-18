@@ -5,9 +5,8 @@ import { GrafanaTheme2 } from '../themes';
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
-import { GrafanaTheme } from './theme';
 
-import { NavLinkDTO, OrgRole } from '.';
+import { GrafanaTheme, NavLinkDTO, OrgRole } from '.';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -71,6 +70,10 @@ export interface GrafanaJavascriptAgentConfig {
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
   apiKey: string;
+}
+
+export interface UnifiedAlertingConfig {
+  minInterval: string;
 }
 
 /**
@@ -173,12 +176,12 @@ export interface GrafanaConfig {
   profileEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
+  azureAuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
   rbacEnabled: boolean;
-  rbacBuiltInRoleAssignmentEnabled: boolean;
   disableUserSignUp: boolean;
   loginHint: string;
   passwordHint: string;
@@ -188,6 +191,7 @@ export interface GrafanaConfig {
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   liveEnabled: boolean;
+  /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[];
@@ -201,6 +205,7 @@ export interface GrafanaConfig {
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
+  unifiedAlerting: UnifiedAlertingConfig;
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;

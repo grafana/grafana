@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -24,8 +27,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 	sql := sqlstore.InitTestDB(t)
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 
-	testUser := &models.SignedInUser{
-		OrgId: 1,
+	testUser := &user.SignedInUser{
+		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
 			1: {
 				accesscontrol.ActionAnnotationsRead: []string{accesscontrol.ScopeAnnotationsAll},
@@ -47,7 +50,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.NoError(t, err)
 		})
 
-		dashboardStore := dashboardstore.ProvideDashboardStore(sql)
+		dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 		testDashboard1 := models.SaveDashboardCommand{
 			UserId: 1,
@@ -388,7 +391,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
-	dashboardStore := dashboardstore.ProvideDashboardStore(sql)
+	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 	testDashboard1 := models.SaveDashboardCommand{
 		UserId: 1,
@@ -434,9 +437,9 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	err = repo.Save(organizationAnnotation)
 	require.NoError(t, err)
 
-	user := &models.SignedInUser{
-		UserId: 1,
-		OrgId:  1,
+	user := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  1,
 	}
 
 	type testStruct struct {

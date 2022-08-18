@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -16,6 +18,8 @@ type Service struct {
 	store store
 	cfg   *setting.Cfg
 	log   log.Logger
+	// TODO remove sqlstore
+	sqlStore *sqlstore.SQLStore
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg) org.Service {
@@ -73,6 +77,30 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 	return s.store.Insert(ctx, &orga)
 }
 
-func (s *Service) InsertUser(ctx context.Context, orguser *org.OrgUser) (int64, error) {
-	return s.store.InsertUser(ctx, orguser)
+func (s *Service) InsertOrgUser(ctx context.Context, orguser *org.OrgUser) (int64, error) {
+	return s.store.InsertOrgUser(ctx, orguser)
+}
+
+func (s *Service) DeleteUserFromAll(ctx context.Context, userID int64) error {
+	return s.store.DeleteUserFromAll(ctx, userID)
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
+	q := &models.GetUserOrgListQuery{
+		UserId: query.UserID,
+	}
+	err := s.sqlStore.GetUserOrgList(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	var result []*org.UserOrgDTO
+	for _, orga := range q.Result {
+		result = append(result, &org.UserOrgDTO{
+			OrgID: orga.OrgId,
+			Name:  orga.Name,
+			Role:  orga.Role,
+		})
+	}
+	return result, nil
 }

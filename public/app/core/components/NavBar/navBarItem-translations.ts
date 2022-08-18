@@ -4,7 +4,10 @@ import { defineMessage } from '@lingui/macro';
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
-// Keys MUST match the ID of the navigation item, defined in the backend.
+
+// The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
+// must match the ID of the navigation item, as defined in the backend nav model
+
 // see pkg/api/index.go
 const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
   home: defineMessage({ id: 'nav.home', message: 'Home' }),
@@ -18,12 +21,12 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
   starred: defineMessage({ id: 'nav.starred', message: 'Starred' }),
   'starred-empty': defineMessage({ id: 'nav.starred-empty', message: 'Your starred dashboards will appear here' }),
   dashboards: defineMessage({ id: 'nav.dashboards', message: 'Dashboards' }),
-  'manage-dashboards': defineMessage({ id: 'nav.manage-dashboards', message: 'Browse' }),
-  playlists: defineMessage({ id: 'nav.playlists', message: 'Playlists' }),
-  snapshots: defineMessage({ id: 'nav.snapshots', message: 'Snapshots' }),
-  'library-panels': defineMessage({ id: 'nav.library-panels', message: 'Library panels' }),
-  'new-dashboard': defineMessage({ id: 'nav.new-dashboard', message: 'New dashboard' }),
-  'new-folder': defineMessage({ id: 'nav.new-folder', message: 'New folder' }),
+  'dashboards/browse': defineMessage({ id: 'nav.manage-dashboards', message: 'Browse' }),
+  'dashboards/playlists': defineMessage({ id: 'nav.playlists', message: 'Playlists' }),
+  'dashboards/snapshots': defineMessage({ id: 'nav.snapshots', message: 'Snapshots' }),
+  'dashboards/library-panels': defineMessage({ id: 'nav.library-panels', message: 'Library panels' }),
+  'dashboards/new': defineMessage({ id: 'nav.new-dashboard', message: 'New dashboard' }),
+  'dashboards/folder/new': defineMessage({ id: 'nav.new-folder', message: 'New folder' }),
 
   explore: defineMessage({ id: 'nav.explore', message: 'Explore' }),
 
@@ -54,8 +57,8 @@ const TRANSLATED_MENU_ITEMS: Record<string, MessageDescriptor> = {
 
   help: defineMessage({ id: 'nav.help', message: 'Help' }),
 
-  'profile-settings': defineMessage({ id: 'nav.profile-settings', message: 'Preferences' }),
-  'change-password': defineMessage({ id: 'nav.change-password', message: 'Change password' }),
+  'profile-settings': defineMessage({ id: 'nav.profile/settings', message: 'Preferences' }),
+  'change-password': defineMessage({ id: 'nav.profile/password', message: 'Change password' }),
   'sign-out': defineMessage({ id: 'nav.sign-out', message: 'Sign out' }),
 };
 

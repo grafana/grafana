@@ -3,7 +3,7 @@ package cloudwatch
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
 	"AWS/AmazonMQ":                {"AckRate", "BurstBalance", "ChannelCount", "ConfirmRate", "ConnectionCount", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExchangeCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "MessageCount", "MessageReadyCount", "MessageUnacknowledgedCount", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "PublishRate", "QueueCount", "QueueSize", "RabbitMQDiskFree", "RabbitMQDiskFreeLimit", "RabbitMQFdUsed", "RabbitMQMemLimit", "RabbitMQMemUsed", "ReceiveCount", "StorePercentUsage", "SystemCpuUtilization", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
-	"AWS/ApiGateway":              {"4xx", "4XXError", "5xx", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "DataProcessed", "IntegrationLatency", "Latency"},
+	"AWS/ApiGateway":              {"4xx", "4XXError", "5xx", "5XXError", "CacheHitCount", "CacheMissCount", "ClientError", "Count", "ConnectCount", "DataProcessed", "ExecutionError", "IntegrationError", "IntegrationLatency", "Latency", "MessageCount"},
 	"AWS/AppRunner":               {"2xxStatusResponses", "4xxStatusResponses", "5xxStatusResponses", "ActiveInstances", "CPUUtilization", "MemoryUtilization", "Requests", "RequestLatency"},
 	"AWS/AppStream":               {"ActualCapacity", "AvailableCapacity", "CapacityUtilization", "DesiredCapacity", "InUseCapacity", "InsufficientCapacityError", "PendingCapacity", "RunningCapacity"},
 	"AWS/AppSync":                 {"4XXError", "5XXError", "Latency", "ActiveConnections", "ActiveSubscriptions", "ConnectClientError", "ConnectionDuration", "ConnectServerError", "ConnectSuccess", "DisconnectClientError", "DisconnectServerError", "DisconnectSuccess", "PublishDataMessageClientError", "PublishDataMessageServerError", "PublishDataMessageSize", "PublishDataMessageSuccess", "SubscribeClientError", "SubscribeServerError", "SubscribeSuccess", "UnsubscribeClientError", "UnsubscribeServerError", "UnsubscribeSuccess"},
@@ -254,6 +254,7 @@ var metricsMap = map[string][]string{
 		"CurrConfig",
 		"CurrConnections",
 		"CurrItems",
+		"CurrVolatileItems",
 		"DatabaseMemoryUsagePercentage",
 		"DatabaseMemoryUsageCountedForEvictPercentage",
 		"DB0AverageTTL",
@@ -275,6 +276,7 @@ var metricsMap = map[string][]string{
 		"GetTypeCmds",
 		"GetTypeCmdsLatency",
 		"GlobalDatastoreReplicationLag",
+		"IsMaster",
 		"HashBasedCmds",
 		"HashBasedCmdsLatency",
 		"HyperLogLogBasedCmds",
@@ -330,7 +332,7 @@ var metricsMap = map[string][]string{
 	"AWS/ElasticInference":     {"AcceleratorHealthCheckFailed", "AcceleratorMemoryUsage", "ConnectivityCheckFailed"},
 	"AWS/ElasticMapReduce":     {"AppsCompleted", "AppsFailed", "AppsKilled", "AppsPending", "AppsRunning", "AppsSubmitted", "BackupFailed", "CapacityRemainingGB", "Cluster Status", "ContainerAllocated", "ContainerPending", "ContainerPendingRatio", "ContainerReserved", "CoreNodesPending", "CoreNodesRunning", "CorruptBlocks", "DfsPendingReplicationBlocks", "HBase", "HDFSBytesRead", "HDFSBytesWritten", "HDFSUtilization", "HbaseBackupFailed", "IO", "IsIdle", "JobsFailed", "JobsRunning", "LiveDataNodes", "LiveTaskTrackers", "MRActiveNodes", "MRDecommissionedNodes", "MRLostNodes", "MRRebootedNodes", "MRTotalNodes", "MRUnhealthyNodes", "Map/Reduce", "MapSlotsOpen", "MapTasksRemaining", "MapTasksRunning", "MemoryAllocatedMB", "MemoryAvailableMB", "MemoryReservedMB", "MemoryTotalMB", "MissingBlocks", "MostRecentBackupDuration", "Node Status", "PendingDeletionBlocks", "ReduceSlotsOpen", "ReduceTasksRemaining", "ReduceTasksRunning", "RemainingMapTasksPerSlot", "S3BytesRead", "S3BytesWritten", "TaskNodesPending", "TaskNodesRunning", "TimeSinceLastSuccessfulBackup", "TotalLoad", "UnderReplicatedBlocks", "YARNMemoryAvailablePercentage"},
 	"AWS/ElasticTranscoder":    {"Billed Audio Output", "Billed HD Output", "Billed SD Output", "Errors", "Jobs Completed", "Jobs Errored", "Outputs per Job", "Standby Time", "Throttles"},
-	"AWS/Events":               {"DeadLetterInvocations", "FailedInvocations", "Invocations", "InvocationsFailedToBeSentToDlq", "InvocationsSentToDlq", "MatchedEvents", "ThrottledRules", "TriggeredRules"},
+	"AWS/Events":               {"DeadLetterInvocations", "Events", "FailedInvocations", "IngestionToInvocationStartLatency", "Invocations", "InvocationsFailedToBeSentToDlq", "InvocationsSentToDlq", "MatchedEvents", "ThrottledRules", "TriggeredRules"},
 	"AWS/FSx":                  {"DataReadBytes", "DataReadOperations", "DataWriteBytes", "DataWriteOperations", "FreeDataStorageCapacity", "FreeStorageCapacity", "MetadataOperations"},
 	"AWS/Firehose":             {"BackupToS3.Bytes", "BackupToS3.DataFreshness", "BackupToS3.Records", "BackupToS3.Success", "DataReadFromKinesisStream.Bytes", "DataReadFromKinesisStream.Records", "DeliveryToElasticsearch.Bytes", "DeliveryToElasticsearch.Records", "DeliveryToElasticsearch.Success", "DeliveryToRedshift.Bytes", "DeliveryToRedshift.Records", "DeliveryToRedshift.Success", "DeliveryToS3.Bytes", "DeliveryToS3.DataFreshness", "DeliveryToS3.Records", "DeliveryToS3.Success", "DeliveryToSplunk.Bytes", "DeliveryToSplunk.DataFreshness", "DeliveryToSplunk.Records", "DeliveryToSplunk.Success", "DescribeDeliveryStream.Latency", "DescribeDeliveryStream.Requests", "ExecuteProcessing.Duration", "ExecuteProcessing.Success", "FailedConversion.Bytes", "FailedConversion.Records", "IncomingBytes", "IncomingRecords", "KinesisMillisBehindLatest", "ListDeliveryStreams.Latency", "ListDeliveryStreams.Requests", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Requests", "PutRecordBatch.Bytes", "PutRecordBatch.Latency", "PutRecordBatch.Records", "PutRecordBatch.Requests", "SucceedConversion.Bytes", "SucceedConversion.Records", "SucceedProcessing.Bytes", "SucceedProcessing.Records", "ThrottledDescribeStream", "ThrottledGetRecords", "ThrottledGetShardIterator", "UpdateDeliveryStream.Latency", "UpdateDeliveryStream.Requests"},
 	"AWS/GameLift":             {"ActivatingGameSessions", "ActiveGameSessions", "ActiveInstances", "ActiveServerProcesses", "AvailableGameSessions", "AverageWaitTime", "CurrentPlayerSessions", "CurrentTickets", "DesiredInstances", "FirstChoiceNotViable", "FirstChoiceOutOfCapacity", "GameSessionInterruptions", "HealthyServerProcesses", "IdleInstances", "InstanceInterruptions", "LowestLatencyPlacement", "LowestPricePlacement", "MatchAcceptancesTimedOut", "MatchesAccepted", "MatchesCreated", "MatchesPlaced", "MatchesRejected", "MaxInstances", "MinInstances", "PercentAvailableGameSessions", "PercentHealthyServerProcesses", "PercentIdleInstances", "Placement", "PlacementsCanceled", "PlacementsFailed", "PlacementsStarted", "PlacementsSucceeded", "PlacementsTimedOut", "PlayerSessionActivations", "PlayersStarted", "QueueDepth", "RuleEvaluationsFailed", "RuleEvaluationsPassed", "ServerProcessAbnormalTerminations", "ServerProcessActivations", "ServerProcessTerminations", "TicketsFailed", "TicketsStarted", "TicketsTimedOut", "TimeToMatch", "TimeToTicketSuccess"},
@@ -346,7 +348,7 @@ var metricsMap = map[string][]string{
 	"AWS/Kinesis":              {"GetRecords.Bytes", "GetRecords.IteratorAge", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Records", "GetRecords.Success", "IncomingBytes", "IncomingRecords", "IteratorAgeMilliseconds", "OutgoingBytes", "OutgoingRecords", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "ReadProvisionedThroughputExceeded", "SubscribeToShard.RateExceeded", "SubscribeToShard.Success", "SubscribeToShardEvent.Bytes", "SubscribeToShardEvent.MillisBehindLatest", "SubscribeToShardEvent.Records", "SubscribeToShardEvent.Success", "WriteProvisionedThroughputExceeded"},
 	"AWS/KinesisAnalytics":     {"Bytes", "InputProcessing.DroppedRecords", "InputProcessing.Duration", "InputProcessing.OkBytes", "InputProcessing.OkRecords", "InputProcessing.ProcessingFailedRecords", "InputProcessing.Success", "KPUs", "LambdaDelivery.DeliveryFailedRecords", "LambdaDelivery.Duration", "LambdaDelivery.OkRecords", "MillisBehindLatest", "Records", "Success"},
 	"AWS/KinesisVideo":         {"GetHLSMasterPlaylist.Latency", "GetHLSMasterPlaylist.Requests", "GetHLSMasterPlaylist.Success", "GetHLSMediaPlaylist.Latency", "GetHLSMediaPlaylist.Requests", "GetHLSMediaPlaylist.Success", "GetHLSStreamingSessionURL.Latency", "GetHLSStreamingSessionURL.Requests", "GetHLSStreamingSessionURL.Success", "GetMP4InitFragment.Latency", "GetMP4InitFragment.Requests", "GetMP4InitFragment.Success", "GetMP4MediaFragment.Latency", "GetMP4MediaFragment.OutgoingBytes", "GetMP4MediaFragment.Requests", "GetMP4MediaFragment.Success", "GetMedia.ConnectionErrors", "GetMedia.MillisBehindNow", "GetMedia.OutgoingBytes", "GetMedia.OutgoingFragments", "GetMedia.OutgoingFrames", "GetMedia.Requests", "GetMedia.Success", "GetMediaForFragmentList.OutgoingBytes", "GetMediaForFragmentList.OutgoingFragments", "GetMediaForFragmentList.OutgoingFrames", "GetMediaForFragmentList.Requests", "GetMediaForFragmentList.Success", "GetTSFragment.Latency", "GetTSFragment.OutgoingBytes", "GetTSFragment.Requests", "GetTSFragment.Success", "ListFragments.Latency", "PutMedia.ActiveConnections", "PutMedia.BufferingAckLatency", "PutMedia.ConnectionErrors", "PutMedia.ErrorAckCount", "PutMedia.FragmentIngestionLatency", "PutMedia.FragmentPersistLatency", "PutMedia.IncomingBytes", "PutMedia.IncomingFragments", "PutMedia.IncomingFrames", "PutMedia.Latency", "PutMedia.PersistedAckLatency", "PutMedia.ReceivedAckLatency", "PutMedia.Requests", "PutMedia.Success"},
-	"AWS/Lambda":               {"ConcurrentExecutions", "DeadLetterErrors", "Duration", "Errors", "Invocations", "IteratorAge", "Throttles", "UnreservedConcurrentExecutions"},
+	"AWS/Lambda":               {"ConcurrentExecutions", "DeadLetterErrors", "DestinationDeliveryFailures", "Duration", "Errors", "Invocations", "IteratorAge", "OffsetLag", "PostRuntimeExtensionsDuration", "ProvisionedConcurrencyInvocations", "ProvisionedConcurrencyUtilization", "ProvisionedConcurrentExecutions", "Throttles", "ProvisionedConcurrencySpilloverInvocations", "UnreservedConcurrentExecutions"},
 	"AWS/Lex":                  {"BotChannelAuthErrors", "BotChannelConfigurationErrors", "BotChannelInboundThrottledEvents", "BotChannelOutboundThrottledEvents", "BotChannelRequestCount", "BotChannelResponseCardErrors", "BotChannelSystemErrors", "MissedUtteranceCount", "RuntimeInvalidLambdaResponses", "RuntimeLambdaErrors", "RuntimePollyErrors", "RuntimeRequestCount", "RuntimeSucessfulRequestLatency", "RuntimeSystemErrors", "RuntimeThrottledEvents", "RuntimeUserErrors"},
 	"AWS/Logs":                 {"DeliveryErrors", "DeliveryThrottling", "ForwardedBytes", "ForwardedLogEvents", "IncomingBytes", "IncomingLogEvents"},
 	"AWS/LookoutMetrics":       {"ExecutionsStarted", "ExecutionsSucceeded", "ExecutionsFailed", "Delivered", "Undelivered"},
@@ -398,12 +400,13 @@ var metricsMap = map[string][]string{
 	"AWS/Rekognition":          {"DetectedFaceCount", "DetectedLabelCount", "ResponseTime", "ServerErrorCount", "SuccessfulRequestCount", "ThrottledCount", "UserErrorCount"},
 	"AWS/Cassandra":            {"AccountMaxReads", "AccountMaxTableLevelReads", "AccountMaxTableLevelWrites", "AccountMaxWrites", "AccountProvisionedReadCapacityUtilization", "AccountProvisionedWriteCapacityUtilization", "ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "MaxProvisionedTableReadCapacityUtilization", "MaxProvisionedTableWriteCapacityUtilization", "ReturnedItemCount", "ReturnedItemCountBySelect", "SuccessfulRequestCount", "SuccessfulRequestLatency", "SystemErrors", "UserErrors"},
 	"AWS/AmplifyHosting":       {"Requests", "BytesDownloaded", "BytesUploaded", "4XXErrors", "5XXErrors", "Latency"},
+	"CloudWatchSynthetics":     {"SuccessPercent", "Duration", "2xx", "4xx", "5xx", "Failed", "Failed requests", "VisualMonitoringSuccessPercent", "VisualMonitoringTotalComparisons"},
 }
 
 var dimensionsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {},
 	"AWS/AmazonMQ":                {"Broker", "NetworkConnector", "Queue", "Topic", "Node", "Virtual host"},
-	"AWS/ApiGateway":              {"ApiId", "ApiName", "Method", "Resource", "Stage"},
+	"AWS/ApiGateway":              {"ApiId", "ApiName", "Method", "Resource", "Route", "Stage"},
 	"AWS/AppRunner":               {"Instance", "ServiceID", "ServiceName"},
 	"AWS/AppStream":               {"Fleet"},
 	"AWS/AppSync":                 {"GraphQLAPIId"},
@@ -461,7 +464,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Kinesis":                 {"ShardId", "StreamName"},
 	"AWS/KinesisAnalytics":        {"Application", "Flow", "Id"},
 	"AWS/KinesisVideo":            {"StreamName"},
-	"AWS/Lambda":                  {"Alias", "ExecutedVersion", "FunctionName", "Resource"},
+	"AWS/Lambda":                  {"ExecutedVersion", "FunctionName", "Resource"},
 	"AWS/Lex":                     {"BotAlias", "BotChannelName", "BotName", "BotVersion", "InputMode", "Operation", "Source"},
 	"AWS/Logs":                    {"DestinationType", "FilterName", "LogGroupName"},
 	"AWS/LookoutMetrics":          {"AlertArn", "AnomalyDetectorArn"},
@@ -513,6 +516,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/Rekognition":             {},
 	"AWS/Cassandra":               {"Keyspace", "Operation", "TableName"},
 	"AWS/AmplifyHosting":          {"App"},
+	"CloudWatchSynthetics":        {"CanaryName"},
 }
 
 // Known AWS regions.

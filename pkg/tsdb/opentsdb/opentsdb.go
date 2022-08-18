@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -130,7 +130,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, dat
 func (s *Service) parseResponse(res *http.Response) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

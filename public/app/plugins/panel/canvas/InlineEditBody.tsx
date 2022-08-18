@@ -2,10 +2,11 @@ import { get as lodashGet } from 'lodash';
 import React, { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
+import { DataFrame, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
 import { FrameState } from 'app/features/canvas/runtime/frame';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { fillOptionsPaneItems } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
@@ -14,13 +15,13 @@ import { activePanelSubject, InstanceState } from './CanvasPanel';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 
-export const InlineEditBody = () => {
+export function InlineEditBody() {
   const activePanel = useObservable(activePanelSubject);
   const instanceState = activePanel?.panel.context?.instanceState;
-
   const pane = useMemo(() => {
+    const p = activePanel?.panel;
     const state: InstanceState = instanceState;
-    if (!state) {
+    if (!state || !p) {
       return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
 
@@ -42,33 +43,41 @@ export const InlineEditBody = () => {
       }
     };
 
-    return getOptionsPaneCategoryDescriptor({}, supplier);
-  }, [instanceState]);
+    return getOptionsPaneCategoryDescriptor(
+      {
+        options: p.props.options,
+        onChange: p.props.onOptionsChange,
+        data: p.props.data?.series,
+      },
+      supplier
+    );
+  }, [instanceState, activePanel]);
 
+  return <>{pane.categories.map((p) => renderOptionsPaneCategoryDescriptor(p))}</>;
+}
+
+// Recursively render options
+function renderOptionsPaneCategoryDescriptor(pane: OptionsPaneCategoryDescriptor) {
   return (
-    <div>
+    <OptionsPaneCategory {...pane.props} key={pane.props.id}>
       <div>{pane.items.map((v) => v.render())}</div>
-      <div>
-        {pane.categories.map((c) => {
-          return (
-            <div key={c.props.id}>
-              <h5>{c.props.title}</h5>
-              <div>{c.items.map((s) => s.render())}</div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+      {pane.categories.map((c) => renderOptionsPaneCategoryDescriptor(c))}
+    </OptionsPaneCategory>
   );
-};
+}
 
-// 🤮🤮🤮🤮 this oddly does not actually do anything, but structure is required.  I'll try to clean it up...
+interface EditorProps<T> {
+  onChange: (v: T) => void;
+  options: T;
+  data?: DataFrame[];
+}
+
 function getOptionsPaneCategoryDescriptor<T = any>(
-  props: any,
+  props: EditorProps<T>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
   const context: StandardEditorContext<unknown, unknown> = {
-    data: props.input,
+    data: props.data ?? [],
     options: props.options,
   };
 

@@ -19,8 +19,8 @@ import { OrgRole, Role } from 'app/types';
 
 import { MENU_MAX_HEIGHT } from './constants';
 
-const BuiltinRoles = Object.values(OrgRole);
-const BuiltinRoleOption: Array<SelectableValue<OrgRole>> = BuiltinRoles.map((r) => ({
+const BasicRoles = Object.values(OrgRole);
+const BasicRoleOption: Array<SelectableValue<OrgRole>> = BasicRoles.map((r) => ({
   label: r,
   value: r,
 }));
@@ -31,36 +31,36 @@ const fixedRoleGroupNames: Record<string, string> = {
 };
 
 interface RolePickerMenuProps {
-  builtInRole?: OrgRole;
+  basicRole?: OrgRole;
   options: Role[];
   appliedRoles: Role[];
   showGroups?: boolean;
-  builtinRolesDisabled?: boolean;
-  showBuiltInRole?: boolean;
+  basicRoleDisabled?: boolean;
+  showBasicRole?: boolean;
   onSelect: (roles: Role[]) => void;
-  onBuiltInRoleSelect?: (role: OrgRole) => void;
+  onBasicRoleSelect?: (role: OrgRole) => void;
   onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
-  onClear?: () => void;
   updateDisabled?: boolean;
+  apply?: boolean;
   offset: { vertical: number; horizontal: number };
 }
 
 export const RolePickerMenu = ({
-  builtInRole,
+  basicRole,
   options,
   appliedRoles,
   showGroups,
-  builtinRolesDisabled,
-  showBuiltInRole,
+  basicRoleDisabled,
+  showBasicRole,
   onSelect,
-  onBuiltInRoleSelect,
+  onBasicRoleSelect,
   onUpdate,
-  onClear,
   updateDisabled,
   offset,
+  apply,
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
-  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
   const [showSubMenu, setShowSubMenu] = useState(false);
   const [openedMenuGroup, setOpenedMenuGroup] = useState('');
   const [subMenuOptions, setSubMenuOptions] = useState<Role[]>([]);
@@ -75,10 +75,10 @@ export const RolePickerMenu = ({
   }, [selectedOptions, onSelect]);
 
   useEffect(() => {
-    if (onBuiltInRoleSelect && selectedBuiltInRole) {
-      onBuiltInRoleSelect(selectedBuiltInRole);
+    if (onBasicRoleSelect && selectedBuiltInRole) {
+      onBasicRoleSelect(selectedBuiltInRole);
     }
-  }, [selectedBuiltInRole, onBuiltInRoleSelect]);
+  }, [selectedBuiltInRole, onBasicRoleSelect]);
 
   const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
   const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
@@ -153,9 +153,6 @@ export const RolePickerMenu = ({
   };
 
   const onClearInternal = async () => {
-    if (onClear) {
-      onClear();
-    }
     setSelectedOptions([]);
   };
 
@@ -191,16 +188,16 @@ export const RolePickerMenu = ({
     >
       <div className={customStyles.menu} aria-label="Role picker menu">
         <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack hideVerticalTrack>
-          {showBuiltInRole && (
+          {showBasicRole && (
             <div className={customStyles.menuSection}>
               <div className={customStyles.groupHeader}>Basic roles</div>
               <RadioButtonGroup
-                className={customStyles.builtInRoleSelector}
-                options={BuiltinRoleOption}
+                className={customStyles.basicRoleSelector}
+                options={BasicRoleOption}
                 value={selectedBuiltInRole}
                 onChange={onSelectedBuiltinRoleChange}
                 fullWidth={true}
-                disabled={builtinRolesDisabled}
+                disabled={basicRoleDisabled}
               />
             </div>
           )}
@@ -272,11 +269,11 @@ export const RolePickerMenu = ({
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
           <HorizontalGroup justify="flex-end">
-            <Button size="sm" fill="text" onClick={onClearInternal}>
+            <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
               Clear all
             </Button>
-            <Button size="sm" onClick={onUpdateInternal}>
-              {updateDisabled ? `Apply` : `Update`}
+            <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>
+              {apply ? `Apply` : `Update`}
             </Button>
           </HorizontalGroup>
         </div>
@@ -624,7 +621,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     menuOptionInfoSign: css`
       color: ${theme.colors.text.disabled};
     `,
-    builtInRoleSelector: css`
+    basicRoleSelector: css`
       margin: ${theme.spacing(1, 1.25, 1, 1)};
     `,
     subMenuPortal: css`

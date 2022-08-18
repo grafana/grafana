@@ -35,6 +35,7 @@ interface Props {
 interface State {
   panelDataByRefId: Record<string, PanelData>;
 }
+
 export class QueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
   private queries: AlertQuery[];
@@ -100,12 +101,16 @@ export class QueryEditor extends PureComponent<Props, State> {
   onNewExpressionQuery = () => {
     const { queries } = this;
 
+    const lastQuery = queries.at(-1);
+    const defaultParams = lastQuery ? [lastQuery.refId] : [];
+
     this.onChangeQueries(
       addQuery(queries, {
         datasourceUid: ExpressionDatasourceUID,
         model: expressionDatasource.newQuery({
           type: ExpressionQueryType.classic,
-          conditions: [defaultCondition],
+          conditions: [{ ...defaultCondition, query: { params: defaultParams } }],
+          expression: lastQuery?.refId,
         }),
       })
     );

@@ -1,128 +1,70 @@
 import { action } from '@storybook/addon-actions';
-import { Story } from '@storybook/react';
+import { useArgs } from '@storybook/client-api';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { dateTime, TimeRange, DefaultTimeZone, TimeZone, isDateTime } from '@grafana/data';
-import { Button, TimeRangePicker } from '@grafana/ui';
+import { dateTime, DefaultTimeZone } from '@grafana/data';
+import { TimeRangePicker } from '@grafana/ui';
 
-import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import { TimeRangePickerProps } from './TimeRangePicker';
+const to = dateTime();
+const from = to.subtract(6, 'h');
 
-export default {
+const meta: ComponentMeta<typeof TimeRangePicker> = {
   title: 'Pickers and Editors/TimePickers/TimeRangePicker',
   component: TimeRangePicker,
   decorators: [withCenteredStory],
+  args: {
+    value: {
+      from,
+      to,
+      raw: {
+        from: 'now-6h',
+        to: 'now',
+      },
+    },
+    timeZone: DefaultTimeZone,
+    history: [],
+  },
+  parameters: {
+    controls: {
+      exclude: [
+        'onChange',
+        'onChangeTimeZone',
+        'onChangeFiscalYearStartMonth',
+        'onMoveBackward',
+        'onMoveForward',
+        'onZoom',
+        'timeSyncButton',
+      ],
+    },
+  },
 };
 
-interface State {
-  value: TimeRange;
-  timeZone: TimeZone;
-  history: TimeRange[];
-}
-
-const getComponentWithState = (initialState: State, props: TimeRangePickerProps) => (
-  <UseState initialState={initialState}>
-    {(state, updateValue) => {
-      return (
-        <DashboardStoryCanvas>
-          <VerticalGroup>
-            <HorizontalGroup justify="flex-end">
-              <TimeRangePicker
-                {...props}
-                timeZone={state.timeZone}
-                value={state.value}
-                history={state.history}
-                onChange={(value) => {
-                  action('onChange fired')(value);
-                  updateValue({
-                    ...state,
-                    value,
-                    history:
-                      isDateTime(value.raw.from) && isDateTime(value.raw.to)
-                        ? [...state.history, value]
-                        : state.history,
-                  });
-                }}
-                onChangeTimeZone={(timeZone) => {
-                  action('onChangeTimeZone fired')(timeZone);
-                  updateValue({
-                    ...state,
-                    timeZone,
-                  });
-                }}
-                onMoveBackward={() => {
-                  action('onMoveBackward fired')();
-                }}
-                onMoveForward={() => {
-                  action('onMoveForward fired')();
-                }}
-                onZoom={() => {
-                  action('onZoom fired')();
-                }}
-              />
-            </HorizontalGroup>
-            <br />
-            <br />
-            <br />
-            <Button
-              onClick={() => {
-                updateValue({
-                  ...state,
-                  history: [],
-                });
-              }}
-            >
-              Clear history
-            </Button>
-          </VerticalGroup>
-        </DashboardStoryCanvas>
-      );
-    }}
-  </UseState>
-);
-
-export const Relative: Story<TimeRangePickerProps> = (props) => {
-  const to = dateTime();
-  const from = to.subtract(6, 'h');
-
-  return getComponentWithState(
-    {
-      value: {
-        from,
-        to,
-        raw: {
-          from: 'now-6h',
-          to: 'now',
-        },
-      },
-      timeZone: DefaultTimeZone,
-      history: [],
-    },
-    props
+export const Basic: ComponentStory<typeof TimeRangePicker> = (args) => {
+  const [, updateArgs] = useArgs();
+  return (
+    <TimeRangePicker
+      {...args}
+      onChange={(value) => {
+        action('onChange')(value);
+        updateArgs({
+          value,
+          history: args.history ? [...args.history, value] : [value],
+        });
+      }}
+      onChangeTimeZone={(timeZone) => {
+        action('onChangeTimeZone')(timeZone);
+        updateArgs({
+          timeZone,
+        });
+      }}
+      onMoveBackward={action('onMoveBackward')}
+      onMoveForward={action('onMoveForward')}
+      onZoom={action('onZoom')}
+    />
   );
 };
 
-export const Absolute: Story<TimeRangePickerProps> = (props) => {
-  const to = dateTime();
-  const from = to.subtract(6, 'h');
-
-  return getComponentWithState(
-    {
-      value: {
-        from,
-        to,
-        raw: {
-          from,
-          to,
-        },
-      },
-      timeZone: DefaultTimeZone,
-      history: [],
-    },
-    props
-  );
-};
+export default meta;

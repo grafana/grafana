@@ -2,7 +2,7 @@ package influxdb
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"testing"
 
@@ -48,7 +48,7 @@ func TestExecutor_createRequest(t *testing.T) {
 		q := req.URL.Query().Get("q")
 		assert.Empty(t, q)
 
-		body, err := ioutil.ReadAll(req.Body)
+		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
 		testBodyValues := url.Values{}
