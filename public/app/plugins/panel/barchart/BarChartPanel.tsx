@@ -217,7 +217,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   };
 
   // Color by value
-  let getColor: ((seriesIdx: number, valueIdx: number, value: any) => string) | undefined = undefined;
+  let getColor: ((seriesIdx: number, valueIdx: number) => string) | undefined = undefined;
 
   let fillOpacity = 1;
 
@@ -226,7 +226,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     const disp = colorByField.display!;
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number, value: any) => disp(value).color!;
+    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByField.values.get(valueIdx)).color!;
   }
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {

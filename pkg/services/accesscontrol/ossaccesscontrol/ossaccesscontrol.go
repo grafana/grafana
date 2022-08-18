@@ -8,16 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(
-	features featuremgmt.FeatureToggles, cfg *setting.Cfg,
-	store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister,
-) (*OSSAccessControlService, error) {
+func ProvideService(cfg *setting.Cfg, store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
 	s := ProvideOSSAccessControl(cfg, store)
 	if !s.IsDisabled() {
@@ -102,6 +98,10 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *user.Sign
 	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgID]), nil
 }
 
+var actionsToFetch = append(
+	TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...,
+)
+
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
@@ -113,7 +113,8 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 		OrgID:   user.OrgID,
 		UserID:  user.UserID,
 		Roles:   accesscontrol.GetOrgRoles(ac.cfg, user),
-		Actions: append(TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...),
+		TeamIDs: user.Teams,
+		Actions: actionsToFetch,
 	})
 	if err != nil {
 		return nil, err
@@ -199,6 +200,6 @@ func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix st
 	ac.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 }
 
-func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, userID int64) error {
-	return ac.store.DeleteUserPermissions(ctx, userID)
+func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
+	return ac.store.DeleteUserPermissions(ctx, orgID, userID)
 }

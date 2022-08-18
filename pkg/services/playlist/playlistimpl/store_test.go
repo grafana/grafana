@@ -9,12 +9,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationPlaylistDataAccess(t *testing.T) {
+type getStore func(*sqlstore.SQLStore) store
+
+func testIntegrationPlaylistDataAccess(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
 	ss := sqlstore.InitTestDB(t)
-	playlistStore := sqlStore{db: ss}
+	playlistStore := fn(ss)
 
 	t.Run("Can create playlist", func(t *testing.T) {
 		items := []playlist.PlaylistItemDTO{
@@ -26,18 +29,18 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		uid := p.UID
 
+		t.Run("Can get playlist", func(t *testing.T) {
+			get := &playlist.GetPlaylistByUidQuery{UID: uid, OrgId: 1}
+			pl, err := playlistStore.Get(context.Background(), get)
+			require.NoError(t, err)
+			require.Equal(t, p.Id, pl.Id)
+		})
+
 		t.Run("Can get playlist items", func(t *testing.T) {
 			get := &playlist.GetPlaylistItemsByUidQuery{PlaylistUID: uid, OrgId: 1}
 			storedPlaylistItems, err := playlistStore.GetItems(context.Background(), get)
 			require.NoError(t, err)
-			require.Equal(t, len(storedPlaylistItems), len(items))
-		})
-
-		t.Run("Get playlist that doesn't exist", func(t *testing.T) {
-			get := &playlist.GetPlaylistByUidQuery{UID: "unknown", OrgId: 1}
-			_, err := playlistStore.Get(context.Background(), get)
-			require.Error(t, err)
-			require.ErrorIs(t, err, playlist.ErrPlaylistNotFound)
+			require.Equal(t, len(items), len(storedPlaylistItems))
 		})
 
 		t.Run("Can update playlist", func(t *testing.T) {
@@ -56,14 +59,49 @@ func TestIntegrationPlaylistDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			getQuery := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: 1}
-			p, err := playlistStore.Get(context.Background(), &getQuery)
+			_, err := playlistStore.Get(context.Background(), &getQuery)
 			require.Error(t, err)
-			require.Equal(t, uid, p.UID, "playlist should've been removed")
 			require.ErrorIs(t, err, playlist.ErrPlaylistNotFound)
 		})
 	})
 
-	t.Run("Delete playlist that doesn't exist", func(t *testing.T) {
+	t.Run("Search playlist", func(t *testing.T) {
+		items := []playlist.PlaylistItemDTO{
+			{Title: "graphite", Value: "graphite", Type: "dashboard_by_tag"},
+			{Title: "Backend response times", Value: "3", Type: "dashboard_by_id"},
+		}
+		pl1 := playlist.CreatePlaylistCommand{Name: "NYC office", Interval: "10m", OrgId: 1, Items: items}
+		pl2 := playlist.CreatePlaylistCommand{Name: "NICE office", Interval: "10m", OrgId: 1, Items: items}
+		pl3 := playlist.CreatePlaylistCommand{Name: "NICE office", Interval: "10m", OrgId: 2, Items: items}
+		_, err := playlistStore.Insert(context.Background(), &pl1)
+		require.NoError(t, err)
+		_, err = playlistStore.Insert(context.Background(), &pl2)
+		require.NoError(t, err)
+		_, err = playlistStore.Insert(context.Background(), &pl3)
+		require.NoError(t, err)
+
+		t.Run("With Org ID", func(t *testing.T) {
+			qr := playlist.GetPlaylistsQuery{Limit: 100, OrgId: 1}
+			res, err := playlistStore.List(context.Background(), &qr)
+
+			require.NoError(t, err)
+			require.Equal(t, 2, len(res))
+		})
+		t.Run("With Limit", func(t *testing.T) {
+			qr := playlist.GetPlaylistsQuery{Limit: 1, Name: "office", OrgId: 1}
+			res, err := playlistStore.List(context.Background(), &qr)
+			require.NoError(t, err)
+			require.Equal(t, 1, len(res))
+		})
+		t.Run("With Org ID and Name", func(t *testing.T) {
+			qr := playlist.GetPlaylistsQuery{Limit: 100, Name: "office", OrgId: 1}
+			res, err := playlistStore.List(context.Background(), &qr)
+			require.NoError(t, err)
+			require.Equal(t, 2, len(res))
+		})
+	})
+
+	t.Run("Delete playlist that doesn't exist, should not return error", func(t *testing.T) {
 		deleteQuery := playlist.DeletePlaylistCommand{UID: "654312", OrgId: 1}
 		err := playlistStore.Delete(context.Background(), &deleteQuery)
 		require.NoError(t, err)

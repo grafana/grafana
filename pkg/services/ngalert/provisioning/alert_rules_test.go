@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -67,6 +66,19 @@ func TestAlertRuleService(t *testing.T) {
 		rule, _, err = ruleService.GetAlertRule(context.Background(), orgID, rule.UID)
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
+	})
+
+	t.Run("if a folder was renamed the interval should be fetched from the renamed folder", func(t *testing.T) {
+		var orgID int64 = 2
+		rule := dummyRule("test#1", orgID)
+		rule.NamespaceUID = "123abc"
+		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+		require.NoError(t, err)
+
+		rule.NamespaceUID = "abc123"
+		_, err = ruleService.UpdateAlertRule(context.Background(),
+			rule, models.ProvenanceNone)
+		require.NoError(t, err)
 	})
 
 	t.Run("group creation should propagate group title correctly", func(t *testing.T) {
@@ -352,8 +364,8 @@ func createTestRule(title string, groupTitle string, orgID int64) models.AlertRu
 	}
 }
 
-func createDummyGroup(title string, orgID int64) definitions.AlertRuleGroup {
-	return definitions.AlertRuleGroup{
+func createDummyGroup(title string, orgID int64) models.AlertRuleGroup {
+	return models.AlertRuleGroup{
 		Title:     title,
 		Interval:  60,
 		FolderUID: "my-namespace",
