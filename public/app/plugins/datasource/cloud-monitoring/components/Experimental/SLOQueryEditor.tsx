@@ -9,6 +9,7 @@ import { alignmentPeriodLabel } from '../../functions';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
 
 import { AliasBy } from './AliasBy';
+import { LookbackPeriodSelect } from './LookbackPeriodSelect';
 import { PeriodSelect } from './PeriodSelect';
 import { Project } from './Project';
 import { SLO } from './SLO';
@@ -35,6 +36,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
   serviceName: '',
   sloId: '',
   sloName: '',
+  lookbackPeriod: '1h',
 });
 
 export function SLOQueryEditor({
@@ -77,6 +79,14 @@ export function SLOQueryEditor({
           query={query}
           onChange={onChange}
         />
+        {query.selectorName === 'select_slo_burn_rate' && (
+          <LookbackPeriodSelect
+            refId={refId}
+            onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
+            current={query.lookbackPeriod}
+            templateVariableOptions={variableOptionGroup.options}
+          />
+        )}
 
         <EditorFieldGroup>
           <EditorField label="Alignment period" tooltip={alignmentLabel}>
