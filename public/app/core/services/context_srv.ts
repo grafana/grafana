@@ -112,10 +112,6 @@ export class ContextSrv {
     return config.rbacEnabled;
   }
 
-  accessControlBuiltInRoleAssignmentEnabled(): boolean {
-    return config.rbacBuiltInRoleAssignmentEnabled;
-  }
-
   licensedAccessControlEnabled(): boolean {
     return featureEnabled('accesscontrol') && config.rbacEnabled;
   }

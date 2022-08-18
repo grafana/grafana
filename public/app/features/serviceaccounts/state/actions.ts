@@ -1,7 +1,7 @@
 import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
 import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
@@ -11,7 +11,6 @@ import { API_KEYS_MIGRATION_INFO_STORAGE_KEY } from '../constants';
 
 import {
   acOptionsLoaded,
-  builtInRolesLoaded,
   pageChanged,
   queryChanged,
   serviceAccountsFetchBegin,
@@ -30,14 +29,6 @@ export function fetchACOptions(): ThunkResult<void> {
       if (contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
         const options = await fetchRoleOptions();
         dispatch(acOptionsLoaded(options));
-      }
-      if (
-        contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
-        contextSrv.licensedAccessControlEnabled() &&
-        contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
-      ) {
-        const builtInRoles = await fetchBuiltinRoles();
-        dispatch(builtInRolesLoaded(builtInRoles));
       }
     } catch (error) {
       console.error(error);
