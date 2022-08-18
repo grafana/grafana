@@ -47,11 +47,10 @@ export const UserRolePicker: FC<Props> = ({
 }) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
-      if (apply) {
-        if (pendingRoles?.length! > 0) {
-          return pendingRoles;
-        }
+      if (apply && Boolean(pendingRoles?.length)) {
+        return pendingRoles;
       }
+
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
         return await fetchUserRoles(userId, orgId);
       }

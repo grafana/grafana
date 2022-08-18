@@ -38,10 +38,13 @@ export const TeamRolePicker: FC<Props> = ({
 }) => {
   const [{ loading, value: appliedRoles = [] }, getTeamRoles] = useAsyncFn(async () => {
     try {
-      if (apply && pendingRoles?.length! > 0) {
+      if (apply && Boolean(pendingRoles?.length)) {
         return pendingRoles;
       }
-      return await fetchTeamRoles(teamId);
+
+      if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList)) {
+        return await fetchTeamRoles(teamId);
+      }
     } catch (e) {
       console.error('Error loading options', e);
     }
