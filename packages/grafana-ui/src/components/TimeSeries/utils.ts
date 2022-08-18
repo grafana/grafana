@@ -231,7 +231,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       yScaleKey = scaleKey;
     }
 
-    if (customConfig.axisPlacement !== AxisPlacement.Hidden && !customConfig.hideFrom?.viz) {
+    if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       let axisColor: uPlot.Axis.Stroke | undefined;
 
       if (customConfig.axisColorMode === AxisColorMode.Series) {
