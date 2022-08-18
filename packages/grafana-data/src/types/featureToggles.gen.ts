@@ -63,5 +63,4 @@ export interface FeatureToggles {
   internationalization?: boolean;
   topnav?: boolean;
   customBranding?: boolean;
-  fullstoryUserTracking?: boolean;
 }

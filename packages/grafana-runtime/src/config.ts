@@ -62,7 +62,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   verifyEmailEnabled = false;
   oauth: OAuthSettings = {};
   rbacEnabled = true;
-  rbacBuiltInRoleAssignmentEnabled = false;
   disableUserSignUp = false;
   loginHint = '';
   passwordHint = '';
@@ -134,7 +133,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     enabled: true,
   };
   googleAnalyticsId: undefined;
-  fullstoryOrgId: undefined;
   rudderstackWriteKey: undefined;
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
