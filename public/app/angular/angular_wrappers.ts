@@ -149,4 +149,22 @@ export function registerAngularDirectives() {
   react2AngularDirective('clipboardButton', ClipboardButton, [
     ['getText', { watchDepth: 'reference', wrapApply: true }],
   ]);
+
+  // replacing bootstrap-tagsinput
+  react2AngularDirective('tagFilter', TagFilter, [
+    'tags', // string[];
+    ['onChange', { watchDepth: 'reference', wrapApply: true }], // onChange: (tags: string[]) => void;
+  ]);
 }
+
+// allowCustomValue?: boolean;
+// formatCreateLabel?: (input: string) => string;
+// /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
+// hideValues?: boolean;
+// inputId?: string;
+// isClearable?: boolean;
+// onChange: (tags: string[]) => void;
+// placeholder?: string;
+// tagOptions: () => Promise<TermCount[]>;
+// tags: string[];
+// width?: number;

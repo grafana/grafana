@@ -38,7 +38,7 @@ const filterOption = (option: any, searchQuery: string) => {
   return regex.test(option.value);
 };
 
-export const TagFilter: FC<Props> = ({
+export function TagFilter({
   allowCustomValue = false,
   formatCreateLabel,
   hideValues,
@@ -49,7 +49,7 @@ export const TagFilter: FC<Props> = ({
   tagOptions,
   tags,
   width,
-}) => {
+}: Props) {
   const styles = useStyles2(getStyles);
 
   const currentlySelectedTags = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
@@ -168,7 +168,7 @@ export const TagFilter: FC<Props> = ({
       <MultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
-};
+}
 
 TagFilter.displayName = 'TagFilter';
 

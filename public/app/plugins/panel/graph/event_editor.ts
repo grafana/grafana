@@ -115,4 +115,6 @@ export function eventEditor() {
   };
 }
 
+//
+
 coreModule.directive('eventEditor', eventEditor);

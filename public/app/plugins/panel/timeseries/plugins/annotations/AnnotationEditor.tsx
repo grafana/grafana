@@ -18,7 +18,7 @@ interface AnnotationEditorProps extends HTMLAttributes<HTMLDivElement> {
   annotation?: AnnotationsDataFrameViewDTO;
 }
 
-export const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
+export function AnnotationEditor({
   onDismiss,
   onSave,
   timeZone,
@@ -26,7 +26,7 @@ export const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
   selection,
   annotation,
   style,
-}) => {
+}: AnnotationEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const commonStyles = useStyles2(getCommonAnnotationStyles);
@@ -94,7 +94,7 @@ export const AnnotationEditor: React.FC<AnnotationEditorProps> = ({
       </>
     </Portal>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
