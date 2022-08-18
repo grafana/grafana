@@ -958,6 +958,11 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				err = sc.db.GetOrgUsers(context.Background(), &getUsersQuery)
 				require.NoError(t, err)
 				assert.Len(t, getUsersQuery.Result, tc.expectedUserCount)
+
+				// check all permissions for user is removed in org
+				permission, err := sc.hs.AccessControl.GetUserPermissions(context.Background(), &user.SignedInUser{UserID: tc.targetUserId, OrgID: tc.targetOrg}, accesscontrol.Options{})
+				require.NoError(t, err)
+				assert.Len(t, permission, 0)
 			}
 		})
 	}
