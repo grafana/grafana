@@ -16,6 +16,7 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { RuleTypePicker } from './rule-types/RuleTypePicker';
 import { checkForPathSeparator } from './util';
+import { DashboardSearchHit } from "../../../../search/types";
 
 interface Props {
   editingExistingRule: boolean;
@@ -26,6 +27,10 @@ const recordingRuleNameValidationPattern = {
     'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
   value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
 };
+
+//LOGZIO GRAFANA CHANGE :: DEV-33636 - Blacklist folder selection options
+const blackListedFolderUids = ['logzio-dashboards-folder']
+//LOGZIO GRAFANA CHANGE :: end
 
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const styles = useStyles2(getStyles);
@@ -46,6 +51,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const [newName, setNewName] = useState<string | null>(null);
   const folder = watch('folder');
   const group = watch('group');
+  const folderFilter = (hits: DashboardSearchHit[]) => {
+    return hits.filter(hit => !blackListedFolderUids.includes(hit.uid))
+  }
 
   if(group !== '' && newName !== null) {
     if(folders.find((f: string) => f === group) === undefined) {
@@ -192,7 +200,9 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           >
             <InputControl
               render={({ field: { ref, ...field } }) => (
-                <RuleFolderPicker inputId="folder" {...field} enableCreateNew={true} enableReset={true} onChange={onFolderChange /* // LOGZ.IO CHANGE */}/>
+                <RuleFolderPicker
+                  inputId="folder" {...field} enableCreateNew={true} enableReset={true}
+                  onChange={onFolderChange} filter={folderFilter}/>  // LOGZ.IO CHANGE
               )}
               name="folder"
               rules={{
