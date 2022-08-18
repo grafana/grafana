@@ -1,10 +1,8 @@
 package accesscontrol
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -118,21 +116,6 @@ type ScopeKeywordMutator func(context.Context, string) (string, error)
 // getScopeCacheKey creates an identifier to fetch and store resolution of scopes in the cache
 func getScopeCacheKey(orgID int64, scope string) string {
 	return fmt.Sprintf("%s-%v", scope, orgID)
-}
-
-//ScopeInjector inject request params into the templated scopes. e.g. "settings:" + eval.Parameters(":id")
-func ScopeInjector(params ScopeParams) ScopeAttributeMutator {
-	return func(_ context.Context, scope string) ([]string, error) {
-		tmpl, err := template.New("scope").Parse(scope)
-		if err != nil {
-			return nil, err
-		}
-		var buf bytes.Buffer
-		if err = tmpl.Execute(&buf, params); err != nil {
-			return nil, err
-		}
-		return []string{buf.String()}, nil
-	}
 }
 
 var userSelfResolver = ScopeKeywordResolverFunc(func(ctx context.Context, user *user.SignedInUser) (string, error) {

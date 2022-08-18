@@ -1,10 +1,12 @@
 package accesscontrol
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 	"strconv"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -27,7 +29,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 }
 
 func authorize(c *models.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
-	injected, err := evaluator.MutateScopes(c.Req.Context(), ScopeInjector(ScopeParams{
+	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
 		OrgID:     c.OrgID,
 		URLParams: web.Params(c.Req),
 	}))
@@ -165,5 +167,26 @@ func LoadPermissionsMiddleware(ac AccessControl) web.Handler {
 			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 		}
 		c.SignedInUser.Permissions[c.OrgID] = GroupScopesByAction(permissions)
+	}
+}
+
+// scopeParams holds the parameters used to fill in scope templates
+type scopeParams struct {
+	OrgID     int64
+	URLParams map[string]string
+}
+
+// scopeInjector inject request params into the templated scopes. e.g. "settings:" + eval.Parameters(":id")
+func scopeInjector(params scopeParams) ScopeAttributeMutator {
+	return func(_ context.Context, scope string) ([]string, error) {
+		tmpl, err := template.New("scope").Parse(scope)
+		if err != nil {
+			return nil, err
+		}
+		var buf bytes.Buffer
+		if err = tmpl.Execute(&buf, params); err != nil {
+			return nil, err
+		}
+		return []string{buf.String()}, nil
 	}
 }

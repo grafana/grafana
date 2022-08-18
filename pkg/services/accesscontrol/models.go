@@ -214,12 +214,6 @@ type GetUserPermissionsQuery struct {
 	TeamIDs []int64
 }
 
-// ScopeParams holds the parameters used to fill in scope templates
-type ScopeParams struct {
-	OrgID     int64
-	URLParams map[string]string
-}
-
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
 // can perform against specific resource.
 type ResourcePermission struct {
