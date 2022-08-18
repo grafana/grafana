@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { Button, ButtonCascader, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
+import { useAppNotification } from '../../../core/copy/appNotification';
 import { SavedQuery } from '../api/SavedQueriesApi';
 import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
 
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryChange }: Props) => {
+  const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
 
   const [queryName, setQueryName] = useState(savedQuery.title);
@@ -45,7 +47,13 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
   };
 
   const onQuerySave = async () => {
-    await getSavedQuerySrv().updateSavedQuery(savedQuery);
+    await getSavedQuerySrv()
+      .updateSavedQuery(savedQuery)
+      .then(() => notifyApp.success('Query updated'))
+      .catch((err) => {
+        const msg = err.data?.message || err;
+        notifyApp.warning(msg);
+      });
     onDismiss();
   };
 
