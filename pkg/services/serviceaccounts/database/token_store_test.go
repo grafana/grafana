@@ -117,7 +117,7 @@ func TestStore_RevokeServiceAccountToken(t *testing.T) {
 	require.NoError(t, err)
 	newKey := cmd.Result
 
-	// Delete key from wrong service account
+	// Revoke SAT
 	err = store.RevokeServiceAccountToken(context.Background(), sa.OrgID, sa.ID, newKey.Id)
 	require.NoError(t, err)
 

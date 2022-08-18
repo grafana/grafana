@@ -97,7 +97,7 @@ func addApiKeyMigrations(mg *Migrator) {
 	}))
 
 	// is_revoked indicates whether key is revoked or not. Revoked keys should be kept in the table, but invalid.
-	mg.AddMigration("Add is_disabled column to api_key table", NewAddColumnMigration(apiKeyV2, &Column{
+	mg.AddMigration("Add is_revoked column to api_key table", NewAddColumnMigration(apiKeyV2, &Column{
 		Name: "is_revoked", Type: DB_Bool, Nullable: true, Default: "0",
 	}))
 }
