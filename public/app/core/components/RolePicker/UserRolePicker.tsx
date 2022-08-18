@@ -8,28 +8,26 @@ import { RolePicker } from './RolePicker';
 import { fetchUserRoles, updateUserRoles } from './api';
 
 export interface Props {
-  builtInRole: OrgRole;
+  basicRole: OrgRole;
   userId: number;
   orgId?: number;
-  onBuiltinRoleChange: (newRole: OrgRole) => void;
+  onBasicRoleChange: (newRole: OrgRole) => void;
   roleOptions: Role[];
-  builtInRoles?: { [key: string]: Role[] };
   disabled?: boolean;
-  builtinRolesDisabled?: boolean;
+  basicRoleDisabled?: boolean;
   apply?: boolean;
   onApplyRoles?: (newRoles: Role[], userId: number, orgId: number | undefined) => void;
   pendingRoles?: Role[];
 }
 
 export const UserRolePicker: FC<Props> = ({
-  builtInRole,
+  basicRole,
   userId,
   orgId,
-  onBuiltinRoleChange,
+  onBasicRoleChange,
   roleOptions,
-  builtInRoles,
   disabled,
-  builtinRolesDisabled,
+  basicRoleDisabled,
   apply = false,
   onApplyRoles,
   pendingRoles,
@@ -74,15 +72,14 @@ export const UserRolePicker: FC<Props> = ({
   return (
     <RolePicker
       appliedRoles={appliedRoles}
-      builtInRole={builtInRole}
+      basicRole={basicRole}
       onRolesChange={onRolesChange}
-      onBuiltinRoleChange={onBuiltinRoleChange}
+      onBasicRoleChange={onBasicRoleChange}
       roleOptions={roleOptions}
-      builtInRoles={builtInRoles}
       isLoading={loading}
       disabled={disabled}
-      builtinRolesDisabled={builtinRolesDisabled}
-      showBuiltInRole
+      basicRoleDisabled={basicRoleDisabled}
+      showBasicRole
       apply={apply}
       canUpdateRoles={canUpdateRoles}
     />
