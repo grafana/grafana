@@ -41,6 +41,11 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss }: Props) => {
     savedQuery.title = name;
   };
 
+  const onQuerySave = () => {
+    // TODO: implement save (maybe)
+    onDismiss();
+  };
+
   return (
     <div className={styles.header}>
       <HorizontalGroup justify={'space-between'}>
@@ -62,7 +67,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss }: Props) => {
           </Button>
           {/*<Button icon="share-alt" size="sm" variant={'secondary'}>Export</Button>*/}
           <Button icon="lock" size="sm" variant={'secondary'} />
-          <Button size="sm" variant={'primary'}>
+          <Button size="sm" variant={'primary'} onClick={onQuerySave}>
             Save
           </Button>
           <Button icon="trash-alt" size="sm" variant={'destructive'} onClick={deleteQuery} />

@@ -44,7 +44,7 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
       <div>
         <QueryEditorDrawerHeader savedQuery={savedQuery} onDismiss={onDismiss} />
         <div className={styles.queryWrapper}>
-          <QueryEditor initialQueries={savedQuery.queries} />
+          <QueryEditor savedQuery={savedQuery} />
         </div>
         <TabsBar>
           {tabs.map((tab, index) => (
