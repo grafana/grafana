@@ -92,20 +92,20 @@ describe('TraceView', () => {
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByRole('switch', { name: /Tags/ })).toBeFalsy();
-    const spanView = screen.getByRole('switch', { name: 'loki-all::HTTP POST - api_prom_push' });
-    expect(spanView).toBeInTheDocument();
+    expect(screen.queryByText(/Tags/)).toBeFalsy();
+    const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByRole('switch', { name: /Tags/ })).toBeTruthy();
+    expect(screen.queryByText(/Tags/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    expect(screen.queryByRole('switch', { name: /Tags/ })).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Tags/));
+    expect(screen.queryByText(/Tags/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {
     renderTraceViewNew();
     function ticks() {
-      return screen.getByText('', { selector: 'div[data-testid="TimelineHeaderRow"]' }).children[1].children[1]
+      return screen.getByText('', { selector: 'div[data-test-id="TimelineHeaderRow"]' }).children[1].children[1]
         .textContent;
     }
     expect(ticks()).toBe('0μs274.5μs549μs823.5μs1.1ms');
@@ -114,22 +114,23 @@ describe('TraceView', () => {
   it('correctly shows processes for each span', async () => {
     renderTraceView();
     let table: HTMLElement;
+    expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
 
-    const firstSpan = screen.getByRole('switch', { name: 'loki-all::HTTP POST - api_prom_push' });
+    const firstSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(firstSpan);
-    await userEvent.click(screen.getByRole('switch', { name: /Process/ }));
-    expect(screen.getByRole('cell', { name: /client-uuid-1/ })).toBeInTheDocument();
+    await userEvent.click(screen.getByText(/Process/));
+    table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
+    expect(table.innerHTML).toContain('client-uuid-1');
     await userEvent.click(firstSpan);
 
-    const secondSpan = screen.queryAllByRole('switch', { name: '/logproto.Pusher/Push' })[0];
+    const secondSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[1];
     await userEvent.click(secondSpan);
-    // FAILING TEST from here:
     await userEvent.click(screen.getByText(/Process/));
     table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
     expect(table.innerHTML).toContain('client-uuid-2');
     await userEvent.click(secondSpan);
 
-    const thirdSpan = screen.queryAllByRole('switch', { name: '/logproto.Pusher/Push' })[1];
+    const thirdSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
     await userEvent.click(thirdSpan);
     await userEvent.click(screen.getByText(/Process/));
     table = screen.getByText('', { selector: 'div[data-testid="KeyValueTable"]' });
@@ -138,9 +139,8 @@ describe('TraceView', () => {
 
   it('resets detail view for new trace with the identical spanID', async () => {
     const { rerender } = render(getTraceView([frameOld]));
-    const spanView = screen.getByRole('switch', { name: 'loki-all::HTTP POST - api_prom_push' });
-    expect(spanView).toBeInTheDocument();
-    await userEvent.click(spanView);
+    const span = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
+    await userEvent.click(span);
     //Process is in detail view
     expect(screen.getByText(/Process/)).toBeInTheDocument();
 
