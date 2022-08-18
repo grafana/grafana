@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -603,10 +602,10 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), license, &dashboards.FakeDashboardStore{})
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{})
 	require.NoError(t, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, database.ProvideService(store), license, &dashboards.FakeDashboardStore{})
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{})
 	require.NoError(t, err)
 	if dashboardSvc == nil {
 		dashboardSvc = &dashboards.FakeDashboardService{}

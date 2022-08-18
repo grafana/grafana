@@ -1,4 +1,4 @@
-package types
+package resourcepermissions
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

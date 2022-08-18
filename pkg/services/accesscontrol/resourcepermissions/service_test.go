@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -220,13 +219,12 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	t.Helper()
 
 	sql := sqlstore.InitTestDB(t)
-	store := database.ProvideService(sql)
 	cfg := setting.NewCfg()
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	service, err := New(
 		ops, cfg, routing.NewRouteRegister(), license,
-		accesscontrolmock.New().WithPermissions(permissions), store, sql,
+		accesscontrolmock.New().WithPermissions(permissions), sql,
 	)
 	require.NoError(t, err)
 
