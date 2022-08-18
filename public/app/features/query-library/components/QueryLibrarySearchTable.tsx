@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -37,6 +37,8 @@ const QueryLibrarySearchTable = () => {
 
     return query;
   }, [datasourceType, searchQueryBy]);
+
+  useEffect(() => {}, [reload]);
 
   const results = useAsync(async () => {
     const raw = await getGrafanaSearcher().search(searchQuery);
@@ -122,7 +124,13 @@ const QueryLibrarySearchTable = () => {
                     <tbody>
                       {found!.map((item) => {
                         return (
-                          <QueryListItem query={item} key={item.uid} showModal={showModal} hideModal={hideModal} />
+                          <QueryListItem
+                            query={item}
+                            key={item.uid}
+                            showModal={showModal}
+                            hideModal={hideModal}
+                            updateComponent={() => setReload(reload + 1)}
+                          />
                         );
                       })}
                     </tbody>

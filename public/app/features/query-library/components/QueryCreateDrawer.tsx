@@ -19,7 +19,7 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
       title="Add new query"
       subtitle="You can create a new query from builder or import from file"
       onClose={onDismiss}
-      width={'40%'}
+      width={'1000px'}
       expandable
       scrollableContent
     >

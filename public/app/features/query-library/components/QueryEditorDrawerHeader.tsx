@@ -36,7 +36,6 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
     ];
   };
 
-  // @TODO update when Save is implemented
   const onQueryNameChange = (name: string) => {
     setQueryName(name);
     onSavedQueryChange({
@@ -47,6 +46,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
 
   const onQuerySave = async () => {
     await getSavedQuerySrv().updateSavedQuery(savedQuery);
+    onDismiss();
   };
 
   return (

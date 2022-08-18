@@ -43,7 +43,7 @@ export const QueryEditorDrawer = (props: Props) => {
   const [query, setSavedQuery] = useState(props.savedQuery);
 
   return (
-    <Drawer onClose={onDismiss} width={'50%'} expandable scrollableContent>
+    <Drawer onClose={onDismiss} width={'1000px'} expandable scrollableContent>
       <div>
         <QueryEditorDrawerHeader onSavedQueryChange={setSavedQuery} savedQuery={query} onDismiss={onDismiss} />
         <div className={styles.queryWrapper}>

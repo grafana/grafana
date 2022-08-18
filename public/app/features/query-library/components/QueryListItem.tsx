@@ -15,9 +15,10 @@ type QueryListItemProps = {
   query: QueryItem;
   showModal: <T>(component: React.ComponentType<T>, props: T) => void;
   hideModal: () => void;
+  updateComponent: () => void;
 };
 
-export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListItemProps) => {
+export const QueryListItem = memo(({ query, showModal, hideModal, updateComponent }: QueryListItemProps) => {
   const styles = useStyles2(getStyles);
   const [dsInfo, setDsInfo] = useState<any>();
 
@@ -43,15 +44,21 @@ export const QueryListItem = memo(({ query, showModal, hideModal }: QueryListIte
     getQueryDsInstance();
   }, [query.ds_uid]);
 
+  const closeDrawer = () => {
+    hideModal();
+    updateComponent();
+  };
+
   const openDrawer = async () => {
     const result = await getSavedQuerySrv().getSavedQueryByUids([{ uid: query.uid }]);
     const savedQuery = result[0];
 
-    showModal(QueryEditorDrawer, { onDismiss: hideModal, savedQuery: savedQuery });
+    showModal(QueryEditorDrawer, { onDismiss: closeDrawer, savedQuery: savedQuery });
   };
 
   const deleteQuery = async () => {
     await getSavedQuerySrv().deleteSavedQuery({ uid: query.uid });
+    updateComponent();
   };
 
   const getDsType = () => {
