@@ -12,7 +12,6 @@ type ServiceAccountListItemProps = {
   serviceAccount: ServiceAccountDTO;
   onRoleChange: (role: OrgRole, serviceAccount: ServiceAccountDTO) => void;
   roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
   onRemoveButtonClick: (serviceAccount: ServiceAccountDTO) => void;
   onDisable: (serviceAccount: ServiceAccountDTO) => void;
   onEnable: (serviceAccount: ServiceAccountDTO) => void;
@@ -28,7 +27,6 @@ const ServiceAccountListItem = memo(
     serviceAccount,
     onRoleChange,
     roleOptions,
-    builtInRoles,
     onRemoveButtonClick,
     onDisable,
     onEnable,
@@ -78,11 +76,10 @@ const ServiceAccountListItem = memo(
               <UserRolePicker
                 userId={serviceAccount.id}
                 orgId={serviceAccount.orgId}
-                builtInRole={serviceAccount.role}
-                onBuiltinRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
+                basicRole={serviceAccount.role}
+                onBasicRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
-                builtInRoles={builtInRoles}
-                builtinRolesDisabled={!canUpdateRole}
+                basicRoleDisabled={!canUpdateRole}
                 disabled={serviceAccount.isDisabled}
               />
             )}
