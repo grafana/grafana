@@ -14,7 +14,7 @@ export const EmptyCorrelationsCTA = ({ onClick }: Props) => {
       buttonIcon="sitemap"
       onClick={onClick}
       buttonTitle="Add correlation"
-      proTip="you can also define correlations via datasource provisiniong"
+      proTip="you can also define correlations via datasource provisioning"
     />
   );
 };
