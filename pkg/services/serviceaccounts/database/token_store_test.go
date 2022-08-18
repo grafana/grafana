@@ -48,7 +48,10 @@ func TestStore_AddServiceAccountToken(t *testing.T) {
 			require.Equal(t, t.Name(), newKey.Name)
 
 			// Verify against DB
-			keys, errT := store.ListTokens(context.Background(), user.OrgID, user.ID)
+			keys, errT := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
+				OrgID:            &user.OrgID,
+				ServiceAccountID: &user.ID,
+			})
 
 			require.NoError(t, errT)
 
@@ -124,7 +127,10 @@ func TestStore_DeleteServiceAccountToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify against DB
-	keys, errT := store.ListTokens(context.Background(), sa.OrgID, sa.ID)
+	keys, errT := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
+		OrgID:            &sa.OrgID,
+		ServiceAccountID: &sa.ID,
+	})
 	require.NoError(t, errT)
 
 	for _, k := range keys {
