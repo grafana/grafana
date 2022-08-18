@@ -7,9 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// FolderService is a service for operating on folders.
-//
 //go:generate mockery --name FolderService --structname FakeFolderService --inpackage --filename folder_service_mock.go
+// FolderService is a service for operating on folders.
 type FolderService interface {
 	GetFolders(ctx context.Context, user *user.SignedInUser, orgID int64, limit int64, page int64) ([]*models.Folder, error)
 	GetFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*models.Folder, error)

@@ -280,7 +280,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 	}
 }
 
-// `/public/dashboards/:uid/query“ endpoint test
+// `/public/dashboards/:uid/query`` endpoint test
 func TestAPIQueryPublicDashboard(t *testing.T) {
 	cacheService := &fakeDatasources.FakeCacheService{
 		DataSources: []*datasources.DataSource{

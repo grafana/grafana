@@ -35,7 +35,7 @@ type FakeScheduleService_DeleteAlertRule_Call struct {
 }
 
 // DeleteAlertRule is a helper method to define mock.On call
-//   - key models.AlertRuleKey
+//  - key models.AlertRuleKey
 func (_e *FakeScheduleService_Expecter) DeleteAlertRule(key interface{}) *FakeScheduleService_DeleteAlertRule_Call {
 	return &FakeScheduleService_DeleteAlertRule_Call{Call: _e.mock.On("DeleteAlertRule", key)}
 }
@@ -72,7 +72,7 @@ type FakeScheduleService_Run_Call struct {
 }
 
 // Run is a helper method to define mock.On call
-//   - _a0 context.Context
+//  - _a0 context.Context
 func (_e *FakeScheduleService_Expecter) Run(_a0 interface{}) *FakeScheduleService_Run_Call {
 	return &FakeScheduleService_Run_Call{Call: _e.mock.On("Run", _a0)}
 }
@@ -100,8 +100,8 @@ type FakeScheduleService_UpdateAlertRule_Call struct {
 }
 
 // UpdateAlertRule is a helper method to define mock.On call
-//   - key models.AlertRuleKey
-//   - lastVersion int64
+//  - key models.AlertRuleKey
+//  - lastVersion int64
 func (_e *FakeScheduleService_Expecter) UpdateAlertRule(key interface{}, lastVersion interface{}) *FakeScheduleService_UpdateAlertRule_Call {
 	return &FakeScheduleService_UpdateAlertRule_Call{Call: _e.mock.On("UpdateAlertRule", key, lastVersion)}
 }
@@ -129,8 +129,8 @@ type FakeScheduleService_evalApplied_Call struct {
 }
 
 // evalApplied is a helper method to define mock.On call
-//   - _a0 models.AlertRuleKey
-//   - _a1 time.Time
+//  - _a0 models.AlertRuleKey
+//  - _a1 time.Time
 func (_e *FakeScheduleService_Expecter) evalApplied(_a0 interface{}, _a1 interface{}) *FakeScheduleService_evalApplied_Call {
 	return &FakeScheduleService_evalApplied_Call{Call: _e.mock.On("evalApplied", _a0, _a1)}
 }
@@ -158,7 +158,7 @@ type FakeScheduleService_overrideCfg_Call struct {
 }
 
 // overrideCfg is a helper method to define mock.On call
-//   - cfg SchedulerCfg
+//  - cfg SchedulerCfg
 func (_e *FakeScheduleService_Expecter) overrideCfg(cfg interface{}) *FakeScheduleService_overrideCfg_Call {
 	return &FakeScheduleService_overrideCfg_Call{Call: _e.mock.On("overrideCfg", cfg)}
 }
@@ -186,7 +186,7 @@ type FakeScheduleService_stopApplied_Call struct {
 }
 
 // stopApplied is a helper method to define mock.On call
-//   - _a0 models.AlertRuleKey
+//  - _a0 models.AlertRuleKey
 func (_e *FakeScheduleService_Expecter) stopApplied(_a0 interface{}) *FakeScheduleService_stopApplied_Call {
 	return &FakeScheduleService_stopApplied_Call{Call: _e.mock.On("stopApplied", _a0)}
 }

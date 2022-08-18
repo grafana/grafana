@@ -353,7 +353,7 @@ func getDashboardLocation(index *orgIndex, dashboardUID string) (string, bool, e
 	return dashboardLocation, found, err
 }
 
-// nolint: gocyclo
+//nolint: gocyclo
 func doSearchQuery(
 	ctx context.Context,
 	logger log.Logger,
