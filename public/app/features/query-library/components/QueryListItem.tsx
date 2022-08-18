@@ -16,15 +16,12 @@ type QueryListItemProps = {
   showModal: <T>(component: React.ComponentType<T>, props: T) => void;
   hideModal: () => void;
   updateComponent: () => void;
+  author: string;
 };
 
-export const QueryListItem = memo(({ query, showModal, hideModal, updateComponent }: QueryListItemProps) => {
+export const QueryListItem = memo(({ query, showModal, hideModal, updateComponent, author }: QueryListItemProps) => {
   const styles = useStyles2(getStyles);
   const [dsInfo, setDsInfo] = useState<any>();
-
-  // @TODO update with real data
-  const authors = ['Drew Slobodnjak', 'Nathan Marrs', 'Artur Wierzbicki', 'Raphael Batyrbaev', 'Adela Almasan'];
-  const author = authors[Math.floor(Math.random() * authors.length)];
 
   const dates = [
     'August 13, 2022, 4:10pm',

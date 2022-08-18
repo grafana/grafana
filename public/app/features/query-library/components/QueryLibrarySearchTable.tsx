@@ -20,6 +20,9 @@ const QueryLibrarySearchTable = () => {
   const [searchQueryBy, setSearchByQuery] = useState<string>('');
   const [reload, setReload] = useState(0);
 
+  // @TODO update with real data
+  const authors = ['Artur Wierzbicki', 'Drew Slobodnjak', 'Nathan Marrs', 'Raphael Batyrbaev', 'Adela Almasan'];
+
   const searchQuery = useMemo<SearchQuery>(() => {
     const query: SearchQuery = {
       query: '*',
@@ -122,7 +125,7 @@ const QueryLibrarySearchTable = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {found!.map((item) => {
+                      {found!.map((item, key) => {
                         return (
                           <QueryListItem
                             query={item}
@@ -130,6 +133,7 @@ const QueryLibrarySearchTable = () => {
                             showModal={showModal}
                             hideModal={hideModal}
                             updateComponent={() => setReload(reload + 1)}
+                            author={authors[key]}
                           />
                         );
                       })}
