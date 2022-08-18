@@ -18,12 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setupTestEnv(t testing.TB) *OSSAccessControlService {
+func setupTestEnv(t testing.TB) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = true
 
-	ac := &OSSAccessControlService{
+	ac := &Service{
 		cfg:            cfg,
 		log:            log.New("accesscontrol"),
 		registrations:  accesscontrol.RegistrationList{},
@@ -183,7 +183,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	}
 }
 
-func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
+func TestService_DeclareFixedRoles(t *testing.T) {
 	tests := []struct {
 		name          string
 		registrations []accesscontrol.RoleRegistration
@@ -278,7 +278,7 @@ func TestOSSAccessControlService_DeclareFixedRoles(t *testing.T) {
 	}
 }
 
-func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
+func TestService_RegisterFixedRoles(t *testing.T) {
 	tests := []struct {
 		name          string
 		token         models.Licensing
@@ -355,7 +355,7 @@ func TestOSSAccessControlService_RegisterFixedRoles(t *testing.T) {
 	}
 }
 
-func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
+func TestService_GetUserPermissions(t *testing.T) {
 	testUser := user.SignedInUser{
 		UserID:  2,
 		OrgID:   3,
@@ -417,7 +417,7 @@ func TestOSSAccessControlService_GetUserPermissions(t *testing.T) {
 	}
 }
 
-func TestOSSAccessControlService_Evaluate(t *testing.T) {
+func TestService_Evaluate(t *testing.T) {
 	testUser := user.SignedInUser{
 		UserID:  2,
 		OrgID:   3,
