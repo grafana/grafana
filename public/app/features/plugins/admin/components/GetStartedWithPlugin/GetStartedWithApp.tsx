@@ -3,9 +3,9 @@ import React from 'react';
 import { PluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
 
+import { usePluginConfig } from '../../../hooks/usePluginConfig';
 import { CatalogPlugin } from '../../../types';
 import { updatePluginSettings } from '../../api';
-import { usePluginConfig } from '../../hooks/usePluginConfig';
 
 type Props = {
   plugin: CatalogPlugin;

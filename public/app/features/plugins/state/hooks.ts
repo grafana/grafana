@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { PluginCatalogStoreState, PluginListDisplayMode } from '../../types';
 import { sortPlugins, Sorters } from '../helpers';
+import { PluginCatalogStoreState, PluginListDisplayMode } from '../types';
 
 import { fetchAll, fetchRemotePlugins, fetchSingle, install, uninstall } from './actions';
 import { setDisplayMode } from './reducer';
