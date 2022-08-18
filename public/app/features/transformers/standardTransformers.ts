@@ -11,13 +11,13 @@ import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefI
 import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { histogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
+import { joinByFieldTransformerRegistryItem } from './editors/JoinByFieldTransformerEditor';
 import { labelsToFieldsTransformerRegistryItem } from './editors/LabelsToFieldsTransformerEditor';
 import { limitTransformRegistryItem } from './editors/LimitTransformerEditor';
 import { mergeTransformerRegistryItem } from './editors/MergeTransformerEditor';
 import { organizeFieldsTransformRegistryItem } from './editors/OrganizeFieldsTransformerEditor';
 import { reduceTransformRegistryItem } from './editors/ReduceTransformerEditor';
 import { renameByRegexTransformRegistryItem } from './editors/RenameByRegexTransformer';
-import { seriesToFieldsTransformerRegistryItem } from './editors/SeriesToFieldsTransformerEditor';
 import { seriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTransformerEditor';
 import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
@@ -35,7 +35,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     filterFramesByRefIdTransformRegistryItem,
     filterByValueTransformRegistryItem,
     organizeFieldsTransformRegistryItem,
-    seriesToFieldsTransformerRegistryItem,
+    joinByFieldTransformerRegistryItem,
     seriesToRowsTransformerRegistryItem,
     concatenateTransformRegistryItem,
     calculateFieldTransformRegistryItem,

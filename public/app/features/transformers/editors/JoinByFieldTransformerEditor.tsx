@@ -7,7 +7,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/seriesToColumns';
+import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -62,8 +62,8 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
   );
 }
 
-export const seriesToFieldsTransformerRegistryItem: TransformerRegistryItem<JoinByFieldOptions> = {
-  id: DataTransformerID.join,
+export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByFieldOptions> = {
+  id: DataTransformerID.joinByField,
   aliasIds: [DataTransformerID.seriesToColumns],
   editor: SeriesToFieldsTransformerEditor,
   transformation: standardTransformers.joinByFieldTransformer,

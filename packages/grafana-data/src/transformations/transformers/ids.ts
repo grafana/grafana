@@ -1,5 +1,4 @@
 export enum DataTransformerID {
-  join = 'join',
   append = 'append',
   //  rotate = 'rotate', // Columns to rows
   reduce = 'reduce',
@@ -31,6 +30,7 @@ export enum DataTransformerID {
   fieldLookup = 'fieldLookup',
   heatmap = 'heatmap',
   spatial = 'spatial',
+  joinByField = 'joinByField',
   joinByLabels = 'joinByLabels',
   extractFields = 'extractFields',
   groupingToMatrix = 'groupingToMatrix',

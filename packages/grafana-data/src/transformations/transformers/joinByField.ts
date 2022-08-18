@@ -18,7 +18,7 @@ export interface JoinByFieldOptions {
 }
 
 export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldOptions> = {
-  id: DataTransformerID.join,
+  id: DataTransformerID.joinByField,
   aliasIds: [DataTransformerID.seriesToColumns],
   name: 'Join by field',
   description:
