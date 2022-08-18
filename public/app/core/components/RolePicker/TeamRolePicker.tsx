@@ -76,7 +76,7 @@ export const TeamRolePicker: FC<Props> = ({
       appliedRoles={appliedRoles}
       isLoading={loading}
       disabled={disabled}
-      builtinRolesDisabled={true}
+      basicRoleDisabled={true}
       canUpdateRoles={canUpdateRoles}
     />
   );
