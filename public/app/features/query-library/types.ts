@@ -10,4 +10,5 @@ export interface QueryItem {
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
+  location?: string;
 }

@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Icon, Input, FieldValidationMessage, useStyles, HorizontalGroup } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, Input, FieldValidationMessage, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 export interface QueryNameProps {
   name: string;
@@ -10,7 +10,7 @@ export interface QueryNameProps {
 }
 
 export const QueryName = ({ name, onChange }: QueryNameProps) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -90,16 +90,16 @@ export const QueryName = ({ name, onChange }: QueryNameProps) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       display: flex;
       align-items: center;
-      margin-left: ${theme.spacing.xs};
+      margin-left: ${theme.v1.spacing.xs};
     `,
     nameEditIcon: css`
       cursor: pointer;
-      color: ${theme.colors.textFaint};
+      color: ${theme.colors.text.secondary};
       width: 12px;
       height: 12px;
     `,

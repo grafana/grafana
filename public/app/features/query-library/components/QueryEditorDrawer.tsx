@@ -7,9 +7,9 @@ import { Drawer, IconName, Tab, TabContent, TabsBar, useStyles2 } from '@grafana
 
 import { SavedQuery } from '../api/SavedQueriesApi';
 
-import { ConnectionsTab } from './ConnectionsTab';
 import { QueryEditor } from './QueryEditor';
 import { QueryEditorDrawerHeader } from './QueryEditorDrawerHeader';
+import { UsagesTab } from './UsagesTab';
 import { VariablesTab } from './VariablesTab';
 
 type Props = {
@@ -19,7 +19,7 @@ type Props = {
 
 const initialTabs = [
   {
-    label: 'Connections',
+    label: 'Usages',
     active: true,
     icon: 'link',
   },
@@ -59,7 +59,7 @@ export const QueryEditorDrawer = ({ onDismiss, savedQuery }: Props) => {
         </TabsBar>
         <TabContent>
           <div className={styles.tabWrapper}>
-            {tabs[0].active && <ConnectionsTab savedQuery={savedQuery} />}
+            {tabs[0].active && <UsagesTab savedQuery={savedQuery} />}
             {tabs[1].active && <VariablesTab savedQuery={savedQuery} />}
             {tabs[2].active && <div>TODO History</div>}
           </div>
