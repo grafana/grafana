@@ -3,7 +3,7 @@ package cloudwatch
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
 	"AWS/AmazonMQ":                {"AckRate", "BurstBalance", "ChannelCount", "ConfirmRate", "ConnectionCount", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExchangeCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "MessageCount", "MessageReadyCount", "MessageUnacknowledgedCount", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "PublishRate", "QueueCount", "QueueSize", "RabbitMQDiskFree", "RabbitMQDiskFreeLimit", "RabbitMQFdUsed", "RabbitMQMemLimit", "RabbitMQMemUsed", "ReceiveCount", "StorePercentUsage", "SystemCpuUtilization", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
-	"AWS/ApiGateway":              {"4xx", "4XXError", "5xx", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "DataProcessed", "IntegrationLatency", "Latency"},
+	"AWS/ApiGateway":              {"4xx", "4XXError", "5xx", "5XXError", "CacheHitCount", "CacheMissCount", "ClientError", "Count", "ConnectCount", "DataProcessed", "ExecutionError", "IntegrationError", "IntegrationLatency", "Latency", "MessageCount"},
 	"AWS/AppRunner":               {"2xxStatusResponses", "4xxStatusResponses", "5xxStatusResponses", "ActiveInstances", "CPUUtilization", "MemoryUtilization", "Requests", "RequestLatency"},
 	"AWS/AppStream":               {"ActualCapacity", "AvailableCapacity", "CapacityUtilization", "DesiredCapacity", "InUseCapacity", "InsufficientCapacityError", "PendingCapacity", "RunningCapacity"},
 	"AWS/AppSync":                 {"4XXError", "5XXError", "Latency", "ActiveConnections", "ActiveSubscriptions", "ConnectClientError", "ConnectionDuration", "ConnectServerError", "ConnectSuccess", "DisconnectClientError", "DisconnectServerError", "DisconnectSuccess", "PublishDataMessageClientError", "PublishDataMessageServerError", "PublishDataMessageSize", "PublishDataMessageSuccess", "SubscribeClientError", "SubscribeServerError", "SubscribeSuccess", "UnsubscribeClientError", "UnsubscribeServerError", "UnsubscribeSuccess"},
@@ -406,7 +406,7 @@ var metricsMap = map[string][]string{
 var dimensionsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {},
 	"AWS/AmazonMQ":                {"Broker", "NetworkConnector", "Queue", "Topic", "Node", "Virtual host"},
-	"AWS/ApiGateway":              {"ApiId", "ApiName", "Method", "Resource", "Stage"},
+	"AWS/ApiGateway":              {"ApiId", "ApiName", "Method", "Resource", "Route", "Stage"},
 	"AWS/AppRunner":               {"Instance", "ServiceID", "ServiceName"},
 	"AWS/AppStream":               {"Fleet"},
 	"AWS/AppSync":                 {"GraphQLAPIId"},
