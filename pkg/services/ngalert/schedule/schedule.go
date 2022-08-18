@@ -2,6 +2,7 @@ package schedule
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -168,7 +169,7 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 			continue
 		}
 		// stop rule evaluation
-		ruleInfo.stop()
+		ruleInfo.stop(errRuleDeleted)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules := sch.schedulableAlertRules.all()
@@ -286,7 +287,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 }
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
-	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
+	logger := sch.log.New(key.LogContext()...)
 	logger.Debug("alert rule routine started")
 
 	orgID := fmt.Sprint(key.OrgID)
@@ -316,7 +317,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		} else {
 			logger.Debug("alert rule evaluated", "results", results, "duration", dur)
 		}
-
+		if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
+			logger.Debug("skip updating the state because the context has been cancelled")
+			return
+		}
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, extraLabels)
 		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		if len(alerts.PostableAlerts) > 0 {
@@ -395,7 +399,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				}
 			}()
 		case <-grafanaCtx.Done():
-			clearState()
+			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
+			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
+				clearState()
+			}
 			logger.Debug("stopping alert rule routine")
 			return nil
 		}

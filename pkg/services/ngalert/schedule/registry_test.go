@@ -153,7 +153,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 				resultCh <- evalResponse{result, dropped}
 			}()
 			runtime.Gosched()
-			r.stop()
+			r.stop(nil)
 			select {
 			case result := <-resultCh:
 				require.False(t, result.success)
@@ -166,12 +166,13 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 	t.Run("when rule evaluation is stopped", func(t *testing.T) {
 		t.Run("Update should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			r.stop()
+			r.stop(errRuleDeleted)
+			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
 			require.False(t, r.update(ruleVersion(rand.Int63())))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			r.stop()
+			r.stop(nil)
 			rule := models.AlertRuleGen()()
 			success, dropped := r.eval(time.Now(), rule)
 			require.False(t, success)
@@ -179,8 +180,14 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		})
 		t.Run("stop should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
-			r.stop()
-			r.stop()
+			r.stop(nil)
+			r.stop(nil)
+		})
+		t.Run("stop should do nothing if parent context stopped", func(t *testing.T) {
+			ctx, cancelFn := context.WithCancel(context.Background())
+			r := newAlertRuleInfo(ctx)
+			cancelFn()
+			r.stop(nil)
 		})
 	})
 	t.Run("should be thread-safe", func(t *testing.T) {
@@ -213,7 +220,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					case 2:
 						r.eval(time.Now(), models.AlertRuleGen()())
 					case 3:
-						r.stop()
+						r.stop(nil)
 					}
 				}
 				wg.Done()
