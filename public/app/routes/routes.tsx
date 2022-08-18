@@ -489,7 +489,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/dbaas',
       // eslint-disable-next-line react/display-name
-      component: () => <Redirect to="/dbaas/kubernetes" />,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "DbaaSKubernetesPage" */ 'app/percona/dbaas/components/DBaasRouting/DBaaSRouting')
+      ),
     },
     {
       path: '/dbaas/kubernetes',

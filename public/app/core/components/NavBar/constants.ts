@@ -43,15 +43,15 @@ export const PMM_DBAAS_PAGE: NavModelItem = {
   ],
   children: [
     {
-      id: 'kubernetes',
-      text: 'Kubernetes Cluster',
-      url: `${config.appSubUrl}/dbaas/kubernetes`,
-      hideFromMenu: true,
-    },
-    {
       id: 'dbclusters',
       text: 'DB Cluster',
       url: `${config.appSubUrl}/dbaas/dbclusters`,
+      hideFromMenu: true,
+    },
+    {
+      id: 'kubernetes',
+      text: 'Kubernetes Cluster',
+      url: `${config.appSubUrl}/dbaas/kubernetes`,
       hideFromMenu: true,
     },
   ],
