@@ -43,7 +43,6 @@ var allowedImportsStr string
 // Name expected to be used for all models.cue files in Grafana plugins
 const pkgname = "grafanaplugin"
 
-var pm = registry.NewBase().Pluginmeta()
 var slots = coremodel.AllSlots()
 
 var plugmux kernel.InputKernel
@@ -183,7 +182,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	if err != nil {
 		// TODO more nuanced error handling by class of Thema failure
 		// return nil, fmt.Errorf("plugin.json was invalid: %w", err)
-		return nil, &errPluginValidation{err: err}
+		return nil, ewrap(err, ErrInvalidRootFile)
 	}
 	r.meta = *metaany.(*pluginmeta.Model)
 
@@ -221,44 +220,101 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		val := ctx.BuildInstance(bi)
 		for _, s := range slots {
 			iv := val.LookupPath(cue.ParsePath(s.Name()))
-			accept, required := s.ForPluginType(string(r.meta.Type))
-			exists := iv.Exists()
-
-			if !accept {
-				if exists {
-					// If it's not accepted for the type, but is declared, error out. This keeps a
-					// precise boundary on what's actually expected for plugins to do, which makes
-					// for clearer docs and guarantees for users.
-					return nil, fmt.Errorf("%s: %s plugins may not provide a %s slot implementation in models.cue", r.meta.Id, r.meta.Type, s.Name())
-				}
-				continue
+			lin, err := bindSlotLineage(iv, s, r.meta, lib)
+			if lin != nil {
+				r.slotimpls[s.Name()] = lin
 			}
-
-			if !exists && required {
-				return nil, fmt.Errorf("%s: %s plugins must provide a %s slot implementation in models.cue", r.meta.Id, r.meta.Type, s.Name())
-			}
-
-			// TODO make this opt real in thema, then uncomment to enforce joinSchema
-			// lin, err := thema.BindLineage(iv, lib, thema.SatisfiesJoinSchema(s.MetaSchema()))
-			lin, err := thema.BindLineage(iv, lib)
 			if err != nil {
-				return nil, fmt.Errorf("%s: invalid thema lineage for slot %s: %w", r.meta.Id, s.Name(), err)
+				return nil, err
 			}
-			r.slotimpls[s.Name()] = lin
 		}
 	}
 
 	return tree, nil
 }
 
-type errPluginValidation struct {
-	err error
+func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib thema.Library) (thema.Lineage, error) {
+	accept, required := s.ForPluginType(string(meta.Type))
+	exists := v.Exists()
+
+	if !accept {
+		if exists {
+			// If it's not accepted for the type, but is declared, error out. This keeps a
+			// precise boundary on what's actually expected for plugins to do, which makes
+			// for clearer docs and guarantees for users.
+			return nil, fmt.Errorf("%s: %s plugins may not provide a %s slot implementation in models.cue", meta.Id, meta.Type, s.Name())
+		}
+		return nil, nil
+	}
+
+	if !exists && required {
+		return nil, fmt.Errorf("%s: %s plugins must provide a %s slot implementation in models.cue", meta.Id, meta.Type, s.Name())
+	}
+
+	// TODO make this opt real in thema, then uncomment to enforce joinSchema
+	// lin, err := thema.BindLineage(iv, lib, thema.SatisfiesJoinSchema(s.MetaSchema()))
+	lin, err := thema.BindLineage(v, lib)
+	if err != nil {
+		return nil, ewrap(fmt.Errorf("%s: invalid thema lineage for slot %s: %w", meta.Id, s.Name(), err), ErrInvalidLineage)
+	}
+
+	sanid := sanitizePluginId(meta.Id)
+	if lin.Name() != sanid {
+		errf := func(format string, args ...interface{}) error {
+			var errin error
+			if n := v.LookupPath(cue.ParsePath("name")).Source(); n != nil {
+				errin = errors.Newf(n.Pos(), format, args...)
+			} else {
+				errin = fmt.Errorf(format, args...)
+			}
+			return ewrap(errin, ErrLineageNameMismatch)
+		}
+		if sanid != meta.Id {
+			return nil, errf("%s: %q slot lineage name must be the sanitized plugin id (%q), got %q", meta.Id, s.Name(), sanid, lin.Name())
+		} else {
+			return nil, errf("%s: %q slot lineage name must be the plugin id, got %q", meta.Id, s.Name(), lin.Name())
+		}
+	}
+	return lin, nil
 }
 
-func (e *errPluginValidation) Is(err error) bool {
-	return errors.Is(err, ErrInvalidRootFile) || errors.Is(err, e.err)
+// Plugin IDs are allowed to contain characters that aren't allowed in thema
+// Lineage names, CUE package names, Go package names, TS or Go type names, etc.
+func sanitizePluginId(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z':
+			fallthrough
+		case r >= 'A' && r <= 'Z':
+			fallthrough
+		case r >= '0' && r <= '9':
+			fallthrough
+		case r == '_':
+			return r
+		case r == '-':
+			return '_'
+		default:
+			return -1
+		}
+	}, s)
 }
 
-func (e *errPluginValidation) Error() string {
-	return fmt.Sprintf("plugin.json is invalid: %s", e.err)
+func ewrap(actual, is error) error {
+	return &errPassthrough{
+		actual: actual,
+		is:     is,
+	}
+}
+
+type errPassthrough struct {
+	actual error
+	is     error
+}
+
+func (e *errPassthrough) Is(err error) bool {
+	return errors.Is(err, e.actual) || errors.Is(err, e.is)
+}
+
+func (e *errPassthrough) Error() string {
+	return e.actual.Error()
 }
