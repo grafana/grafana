@@ -50,15 +50,23 @@ export const UsagesTab = ({ savedQuery }: Props) => {
   const found = results.value;
 
   const getIconForKind = (kind: string): IconName => {
-    if (kind === 'dashboard') {
-      return 'apps';
+    let icon: IconName = 'question-circle';
+    switch (kind) {
+      case 'dashboard':
+        icon = 'apps';
+        break;
+      case 'folder':
+        icon = 'folder';
+        break;
+      case 'alert':
+        icon = 'folder';
+        break;
+      default:
+        icon = 'question-circle';
+        break;
     }
 
-    if (kind === 'folder') {
-      return 'folder';
-    }
-
-    return 'question-circle';
+    return icon;
   };
 
   if (found?.length === 0) {
