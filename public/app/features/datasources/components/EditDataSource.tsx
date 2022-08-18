@@ -45,7 +45,7 @@ export function EditDataSource({ uid, pageId }: Props) {
 
   const dispatch = useDispatch();
   const dataSource = useDataSource(uid);
-  const dataSourceMeta = useDataSourceMeta(uid);
+  const dataSourceMeta = useDataSourceMeta(dataSource.type);
   const dataSourceSettings = useDataSourceSettings();
   const dataSourceRights = useDataSourceRights(uid);
   const exploreUrl = useDataSourceExploreUrl(uid);

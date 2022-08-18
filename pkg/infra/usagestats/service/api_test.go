@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -51,14 +51,13 @@ func TestApi_getUsageStats(t *testing.T) {
 
 	sqlStore.ExpectedSystemStats = &models.SystemStats{}
 	sqlStore.ExpectedDataSourceStats = []*models.DataSourceStats{}
-	sqlStore.ExpectedDataSources = []*datasources.DataSource{}
 	sqlStore.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{}
 	sqlStore.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			uss.Cfg.ReportingEnabled = tt.enabled
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
 
 			usageStats, recorder := getUsageStats(t, server)
 			require.Equal(t, tt.expectedStatus, recorder.Code)
@@ -83,7 +82,7 @@ func getUsageStats(t *testing.T, server *web.Mux) (*models.SystemStats, *httptes
 	return &usageStats, recorder
 }
 
-func setupTestServer(t *testing.T, user *models.SignedInUser, service *UsageStats) *web.Mux {
+func setupTestServer(t *testing.T, user *user.SignedInUser, service *UsageStats) *web.Mux {
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
@@ -92,7 +91,7 @@ func setupTestServer(t *testing.T, user *models.SignedInUser, service *UsageStat
 }
 
 type testContext struct {
-	user *models.SignedInUser
+	user *user.SignedInUser
 }
 
 func contextProvider(tc *testContext) web.Handler {

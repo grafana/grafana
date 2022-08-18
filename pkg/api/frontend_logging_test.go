@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
@@ -68,7 +67,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 				return nil, errors.New("epic hard drive failure")
 			}
 			if strings.HasSuffix(path, "foo.js.map") {
-				f, err := ioutil.ReadFile("./frontendlogging/test-data/foo.js.map")
+				f, err := os.ReadFile("./frontendlogging/test-data/foo.js.map")
 				require.NoError(t, err)
 				return f, nil
 			}
@@ -140,7 +139,7 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 				return nil, errors.New("epic hard drive failure")
 			}
 			if strings.HasSuffix(path, "foo.js.map") {
-				f, err := ioutil.ReadFile("./frontendlogging/test-data/foo.js.map")
+				f, err := os.ReadFile("./frontendlogging/test-data/foo.js.map")
 				require.NoError(t, err)
 				return f, nil
 			}

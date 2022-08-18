@@ -4,7 +4,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Form, Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { fetchBuiltinRoles, fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
+import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgRole, Role, ServiceAccountCreateApiResponse, ServiceAccountDTO } from 'app/types';
 
@@ -23,7 +23,6 @@ const updateServiceAccount = async (id: number, sa: ServiceAccountDTO) =>
 
 export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
   const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
 
   const currentOrgId = contextSrv.user.orgId;
@@ -45,14 +44,6 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
         if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
           let options = await fetchRoleOptions(currentOrgId);
           setRoleOptions(options);
-        }
-
-        if (
-          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
-          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
-        ) {
-          const builtInRoles = await fetchBuiltinRoles(currentOrgId);
-          setBuiltinRoles(builtInRoles);
         }
       } catch (e) {
         console.error('Error loading options', e);
@@ -128,14 +119,12 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
                   <Field label="Role">
                     {contextSrv.licensedAccessControlEnabled() ? (
                       <UserRolePicker
+                        apply
                         userId={serviceAccount.id || 0}
                         orgId={serviceAccount.orgId}
-                        builtInRole={serviceAccount.role}
-                        builtInRoles={builtinRoles}
-                        onBuiltinRoleChange={onRoleChange}
-                        builtinRolesDisabled={false}
+                        basicRole={serviceAccount.role}
+                        onBasicRoleChange={onRoleChange}
                         roleOptions={roleOptions}
-                        updateDisabled={true}
                         onApplyRoles={onPendingRolesUpdate}
                         pendingRoles={pendingRoles}
                       />

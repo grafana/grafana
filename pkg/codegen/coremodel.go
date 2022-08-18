@@ -8,7 +8,7 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -79,7 +79,7 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 		return nil, fmt.Errorf("could not open lineage file at %s: %w", path, err)
 	}
 
-	byt, err := ioutil.ReadAll(f)
+	byt, err := io.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}
@@ -182,8 +182,7 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 	if err != nil {
 		return nil, fmt.Errorf("generated go file parsing failed: %w", err)
 	}
-	m := makeReplacer(lin.Name())
-	ast.Walk(m, gf)
+	ast.Walk(prefixDropper(strings.Title(lin.Name())), gf)
 
 	var buf bytes.Buffer
 	err = format.Node(&buf, fset, gf)
@@ -223,7 +222,7 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 		return nil, fmt.Errorf("cuetsy parts gen failed: %w", err)
 	}
 
-	top, err := cuetsy.GenerateSingleAST(string(makeReplacer(ls.Lineage.Name())), schv, cuetsy.TypeInterface)
+	top, err := cuetsy.GenerateSingleAST(strings.Title(ls.Lineage.Name()), schv, cuetsy.TypeInterface)
 	if err != nil {
 		return nil, fmt.Errorf("cuetsy top gen failed: %w", err)
 	}
@@ -260,25 +259,19 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 	return wd, nil
 }
 
-type modelReplacer string
+type prefixDropper string
 
-func makeReplacer(name string) modelReplacer {
-	return modelReplacer(fmt.Sprintf("%s%s", string(strings.ToUpper(name)[0]), name[1:]))
-}
-
-func (m modelReplacer) Visit(n ast.Node) ast.Visitor {
+func (d prefixDropper) Visit(n ast.Node) ast.Visitor {
+	asstr := string(d)
 	switch x := n.(type) {
 	case *ast.Ident:
-		x.Name = m.replacePrefix(x.Name)
+		if x.Name != asstr {
+			x.Name = strings.TrimPrefix(x.Name, asstr)
+		} else {
+			x.Name = "Model"
+		}
 	}
-	return m
-}
-
-func (m modelReplacer) replacePrefix(str string) string {
-	if len(str) >= len(m) && str[:len(m)] == string(m) {
-		return strings.Replace(str, string(m), "Model", 1)
-	}
-	return str
+	return d
 }
 
 // GenerateCoremodelRegistry produces Go files that define a registry with

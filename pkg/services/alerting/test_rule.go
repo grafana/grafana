@@ -6,10 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // AlertTest makes a test alert.
-func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *models.SignedInUser) (*EvalContext, error) {
+func (e *AlertEngine) AlertTest(orgID int64, dashboard *simplejson.Json, panelID int64, user *user.SignedInUser) (*EvalContext, error) {
 	dash := models.NewDashboardFromJson(dashboard)
 	dashInfo := DashAlertInfo{
 		User:  user,
