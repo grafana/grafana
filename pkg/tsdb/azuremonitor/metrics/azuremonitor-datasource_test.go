@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -651,7 +651,7 @@ func loadTestFile(t *testing.T, name string) types.AzureMonitorResponse {
 	path := filepath.Join("../testdata", name)
 	// Ignore gosec warning G304 since it's a test
 	// nolint:gosec
-	jsonBody, err := ioutil.ReadFile(path)
+	jsonBody, err := os.ReadFile(path)
 	require.NoError(t, err)
 
 	var azData types.AzureMonitorResponse

@@ -20,4 +20,16 @@ var (
 		Name:  "variants",
 		Usage: "Comma-separated list of variants to build",
 	}
+	noInstallDepsFlag = cli.BoolFlag{
+		Name:  "no-install-deps",
+		Usage: "Don't install dependencies",
+	}
+	signingAdminFlag = cli.BoolFlag{
+		Name:  "signing-admin",
+		Usage: "Use manifest signing admin API endpoint?",
+	}
+	signFlag = cli.BoolFlag{
+		Name:  "sign",
+		Usage: "Enable plug-in signing (you must set GRAFANA_API_KEY)",
+	}
 )

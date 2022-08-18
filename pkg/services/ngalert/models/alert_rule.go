@@ -113,6 +113,15 @@ var (
 	}
 )
 
+// AlertRuleGroup is the base model for a rule group in unified alerting.
+type AlertRuleGroup struct {
+	Title      string
+	FolderUID  string
+	Interval   int64
+	Provenance Provenance
+	Rules      []AlertRule
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
@@ -216,6 +225,10 @@ func (alertRule *AlertRule) SetDashboardAndPanel() error {
 type AlertRuleKey struct {
 	OrgID int64  `xorm:"org_id"`
 	UID   string `xorm:"uid"`
+}
+
+func (k AlertRuleKey) LogContext() []interface{} {
+	return []interface{}{"rule_uid", k.UID, "org_id", k.OrgID}
 }
 
 type AlertRuleKeyWithVersion struct {

@@ -66,6 +66,11 @@ if [ $1 -eq 1 ] ; then
     cp /usr/share/grafana/conf/provisioning/access-control/sample.yaml $PROVISIONING_CFG_DIR/access-control/sample.yaml
   fi
 
+  if [ ! -d $PROVISIONING_CFG_DIR/alerting ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/alerting
+    cp /usr/share/grafana/conf/provisioning/alerting/sample.yaml $PROVISIONING_CFG_DIR/alerting/sample.yaml
+  fi
+
  	# Set user permissions on /var/log/grafana, /var/lib/grafana
 	mkdir -p /var/log/grafana /var/lib/grafana
 	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana

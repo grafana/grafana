@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -98,34 +100,6 @@ func (f fakeFeatureToggles) IsEnabled(feature string) bool {
 	return f.returnValue
 }
 
-// Fake Remote Secrets Plugin Check
-type mockRemoteSecretsPluginCheck struct {
-	UseRemoteSecretsPluginCheck
-	shouldReturnError bool
-}
-
-func provideMockRemotePluginCheck() *mockRemoteSecretsPluginCheck {
-	return &mockRemoteSecretsPluginCheck{}
-}
-
-func provideMockRemotePluginCheckWithErr() *mockRemoteSecretsPluginCheck {
-	return &mockRemoteSecretsPluginCheck{
-		shouldReturnError: true,
-	}
-}
-
-func (c *mockRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
-	return true
-}
-
-func (c *mockRemoteSecretsPluginCheck) StartAndReturnPlugin(ctx context.Context) (secretsmanagerplugin.SecretsManagerPlugin, error) {
-	var err error
-	if c.shouldReturnError {
-		err = errors.New("bogus")
-	}
-	return &fakeGRPCSecretsPlugin{}, err
-}
-
 // Fake grpc secrets plugin impl
 type fakeGRPCSecretsPlugin struct{}
 
@@ -156,3 +130,38 @@ func (c *fakeGRPCSecretsPlugin) RenameSecret(ctx context.Context, in *secretsman
 
 var _ SecretsKVStore = FakeSecretsKVStore{}
 var _ secretsmanagerplugin.SecretsManagerPlugin = &fakeGRPCSecretsPlugin{}
+
+// Fake plugin manager
+type fakePluginManager struct {
+	shouldFailOnStart bool
+}
+
+func (mg *fakePluginManager) SecretsManager() *plugins.Plugin {
+	p := &plugins.Plugin{
+		SecretsManager: &fakeGRPCSecretsPlugin{},
+	}
+	p.RegisterClient(&fakePluginClient{
+		shouldFailOnStart: mg.shouldFailOnStart,
+	})
+	return p
+}
+
+func NewFakeSecretsPluginManager(t *testing.T, shouldFailOnStart bool) plugins.SecretsPluginManager {
+	t.Helper()
+	return &fakePluginManager{
+		shouldFailOnStart: shouldFailOnStart,
+	}
+}
+
+// Fake plugin client
+type fakePluginClient struct {
+	shouldFailOnStart bool
+	backendplugin.Plugin
+}
+
+func (pc *fakePluginClient) Start(_ context.Context) error {
+	if pc.shouldFailOnStart {
+		return errors.New("failed to start")
+	}
+	return nil
+}
