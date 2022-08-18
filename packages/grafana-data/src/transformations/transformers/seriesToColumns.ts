@@ -7,16 +7,23 @@ import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
 import { joinDataFrames } from './joinDataFrames';
 
+export enum JoinMode {
+  outer = 'outer',
+  inner = 'inner',
+}
+
 export interface SeriesToColumnsOptions {
   byField?: string; // empty will pick the field automatically
+  mode?: JoinMode;
 }
 
 export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesToColumnsOptions> = {
   id: DataTransformerID.seriesToColumns,
-  name: 'Series as columns', // Called 'Outer join' in the UI!
+  name: 'Series as columns', // Used for 'Outer join' and 'Inner join' in the UI!
   description: 'Groups series by field and returns values as columns',
   defaultOptions: {
     byField: undefined, // DEFAULT_KEY_FIELD,
+    mode: JoinMode.outer,
   },
 
   operator: (options) => (source) => source.pipe(map((data) => seriesToColumnsTransformer.transformer(options)(data))),
@@ -28,7 +35,7 @@ export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesTo
         if (options.byField && !joinBy) {
           joinBy = fieldMatchers.get(FieldMatcherID.byName).get(options.byField);
         }
-        const joined = joinDataFrames({ frames: data, joinBy });
+        const joined = joinDataFrames({ frames: data, joinBy, mode: options.mode });
         if (joined) {
           return [joined];
         }

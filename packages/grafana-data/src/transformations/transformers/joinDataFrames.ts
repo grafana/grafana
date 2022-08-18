@@ -1,8 +1,12 @@
+import intersect from 'fast_array_intersect';
+
 import { getTimeField, sortDataFrame } from '../../dataframe';
 import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
+
+import { JoinMode } from './seriesToColumns';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -39,11 +43,6 @@ export interface JoinOptions {
   frames: DataFrame[];
 
   /**
-   * @internal -- Optionally specify if the join should be an inner join
-   */
-  innerJoin?: boolean;
-
-  /**
    * The field to join -- frames that do not have this field will be droppped
    */
   joinBy?: FieldMatcher;
@@ -57,6 +56,11 @@ export interface JoinOptions {
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
+
+  /**
+   * @internal -- Optionally specify a join mode (outer or inner)
+   */
+  mode?: JoinMode;
 }
 
 function getJoinMatcher(options: JoinOptions): FieldMatcher {
@@ -216,7 +220,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     allData.push(a);
   }
 
-  const joined = join(allData, nullModes, options.innerJoin);
+  const joined = join(allData, nullModes, options.mode);
 
   return {
     // ...options.data[0], // keep name, meta?
@@ -277,27 +281,20 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-export function join(tables: AlignedData[], nullModes?: number[][], innerJoin?: boolean) {
-  const xVals = new Set<number>();
+export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
+  let xVals: Set<number>;
 
-  for (let ti = 0; ti < tables.length; ti++) {
-    let t = tables[ti];
-    let xs = t[0];
-    let len = xs.length;
-    const xsSet = new Set(xs);
+  if (mode === JoinMode.inner) {
+    xVals = new Set(intersect(tables.map((t) => Array.from(t[0]))));
+  } else {
+    xVals = new Set();
 
-    for (let i = 0; i < len; i++) {
-      if (innerJoin) {
-        if (ti === 0) {
-          xVals.add(xs[i]);
-        } else {
-          for (const xVal of xVals) {
-            if (!xsSet.has(xVal)) {
-              xVals.delete(xVal);
-            }
-          }
-        }
-      } else {
+    for (let ti = 0; ti < tables.length; ti++) {
+      let t = tables[ti];
+      let xs = t[0];
+      let len = xs.length;
+
+      for (let i = 0; i < len; i++) {
         xVals.add(xs[i]);
       }
     }

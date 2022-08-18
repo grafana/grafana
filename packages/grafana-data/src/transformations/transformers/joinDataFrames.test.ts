@@ -5,6 +5,7 @@ import { ArrayVector } from '../../vector';
 
 import { calculateFieldTransformer } from './calculateField';
 import { isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
+import { JoinMode } from './seriesToColumns';
 
 describe('align frames', () => {
   beforeAll(() => {
@@ -81,7 +82,7 @@ describe('align frames', () => {
     });
 
     it('should perform an inner join', () => {
-      const out = joinDataFrames({ frames: [series1, series2], innerJoin: true })!;
+      const out = joinDataFrames({ frames: [series1, series2], mode: JoinMode.inner })!;
       expect(
         out.fields.map((f) => ({
           name: f.name,
