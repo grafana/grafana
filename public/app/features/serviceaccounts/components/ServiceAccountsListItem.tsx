@@ -71,7 +71,7 @@ const ServiceAccountListItem = memo(
           </a>
         </td>
         {contextSrv.licensedAccessControlEnabled() ? (
-          <td className="max-width-23">
+          <td>
             {displayRolePicker && (
               <UserRolePicker
                 userId={serviceAccount.id}
