@@ -292,7 +292,7 @@ export const Table: FC<Props> = memo((props: Props) => {
 
   return (
     <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table">
-      <CustomScrollbar onCustomScroll={handleScroll}>
+      <CustomScrollbar onScroll={handleScroll}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} />}
           {itemCount > 0 ? (
