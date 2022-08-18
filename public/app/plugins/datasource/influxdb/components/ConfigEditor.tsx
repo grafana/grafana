@@ -14,6 +14,7 @@ import {
 import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 
 const { Input, SecretFormField } = LegacyForms;
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
 
 const httpModes = [
@@ -270,6 +271,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
   render() {
     const { options, onOptionsChange } = this.props;
+    const isDirectAccess = options.access === 'direct';
 
     return (
       <>
@@ -301,14 +303,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </InfoBox>
         )}
 
-        {options.access === 'direct' && (
-          <Alert title="Deprecation Notice" severity="warning">
-            Browser access mode in the InfluxDB datasource is deprecated and will be removed in a future release.
+        {isDirectAccess && (
+          <Alert title="Error" severity="error">
+            {BROWSER_MODE_DISABLED_MESSAGE}
           </Alert>
         )}
 
         <DataSourceHttpSettings
-          showAccessOptions={true}
+          showAccessOptions={isDirectAccess}
           dataSourceConfig={options}
           defaultUrl="http://localhost:8086"
           onChange={onOptionsChange}

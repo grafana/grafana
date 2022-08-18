@@ -158,16 +158,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
   }
 
   onOrgRemove = async () => {
-    const { org, user } = this.props;
+    const { org } = this.props;
     this.props.onOrgRemove(org.orgId);
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (
-        contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove) &&
-        contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd)
-      ) {
-        user && (await updateUserRoles([], user.id, org.orgId));
-      }
-    }
   };
 
   onChangeRoleClick = () => {
