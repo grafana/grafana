@@ -28,7 +28,6 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   tokens: ApiKey[];
   isLoading: boolean;
   roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
 }
 
 function mapStateToProps(state: StoreState) {
@@ -37,7 +36,6 @@ function mapStateToProps(state: StoreState) {
     tokens: state.serviceAccountProfile.tokens,
     isLoading: state.serviceAccountProfile.isLoading,
     roleOptions: state.serviceAccounts.roleOptions,
-    builtInRoles: state.serviceAccounts.builtInRoles,
     timezone: getTimeZone(state.user),
   };
 }
@@ -62,7 +60,6 @@ export const ServiceAccountPageUnconnected = ({
   timezone,
   isLoading,
   roleOptions,
-  builtInRoles,
   createServiceAccountToken,
   deleteServiceAccount,
   deleteServiceAccountToken,
@@ -187,7 +184,6 @@ export const ServiceAccountPageUnconnected = ({
               serviceAccount={serviceAccount}
               timeZone={timezone}
               roleOptions={roleOptions}
-              builtInRoles={builtInRoles}
               onChange={onProfileChange}
             />
           )}

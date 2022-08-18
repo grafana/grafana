@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -409,7 +410,16 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *models.Remov
 	}
 
 	if cmd.UserWasDeleted {
+		// This should be called from appropriate service when moved
+		if err := hs.AccessControl.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserId); err != nil {
+			hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", accesscontrol.GlobalOrgID, "err", err)
+		}
 		return response.Success("User deleted")
+	}
+
+	// This should be called from appropriate service when moved
+	if err := hs.AccessControl.DeleteUserPermissions(ctx, cmd.OrgId, cmd.UserId); err != nil {
+		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", cmd.OrgId, "err", err)
 	}
 
 	return response.Success("User removed from organization")
