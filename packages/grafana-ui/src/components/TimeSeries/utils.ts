@@ -272,6 +272,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
+            show: !customConfig.hideFrom?.viz,
             ...axisColorOpts,
           },
           field
