@@ -13,6 +13,9 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
+// Avoid using v2.0.0+incompatible Redigo used by dependencies as the latest maintained branch of Redigo is v1.
+replace github.com/gomodule/redigo => github.com/gomodule/redigo v1.8.9
+
 require (
 	cloud.google.com/go/storage v1.21.0
 	cuelang.org/go v0.4.3
@@ -25,7 +28,7 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.23.2-0.20220705071446-5d7ca5184786
+	github.com/centrifugal/centrifuge v0.25.0
 	github.com/cortexproject/cortex v1.10.1-0.20211014125347-85c378182d0d
 	github.com/crewjam/saml v0.4.8
 	github.com/davecgh/go-spew v1.1.1
@@ -88,7 +91,6 @@ require (
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
-	github.com/unknwon/com v1.0.1
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae
 	github.com/weaveworks/common v0.0.0-20210913144402-035033b78a78 // indirect
@@ -141,7 +143,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
-	github.com/centrifugal/protocol v0.8.9 // indirect
+	github.com/centrifugal/protocol v0.8.10 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
@@ -316,7 +318,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/pierrec/lz4/v4 v4.1.8 // indirect
 	github.com/segmentio/asm v1.1.4 // indirect
-	github.com/smartystreets/goconvey v1.7.2 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/wk8/go-ordered-map v1.0.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect

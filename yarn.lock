@@ -15506,13 +15506,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:3.0.0-beta.0":
-  version: 3.0.0-beta.0
-  resolution: "centrifuge@npm:3.0.0-beta.0"
+"centrifuge@npm:3.0.1":
+  version: 3.0.1
+  resolution: "centrifuge@npm:3.0.1"
   dependencies:
     events: ^3.3.0
     protobufjs: ^6.11.3
-  checksum: da4088929ee96014e81de3dbd6759aa879843baff04f2d70857c92d09d7bd1079e65bfe3b9dacfadd7e55f314dc5684b032ed5122889cb00c8d277ab6823390b
+  checksum: cf17b63fe9c684f121348a8597da0686a1f45fff2f85eaed6a3452504caeb1098c1524b10f197fe3811a11199214b88b75f5935ac86cb9753146fcc0d11f418c
   languageName: node
   linkType: hard
 
@@ -21788,7 +21788,7 @@ __metadata:
     baron: 3.0.3
     brace: 0.11.1
     calculate-size: 1.1.1
-    centrifuge: 3.0.0-beta.0
+    centrifuge: 3.0.1
     classnames: 2.3.1
     comlink: 4.3.1
     common-tags: 1.8.2
