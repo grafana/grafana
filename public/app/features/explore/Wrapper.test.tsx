@@ -460,9 +460,8 @@ describe('Wrapper', () => {
           }),
         })
       );
-      // the actual final URL will have both queries be loki, but due to the complexity of query export/import we do not do a complete URL change in this test
       expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}'
+        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
       );
     });
   });

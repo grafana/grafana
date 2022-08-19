@@ -722,15 +722,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (queriesImportedAction.match(action)) {
-    const { queries } = action.payload;
-    return {
-      ...state,
-      queries,
-      queryKeys: getQueryKeys(queries),
-    };
-  }
-
   if (queryStoreSubscriptionAction.match(action)) {
     const { querySubscription } = action.payload;
     return {

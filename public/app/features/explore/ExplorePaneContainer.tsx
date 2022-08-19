@@ -26,7 +26,7 @@ import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors
 
 import Explore from './Explore';
 import { initializeExplore, refreshExplore } from './state/explorePane';
-import { lastSavedUrl, cleanupPaneAction } from './state/main';
+import { lastSavedUrl, cleanupPaneAction, stateSave } from './state/main';
 import { importQueries } from './state/query';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -82,7 +82,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
         queriesDatasourceOverride = datasource.getRef();
       }
 
-      const queries = await ensureQueries(initialQueries, queriesDatasourceOverride); // this will return an empty array if there are no datasources
+      let queries = await ensureQueries(initialQueries, queriesDatasourceOverride); // this will return an empty array if there are no datasources
 
       const queriesDatasourceDetails = queryDatasourceDetails(queries);
       if (!queriesDatasourceDetails.noneHaveDatasource) {
@@ -90,12 +90,15 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
           if (config.featureToggles.exploreMixedDatasource) {
             rootDatasourceOverride = await getDatasourceSrv().get(MIXED_DATASOURCE_NAME);
           } else {
+            // if we have mixed queries but the mixed datasource feature is not on, change the datasource to the first query that has one
             const changeDatasourceUid = queries.find((query) => query.datasource?.uid)!.datasource!.uid;
             if (changeDatasourceUid) {
               rootDatasourceOverride = changeDatasourceUid;
               const datasource = await getDatasourceSrv().get(changeDatasourceUid);
               const datasourceInit = await getDatasourceSrv().get(initialDatasource);
-              this.props.importQueries(exploreId, queries, datasourceInit, datasource);
+              await this.props.importQueries(exploreId, queries, datasourceInit, datasource);
+              await this.props.stateSave({ replace: true });
+              queries = this.props.initialQueries;
             }
           }
         }
@@ -174,6 +177,7 @@ const mapDispatchToProps = {
   refreshExplore,
   cleanupPaneAction,
   importQueries,
+  stateSave,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
