@@ -34,12 +34,12 @@ func (gs *SessionDB) Exec(ctx context.Context, query string, args ...interface{}
 	return gs.sqlxdb.ExecContext(ctx, gs.sqlxdb.Rebind(query), args...)
 }
 
-func (gs *SessionDB) driverName() string {
-	return gs.sqlxdb.DriverName()
-}
-
 func (gs *SessionDB) NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
 	return gs.sqlxdb.NamedExecContext(ctx, gs.sqlxdb.Rebind(query), arg)
+}
+
+func (gs *SessionDB) driverName() string {
+	return gs.sqlxdb.DriverName()
 }
 
 func (gs *SessionDB) Beginx() (*SessionTx, error) {

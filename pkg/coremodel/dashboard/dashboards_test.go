@@ -1,9 +1,10 @@
-package dev_dashboards
+package dashboard_test
 
 import (
 	"encoding/json"
 	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,9 +17,12 @@ import (
 )
 
 func TestDevenvDashboardValidity(t *testing.T) {
-	m, err := themaTestableDashboards()
+	path, err := filepath.Abs("../../../devenv/dev-dashboards")
 	require.NoError(t, err)
-	cm, err := dashboard.ProvideCoremodel(cuectx.ProvideThemaLibrary())
+
+	m, err := themaTestableDashboards(os.DirFS(path))
+	require.NoError(t, err)
+	cm, err := dashboard.New(cuectx.ProvideThemaLibrary())
 	require.NoError(t, err)
 
 	for path, b := range m {
@@ -41,9 +45,8 @@ func TestDevenvDashboardValidity(t *testing.T) {
 	}
 }
 
-func themaTestableDashboards() (map[string][]byte, error) {
+func themaTestableDashboards(in fs.FS) (map[string][]byte, error) {
 	m := make(map[string][]byte)
-	in := DevDashboardFS
 
 	err := fs.WalkDir(in, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -67,7 +70,10 @@ func themaTestableDashboards() (map[string][]byte, error) {
 		}
 
 		jtree := make(map[string]interface{})
-		json.Unmarshal(b, &jtree)
+		err = json.Unmarshal(b, &jtree)
+		if err != nil {
+			return err
+		}
 		if oldschemav, has := jtree["schemaVersion"]; !has || !(oldschemav.(float64) > dashboard.HandoffSchemaVersion-1) {
 			return nil
 		}
