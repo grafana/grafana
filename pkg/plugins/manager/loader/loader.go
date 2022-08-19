@@ -21,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,6 +39,8 @@ var _ plugins.ErrorResolver = (*Loader)(nil)
 type Loader struct {
 	cfg                *plugins.Cfg
 	pluginFinder       finder.Finder
+	processManager     process.Service
+	pluginRegistry     registry.Service
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	log                log.Logger
@@ -45,15 +49,17 @@ type Loader struct {
 }
 
 func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
+	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, pluginRegistry, backendProvider), nil
 }
 
 func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	backendProvider plugins.BackendFactoryProvider) *Loader {
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(),
+		pluginRegistry:     pluginRegistry,
+		processManager:     process.NewManager(pluginRegistry),
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
 		errs:               make(map[string]*plugins.SignatureError),
@@ -61,16 +67,16 @@ func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLo
 	}
 }
 
-func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
 	pluginJSONPaths, err := l.pluginFinder.Find(paths)
 	if err != nil {
 		return nil, err
 	}
 
-	return l.loadPlugins(ctx, class, pluginJSONPaths, ignore)
+	return l.loadPlugins(ctx, class, pluginJSONPaths)
 }
 
-func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string, existingPlugins map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
 
 	// load plugin.json files and map directory to JSON data
@@ -94,12 +100,18 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 
-	foundPlugins.stripDuplicates(existingPlugins, l.log)
+	// get all registered plugins
+	registeredPlugins := make(map[string]struct{})
+	for _, p := range l.pluginRegistry.Plugins(ctx) {
+		registeredPlugins[p.ID] = struct{}{}
+	}
+
+	foundPlugins.stripDuplicates(registeredPlugins, l.log)
 
 	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.Plugin)
 	for pluginDir, pluginJSON := range foundPlugins {
-		plugin := createPluginBase(pluginJSON, class, pluginDir, l.log)
+		plugin := createPluginBase(pluginJSON, class, pluginDir)
 
 		sig, err := signature.Calculate(l.log, plugin)
 		if err != nil {
@@ -178,10 +190,59 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		if err != nil {
 			return nil, err
 		}
-		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
+		metrics.SetPluginBuildInformation(p.ID, p.Type, p.Info.Version, string(p.Signature))
+	}
+
+	for _, p := range verifiedPlugins {
+		if err := l.registerAndStart(context.Background(), p); err != nil {
+			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+		}
 	}
 
 	return verifiedPlugins, nil
+}
+
+func (l *Loader) Unload(ctx context.Context, pluginID string) error {
+	plugin, exists := l.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists {
+		return plugins.ErrPluginNotInstalled
+	}
+
+	if !plugin.IsExternalPlugin() {
+		return plugins.ErrUninstallCorePlugin
+	}
+
+	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
+	path, err := filepath.Rel(l.cfg.PluginsPath, plugin.PluginDir)
+	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
+		return plugins.ErrUninstallOutsideOfPluginDir
+	}
+
+	if err = l.unregisterAndStop(ctx, plugin); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (l *Loader) registerAndStart(ctx context.Context, p *plugins.Plugin) error {
+	if err := l.pluginRegistry.Add(ctx, p); err != nil {
+		return err
+	}
+	return l.processManager.Start(ctx, p.ID)
+}
+
+func (l *Loader) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
+	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
+
+	if err := l.processManager.Stop(ctx, p.ID); err != nil {
+		return err
+	}
+
+	if err := l.pluginRegistry.Remove(ctx, p.ID); err != nil {
+		return err
+	}
+	l.log.Debug("Plugin unregistered", "pluginId", p.ID)
+	return nil
 }
 
 func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
@@ -233,7 +294,7 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	return plugin, nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, logger log.Logger) *plugins.Plugin {
+func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) *plugins.Plugin {
 	plugin := &plugins.Plugin{
 		JSONData:  pluginJSON,
 		PluginDir: pluginDir,
@@ -342,7 +403,7 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 
 func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
 	if class == plugins.Core {
-		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
+		return path.Join("public/app/plugins", pluginJSON.Type, filepath.Base(pluginDir))
 	}
 
 	return path.Join("public/plugins", pluginJSON.ID)
@@ -350,7 +411,7 @@ func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string)
 
 func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
 	if class == plugins.Core {
-		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
+		return path.Join("app/plugins", pluginJSON.Type, filepath.Base(pluginDir), "module")
 	}
 
 	return path.Join("plugins", pluginJSON.ID, "module")
