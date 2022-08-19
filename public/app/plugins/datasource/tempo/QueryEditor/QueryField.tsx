@@ -3,7 +3,7 @@ import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   FileDropzone,
   InlineField,
@@ -96,7 +96,9 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
       }
     }
 
-    queryTypeOptions.push({ value: 'traceql', label: 'TraceQL' });
+    if (config.featureToggles.traceqlEditor) {
+      queryTypeOptions.push({ value: 'traceql', label: 'TraceQL' });
+    }
 
     return (
       <>

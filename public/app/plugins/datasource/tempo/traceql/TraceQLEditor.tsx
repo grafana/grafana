@@ -70,7 +70,6 @@ function useAutocomplete(datasource: TempoDatasource) {
       try {
         await datasource.languageProvider.start();
         const tags = datasource.languageProvider.getTags();
-        console.log(tags);
 
         if (tags) {
           providerRef.current.setTags(tags);

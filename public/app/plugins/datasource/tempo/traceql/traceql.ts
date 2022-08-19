@@ -36,7 +36,7 @@ export const language = {
   tokenizer: {
     root: [
       // labels
-      [/[a-z_]\w*(?=\s*(=|!=|=~|!~))/, 'tag'],
+      [/[a-z_][\w.]*(?=\s*(=|!=|=~|!~))/, 'tag'],
 
       // strings
       [/"([^"\\]|\\.)*$/, 'string.invalid'], // non-teminated string
