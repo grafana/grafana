@@ -94,6 +94,15 @@ describe('valueFormats', () => {
 
       expect(toFixed(100.4)).toBe('100');
       expect(toFixed(100.5)).toBe('101');
+      expect(toFixed(27.4)).toBe('27.4');
+      expect(toFixed(27.5)).toBe('27.5');
+
+      expect(toFixed(-100)).toBe('-100');
+
+      expect(toFixed(-100.5)).toBe('-100');
+      expect(toFixed(-100.6)).toBe('-101');
+      expect(toFixed(-27.5)).toBe('-27.5');
+      expect(toFixed(-27.6)).toBe('-27.6');
     });
 
     it('toFixed should handle number correctly if decimal is not null', () => {
