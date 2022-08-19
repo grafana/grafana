@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import React, { ReactNode, useState } from 'react';
 
-import { ArrayVector, dateTime, Field, FieldType, LinkModel } from '@grafana/data';
+import { ArrayVector, Field, FieldType, LinkModel } from '@grafana/data';
 import { LegacyForms } from '@grafana/ui';
 
 import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
