@@ -60,7 +60,6 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 
 			handlers = append(handlers, AppPluginRoute(route, plugin.ID, hs))
 			for _, method := range strings.Split(route.Method, ",") {
-
 				r.Handle(strings.TrimSpace(method), url, handlers)
 			}
 
