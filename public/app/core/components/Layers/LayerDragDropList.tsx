@@ -49,7 +49,7 @@ export const LayerDragDropList = <T extends LayerElement>({
           <div {...provided.droppableProps} ref={provided.innerRef}>
             {(() => {
               // reverse order
-              const rows: any = [];
+              const rows: JSX.Element[] = [];
               const lastLayerIndex = excludeBaseLayer ? 1 : 0;
               const shouldRenderDragIconLengthThreshold = excludeBaseLayer ? 2 : 1;
               for (let i = layers.length - 1; i >= lastLayerIndex; i--) {

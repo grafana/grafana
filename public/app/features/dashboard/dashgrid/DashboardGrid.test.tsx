@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
+import { DashboardMeta } from 'app/types';
+
 import { DashboardModel } from '../state';
 
 import { DashboardGridUnconnected as DashboardGrid, Props } from './DashboardGrid';
@@ -12,7 +14,7 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
   return { LazyLoader };
 });
 
-function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel {
+function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',

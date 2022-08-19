@@ -51,7 +51,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
     setLinkSettings(link);
   };
 
-  const onTagsChange = (tags: any[]) => {
+  const onTagsChange = (tags: string[]) => {
     onUpdate({ ...linkSettings, tags: tags });
   };
 

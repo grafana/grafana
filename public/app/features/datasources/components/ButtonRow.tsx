@@ -10,8 +10,8 @@ export interface Props {
   canSave: boolean;
   canDelete: boolean;
   onDelete: () => void;
-  onSubmit: (event: any) => void;
-  onTest: (event: any) => void;
+  onSubmit: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  onTest: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 
 export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest, exploreUrl }: Props) {

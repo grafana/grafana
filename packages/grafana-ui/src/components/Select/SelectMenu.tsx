@@ -35,7 +35,7 @@ interface SelectMenuOptionProps<T> {
   isDisabled: boolean;
   isFocused: boolean;
   isSelected: boolean;
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
   innerRef: RefCallback<HTMLDivElement>;
   renderOptionLabel?: (value: SelectableValue<T>) => JSX.Element;
   data: SelectableValue<T>;

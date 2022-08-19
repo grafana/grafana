@@ -53,7 +53,7 @@ interface Props extends OwnProps, ConnectedProps<typeof connector> {}
  * of state based on URL changes and preventing any infinite loops.
  */
 class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
-  el: any;
+  el: HTMLDivElement | null = null;
   exploreEvents: EventBusExtended;
 
   constructor(props: Props) {
@@ -100,7 +100,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
     }
   };
 
-  getRef = (el: any) => {
+  getRef = (el: HTMLDivElement) => {
     this.el = el;
   };
 

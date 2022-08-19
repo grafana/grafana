@@ -77,7 +77,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
         .then(() => {
           this.toGrafana();
         })
-        .catch((err: any) => console.error(err));
+        .catch((err) => console.error(err));
     }
   };
 
@@ -88,7 +88,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
 
     getBackendSrv()
       .post('/login', formModel)
-      .then((result: any) => {
+      .then((result) => {
         this.result = result;
         if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
           this.toGrafana();
