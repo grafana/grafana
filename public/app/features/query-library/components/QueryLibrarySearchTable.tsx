@@ -38,6 +38,7 @@ const QueryLibrarySearchTable = () => {
   const searchQuery = useMemo<SearchQuery>(() => {
     const query: SearchQuery = {
       query: '*',
+      sort: 'name_sort',
       explain: true,
       kind: ['query'],
     };
