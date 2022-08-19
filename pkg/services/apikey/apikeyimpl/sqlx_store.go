@@ -49,7 +49,7 @@ func (ss *sqlxStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQue
 	return err
 }
 
-func (ss *sqlxStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.APIKey {
+func (ss *sqlxStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
 	result := make([]*apikey.APIKey, 0)
 	var err error
 	if orgID != -1 {
@@ -59,11 +59,7 @@ func (ss *sqlxStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.A
 		err = ss.sess.Select(
 			ctx, &result, "SELECT * FROM api_key WHERE service_account_id IS NULL ORDER BY name ASC")
 	}
-	if err != nil {
-		_ = err
-		// TODO: return error
-	}
-	return result
+	return result, err
 }
 
 func (ss *sqlxStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {

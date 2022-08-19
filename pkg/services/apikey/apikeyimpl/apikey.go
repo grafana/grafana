@@ -27,7 +27,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg) apikey.Service {
 func (s *Service) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) error {
 	return s.store.GetAPIKeys(ctx, query)
 }
-func (s *Service) GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.APIKey {
+func (s *Service) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
 	return s.store.GetAllAPIKeys(ctx, orgID)
 }
 func (s *Service) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error {

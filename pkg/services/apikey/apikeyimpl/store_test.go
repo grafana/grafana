@@ -262,7 +262,8 @@ func testIntegrationApiKeyDataAccess(t *testing.T, fn getStore) {
 				require.NoError(t, err)
 				assert.Len(t, query.Result, tt.expectedNumKeys)
 
-				res := store.GetAllAPIKeys(context.Background(), 1)
+				res, err := store.GetAllAPIKeys(context.Background(), 1)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expectedAllNumKeys, len(res))
 			})
 		}

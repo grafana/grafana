@@ -50,7 +50,7 @@ func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuer
 	})
 }
 
-func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.APIKey {
+func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
 	result := make([]*apikey.APIKey, 0)
 	err := ss.db.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		sess := dbSession.Where("service_account_id IS NULL").Asc("name")
@@ -59,11 +59,7 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.AP
 		}
 		return sess.Find(&result)
 	})
-	if err != nil {
-		_ = err
-		// TODO: return error
-	}
-	return result
+	return result, err
 }
 
 func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
