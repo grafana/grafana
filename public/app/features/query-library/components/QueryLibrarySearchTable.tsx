@@ -22,6 +22,13 @@ const QueryLibrarySearchTable = () => {
 
   // @TODO update with real data
   const authors = ['Artur Wierzbicki', 'Drew Slobodnjak', 'Nathan Marrs', 'Raphael Batyrbaev', 'Adela Almasan'];
+  const dates = [
+    'August 13, 2022, 4:10pm',
+    'August 13, 2022, 2:32pm',
+    'August 14, 2022, 1:00am',
+    'August 16, 2022, 12:00pm',
+    'August 17, 2022, 2:33pm',
+  ];
 
   const searchQuery = useMemo<SearchQuery>(() => {
     const query: SearchQuery = {
@@ -147,6 +154,7 @@ const QueryLibrarySearchTable = () => {
                             hideModal={hideModal}
                             updateComponent={() => setReload(reload + 1)}
                             author={authors[key]}
+                            date={dates[key]}
                           />
                         );
                       })}
