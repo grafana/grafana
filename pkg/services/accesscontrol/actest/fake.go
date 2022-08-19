@@ -50,6 +50,10 @@ func (f FakeAccessControl) Evaluate(ctx context.Context, user *user.SignedInUser
 func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 }
 
+func (f FakeAccessControl) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
+	return f.ExpectedErr
+}
+
 func (f FakeAccessControl) IsDisabled() bool {
 	return f.ExpectedDisabled
 }
