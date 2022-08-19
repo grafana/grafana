@@ -45,7 +45,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
     { label: 'Create alert rule', value: 'alert-rule', icon: 'bell' },
     { label: 'View in explore', value: 'explore', icon: 'compass' },
     {
-      label: 'Create Recorded Query',
+      label: 'Create recorded query',
       value: 'recorded-query',
       icon: 'record-audio',
     },
