@@ -44,6 +44,11 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
     { label: 'Add to dashboard', value: 'dashboard-panel', icon: 'apps' },
     { label: 'Create alert rule in Grafana Alerting', value: 'alert-rule', icon: 'bell' },
     { label: 'View in explore', value: 'explore', icon: 'compass' },
+    {
+      label: 'Create Recorded Query',
+      value: 'recorded-query',
+      icon: 'record-audio',
+    },
     { label: 'Create SLO', value: 'slo', icon: 'crosshair' },
     {
       label: 'Add to incident in Grafana OnCall',
