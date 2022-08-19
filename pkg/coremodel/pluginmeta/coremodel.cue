@@ -17,8 +17,8 @@ seqs: [
 				// conventions.
 				id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([for t in _types {t}], "|")))$"
 
-				// types indicates the set of all plugin types. This private field solely
-				// exists so that the plugin type can be interpolated in other fields
+				// The set of all plugin types. This hidden field exists solely
+				// so that the set can be string-interpolated into other fields.
 				_types: ["app", "datasource", "panel", "renderer", "secretsmanager"]
 
 				// type indicates which type of Grafana plugin this is, of the defined
