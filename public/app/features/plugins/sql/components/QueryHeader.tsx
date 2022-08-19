@@ -26,7 +26,7 @@ import { DatasetSelector } from './DatasetSelector';
 import { ErrorBoundary } from './ErrorBoundary';
 import { TableSelector } from './TableSelector';
 
-interface QueryHeaderProps {
+export interface QueryHeaderProps {
   db: DB;
   query: QueryWithDefaults;
   onChange: (query: SQLQuery) => void;
@@ -34,6 +34,7 @@ interface QueryHeaderProps {
   onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
   queryRowFilter: QueryRowFilter;
   isQueryRunnable: boolean;
+  isDatasetSelectorHidden?: boolean;
 }
 
 const editorModes = [
@@ -49,6 +50,7 @@ export function QueryHeader({
   onRunQuery,
   onQueryRowChange,
   isQueryRunnable,
+  isDatasetSelectorHidden,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -230,15 +232,16 @@ export function QueryHeader({
       {editorMode === EditorMode.Builder && (
         <>
           <Space v={0.5} />
-
           <EditorRow>
-            <EditorField label="Dataset" width={25}>
-              <DatasetSelector
-                db={db}
-                value={query.dataset === undefined ? null : query.dataset}
-                onChange={onDatasetChange}
-              />
-            </EditorField>
+            {isDatasetSelectorHidden ? null : (
+              <EditorField label="Dataset" width={25}>
+                <DatasetSelector
+                  db={db}
+                  value={query.dataset === undefined ? null : query.dataset}
+                  onChange={onDatasetChange}
+                />
+              </EditorField>
+            )}
 
             <EditorField label="Table" width={25}>
               <TableSelector
@@ -246,6 +249,7 @@ export function QueryHeader({
                 query={query}
                 value={query.table === undefined ? null : query.table}
                 onChange={onTableChange}
+                forceFetch={isDatasetSelectorHidden}
                 applyDefault
               />
             </EditorField>

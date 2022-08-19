@@ -6,10 +6,6 @@ export function getTimescaleDBVersion() {
   return "SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'";
 }
 
-export function showDatabases() {
-  return 'SELECT datname FROM pg_database WHERE datistemplate = false';
-}
-
 export function showTables() {
   return `select quote_ident(table_name) as "table" from information_schema.tables
     where quote_ident(table_schema) not in ('information_schema',

@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { FUNCTIONS } from '../mysql/functions';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
-import { getSchema, getTimescaleDBVersion, getVersion, showDatabases, showTables } from './postgresMetaQuery';
+import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getFieldConfig, toRawSql } from './sqlUtil';
 import { PostgresOptions } from './types';
@@ -33,11 +33,6 @@ export class PostgresDatasource extends SqlDatasource {
     const value = await this.runSql<{ extversion: string }>(getTimescaleDBVersion());
     const results = value.fields.extversion.values.toArray();
     return results[0];
-  }
-
-  async fetchDatasets(): Promise<string[]> {
-    const datasets = await this.runSql<{ datname: string[] }>(showDatabases(), { refId: 'datasets' });
-    return datasets.fields.datname.values.toArray().flat();
   }
 
   async fetchTables(): Promise<string[]> {
@@ -74,11 +69,11 @@ export class PostgresDatasource extends SqlDatasource {
   getDB(): DB {
     return {
       init: () => Promise.resolve(true),
-      datasets: () => this.fetchDatasets(),
+      datasets: () => Promise.resolve([]),
       tables: () => this.fetchTables(),
       getSqlCompletionProvider: () => this.getSqlCompletionProvider(this.db),
       fields: async (query: SQLQuery) => {
-        if (!query?.dataset && !query?.table) {
+        if (!query?.table) {
           return [];
         }
         return this.fetchFields(query);

@@ -45,7 +45,7 @@ export function getFieldConfig(type: string): { raqbFieldType: RAQBFieldTypes; i
   }
 }
 
-export function toRawSql({ sql, dataset, table }: SQLQuery): string {
+export function toRawSql({ sql, table }: SQLQuery): string {
   let rawQuery = '';
 
   // Return early with empty string if there is no sql column
@@ -55,7 +55,7 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
 
   rawQuery += createSelectClause(sql.columns);
 
-  if (dataset && table) {
+  if (table) {
     rawQuery += `FROM ${table} `;
   }
 
