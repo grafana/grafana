@@ -63,7 +63,7 @@ This setting configures the axis range.
 
 ### Reverse
 
-When selected, the axis will be displayed in reverse order
+When selected, the axis appears in reverse order.
 
 ## Colors
 
