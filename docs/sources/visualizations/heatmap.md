@@ -101,8 +101,8 @@ Use these settings to refine your visualization.
 
 ### Legend
 
-Choose whether to display the heatmap legend on the visualization or not.
+Choose whether you want to display the heatmap legend on the visualization.
 
 ### Exemplars
 
-Set the color used to show exemplar data
+Set the color used to show exemplar data.
