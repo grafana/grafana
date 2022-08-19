@@ -26,18 +26,21 @@ type APIKey struct {
 	LastUsedAt       *time.Time `xorm:"last_used_at"`
 	Expires          *int64
 	ServiceAccountId *int64
+	IsRevoked        *bool `xorm:"is_revoked"`
 }
 
 func (k APIKey) TableName() string { return "api_key" }
 
 // swagger:model
 type AddCommand struct {
-	Name          string       `json:"name" binding:"Required"`
-	Role          org.RoleType `json:"role" binding:"Required"`
-	OrgId         int64        `json:"-"`
-	Key           string       `json:"-"`
-	SecondsToLive int64        `json:"secondsToLive"`
-	Result        *APIKey      `json:"-"`
+	Name             string       `json:"name" binding:"Required"`
+	Role             org.RoleType `json:"role" binding:"Required"`
+	OrgId            int64        `json:"-"`
+	Key              string       `json:"-"`
+	SecondsToLive    int64        `json:"secondsToLive"`
+	ServiceAccountID *int64       `json:"-"`
+
+	Result *APIKey `json:"-"`
 }
 
 type DeleteCommand struct {

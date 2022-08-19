@@ -66,8 +66,9 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	return manager
 }
 
-func (st *Manager) Close() {
+func (st *Manager) Close(ctx context.Context) {
 	st.quit <- struct{}{}
+	st.flushState(ctx)
 }
 
 func (st *Manager) Warm(ctx context.Context) {
@@ -161,7 +162,8 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
-	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
+	logger := st.log.New(alertRule.GetKey().LogContext())
+	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
@@ -170,6 +172,14 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		processedResults[s.CacheId] = s
 	}
 	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+	if len(states) > 0 {
+		logger.Debug("saving new states to the database", "count", len(states))
+		for _, state := range states {
+			if err := st.saveState(ctx, state); err != nil {
+				logger.Error("failed to save alert state", "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error())
+			}
+		}
+	}
 	return states
 }
 
@@ -295,6 +305,42 @@ func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.set(s)
 	}
+}
+
+// flushState dumps the entire state to the database
+func (st *Manager) flushState(ctx context.Context) {
+	t := st.clock.Now()
+	st.log.Info("flushing the state")
+	st.cache.mtxStates.Lock()
+	defer st.cache.mtxStates.Unlock()
+	totalStates, errorsCnt := 0, 0
+	for _, orgStates := range st.cache.states {
+		for _, ruleStates := range orgStates {
+			for _, state := range ruleStates {
+				err := st.saveState(ctx, state)
+				totalStates++
+				if err != nil {
+					st.log.Error("failed to save alert state", append(state.GetRuleKey().LogContext(), "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error()))
+					errorsCnt++
+				}
+			}
+		}
+	}
+	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
+}
+
+func (st *Manager) saveState(ctx context.Context, s *State) error {
+	cmd := ngModels.SaveAlertInstanceCommand{
+		RuleOrgID:         s.OrgID,
+		RuleUID:           s.AlertRuleUID,
+		Labels:            ngModels.InstanceLabels(s.Labels),
+		State:             ngModels.InstanceStateType(s.State.String()),
+		StateReason:       s.StateReason,
+		LastEvalTime:      s.LastEvaluationTime,
+		CurrentStateSince: s.StartsAt,
+		CurrentStateEnd:   s.EndsAt,
+	}
+	return st.instanceStore.SaveAlertInstance(ctx, &cmd)
 }
 
 // TODO: why wouldn't you allow other types like NoData or Error?

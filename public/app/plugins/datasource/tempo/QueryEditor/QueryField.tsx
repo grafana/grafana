@@ -33,9 +33,12 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
     super(props);
   }
 
+  // Set the default query type when the component mounts.
+  // Also do this if queryType is 'clear' (which is the case when the user changes the query type)
+  // otherwise if the user changes the query type and refreshes the page, no query type will be selected
+  // which is inconsistent with how the UI was originally when they selected the Tempo data source.
   async componentDidMount() {
-    // Set initial query type to ensure traceID field appears
-    if (!this.props.query.queryType) {
+    if (!this.props.query.queryType || this.props.query.queryType === 'clear') {
       this.props.onChange({
         ...this.props.query,
         queryType: DEFAULT_QUERY_TYPE,

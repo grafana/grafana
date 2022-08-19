@@ -151,9 +151,7 @@ export function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
 
   const scaleLabel = Boolean(config.custom?.axisLabel) ? config.custom!.axisLabel : defaultPart;
 
-  const shouldHideFromViz = Boolean(config.custom?.hideFrom?.viz);
-
-  return `${scaleUnit}/${scaleRange}/${scaleSoftRange}/${scalePlacement}/${scaleDistribution}/${scaleLabel}/${shouldHideFromViz}`;
+  return `${scaleUnit}/${scaleRange}/${scaleSoftRange}/${scalePlacement}/${scaleDistribution}/${scaleLabel}`;
 }
 
 function getScaleDistributionPart(config: ScaleDistributionConfig) {

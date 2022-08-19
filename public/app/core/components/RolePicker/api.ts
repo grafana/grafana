@@ -13,14 +13,6 @@ export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<
   return roles;
 };
 
-export const fetchBuiltinRoles = (orgId?: number): Promise<{ [key: string]: Role[] }> => {
-  let builtinRolesUrl = '/api/access-control/builtin-roles';
-  if (orgId) {
-    builtinRolesUrl += `?targetOrgId=${orgId}`;
-  }
-  return getBackendSrv().get(builtinRolesUrl);
-};
-
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
   let userRolesUrl = `/api/access-control/users/${userId}/roles`;
   if (orgId) {
