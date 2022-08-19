@@ -25,6 +25,11 @@ export const QueryListItem = memo(
     const styles = useStyles2(getStyles);
     const [dsInfo, setDsInfo] = useState<any>();
 
+    const gitUidStart = '^it/';
+    const regexp = new RegExp(gitUidStart);
+
+    const hasGitIntegration = regexp.test(query.uid);
+
     useEffect(() => {
       const getQueryDsInstance = async () => {
         const ds = await getDataSourceSrv().get(query.ds_uid[0]);
@@ -63,6 +68,9 @@ export const QueryListItem = memo(
         </td>
         <td onClick={openDrawer}>
           <Badge color={'green'} text={'1'} icon={'link'} />
+          {hasGitIntegration && (
+            <img src={'public/app/features/query-library/img/git.png'} alt="git icon" className={styles.gitIcon} />
+          )}
         </td>
         <td onClick={openDrawer}>{query.title}</td>
         <td onClick={openDrawer}>
@@ -111,6 +119,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     disabled: css`
       color: ${theme.colors.text.secondary};
+    `,
+    gitIcon: css`
+      width: 30px;
+      height: 30px;
+      margin-left: 10px;
+      margin-top: 1px;
     `,
   };
 };
