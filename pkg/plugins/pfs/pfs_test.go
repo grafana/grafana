@@ -102,6 +102,31 @@ func TestParseTreeTestdata(t *testing.T) {
 		"no-rootfile": {
 			err: ErrNoRootFile,
 		},
+		"panel-models-valid":      {},
+		"datasource-models-valid": {},
+		"wrong-slot-for-type": {
+			err: ErrImplementedSlots,
+		},
+		"missing-slot-impl": {
+			err: ErrImplementedSlots,
+		},
+		"panel-conflicting-joinschema": {
+			err:  ErrInvalidLineage,
+			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
+		},
+		"panel-does-not-follow-slot-joinschema": {
+			err:  ErrInvalidLineage,
+			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
+		},
+		"name-id-mismatch": {
+			err: ErrLineageNameMismatch,
+		},
+		"mismatch": {
+			err: ErrLineageNameMismatch,
+		},
+		"disallowed-cue-import": {
+			err: ErrDisallowedCUEImport,
+		},
 	}
 
 	staticRootPath, err := filepath.Abs("../manager/testdata")
@@ -145,6 +170,10 @@ func TestParseTreeTestdata(t *testing.T) {
 			} else {
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
 				return
+			}
+
+			if tst.rootid == "" {
+				tst.rootid = name
 			}
 
 			rootp := tree.RootPlugin()

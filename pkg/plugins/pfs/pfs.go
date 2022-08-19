@@ -211,8 +211,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		for _, im := range pf.Imports {
 			ip := strings.Trim(im.Path.Value, "\"")
 			if !importAllowed(ip) {
-				// TODO make a specific error type for this
-				return nil, errors.Newf(im.Pos(), "import %q in models.cue not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr)
+				return nil, ewrap(errors.Newf(im.Pos(), "import %q in models.cue not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr), ErrDisallowedCUEImport)
 			}
 			r.imports = append(r.imports, im)
 		}
@@ -242,13 +241,13 @@ func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib 
 			// If it's not accepted for the type, but is declared, error out. This keeps a
 			// precise boundary on what's actually expected for plugins to do, which makes
 			// for clearer docs and guarantees for users.
-			return nil, fmt.Errorf("%s: %s plugins may not provide a %s slot implementation in models.cue", meta.Id, meta.Type, s.Name())
+			return nil, ewrap(fmt.Errorf("%s: %s plugins may not provide a %s slot implementation in models.cue", meta.Id, meta.Type, s.Name()), ErrImplementedSlots)
 		}
 		return nil, nil
 	}
 
 	if !exists && required {
-		return nil, fmt.Errorf("%s: %s plugins must provide a %s slot implementation in models.cue", meta.Id, meta.Type, s.Name())
+		return nil, ewrap(fmt.Errorf("%s: %s plugins must provide a %s slot implementation in models.cue", meta.Id, meta.Type, s.Name()), ErrImplementedSlots)
 	}
 
 	// TODO make this opt real in thema, then uncomment to enforce joinSchema

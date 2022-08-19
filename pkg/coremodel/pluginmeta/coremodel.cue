@@ -1,6 +1,9 @@
 package pluginmeta
 
-import "github.com/grafana/thema"
+import (
+	"github.com/grafana/thema"
+	"strings"
+)
 
 thema.#Lineage
 name: "pluginmeta"
@@ -11,7 +14,7 @@ seqs: [
 				// Unique name of the plugin. If the plugin is published on
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
-				id: string
+				id: string & strings.MinRunes(1)
 				if !builtIn {
 						id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
 				}
