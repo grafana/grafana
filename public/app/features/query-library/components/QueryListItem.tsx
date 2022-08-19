@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import { uniq } from 'lodash';
 import React, { memo, useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { DataSourceApi, GrafanaTheme2 } from '@grafana/data/src';
 import { getDataSourceSrv } from '@grafana/runtime/src';
 import { Icon } from '@grafana/ui';
 import { Badge, IconButton, useStyles2 } from '@grafana/ui/src';
@@ -23,7 +24,7 @@ type QueryListItemProps = {
 export const QueryListItem = memo(
   ({ query, showModal, hideModal, updateComponent, author, date }: QueryListItemProps) => {
     const styles = useStyles2(getStyles);
-    const [dsInfo, setDsInfo] = useState<any>();
+    const [dsInfo, setDsInfo] = useState<DataSourceApi[]>([]);
 
     const gitUidStart = '^it/';
     const regexp = new RegExp(gitUidStart);
@@ -32,8 +33,8 @@ export const QueryListItem = memo(
 
     useEffect(() => {
       const getQueryDsInstance = async () => {
-        const ds = await getDataSourceSrv().get(query.ds_uid[0]);
-        setDsInfo(ds);
+        const uniqueUids = uniq(query?.ds_uid ?? []);
+        setDsInfo((await Promise.all(uniqueUids.map((dsUid) => getDataSourceSrv().get(dsUid)))).filter(Boolean));
       };
 
       getQueryDsInstance();
@@ -57,7 +58,7 @@ export const QueryListItem = memo(
     };
 
     const getDsType = () => {
-      const dsType = query.ds_uid.length > 1 ? 'mixed' : dsInfo?.type ?? 'datasource';
+      const dsType = dsInfo?.length > 1 ? 'mixed' : dsInfo?.[0]?.type ?? 'datasource';
       return dsType.charAt(0).toUpperCase() + dsType.slice(1);
     };
 
@@ -74,12 +75,17 @@ export const QueryListItem = memo(
         </td>
         <td onClick={openDrawer}>{query.title}</td>
         <td onClick={openDrawer}>
-          <img
-            className="filter-table__avatar"
-            src={dsInfo?.meta.info.logos.small}
-            alt="datasource image"
-            style={{ width: '16px', height: '16px' }}
-          />
+          {dsInfo.map((dsI, key) => {
+            return (
+              <img
+                key={`ds_${key}`}
+                className="filter-table__avatar"
+                src={dsI?.meta?.info.logos.small}
+                alt="datasource image"
+                style={{ width: '16px', height: '16px' }}
+              />
+            );
+          })}
           &nbsp;&nbsp;{getDsType()}
         </td>
         <td onClick={openDrawer}>
