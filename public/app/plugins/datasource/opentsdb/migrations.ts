@@ -8,7 +8,7 @@ type LegacyAnnotation = {
 // this becomes the target in the migrated annotations
 const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
   // return the target annotation
-  let annotation: LegacyAnnotation = {
+  const annotation: LegacyAnnotation = {
     fromAnnotations: true,
     target: json.target ?? '',
     name: json.name ?? '',

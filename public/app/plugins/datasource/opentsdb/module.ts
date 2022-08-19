@@ -7,4 +7,3 @@ import { OpenTsQueryCtrl } from './query_ctrl';
 export const plugin = new DataSourcePlugin(OpenTsDatasource)
   .setQueryCtrl(OpenTsQueryCtrl)
   .setConfigEditor(ConfigEditor);
-

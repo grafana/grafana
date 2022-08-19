@@ -73,13 +73,18 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     if (options.targets.some((target: OpenTsdbQuery) => target.fromAnnotations)) {
       const streams: Array<Observable<DataQueryResponse>> = [];
 
-      for (const target of options.targets) {
-        if (target.target) {
+      for (const annotation of options.targets) {
+        if (annotation.target) {
           streams.push(
             new Observable((subscriber) => {
-              this.annotationEvent(options, target)
+              this.annotationEvent(options, annotation)
                 .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
-                .catch((ex) => subscriber.error(new Error(ex)))
+                .catch((ex) => {
+                  // grafana fetch throws the error so for annotation consistency among datasources
+                  // we return an empty array which displays as 'no events found'
+                  // in the annnotation editor
+                  return subscriber.next({ data: [toDataFrame([])] })
+                })
                 .finally(() => subscriber.complete());
             })
           );

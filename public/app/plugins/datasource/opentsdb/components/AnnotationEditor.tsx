@@ -9,7 +9,6 @@ import { OpenTsdbQuery, OpenTsdbOptions } from '../types';
 export const AnnotationEditor = (props: QueryEditorProps<OpenTsDatasource, OpenTsdbQuery, OpenTsdbOptions>) => {
   const { query, onChange } = props;
   const [target, setTarget] = useState<string>(query.target ?? '');
-
   const [isGlobal, setIsGlobal] = useState<boolean>(query.isGlobal ?? false);
   
   const updateValue = <K extends keyof OpenTsdbQuery, V extends OpenTsdbQuery[K]>(key: K, val: V) => {
