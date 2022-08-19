@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { uniq } from 'lodash';
 import React, { memo, useEffect, useState } from 'react';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data/src';
 import { getDataSourceSrv } from '@grafana/runtime/src';
-import { Icon } from '@grafana/ui';
+import { Icon, Tooltip } from '@grafana/ui';
 import { Badge, IconButton, useStyles2 } from '@grafana/ui/src';
 
 import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
@@ -59,7 +59,29 @@ export const QueryListItem = memo(
 
     const getDsType = () => {
       const dsType = dsInfo?.length > 1 ? 'mixed' : dsInfo?.[0]?.type ?? 'datasource';
+      return startWithUpperCase(dsType);
+    };
+
+    const startWithUpperCase = (dsType: string) => {
       return dsType.charAt(0).toUpperCase() + dsType.slice(1);
+    };
+
+    const getTooltip = () => {
+      return (
+        <div>
+          <ul className={styles.dsTooltipList}>
+            {dsInfo.map((dsI, key) => {
+              return (
+                <li key={key}>
+                  <img className={styles.dsTooltipIcon} src={dsI?.meta?.info.logos.small} alt="datasource image" />
+                  &nbsp;
+                  {startWithUpperCase(dsI.type)}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      );
     };
 
     return (
@@ -75,25 +97,24 @@ export const QueryListItem = memo(
         </td>
         <td onClick={openDrawer}>{query.title}</td>
         <td onClick={openDrawer}>
-          {dsInfo.map((dsI, key) => {
-            return (
-              <img
-                key={`ds_${key}`}
-                className="filter-table__avatar"
-                src={dsI?.meta?.info.logos.small}
-                alt="datasource image"
-                style={{ width: '16px', height: '16px' }}
-              />
-            );
-          })}
-          &nbsp;&nbsp;{getDsType()}
+          <img
+            className={styles.dsIcon}
+            src={getDsType() === 'Mixed' ? 'public/img/icn-datasource.svg' : dsInfo[0]?.meta?.info.logos.small}
+            alt="datasource image"
+            style={{ width: '16px', height: '16px' }}
+          />
+          &nbsp;&nbsp;{getDsType()}&nbsp;
+          {getDsType() === 'Mixed' && (
+            <Tooltip content={getTooltip()}>
+              <Icon name={'question-circle'} className={styles.infoIcon} />
+            </Tooltip>
+          )}
         </td>
         <td onClick={openDrawer}>
           <img
-            className="filter-table__avatar"
+            className={cx('filter-table__avatar', styles.dsIcon)}
             src={'/avatar/46d229b033af06a191ff2267bca9ae56'}
             alt={`Avatar for ${author}`}
-            style={{ width: '16px', height: '16px' }}
           />
           &nbsp;&nbsp;{author}
         </td>
@@ -132,6 +153,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-left: 10px;
       margin-top: 1px;
       opacity: 0.8;
+    `,
+    infoIcon: css`
+      margin-top: -2px;
+    `,
+    dsTooltipIcon: css`
+      width: 11px;
+      height: 11px;
+    `,
+    dsIcon: css`
+      width: 16px !important;
+      height: 16px !important;
+    `,
+    dsTooltipList: css`
+      list-style-type: none;
     `,
   };
 };
