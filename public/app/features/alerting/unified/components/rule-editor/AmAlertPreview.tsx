@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAsync } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrameJSON, GrafanaTheme2, SelectableValue } from '@grafana/data/src';
-import { Icon, LoadingPlaceholder, RadioButtonList, Stack, Tag, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, LoadingPlaceholder, Stack, Tag, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 import { Matcher, Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { getBackendSrv } from '../../../../../core/services/backend_srv';
@@ -59,7 +59,14 @@ export function AmAlertPreview({ alertLabels, queries, alertCondition }: AmAlert
     return lastValueFrom(getBackendSrv().fetch<AlertingQueryResponse>(request));
   });
 
-  const evalFrames = alertCondition ? queryEvaluationResult?.data?.results[alertCondition]?.frames ?? [] : [];
+  const evalFrames = useMemo(
+    () => (alertCondition ? queryEvaluationResult?.data?.results[alertCondition]?.frames ?? [] : []),
+    [alertCondition, queryEvaluationResult]
+  );
+
+  useEffect(() => {
+    setSelectedInstance(evalFrames[0]?.schema?.fields[0]?.labels ?? {});
+  }, [evalFrames]);
 
   return (
     <Stack gap={2} direction="column">
@@ -71,47 +78,33 @@ export function AmAlertPreview({ alertLabels, queries, alertCondition }: AmAlert
       />
       {amConfigState.loading && <LoadingPlaceholder text="Loading Alertmanager configuration" />}
 
-      <Stack gap={2} direction="row">
-        <div
-          className={css`
-            flex: 1;
-          `}
-        >
-          <h5>Possible alert instances</h5>
-          <AlertInstancesPreview
-            dataFrames={evalFrames ?? []}
-            selectedInstance={selectedInstance}
-            onChange={setSelectedInstance}
-          />
-        </div>
+      <h5>Possible alert instances</h5>
+      <AlertInstancesPreview
+        dataFrames={evalFrames ?? []}
+        selectedInstance={selectedInstance}
+        onChange={setSelectedInstance}
+      />
 
-        <div
-          className={css`
-            flex: 1;
-          `}
-        >
-          <h5>Matching Notification policies</h5>
-          <Stack direction="column" gap={2}>
-            {amRoutes.map((route, index) => {
-              // TODO This requires consideration of previous routes and the continue flag
-              const isMatchingRoute = labelsMatchMatchers(
-                selectedInstance,
-                route.object_matchers?.map(objectMatcherToMatcher) ?? []
-              );
-              return (
-                <RouteLabelsMatch
-                  key={index}
-                  className={cx(styles.route, { [styles.matchingRoute]: isMatchingRoute })}
-                  isMatchingRoute={isMatchingRoute}
-                  labels={selectedInstance}
-                  route={route}
-                  routeIndex={index + 1}
-                  receivers={receivers}
-                />
-              );
-            })}
-          </Stack>
-        </div>
+      <h5>Matching Notification policies</h5>
+      <Stack direction="column" gap={2}>
+        {amRoutes.map((route, index) => {
+          // TODO This requires consideration of previous routes and the continue flag
+          const isMatchingRoute = labelsMatchMatchers(
+            selectedInstance,
+            route.object_matchers?.map(objectMatcherToMatcher) ?? []
+          );
+          return (
+            <RouteLabelsMatch
+              key={index}
+              className={cx(styles.route, { [styles.matchingRoute]: isMatchingRoute })}
+              isMatchingRoute={isMatchingRoute}
+              labels={selectedInstance}
+              route={route}
+              routeIndex={index + 1}
+              receivers={receivers}
+            />
+          );
+        })}
       </Stack>
     </Stack>
   );
@@ -124,6 +117,20 @@ interface AlertInstancesPreviewProps {
 }
 
 function AlertInstancesPreview({ dataFrames, selectedInstance, onChange }: AlertInstancesPreviewProps) {
+  const labelValues = new Map<string, Set<string>>();
+  dataFrames.forEach((frame) => {
+    frame.schema?.fields.forEach((field) => {
+      Object.entries(field.labels ?? {}).forEach(([labelKey, labelValue]) => {
+        const labelEntry = labelValues.get(labelKey);
+        if (labelEntry) {
+          labelEntry.add(labelValue);
+        } else {
+          labelValues.set(labelKey, new Set<string>([labelValue]));
+        }
+      });
+    });
+  });
+
   const uniqLabelsCombinations = dataFrames
     .flatMap((frame) => frame.schema?.fields ?? [])
     .map((field) => field.labels)
@@ -141,14 +148,31 @@ function AlertInstancesPreview({ dataFrames, selectedInstance, onChange }: Alert
     ),
   }));
 
+  const isTagSelected = (label: [string, string]) => {
+    return selectedInstance && selectedInstance[label[0]] === label[1];
+  };
+
   return (
-    <Stack gap={1}>
-      <RadioButtonList
-        name="available-alert-instances"
-        options={labelOptions}
-        value={selectedInstance}
-        onChange={onChange}
-      />
+    <Stack gap={2} direction="row">
+      {Array.from(labelValues.entries()).map(([key, values]) => (
+        <Stack key={key} gap={1} direction="column">
+          {Array.from(values.values()).map((value) => (
+            <Tag
+              key={`${key}-${value}`}
+              name={labelToString([key, value])}
+              colorIndex={isTagSelected([key, value]) ? 5 : 9}
+              onClick={() => onChange && onChange({ ...selectedInstance, [key]: value })}
+            />
+          ))}
+        </Stack>
+      ))}
+
+      {/*<RadioButtonList*/}
+      {/*  name="available-alert-instances"*/}
+      {/*  options={labelOptions}*/}
+      {/*  value={selectedInstance}*/}
+      {/*  onChange={onChange}*/}
+      {/*/>*/}
     </Stack>
   );
 }
@@ -169,62 +193,68 @@ function RouteLabelsMatch({ isMatchingRoute, labels, route, receivers = new Map(
 
   return (
     <div className={className}>
-      <Stack justifyContent="space-between">
-        {receiver ? (
-          <div>
-            <Icon name="message" /> {receiver.name} (
-            {receiver.grafana_managed_receiver_configs?.map((gmc) => gmc.type).join(', ')})
-          </div>
-        ) : (
-          <div>
-            <Icon name="exclamation-triangle" /> --Contact point not defined--
-          </div>
+      <Stack gap={1} direction="column">
+        <Stack direction="row" gap={4}>
+          <Stack gap={1}>
+            {matchers.map((matcher, index) => {
+              const matchingLabels = getLabelsMatchingMatcher(labels, matcher);
+              const hasMatchingLabels = matchingLabels.length > 0;
+
+              const matchingLabelsTooltip = (
+                <>
+                  <h6>Matching labels: </h6>
+                  <Stack gap={2}>
+                    {matchingLabels.map((label, index) => (
+                      <Tag key={index} name={labelToString(label)} colorIndex={1} />
+                    ))}
+                  </Stack>
+                </>
+              );
+
+              return hasMatchingLabels ? (
+                <Tooltip content={matchingLabelsTooltip}>
+                  <Tag key={index} name={matcherToString(matcher)} colorIndex={isMatchingRoute ? 23 : 6} />
+                </Tooltip>
+              ) : (
+                <Tag key={index} name={matcherToString(matcher)} colorIndex={9} />
+              );
+            })}
+          </Stack>
+          <Stack justifyContent="space-between">
+            {receiver ? (
+              <div>
+                <Icon name="message" /> {receiver.name} (
+                {receiver.grafana_managed_receiver_configs?.map((gmc) => gmc.type).join(', ')})
+              </div>
+            ) : (
+              <div>
+                <Icon name="exclamation-triangle" /> --Contact point not defined--
+              </div>
+            )}
+          </Stack>
+        </Stack>
+        {route.routes && route.routes.length > 0 && (
+          <>
+            {route.routes?.map((nestedRoute, index) => {
+              const isMatchingNestedRoute =
+                labelsMatchMatchers(labels, nestedRoute.object_matchers?.map(objectMatcherToMatcher) ?? []) &&
+                isMatchingRoute;
+
+              return (
+                <RouteLabelsMatch
+                  key={index}
+                  className={styles.nestedRoutes}
+                  isMatchingRoute={isMatchingNestedRoute}
+                  labels={labels}
+                  route={nestedRoute}
+                  routeIndex={index + 1}
+                  receivers={receivers}
+                />
+              );
+            })}
+          </>
         )}
       </Stack>
-      <Stack gap={2}>
-        {matchers.map((matcher, index) => {
-          const matchingLabels = getLabelsMatchingMatcher(labels, matcher);
-          const hasMatchingLabels = matchingLabels.length > 0;
-
-          const matchingLabelsTooltip = (
-            <>
-              <h6>Matching labels: </h6>
-              <Stack gap={2}>
-                {matchingLabels.map((label, index) => (
-                  <Tag key={index} name={labelToString(label)} colorIndex={1} />
-                ))}
-              </Stack>
-            </>
-          );
-
-          return hasMatchingLabels ? (
-            <Tooltip content={matchingLabelsTooltip}>
-              <Tag key={index} name={matcherToString(matcher)} colorIndex={isMatchingRoute ? 23 : 6} />
-            </Tooltip>
-          ) : (
-            <Tag key={index} name={matcherToString(matcher)} colorIndex={9} />
-          );
-        })}
-      </Stack>
-      <div>
-        {route.routes?.map((nestedRoute, index) => {
-          const isMatchingNestedRoute =
-            labelsMatchMatchers(labels, nestedRoute.object_matchers?.map(objectMatcherToMatcher) ?? []) &&
-            isMatchingRoute;
-
-          return (
-            <RouteLabelsMatch
-              key={index}
-              className={styles.nestedRoutes}
-              isMatchingRoute={isMatchingNestedRoute}
-              labels={labels}
-              route={nestedRoute}
-              routeIndex={index + 1}
-              receivers={receivers}
-            />
-          );
-        })}
-      </div>
     </div>
   );
 }

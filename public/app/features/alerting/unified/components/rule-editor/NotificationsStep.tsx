@@ -62,7 +62,7 @@ export const NotificationsStep: FC = () => {
       </div>
       <Button onClick={setAmPreviewVisible}>Open Alertmanager preview</Button>
       {amPreviewVisible && (
-        <Drawer onClose={setAmPreviewVisible} width="100%" scrollableContent={true}>
+        <Drawer onClose={setAmPreviewVisible} width="60%" scrollableContent={true}>
           <AmAlertPreview alertLabels={alertLabels} queries={queries} alertCondition={alertCondition} />
         </Drawer>
       )}
