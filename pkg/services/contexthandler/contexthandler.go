@@ -32,6 +32,8 @@ const (
 	InvalidAPIKey           = "invalid API key"
 )
 
+var RoutesWhitelistedForAuth = [...]string{"/internal/alert/api/v1/eval", "/internal/alert/api/v1/process"} // LOGZ.IO GRAFANA CHANGE :: DEV-33653 - Skip auth db queries for whitelisted endpoints
+
 const ServiceName = "ContextHandler"
 
 func ProvideService(cfg *setting.Cfg, tokenService models.UserTokenService, jwtService models.JWTService,
@@ -125,21 +127,28 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 			reqContext.Logger.Error("Invalid target organization ID", "error", err)
 		}
 	}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-33653 - Skip auth db queries for whitelisted endpoints
+	if !h.shouldIgnoreAuth(reqContext) {
 
-	// the order in which these are tested are important
-	// look for api key in Authorization header first
-	// then init session and look for userId in session
-	// then look for api key in session (special case for render calls via api)
-	// then test if anonymous access is enabled
-	switch {
-	case h.initContextWithRenderAuth(reqContext):
-	case h.initContextWithAPIKey(reqContext):
-	case h.initContextWithBasicAuth(reqContext, orgID):
-	case h.initContextWithAuthProxy(reqContext, orgID):
-	case h.initContextWithToken(reqContext, orgID):
-	case h.initContextWithJWT(reqContext, orgID):
-	case h.initContextWithAnonymousUser(reqContext):
+		// the order in which these are tested are important
+		// look for api key in Authorization header first
+		// then init session and look for userId in session
+		// then look for api key in session (special case for render calls via api)
+		// then test if anonymous access is enabled
+		switch {
+		case h.initContextWithRenderAuth(reqContext):
+		case h.initContextWithAPIKey(reqContext):
+		case h.initContextWithBasicAuth(reqContext, orgID):
+		case h.initContextWithAuthProxy(reqContext, orgID):
+		case h.initContextWithToken(reqContext, orgID):
+		case h.initContextWithJWT(reqContext, orgID):
+		case h.initContextWithAnonymousUser(reqContext):
+		}
+	} else {
+		reqContext.OrgId = orgID
+		reqContext.IsGrafanaAdmin = true
 	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 
 	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
 	span.AddEvents(
@@ -542,3 +551,17 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 
 	return true
 }
+
+// LOGZ.IO GRAFANA CHANGE :: DEV-33653 - Skip auth db queries for whitelisted endpoints
+func (h *ContextHandler) shouldIgnoreAuth(reqContext *models.ReqContext) bool {
+	reqPath := reqContext.Req.URL.Path
+
+	for _, whiteListedUrl := range RoutesWhitelistedForAuth {
+		if whiteListedUrl == reqPath {
+			return true
+		}
+	}
+	return false
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
