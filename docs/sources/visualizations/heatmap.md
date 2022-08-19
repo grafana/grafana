@@ -29,7 +29,7 @@ This setting determines how the X-axis is split into buckets. You can specify a 
 
 ### Y Bucket
 
-Specify how the axis will be split into buckets.
+This setting determines how the Y-axis is split into buckets.
 
 ### Y Bucket scale
 
