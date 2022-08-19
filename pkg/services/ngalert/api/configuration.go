@@ -21,6 +21,10 @@ func (f *ConfigurationApiHandler) handleRouteGetAlertmanagers(c *models.ReqConte
 	return f.grafana.RouteGetAlertmanagers(c)
 }
 
+func (f *ConfigurationApiHandler) handleRouteGetPublicAlertmanagersConfig(c *models.ReqContext) response.Response {
+	return f.grafana.RouteGetPulblicAlertManagerConfig(c)
+}
+
 func (f *ConfigurationApiHandler) handleRouteGetNGalertConfig(c *models.ReqContext) response.Response {
 	return f.grafana.RouteGetNGalertConfig(c)
 }

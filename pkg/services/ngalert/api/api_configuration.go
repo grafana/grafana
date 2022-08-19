@@ -43,6 +43,17 @@ func (srv ConfigSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Respon
 	})
 }
 
+func (srv ConfigSrv) RouteGetPulblicAlertManagerConfig(c *models.ReqContext) response.Response {
+	cfg, err := srv.store.GetAdminConfiguration(c.OrgID)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "Failed to fetch configuration")
+	}
+
+	resp := apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String())
+
+	return response.JSON(http.StatusOK, resp)
+}
+
 func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Response {
 	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()

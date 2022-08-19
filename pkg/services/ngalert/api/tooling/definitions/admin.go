@@ -14,6 +14,16 @@ import (
 //     Responses:
 //		 200: GettableAlertmanagers
 
+// swagger:route GET /api/v1/ngalert/public_config configuration RouteGetPublicAlertmanagersConfig
+//
+// Get public configuration
+//
+// 		Produces:
+//    - application/json
+//
+//    Responses:
+//		200: AlertmanagersChoice
+
 // swagger:route GET /api/v1/ngalert/admin_config configuration RouteGetNGalertConfig
 //
 //  Get the NGalert configuration of the user's organization, returns 404 if no configuration is present.

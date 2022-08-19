@@ -179,6 +179,9 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/ngalert/alertmanagers":
 		return middleware.ReqOrgAdmin
 
+	case http.MethodGet + "/api/v1/ngalert/public_config":
+		return middleware.ReqSignedIn
+
 	// Grafana-only Provisioning Read Paths
 	case http.MethodGet + "/api/v1/provisioning/policies",
 		http.MethodGet + "/api/v1/provisioning/contact-points",
