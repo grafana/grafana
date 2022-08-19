@@ -168,6 +168,7 @@ export interface GraphThresholdsStyleConfig {
 export type LegendPlacement = ('bottom' | 'right');
 
 export enum LegendDisplayMode {
+  Hidden = 'hidden',
   List = 'list',
   Table = 'table',
 }
