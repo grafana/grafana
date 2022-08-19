@@ -228,7 +228,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
                 showLineNumbers={true}
                 showMiniMap={(text && text.length) > 100}
                 value={text || ''}
-                readOnly={!isPanelJSON}
+                readOnly={!(isPanelJSON || isTroubleshooter)}
                 onBlur={this.onTextChanged}
               />
             )}

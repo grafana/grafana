@@ -1,7 +1,16 @@
 import { cloneDeep } from 'lodash';
 import { firstValueFrom } from 'rxjs';
 
-import { dateTimeFormat, TimeRange, DataQuery, PanelData, DataTransformerConfig } from '@grafana/data';
+import {
+  dateTimeFormat,
+  TimeRange,
+  DataQuery,
+  PanelData,
+  DataTransformerConfig,
+  getValueFormat,
+  formattedValueToString,
+  dataFrameToJSON,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { PanelModel } from '../dashboard/state';
@@ -23,29 +32,29 @@ export async function getTroubleshootingDashboard(panel: PanelModel, timeRange: 
       withTransforms: false,
     })
   );
-
+  const rawFrameContent = JSON.stringify(getPanelDataFrames(data));
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
   const html = `<table width="100%">
     <tr>
-        <th width="2%">Panel</th>
-        <td >${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion}</td>
+      <th width="2%">Panel</th>
+      <td >${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion}</td>
     </tr>
     <tr>
-        <th>Queries (${saveModel.targets})</th>
-        <td>${saveModel.targets
-          .map((t: DataQuery) => {
-            return `${t.refId}[${t.datasource?.type}]`;
-          })
-          .join(', ')}</td>
+      <th>Queries&nbsp;(${saveModel.targets?.length ?? 0})</th>
+      <td>${saveModel.targets
+        .map((t: DataQuery) => {
+          return `${t.refId}[${t.datasource?.type}]`;
+        })
+        .join(', ')}</td>
     </tr>
     ${getTransformsRow(saveModel)}
-    ${getDataRow(data)}
+    ${getDataRow(data, rawFrameContent)}
     ${getAnnotationsRow(data)}
     <tr>
-        <th>Grafana</th>
-        <td>${grafanaVersion} // ${config.buildInfo.edition}</td>
+      <th>Grafana</th>
+      <td>${grafanaVersion} // ${config.buildInfo.edition}</td>
     </tr>
-    </table>`;
+  </table>`;
 
   // Replace the panel with embedded data
   dashboard.panels[0] = {
@@ -58,15 +67,47 @@ export async function getTroubleshootingDashboard(panel: PanelModel, timeRange: 
           type: 'testdata',
           uid: 'nVPrVUQGk',
         },
-        rawFrameContent: JSON.stringify(getPanelDataFrames(data)),
+        rawFrameContent,
         scenarioId: 'raw_frame',
       },
     ],
   };
+
+  if (data.annotations?.length) {
+    dashboard.panels.push({
+      id: 7,
+      gridPos: {
+        h: 6,
+        w: 24,
+        x: 0,
+        y: 20,
+      },
+      type: 'table',
+      title: 'Annotations',
+      datasource: {
+        type: 'testdata',
+        uid: 'nVPrVUQGk',
+      },
+      targets: [
+        {
+          refId: 'A',
+          rawFrameContent: JSON.stringify(
+            data.annotations.map((f) => {
+              const js = dataFrameToJSON(f);
+              delete js.schema?.meta?.dataTopic; // remove it
+              return js;
+            })
+          ),
+          scenarioId: 'raw_frame',
+        },
+      ],
+    });
+  }
+
   dashboard.panels[1].options.content = html;
   dashboard.panels[2].options.content = `<pre>${JSON.stringify(saveModel, null, 2)}</pre>`;
   dashboard.title = `Troubleshooting: ${saveModel.title} // ${dateTimeFormat(new Date())}`;
-  dashboard.tags = ['debug', info.panelType];
+  dashboard.tags = ['troubleshoot', `troubleshoot-${info.panelType}`];
   dashboard.time = {
     from: timeRange.from.toISOString(),
     to: timeRange.to.toISOString(),
@@ -85,10 +126,11 @@ function getTransformsRow(saveModel: any): string {
   </tr>`;
 }
 
-function getDataRow(data: PanelData): string {
+function getDataRow(data: PanelData, raw: string): string {
+  const size = getValueFormat('decbytes')(raw?.length);
   return `<tr>
   <th>Data</th>
-  <td>${data.state} // Frames: ${data.series?.length}</td>
+  <td>${data.state} // Frames: ${data.series?.length} (${formattedValueToString(size)} JSON)</td>
 </tr>`;
 }
 
