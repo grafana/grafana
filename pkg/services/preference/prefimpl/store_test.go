@@ -12,12 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationPreferencesDataAccess(t *testing.T) {
+type getStore func(*sqlstore.SQLStore) store
+
+func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	ss := sqlstore.InitTestDB(t)
-	prefStore := sqlStore{db: ss}
+	prefStore := fn(ss)
 	orgNavbarPreferences := pref.NavbarPreference{
 		SavedItems: []pref.NavLink{{
 			ID:   "alerting",
@@ -115,7 +117,7 @@ func TestIntegrationPreferencesDataAccess(t *testing.T) {
 
 	t.Run("Update for a user should only modify a single value", func(t *testing.T) {
 		ss := sqlstore.InitTestDB(t)
-		prefStore := sqlStore{db: ss}
+		prefStore := fn(ss)
 		id, err := prefStore.Insert(context.Background(), &pref.Preference{
 			UserID:          user.SignedInUser{}.UserID,
 			Theme:           "dark",
@@ -166,5 +168,12 @@ func TestIntegrationPreferencesDataAccess(t *testing.T) {
 				JSONData: &pref.PreferenceJSONData{},
 			})
 		require.NoError(t, err)
+	})
+	t.Run("delete preference by user", func(t *testing.T) {
+		err := prefStore.DeleteByUser(context.Background(), user.SignedInUser{}.UserID)
+		require.NoError(t, err)
+		query := &pref.Preference{OrgID: 0, UserID: user.SignedInUser{}.UserID, TeamID: 0}
+		_, err = prefStore.Get(context.Background(), query)
+		require.EqualError(t, err, pref.ErrPrefNotFound.Error())
 	})
 }

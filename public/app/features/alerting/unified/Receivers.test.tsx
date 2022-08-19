@@ -16,6 +16,7 @@ import { AccessControlAction } from 'app/types';
 
 import Receivers from './Receivers';
 import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
+import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import { fetchNotifiers } from './api/grafana';
 import {
   mockDataSource,
@@ -33,6 +34,7 @@ jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
 jest.mock('./utils/config');
 jest.mock('app/core/services/context_srv');
+jest.mock('./api/buildInfo');
 
 const mocks = {
   getAllDataSources: jest.mocked(getAllDataSources),
@@ -43,6 +45,7 @@ const mocks = {
     updateConfig: jest.mocked(updateAlertManagerConfig),
     fetchNotifiers: jest.mocked(fetchNotifiers),
     testReceivers: jest.mocked(testReceivers),
+    discoverAlertmanagerFeatures: jest.mocked(discoverAlertmanagerFeatures),
   },
   contextSrv: jest.mocked(contextSrv),
 };
@@ -129,6 +132,7 @@ describe('Receivers', () => {
     jest.resetAllMocks();
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
+    mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
@@ -469,5 +473,19 @@ describe('Receivers', () => {
     expect(mocks.api.fetchConfig).toHaveBeenLastCalledWith('CloudManager');
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
     expect(mocks.api.fetchStatus).toHaveBeenLastCalledWith('CloudManager');
+  });
+
+  it('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+    mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
+    mocks.api.fetchConfig.mockRejectedValue({ message: 'alertmanager storage object not found' });
+
+    await renderReceivers('CloudManager');
+
+    const templatesTable = await ui.templatesTable.find();
+    const receiversTable = await ui.receiversTable.find();
+
+    expect(templatesTable).toBeInTheDocument();
+    expect(receiversTable).toBeInTheDocument();
+    expect(ui.newContactPointButton.get()).toBeInTheDocument();
   });
 });

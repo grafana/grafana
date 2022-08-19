@@ -61,6 +61,16 @@ type GetOrgIDForNewUserCommand struct {
 	SkipOrgSetup bool
 }
 
+type GetUserOrgListQuery struct {
+	UserID int64
+}
+
+type UserOrgDTO struct {
+	OrgID int64    `json:"orgId"`
+	Name  string   `json:"name"`
+	Role  RoleType `json:"role"`
+}
+
 func (r RoleType) IsValid() bool {
 	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
 }
