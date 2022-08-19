@@ -131,6 +131,10 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 	if err != nil {
 		return definitions.Route{}, err
 	}
+	// When resetting the policy, we have to make sure to use a receiver that
+	// does exist. Otherwise it can cause everything to crash as the default
+	// receiver used could already be deleted by the user.
+	route.Receiver = revision.cfg.AlertmanagerConfig.Receivers[0].Name
 	revision.cfg.AlertmanagerConfig.Config.Route = route
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
