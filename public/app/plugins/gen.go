@@ -15,9 +15,7 @@ import (
 )
 
 var skipPlugins = map[string]bool{
-	"barchart":       true,
 	"canvas":         true,
-	"histogram":      true,
 	"heatmap":        true,
 	"heatmap-old":    true,
 	"candlestick":    true,
