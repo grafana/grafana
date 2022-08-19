@@ -30,7 +30,7 @@ export class SavedQuerySrv {
     query: SavedQuery,
     options?: { message?: string; workflow?: WorkflowID }
   ): Promise<void> => {
-    const path = query.uid.length ? query.uid : `system/queries/${query.title}.json`;
+    const path = query.uid?.length ? query.uid : `system/queries/${query.title}.json`;
     await getGrafanaStorage().write(path, {
       kind: 'query',
       body: query,
