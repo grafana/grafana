@@ -153,8 +153,8 @@ const QueryLibrarySearchTable = () => {
                             showModal={showModal}
                             hideModal={hideModal}
                             updateComponent={() => setReload(reload + 1)}
-                            author={authors[key]}
-                            date={dates[key]}
+                            author={key < authors.length ? authors[key] : authors[key - authors.length]}
+                            date={key < dates.length ? dates[key] : dates[key - dates.length]}
                           />
                         );
                       })}

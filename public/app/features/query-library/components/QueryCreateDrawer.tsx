@@ -6,8 +6,8 @@ import { Button, Card, Drawer, Icon, ModalsController, useStyles2 } from '@grafa
 
 import { SavedQuery } from '../api/SavedQueriesApi';
 
-import { CreateNewQuery } from './CreateNewQuery';
 import { QueryEditorDrawer } from './QueryEditorDrawer';
+import { QueryImportDrawer } from './QueryImportDrawer';
 
 type Props = {
   onDismiss: () => void;
@@ -67,15 +67,25 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
             <Icon name={'import'} className={styles.cardIcon} />
           </Card.Figure>
           <Card.Tags>
-            <Button icon="arrow-right" size="md" variant={'secondary'}>
-              Next
-            </Button>
+            <ModalsController>
+              {({ showModal, hideModal }) => {
+                return (
+                  <Button
+                    icon="arrow-right"
+                    size="md"
+                    onClick={() => {
+                      showModal(QueryImportDrawer, {
+                        onDismiss: closeDrawer,
+                      });
+                    }}
+                  >
+                    Next
+                  </Button>
+                );
+              }}
+            </ModalsController>
           </Card.Tags>
         </Card>
-      </div>
-
-      <div className={styles.addQuery}>
-        <CreateNewQuery onDismiss={onDismiss} updateComponent={updateComponent} />
       </div>
     </Drawer>
   );
@@ -86,9 +96,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     cardIcon: css`
       width: 30px;
       height: 30px;
-    `,
-    addQuery: css`
-      margin-top: 50px;
     `,
   };
 };

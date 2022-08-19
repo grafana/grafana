@@ -8,7 +8,7 @@ import { SavedQuery, useUpdateSavedQueryMutation } from '../api/SavedQueriesApi'
 
 type Props = {
   onDismiss: () => void;
-  updateComponent: () => void;
+  updateComponent?: () => void;
 };
 
 interface QueryForm {
@@ -99,10 +99,10 @@ export const CreateNewQuery = ({ onDismiss, updateComponent }: Props) => {
         onClick={async () => {
           await updateSavedQuery(query.val);
           onDismiss();
-          updateComponent();
+          updateComponent?.();
         }}
       >
-        Save
+        Save query
       </Button>
     </>
   );
@@ -112,10 +112,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     editor: css``,
     submitButton: css`
-      width: 75px;
       align-self: flex-end;
-      margin-bottom: 15px;
-      margin-top: 15px;
+      margin-bottom: 25px;
+      margin-top: 25px;
     `,
   };
 };
