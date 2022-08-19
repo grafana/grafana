@@ -92,7 +92,7 @@ export function compareArrayValues<T>(a: T[], b: T[], cmp: (a: T, b: T) => boole
   return true;
 }
 
-type Cmp = (valA: any, valB: any) => boolean;
+type Cmp = (valA: unknown, valB: unknown) => boolean;
 
 const defaultCmp: Cmp = (a, b) => a === b;
 
