@@ -72,7 +72,7 @@ export const QueryListItem = memo(
             alt="datasource image"
             style={{ width: '16px', height: '16px' }}
           />
-          &nbsp;{getDsType()}
+          &nbsp;&nbsp;{getDsType()}
         </td>
         <td onClick={openDrawer}>
           <img
@@ -81,7 +81,7 @@ export const QueryListItem = memo(
             alt={`Avatar for ${author}`}
             style={{ width: '16px', height: '16px' }}
           />
-          &nbsp;{author}
+          &nbsp;&nbsp;{author}
         </td>
         <td onClick={openDrawer}>{date}</td>
         <td className={styles.tableTr}>

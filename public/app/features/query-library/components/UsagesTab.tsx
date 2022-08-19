@@ -20,7 +20,7 @@ export const UsagesTab = ({ savedQuery }: Props) => {
   const searchQuery = useMemo<SearchQuery>(() => {
     const query: SearchQuery = {
       query: '*',
-      kind: ['dashboard', 'alert'],
+      kind: savedQuery.uid ? ['dashboard', 'alert'] : ['newQuery'], // workaround for new queries
       saved_query_uid: savedQuery.uid,
     };
 

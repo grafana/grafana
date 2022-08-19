@@ -19,6 +19,7 @@ import { addQuery } from '../../../core/utils/query';
 import { dataSource as expressionDatasource } from '../../expressions/ExpressionDatasource';
 import { updateQueries } from '../../query/state/updateQueries';
 import { isQueryWithMixedDatasource, SavedQuery } from '../api/SavedQueriesApi';
+import { defaultQuery } from '../utils';
 
 type Props = {
   savedQuery: SavedQuery;
@@ -27,7 +28,7 @@ type Props = {
 
 export const QueryEditor = ({ savedQuery, onSavedQueryChange }: Props) => {
   const styles = useStyles2(getStyles);
-  const [queries, setQueries] = useState(savedQuery.queries);
+  const [queries, setQueries] = useState<DataQuery[]>(savedQuery.queries ?? [defaultQuery]);
 
   const dsRef = isQueryWithMixedDatasource(savedQuery)
     ? { uid: '-- Mixed --', type: 'grafana' }

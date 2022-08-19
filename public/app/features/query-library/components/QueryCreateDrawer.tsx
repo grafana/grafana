@@ -2,9 +2,12 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, Drawer, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Card, Drawer, Icon, ModalsController, useStyles2 } from '@grafana/ui';
+
+import { SavedQuery } from '../api/SavedQueriesApi';
 
 import { CreateNewQuery } from './CreateNewQuery';
+import { QueryEditorDrawer } from './QueryEditorDrawer';
 
 type Props = {
   onDismiss: () => void;
@@ -13,6 +16,11 @@ type Props = {
 
 export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
   const styles = useStyles2(getStyles);
+
+  const closeDrawer = () => {
+    onDismiss();
+    updateComponent();
+  };
 
   return (
     <Drawer
@@ -31,9 +39,24 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
             <Icon name={'list-ui-alt'} className={styles.cardIcon} />
           </Card.Figure>
           <Card.Tags>
-            <Button icon="plus" size="md">
-              Create query
-            </Button>
+            <ModalsController>
+              {({ showModal, hideModal }) => {
+                return (
+                  <Button
+                    icon="plus"
+                    size="md"
+                    onClick={() => {
+                      showModal(QueryEditorDrawer, {
+                        onDismiss: closeDrawer,
+                        savedQuery: { title: 'New Query' } as SavedQuery,
+                      });
+                    }}
+                  >
+                    Create query
+                  </Button>
+                );
+              }}
+            </ModalsController>
           </Card.Tags>
         </Card>
 
