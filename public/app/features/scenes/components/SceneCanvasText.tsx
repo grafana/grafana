@@ -21,7 +21,7 @@ export class SceneCanvasText extends SceneObjectBase<SceneCanvasTextState> {
       display: 'flex',
       flexGrow: 1,
       alignItems: 'center',
-      padding: 16,
+      // padding: 16,
       justifyContent: align,
     };
 

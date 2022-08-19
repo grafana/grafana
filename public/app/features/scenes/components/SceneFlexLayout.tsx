@@ -3,13 +3,65 @@ import React, { CSSProperties } from 'react';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObjectSize, SceneLayoutState, SceneComponentProps, SceneLayoutChild, SceneObject } from '../core/types';
-import { isDataProviderNode, isTimeRangeNode } from './Scene';
+import { SceneObjectSize, SceneLayoutState, SceneComponentProps, SceneObject } from '../core/types';
 
-export type FlexLayoutDirection = 'column' | 'row';
+import { isDataProviderNode, isFlexChildNode } from './Scene';
 
+export type FlexLayoutDirection = 'row' | 'column' | 'row-reverse' | 'column-reverse';
+export type FlexLayoutJustifyContent =
+  | 'start'
+  | 'end'
+  | 'center'
+  | 'left'
+  | 'right'
+  | 'space-between'
+  | 'space-around'
+  | 'space-evenly'
+  | 'stretch'
+  | 'baseline'
+  | 'first baseline'
+  | 'last baseline'
+  | 'safe center'
+  | 'unsafe center';
+
+export type FlexLayoutAlignContent =
+  | 'start'
+  | 'end'
+  | 'center'
+  | 'space-between'
+  | 'space-around'
+  | 'space-evenly'
+  | 'stretch'
+  | 'baseline'
+  | 'first baseline'
+  | 'last baseline'
+  | 'safe center'
+  | 'unsafe center';
+
+export type FlexLayoutAlignItems =
+  | 'start'
+  | 'end'
+  | 'center'
+  | 'stretch'
+  | 'self-start'
+  | 'self-end'
+  | 'baseline'
+  | 'first baseline'
+  | 'last baseline'
+  | 'safe center'
+  | 'unsafe center';
+
+export type FlexLayoutGap = number | string;
 interface SceneFlexLayoutState extends SceneLayoutState {
   direction?: FlexLayoutDirection;
+  justifyContent?: FlexLayoutJustifyContent;
+  alignContent?: FlexLayoutAlignContent;
+  alignItems?: FlexLayoutAlignItems;
+  gap?: FlexLayoutGap;
+}
+
+export class SceneFlexChild extends SceneObjectBase<SceneFlexLayoutState> {
+  static Component = FlexLayoutChildComponent;
 }
 
 export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
@@ -26,44 +78,55 @@ export class SceneFlexLayout extends SceneObjectBase<SceneFlexLayoutState> {
 function renderNodes(nodes: SceneObject[], direction: FlexLayoutDirection, isEditing: boolean): React.ReactNode {
   return nodes.map((node) => {
     if (isDataProviderNode(node)) {
-      return renderNodes(node.state.children, direction, isEditing);
+      return (
+        <>
+          <node.Component key={node.state.key} model={node} isEditing={isEditing} />
+          {renderNodes(node.state.children, direction, isEditing)}
+        </>
+      );
+    }
+    if (isFlexChildNode(node)) {
+      node.setState({ direction });
     }
 
-    if (isTimeRangeNode(node)) {
-      return [
-        <FlexLayoutChildComponent key={node.state.key} item={node} direction={direction} isEditing={isEditing} />,
-        renderNodes(node.state.children, direction, isEditing),
-      ];
-    }
-
-    return <FlexLayoutChildComponent key={node.state.key} item={node} direction={direction} isEditing={isEditing} />;
+    return <node.Component key={node.state.key} model={node} isEditing={isEditing} />;
   });
 }
 
 function FlexLayoutRenderer({ model, isEditing }: SceneComponentProps<SceneFlexLayout>) {
-  const { direction = 'row', children } = model.useState();
+  const {
+    direction = 'row',
+    justifyContent = 'start',
+    alignItems = 'normal',
+    alignContent = 'normal',
+    gap = 8,
+    children,
+  } = model.useState();
 
   return (
-    <div style={{ flexGrow: 1, flexDirection: direction, display: 'flex', gap: '8px' }}>
+    <div
+      style={{
+        flexGrow: 1,
+        flexDirection: direction,
+        display: 'flex',
+        gap,
+        justifyContent,
+        alignItems,
+        alignContent,
+      }}
+    >
       {renderNodes(children, direction, Boolean(isEditing))}
     </div>
   );
 }
 
-function FlexLayoutChildComponent({
-  item,
-  direction,
-  isEditing,
-}: {
-  item: SceneLayoutChild;
-  direction: FlexLayoutDirection;
-  isEditing?: boolean;
-}) {
-  const { size } = item.useState();
+export function FlexLayoutChildComponent({ model, isEditing }: SceneComponentProps<SceneFlexChild>) {
+  const { children, size, direction } = model.useState();
 
   return (
-    <div style={getItemStyles(direction, size)}>
-      <item.Component model={item} isEditing={isEditing} />
+    // Rethink, the wrapping div here may cause issues ltr on
+    <div style={getItemStyles(direction || 'column', size)}>
+      {renderNodes(children, direction || 'column', Boolean(isEditing))}
     </div>
   );
 }
@@ -73,7 +136,7 @@ function getItemStyles(direction: FlexLayoutDirection, sizing: SceneObjectSize =
 
   const style: CSSProperties = {
     display: 'flex',
-    flexDirection: direction,
+    // flexDirection: direction,
     minWidth: sizing.minWidth,
     minHeight: sizing.minHeight,
   };

@@ -203,3 +203,16 @@ function useSceneObjectState<TState>(model: SceneObjectBase<TState>): TState {
 
   return model.state;
 }
+
+/**
+ * This class needs to be extended by any scene object that can provide data to other objects
+ */
+export class SceneDataObject<TState extends SceneDataState = {}> extends SceneObjectBase<TState> {
+  getData(): SceneObject<SceneDataState> {
+    if (!this.isActive) {
+      this.activate();
+    }
+
+    return this;
+  }
+}

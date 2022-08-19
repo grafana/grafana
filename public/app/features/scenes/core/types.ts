@@ -2,14 +2,13 @@ import React from 'react';
 import { Subscribable } from 'rxjs';
 
 import { EventBus, PanelData, TimeRange, UrlQueryMap } from '@grafana/data';
+
 import { SceneVariableSet } from '../variables/types';
 
 // import { SceneVariableSet } from '../variables/types';
 
 export interface SceneObjectStatePlain {
   key?: string;
-  $timeRange?: SceneTimeRange;
-  // $data?: SceneObject<SceneDataState>;
   $editor?: SceneEditor;
   $variables?: SceneVariableSet;
 }
@@ -18,7 +17,7 @@ export interface SceneLayoutChildState extends SceneObjectStatePlain {
   size?: SceneObjectSize;
 }
 
-export type SceneObjectState = SceneObjectStatePlain | SceneLayoutState | SceneLayoutChildState | SceneWithActionState;
+export type SceneObjectState = SceneObjectStatePlain | SceneLayoutState | SceneLayoutChildState;
 
 export interface SceneObjectSize {
   width?: number | string;
@@ -39,7 +38,7 @@ export interface SceneComponentProps<T> {
 export type SceneComponent<TModel> = React.FunctionComponent<SceneComponentProps<TModel>>;
 
 export interface SceneDataState extends SceneObjectStatePlain {
-  data?: PanelData;
+  $data?: PanelData;
 }
 
 export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
@@ -86,10 +85,6 @@ export interface SceneLayoutState extends SceneLayoutChildState {
   children: SceneLayoutChild[];
 }
 
-export interface SceneWithActionState extends SceneObjectStatePlain {
-  showInToolbox?: boolean;
-}
-
 export type SceneLayout<T extends SceneLayoutState = SceneLayoutState> = SceneObject<T>;
 
 export interface SceneEditorState extends SceneObjectStatePlain {
@@ -103,7 +98,7 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
   onSelectObject(model: SceneObject): void;
 }
 
-export interface SceneTimeRangeState extends SceneObjectStatePlain, SceneLayoutState, SceneWithActionState {
+export interface SceneTimeRangeState extends SceneObjectStatePlain {
   range: TimeRange;
 }
 export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {

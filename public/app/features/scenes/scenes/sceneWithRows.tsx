@@ -1,62 +1,95 @@
-// import { getDefaultTimeRange } from '@grafana/data';
+import { getDefaultTimeRange } from '@grafana/data';
 
-// import { NestedScene } from '../components/NestedScene';
-// import { Scene } from '../components/Scene';
-// import { SceneFlexLayout } from '../components/SceneFlexLayout';
-// import { SceneTimePicker } from '../components/SceneTimePicker';
-// import { VizPanel } from '../components/VizPanel';
-// import { SceneTimeRange } from '../core/SceneTimeRange';
-// import { SceneEditManager } from '../editor/SceneEditManager';
+import { NestedScene } from '../components/NestedScene';
+import { Scene } from '../components/Scene';
+import { SceneFlexChild, SceneFlexLayout } from '../components/SceneFlexLayout';
+import { SceneToolbar } from '../components/SceneToolbar';
+import { VizPanel } from '../components/VizPanel';
+import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
+import { SceneTimeRange } from '../core/SceneTimeRange';
+import { SceneEditManager } from '../editor/SceneEditManager';
 
-// import { getQueryRunnerWithRandomWalkQuery } from './queries';
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-// export function getSceneWithRows(): Scene {
-//   const scene = new Scene({
-//     title: 'Scene with rows',
-//     layout: new SceneFlexLayout({
-//       direction: 'column',
-//       children: [
-//         new NestedScene({
-//           title: 'Overview',
-//           canCollapse: true,
-//           layout: new SceneFlexLayout({
-//             direction: 'row',
-//             children: [
-//               new VizPanel({
-//                 pluginId: 'timeseries',
-//                 title: 'Fill height',
-//               }),
-//               new VizPanel({
-//                 pluginId: 'timeseries',
-//                 title: 'Fill height',
-//               }),
-//             ],
-//           }),
-//         }),
-//         new NestedScene({
-//           title: 'More server details',
-//           canCollapse: true,
-//           layout: new SceneFlexLayout({
-//             direction: 'row',
-//             children: [
-//               new VizPanel({
-//                 pluginId: 'timeseries',
-//                 title: 'Fill height',
-//               }),
-//               new VizPanel({
-//                 pluginId: 'timeseries',
-//                 title: 'Fill height',
-//               }),
-//             ],
-//           }),
-//         }),
-//       ],
-//     }),
-//     $editor: new SceneEditManager({}),
-//     $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-//     $data: getQueryRunnerWithRandomWalkQuery(),
-//     actions: [new SceneTimePicker({})],
-//   });
+export function getSceneWithRows(): Scene {
+  const timeRange = new SceneTimeRange({ range: getDefaultTimeRange() });
 
-//   return scene;
-// }
+  const scene = new Scene({
+    title: 'Scene with rows',
+    children: [
+      new SceneFlexLayout({
+        direction: 'column',
+        children: [
+          new SceneDataProviderNode({
+            queries: getQueryRunnerWithRandomWalkQuery(),
+            inputParams: { timeRange },
+            children: [
+              new SceneToolbar({
+                orientation: 'horizontal',
+                children: [timeRange],
+              }),
+              new NestedScene({
+                title: 'Overview',
+                canCollapse: true,
+                children: [
+                  new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                      new SceneFlexChild({
+                        children: [
+                          new VizPanel({
+                            pluginId: 'timeseries',
+                            title: 'Fill height',
+                          }),
+                        ],
+                      }),
+                      new SceneFlexChild({
+                        children: [
+                          new VizPanel({
+                            pluginId: 'timeseries',
+                            title: 'Fill height',
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+
+              new NestedScene({
+                title: 'More server details',
+                canCollapse: true,
+                children: [
+                  new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                      new SceneFlexChild({
+                        children: [
+                          new VizPanel({
+                            pluginId: 'timeseries',
+                            title: 'Fill height',
+                          }),
+                        ],
+                      }),
+                      new SceneFlexChild({
+                        children: [
+                          new VizPanel({
+                            pluginId: 'timeseries',
+                            title: 'Fill height',
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+    $editor: new SceneEditManager({}),
+  });
+
+  return scene;
+}

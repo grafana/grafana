@@ -9,18 +9,22 @@ import { SceneFlexLayout } from './SceneFlexLayout';
 function setup() {
   const scene = new Scene({
     title: 'Hello',
-    layout: new SceneFlexLayout({
-      children: [
-        new NestedScene({
-          title: 'Nested title',
-          canRemove: true,
-          canCollapse: true,
-          layout: new SceneFlexLayout({
-            children: [new SceneCanvasText({ text: 'SceneCanvasText' })],
+    children: [
+      new SceneFlexLayout({
+        children: [
+          new NestedScene({
+            title: 'Nested title',
+            canRemove: true,
+            canCollapse: true,
+            children: [
+              new SceneFlexLayout({
+                children: [new SceneCanvasText({ text: 'SceneCanvasText' })],
+              }),
+            ],
           }),
-        }),
-      ],
-    }),
+        ],
+      }),
+    ],
   });
 
   render(<scene.Component model={scene} />);
@@ -29,14 +33,14 @@ function setup() {
 describe('NestedScene', () => {
   it('Renders heading and layout', () => {
     setup();
-    expect(screen.getByRole('heading', { name: 'Nested title' })).toBeInTheDocument();
+    expect(screen.getByText('Nested title')).toBeInTheDocument();
     expect(screen.getByText('SceneCanvasText')).toBeInTheDocument();
   });
 
   it('Can remove', async () => {
     setup();
     screen.getByRole('button', { name: 'Remove scene' }).click();
-    expect(screen.queryByRole('heading', { name: 'Nested title' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Nested title')).not.toBeInTheDocument();
   });
 
   it('Can collapse and expand', async () => {

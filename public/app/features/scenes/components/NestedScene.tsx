@@ -1,60 +1,129 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { ToolbarButton } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneLayoutChildState, SceneComponentProps, SceneLayoutState, SceneWithActionState } from '../core/types';
-import { Orientation, SceneToolboxLayout } from './SceneToolboxLayout';
+import {
+  SceneLayoutChildState,
+  SceneComponentProps,
+  SceneLayoutState,
+  SceneLayoutChild,
+  SceneObject,
+} from '../core/types';
+
+import { SceneCanvasText } from './SceneCanvasText';
+import { SceneFlexLayout, SceneFlexChild } from './SceneFlexLayout';
+import { SceneToolbar } from './SceneToolbar';
 
 interface NestedSceneState extends SceneLayoutChildState, SceneLayoutState {
   title: string;
   isCollapsed?: boolean;
   canCollapse?: boolean;
   canRemove?: boolean;
-  // layout: SceneLayout;
-  // actions?: SceneObject[];
+  actions?: SceneObject[];
 }
 
 export class NestedScene extends SceneObjectBase<NestedSceneState> {
   static Component = NestedSceneRenderer;
+
   private sceneCollapser: SceneCollapser;
+  private collapsibleChildren: SceneLayoutChild[] = [];
 
   constructor(state: NestedSceneState) {
     super(state);
+
+    this.collapsibleChildren = state.children;
 
     this.sceneCollapser = new SceneCollapser({
       canCollapse: Boolean(state.canCollapse),
       canRemove: Boolean(state.canRemove),
       isCollapsed: Boolean(state.isCollapsed),
       onCollapse: this.onToggle,
-      showInToolbox: true,
+      onRemove: this.onRemove,
     });
 
-    const children = [
-      new SceneToolboxLayout({
-        orientation: Orientation.Vertical,
-        children: [this.sceneCollapser, ...state.children],
-      }),
-    ];
-
+    const children = this.buildSceneChildren(Boolean(state.isCollapsed));
     this.setState({ children });
   }
 
+  private buildSceneChildren = (isCollapsed: boolean) => {
+    const children = isCollapsed
+      ? []
+      : [
+          new SceneFlexChild({
+            children: this.collapsibleChildren,
+          }),
+        ];
+
+    const actionChildren = this.state.actions ? [...this.state.actions, this.sceneCollapser] : [this.sceneCollapser];
+
+    return [
+      new SceneFlexChild({
+        size: { ySizing: isCollapsed ? 'content' : 'fill' },
+        children: [
+          new SceneFlexLayout({
+            direction: 'column',
+            children: [
+              new SceneFlexChild({
+                size: {
+                  ySizing: 'content',
+                },
+                children: [
+                  new SceneToolbar({
+                    orientation: 'horizontal',
+                    children: [
+                      new SceneFlexLayout({
+                        direction: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        children: [
+                          new SceneFlexChild({
+                            size: {
+                              xSizing: 'content',
+                            },
+                            children: [
+                              new SceneCanvasText({
+                                text: this.state.title,
+                              }),
+                            ],
+                          }),
+                          new SceneFlexChild({
+                            size: {
+                              xSizing: 'content',
+                            },
+                            children: [
+                              new SceneFlexLayout({
+                                children: isCollapsed ? [this.sceneCollapser] : actionChildren,
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              ...children,
+            ],
+          }),
+        ],
+      }),
+    ];
+  };
+
   onToggle = () => {
-    this.sceneCollapser.setState({ isCollapsed: !this.state.isCollapsed });
+    const isCollapsed = !this.state.isCollapsed;
+    const children = this.buildSceneChildren(isCollapsed);
+
+    this.sceneCollapser.setState({ isCollapsed });
     this.setState({
-      isCollapsed: !this.state.isCollapsed,
+      children,
+      isCollapsed,
       size: {
         ...this.state.size,
         ySizing: this.state.isCollapsed ? 'fill' : 'content',
       },
     });
-
-    if (!this.state.isCollapsed) {
-      this.deactivate();
-    }
   };
 
   /** Removes itself from its parent's children array */
@@ -68,67 +137,39 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
   };
 }
 
-interface SceneCollapserState extends SceneLayoutChildState, SceneWithActionState {
+interface SceneCollapserState extends SceneLayoutChildState {
   canRemove: boolean;
   canCollapse: boolean;
   isCollapsed?: boolean;
-  onCollapse: () => void;
+  onCollapse?: () => void;
+  onRemove?: () => void;
 }
 
-export function SceneCollapserRenderer({ model, isEditing }: SceneComponentProps<SceneCollapser>) {
-  const { isCollapsed, onCollapse } = model.useState();
+export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<NestedScene>) {
+  const { children } = model.useState();
 
-  return <ToolbarButton onClick={onCollapse}>{isCollapsed ? 'Expand' : 'Collapse'}</ToolbarButton>;
+  return (
+    <>
+      {children.map((child) => (
+        <child.Component key={child.state.key} model={child} isEditing={isEditing} />
+      ))}
+    </>
+  );
 }
 
 export class SceneCollapser extends SceneObjectBase<SceneCollapserState> {
   static Component = SceneCollapserRenderer;
 }
 
-export function NestedSceneRenderer({ model, isEditing }: SceneComponentProps<NestedScene>) {
-  const { title, isCollapsed, children } = model.useState();
-  const collapsibleState = children[0].useState();
-
-  const [collapse, ...otherChildren] = collapsibleState.children;
-  const styles = useStyles2(getStyles);
+export function SceneCollapserRenderer({ model }: SceneComponentProps<SceneCollapser>) {
+  const { canCollapse, canRemove, isCollapsed, onCollapse, onRemove } = model.useState();
 
   return (
-    <div className={styles.row}>
-      <div className={styles.rowHeader}>
-        <Stack gap={0}>
-          <div className={styles.title} role="heading">
-            {title}
-          </div>
-        </Stack>
-      </div>
-      <collapse.Component model={collapse} isEditing={isEditing} />
-      {!isCollapsed && otherChildren.map((child) => <child.Component model={child} isEditing={isEditing} />)}
-    </div>
+    <>
+      {canCollapse && onCollapse && (
+        <ToolbarButton onClick={onCollapse}>{isCollapsed ? 'Expand scene' : 'Collapse scene'}</ToolbarButton>
+      )}
+      {canRemove && onRemove && <ToolbarButton onClick={onRemove}>Remove scene</ToolbarButton>}
+    </>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  row: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flexGrow: 1,
-    gap: theme.spacing(1),
-    cursor: 'pointer',
-  }),
-  toggle: css({}),
-  title: css({
-    fontSize: theme.typography.h5.fontSize,
-  }),
-  rowHeader: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(2),
-  }),
-  actions: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-    justifyContent: 'flex-end',
-    flexGrow: 1,
-  }),
-});

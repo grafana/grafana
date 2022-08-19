@@ -1,15 +1,24 @@
 // import { getDefaultTimeRange } from '@grafana/data';
 
 import { getDefaultTimeRange } from '@grafana/data';
+
 import { Scene } from '../components/Scene';
-import { SceneFlexLayout } from '../components/SceneFlexLayout';
-import { SceneToolboxLayout, Orientation } from '../components/SceneToolboxLayout';
+import { SceneFlexChild, SceneFlexLayout } from '../components/SceneFlexLayout';
+import { SceneToolbar } from '../components/SceneToolbar';
 import { VizPanel } from '../components/VizPanel';
 import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 export function getFlexLayoutTest1(): Scene {
+  const timeRangeNode1 = new SceneTimeRange({
+    range: getDefaultTimeRange(),
+  });
+
+  const timeRangeNode2 = new SceneTimeRange({
+    range: getDefaultTimeRange(),
+  });
+
   const scene = new Scene({
     $editor: new SceneEditManager({}),
     title: 'Flex layout test',
@@ -18,16 +27,107 @@ export function getFlexLayoutTest1(): Scene {
         direction: 'column',
         children: [
           new SceneFlexLayout({
-            direction: 'row',
+            direction: 'column',
             children: [
-              new SceneToolboxLayout({
-                orientation: Orientation.Vertical,
+              new SceneFlexChild({
+                size: {
+                  ySizing: 'content',
+                },
                 children: [
-                  new SceneTimeRange({
-                    range: getDefaultTimeRange(),
-                    showInToolbox: true,
+                  new SceneToolbar({
+                    orientation: 'horizontal',
+                    children: [timeRangeNode1],
+                  }),
+                ],
+              }),
+              new SceneFlexChild({
+                children: [
+                  new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                      new SceneFlexChild({
+                        children: [
+                          new SceneDataProviderNode({
+                            inputParams: {
+                              timeRange: timeRangeNode1,
+                            },
+                            queries: [
+                              {
+                                refId: 'A',
+                                datasource: {
+                                  uid: 'gdev-testdata',
+                                  type: 'testdata',
+                                },
+                                scenarioId: 'random_walk',
+                              },
+                            ],
+                            children: [
+                              new VizPanel({
+                                pluginId: 'timeseries',
+                                title: 'Title',
+                                options: {
+                                  legend: { displayMode: 'hidden' },
+                                },
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+
+                      new SceneFlexChild({
+                        children: [
+                          new SceneDataProviderNode({
+                            inputParams: {
+                              timeRange: timeRangeNode1,
+                            },
+                            queries: [
+                              {
+                                refId: 'A',
+                                datasource: {
+                                  uid: 'gdev-testdata',
+                                  type: 'testdata',
+                                },
+                                scenarioId: 'random_walk',
+                              },
+                            ],
+                            children: [
+                              new VizPanel({
+                                pluginId: 'timeseries',
+                                title: 'Title',
+                                options: {
+                                  legend: { displayMode: 'hidden' },
+                                },
+                              }),
+                            ],
+                          }),
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+          new SceneFlexChild({
+            children: [
+              new SceneFlexLayout({
+                direction: 'column',
+                children: [
+                  new SceneFlexChild({
+                    size: { ySizing: 'content' },
+                    children: [
+                      new SceneToolbar({
+                        orientation: 'horizontal',
+                        children: [timeRangeNode2],
+                      }),
+                    ],
+                  }),
+                  new SceneFlexChild({
                     children: [
                       new SceneDataProviderNode({
+                        inputParams: {
+                          timeRange: timeRangeNode2,
+                        },
                         queries: [
                           {
                             refId: 'A',
@@ -47,71 +147,6 @@ export function getFlexLayoutTest1(): Scene {
                             },
                           }),
                         ],
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-              new SceneToolboxLayout({
-                orientation: Orientation.Vertical,
-                children: [
-                  new SceneTimeRange({
-                    range: getDefaultTimeRange(),
-                    showInToolbox: true,
-                    children: [
-                      new SceneDataProviderNode({
-                        queries: [
-                          {
-                            refId: 'B',
-                            datasource: {
-                              uid: 'gdev-testdata',
-                              type: 'testdata',
-                            },
-                            scenarioId: 'random_walk_table',
-                          },
-                        ],
-                        children: [
-                          new VizPanel({
-                            pluginId: 'timeseries',
-                            title: 'Title',
-                            options: {
-                              legend: { displayMode: 'hidden' },
-                            },
-                          }),
-                        ],
-                      }),
-                    ],
-                  }),
-                ],
-              }),
-            ],
-          }),
-          new SceneToolboxLayout({
-            orientation: Orientation.Horizontal,
-            children: [
-              new SceneTimeRange({
-                range: getDefaultTimeRange(),
-                showInToolbox: true,
-                children: [
-                  new SceneDataProviderNode({
-                    queries: [
-                      {
-                        refId: 'C',
-                        datasource: {
-                          uid: 'gdev-testdata',
-                          type: 'testdata',
-                        },
-                        scenarioId: 'usa',
-                        usa: { mode: 'timeseries-wide' },
-                      },
-                    ],
-                    children: [
-                      new VizPanel({
-                        pluginId: 'timeseries',
-                        title: 'Title',
-                        options: {
-                          legend: { displayMode: 'hidden' },
-                        },
                       }),
                     ],
                   }),

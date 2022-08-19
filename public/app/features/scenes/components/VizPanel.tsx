@@ -36,7 +36,7 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
 
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, pluginId, options, fieldConfig } = model.useState();
-  const { data } = model.getData().useState();
+  const { $data } = model.getData().useState();
 
   return (
     <AutoSizer>
@@ -54,7 +54,7 @@ function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
                   pluginId={pluginId}
                   width={innerWidth}
                   height={innerHeight}
-                  data={data}
+                  data={$data}
                   options={options}
                   fieldConfig={fieldConfig}
                   onOptionsChange={() => {}}

@@ -30,6 +30,10 @@ export class SceneQueryRunner {
     this.queries = state.queries;
   }
 
+  updateQueries(queries: DataQueryExtended[]) {
+    this.queries = queries;
+  }
+
   async runWithTimeRange(timeRange: TimeRange) {
     const queries = cloneDeep(this.queries);
 

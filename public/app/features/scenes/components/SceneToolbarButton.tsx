@@ -19,8 +19,7 @@ export class SceneToolbarButton extends SceneObjectBase<ToolbarButtonState> {
 }
 
 export interface SceneToolbarInputState extends SceneObjectStatePlain {
-  value?: string;
-  onChange: (value: number) => void;
+  value?: number;
 }
 
 export class SceneToolbarInput extends SceneObjectBase<SceneToolbarInputState> {
@@ -32,7 +31,7 @@ export class SceneToolbarInput extends SceneObjectBase<SceneToolbarInputState> {
         defaultValue={state.value}
         width={8}
         onBlur={(evt) => {
-          model.state.onChange(parseInt(evt.currentTarget.value, 10));
+          model.setState({ value: parseInt(evt.currentTarget.value, 10) });
         }}
       />
     );
