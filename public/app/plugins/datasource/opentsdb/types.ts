@@ -5,7 +5,7 @@ export interface OpenTsdbQuery extends DataQuery {
   // annotation attrs
   fromAnnotations?: boolean;
   isGlobal?: boolean;
-  target?: string
+  target?: string;
   name?: string;
 }
 
@@ -14,3 +14,10 @@ export interface OpenTsdbOptions extends DataSourceJsonData {
   tsdbResolution: number;
   lookupLimit: number;
 }
+
+export type LegacyAnnotation = {
+  fromAnnotations?: boolean;
+  isGlobal?: boolean;
+  target?: string;
+  name?: string;
+};

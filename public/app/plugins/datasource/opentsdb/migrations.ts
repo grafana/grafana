@@ -1,9 +1,4 @@
-type LegacyAnnotation = {
-  fromAnnotations?: boolean;
-  isGlobal?: boolean;
-  target?: string
-  name?: string;
-};
+import { LegacyAnnotation } from './types';
 
 // this becomes the target in the migrated annotations
 const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
@@ -23,6 +18,6 @@ export const prepareAnnotation = (json: any) => {
   const resultingTarget = json.target && typeof json.target !== 'string' ? json.target : migrateLegacyAnnotation(json);
 
   json.target = resultingTarget;
-  
+
   return json;
 };
