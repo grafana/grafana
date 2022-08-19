@@ -12,9 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -245,68 +243,6 @@ func TestService_RegisterFixedRoles(t *testing.T) {
 					}
 				}
 			}
-		})
-	}
-}
-
-func TestService_GetUserPermissions(t *testing.T) {
-	testUser := user.SignedInUser{
-		UserID:  2,
-		OrgID:   3,
-		OrgName: "TestOrg",
-		OrgRole: org.RoleViewer,
-		Login:   "testUser",
-		Name:    "Test User",
-		Email:   "testuser@example.org",
-	}
-	registration := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			UID:         "fixed:test:test",
-			Name:        "fixed:test:test",
-			Description: "Test role",
-			Permissions: []accesscontrol.Permission{},
-		},
-		Grants: []string{"Viewer"},
-	}
-	tests := []struct {
-		name     string
-		user     user.SignedInUser
-		rawPerm  accesscontrol.Permission
-		wantPerm accesscontrol.Permission
-		wantErr  bool
-	}{
-		{
-			name:     "Translate users:self",
-			user:     testUser,
-			rawPerm:  accesscontrol.Permission{Action: "users:read", Scope: "users:self"},
-			wantPerm: accesscontrol.Permission{Action: "users:read", Scope: "users:id:2"},
-			wantErr:  false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			ac := setupTestEnv(t)
-
-			registration.Role.Permissions = []accesscontrol.Permission{tt.rawPerm}
-			err := ac.DeclareFixedRoles(registration)
-			require.NoError(t, err)
-
-			err = ac.RegisterFixedRoles(context.Background())
-			require.NoError(t, err)
-
-			// Test
-			userPerms, err := ac.GetUserPermissions(context.Background(), &tt.user, accesscontrol.Options{})
-			if tt.wantErr {
-				assert.Error(t, err, "Expected an error with GetUserPermissions.")
-				return
-			}
-			require.NoError(t, err, "Did not expect an error with GetUserPermissions.")
-
-			rawUserPerms := extractRawPermissionsHelper(userPerms)
-
-			assert.Contains(t, rawUserPerms, tt.wantPerm, "Expected resolution of raw permission")
-			assert.NotContains(t, rawUserPerms, tt.rawPerm, "Expected raw permission to have been resolved")
 		})
 	}
 }
