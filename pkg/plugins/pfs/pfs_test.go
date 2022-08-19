@@ -245,7 +245,7 @@ func TestParseTreeZips(t *testing.T) {
 		tst := tab[ent.Name()]
 		r, err := zip.OpenReader(filepath.Join(staticRootPath, ent.Name()))
 		require.NoError(t, err)
-		defer r.Close() //lint:noerror
+		defer r.Close() //nolint:errcheck
 		if tst.subpath != "" {
 			tst.tfs, err = fs.Sub(r, tst.subpath)
 			require.NoError(t, err)
