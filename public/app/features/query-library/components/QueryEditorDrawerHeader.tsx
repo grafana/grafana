@@ -41,12 +41,12 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
   };
 
   const useQueryOptions = [
-    { label: 'Create dashboard panel', value: 'dashboard-panel', icon: 'apps' },
-    { label: 'Create alert rule in Alert Manager', value: 'alert-rule', icon: 'bell' },
-    { label: 'Use in explore', value: 'explore', icon: 'compass' },
+    { label: 'Add to dashboard', value: 'dashboard-panel', icon: 'apps' },
+    { label: 'Create alert rule in Grafana Alerting', value: 'alert-rule', icon: 'bell' },
+    { label: 'View in explore', value: 'explore', icon: 'compass' },
     { label: 'Create SLO', value: 'slo', icon: 'crosshair' },
     {
-      label: 'Create incident in Grafana OnCall',
+      label: 'Add to incident in Grafana OnCall',
       value: 'incident-oncall',
       icon: 'record-audio',
       src: 'public/app/features/query-library/img/grafana_incident.svg',
@@ -58,10 +58,10 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
       src: 'public/app/features/query-library/img/grafana_oncall.svg',
     },
     {
-      label: 'Explore logs',
-      value: 'incident-incident',
-      icon: 'search',
-      src: 'public/app/plugins/datasource/loki/img/loki_icon.svg',
+      label: 'Create forecast in Grafana ML',
+      value: 'grafana-ml',
+      icon: 'grafana-ml',
+      src: 'public/app/features/query-library/img/grafana_ml.svg',
     },
   ];
 
