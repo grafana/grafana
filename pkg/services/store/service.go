@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -45,7 +46,7 @@ const SystemQueriesStorage = "system/" + queriesStorage
 var (
 	SystemBrandingReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
 	SystemBrandingAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
-	QueriesSearch        = &user.SignedInUser{OrgID: 1} // TODO per org
+	QueriesSearch        = &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: true, OrgRole: org.RoleAdmin} // TODO per org
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
@@ -68,7 +69,7 @@ type StorageService interface {
 	// List folder contents
 	List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error)
 
-	ListRaw(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.ListResponse, error) // TODO remove this
+	ListRaw(ctx context.Context, user *user.SignedInUser, path string, opts *filestorage.ListOptions) (*filestorage.ListResponse, error) // TODO remove this
 
 	// Read raw file contents out of the store
 	Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error)
@@ -299,9 +300,9 @@ func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUs
 	return s.tree.ListFolder(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
 }
 
-func (s *standardStorageService) ListRaw(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.ListResponse, error) {
+func (s *standardStorageService) ListRaw(ctx context.Context, user *user.SignedInUser, path string, opts *filestorage.ListOptions) (*filestorage.ListResponse, error) {
 	guardian := s.authService.newGuardian(ctx, user, getFirstSegment(path))
-	return s.tree.ListFolderRaw(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead))
+	return s.tree.ListFolderRaw(ctx, getOrgId(user), path, guardian.getPathFilter(ActionFilesRead), opts)
 }
 
 func (s *standardStorageService) Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error) {

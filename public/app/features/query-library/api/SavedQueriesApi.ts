@@ -2,6 +2,8 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { DataQuery } from '@grafana/data/src';
 
+import { ItemOptions } from '../../storage/types';
+
 import { getSavedQuerySrv } from './SavedQueriesSrv';
 
 export type SavedQueryRef = {
@@ -20,7 +22,9 @@ type SavedQueryData<TQuery extends DataQuery = DataQuery> = {
   queries: TQuery[];
 };
 
-export type SavedQuery<TQuery extends DataQuery = DataQuery> = SavedQueryMeta & SavedQueryData<TQuery> & SavedQueryRef;
+export type SavedQuery<TQuery extends DataQuery = DataQuery> = SavedQueryMeta &
+  SavedQueryData<TQuery> &
+  SavedQueryRef & { storageOptions: ItemOptions };
 
 export const isQueryWithMixedDatasource = (savedQuery: SavedQuery): boolean => {
   if (!savedQuery?.queries?.length) {

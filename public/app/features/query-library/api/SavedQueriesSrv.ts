@@ -7,8 +7,17 @@ export class SavedQuerySrv {
   getSavedQueryByUids = async (refs: SavedQueryRef[]): Promise<SavedQuery[]> => {
     const storage = getGrafanaStorage();
     return Promise.all(
-      refs.map((ref) => {
-        return storage.get<SavedQuery>(ref.uid).then((res) => ({ ...res, uid: ref.uid }));
+      refs.map(async (ref) => {
+        const [savedQuery, options] = await Promise.all([
+          storage.get<SavedQuery>(ref.uid),
+          storage.getOptions(ref.uid),
+        ]);
+
+        return {
+          ...savedQuery,
+          uid: ref.uid,
+          storageOptions: options,
+        };
       })
     );
   };
@@ -17,13 +26,17 @@ export class SavedQuerySrv {
     await getGrafanaStorage().delete({ isFolder: false, path: ref.uid });
   };
 
-  updateSavedQuery = async (query: SavedQuery): Promise<void> => {
-    const path = `system/queries/${query.title}.json`;
+  updateSavedQuery = async (
+    query: SavedQuery,
+    options?: { message?: string; workflow?: WorkflowID }
+  ): Promise<void> => {
+    const path = query.uid.length ? query.uid : `system/queries/${query.title}.json`;
     await getGrafanaStorage().write(path, {
       kind: 'query',
       body: query,
       title: query.title,
-      workflow: WorkflowID.Save,
+      message: options?.message,
+      workflow: options?.workflow ?? WorkflowID.Save,
     });
   };
 }

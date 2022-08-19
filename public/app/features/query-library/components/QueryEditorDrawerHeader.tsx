@@ -3,13 +3,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import InlineSVG from 'react-inlinesvg/esm';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Button, HorizontalGroup, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, IconName, ModalsController, useStyles2 } from '@grafana/ui';
 
 import { useAppNotification } from '../../../core/copy/appNotification';
+import { WorkflowID } from '../../storage/types';
 import { SavedQuery } from '../api/SavedQueriesApi';
 import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
 
 import { QueryName } from './QueryName';
+import { SaveQueryWorkflowModal } from './SaveQueryWorkflowModal';
 
 type Props = {
   onSavedQueryChange: (newQuery: SavedQuery) => void;
@@ -25,6 +27,8 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
 
   const [queryName, setQueryName] = useState(savedQuery.title);
   const [showUseQueryOptions, setShowUseQueryOptions] = useState(false);
+
+  const supportsPR = savedQuery?.storageOptions?.workflows?.some((opt) => opt.value === WorkflowID.PR);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,9 +82,9 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
     });
   };
 
-  const onQuerySave = async () => {
+  const onQuerySave = async (options?: { workflow?: WorkflowID; message?: string }) => {
     await getSavedQuerySrv()
-      .updateSavedQuery(savedQuery)
+      .updateSavedQuery(savedQuery, options)
       .then(() => notifyApp.success('Query updated'))
       .catch((err) => {
         const msg = err.data?.message || err;
@@ -88,6 +92,23 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
       });
     onDismiss();
   };
+
+  const onSaveQueryWorkflow =
+    (workflow: WorkflowID) =>
+    async ({ message }: { message?: string }): Promise<{ success: boolean }> => {
+      const options = { workflow, message };
+
+      try {
+        await getSavedQuerySrv().updateSavedQuery(savedQuery, options);
+        notifyApp.success(workflow === WorkflowID.PR ? 'Pull Request created' : 'Push successful');
+        onDismiss();
+        return { success: true };
+      } catch (e) {
+        notifyApp.warning(JSON.stringify(e));
+        onDismiss();
+        return { success: false };
+      }
+    };
 
   return (
     <>
@@ -113,9 +134,64 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
             </Button>
             {/*<Button icon="share-alt" size="sm" variant={'secondary'}>Export</Button>*/}
             <Button icon="lock" size="md" variant={'secondary'} />
-            <Button size="md" variant={'primary'} onClick={onQuerySave}>
-              Save
-            </Button>
+            {supportsPR && (
+              <ModalsController>
+                {({ showModal, hideModal }) => {
+                  return (
+                    <>
+                      <Button
+                        size="md"
+                        variant={'primary'}
+                        onClick={() => {
+                          showModal(SaveQueryWorkflowModal, {
+                            options: {
+                              savedQuery: savedQuery,
+                              workflow: WorkflowID.PR,
+                            },
+                            onSubmit: onSaveQueryWorkflow(WorkflowID.PR),
+                            onCancel: () => {
+                              hideModal();
+                            },
+                            onOptionsChange: () => {},
+                            onSuccess: () => {},
+                          });
+                        }}
+                      >
+                        Submit PR
+                      </Button>
+                      &nbsp;
+                      <Button
+                        size="md"
+                        variant={'primary'}
+                        onClick={() => {
+                          showModal(SaveQueryWorkflowModal, {
+                            options: {
+                              savedQuery: savedQuery,
+                              workflow: WorkflowID.Push,
+                            },
+                            onSubmit: onSaveQueryWorkflow(WorkflowID.Push),
+                            onCancel: () => {
+                              hideModal();
+                            },
+                            onOptionsChange: () => {},
+                            onSuccess: () => {},
+                          });
+                        }}
+                      >
+                        Push
+                      </Button>
+                    </>
+                  );
+                }}
+              </ModalsController>
+            )}
+            {!supportsPR && (
+              <>
+                <Button size="md" variant={'primary'} onClick={() => onQuerySave()}>
+                  Save
+                </Button>
+              </>
+            )}
             <Button icon="trash-alt" size="md" variant={'destructive'} onClick={deleteQuery} />
           </HorizontalGroup>
         </HorizontalGroup>

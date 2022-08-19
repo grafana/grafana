@@ -227,7 +227,7 @@ func (s *standardStorageService) doDelete(c *models.ReqContext) response.Respons
 	err := s.Delete(c.Req.Context(), c.SignedInUser, scope+"/"+path)
 
 	if err := s.entityEventsService.SaveEvent(c.Req.Context(), SaveEventCmd{
-		EntityId:  CreateDatabaseEntityId(path, c.OrgID, EntityTypeQuery), // todo its not really query
+		EntityId:  CreateDatabaseEntityId(scope+"/"+path, c.OrgID, EntityTypeQuery), // todo its not really query
 		EventType: EntityEventTypeDelete,
 	}); err != nil {
 		grafanaStorageLogger.Error("error when saving event", "path", path)

@@ -3,8 +3,10 @@ package searchV2
 import (
 	"bytes"
 	"context"
+	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/searchV2/dslookup"
@@ -63,7 +65,7 @@ func (l storageQueriesLoader) LoadQueries(ctx context.Context, orgID int64, uid 
 
 	queries := make([]query, 0)
 
-	resp, err := l.storage.ListRaw(ctx, store.QueriesSearch, store.SystemQueriesStorage)
+	resp, err := l.storage.ListRaw(ctx, store.QueriesSearch, store.SystemQueriesStorage, &filestorage.ListOptions{WithFiles: true, WithFolders: false, WithContents: true})
 	if err != nil {
 		return queries, err
 	}
@@ -87,5 +89,55 @@ func (l storageQueriesLoader) LoadQueries(ctx context.Context, orgID int64, uid 
 		})
 	}
 
+	// name is configurable - lets hardcode for now
+	hardcodedGitStorage := "it"
+	resp, err = l.storage.ListRaw(ctx, store.QueriesSearch, hardcodedGitStorage, &filestorage.ListOptions{WithFiles: true, WithFolders: false, WithContents: true})
+	l.logger.Info("Found git queries", "len", len(resp.Files))
+
+	if err != nil {
+		return queries, err
+	}
+	for _, file := range resp.Files {
+		isQuery := l.isQueryFromGit(file)
+		if !isQuery {
+			continue
+		}
+
+		uid := hardcodedGitStorage + file.FullPath
+		info, err := extract.ReadQuery(bytes.NewReader(file.Contents), uid, lookup)
+		if err != nil {
+			return nil, err
+		}
+
+		queries = append(queries, query{
+			uid:     uid,
+			slug:    uid,
+			created: file.Created,
+			updated: file.Modified,
+			info:    info,
+		})
+	}
+
 	return queries, nil
+}
+
+func (l storageQueriesLoader) isQueryFromGit(file *filestorage.File) bool {
+	if !strings.HasSuffix(file.FullPath, ".json") {
+		return false
+	}
+
+	query, err := simplejson.NewJson(file.Contents)
+	if err != nil {
+		l.logger.Debug("Skipping git query", "path", file.FullPath, "error", err)
+		return false
+	}
+
+	l.logger.Debug("Parsing git query", "path", file.FullPath)
+	_, err = query.Get("queries").Array()
+	if err != nil {
+		l.logger.Debug("Skipping git query - no queries array", "path", file.FullPath, "error", err)
+		return false
+	}
+
+	return true
 }

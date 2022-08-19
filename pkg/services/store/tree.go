@@ -195,7 +195,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 	return &StorageListFrame{frame}, nil
 }
 
-func (t *nestedTree) ListFolderRaw(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter) (*filestorage.ListResponse, error) {
+func (t *nestedTree) ListFolderRaw(ctx context.Context, orgId int64, path string, accessFilter filestorage.PathFilter, opts *filestorage.ListOptions) (*filestorage.ListResponse, error) {
 	if path == "" || path == "/" {
 		return nil, errors.New("not supported")
 	}
@@ -212,9 +212,9 @@ func (t *nestedTree) ListFolderRaw(ctx context.Context, orgId int64, path string
 
 	listResponse, err := store.List(ctx, path, nil, &filestorage.ListOptions{
 		Recursive:    true,
-		WithFolders:  true,
-		WithContents: true,
-		WithFiles:    true,
+		WithFolders:  opts.WithFolders,
+		WithContents: opts.WithContents,
+		WithFiles:    opts.WithFiles,
 		Filter:       accessFilter,
 	})
 

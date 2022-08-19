@@ -10,6 +10,7 @@ import { SavedQuery } from '../api/SavedQueriesApi';
 import { HistoryTab } from './HistoryTab';
 import { QueryEditor } from './QueryEditor';
 import { QueryEditorDrawerHeader } from './QueryEditorDrawerHeader';
+import { SaveQueryWorkflowModal } from './SaveQueryModal';
 import { UsagesTab } from './UsagesTab';
 import { VariablesTab } from './VariablesTab';
 

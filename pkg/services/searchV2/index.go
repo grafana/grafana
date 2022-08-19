@@ -830,8 +830,6 @@ func (i *searchIndex) updateQuery(ctx context.Context, index *orgIndex, uid stri
 }
 
 func (i *searchIndex) removeQuery(ctx context.Context, index *orgIndex, uid string) error {
-	// TODO: fix, lacking storage (system/) prefix
-	uid = fmt.Sprintf("%s/%s", store.RootSystem, uid)
 	writer := index.writerForIndex(indexTypeDashboard)
 
 	batch := bluge.NewBatch()
