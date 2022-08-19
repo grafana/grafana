@@ -116,7 +116,7 @@ You can share a panel as a direct link, as a snapshot, or as an embedded link. Y
 
 ### Use direct link
 
-The **Link** tab shows the current time range, template variables, and the defaul theme. You can optionally enable a shortened URL to share.
+The **Link** tab shows the current time range, template variables, and the default theme. You can optionally enable a shortened URL to share.
 
 1. Click **Copy**.
 
