@@ -109,11 +109,11 @@ msgstr "Apply panel transformations"
 
 #: public/app/features/inspector/InspectJSONTab.tsx
 msgid "dashboard.inspect-json.dataframe-description"
-msgstr "JSON formatted DataFrames"
+msgstr "Raw data without transformations and field config applied."
 
 #: public/app/features/inspector/InspectJSONTab.tsx
 msgid "dashboard.inspect-json.dataframe-label"
-msgstr "DataFrame JSON"
+msgstr "DataFrame JSON (from Query)"
 
 #: public/app/features/inspector/InspectJSONTab.tsx
 msgid "dashboard.inspect-json.panel-data-description"
