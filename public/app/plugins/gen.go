@@ -43,7 +43,13 @@ func main() {
 
 	wd := codegen.NewWriteDiffer()
 	lib := cuectx.ProvideThemaLibrary()
-	ptrees := make(map[string]*codegen.PluginTree)
+
+	type ptreepath struct {
+		fullpath string
+		tree     *codegen.PluginTree
+	}
+	// ptrees := make(map[string]*codegen.PluginTree)
+	var ptrees []ptreepath
 	for _, typ := range []string{"datasource", "panel"} {
 		dir := filepath.Join(cwd, typ)
 		treeor, err := codegen.ExtractPluginTrees(os.DirFS(dir), lib)
@@ -58,7 +64,10 @@ func main() {
 			}
 
 			if option.Tree != nil {
-				ptrees[filepath.Join(typ, name)] = option.Tree
+				ptrees = append(ptrees, ptreepath{
+					fullpath: filepath.Join(typ, name),
+					tree:     option.Tree,
+				})
 			} else if !errors.Is(option.Err, pfs.ErrNoRootFile) {
 				fmt.Fprintf(os.Stderr, "error parsing plugin directory %s: %s\n", filepath.Join(dir, name), option.Err)
 				os.Exit(1)
@@ -66,10 +75,13 @@ func main() {
 		}
 	}
 
-	for fullp, ptree := range ptrees {
-		twd, err := ptree.GenerateTS(fullp)
+	// Sort ptrees, so that visit order is deterministic. Otherwise having multiple
+	// core plugins with errors can cause confusing error flip-flopping
+
+	for _, ptp := range ptrees {
+		twd, err := ptp.tree.GenerateTS(ptp.fullpath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "generating typescript failed for %s: %s\n", fullp, err)
+			fmt.Fprintf(os.Stderr, "generating typescript failed for %s: %s\n", ptp.fullpath, err)
 			os.Exit(1)
 		}
 		wd.Merge(twd)

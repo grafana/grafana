@@ -3,6 +3,7 @@ package pfs
 import (
 	"fmt"
 	"io/fs"
+	"sort"
 	"strings"
 	"sync"
 
@@ -43,7 +44,12 @@ var allowedImportsStr string
 // Name expected to be used for all models.cue files in Grafana plugins
 const pkgname = "grafanaplugin"
 
-var slots = coremodel.AllSlots()
+type slotandname struct {
+	name string
+	slot *coremodel.Slot
+}
+
+var allslots []slotandname
 
 var plugmux kernel.InputKernel
 
@@ -57,6 +63,17 @@ func init() {
 		all = append(all, fmt.Sprintf("\t%s", im))
 	}
 	allowedImportsStr = strings.Join(all, "\n")
+
+	for n, s := range coremodel.AllSlots() {
+		allslots = append(allslots, slotandname{
+			name: n,
+			slot: s,
+		})
+	}
+
+	sort.Slice(allslots, func(i, j int) bool {
+		return allslots[i].name < allslots[j].name
+	})
 }
 
 var muxonce sync.Once
@@ -217,11 +234,11 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		}
 
 		val := ctx.BuildInstance(bi)
-		for _, s := range slots {
-			iv := val.LookupPath(cue.ParsePath(s.Name()))
-			lin, err := bindSlotLineage(iv, s, r.meta, lib)
+		for _, s := range allslots {
+			iv := val.LookupPath(cue.ParsePath(s.slot.Name()))
+			lin, err := bindSlotLineage(iv, s.slot, r.meta, lib)
 			if lin != nil {
-				r.slotimpls[s.Name()] = lin
+				r.slotimpls[s.slot.Name()] = lin
 			}
 			if err != nil {
 				return nil, err
