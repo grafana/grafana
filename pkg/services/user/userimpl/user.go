@@ -32,7 +32,7 @@ type Service struct {
 	teamMemberService  teamguardian.TeamGuardian
 	userAuthService    userauth.Service
 	quotaService       quota.Service
-	accessControlStore accesscontrol.AccessControl
+	accessControlStore accesscontrol.Service
 	// TODO remove sqlstore
 	sqlStore *sqlstore.SQLStore
 
@@ -48,7 +48,7 @@ func ProvideService(
 	teamMemberService teamguardian.TeamGuardian,
 	userAuthService userauth.Service,
 	quotaService quota.Service,
-	accessControlStore accesscontrol.AccessControl,
+	accessControlStore accesscontrol.Service,
 	cfg *setting.Cfg,
 	ss *sqlstore.SQLStore,
 ) user.Service {

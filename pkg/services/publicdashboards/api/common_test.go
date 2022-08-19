@@ -62,8 +62,9 @@ func setupTestServer(
 	}
 
 	var err error
-	ac, err := ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), rr)
+	acService, err := ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), rr)
 	require.NoError(t, err)
+	ac := ossaccesscontrol.ProvideAccessControl(cfg, acService)
 
 	// build mux
 	m := web.New()
