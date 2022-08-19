@@ -261,7 +261,7 @@ export class QueryRows extends PureComponent<Props, State> {
     const thresholdByRefId = this.getThresholdsForQueries(queries);
 
     return (
-      <div>
+      <div style={{ maxWidth: '750px' }}>
         <SavedQueryPicker onChange={this.onSelectedSaveQuery} current={this.state.savedQueryLink?.ref?.uid ?? null} />
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="alerting-queries" direction="vertical">
