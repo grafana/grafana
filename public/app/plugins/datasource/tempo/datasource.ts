@@ -45,6 +45,7 @@ import {
   errorRateMetric,
   defaultTableFilter,
 } from './graphTransform';
+import TempoLanguageProvider from './language_provider';
 import {
   transformTrace,
   transformTraceList,
@@ -53,7 +54,7 @@ import {
 } from './resultTransformer';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
+export type TempoQueryType = 'traceql' | 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -111,6 +112,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
+  languageProvider: TempoLanguageProvider;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -122,6 +124,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
+    this.languageProvider = new TempoLanguageProvider(this);
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
