@@ -175,7 +175,7 @@ OptionsWithLegend: {
 
 // TODO docs
 OptionsWithTimezones: {
-	timezones?: [...string]
+	timezone?: [...string]
 } @cuetsy(kind="interface")
 
 // TODO docs

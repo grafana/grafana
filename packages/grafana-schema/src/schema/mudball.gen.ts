@@ -208,11 +208,11 @@ export interface OptionsWithLegend {
 }
 
 export interface OptionsWithTimezones {
-  timezones?: string[];
+  timezone?: string[];
 }
 
 export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
-  timezones: [],
+  timezone: [],
 };
 
 export interface OptionsWithTextFormatting {
