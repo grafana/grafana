@@ -20,7 +20,7 @@ The Heatmap panel visualization allows you to view histograms over time. For mor
 
 ## Calculate from data
 
-This will toggle if the data is already a calculated heatmap (from the data source/transformer), or one that should be
+This setting determines if the data is already a calculated heatmap (from the data source/transformer), or one that should be
 calculated in the panel.
 
 ### X Bucket
