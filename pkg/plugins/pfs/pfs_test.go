@@ -1,6 +1,7 @@
 package pfs
 
 import (
+	"archive/zip"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -153,6 +154,105 @@ func TestParseTreeTestdata(t *testing.T) {
 		tst := tab[ent.Name()]
 		tst.tfs, err = fs.Sub(dfs, filepath.Join(ent.Name(), tst.subpath))
 		require.NoError(t, err)
+		tab[ent.Name()] = tst
+	}
+
+	lib := cuectx.ProvideThemaLibrary()
+	for name, otst := range tab {
+		tst := otst // otherwise var is shadowed within func by looping
+		t.Run(name, func(t *testing.T) {
+			if tst.skip != "" {
+				t.Skip(tst.skip)
+			}
+
+			tree, err := ParsePluginFS(tst.tfs, lib)
+			if tst.err == nil {
+				require.NoError(t, err, "unexpected error while parsing plugin tree")
+			} else {
+				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
+				return
+			}
+
+			if tst.rootid == "" {
+				tst.rootid = name
+			}
+
+			rootp := tree.RootPlugin()
+			require.Equal(t, tst.rootid, rootp.Meta().Id, "expected root plugin id and actual root plugin id differ")
+		})
+	}
+}
+
+func TestParseTreeZips(t *testing.T) {
+	type tt struct {
+		tfs fs.FS
+		// TODO could remove this by getting rid of inconsistent subdirs
+		subpath string
+		skip    string
+		err     error
+		// TODO could remove this by expecting that dirname == id
+		rootid string
+	}
+
+	tab := map[string]tt{
+		"grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip": {
+			skip: "binary plugin",
+		},
+		"plugin-with-absolute-member.zip": {
+			skip: "not actually a plugin, no plugin.json?",
+		},
+		"plugin-with-absolute-symlink-dir.zip": {
+			skip: "not actually a plugin, no plugin.json?",
+		},
+		"plugin-with-absolute-symlink.zip": {
+			skip: "not actually a plugin, no plugin.json?",
+		},
+		"plugin-with-parent-member.zip": {
+			skip: "not actually a plugin, no plugin.json?",
+		},
+		"plugin-with-symlink-dir.zip": {
+			skip: "not actually a plugin, no plugin.json?",
+		},
+		"plugin-with-symlink.zip": {
+			skip: "not actually a plugin, no plugin.json?",
+		},
+		"plugin-with-symlinks.zip": {
+			subpath: "test-app",
+			rootid:  "test-app",
+		},
+	}
+
+	staticRootPath, err := filepath.Abs("../manager/installer/testdata")
+	require.NoError(t, err)
+	ents, err := os.ReadDir(staticRootPath)
+	require.NoError(t, err)
+
+	// Ensure table test and dir list are ==
+	var dirs, tts []string
+	for k := range tab {
+		tts = append(tts, k)
+	}
+	for _, ent := range ents {
+		dirs = append(dirs, ent.Name())
+	}
+	sort.Strings(tts)
+	sort.Strings(dirs)
+	if !cmp.Equal(tts, dirs) {
+		t.Fatalf("table test map (-) and pkg/plugins/installer/testdata dirs (+) differ: %s", cmp.Diff(tts, dirs))
+	}
+
+	for _, ent := range ents {
+		tst := tab[ent.Name()]
+		r, err := zip.OpenReader(filepath.Join(staticRootPath, ent.Name()))
+		require.NoError(t, err)
+		defer r.Close() //lint:noerror
+		if tst.subpath != "" {
+			tst.tfs, err = fs.Sub(r, tst.subpath)
+			require.NoError(t, err)
+		} else {
+			tst.tfs = r
+		}
+
 		tab[ent.Name()] = tst
 	}
 
