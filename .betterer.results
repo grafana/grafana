@@ -68,9 +68,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/alerting/AlertRuleList.test.tsx:2998938420": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/alerting/TestRuleResult.test.tsx:2358420489": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3716733755": [
       [0, 35, 13, "RegExp match", "2409514259"]
     ],

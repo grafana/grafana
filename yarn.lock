@@ -4834,6 +4834,7 @@ __metadata:
     date-fns: 2.29.1
     esbuild: ^0.14.47
     eventemitter3: 4.0.7
+    fast_array_intersect: 1.1.0
     history: 4.10.1
     lodash: 4.17.21
     marked: 4.0.18
@@ -20341,6 +20342,13 @@ __metadata:
   version: 1.0.0
   resolution: "fast-shallow-equal@npm:1.0.0"
   checksum: ae89318ce43c0c46410d9511ac31520d59cfe675bad3d0b1cb5f900b2d635943d788b8370437178e91ae0d0412decc394229c03e69925ade929a8c02da241610
+  languageName: node
+  linkType: hard
+
+"fast_array_intersect@npm:1.1.0":
+  version: 1.1.0
+  resolution: "fast_array_intersect@npm:1.1.0"
+  checksum: 3bd65089e84f3eb2b378d346b741fe333183fdf3c14166ffeafd228e40b035703d82a3a9e645c8714c2f2b399140f6f0991a1c0344b0a8cf05697a48365cbadc
   languageName: node
   linkType: hard
 

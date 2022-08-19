@@ -281,6 +281,12 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
+	if apikey.IsRevoked != nil && *apikey.IsRevoked {
+		reqContext.JsonApiErr(http.StatusUnauthorized, "Revoked token", nil)
+
+		return true
+	}
+
 	// update api_key last used date
 	if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
 		reqContext.JsonApiErr(http.StatusInternalServerError, InvalidAPIKey, errKey)

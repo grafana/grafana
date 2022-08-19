@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/pkg/errors"
 	"xorm.io/xorm"
 )
 
@@ -111,6 +112,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 			return apikey.ErrInvalidExpiration
 		}
 
+		isRevoked := false
 		t := apikey.APIKey{
 			OrgId:            cmd.OrgId,
 			Name:             cmd.Name,
@@ -119,12 +121,14 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: nil,
+			ServiceAccountId: cmd.ServiceAccountID,
+			IsRevoked:        &isRevoked,
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
-			return err
+			return errors.Wrap(err, "failed to insert token")
 		}
+
 		cmd.Result = &t
 		return nil
 	})
