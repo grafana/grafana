@@ -97,7 +97,7 @@ Use these settings to refine your visualization.
 ### Tooltip
 
 - **Show tooltip -** Show heatmap tooltip.
-- **Show Histogram -** Show Y axis histogram on the tooltip. Histogram represents distribution of the bucket values for the specific timestamp.
+- **Show Histogram -** Show a Y-axis histogram on the tooltip. A histogram represents the distribution of the bucket values for a specific timestamp.
 
 ### Legend
 
