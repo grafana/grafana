@@ -1,8 +1,17 @@
 import { t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { firstValueFrom } from 'rxjs';
 
-import { AppEvents, DataFrameJSON, dataFrameToJSON, DataTopic, PanelData, SelectableValue } from '@grafana/data';
+import {
+  AppEvents,
+  DataFrameJSON,
+  dataFrameToJSON,
+  DataTopic,
+  PanelData,
+  SelectableValue,
+  LoadingState,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
@@ -34,8 +43,11 @@ const options: Array<SelectableValue<ShowContent>> = [
     value: ShowContent.PanelData,
   },
   {
-    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON' }),
-    description: t({ id: 'dashboard.inspect-json.dataframe-description', message: 'JSON formatted DataFrames' }),
+    label: t({ id: 'dashboard.inspect-json.dataframe-label', message: 'DataFrame JSON (from Query)' }),
+    description: t({
+      id: 'dashboard.inspect-json.dataframe-description',
+      message: 'Raw data without transformations and field config applied. ',
+    }),
     value: ShowContent.DataFrames,
   },
 ];
@@ -65,8 +77,8 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     };
   }
 
-  onSelectChanged = (item: SelectableValue<ShowContent>) => {
-    const show = this.getJSONObject(item.value!);
+  onSelectChanged = async (item: SelectableValue<ShowContent>) => {
+    const show = await this.getJSONObject(item.value!);
     const text = getPrettyJSON(show);
     this.setState({ text, show: item.value! });
   };
@@ -76,14 +88,25 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     this.setState({ text });
   };
 
-  getJSONObject(show: ShowContent) {
+  async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
       return data;
     }
 
     if (show === ShowContent.DataFrames) {
-      return getPanelDataFrames(data);
+      let d = data;
+
+      // do not include transforms and
+      if (panel && data?.state === LoadingState.Done) {
+        d = await firstValueFrom(
+          panel.getQueryRunner().getData({
+            withFieldConfig: false,
+            withTransforms: false,
+          })
+        );
+      }
+      return getPanelDataFrames(d);
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {

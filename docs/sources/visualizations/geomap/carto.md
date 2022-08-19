@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: CARTO layer
-weight: 400
+weight: 4
 ---
 
 # CARTO layer

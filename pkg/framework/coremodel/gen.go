@@ -72,12 +72,15 @@ func main() {
 		}
 		wd.Merge(gofiles)
 
-		tsfiles, err := ls.GenerateTypescriptCoremodel(filepath.Join(tsroot, ls.Lineage.Name()))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to generate TypeScript for %s: %s\n", ls.Lineage.Name(), err)
-			os.Exit(1)
+		// Only generate TS for API types
+		if ls.IsAPIType {
+			tsfiles, err := ls.GenerateTypescriptCoremodel(filepath.Join(tsroot, ls.Lineage.Name()))
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "failed to generate TypeScript for %s: %s\n", ls.Lineage.Name(), err)
+				os.Exit(1)
+			}
+			wd.Merge(tsfiles)
 		}
-		wd.Merge(tsfiles)
 	}
 
 	regfiles, err := gcgen.GenerateCoremodelRegistry(filepath.Join(groot, "pkg", "framework", "coremodel", "registry", "registry_gen.go"), lins)

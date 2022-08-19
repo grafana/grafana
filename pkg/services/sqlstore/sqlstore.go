@@ -299,6 +299,10 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
 
+		if ss.Cfg.IsFeatureToggleEnabled("newDBLibrary") {
+			cnnstr += "&parseTime=true"
+		}
+
 		cnnstr += ss.buildExtraConnectionString('&')
 	case migrator.Postgres:
 		addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
