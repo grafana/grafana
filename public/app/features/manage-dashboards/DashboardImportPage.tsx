@@ -32,6 +32,7 @@ import { validateDashboardJson, validateGcomDashboard } from './utils/validation
 
 type DashboardImportPageRouteSearchParams = {
   gcomDashboardId?: string;
+  body?: string; // POST parameter
 };
 
 type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageRouteSearchParams>;
@@ -56,6 +57,10 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
     const { gcomDashboardId } = this.props.queryParams;
+
+    console.log( "INIT", this.props);
+    debugger;
+
     if (gcomDashboardId) {
       this.getGcomDashboard({ gcomDashboard: gcomDashboardId });
       return;

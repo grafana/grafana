@@ -1,4 +1,5 @@
 import { t } from '@lingui/macro';
+import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
@@ -11,6 +12,7 @@ import {
   PanelData,
   SelectableValue,
   LoadingState,
+  dateTimeFormat,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
@@ -19,10 +21,13 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { getPanelInspectorStyles } from '../inspector/styles';
 
+import { getTroubleshootingDashboard } from './troubleshooting';
+
 enum ShowContent {
   PanelJSON = 'panel',
   PanelData = 'data',
   DataFrames = 'frames',
+  TroubleshootingDashboard = 'dash',
 }
 
 const options: Array<SelectableValue<ShowContent>> = [
@@ -49,6 +54,11 @@ const options: Array<SelectableValue<ShowContent>> = [
       message: 'Raw data without transformations and field config applied. ',
     }),
     value: ShowContent.DataFrames,
+  },
+  {
+    label: 'Troubleshooting dashboard',
+    description: 'Create a dashboard to show help reproduce issues',
+    value: ShowContent.TroubleshootingDashboard,
   },
 ];
 
@@ -88,6 +98,19 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     this.setState({ text });
   };
 
+  doDashboardImport = () => {
+    alert('TODO... post dashboard to UI');
+  };
+
+  doSaveDashboard = () => {
+    const blob = new Blob([this.state.text], {
+      type: 'application/json',
+    });
+    const displayTitle = `${this.props.panel?.title}`;
+    const fileName = `troubleshoot-${displayTitle}-${dateTimeFormat(new Date())}.json`;
+    saveAs(blob, fileName);
+  };
+
   async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
@@ -107,6 +130,10 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         );
       }
       return getPanelDataFrames(d);
+    }
+
+    if (show === ShowContent.TroubleshootingDashboard && panel) {
+      return await getTroubleshootingDashboard(panel);
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
@@ -144,6 +171,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     const jsonOptions = this.hasPanelJSON ? options : options.slice(1, options.length);
     const selected = options.find((v) => v.value === show);
     const isPanelJSON = show === ShowContent.PanelJSON;
+    const isTroubleshooter = show === ShowContent.TroubleshootingDashboard;
     const canEdit = dashboard && dashboard.meta.canEdit;
     const styles = getPanelInspectorStyles();
 
@@ -166,7 +194,24 @@ export class InspectJSONTab extends PureComponent<Props, State> {
               Apply
             </Button>
           )}
+          {isTroubleshooter && <>
+            {canEdit &&
+              <form action="/dashboard/import" method="POST">
+                <input type="hidden" name="body" value={this.state.text}/>
+                <Button className={styles.toolbarItem} type="submit">
+                  Import
+                </Button>
+              </form>}
+            <Button className={styles.toolbarItem} onClick={this.doSaveDashboard}>
+              Download
+            </Button>
+          </>}
         </div>
+        {isTroubleshooter && <div>
+          This creates a dashboard that can be downloaed and attached to github issues or sent to support.
+          It contains relevant data required to reproduce visualization issues disconnected from the original 
+          datasource.
+        </div>}
         <div className={styles.content}>
           <AutoSizer disableWidth>
             {({ height }) => (
@@ -188,7 +233,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   }
 }
 
-function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
+export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   const frames: DataFrameJSON[] = [];
   if (data?.series) {
     for (const f of data.series) {
