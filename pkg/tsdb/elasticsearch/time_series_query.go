@@ -111,6 +111,8 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
 		case geohashGridType:
 			aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
+		case nestedType:
+			aggBuilder = addNestedAgg(aggBuilder, bucketAgg)
 		}
 	}
 
@@ -337,6 +339,14 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 			}
 		}
 
+		aggBuilder = b
+	})
+
+	return aggBuilder
+}
+
+func addNestedAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
+	aggBuilder.Nested(bucketAgg.ID, bucketAgg.Field, func(a *es.NestedAggregation, b es.AggBuilder) {
 		aggBuilder = b
 	})
 

@@ -22,6 +22,7 @@ const (
 	topMetricsType    = "top_metrics"
 	// Bucket types
 	dateHistType    = "date_histogram"
+	nestedType      = "nested"
 	histogramType   = "histogram"
 	filtersType     = "filters"
 	termsType       = "terms"
@@ -107,6 +108,13 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 		aggDef, _ := findAgg(target, aggID)
 		esAgg := simplejson.NewFromAny(v)
 		if aggDef == nil {
+			continue
+		}
+		if aggDef.Type == nestedType {
+			err = rp.processBuckets(esAgg.MustMap(), target, queryResult, props, depth+1)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
