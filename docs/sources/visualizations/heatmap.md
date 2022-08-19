@@ -33,7 +33,7 @@ This setting determines how the Y-axis is split into buckets.
 
 ### Y Bucket scale
 
-The scale to use for the Y axis value.
+Select one of the following Y-axis value scales:
 
 - **linear -** Linear scale.
 - **log (base 2) -** Logarithmic scale with base 2.
