@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -48,7 +49,6 @@ func main() {
 		fullpath string
 		tree     *codegen.PluginTree
 	}
-	// ptrees := make(map[string]*codegen.PluginTree)
 	var ptrees []ptreepath
 	for _, typ := range []string{"datasource", "panel"} {
 		dir := filepath.Join(cwd, typ)
@@ -75,8 +75,12 @@ func main() {
 		}
 	}
 
-	// Sort ptrees, so that visit order is deterministic. Otherwise having multiple
-	// core plugins with errors can cause confusing error flip-flopping
+	// Ensure ptrees are sorted, so that visit order is deterministic. Otherwise
+	// having multiple core plugins with errors can cause confusing error
+	// flip-flopping
+	sort.Slice(ptrees, func(i, j int) bool {
+		return ptrees[i].fullpath < ptrees[j].fullpath
+	})
 
 	for _, ptp := range ptrees {
 		twd, err := ptp.tree.GenerateTS(ptp.fullpath)
