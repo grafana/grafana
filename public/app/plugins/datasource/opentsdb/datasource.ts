@@ -83,7 +83,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
                   // grafana fetch throws the error so for annotation consistency among datasources
                   // we return an empty array which displays as 'no events found'
                   // in the annnotation editor
-                  return subscriber.next({ data: [toDataFrame([])] })
+                  return subscriber.next({ data: [toDataFrame([])] });
                 })
                 .finally(() => subscriber.complete());
             })

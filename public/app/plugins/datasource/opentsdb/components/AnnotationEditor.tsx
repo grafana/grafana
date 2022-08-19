@@ -10,7 +10,7 @@ export const AnnotationEditor = (props: QueryEditorProps<OpenTsDatasource, OpenT
   const { query, onChange } = props;
   const [target, setTarget] = useState<string>(query.target ?? '');
   const [isGlobal, setIsGlobal] = useState<boolean>(query.isGlobal ?? false);
-  
+
   const updateValue = <K extends keyof OpenTsdbQuery, V extends OpenTsdbQuery[K]>(key: K, val: V) => {
     onChange({
       ...query,
@@ -23,7 +23,7 @@ export const AnnotationEditor = (props: QueryEditorProps<OpenTsDatasource, OpenT
     isGlobal = !isGlobal;
     setIsGlobal(isGlobal);
     updateValue('isGlobal', isGlobal);
-  }
+  };
 
   return (
     <div className="gf-form-group">
@@ -38,10 +38,7 @@ export const AnnotationEditor = (props: QueryEditorProps<OpenTsDatasource, OpenT
       </div>
       <div className="gf-form">
         <InlineFormLabel width={12}>Show Global Annotations?</InlineFormLabel>
-        <InlineSwitch 
-          value={isGlobal}
-          onChange={(e) => updateIsGlobal(isGlobal)}
-        />
+        <InlineSwitch value={isGlobal} onChange={(e) => updateIsGlobal(isGlobal)} />
       </div>
     </div>
   );
