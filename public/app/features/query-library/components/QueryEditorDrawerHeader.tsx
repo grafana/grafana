@@ -104,6 +104,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
         onDismiss();
         return { success: true };
       } catch (e) {
+        console.error(e);
         notifyApp.warning(JSON.stringify(e));
         onDismiss();
         return { success: false };
