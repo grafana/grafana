@@ -146,7 +146,6 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 		}
 	} else {
 		reqContext.OrgId = orgID
-		reqContext.IsGrafanaAdmin = true
 	}
 	// LOGZ.IO GRAFANA CHANGE :: end
 
