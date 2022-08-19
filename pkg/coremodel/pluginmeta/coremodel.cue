@@ -1,6 +1,10 @@
 package pluginmeta
 
-import "github.com/grafana/thema"
+import (
+	"strings"
+
+	"github.com/grafana/thema"
+)
 
 thema.#Lineage
 name: "pluginmeta"
@@ -11,14 +15,15 @@ seqs: [
 				// Unique name of the plugin. If the plugin is published on
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
-				id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+				id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([for t in _types {t}], "|")))$"
+
+				// types indicates the set of all plugin types. This private field solely
+				// exists so that the plugin type can be interpolated in other fields
+				_types: ["app", "datasource", "panel", "renderer", "secretsmanager"]
 
 				// type indicates which type of Grafana plugin this is, of the defined
 				// set of Grafana plugin types.
-				type: #Type
-
-				// Type is a string identifier of the Grafana plugin type.
-				#Type: "app" | "datasource" | "panel" | "renderer" | "secretsmanager"
+				type: or(_types)
 
 				// IncludeType is a string identifier of a plugin include type, which is
 				// a superset of plugin types.
