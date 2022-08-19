@@ -6,7 +6,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const modelVersion = Object.freeze([0, 0]);
+export const PanelModelVersion = Object.freeze([0, 0]);
 
 
 export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTextFormatting {
