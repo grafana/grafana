@@ -183,8 +183,8 @@ func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, saId int64,
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*apikey.APIKey, error) {
-	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
+func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
+	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, query.OrgID, query.ServiceAccountID})
 	return nil, nil
 }
 

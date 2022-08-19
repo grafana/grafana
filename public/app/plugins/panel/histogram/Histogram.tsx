@@ -199,7 +199,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       colorMode,
       pathBuilder,
       //pointsBuilder: config.drawPoints,
-      show: !customConfig.hideFrom?.vis,
+      show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 

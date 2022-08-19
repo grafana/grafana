@@ -130,7 +130,7 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
   const collapsed = hideQuickRanges ? false : collapsedFlag;
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
-    return onChange(mapOptionToTimeRange(timeOption));
+    return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
 
   return (
@@ -176,7 +176,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
   const theme = useTheme2();
   const styles = getFullScreenStyles(theme, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
-    return onChange(mapOptionToTimeRange(timeOption));
+    return onChange(mapOptionToTimeRange(timeOption, timeZone));
   };
 
   return (

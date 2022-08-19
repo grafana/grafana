@@ -33,7 +33,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		return true
 	}
 
-	query := models.GetSignedInUserQuery{OrgId: orgId}
+	query := user.GetSignedInUserQuery{OrgID: orgId}
 
 	sub, _ := claims["sub"].(string)
 
@@ -83,7 +83,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		}
 	}
 
-	err = h.SQLStore.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query)
+	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			ctx.Logger.Debug(
@@ -100,7 +100,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		return true
 	}
 
-	ctx.SignedInUser = query.Result
+	ctx.SignedInUser = queryResult
 	ctx.IsSignedIn = true
 
 	return true
