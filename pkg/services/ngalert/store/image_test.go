@@ -90,8 +90,11 @@ func TestIntegrationGetImages(t *testing.T) {
 	assert.Len(t, mismatched, 0)
 	assert.Equal(t, []models.Image{image1}, images)
 
-	// create an image with a URL
-	image2 := models.Image{Path: "https://example.com/example.png"}
+	// create an image with a long URL (e.g signed URL)
+	image2 := models.Image{URL: "https://example.com/example.png?Signature=3r4r4r34r34r34r34dfeergef3t343t34erg443" +
+		"kjwjdwdisdihdw3903999333u3uru23hsdjhfjsh38rr82r23r2rdsfhfh39frhfhf5e9316a2841e8ff4a8496def8e260c1dbe25e3a" +
+		"c530b22ceaa1c23hsdjhfjsh38rr82r23r2rdsfhfh39frhfhf5e924f722292d21e24d31dcfb38cee25e3a85a7dbb891d8rr82r23r" +
+		"9edf4d187d54e7cc46e4731b1e6273242c4f4c39a1d2507a0e58706e25e3a85a7dbb891d62afa8496def8e260c1dbf4c39a1d2507"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
 
 	// should return both images

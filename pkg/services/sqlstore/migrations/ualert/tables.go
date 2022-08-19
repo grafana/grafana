@@ -396,6 +396,11 @@ func AddAlertImageMigrations(mg *migrator.Migrator) {
 			{Cols: []string{"token"}, Type: migrator.UniqueIndex},
 		},
 	}
+
 	mg.AddMigration("create alert_image table", migrator.NewAddTableMigration(imageTable))
 	mg.AddMigration("add unique index on token to alert_image table", migrator.NewAddIndexMigration(imageTable, imageTable.Indices[0]))
+
+	mg.AddMigration("alter alert_image.url to mediumtext in mysql and text in postgres", migrator.NewRawSQLMigration("").
+		Postgres("ALTER TABLE alert_image ALTER COLUMN url TYPE TEXT;").
+		Mysql("ALTER TABLE alert_image MODIFY url MEDIUMTEXT;"))
 }
