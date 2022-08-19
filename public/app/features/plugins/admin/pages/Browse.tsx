@@ -4,20 +4,19 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { locationSearchToObject } from '@grafana/runtime';
+import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types/store';
 
+import { useGetPlugins, useIsRemotePluginsAvailable, useDisplayMode } from '../../hooks';
 import { PluginAdminRoutes, PluginListDisplayMode } from '../../types';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
-import { useHistory } from '../hooks/useHistory';
-import { useGetPlugins, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
@@ -26,7 +25,6 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
   const { displayMode, setDisplayMode } = useDisplayMode();
   const styles = useStyles2(getStyles);
-  const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
   const query = (locationSearch.q as string) || '';
   const filterBy = (locationSearch.filterBy as string) || 'installed';
@@ -44,19 +42,19 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   ];
 
   const onSortByChange = (value: SelectableValue<string>) => {
-    history.push({ query: { sortBy: value.value } });
+    locationService.partial({ sortBy: value.value });
   };
 
   const onFilterByChange = (value: string) => {
-    history.push({ query: { filterBy: value } });
+    locationService.partial({ filterBy: value });
   };
 
   const onFilterByTypeChange = (value: string) => {
-    history.push({ query: { filterByType: value } });
+    locationService.partial({ filterByType: value });
   };
 
   const onSearch = (q: any) => {
-    history.push({ query: { filterBy: 'all', filterByType: 'all', q } });
+    locationService.partial({ filterBy: 'all', filterByType: 'all', q });
   };
 
   // How should we handle errors?

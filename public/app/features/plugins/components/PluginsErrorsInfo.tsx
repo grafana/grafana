@@ -5,10 +5,10 @@ import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useTheme } from '@grafana/ui';
 
-import { useGetErrors } from '../admin/state/hooks';
+import { useGetErrorsPluginErrors } from '../hooks';
 
 export function PluginsErrorsInfo(): React.ReactElement | null {
-  const { loading, errors } = useGetErrors();
+  const { loading, errors } = useGetErrorsPluginErrors();
   const theme = useTheme();
 
   if (loading || errors.length === 0) {

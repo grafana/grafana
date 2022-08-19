@@ -5,10 +5,10 @@ import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { config, featureEnabled } from '@grafana/runtime';
 import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 
+import { useIsRemotePluginsAvailable } from '../../../hooks';
 import { CatalogPlugin, PluginStatus, Version } from '../../../types';
 import { isGrafanaAdmin } from '../../../utils/permissions';
 import { getExternalManageLink, isInstallControlsEnabled } from '../../helpers';
-import { useIsRemotePluginsAvailable } from '../../state/hooks';
 
 import { ExternallyManagedButton } from './ExternallyManagedButton';
 import { InstallControlsButton } from './InstallControlsButton';

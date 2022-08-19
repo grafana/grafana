@@ -4,8 +4,8 @@ import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 
+import { useInstallPlugin, useUninstallPlugin } from '../../../hooks';
 import { CatalogPlugin, PluginStatus, Version } from '../../../types';
-import { useInstall, useUninstall } from '../../state/hooks';
 
 type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
@@ -14,8 +14,8 @@ type InstallControlsButtonProps = {
 };
 
 export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVersion }: InstallControlsButtonProps) {
-  const { install, error: installError, loading: installLoading } = useInstall();
-  const { uninstall, error: uninstallError, loading: uninstallLoading } = useUninstall();
+  const { install, error: installError, loading: installLoading } = useInstallPlugin();
+  const { uninstall, error: uninstallError, loading: uninstallLoading } = useUninstallPlugin();
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
   const showConfirmModal = () => setIsConfirmModalVisible(true);
   const hideConfirmModal = () => setIsConfirmModalVisible(false);
