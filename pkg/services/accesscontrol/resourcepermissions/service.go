@@ -79,6 +79,7 @@ func New(
 		permissions: permissions,
 		actions:     actions,
 		sqlStore:    sqlStore,
+		service:     service,
 	}
 
 	s.api = newApi(ac, router, s)
