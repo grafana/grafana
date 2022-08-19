@@ -32,7 +32,7 @@ import { validateDashboardJson, validateGcomDashboard } from './utils/validation
 
 type DashboardImportPageRouteSearchParams = {
   gcomDashboardId?: string;
-  body?: string; // POST parameter
+  dashboard?: string; // POST parameter
 };
 
 type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageRouteSearchParams>;
@@ -49,6 +49,15 @@ const mapDispatchToProps = {
   cleanUpAction,
 };
 
+/**
+ * Global access to support importing a dashboard from elsewhere in the application.
+ * Alternativly this could be in redux, but given the size (potentially LARGE) and how
+ * infrequently it will be used, a simple global object seems reasonable.
+ */
+export const pendingImportDashboard = {
+  dashboard: undefined,
+};
+
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -58,8 +67,11 @@ class UnthemedDashboardImport extends PureComponent<Props> {
     super(props);
     const { gcomDashboardId } = this.props.queryParams;
 
-    console.log( "INIT", this.props);
-    debugger;
+    // Import a dashboard from elsewhere in the application
+    if (pendingImportDashboard.dashboard) {
+      this.props.importDashboardJson(pendingImportDashboard.dashboard);
+    }
+    pendingImportDashboard.dashboard = undefined;
 
     if (gcomDashboardId) {
       this.getGcomDashboard({ gcomDashboard: gcomDashboardId });
@@ -69,6 +81,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
   componentWillUnmount() {
     this.props.cleanUpAction({ stateSelector: (state: StoreState) => state.importDashboard });
+    pendingImportDashboard.dashboard = undefined;
   }
 
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {

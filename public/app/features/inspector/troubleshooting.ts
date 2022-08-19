@@ -1,14 +1,14 @@
 import { cloneDeep } from 'lodash';
 import { firstValueFrom } from 'rxjs';
 
-import { dateTime, dateTimeFormat } from '@grafana/data';
+import { dateTimeFormat, TimeRange, DataQuery, PanelData, DataTransformerConfig } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { PanelModel } from '../dashboard/state';
 
 import { getPanelDataFrames } from './InspectJSONTab';
 
-export async function getTroubleshootingDashboard(panel: PanelModel) {
+export async function getTroubleshootingDashboard(panel: PanelModel, timeRange: TimeRange) {
   const saveModel = panel.getSaveModel();
   const dashboard = cloneDeep(embeddedDataTemplate);
   const info = {
@@ -24,33 +24,26 @@ export async function getTroubleshootingDashboard(panel: PanelModel) {
     })
   );
 
+  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
   const html = `<table width="100%">
     <tr>
         <th width="2%">Panel</th>
-        <td >${info.panelType} @ ${saveModel.pluginVersion}</td>
+        <td >${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion}</td>
     </tr>
     <tr>
-        <th>Datasource</th>
-        <td>prometheus @ XYZ</td>
+        <th>Queries (${saveModel.targets})</th>
+        <td>${saveModel.targets
+          .map((t: DataQuery) => {
+            return `${t.refId}[${t.datasource?.type}]`;
+          })
+          .join(', ')}</td>
     </tr>
-    <tr>
-        <th>Queries</th>
-        <td>${saveModel.targets?.length}</td>
-    </tr>
-    <tr>
-        <th>Transforms</th>
-        <td>${saveModel.transformations?.length}</td>
-    </tr>
-    <tr>
-        <th>Time range</th>
-        <td>
-        <a href="?from=a">Panel</a>,
-        <a href="?from=b">Data</a>
-        </td>
-    </tr>
+    ${getTransformsRow(saveModel)}
+    ${getDataRow(data)}
+    ${getAnnotationsRow(data)}
     <tr>
         <th>Grafana</th>
-        <td>${config.buildInfo.version} // ${config.buildInfo.edition} // ${config.buildInfo.commit}</td>
+        <td>${grafanaVersion} // ${config.buildInfo.edition}</td>
     </tr>
     </table>`;
 
@@ -75,11 +68,39 @@ export async function getTroubleshootingDashboard(panel: PanelModel) {
   dashboard.title = `Troubleshooting: ${saveModel.title} // ${dateTimeFormat(new Date())}`;
   dashboard.tags = ['debug', info.panelType];
   dashboard.time = {
-    from: dateTime(1655837890279).toISOString(),
-    to: dateTime(1655838364279).toISOString(),
+    from: timeRange.from.toISOString(),
+    to: timeRange.to.toISOString(),
   };
 
   return dashboard;
+}
+
+function getTransformsRow(saveModel: any): string {
+  if (!saveModel.transformations) {
+    return '';
+  }
+  return `<tr>
+      <th>Transforms (${saveModel.transformations.length})</th>
+      <td>${saveModel.transformations.map((t: DataTransformerConfig) => t.id).join(', ')}</td>
+  </tr>`;
+}
+
+function getDataRow(data: PanelData): string {
+  return `<tr>
+  <th>Data</th>
+  <td>${data.state} // Frames: ${data.series?.length}</td>
+</tr>`;
+}
+
+function getAnnotationsRow(data: PanelData): string {
+  if (!data.annotations?.length) {
+    return '';
+  }
+
+  return `<tr>
+  <th>Annotations</th>
+  <td>${data.annotations.length}</td>
+</tr>`;
 }
 
 const embeddedDataTemplate: any = {

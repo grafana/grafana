@@ -15,11 +15,14 @@ import {
   dateTimeFormat,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
+import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getPanelInspectorStyles } from '../inspector/styles';
+import { pendingImportDashboard } from '../manage-dashboards/DashboardImportPage';
 
 import { getTroubleshootingDashboard } from './troubleshooting';
 
@@ -98,8 +101,10 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     this.setState({ text });
   };
 
-  doDashboardImport = () => {
-    alert('TODO... post dashboard to UI');
+  doImportDashboard = () => {
+    pendingImportDashboard.dashboard = JSON.parse(this.state.text);
+    locationService.push('/dashboard/import');
+    appEvents.emit(AppEvents.alertSuccess, ['Select a folder and click import']);
   };
 
   doSaveDashboard = () => {
@@ -133,7 +138,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
 
     if (show === ShowContent.TroubleshootingDashboard && panel) {
-      return await getTroubleshootingDashboard(panel);
+      return await getTroubleshootingDashboard(panel, getTimeSrv().timeRange());
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
@@ -194,24 +199,25 @@ export class InspectJSONTab extends PureComponent<Props, State> {
               Apply
             </Button>
           )}
-          {isTroubleshooter && <>
-            {canEdit &&
-              <form action="/dashboard/import" method="POST">
-                <input type="hidden" name="body" value={this.state.text}/>
-                <Button className={styles.toolbarItem} type="submit">
+          {isTroubleshooter && (
+            <>
+              {canEdit && (
+                <Button className={styles.toolbarItem} onClick={this.doImportDashboard}>
                   Import
                 </Button>
-              </form>}
-            <Button className={styles.toolbarItem} onClick={this.doSaveDashboard}>
-              Download
-            </Button>
-          </>}
+              )}
+              <Button className={styles.toolbarItem} onClick={this.doSaveDashboard}>
+                Download
+              </Button>
+            </>
+          )}
         </div>
-        {isTroubleshooter && <div>
-          This creates a dashboard that can be downloaed and attached to github issues or sent to support.
-          It contains relevant data required to reproduce visualization issues disconnected from the original 
-          datasource.
-        </div>}
+        {isTroubleshooter && (
+          <div>
+            This creates a dashboard that can be downloaed and attached to github issues or sent to support. It contains
+            relevant data required to reproduce visualization issues disconnected from the original datasource.
+          </div>
+        )}
         <div className={styles.content}>
           <AutoSizer disableWidth>
             {({ height }) => (
