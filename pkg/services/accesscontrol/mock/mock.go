@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -49,7 +47,7 @@ type Mock struct {
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
 
-	scopeResolvers ossaccesscontrol.Resolvers
+	scopeResolvers accesscontrol.Resolvers
 }
 
 // Ensure the mock stays in line with the interface
@@ -61,7 +59,7 @@ func New() *Mock {
 		disabled:       false,
 		permissions:    []accesscontrol.Permission{},
 		builtInRoles:   []string{},
-		scopeResolvers: ossaccesscontrol.NewResolvers(log.NewNopLogger()),
+		scopeResolvers: accesscontrol.NewResolvers(log.NewNopLogger()),
 	}
 
 	return mock
