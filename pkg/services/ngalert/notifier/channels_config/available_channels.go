@@ -1,13 +1,12 @@
 package channels_config
 
 import (
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
-func GetAvailableNotifiers() []*alerting.NotifierPlugin {
-	pushoverSoundOptions := []alerting.SelectOption{
+func GetAvailableNotifiers() []*NotifierPlugin {
+	pushoverSoundOptions := []SelectOption{
 		{
 			Value: "default",
 			Label: "Default",
@@ -81,7 +80,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 		},
 	}
 
-	pushoverPriorityOptions := []alerting.SelectOption{
+	pushoverPriorityOptions := []SelectOption{
 		{
 			Value: "2",
 			Label: "Emergency",
@@ -104,26 +103,26 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 		},
 	}
 
-	return []*alerting.NotifierPlugin{
+	return []*NotifierPlugin{
 		{
 			Type:        "dingding",
 			Name:        "DingDing",
 			Description: "Sends HTTP POST request to DingDing",
 			Heading:     "DingDing settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx",
 					PropertyName: "url",
 					Required:     true,
 				},
 				{
 					Label:        "Message Type",
-					Element:      alerting.ElementTypeSelect,
+					Element:      ElementTypeSelect,
 					PropertyName: "msgType",
-					SelectOptions: []alerting.SelectOption{
+					SelectOptions: []SelectOption{
 						{
 							Value: "link",
 							Label: "Link"},
@@ -135,7 +134,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{ // New in 8.0.
 					Label:        "Message",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
@@ -146,19 +145,19 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Kafka REST Proxy",
 			Description: "Sends notifications to Kafka Rest Proxy",
 			Heading:     "Kafka settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "Kafka REST Proxy",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "http://localhost:8082",
 					PropertyName: "kafkaRestProxy",
 					Required:     true,
 				},
 				{
 					Label:        "Topic",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "topic1",
 					PropertyName: "kafkaTopic",
 					Required:     true,
@@ -170,30 +169,30 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Email",
 			Description: "Sends notifications using Grafana server configured SMTP settings",
 			Heading:     "Email settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "Single email",
 					Description:  "Send a single email to all recipients",
-					Element:      alerting.ElementTypeCheckbox,
+					Element:      ElementTypeCheckbox,
 					PropertyName: "singleEmail",
 				},
 				{
 					Label:        "Addresses",
 					Description:  "You can enter multiple email addresses using a \";\" separator",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					PropertyName: "addresses",
 					Required:     true,
 				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Description:  "Optional message to include with the email. You can use template variables",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					PropertyName: "message",
 				},
 				{ // New in 9.0.
 					Label:        "Subject",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Templated subject of the email",
 					PropertyName: "subject",
 					Placeholder:  `{{ template "default.title" . }}`,
@@ -205,11 +204,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "PagerDuty",
 			Description: "Sends notifications to PagerDuty",
 			Heading:     "PagerDuty settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "Integration Key",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "Pagerduty Integration Key",
 					PropertyName: "integrationKey",
 					Required:     true,
@@ -217,8 +216,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:   "Severity",
-					Element: alerting.ElementTypeSelect,
-					SelectOptions: []alerting.SelectOption{
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
 						{
 							Value: "critical",
 							Label: "Critical",
@@ -241,29 +240,29 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Class",
 					Description:  "The class/type of the event, for example 'ping failure' or 'cpu load'",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "class",
 				},
 				{ // New in 8.0.
 					Label:        "Component",
 					Description:  "Component of the source machine that is responsible for the event, for example mysql or eth0",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "Grafana",
 					PropertyName: "component",
 				},
 				{ // New in 8.0.
 					Label:        "Group",
 					Description:  "Logical grouping of components of a service, for example 'app-stack'",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "group",
 				},
 				{ // New in 8.0.
 					Label:        "Summary",
 					Description:  "You can use templates for summary",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "summary",
 				},
@@ -274,20 +273,20 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "VictorOps",
 			Description: "Sends notifications to VictorOps",
 			Heading:     "VictorOps settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "VictorOps url",
 					PropertyName: "url",
 					Required:     true,
 				},
 				{ // New in 8.0.
 					Label:        "Message Type",
-					Element:      alerting.ElementTypeSelect,
+					Element:      ElementTypeSelect,
 					PropertyName: "messageType",
-					SelectOptions: []alerting.SelectOption{
+					SelectOptions: []SelectOption{
 						{
 							Value: "CRITICAL",
 							Label: "CRITICAL"},
@@ -304,11 +303,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Pushover",
 			Description: "Sends HTTP POST request to the Pushover API",
 			Heading:     "Pushover settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "API Token",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "Application token",
 					PropertyName: "apiToken",
 					Required:     true,
@@ -316,8 +315,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "User key(s)",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "comma-separated list",
 					PropertyName: "userKey",
 					Required:     true,
@@ -325,54 +324,54 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "Device(s) (optional)",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "comma-separated list; leave empty to send to all devices",
 					PropertyName: "device",
 				},
 				{
 					Label:         "Alerting priority",
-					Element:       alerting.ElementTypeSelect,
+					Element:       ElementTypeSelect,
 					SelectOptions: pushoverPriorityOptions,
 					PropertyName:  "priority",
 				},
 				{
 					Label:         "OK priority",
-					Element:       alerting.ElementTypeSelect,
+					Element:       ElementTypeSelect,
 					SelectOptions: pushoverPriorityOptions,
 					PropertyName:  "okPriority",
 				},
 				{
 					Description:  "How often (in seconds) the Pushover servers will send the same alerting or OK notification to the user.",
 					Label:        "Retry (Only used for Emergency Priority)",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "minimum 30 seconds",
 					PropertyName: "retry",
 				},
 				{
 					Description:  "How many seconds the alerting or OK notification will continue to be retried.",
 					Label:        "Expire (Only used for Emergency Priority)",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "maximum 86400 seconds",
 					PropertyName: "expire",
 				},
 				{
 					Label:         "Alerting sound",
-					Element:       alerting.ElementTypeSelect,
+					Element:       ElementTypeSelect,
 					SelectOptions: pushoverSoundOptions,
 					PropertyName:  "sound",
 				},
 				{
 					Label:         "OK sound",
-					Element:       alerting.ElementTypeSelect,
+					Element:       ElementTypeSelect,
 					SelectOptions: pushoverSoundOptions,
 					PropertyName:  "okSound",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
@@ -383,11 +382,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Slack",
 			Description: "Sends notifications to Slack",
 			Heading:     "Slack settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "Recipient",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Specify channel, private group, or IM channel (can be an encoded ID or a name) - required unless you provide a webhook",
 					PropertyName: "recipient",
 					Required:     true,
@@ -399,8 +398,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				// if it's necessary and missing.
 				{
 					Label:        "Token",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Provide a Slack API token (starts with \"xoxb\") - required unless you provide a webhook",
 					PropertyName: "token",
 					Secure:       true,
@@ -409,43 +408,43 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "Username",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Set the username for the bot's message",
 					PropertyName: "username",
 				},
 				{
 					Label:        "Icon emoji",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
 					PropertyName: "icon_emoji",
 				},
 				{
 					Label:        "Icon URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Provide a URL to an image to use as the icon for the bot's message",
 					PropertyName: "icon_url",
 				},
 				{
 					Label:        "Mention Users",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Mention one or more users (comma separated) when notifying in a channel, by ID (you can copy this from the user's Slack profile)",
 					PropertyName: "mentionUsers",
 				},
 				{
 					Label:        "Mention Groups",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Mention one or more groups (comma separated) when notifying in a channel (you can copy this from the group's Slack profile URL)",
 					PropertyName: "mentionGroups",
 				},
 				{
 					Label:   "Mention Channel",
-					Element: alerting.ElementTypeSelect,
-					SelectOptions: []alerting.SelectOption{
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
 						{
 							Value: "",
 							Label: "Disabled",
@@ -464,8 +463,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "Webhook URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Optionally provide a Slack incoming webhook URL for sending messages, in this case the token isn't necessary",
 					Placeholder:  "Slack incoming webhook URL",
 					PropertyName: "url",
@@ -475,23 +474,23 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{ // New in 8.4.
 					Label:        "Endpoint URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Optionally provide a custom Slack message API endpoint for non-webhook requests, default is https://slack.com/api/chat.postMessage",
 					Placeholder:  "Slack endpoint url",
 					PropertyName: "endpointUrl",
 				},
 				{ // New in 8.0.
 					Label:        "Title",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Templated title of the slack message",
 					PropertyName: "title",
 					Placeholder:  `{{ template "slack.default.title" . }}`,
 				},
 				{ // New in 8.0.
 					Label:        "Text Body",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Description:  "Body of the slack message",
 					PropertyName: "text",
 					Placeholder:  `{{ template "slack.default.text" . }}`,
@@ -503,19 +502,19 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Sensu Go",
 			Description: "Sends HTTP POST request to a Sensu Go API",
 			Heading:     "Sensu Go Settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "Backend URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "http://sensu-api.local:8080",
 					PropertyName: "url",
 					Required:     true,
 				},
 				{
 					Label:        "API Key",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypePassword,
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
 					Description:  "API key to auth to Sensu Go backend",
 					PropertyName: "apikey",
 					Required:     true,
@@ -523,34 +522,34 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "Proxy entity name",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "default",
 					PropertyName: "entity",
 				},
 				{
 					Label:        "Check name",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "default",
 					PropertyName: "check",
 				},
 				{
 					Label:        "Handler",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "handler",
 				},
 				{
 					Label:        "Namespace",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "default",
 					PropertyName: "namespace",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
@@ -561,33 +560,33 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Microsoft Teams",
 			Description: "Sends notifications using Incoming Webhook connector to Microsoft Teams",
 			Heading:     "Teams settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "Teams incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
 				},
 				{
 					Label:        "Title",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Templated title of the Teams message.",
 					PropertyName: "title",
 					Placeholder:  `{{ template "default.title" . }}`,
 				},
 				{
 					Label:        "Section Title",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Section title for the Teams message. Leave blank for none.",
 					PropertyName: "sectiontitle",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
@@ -598,11 +597,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Telegram",
 			Description: "Sends notifications to Telegram",
 			Heading:     "Telegram API settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "BOT API Token",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "Telegram BOT API Token",
 					PropertyName: "bottoken",
 					Required:     true,
@@ -610,15 +609,15 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "Chat ID",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Integer Telegram Chat Identifier",
 					PropertyName: "chatid",
 					Required:     true,
 				},
 				{ // New in 8.0.
 					Label:        "Message",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
@@ -629,18 +628,18 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Webhook",
 			Description: "Sends HTTP POST request to a URL",
 			Heading:     "Webhook settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "url",
 					Required:     true,
 				},
 				{
 					Label:   "HTTP Method",
-					Element: alerting.ElementTypeSelect,
-					SelectOptions: []alerting.SelectOption{
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
 						{
 							Value: "POST",
 							Label: "POST",
@@ -654,38 +653,38 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "HTTP Basic Authentication - Username",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "username",
 				},
 				{
 					Label:        "HTTP Basic Authentication - Password",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypePassword,
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
 					PropertyName: "password",
 					Secure:       true,
 				},
 				{ // New in 9.1
 					Label:        "Authorization Header - Scheme",
 					Description:  "Optionally provide a scheme for the Authorization Request Header. Default is Bearer.",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "authorization_scheme",
 					Placeholder:  "Bearer",
 				},
 				{ // New in 9.1
 					Label:        "Authorization Header - Credentials",
 					Description:  "Credentials for the Authorization Request header. Only one of HTTP Basic Authentication or Authorization Request Header can be set.",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "authorization_credentials",
 					Secure:       true,
 				},
 				{ // New in 8.0. TODO: How to enforce only numbers?
 					Label:        "Max Alerts",
 					Description:  "Max alerts to include in a notification. Remaining alerts in the same batch will be ignored above this number. 0 means no limit.",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "maxAlerts",
 				},
 			},
@@ -695,11 +694,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "WeCom",
 			Description: "Send alerts generated by Grafana to WeCom",
 			Heading:     "WeCom settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx",
 					PropertyName: "url",
 					Required:     true,
@@ -708,14 +707,14 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				{
 					Label:        "Message",
 					Description:  "Custom WeCom message. You can use template variables.",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
 				{ // New in 9.1.
 					Label:        "Title",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Templated title of the message",
 					PropertyName: "title",
 					Placeholder:  `{{ template "default.title" . }}`,
@@ -727,25 +726,25 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Alertmanager",
 			Description: "Sends notifications to Alertmanager",
 			Heading:     "Alertmanager Settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "http://localhost:9093",
 					PropertyName: "url",
 					Required:     true,
 				},
 				{
 					Label:        "Basic Auth User",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "basicAuthUser",
 				},
 				{
 					Label:        "Basic Auth Password",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypePassword,
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
 					PropertyName: "basicAuthPassword",
 					Secure:       true,
 				},
@@ -756,33 +755,33 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Discord",
 			Heading:     "Discord settings",
 			Description: "Sends notifications to Discord",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "Message Content",
 					Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
 				{
 					Label:        "Webhook URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "Discord webhook URL",
 					PropertyName: "url",
 					Required:     true,
 				},
 				{
 					Label:        "Avatar URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					PropertyName: "avatar_url",
 				},
 				{
 					Label:        "Use Discord's Webhook Username",
 					Description:  "Use the username configured in Discord's webhook settings. Otherwise, the username will be 'Grafana'",
-					Element:      alerting.ElementTypeCheckbox,
+					Element:      ElementTypeCheckbox,
 					PropertyName: "use_discord_username",
 				},
 			},
@@ -792,18 +791,18 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "Google Hangouts Chat",
 			Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
 			Heading:     "Google Hangouts Chat settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "Google Hangouts Chat incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
 				},
 				{
 					Label:        "Message",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
 				},
@@ -814,11 +813,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "LINE",
 			Description: "Send notifications to LINE notify",
 			Heading:     "LINE notify settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "Token",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "LINE notify token key",
 					PropertyName: "token",
 					Required:     true,
@@ -832,11 +831,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Heading:     "Threema Gateway settings",
 			Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
 				"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:          "Gateway ID",
-					Element:        alerting.ElementTypeInput,
-					InputType:      alerting.InputTypeText,
+					Element:        ElementTypeInput,
+					InputType:      InputTypeText,
 					Placeholder:    "*3MAGWID",
 					Description:    "Your 8 character Threema Gateway Basic ID (starting with a *).",
 					PropertyName:   "gateway_id",
@@ -845,8 +844,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:          "Recipient ID",
-					Element:        alerting.ElementTypeInput,
-					InputType:      alerting.InputTypeText,
+					Element:        ElementTypeInput,
+					InputType:      InputTypeText,
 					Placeholder:    "YOUR3MID",
 					Description:    "The 8 character Threema ID that should receive the alerts.",
 					PropertyName:   "recipient_id",
@@ -855,8 +854,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "API Secret",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Description:  "Your Threema Gateway API secret.",
 					PropertyName: "api_secret",
 					Required:     true,
@@ -869,11 +868,11 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			Name:        "OpsGenie",
 			Description: "Sends notifications to OpsGenie",
 			Heading:     "OpsGenie settings",
-			Options: []alerting.NotifierOption{
+			Options: []NotifierOption{
 				{
 					Label:        "API Key",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "OpsGenie API Key",
 					PropertyName: "apiKey",
 					Required:     true,
@@ -881,8 +880,8 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 				{
 					Label:        "Alert API URL",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  "https://api.opsgenie.com/v2/alerts",
 					PropertyName: "apiUrl",
 					Required:     true,
@@ -890,32 +889,32 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				{
 					Label:        "Message",
 					Description:  "Alert text limited to 130 characters.",
-					Element:      alerting.ElementTypeInput,
-					InputType:    alerting.InputTypeText,
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
 					Placeholder:  `{{ template "default.title" . }}`,
 					PropertyName: "message",
 				},
 				{
 					Label:        "Description",
 					Description:  "A description of the incident.",
-					Element:      alerting.ElementTypeTextArea,
+					Element:      ElementTypeTextArea,
 					PropertyName: "description",
 				},
 				{
 					Label:        "Auto close incidents",
-					Element:      alerting.ElementTypeCheckbox,
+					Element:      ElementTypeCheckbox,
 					Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
 					PropertyName: "autoClose",
 				}, {
 					Label:        "Override priority",
-					Element:      alerting.ElementTypeCheckbox,
+					Element:      ElementTypeCheckbox,
 					Description:  "Allow the alert priority to be set using the og_priority annotation",
 					PropertyName: "overridePriority",
 				},
 				{
 					Label:   "Send notification tags as",
-					Element: alerting.ElementTypeSelect,
-					SelectOptions: []alerting.SelectOption{
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
 						{
 							Value: channels.OpsgenieSendTags,
 							Label: "Tags",
