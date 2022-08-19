@@ -59,7 +59,7 @@ This setting determines decimal configuration.
 
 ### Min/Max value
 
-Configures the axis range
+This setting configures the axis range.
 
 ### Reverse
 
