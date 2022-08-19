@@ -217,7 +217,7 @@ Also, a counter for audit log writing actions with status (success / failure) an
 
 You can now select a font, other than the default, for Unicode-based scripts. As a result, an automatically generated PDF of a dashboard, which contains for example Chinese or Cyrillic text, can display them. Because the size of a report increases as additional fonts are added, this feature is not on by default.
 
-[Reporting]({{< relref "../enterprise/reporting/#rendering-configuration" >}}) was updated as a result of this change.
+[Reporting]({{< relref "../share-dashboards-panels/#rendering-configuration" >}}) was updated as a result of this change.
 
 ### Request security
 
