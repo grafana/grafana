@@ -228,6 +228,10 @@ type AlertRuleKey struct {
 	UID   string `xorm:"uid"`
 }
 
+func (k AlertRuleKey) LogContext() []interface{} {
+	return []interface{}{"rule_uid", k.UID, "org_id", k.OrgID}
+}
+
 type AlertRuleKeyWithVersion struct {
 	Version      int64
 	AlertRuleKey `xorm:"extends"`

@@ -111,26 +111,6 @@ func userRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
 }
 
-func deletePermissions(sess *sqlstore.DBSession, ids []int64) error {
-	if len(ids) == 0 {
-		return nil
-	}
-
-	rawSQL := "DELETE FROM permission WHERE id IN(?" + strings.Repeat(",?", len(ids)-1) + ")"
-	args := make([]interface{}, 0, len(ids)+1)
-	args = append(args, rawSQL)
-	for _, id := range ids {
-		args = append(args, id)
-	}
-
-	_, err := sess.Exec(args...)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
 	err := s.sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		roleDeleteQuery := "DELETE FROM user_role WHERE user_id = ?"

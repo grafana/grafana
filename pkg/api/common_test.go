@@ -380,7 +380,7 @@ func setupHTTPServerWithCfgDb(
 		require.NoError(t, err)
 	}
 
-	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db), license)
+	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license)
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server
