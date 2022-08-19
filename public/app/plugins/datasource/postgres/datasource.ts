@@ -15,8 +15,8 @@ import { PostgresOptions } from './types';
 export class PostgresDatasource extends SqlDatasource {
   completionProvider: LanguageCompletionProvider | undefined = undefined;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>, templateSrv?: TemplateSrv) {
-    super(instanceSettings, templateSrv);
+  constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
+    super(instanceSettings);
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {

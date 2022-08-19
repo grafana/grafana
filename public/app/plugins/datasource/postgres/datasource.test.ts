@@ -48,8 +48,8 @@ describe('PostgreSQLDatasource', () => {
     } as unknown as DataSourceInstanceSettings<PostgresOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
-    const ds = new PostgresDatasource(instanceSettings, templateSrv);
-
+    const ds = new PostgresDatasource(instanceSettings);
+    Reflect.set(ds, 'templateSrv', templateSrv);
     return { ds, templateSrv, variable };
   };
 
