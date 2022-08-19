@@ -76,6 +76,8 @@ const (
 
 	IncludeTypeDatasource IncludeType = "datasource"
 
+	IncludeTypePage IncludeType = "page"
+
 	IncludeTypePanel IncludeType = "panel"
 
 	IncludeTypeRenderer IncludeType = "renderer"

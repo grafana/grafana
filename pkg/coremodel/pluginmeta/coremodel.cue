@@ -28,7 +28,7 @@ seqs: [
 
 				// IncludeType is a string identifier of a plugin include type, which is
 				// a superset of plugin types.
-				#IncludeType: #Type | "dashboard"
+				#IncludeType: #Type | "dashboard" | "page"
 
 				// Human-readable name of the plugin that is shown to the user in
 				// the UI.
@@ -214,7 +214,7 @@ seqs: [
 						// an SVG image. "Large" and "small" logos can be the same image.
 						large: string
 					}
-					if !builtIn {
+					if !builtIn { // required for non-core plugins
 						logos: {...}
 					}
 
