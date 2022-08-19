@@ -9,9 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -26,7 +30,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		setup := func() {
 			sqlStore = sqlstore.InitTestDB(t)
 			sqlStore.Cfg.RBACEnabled = false
-			dashboardStore = ProvideDashboardStore(sqlStore)
+			dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles)
 			folder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")
 			childDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, folder.Id, false, "prod", "webapp")
@@ -40,7 +44,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			t.Run("and no acls are set", func(t *testing.T) {
 				t.Run("should return all dashboards", func(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
-						SignedInUser: &models.SignedInUser{UserId: currentUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 						OrgId:        1,
 						DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
@@ -64,7 +68,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should not return folder", func(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
-						SignedInUser: &models.SignedInUser{UserId: currentUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
 					err := testSearchDashboards(dashboardStore, query)
@@ -82,7 +86,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should be able to access folder", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
-							SignedInUser: &models.SignedInUser{UserId: currentUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+							SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
@@ -97,10 +101,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				t.Run("when the user is an admin", func(t *testing.T) {
 					t.Run("should be able to access folder", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
-							SignedInUser: &models.SignedInUser{
-								UserId:  currentUser.ID,
-								OrgId:   1,
-								OrgRole: models.ROLE_ADMIN,
+							SignedInUser: &user.SignedInUser{
+								UserID:  currentUser.ID,
+								OrgID:   1,
+								OrgRole: org.RoleAdmin,
 							},
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
@@ -125,7 +129,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should not return folder or child", func(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
-						SignedInUser: &models.SignedInUser{UserId: currentUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id},
+						SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id},
 					}
 					err := testSearchDashboards(dashboardStore, query)
 					require.NoError(t, err)
@@ -140,7 +144,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					require.NoError(t, err)
 
 					t.Run("should be able to search for child dashboard but not folder", func(t *testing.T) {
-						query := &models.FindPersistedDashboardsQuery{SignedInUser: &models.SignedInUser{UserId: currentUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
+						query := &models.FindPersistedDashboardsQuery{SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
 						err := testSearchDashboards(dashboardStore, query)
 						require.NoError(t, err)
 						require.Equal(t, len(query.Result), 2)
@@ -152,10 +156,10 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				t.Run("when the user is an admin", func(t *testing.T) {
 					t.Run("should be able to search for child dash and folder", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
-							SignedInUser: &models.SignedInUser{
-								UserId:  currentUser.ID,
-								OrgId:   1,
-								OrgRole: models.ROLE_ADMIN,
+							SignedInUser: &user.SignedInUser{
+								UserID:  currentUser.ID,
+								OrgID:   1,
+								OrgRole: org.RoleAdmin,
 							},
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id, childDash.Id},
@@ -179,7 +183,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			setup2 := func() {
 				sqlStore = sqlstore.InitTestDB(t)
-				dashboardStore := ProvideDashboardStore(sqlStore)
+				dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
@@ -194,8 +198,8 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				t.Run("should return dashboards in root and expanded folder", func(t *testing.T) {
 					query := &models.FindPersistedDashboardsQuery{
 						FolderIds: []int64{
-							rootFolderId, folder1.Id}, SignedInUser: &models.SignedInUser{UserId: currentUser.ID,
-							OrgId: 1, OrgRole: models.ROLE_VIEWER,
+							rootFolderId, folder1.Id}, SignedInUser: &user.SignedInUser{UserID: currentUser.ID,
+							OrgID: 1, OrgRole: org.RoleViewer,
 						},
 						OrgId: 1,
 					}
@@ -221,7 +225,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should not return folder with acl or its children", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
-							SignedInUser: &models.SignedInUser{UserId: currentUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+							SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 							OrgId:        1,
 							DashboardIds: []int64{folder1.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
@@ -237,7 +241,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should return folder without acl and its children", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
-							SignedInUser: &models.SignedInUser{UserId: currentUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+							SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
@@ -261,7 +265,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should return folder without acl but not the dashboard with acl", func(t *testing.T) {
 						query := &models.FindPersistedDashboardsQuery{
-							SignedInUser: &models.SignedInUser{UserId: currentUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+							SignedInUser: &user.SignedInUser{UserID: currentUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
@@ -284,7 +288,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 			setup3 := func() {
 				sqlStore = sqlstore.InitTestDB(t)
-				dashboardStore := ProvideDashboardStore(sqlStore)
+				dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 				folder1 = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod")
 				folder2 = insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod")
 				insertTestDashboard(t, dashboardStore, "folder in another org", 2, 0, true, "prod")
@@ -299,7 +303,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 				t.Run("Should have write access to all dashboard folders in their org", func(t *testing.T) {
 					query := models.FindPersistedDashboardsQuery{
 						OrgId:        1,
-						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgRole: models.ROLE_ADMIN, OrgId: 1},
+						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgRole: org.RoleAdmin, OrgID: 1},
 						Permission:   models.PERMISSION_VIEW,
 						Type:         "dash-folder",
 					}
@@ -314,7 +318,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should have edit permission in folders", func(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
-						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_ADMIN},
+						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgID: 1, OrgRole: org.RoleAdmin},
 					}
 					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 					require.NoError(t, err)
@@ -323,7 +327,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should have admin permission in folders", func(t *testing.T) {
 					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
-						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_ADMIN},
+						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgID: 1, OrgRole: org.RoleAdmin},
 					}
 					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
@@ -334,7 +338,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			t.Run("Editor users", func(t *testing.T) {
 				query := models.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					SignedInUser: &models.SignedInUser{UserId: editorUser.ID, OrgRole: models.ROLE_EDITOR, OrgId: 1},
+					SignedInUser: &user.SignedInUser{UserID: editorUser.ID, OrgRole: org.RoleEditor, OrgID: 1},
 					Permission:   models.PERMISSION_EDIT,
 				}
 
@@ -362,7 +366,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should have edit permission in folders", func(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
-						SignedInUser: &models.SignedInUser{UserId: editorUser.ID, OrgId: 1, OrgRole: models.ROLE_EDITOR},
+						SignedInUser: &user.SignedInUser{UserID: editorUser.ID, OrgID: 1, OrgRole: org.RoleEditor},
 					}
 					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 					go require.NoError(t, err)
@@ -371,7 +375,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
 					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
-						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_EDITOR},
+						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgID: 1, OrgRole: org.RoleEditor},
 					}
 					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
@@ -382,7 +386,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			t.Run("Viewer users", func(t *testing.T) {
 				query := models.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					SignedInUser: &models.SignedInUser{UserId: viewerUser.ID, OrgRole: models.ROLE_VIEWER, OrgId: 1},
+					SignedInUser: &user.SignedInUser{UserID: viewerUser.ID, OrgRole: org.RoleViewer, OrgID: 1},
 					Permission:   models.PERMISSION_EDIT,
 				}
 
@@ -410,7 +414,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 					setup3()
 
 					query := &models.HasEditPermissionInFoldersQuery{
-						SignedInUser: &models.SignedInUser{UserId: viewerUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+						SignedInUser: &user.SignedInUser{UserID: viewerUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 					}
 					err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 					go require.NoError(t, err)
@@ -419,7 +423,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
 					query := &models.HasAdminPermissionInDashboardsOrFoldersQuery{
-						SignedInUser: &models.SignedInUser{UserId: adminUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+						SignedInUser: &user.SignedInUser{UserID: adminUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 					}
 					err := dashboardStore.HasAdminPermissionInDashboardsOrFolders(context.Background(), query)
 					require.NoError(t, err)
@@ -434,7 +438,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should have edit permission in folders", func(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
-							SignedInUser: &models.SignedInUser{UserId: viewerUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+							SignedInUser: &user.SignedInUser{UserID: viewerUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 						}
 						err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 						go require.NoError(t, err)
@@ -450,7 +454,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 					t.Run("should have edit permission in folders", func(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
-							SignedInUser: &models.SignedInUser{UserId: viewerUser.ID, OrgId: 1, OrgRole: models.ROLE_VIEWER},
+							SignedInUser: &user.SignedInUser{UserID: viewerUser.ID, OrgID: 1, OrgRole: org.RoleViewer},
 						}
 						err := dashboardStore.HasEditPermissionInFolders(context.Background(), query)
 						go require.NoError(t, err)
@@ -466,7 +470,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			var sqlStore *sqlstore.SQLStore
 			var folder1, folder2 *models.Dashboard
 			sqlStore = sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore)
+			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 			folder2 = insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.Id, false, "prod")
 			folder1 = insertTestDashboard(t, dashboardStore, title, orgId, 0, true, "prod")
@@ -481,7 +485,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Run("GetFolderByUID", func(t *testing.T) {
 			var orgId int64 = 1
 			sqlStore := sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore)
+			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
 
@@ -505,7 +509,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		t.Run("GetFolderByID", func(t *testing.T) {
 			var orgId int64 = 1
 			sqlStore := sqlstore.InitTestDB(t)
-			dashboardStore := ProvideDashboardStore(sqlStore)
+			dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 			folder := insertTestDashboard(t, dashboardStore, "TEST", orgId, 0, true, "prod")
 			dash := insertTestDashboard(t, dashboardStore, "Very Unique Name", orgId, folder.Id, false, "prod")
 

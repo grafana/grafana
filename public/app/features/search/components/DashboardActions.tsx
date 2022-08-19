@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Menu, Dropdown, Button, Icon } from '@grafana/ui';
 
 export interface Props {
   folderId?: number;
@@ -19,13 +19,24 @@ export const DashboardActions: FC<Props> = ({ folderId, canCreateFolders = false
     return url;
   };
 
+  const MenuActions = () => {
+    return (
+      <Menu>
+        {canCreateDashboards && <Menu.Item url={actionUrl('new')} label="New Dashboard" />}
+        {!folderId && canCreateFolders && <Menu.Item url="dashboards/folder/new" label="New Folder" />}
+        {canCreateDashboards && <Menu.Item url={actionUrl('import')} label="Import" />}
+      </Menu>
+    );
+  };
+
   return (
     <div>
-      <HorizontalGroup spacing="md" align="center">
-        {canCreateDashboards && <LinkButton href={actionUrl('new')}>New Dashboard</LinkButton>}
-        {!folderId && canCreateFolders && <LinkButton href="dashboards/folder/new">New Folder</LinkButton>}
-        {canCreateDashboards && <LinkButton href={actionUrl('import')}>Import</LinkButton>}
-      </HorizontalGroup>
+      <Dropdown overlay={MenuActions} placement="bottom-start">
+        <Button variant="primary">
+          New
+          <Icon name="angle-down" />
+        </Button>
+      </Dropdown>
     </div>
   );
 };

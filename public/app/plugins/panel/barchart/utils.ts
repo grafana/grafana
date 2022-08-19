@@ -1,5 +1,5 @@
 import { orderBy } from 'lodash';
-import { Padding } from 'uplot';
+import uPlot, { Padding } from 'uplot';
 
 import {
   ArrayVector,
@@ -29,7 +29,7 @@ import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
-import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -166,7 +166,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     seriesIndex++;
 
-    const customConfig: BarChartFieldConfig = { ...defaultBarChartFieldConfig, ...field.config.custom };
+    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
 
     const scaleKey = field.config.unit || FIXED_UNIT;
     const colorMode = getFieldColorModeForField(field);
@@ -246,7 +246,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         label: customConfig.axisLabel,
         size: customConfig.axisWidth,
         placement,
-        formatValue: (v) => formattedValueToString(field.display!(v)),
+        formatValue: (v, decimals) => formattedValueToString(field.display!(v, field.config.decimals ?? decimals)),
         theme,
         grid: { show: customConfig.axisGridShow },
       });
@@ -302,7 +302,7 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
   // Add padding to the bottom to avoid clipping the rotated labels.
   const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
 
-  return [0, paddingRight, paddingBottom, paddingLeft];
+  return [Math.round(UPLOT_AXIS_FONT_SIZE * uPlot.pxRatio), paddingRight, paddingBottom, paddingLeft];
 }
 
 /** @internal */

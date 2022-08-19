@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -114,7 +113,7 @@ func TestApi_getDescription(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service, _ := setupTestEnvironment(t, tt.permissions, tt.options)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1}, service)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1}, service)
 
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/access-control/%s/description", tt.options.Resource), nil)
 			require.NoError(t, err)
@@ -160,12 +159,12 @@ func TestApi_getPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, tt.permissions, testOptionsDashboards)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
+			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			seedPermissions(t, tt.resourceID, sql, service)
 
-			permissions, recorder := getPermission(t, server, testOptionsDashboards.Resource, tt.resourceID)
+			permissions, recorder := getPermission(t, server, testOptions.Resource, tt.resourceID)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
@@ -237,14 +236,14 @@ func TestApi_setBuiltinRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _ := setupTestEnvironment(t, tt.permissions, testOptionsDashboards)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
+			service, _ := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
-			recorder := setPermission(t, server, testOptionsDashboards.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
+			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "builtInRoles", tt.builtInRole)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			if tt.expectedStatus == http.StatusOK {
-				permissions, _ := getPermission(t, server, testOptionsDashboards.Resource, tt.resourceID)
+				permissions, _ := getPermission(t, server, testOptions.Resource, tt.resourceID)
 				require.Len(t, permissions, 1)
 				assert.Equal(t, tt.permission, permissions[0].Permission)
 				assert.Equal(t, tt.builtInRole, permissions[0].BuiltInRole)
@@ -315,19 +314,19 @@ func TestApi_setTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, tt.permissions, testOptionsDashboards)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
+			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed team
 			_, err := sql.CreateTeam("test", "test@test.com", 1)
 			require.NoError(t, err)
 
-			recorder := setPermission(t, server, testOptionsDashboards.Resource, tt.resourceID, tt.permission, "teams", strconv.Itoa(int(tt.teamID)))
+			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "teams", strconv.Itoa(int(tt.teamID)))
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 			if tt.expectedStatus == http.StatusOK {
-				permissions, _ := getPermission(t, server, testOptionsDashboards.Resource, tt.resourceID)
+				permissions, _ := getPermission(t, server, testOptions.Resource, tt.resourceID)
 				require.Len(t, permissions, 1)
 				assert.Equal(t, tt.permission, permissions[0].Permission)
 				assert.Equal(t, tt.teamID, permissions[0].TeamID)
@@ -398,18 +397,19 @@ func TestApi_setUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, tt.permissions, testOptionsDashboards)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
+			service, sql := setupTestEnvironment(t, tt.permissions, testOptions)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
 
 			// seed user
 			_, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
-			recorder := setPermission(t, server, testOptionsDashboards.Resource, tt.resourceID, tt.permission, "users", strconv.Itoa(int(tt.userID)))
+			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "users", strconv.Itoa(int(tt.userID)))
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
+			assert.Equal(t, tt.expectedStatus, recorder.Code)
 			if tt.expectedStatus == http.StatusOK {
-				permissions, _ := getPermission(t, server, testOptionsDashboards.Resource, tt.resourceID)
+				permissions, _ := getPermission(t, server, testOptions.Resource, tt.resourceID)
 				require.Len(t, permissions, 1)
 				assert.Equal(t, tt.permission, permissions[0].Permission)
 				assert.Equal(t, tt.userID, permissions[0].UserID)
@@ -418,93 +418,7 @@ func TestApi_setUserPermission(t *testing.T) {
 	}
 }
 
-type setServiceAccountPermissionTestCase struct {
-	desc             string
-	serviceaccountID int64
-	resourceID       string
-	expectedStatus   int
-	permission       string
-	permissions      []accesscontrol.Permission
-}
-
-func TestApi_setServiceAccountPermission(t *testing.T) {
-	tests := []setServiceAccountPermissionTestCase{
-		{
-			desc:             "should set Edit permission for serviceaccount 1",
-			serviceaccountID: 1,
-			resourceID:       "1",
-			expectedStatus:   200,
-			permission:       "Edit",
-			permissions: []accesscontrol.Permission{
-				{Action: "teams.permissions:read", Scope: "teams:id:1"},
-				{Action: "teams.permissions:write", Scope: "teams:id:1"},
-				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
-			},
-		},
-		{
-			desc:             "should set View permission for serviceaccount 1",
-			serviceaccountID: 1,
-			resourceID:       "1",
-			expectedStatus:   200,
-			permission:       "View",
-			permissions: []accesscontrol.Permission{
-				{Action: "teams.permissions:read", Scope: "teams:id:1"},
-				{Action: "teams.permissions:write", Scope: "teams:id:1"},
-				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
-			},
-		},
-		{
-			desc:             "should set return http 400 when serviceaccount does not exist",
-			serviceaccountID: 2,
-			resourceID:       "1",
-			expectedStatus:   http.StatusBadRequest,
-			permission:       "View",
-			permissions: []accesscontrol.Permission{
-				{Action: "teams.permissions:read", Scope: "teams:id:1"},
-				{Action: "teams.permissions:write", Scope: "teams:id:1"},
-				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
-				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
-			},
-		},
-		{
-			desc:             "should return http 403 when missing permissions",
-			serviceaccountID: 1,
-			resourceID:       "1",
-			expectedStatus:   http.StatusForbidden,
-			permission:       "View",
-			permissions: []accesscontrol.Permission{
-				{Action: "teams.permissions:read", Scope: "teams:id:1"},
-				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, tt.permissions, testOptionsTeams)
-			server := setupTestServer(t, &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}, service)
-
-			// seed serviceaccount
-			_, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1, IsServiceAccount: true})
-			require.NoError(t, err)
-
-			recorder := setPermission(t, server, testOptionsTeams.Resource, tt.resourceID, tt.permission, "users", strconv.Itoa(int(tt.serviceaccountID)))
-			assert.Equal(t, tt.expectedStatus, recorder.Code)
-
-			if tt.expectedStatus == http.StatusOK {
-				permissions, _ := getPermission(t, server, testOptionsTeams.Resource, tt.resourceID)
-				require.Len(t, permissions, 1)
-				assert.Equal(t, tt.permission, permissions[0].Permission)
-				assert.Equal(t, tt.serviceaccountID, permissions[0].UserID)
-				assert.Equal(t, true, permissions[0].UserIsServiceAccount)
-			}
-		})
-	}
-}
-
-func setupTestServer(t *testing.T, user *models.SignedInUser, service *Service) *web.Mux {
+func setupTestServer(t *testing.T, user *user.SignedInUser, service *Service) *web.Mux {
 	server := web.New()
 	server.UseMiddleware(web.Renderer(path.Join(setting.StaticRootPath, "views"), "[[", "]]"))
 	server.Use(contextProvider(&testContext{user}))
@@ -513,7 +427,7 @@ func setupTestServer(t *testing.T, user *models.SignedInUser, service *Service) 
 }
 
 type testContext struct {
-	user *models.SignedInUser
+	user *user.SignedInUser
 }
 
 func contextProvider(tc *testContext) web.Handler {
@@ -530,33 +444,17 @@ func contextProvider(tc *testContext) web.Handler {
 	}
 }
 
-var testOptionsDashboards = Options{
+var testOptions = Options{
 	Resource:          "dashboards",
 	ResourceAttribute: "id",
 	Assignments: Assignments{
-		Users:           true,
-		Teams:           true,
-		BuiltInRoles:    true,
-		ServiceAccounts: true,
+		Users:        true,
+		Teams:        true,
+		BuiltInRoles: true,
 	},
 	PermissionsToActions: map[string][]string{
 		"View": {"dashboards:read"},
 		"Edit": {"dashboards:read", "dashboards:write", "dashboards:delete"},
-	},
-}
-
-var testOptionsTeams = Options{
-	Resource:          "teams",
-	ResourceAttribute: "id",
-	Assignments: Assignments{
-		Users:           true,
-		Teams:           true,
-		BuiltInRoles:    true,
-		ServiceAccounts: true,
-	},
-	PermissionsToActions: map[string][]string{
-		"View": {"teams:read"},
-		"Edit": {"teams:read", "teams:write", "teams:delete"},
 	},
 }
 

@@ -51,10 +51,6 @@ const (
 	// Show APM table
 	FlagTempoApmTable = "tempoApmTable"
 
-	// FlagPrometheusAzureAuth
-	// Experimental. Azure authentication for Prometheus datasource
-	FlagPrometheusAzureAuth = "prometheus_azure_auth"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
@@ -142,6 +138,10 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagPrometheusStreamingJSONParserTest
+	// Run both old and streaming requests and log differences
+	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
 
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db

@@ -545,3 +545,55 @@ Here is the result after applying the Series to rows transformation.
 ## Sort by
 
 This transformation will sort each frame by the configured field, When `reverse` is checked, the values will return in the opposite order.
+
+## Limit
+
+Use this transformation to limit the number of rows displayed.
+
+In the example below, we have the following response from the data source:
+
+| Time                | Metric      | Value |
+| ------------------- | ----------- | ----- |
+| 2020-07-07 11:34:20 | Temperature | 25    |
+| 2020-07-07 11:34:20 | Humidity    | 22    |
+| 2020-07-07 10:32:20 | Humidity    | 29    |
+| 2020-07-07 10:31:22 | Temperature | 22    |
+| 2020-07-07 09:30:57 | Humidity    | 33    |
+| 2020-07-07 09:30:05 | Temperature | 19    |
+
+Here is the result after adding a Limit transformation with a value of '3':
+
+| Time                | Metric      | Value |
+| ------------------- | ----------- | ----- |
+| 2020-07-07 11:34:20 | Temperature | 25    |
+| 2020-07-07 11:34:20 | Humidity    | 22    |
+| 2020-07-07 10:32:20 | Humidity    | 29    |
+
+## Join by field (Inner join)
+
+Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one single result and drop rows where a successful join isn't able to occur - performing an inner join.
+
+In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the inner join transformation.
+
+Query A:
+
+| Time                | Job     | Uptime    |
+| ------------------- | ------- | --------- |
+| 2020-07-07 11:34:20 | node    | 25260122  |
+| 2020-07-07 11:24:20 | postgre | 123001233 |
+| 2020-07-07 11:14:20 | postgre | 345001233 |
+
+Query B:
+
+| Time                | Server   | Errors |
+| ------------------- | -------- | ------ |
+| 2020-07-07 11:34:20 | server 1 | 15     |
+| 2020-07-07 11:24:20 | server 2 | 5      |
+| 2020-07-07 11:04:20 | server 3 | 10     |
+
+Result after applying the inner join transformation:
+
+| Time                | Job     | Uptime    | Server   | Errors |
+| ------------------- | ------- | --------- | -------- | ------ |
+| 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
+| 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |

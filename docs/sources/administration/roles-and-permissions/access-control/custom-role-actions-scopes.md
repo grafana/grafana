@@ -10,6 +10,8 @@ weight: 80
 
 # RBAC permissions, actions, and scopes
 
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
 
 To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions]({{< relref "../#fixed-roles" >}}).
@@ -77,7 +79,7 @@ The following list contains role-based access control actions.
 | `licensing:read`                     | n/a                                                                                     | Read licensing information.                                                                                                                                                                      |
 | `licensing:write`                    | n/a                                                                                     | Update the license token.                                                                                                                                                                        |
 | `org.users:write`                    | `users:*` <br> `users:id:*`                                                             | Update the organization role (`Viewer`, `Editor`, or `Admin`) of a user.                                                                                                                         |
-| `org.users:add`                      | `users:*`                                                                               | Add a user to an organization.                                                                                                                                                                   |
+| `org.users:add`                      | `users:*`                                                                               | Add a user to an organization or invite a new user to an organization.                                                                                                                           |
 | `org.users:read`                     | `users:*` <br> `users:id:*`                                                             | Get user profiles within an organization.                                                                                                                                                        |
 | `org.users:remove`                   | `users:*` <br> `users:id:*`                                                             | Remove a user from an organization.                                                                                                                                                              |
 | `org:create`                         | n/a                                                                                     | Create an organization.                                                                                                                                                                          |

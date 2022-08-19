@@ -5,13 +5,14 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
-"Language: en\n"
+"Language: en-US\n"
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Plural-Forms: \n"
+"X-Crowdin-SourceKey: msgstr\n"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "common.locale.default"
@@ -108,11 +109,11 @@ msgstr "Apply panel transformations"
 
 #: public/app/features/inspector/InspectJSONTab.tsx
 msgid "dashboard.inspect-json.dataframe-description"
-msgstr "JSON formatted DataFrames"
+msgstr "Raw data without transformations and field config applied."
 
 #: public/app/features/inspector/InspectJSONTab.tsx
 msgid "dashboard.inspect-json.dataframe-label"
-msgstr "DataFrame JSON"
+msgstr "DataFrame JSON (from Query)"
 
 #: public/app/features/inspector/InspectJSONTab.tsx
 msgid "dashboard.inspect-json.panel-data-description"
@@ -269,6 +270,42 @@ msgstr "Cycle view mode"
 #: public/app/features/dashboard/components/DashNav/DashNav.tsx
 msgid "dashboard.toolbar.unmark-favorite"
 msgstr "Unmark as favorite"
+
+#: public/app/core/components/Select/FolderPicker.tsx
+msgid "folder-picker.loading"
+msgstr "Loading folders..."
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.cancel"
+msgstr "Cancel"
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.create"
+msgstr "Create library panel"
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.error"
+msgstr "Library panel with this name already exists"
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.folder"
+msgstr "Save in folder"
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.folder-description"
+msgstr "Library panel permissions are derived from the folder permissions"
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.name"
+msgstr "Library panel name"
+
+#: public/app/features/library-panels/utils/usePanelSave.ts
+msgid "library-panels.save.error"
+msgstr "Error saving library panel: \"{errorMsg}\""
+
+#: public/app/features/library-panels/utils/usePanelSave.ts
+msgid "library-panels.save.success"
+msgstr "Library panel saved"
 
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
@@ -466,6 +503,34 @@ msgstr "Share"
 msgid "panel.header-menu.view"
 msgstr "View"
 
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.dashboard.title"
+msgstr "Share"
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.copy"
+msgstr "Copy to clipboard"
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.html"
+msgstr "Embed HTML"
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.html-description"
+msgstr "The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load."
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.info"
+msgstr "Generate HTML for embedding an iframe with this panel."
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.time-range"
+msgstr "Current time range"
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.time-range-description"
+msgstr "Transforms the current relative time range to an absolute time range"
+
 #: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
 msgid "share-modal.export.cancel-button"
 msgstr "Cancel"
@@ -489,6 +554,10 @@ msgstr "Export for sharing externally"
 #: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
 msgid "share-modal.export.view-button"
 msgstr "View JSON"
+
+#: public/app/features/dashboard/components/ShareModal/ShareLibraryPanel.tsx
+msgid "share-modal.library.info"
+msgstr "Create library panel."
 
 #: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
 msgid "share-modal.link.copy-link-button"
@@ -527,28 +596,16 @@ msgid "share-modal.link.shorten-url"
 msgstr "Shorten URL"
 
 #: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme"
-msgstr "Theme"
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-current"
-msgstr "Current"
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-dark"
-msgstr "Dark"
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-light"
-msgstr "Light"
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
 msgid "share-modal.link.time-range-description"
 msgstr "Transforms the current relative time range to an absolute time range"
 
 #: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
 msgid "share-modal.link.time-range-label"
 msgstr "Lock time range"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.panel.title"
+msgstr "Share Panel"
 
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
 msgid "share-modal.snapshot.cancel-button"
@@ -615,6 +672,42 @@ msgid "share-modal.snapshot.timeout-description"
 msgstr ""
 "You might need to configure the timeout value if it takes a long time to collect your dashboard\n"
 "metrics."
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.embed"
+msgstr "Embed"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.export"
+msgstr "Export"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.library-panel"
+msgstr "Library panel"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.link"
+msgstr "Link"
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.snapshot"
+msgstr "Snapshot"
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.current"
+msgstr "Current"
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.dark"
+msgstr "Dark"
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.field-name"
+msgstr "Theme"
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.light"
+msgstr "Light"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"

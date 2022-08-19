@@ -11,6 +11,8 @@ weight: 20
 
 # Plan your RBAC rollout strategy
 
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+
 An RBAC rollout strategy helps you determine _how_ you want to implement RBAC prior to assigning RBAC roles to users and teams.
 
 Your rollout strategy should help you answer the following questions:

@@ -1,4 +1,36 @@
-// Package api contains API logic.
+// Package api Grafana HTTP API.
+//
+// The Grafana backend exposes an HTTP API, the same API is used by the frontend to do
+// everything from saving dashboards, creating users and updating data sources.
+//
+// Schemes: http, https
+// BasePath: /api
+// Version: 0.0.1
+// License: GNU Affero General Public License v3.0 https://www.gnu.org/licenses/agpl-3.0.en.html
+// Contact: Grafana Labs<hello@grafana.com> https://grafana.com
+//
+// Consumes:
+// - application/json
+//
+// Produces:
+// - application/json
+//
+// Security:
+// - basic:
+// - api_key:
+//
+// SecurityDefinitions:
+// basic:
+//
+//	type: basic
+//
+// api_key:
+//
+//	type: apiKey
+//	name: Authorization
+//	in: header
+//
+// swagger:meta
 package api
 
 import (
@@ -36,7 +68,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
-	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.SQLStore)
+	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.userService)
 	quota := middleware.Quota(hs.QuotaService)
 
 	r := hs.RouteRegister
@@ -61,7 +93,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
-	r.Get("/org/users/invite", authorize(reqOrgAdmin, usersInviteEvaluator), hs.Index)
+	r.Get("/org/users/invite", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersAdd)), hs.Index)
 	r.Get("/org/teams", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsRead)), hs.Index)
 	r.Get("/org/teams/edit/*", authorize(reqCanAccessTeams, teamsEditAccessEvaluator), hs.Index)
 	r.Get("/org/teams/new", authorize(reqCanAccessTeams, ac.EvalPermission(ac.ActionTeamsCreate)), hs.Index)
@@ -158,6 +190,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
 		r.Get("/swagger-ui", swaggerUI)
+		r.Get("/openapi3", openapi3)
 	}
 
 	// authed api
@@ -227,17 +260,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
-			apiRoute.Group("/storage", func(storageRoute routing.RouteRegister) {
-				storageRoute.Get("/list/", routing.Wrap(hs.StorageService.List))
-				storageRoute.Get("/list/*", routing.Wrap(hs.StorageService.List))
-				storageRoute.Get("/read/*", routing.Wrap(hs.StorageService.Read))
-
-				// Write paths
-				storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Delete))
-				storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(hs.StorageService.Upload))
-				storageRoute.Post("/createFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.CreateFolder))
-				storageRoute.Post("/deleteFolder", reqGrafanaAdmin, routing.Wrap(hs.StorageService.DeleteFolder))
-			})
+			apiRoute.Group("/storage", hs.StorageService.RegisterHTTPRoutes)
 		}
 
 		// current org
@@ -252,9 +275,9 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRemove, userIDScope)), routing.Wrap(hs.RemoveOrgUserForCurrentOrg))
 
 			// invites
-			orgRoute.Get("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.GetPendingOrgInvites))
-			orgRoute.Post("/invites", authorize(reqOrgAdmin, usersInviteEvaluator), quota("user"), routing.Wrap(hs.AddOrgInvite))
-			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.RevokeInvite))
+			orgRoute.Get("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersAdd)), routing.Wrap(hs.GetPendingOrgInvites))
+			orgRoute.Post("/invites", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersAdd)), quota("user"), routing.Wrap(hs.AddOrgInvite))
+			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersAdd)), routing.Wrap(hs.RevokeInvite))
 
 			// prefs
 			orgRoute.Get("/preferences", authorize(reqOrgAdmin, ac.EvalPermission(ActionOrgsPreferencesRead)), routing.Wrap(hs.GetOrgPreferences))

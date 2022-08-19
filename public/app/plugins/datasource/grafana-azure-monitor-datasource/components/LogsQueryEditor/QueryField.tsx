@@ -42,7 +42,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
       getPromise(),
     ] as const;
 
-    // the kusto schema call might fail, but its okay for that to happen silently
+    // the kusto schema call might fail, but it's okay for that to happen silently
     Promise.all(promises).then(([schema, { monaco, editor }]) => {
       const languages = monaco.languages as unknown as MonacoLanguages;
 

@@ -23,7 +23,7 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     (value: SelectableValue<string>) => {
       onChange({
         ...options,
-        columnField: value.value,
+        columnField: value?.value,
       });
     },
     [onChange, options]
@@ -33,7 +33,7 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     (value: SelectableValue<string>) => {
       onChange({
         ...options,
-        rowField: value.value,
+        rowField: value?.value,
       });
     },
     [onChange, options]
@@ -43,7 +43,7 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     (value: SelectableValue<string>) => {
       onChange({
         ...options,
-        valueField: value.value,
+        valueField: value?.value,
       });
     },
     [onChange, options]

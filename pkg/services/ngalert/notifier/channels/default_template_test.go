@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"testing"
@@ -56,7 +55,7 @@ func TestDefaultTemplateString(t *testing.T) {
 		},
 	}
 
-	f, err := ioutil.TempFile("/tmp", "template")
+	f, err := os.CreateTemp("/tmp", "template")
 	require.NoError(t, err)
 	defer func(f *os.File) {
 		_ = f.Close()
