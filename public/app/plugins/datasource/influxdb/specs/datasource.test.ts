@@ -6,6 +6,7 @@ import { FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import InfluxDatasource from '../datasource';
 
 //@ts-ignore
@@ -26,6 +27,7 @@ describe('InfluxDataSource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
+    ctx.instanceSettings.access = 'proxy';
     ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
   });
 
@@ -119,6 +121,25 @@ describe('InfluxDataSource', () => {
       } catch (err) {
         if (err instanceof Error) {
           expect(err.message).toBe('InfluxDB Error: Query timeout');
+        }
+      }
+    });
+  });
+
+  describe('When getting a request after issuing a query using outdated Browser Mode', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      ctx.instanceSettings.url = '/api/datasources/proxy/1';
+      ctx.instanceSettings.access = 'direct';
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
+    });
+
+    it('throws an error', async () => {
+      try {
+        await lastValueFrom(ctx.ds.query({}));
+      } catch (err) {
+        if (err instanceof Error) {
+          expect(err.message).toBe(BROWSER_MODE_DISABLED_MESSAGE);
         }
       }
     });
