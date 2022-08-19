@@ -25,7 +25,7 @@ calculated in the panel.
 
 ### X Bucket
 
-Specify how the axis will be split into buckets. You can specify a time interval in the Size input, for example, the time range 1h. This will make the cells 1h wide on the X-axis.
+This setting determines how the X-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the X-axis.
 
 ### Y Bucket
 
