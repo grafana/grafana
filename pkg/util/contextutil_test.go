@@ -9,7 +9,7 @@ import (
 )
 
 func TestWithCancelWithReason(t *testing.T) {
-	t.Run("should provide the custom reason", func(t *testing.T) {
+	t.Run("should add custom reason to the standard error", func(t *testing.T) {
 		expected := errors.New("test-err")
 		ctx, fn := WithCancelCause(context.Background())
 		fn(expected)
@@ -19,6 +19,7 @@ func TestWithCancelWithReason(t *testing.T) {
 			require.Fail(t, "the context was not cancelled")
 		}
 		require.ErrorIs(t, ctx.Err(), expected)
+		require.ErrorIs(t, ctx.Err(), context.Canceled)
 	})
 
 	t.Run("should return only the first reason if called multiple times", func(t *testing.T) {
@@ -40,6 +41,6 @@ func TestWithCancelWithReason(t *testing.T) {
 	t.Run("should return context.Canceled if no reason provided", func(t *testing.T) {
 		ctx, fn := WithCancelCause(context.Background())
 		fn(nil)
-		require.ErrorIs(t, ctx.Err(), context.Canceled)
+		require.Equal(t, ctx.Err(), context.Canceled)
 	})
 }

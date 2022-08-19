@@ -3,17 +3,22 @@ package util
 import (
 	"context"
 	"sync"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // this is a decorator for a regular context that contains a custom error and returns the
 type contextWithCancellableReason struct {
 	context.Context
+	mtx sync.Mutex
 	err error
 }
 
 func (c *contextWithCancellableReason) Err() error {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	if c.err != nil {
-		return c.err
+		return multierror.Append(c.Context.Err(), c.err)
 	}
 	return c.Context.Err()
 }
@@ -26,10 +31,13 @@ func WithCancelCause(parent context.Context) (context.Context, CancelCauseFunc) 
 	errOnce := sync.Once{}
 	result := &contextWithCancellableReason{
 		Context: ctx,
+		mtx:     sync.Mutex{},
 	}
 	cancelFn := func(reason error) {
 		errOnce.Do(func() {
+			result.mtx.Lock()
 			result.err = reason
+			result.mtx.Unlock()
 			cancel()
 		})
 	}
