@@ -3,13 +3,16 @@ package mock
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type fullAccessControl interface {
 	accesscontrol.AccessControl
-	GetUserBuiltInRoles(user *user.SignedInUser) []string
+	accesscontrol.Service
 	RegisterFixedRoles(context.Context) error
 }
 
@@ -24,6 +27,7 @@ type Calls struct {
 	DeleteUserPermissions          []interface{}
 }
 
+// Deprecated: Use fakes instead
 type Mock struct {
 	// Unless an override is provided, permissions will be returned by GetUserPermissions
 	permissions []accesscontrol.Permission
@@ -45,7 +49,7 @@ type Mock struct {
 	RegisterScopeAttributeResolverFunc func(string, accesscontrol.ScopeAttributeResolver)
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
 
-	scopeResolvers accesscontrol.ScopeResolvers
+	scopeResolvers ossaccesscontrol.Resolvers
 }
 
 // Ensure the mock stays in line with the interface
@@ -57,29 +61,29 @@ func New() *Mock {
 		disabled:       false,
 		permissions:    []accesscontrol.Permission{},
 		builtInRoles:   []string{},
-		scopeResolvers: accesscontrol.NewScopeResolvers(),
+		scopeResolvers: ossaccesscontrol.NewResolvers(log.NewNopLogger()),
 	}
 
 	return mock
 }
 
-func (m Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
+func (m *Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
 	return make(map[string]interface{})
 }
 
-func (m Mock) WithPermissions(permissions []accesscontrol.Permission) *Mock {
+func (m *Mock) WithPermissions(permissions []accesscontrol.Permission) *Mock {
 	m.permissions = permissions
-	return &m
+	return m
 }
 
-func (m Mock) WithDisabled() *Mock {
+func (m *Mock) WithDisabled() *Mock {
 	m.disabled = true
-	return &m
+	return m
 }
 
-func (m Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
+func (m *Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
 	m.builtInRoles = builtInRoles
-	return &m
+	return m
 }
 
 // Evaluate evaluates access to the given resource.
@@ -146,21 +150,6 @@ func (m *Mock) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration
 		return m.DeclareFixedRolesFunc(registrations...)
 	}
 	return nil
-}
-
-// GetUserBuiltInRoles returns the list of organizational roles ("Viewer", "Editor", "Admin")
-// or "Grafana Admin" associated to a user
-// This mock returns m.builtInRoles unless an override is provided.
-func (m *Mock) GetUserBuiltInRoles(user *user.SignedInUser) []string {
-	m.Calls.GetUserBuiltInRoles = append(m.Calls.GetUserBuiltInRoles, []interface{}{user})
-
-	// Use override if provided
-	if m.GetUserBuiltInRolesFunc != nil {
-		return m.GetUserBuiltInRolesFunc(user)
-	}
-
-	// Otherwise return the BuiltInRoles list
-	return m.builtInRoles
 }
 
 // RegisterFixedRoles registers all roles declared to AccessControl

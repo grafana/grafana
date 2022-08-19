@@ -150,13 +150,13 @@ func UseGlobalOrg(c *models.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
 }
 
-func LoadPermissionsMiddleware(ac AccessControl) web.Handler {
+func LoadPermissionsMiddleware(service Service) web.Handler {
 	return func(c *models.ReqContext) {
-		if ac.IsDisabled() {
+		if service.IsDisabled() {
 			return
 		}
 
-		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser,
+		permissions, err := service.GetUserPermissions(c.Req.Context(), c.SignedInUser,
 			Options{ReloadCache: false})
 		if err != nil {
 			c.JsonApiErr(http.StatusForbidden, "", err)
