@@ -55,7 +55,7 @@ Unit configuration
 
 ### Decimals
 
-Decimals configuration
+This setting determines decimal configuration.
 
 ### Min/Max value
 
