@@ -16,7 +16,7 @@ import (
 func ProvideService(cfg *setting.Cfg, store accesscontrol.Store, routeRegister routing.RouteRegister) (*Service, error) {
 	service := ProvideOSSService(cfg, store)
 
-	if accesscontrol.IsDisabled(cfg) {
+	if !accesscontrol.IsDisabled(cfg) {
 		api.NewAccessControlAPI(routeRegister, service).RegisterAPIEndpoints()
 		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 			return nil, err
