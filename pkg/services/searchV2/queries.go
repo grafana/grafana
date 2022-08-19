@@ -92,30 +92,33 @@ func (l storageQueriesLoader) LoadQueries(ctx context.Context, orgID int64, uid 
 	// name is configurable - lets hardcode for now
 	hardcodedGitStorage := "it"
 	resp, err = l.storage.ListRaw(ctx, store.QueriesSearch, hardcodedGitStorage, &filestorage.ListOptions{WithFiles: true, WithFolders: false, WithContents: true})
-	l.logger.Info("Found git queries", "len", len(resp.Files))
 
-	if err != nil {
-		return queries, err
-	}
-	for _, file := range resp.Files {
-		isQuery := l.isQueryFromGit(file)
-		if !isQuery {
-			continue
-		}
+	if resp != nil && len(resp.Files) > 0 {
+		l.logger.Info("Found git queries", "len", len(resp.Files))
 
-		uid := hardcodedGitStorage + file.FullPath
-		info, err := extract.ReadQuery(bytes.NewReader(file.Contents), uid, lookup)
 		if err != nil {
-			return nil, err
+			return queries, err
 		}
+		for _, file := range resp.Files {
+			isQuery := l.isQueryFromGit(file)
+			if !isQuery {
+				continue
+			}
 
-		queries = append(queries, query{
-			uid:     uid,
-			slug:    uid,
-			created: file.Created,
-			updated: file.Modified,
-			info:    info,
-		})
+			uid := hardcodedGitStorage + file.FullPath
+			info, err := extract.ReadQuery(bytes.NewReader(file.Contents), uid, lookup)
+			if err != nil {
+				return nil, err
+			}
+
+			queries = append(queries, query{
+				uid:     uid,
+				slug:    uid,
+				created: file.Created,
+				updated: file.Modified,
+				info:    info,
+			})
+		}
 	}
 
 	return queries, nil
