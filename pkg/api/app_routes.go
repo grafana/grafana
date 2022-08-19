@@ -40,6 +40,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 		for _, route := range plugin.Routes {
 			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.ID, route.Path)
 			handlers := make([]web.Handler, 0)
+			handlers = append(handlers, middleware.ProvideRouteOperationName("/api/plugin-proxy"))
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
 				ReqSignedIn: true,
 			}))
@@ -59,6 +60,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 
 			handlers = append(handlers, AppPluginRoute(route, plugin.ID, hs))
 			for _, method := range strings.Split(route.Method, ",") {
+
 				r.Handle(strings.TrimSpace(method), url, handlers)
 			}
 
