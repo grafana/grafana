@@ -125,6 +125,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: 30px;
       margin-left: 10px;
       margin-top: 1px;
+      opacity: 0.8;
     `,
   };
 };
