@@ -94,7 +94,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   }
 
   onSelectChanged = async (item: SelectableValue<ShowContent>) => {
-    const show = await this.getJSONObject(item.value!);
+    const show = await this.getJSONObject(item.value!, this.state.rand);
     const text = getPrettyJSON(show);
     this.setState({ text, show: item.value! });
   };
@@ -122,13 +122,13 @@ export class InspectJSONTab extends PureComponent<Props, State> {
   toggleRandomize = (k: keyof Randomize) => {
     const rand = { ...this.state.rand };
     rand[k] = !rand[k];
-    this.setState({ rand });
-
-    // This will update the text values async
-    this.onSelectChanged({ value: this.state.show });
+    this.setState({ rand }, () => {
+      // This will update the text values async
+      this.onSelectChanged({ value: this.state.show });
+    });
   };
 
-  async getJSONObject(show: ShowContent) {
+  async getJSONObject(show: ShowContent, rand: Randomize) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
       return data;
@@ -150,7 +150,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
 
     if (show === ShowContent.TroubleshootingDashboard && panel) {
-      return await getTroubleshootingDashboard(panel, this.state.rand, getTimeSrv().timeRange());
+      return await getTroubleshootingDashboard(panel, rand, getTimeSrv().timeRange());
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {

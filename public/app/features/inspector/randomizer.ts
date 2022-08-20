@@ -1,6 +1,4 @@
-import { isString } from 'lodash';
-
-import { DataFrameJSON, Labels } from '@grafana/data';
+import { DataFrameJSON, Labels, FieldType } from '@grafana/data';
 
 export function newLetterRandomizer(): (v: string) => string {
   const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -44,7 +42,7 @@ export function randomizeData(data: DataFrameJSON[], opts: Randomize): DataFrame
   const rand = newLetterRandomizer();
   return data.map((s) => {
     let { schema, data } = s;
-    if (schema) {
+    if (schema && data) {
       if (opts.labels) {
         for (const f of schema.fields) {
           if (f.labels) {
@@ -63,18 +61,15 @@ export function randomizeData(data: DataFrameJSON[], opts: Randomize): DataFrame
           }
         }
       }
-    }
 
-    // replace string values
-    if (opts.values && data?.values) {
-      for (const col of data.values) {
-        for (let i = 0; i < col.length; i++) {
-          const v = col[i];
-          if (isString(v)) {
-            // col[i] = rand(v);
-            console.log('CHANGE', i, v);
+      // Change values
+      if (opts.values) {
+        schema.fields.forEach((f, idx) => {
+          if (f.type === FieldType.string && data) {
+            const v = data.values[idx].map((v) => rand(v));
+            data.values[idx] = v;
           }
-        }
+        });
       }
     }
     return { schema, data };
