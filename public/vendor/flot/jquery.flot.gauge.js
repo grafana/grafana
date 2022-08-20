@@ -7,6 +7,8 @@
  * Licensed under the MIT license.
  */
 
+const { angularModules } = require("app/angular/core_module");
+
 /**
  * @module flot.gauge
  */
@@ -328,7 +330,6 @@
 
             var blur = gaugeOptionsi.gauge.shadow.show ? gaugeOptionsi.gauge.shadow.blur : 0;
 
-
             // draw gauge frame
             drawArcWithShadow(
                 cellLayout.cx, // center x
@@ -344,18 +345,46 @@
 
             // draw gauge
             var c1 = getColor(gaugeOptionsi, data);
-            var a2 = calculateAngle(gaugeOptionsi, layout, data);
+            var angles = calculateAnglesForGauge(gaugeOptionsi, layout, data);
+
             drawArcWithShadow(
                 cellLayout.cx, // center x
                 cellLayout.cy, // center y
                 layout.radius - 1,
                 layout.width - 2,
-                toRad(gaugeOptionsi.gauge.startAngle),
-                toRad(a2),
+                toRad(angles.a1),
+                toRad(angles.a2),
                 c1,           // line color
                 1,            // line width
                 c1,           // fill color
                 blur);
+        }
+
+
+        /**
+         * if gauge min is negative and has the absolute value of min and max are the same
+         * then calculate a1 and a2 in a way, that zero is at 12 o'clock
+         * 
+         * @method calculateAnglesForGauge
+         * @param {Object} gaugeOptionsi the options of the gauge
+         * @returns {Object}
+         */
+        function calculateAnglesForGauge(gaugeOptionsi, layout, data) {
+            let angles = {};
+            var setNorth = (gaugeOptionsi.gauge.min + gaugeOptionsi.gauge.max) == 0.0
+            
+            angles.a1 = gaugeOptionsi.gauge.startAngle;
+            angles.a2 = calculateAngle(gaugeOptionsi, layout, data);
+
+            if(setNorth && angles.a2<=1.5) {
+                angles.a1 = angles.a2;
+                angles.a2 = 1.5;
+            }
+            if(setNorth && angles.a2>1.5) {
+                angles.a1 = 1.5;
+            }
+            
+            return angles;
         }
 
         /**
