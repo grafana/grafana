@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/ui';
 
-import { ALIGNMENT_PERIODS } from '../../constants';
+import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { alignmentPeriodLabel } from '../../functions';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
@@ -79,7 +79,7 @@ export function SLOQueryEditor({
           query={query}
           onChange={onChange}
         />
-        {query.selectorName === 'select_slo_burn_rate' && (
+        {query.selectorName === SLO_BURN_RATE_SELECTOR_NAME && (
           <LookbackPeriodSelect
             refId={refId}
             onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}

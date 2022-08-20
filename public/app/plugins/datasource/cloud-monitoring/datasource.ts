@@ -14,6 +14,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
+import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
@@ -230,7 +231,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         !!serviceId &&
         !!sloId &&
         !!projectName &&
-        (selectorName !== 'select_slo_burn_rate' || !!lookbackPeriod)
+        (selectorName !== SLO_BURN_RATE_SELECTOR_NAME || !!lookbackPeriod)
       );
     }
 

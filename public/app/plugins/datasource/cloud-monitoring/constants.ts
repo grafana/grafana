@@ -306,11 +306,13 @@ export const SYSTEM_LABELS = [
   'metadata.system_labels.container_image',
 ];
 
+export const SLO_BURN_RATE_SELECTOR_NAME = 'select_slo_burn_rate';
+
 export const SELECTORS = [
   { label: 'SLI Value', value: 'select_slo_health' },
   { label: 'SLO Compliance', value: 'select_slo_compliance' },
   { label: 'SLO Error Budget Remaining', value: 'select_slo_budget_fraction' },
-  { label: 'SLO Burn Rate', value: 'select_slo_burn_rate' },
+  { label: 'SLO Burn Rate', value: SLO_BURN_RATE_SELECTOR_NAME },
 ];
 
 export const QUERY_TYPES = [
