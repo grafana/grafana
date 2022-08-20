@@ -1,3 +1,5 @@
+import { isString } from 'lodash';
+
 import { DataFrameJSON, Labels } from '@grafana/data';
 
 export function newLetterRandomizer(): (v: string) => string {
@@ -33,12 +35,12 @@ export interface Randomize {
   values?: boolean;
 }
 
-export function randomizeData(data: DataFrameJSON[], opts?: Randomize): DataFrameJSON[] {
-  if (!opts || !(opts.labels || opts.names || opts.values)) {
+export function randomizeData(data: DataFrameJSON[], opts: Randomize): DataFrameJSON[] {
+  if (!(opts.labels || opts.names || opts.values)) {
     return data;
   }
-  const keepNames = new Set(['Time', 'time', 'Value', 'value']);
 
+  const keepNames = new Set(['time', 'value', 'exemplar', 'traceid', 'id', 'uid', 'uuid', '__name__', 'le', 'name']);
   const rand = newLetterRandomizer();
   return data.map((s) => {
     let { schema, data } = s;
@@ -56,13 +58,23 @@ export function randomizeData(data: DataFrameJSON[], opts?: Randomize): DataFram
       }
       if (opts.names) {
         for (const f of schema.fields) {
-          if (f.name?.length && !keepNames.has(f.name)) {
+          if (f.name?.length && !keepNames.has(f.name.toLowerCase())) {
             f.name = rand(f.name);
           }
         }
       }
-      if (opts.values) {
-        // TODO... change string values
+    }
+
+    // replace string values
+    if (opts.values && data?.values) {
+      for (const col of data.values) {
+        for (let i = 0; i < col.length; i++) {
+          const v = col[i];
+          if (isString(v)) {
+            // col[i] = rand(v);
+            console.log('CHANGE', i, v);
+          }
+        }
       }
     }
     return { schema, data };

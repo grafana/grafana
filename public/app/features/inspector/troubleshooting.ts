@@ -9,6 +9,7 @@ import {
   DataTransformerConfig,
   getValueFormat,
   formattedValueToString,
+  DataFrameJSON,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -32,7 +33,7 @@ export async function getTroubleshootingDashboard(panel: PanelModel, rand: Rando
       withTransforms: false,
     })
   );
-  const frames = randomizeData(getPanelDataFrames(data));
+  const frames = randomizeData(getPanelDataFrames(data), rand);
   const rawFrameContent = JSON.stringify(frames);
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
   const html = `<table width="100%">
@@ -75,9 +76,12 @@ export async function getTroubleshootingDashboard(panel: PanelModel, rand: Rando
   };
 
   if (data.annotations?.length) {
-    let anno = frames.filter((f) => f.schema?.meta?.dataTopic);
-    if (!anno.length) {
-      anno = []; // ???
+    const anno: DataFrameJSON[] = [];
+    for (const f of frames) {
+      if (f.schema?.meta?.dataTopic) {
+        delete f.schema.meta.dataTopic;
+        anno.push(f);
+      }
     }
 
     dashboard.panels.push({
