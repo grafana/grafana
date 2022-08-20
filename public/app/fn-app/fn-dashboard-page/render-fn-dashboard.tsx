@@ -20,6 +20,7 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
         pageTitle: data?.pageTitle || '',
       })
     );
+    return () => {};
   }, [data, dispatch]);
 
   const props = {

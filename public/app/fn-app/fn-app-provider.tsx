@@ -21,11 +21,12 @@ export const FnAppProvider: React.Component<FnAppProviderProps> = ({ children, F
   navigationLogger('AppWrapper', false, 'rendering');
   useEffect(() => {
     loadAndInitAngularIfEnabled()
-      .then((res) => {
+      .then(() => {
         setReady(true);
         $('.preloader').remove();
       })
       .catch((err) => console.error(err));
+    return () => {};
   }, []);
 
   if (!ready) {
