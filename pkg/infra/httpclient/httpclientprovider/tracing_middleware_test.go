@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestTracingMiddleware(t *testing.T) {
@@ -44,6 +45,50 @@ func TestTracingMiddleware(t *testing.T) {
 
 		_, sp := tracer.Start(ctx, "test")
 		require.NotNil(t, sp)
+	})
+
+	t.Run("GET request that returns 200 OK should propagate parent span", func(t *testing.T) {
+		expectedTraceID := "<unset>"
+
+		finalRoundTripper := httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			// both Jaeger and w3c headers should be set
+			require.NotEmpty(t, req.Header.Get("Uber-Trace-Id"))
+			require.NotEmpty(t, req.Header.Get("Traceparent"))
+
+			_, span := tracer.Start(req.Context(), "inner")
+			defer span.End()
+
+			// child span should have the same trace ID as the parent span
+			require.Equal(t, expectedTraceID, span.(trace.Span).SpanContext().TraceID().String())
+
+			return &http.Response{StatusCode: http.StatusOK, Request: req}, nil
+		})
+
+		mw := TracingMiddleware(log.New("test"), tracer)
+		rt := mw.CreateMiddleware(httpclient.Options{
+			Labels: map[string]string{
+				"l1": "v1",
+				"l2": "v2",
+			},
+		}, finalRoundTripper)
+		require.NotNil(t, rt)
+		middlewareName, ok := mw.(httpclient.MiddlewareName)
+		require.True(t, ok)
+		require.Equal(t, TracingMiddlewareName, middlewareName.MiddlewareName())
+
+		ctx, span := tracer.Start(context.Background(), "testspan")
+		defer span.End()
+
+		expectedTraceID = span.(trace.Span).SpanContext().TraceID().String()
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://test.com/query", nil)
+		require.NoError(t, err)
+		res, err := rt.RoundTrip(req)
+		require.NoError(t, err)
+		require.NotNil(t, res)
+		if res.Body != nil {
+			require.NoError(t, res.Body.Close())
+		}
 	})
 
 	t.Run("GET request that returns 400 Bad Request should start and capture span", func(t *testing.T) {

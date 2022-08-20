@@ -1752,7 +1752,7 @@ The host:port destination for reporting spans. (ex: `localhost:14268/api/traces`
 
 ### propagation
 
-The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Specify multiple values separated by a comma (`,`) to support multiple formats (like `"jaeger,w3c"`). Defaults to `w3c`.
 
 <hr>
 
@@ -1766,7 +1766,7 @@ The host:port destination for reporting spans. (ex: `localhost:4317`)
 
 ### propagation
 
-The propagation specifies the text map propagation format.(ex: jaeger, w3c)
+The propagation specifies the text map propagation format. The values `jaeger` and `w3c` are supported. Specify multiple values separated by a comma (`,`) to support multiple formats (like `"jaeger,w3c"`). Defaults to `w3c`.
 
 <hr>
 
