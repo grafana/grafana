@@ -36,7 +36,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
   serviceName: '',
   sloId: '',
   sloName: '',
-  lookbackPeriod: '1h',
+  lookbackPeriod: '',
 });
 
 export function SLOQueryEditor({

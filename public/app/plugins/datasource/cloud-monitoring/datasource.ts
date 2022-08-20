@@ -224,8 +224,14 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     if (query.queryType && query.queryType === QueryType.SLO && query.sloQuery) {
-      const { selectorName, serviceId, sloId, projectName } = query.sloQuery;
-      return !!selectorName && !!serviceId && !!sloId && !!projectName;
+      const { selectorName, serviceId, sloId, projectName, lookbackPeriod } = query.sloQuery;
+      return (
+        !!selectorName &&
+        !!serviceId &&
+        !!sloId &&
+        !!projectName &&
+        (selectorName !== 'select_slo_burn_rate' || !!lookbackPeriod)
+      );
     }
 
     if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {
