@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { locationService } from '@grafana/runtime';
 import { setIntialMountState } from 'app/core/reducers/fn-slice';
 import DashboardPage from 'app/features/dashboard/containers/DashboardPage';
 import { DashboardRoutes } from 'app/types';
@@ -18,8 +19,10 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
         theme: data.theme,
         controlsContainer: data.controlsContainer,
         pageTitle: data?.pageTitle || '',
+        fnPathname: window.location.pathname,
       })
     );
+    locationService.fnPathnameChange(window.location.pathname);
     return () => {};
   }, [data, dispatch]);
 

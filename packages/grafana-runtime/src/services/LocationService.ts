@@ -47,6 +47,10 @@ export class HistoryWrapper implements LocationService {
     this.getLocation = this.getLocation.bind(this);
   }
 
+  fnPathnameChange(path: string) {
+    this.history.location.pathname = path;
+  }
+
   getHistory() {
     return this.history;
   }
