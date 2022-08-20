@@ -7,8 +7,6 @@
  * Licensed under the MIT license.
  */
 
-const { angularModules } = require("app/angular/core_module");
-
 /**
  * @module flot.gauge
  */
