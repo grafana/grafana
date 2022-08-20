@@ -9,15 +9,15 @@ import {
   DataTransformerConfig,
   getValueFormat,
   formattedValueToString,
-  dataFrameToJSON,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { PanelModel } from '../dashboard/state';
 
 import { getPanelDataFrames } from './InspectJSONTab';
+import { Randomize, randomizeData } from './randomizer';
 
-export async function getTroubleshootingDashboard(panel: PanelModel, timeRange: TimeRange) {
+export async function getTroubleshootingDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
   const saveModel = panel.getSaveModel();
   const dashboard = cloneDeep(embeddedDataTemplate);
   const info = {
@@ -32,7 +32,8 @@ export async function getTroubleshootingDashboard(panel: PanelModel, timeRange: 
       withTransforms: false,
     })
   );
-  const rawFrameContent = JSON.stringify(getPanelDataFrames(data));
+  const frames = randomizeData(getPanelDataFrames(data));
+  const rawFrameContent = JSON.stringify(frames);
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
   const html = `<table width="100%">
     <tr>
@@ -74,6 +75,11 @@ export async function getTroubleshootingDashboard(panel: PanelModel, timeRange: 
   };
 
   if (data.annotations?.length) {
+    let anno = frames.filter((f) => f.schema?.meta?.dataTopic);
+    if (!anno.length) {
+      anno = []; // ???
+    }
+
     dashboard.panels.push({
       id: 7,
       gridPos: {
@@ -91,13 +97,7 @@ export async function getTroubleshootingDashboard(panel: PanelModel, timeRange: 
       targets: [
         {
           refId: 'A',
-          rawFrameContent: JSON.stringify(
-            data.annotations.map((f) => {
-              const js = dataFrameToJSON(f);
-              delete js.schema?.meta?.dataTopic; // remove it
-              return js;
-            })
-          ),
+          rawFrameContent: JSON.stringify(anno),
           scenarioId: 'raw_frame',
         },
       ],

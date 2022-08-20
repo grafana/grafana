@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button, CodeEditor, Field, Select } from '@grafana/ui';
+import { Button, CodeEditor, Field, Select, HorizontalGroup, InlineSwitch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
@@ -24,6 +24,7 @@ import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getPanelInspectorStyles } from '../inspector/styles';
 import { pendingImportDashboard } from '../manage-dashboards/DashboardImportPage';
 
+import { Randomize } from './randomizer';
 import { getTroubleshootingDashboard } from './troubleshooting';
 
 enum ShowContent {
@@ -75,6 +76,7 @@ interface Props {
 interface State {
   show: ShowContent;
   text: string;
+  rand: Randomize;
 }
 
 export class InspectJSONTab extends PureComponent<Props, State> {
@@ -87,6 +89,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     this.state = {
       show: this.hasPanelJSON ? ShowContent.PanelJSON : ShowContent.DataFrames,
       text: this.hasPanelJSON ? getPrettyJSON(props.panel!.getSaveModel()) : getPrettyJSON(props.data),
+      rand: {}, // none
     };
   }
 
@@ -116,6 +119,15 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     saveAs(blob, fileName);
   };
 
+  toggleRandomize = (k: keyof Randomize) => {
+    const rand = { ...this.state.rand };
+    rand[k] = !rand[k];
+    this.setState({ rand });
+
+    // This will update the text values async
+    this.onSelectChanged({ value: this.state.show });
+  };
+
   async getJSONObject(show: ShowContent) {
     const { data, panel } = this.props;
     if (show === ShowContent.PanelData) {
@@ -138,7 +150,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
 
     if (show === ShowContent.TroubleshootingDashboard && panel) {
-      return await getTroubleshootingDashboard(panel, getTimeSrv().timeRange());
+      return await getTroubleshootingDashboard(panel, this.state.rand, getTimeSrv().timeRange());
     }
 
     if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
@@ -172,7 +184,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   render() {
     const { dashboard } = this.props;
-    const { show, text } = this.state;
+    const { show, text, rand } = this.state;
     const jsonOptions = this.hasPanelJSON ? options : options.slice(1, options.length);
     const selected = options.find((v) => v.value === show);
     const isPanelJSON = show === ShowContent.PanelJSON;
@@ -214,8 +226,43 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         </div>
         {isTroubleshooter && (
           <div>
-            This creates a dashboard that can be downloaed and attached to github issues or sent to support. It contains
-            relevant data required to reproduce visualization issues disconnected from the original datasource.
+            <Field
+              label="Randomize data"
+              description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+            >
+              <HorizontalGroup>
+                <InlineSwitch
+                  label="Labels"
+                  showLabel={true}
+                  value={Boolean(rand.labels)}
+                  onChange={(v) => this.toggleRandomize('labels')}
+                />
+                <InlineSwitch
+                  label="Field names"
+                  showLabel={true}
+                  value={Boolean(rand.names)}
+                  onChange={(v) => this.toggleRandomize('names')}
+                />
+                <InlineSwitch
+                  label="String values"
+                  showLabel={true}
+                  value={Boolean(rand.values)}
+                  onChange={(v) => this.toggleRandomize('values')}
+                />
+              </HorizontalGroup>
+            </Field>
+            <Field
+              label="About"
+              description={
+                <span>
+                  This creates a dashboard that can be downloaed and attached to github issues or sent to support. It
+                  contains relevant data required to reproduce visualization issues disconnected from the original
+                  datasource.
+                </span>
+              }
+            >
+              <div></div>
+            </Field>
           </div>
         )}
         <div className={styles.content}>
