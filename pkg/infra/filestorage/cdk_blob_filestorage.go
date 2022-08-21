@@ -404,13 +404,15 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 
 			var contents []byte
 			if options.WithContents {
-				c, err := c.bucket.ReadAll(ctx, lowerPath)
+				cont, err := c.bucket.ReadAll(ctx, lowerPath)
+				c.log.Info("Listing files - retrieving contents", "path", lowerPath, "err", err, "len", len(cont))
+
 				if err != nil && gcerrors.Code(err) != gcerrors.NotFound {
 					return nil, err
 				}
 
-				if c != nil {
-					contents = c
+				if cont != nil {
+					contents = cont
 				}
 			}
 
