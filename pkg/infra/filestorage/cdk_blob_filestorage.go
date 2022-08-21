@@ -32,6 +32,10 @@ func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, f
 
 func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error) {
 	contents, err := c.bucket.ReadAll(ctx, strings.ToLower(filePath))
+
+	if err != nil && gcerrors.Code(err) == gcerrors.NotFound {
+		contents, err = c.bucket.ReadAll(ctx, filePath)
+	}
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			return nil, nil
@@ -404,7 +408,7 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 
 			var contents []byte
 			if options.WithContents {
-				cont, err := c.bucket.ReadAll(ctx, lowerPath)
+				cont, err := c.bucket.ReadAll(ctx, obj.Key)
 				c.log.Info("Listing files - retrieving contents", "path", lowerPath, "err", err, "len", len(cont))
 
 				if err != nil && gcerrors.Code(err) != gcerrors.NotFound {
