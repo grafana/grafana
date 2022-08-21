@@ -6,7 +6,10 @@ import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 
 import { SavedQuery, useUpdateSavedQueryMutation } from '../api/SavedQueriesApi';
 
+import { SavedQueryUpdateOpts } from './QueryEditorDrawer';
+
 type Props = {
+  options: SavedQueryUpdateOpts;
   onDismiss: () => void;
   updateComponent?: () => void;
 };
@@ -71,7 +74,7 @@ const initialForm: QueryForm = {
   },
 };
 
-export const CreateNewQuery = ({ onDismiss, updateComponent }: Props) => {
+export const CreateNewQuery = ({ onDismiss, updateComponent, options }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [updateSavedQuery] = useUpdateSavedQueryMutation();
@@ -97,7 +100,7 @@ export const CreateNewQuery = ({ onDismiss, updateComponent }: Props) => {
         type="submit"
         className={styles.submitButton}
         onClick={async () => {
-          await updateSavedQuery(query.val);
+          await updateSavedQuery({ query: query.val, opts: options });
           onDismiss();
           updateComponent?.();
         }}

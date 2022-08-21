@@ -21,7 +21,7 @@ import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { isQueryWithMixedDatasource, SavedQueryRef } from 'app/features/query-library/api/SavedQueriesApi';
+import { SavedQueryRef } from 'app/features/query-library/api/SavedQueriesApi';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -31,7 +31,6 @@ import {
 } from 'app/types/events';
 
 import { PanelModelLibraryPanel } from '../../library-panels/types';
-import { getSavedQuerySrv } from '../../query-library/api/SavedQueriesSrv';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import { getTimeSrv } from '../services/TimeSrv';
@@ -221,35 +220,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
     this.key = uuidv4();
-    if (this.savedQueryLink?.ref?.uid?.length) {
-      // TODO: do this on the backend
-      getSavedQuerySrv()
-        .getSavedQueryByUids([this.savedQueryLink?.ref])
-        .then((queries) => {
-          if (!queries?.length) {
-            return;
-          }
-
-          const savedQ = queries[0];
-          const datasource = isQueryWithMixedDatasource(savedQ)
-            ? { type: 'datasource', uid: '-- Mixed --' }
-            : savedQ.queries.find((q) => Boolean(q.datasource))?.datasource;
-
-          this.updateQueries({
-            dataSource: datasource ?? { type: 'datasource', uid: 'grafanads' },
-            queries: savedQ.queries,
-            savedQueryUid: this.savedQueryLink?.ref.uid ?? null,
-            cacheTimeout: this.cacheTimeout,
-            timeRange: {
-              from: this.timeFrom,
-              shift: this.timeShift,
-              hide: this.hideTimeOverride,
-            },
-            minInterval: this.interval,
-            maxDataPoints: this.maxDataPoints,
-          });
-        });
-    }
   }
 
   /** Given a persistened PanelModel restores property values */

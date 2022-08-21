@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, Drawer, Icon, ModalsController, useStyles2 } from '@grafana/ui';
+import { Button, Card, Drawer, Icon, ModalsController, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { SavedQuery } from '../api/SavedQueriesApi';
 
-import { QueryEditorDrawer } from './QueryEditorDrawer';
+import { QueryEditorDrawer, SavedQueryUpdateOpts } from './QueryEditorDrawer';
 import { QueryImportDrawer } from './QueryImportDrawer';
 
 type Props = {
@@ -16,6 +16,9 @@ type Props = {
 
 export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
   const styles = useStyles2(getStyles);
+
+  const type: SavedQueryUpdateOpts['type'] = 'create-new';
+  const [storage, setStorage] = useState<'sql' | 'git'>('sql');
 
   const closeDrawer = () => {
     onDismiss();
@@ -32,9 +35,19 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
       scrollableContent
     >
       <div>
+        Choose storage &nbsp;
+        <RadioButtonGroup
+          value={storage}
+          options={[
+            { label: 'SQL', value: 'sql' },
+            { label: 'Git', value: 'git' },
+          ]}
+          onChange={setStorage}
+        />
+        <br />
         <Card>
           <Card.Heading>Create by query builder</Card.Heading>
-          <Card.Description>Configure rotations and shifts directly in Grafana On-Call</Card.Description>
+          <Card.Description></Card.Description>
           <Card.Figure>
             <Icon name={'list-ui-alt'} className={styles.cardIcon} />
           </Card.Figure>
@@ -48,7 +61,20 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
                     onClick={() => {
                       showModal(QueryEditorDrawer, {
                         onDismiss: closeDrawer,
-                        savedQuery: { title: 'New Query' } as SavedQuery,
+                        options: { type, storage },
+                        savedQuery: {
+                          title: 'New Query',
+                          queries: [
+                            {
+                              refId: 'A',
+                              datasource: {
+                                type: 'datasource',
+                                uid: 'grafana',
+                              },
+                              queryType: 'randomWalk',
+                            },
+                          ],
+                        } as SavedQuery,
                       });
                     }}
                   >
@@ -59,7 +85,6 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
             </ModalsController>
           </Card.Tags>
         </Card>
-
         <Card>
           <Card.Heading>Import from file</Card.Heading>
           <Card.Description>Supported formats: JSON</Card.Description>
@@ -76,6 +101,7 @@ export const QueryCreateDrawer = ({ onDismiss, updateComponent }: Props) => {
                     onClick={() => {
                       showModal(QueryImportDrawer, {
                         onDismiss: closeDrawer,
+                        options: { type, storage },
                       });
                     }}
                   >

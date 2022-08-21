@@ -7,11 +7,14 @@ import { LayerName } from 'app/core/components/Layers/LayerName';
 
 import { SavedQuery, useUpdateSavedQueryMutation } from '../api/SavedQueriesApi';
 
+import { SavedQueryUpdateOpts } from './QueryEditorDrawer';
+
 type Props = {
   savedQuery: SavedQuery<DataQuery>;
+  options: SavedQueryUpdateOpts;
 };
 
-export const VariablesTab = ({ savedQuery }: Props) => {
+export const VariablesTab = ({ savedQuery, options }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [updateSavedQuery] = useUpdateSavedQueryMutation();
@@ -30,7 +33,7 @@ export const VariablesTab = ({ savedQuery }: Props) => {
       variables: newVariables,
     } as SavedQuery<DataQuery>;
 
-    updateSavedQuery(newSavedQuery);
+    updateSavedQuery({ query: newSavedQuery, opts: options });
   };
 
   const onVariableValueChange = (variable: any, newValue: string) => {
@@ -47,7 +50,7 @@ export const VariablesTab = ({ savedQuery }: Props) => {
       variables: newVariables,
     } as SavedQuery<DataQuery>;
 
-    updateSavedQuery(newSavedQuery);
+    updateSavedQuery({ query: newSavedQuery, opts: options });
   };
 
   const onAddVariable = () => {
@@ -59,7 +62,7 @@ export const VariablesTab = ({ savedQuery }: Props) => {
       },
     });
 
-    updateSavedQuery(savedQuery);
+    updateSavedQuery({ query: savedQuery, opts: options });
   };
 
   const onRemoveVariable = (variable: any) => {
@@ -73,7 +76,7 @@ export const VariablesTab = ({ savedQuery }: Props) => {
     if (varIndex) {
       // NOTE: doing mutation vs filter to force re-render
       savedQuery.variables.splice(varIndex, 1);
-      updateSavedQuery(savedQuery);
+      updateSavedQuery({ query: savedQuery, opts: options });
     }
   };
 
@@ -83,7 +86,8 @@ export const VariablesTab = ({ savedQuery }: Props) => {
         <HorizontalGroup width="100%" justify="space-between" spacing={'md'} height={25}>
           <div className={styles.tabDescription}>
             Variables enable more interactive and dynamic queries. Instead of hard-coding things like server or sensor
-            names in your metric queries you can use variables in their place.
+            names in your metric queries you can use variables in their place. <br />
+            <b>Variable support is coming soon!</b>
           </div>
           <Button icon="plus" size="md" className={styles.addVariableButton} onClick={onAddVariable}>
             Add variable

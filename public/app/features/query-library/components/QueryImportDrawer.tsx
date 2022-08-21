@@ -5,12 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Drawer, FileDropzone, useStyles2 } from '@grafana/ui';
 
 import { CreateNewQuery } from './CreateNewQuery';
+import { SavedQueryUpdateOpts } from './QueryEditorDrawer';
 
 type Props = {
+  options: SavedQueryUpdateOpts;
   onDismiss: () => void;
 };
 
-export const QueryImportDrawer = ({ onDismiss }: Props) => {
+export const QueryImportDrawer = ({ onDismiss, options }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [file, setFile] = useState<File | undefined>(undefined);
@@ -35,7 +37,7 @@ export const QueryImportDrawer = ({ onDismiss }: Props) => {
 
       {Boolean(file) && (
         <div className={styles.queryPreview}>
-          <CreateNewQuery onDismiss={onDismiss} />
+          <CreateNewQuery options={options} onDismiss={onDismiss} />
         </div>
       )}
     </Drawer>

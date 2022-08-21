@@ -31,7 +31,7 @@ export const QueryEditor = ({ savedQuery, onSavedQueryChange }: Props) => {
   const [queries, setQueries] = useState<DataQuery[]>(savedQuery.queries ?? [defaultQuery]);
 
   const dsRef = isQueryWithMixedDatasource(savedQuery)
-    ? { uid: '-- Mixed --', type: 'grafana' }
+    ? { uid: '-- Mixed --', type: 'datasource' }
     : queries[0].datasource;
 
   const [dsSettings, setDsSettings] = useState(getDataSourceSrv().getInstanceSettings(dsRef));

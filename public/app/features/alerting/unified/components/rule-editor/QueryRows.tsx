@@ -262,7 +262,9 @@ export class QueryRows extends PureComponent<Props, State> {
 
     return (
       <div style={{ maxWidth: '750px' }}>
-        <SavedQueryPicker onChange={this.onSelectedSaveQuery} current={this.state.savedQueryLink?.ref?.uid ?? null} />
+        TODO: Implement filtering based on datasource alerting capabilities :)
+        {/*// @ts-ignore*/}
+        <SavedQueryPicker onChange={this.onSelectedSaveQuery} current={this.state.savedQueryLink?.ref?.uid} />
         <DragDropContext onDragEnd={this.onDragEnd}>
           <Droppable droppableId="alerting-queries" direction="vertical">
             {(provided) => {

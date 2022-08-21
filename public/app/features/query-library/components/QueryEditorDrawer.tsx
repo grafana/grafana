@@ -5,18 +5,29 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { DataQuery } from '@grafana/data/src/types/query';
 import { Drawer, IconName, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
+import { WorkflowID } from '../../storage/types';
 import { SavedQuery } from '../api/SavedQueriesApi';
 
 import { HistoryTab } from './HistoryTab';
 import { QueryEditor } from './QueryEditor';
 import { QueryEditorDrawerHeader } from './QueryEditorDrawerHeader';
-import { SaveQueryWorkflowModal } from './SaveQueryModal';
 import { UsagesTab } from './UsagesTab';
 import { VariablesTab } from './VariablesTab';
+
+export type SavedQueryUpdateOpts = { message?: string; workflowId?: WorkflowID } & (
+  | {
+      type: 'create-new';
+      storage: 'git' | 'sql';
+    }
+  | {
+      type: 'edit';
+    }
+);
 
 type Props = {
   onDismiss: () => void;
   savedQuery: SavedQuery<DataQuery>;
+  options: SavedQueryUpdateOpts;
 };
 
 const initialTabs = [
@@ -38,7 +49,7 @@ const initialTabs = [
 ];
 
 export const QueryEditorDrawer = (props: Props) => {
-  const { onDismiss } = props;
+  const { onDismiss, options } = props;
   const styles = useStyles2(getStyles);
   const [tabs, setTabs] = useState(initialTabs);
   const [query, setSavedQuery] = useState(props.savedQuery);
@@ -46,7 +57,12 @@ export const QueryEditorDrawer = (props: Props) => {
   return (
     <Drawer onClose={onDismiss} width={'1000px'} expandable scrollableContent>
       <div>
-        <QueryEditorDrawerHeader onSavedQueryChange={setSavedQuery} savedQuery={query} onDismiss={onDismiss} />
+        <QueryEditorDrawerHeader
+          options={options}
+          onSavedQueryChange={setSavedQuery}
+          savedQuery={query}
+          onDismiss={onDismiss}
+        />
         <div className={styles.queryWrapper}>
           <QueryEditor onSavedQueryChange={setSavedQuery} savedQuery={query} />
         </div>
@@ -64,7 +80,7 @@ export const QueryEditorDrawer = (props: Props) => {
         <TabContent>
           <div className={styles.tabWrapper}>
             {tabs[0].active && <UsagesTab savedQuery={query} />}
-            {tabs[1].active && <VariablesTab savedQuery={query} />}
+            {tabs[1].active && <VariablesTab savedQuery={query} options={options} />}
             {tabs[2].active && <HistoryTab />}
           </div>
         </TabContent>

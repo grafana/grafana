@@ -9,7 +9,9 @@ import { useAppNotification } from '../../../core/copy/appNotification';
 import { WorkflowID } from '../../storage/types';
 import { SavedQuery } from '../api/SavedQueriesApi';
 import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
+import { implementationComingSoonAlert } from '../utils';
 
+import { SavedQueryUpdateOpts } from './QueryEditorDrawer';
 import { QueryName } from './QueryName';
 import { SaveQueryWorkflowModal } from './SaveQueryWorkflowModal';
 
@@ -17,9 +19,10 @@ type Props = {
   onSavedQueryChange: (newQuery: SavedQuery) => void;
   savedQuery: SavedQuery;
   onDismiss: () => void;
+  options: SavedQueryUpdateOpts;
 };
 
-export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryChange }: Props) => {
+export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryChange, options }: Props) => {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
 
@@ -28,7 +31,10 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
   const [queryName, setQueryName] = useState(savedQuery.title);
   const [showUseQueryOptions, setShowUseQueryOptions] = useState(false);
 
-  const supportsPR = savedQuery?.storageOptions?.workflows?.some((opt) => opt.value === WorkflowID.PR);
+  const supportsPR =
+    savedQuery?.storageOptions?.workflows?.some((opt) => opt.value === WorkflowID.PR) ||
+    (options.type === 'create-new' && options.storage === 'git');
+  const nameEditingEnabled = !Boolean(savedQuery?.uid?.length);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,7 +88,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
     });
   };
 
-  const onQuerySave = async (options?: { workflow?: WorkflowID; message?: string }) => {
+  const onQuerySave = async (options: SavedQueryUpdateOpts) => {
     await getSavedQuerySrv()
       .updateSavedQuery(savedQuery, options)
       .then(() => notifyApp.success('Query updated'))
@@ -96,10 +102,12 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
   const onSaveQueryWorkflow =
     (workflow: WorkflowID) =>
     async ({ message }: { message?: string }): Promise<{ success: boolean }> => {
-      const options = { workflow, message };
-
       try {
-        await getSavedQuerySrv().updateSavedQuery(savedQuery, options);
+        await getSavedQuerySrv().updateSavedQuery(savedQuery, {
+          ...options,
+          workflowId: workflow,
+          message,
+        });
         notifyApp.success(workflow === WorkflowID.PR ? 'Pull Request created' : 'Push successful');
         onDismiss();
         return { success: true };
@@ -115,7 +123,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
     <>
       <div className={styles.header}>
         <HorizontalGroup justify={'space-between'}>
-          <QueryName name={queryName} onChange={onQueryNameChange} />
+          <QueryName name={queryName} onChange={onQueryNameChange} editingEnabled={nameEditingEnabled} />
           <HorizontalGroup>
             <Button icon="times" size="md" variant={'secondary'} onClick={onDismiss} autoFocus={false}>
               Close
@@ -130,11 +138,11 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
             >
               Use query
             </Button>
-            <Button icon="sync" size="md" variant={'secondary'}>
+            <Button icon="sync" size="md" variant={'secondary'} onClick={implementationComingSoonAlert}>
               Run
             </Button>
             {/*<Button icon="share-alt" size="sm" variant={'secondary'}>Export</Button>*/}
-            <Button icon="lock" size="md" variant={'secondary'} />
+            <Button icon="lock" size="md" variant={'secondary'} onClick={implementationComingSoonAlert} />
             {supportsPR && (
               <ModalsController>
                 {({ showModal, hideModal }) => {
@@ -188,12 +196,18 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
             )}
             {!supportsPR && (
               <>
-                <Button size="md" variant={'primary'} onClick={() => onQuerySave()}>
+                <Button size="md" variant={'primary'} onClick={() => onQuerySave(options)}>
                   Save
                 </Button>
               </>
             )}
-            <Button icon="trash-alt" size="md" variant={'destructive'} onClick={deleteQuery} />
+            <Button
+              icon="trash-alt"
+              size="md"
+              variant={'destructive'}
+              disabled={supportsPR}
+              onClick={() => (supportsPR ? implementationComingSoonAlert() : deleteQuery())}
+            />
           </HorizontalGroup>
         </HorizontalGroup>
         {/*@TODO Nicer submenu*/}
@@ -211,7 +225,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
                 {useQueryOptions.map((option, key) => {
                   return (
                     <li key={key}>
-                      <a>
+                      <a onClick={implementationComingSoonAlert}>
                         <div>
                           {option.src ? (
                             <InlineSVG src={option.src} className={styles.optionSvg} />

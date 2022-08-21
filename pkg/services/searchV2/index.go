@@ -127,7 +127,8 @@ func (i *searchIndex) sync(ctx context.Context) error {
 }
 
 func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh chan struct{}) error {
-	reIndexInterval := 5 * time.Minute
+	// TODO REVERT - workaround for no git hooks :)
+	reIndexInterval := 10 * time.Second
 	fullReIndexTimer := time.NewTimer(reIndexInterval)
 	defer fullReIndexTimer.Stop()
 

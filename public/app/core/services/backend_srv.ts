@@ -23,6 +23,7 @@ import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
+import { getSavedQuerySrv } from '../../features/query-library/api/SavedQueriesSrv';
 import { ShowModalReactEvent } from '../../types/events';
 import {
   isContentTypeApplicationJson,
@@ -443,11 +444,35 @@ export class BackendSrv implements BackendService {
     return this.get('/api/search', query);
   }
 
-  getDashboardByUid(uid: string): Promise<DashboardDTO> {
+  async getDashboardByUid(uid: string): Promise<DashboardDTO> {
     if (uid.indexOf('/') > 0 && config.featureToggles.dashboardsFromStorage) {
       return getGrafanaStorage().getDashboard(uid);
     }
-    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+
+    // TODO: move this to the backend
+    const dashboardDTO = await this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+
+    if (!Array.isArray(dashboardDTO?.dashboard?.panels)) {
+      return dashboardDTO;
+    }
+
+    const savedQueryRefs = dashboardDTO.dashboard.panels?.map((p) => p?.savedQueryLink?.ref).filter(Boolean);
+
+    if (!savedQueryRefs?.length) {
+      return dashboardDTO;
+    }
+
+    const savedQueries = await getSavedQuerySrv().getSavedQueryByUids(savedQueryRefs);
+
+    dashboardDTO.dashboard.panels
+      ?.filter((p) => Boolean(p.savedQueryLink?.ref))
+      .forEach((p) => {
+        const savedQuery = savedQueries.find((s) => s.uid === p.savedQueryLink.ref.uid);
+        if (savedQuery) {
+          p.targets = savedQuery.queries;
+        }
+      });
+    return dashboardDTO;
   }
 
   getPublicDashboardByUid(uid: string) {

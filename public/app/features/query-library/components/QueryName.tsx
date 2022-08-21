@@ -6,10 +6,11 @@ import { Icon, Input, FieldValidationMessage, HorizontalGroup, useStyles2 } from
 
 export interface QueryNameProps {
   name: string;
+  editingEnabled: boolean;
   onChange: (v: string) => void;
 }
 
-export const QueryName = ({ name, onChange }: QueryNameProps) => {
+export const QueryName = ({ name, onChange, editingEnabled }: QueryNameProps) => {
   const styles = useStyles2(getStyles);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -65,7 +66,7 @@ export const QueryName = ({ name, onChange }: QueryNameProps) => {
         {!isEditing && (
           <HorizontalGroup>
             <h2 className={styles.h2Style}>{name}</h2>
-            <Icon name="pen" className={styles.nameEditIcon} size="md" onClick={onEditQueryName} />
+            {editingEnabled && <Icon name="pen" className={styles.nameEditIcon} size="md" onClick={onEditQueryName} />}
           </HorizontalGroup>
         )}
 

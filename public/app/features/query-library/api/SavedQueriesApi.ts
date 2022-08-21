@@ -3,6 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { DataQuery } from '@grafana/data/src';
 
 import { ItemOptions } from '../../storage/types';
+import { SavedQueryUpdateOpts } from '../components/QueryEditorDrawer';
 
 import { getSavedQuerySrv } from './SavedQueriesSrv';
 
@@ -52,9 +53,9 @@ const api = createApi({
         };
       },
     }),
-    updateSavedQuery: build.mutation<null, SavedQuery>({
+    updateSavedQuery: build.mutation<null, { query: SavedQuery; opts: SavedQueryUpdateOpts }>({
       async queryFn(arg) {
-        await getSavedQuerySrv().updateSavedQuery(arg);
+        await getSavedQuerySrv().updateSavedQuery(arg.query, arg.opts);
         return {
           data: null,
         };

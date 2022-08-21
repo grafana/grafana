@@ -8,3 +8,7 @@ export const defaultQuery: DataQuery = {
   },
   queryType: 'measurements',
 };
+
+export const implementationComingSoonAlert = () => {
+  alert('Implementation coming soon!');
+};

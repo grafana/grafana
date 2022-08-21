@@ -7,8 +7,10 @@ import { getDataSourceSrv } from '@grafana/runtime/src';
 import { Icon, Tooltip } from '@grafana/ui';
 import { Badge, IconButton, useStyles2 } from '@grafana/ui/src';
 
+import { useAppNotification } from '../../../core/copy/appNotification';
 import { getSavedQuerySrv } from '../api/SavedQueriesSrv';
 import { QueryItem } from '../types';
+import { implementationComingSoonAlert } from '../utils';
 
 import { QueryEditorDrawer } from './QueryEditorDrawer';
 
@@ -21,8 +23,16 @@ type QueryListItemProps = {
   date: string;
 };
 
+const hardcodedRepo = 'https://github.com/ArturWierzbicki/test-repo-export/tree/main/org_1/root/';
+
+const options = {
+  type: 'edit',
+} as const;
+
 export const QueryListItem = memo(
   ({ query, showModal, hideModal, updateComponent, author, date }: QueryListItemProps) => {
+    const notifyApp = useAppNotification();
+
     const styles = useStyles2(getStyles);
     const [dsInfo, setDsInfo] = useState<DataSourceApi[]>([]);
 
@@ -30,6 +40,7 @@ export const QueryListItem = memo(
     const regexp = new RegExp(gitUidStart);
 
     const hasGitIntegration = regexp.test(query.uid);
+    const gitUrl = hasGitIntegration ? `${hardcodedRepo}${query.uid.substring('it/'.length)}` : hardcodedRepo;
 
     useEffect(() => {
       const getQueryDsInstance = async () => {
@@ -49,7 +60,7 @@ export const QueryListItem = memo(
       const result = await getSavedQuerySrv().getSavedQueryByUids([{ uid: query.uid }]);
       const savedQuery = result[0];
 
-      showModal(QueryEditorDrawer, { onDismiss: closeDrawer, savedQuery: savedQuery });
+      showModal(QueryEditorDrawer, { onDismiss: closeDrawer, savedQuery: savedQuery, options });
     };
 
     const deleteQuery = async () => {
@@ -84,15 +95,50 @@ export const QueryListItem = memo(
       );
     };
 
+    const copyToClipboard = async () => {
+      const models = await getSavedQuerySrv().getSavedQueryByUids([{ uid: query.uid }]);
+      if (!models?.length) {
+        implementationComingSoonAlert();
+        return;
+      }
+
+      await navigator.clipboard.writeText(
+        JSON.stringify(
+          {
+            ...models[0],
+            uid: undefined,
+            storageOptions: undefined,
+          },
+          null,
+          2
+        )
+      );
+      notifyApp.success('Query JSON copied to clipboard!');
+    };
+
     return (
       <tr key={query.uid} className={styles.row}>
-        <td onClick={openDrawer}>
-          <Icon name={'lock'} className={styles.disabled} />
+        <td onClick={implementationComingSoonAlert}>
+          <Icon name={'lock'} className={styles.disabled} title={'Implementation coming soon!'} />
         </td>
-        <td onClick={openDrawer}>
-          <Badge color={'green'} text={'1'} icon={'link'} />
+        <td>
+          <Badge
+            color={'green'}
+            text={'1'}
+            icon={'link'}
+            tooltip={
+              'Implementation coming soon! Saved query usages (alerts and dashboards) are visible in the Query Editor drawer'
+            }
+          />
           {hasGitIntegration && (
-            <img src={'public/app/features/query-library/img/git.png'} alt="git icon" className={styles.gitIcon} />
+            <a href={gitUrl}>
+              <img
+                src={'public/app/features/query-library/img/git.png'}
+                alt="git icon"
+                className={styles.gitIcon}
+                title={gitUrl}
+              />
+            </a>
           )}
         </td>
         <td onClick={openDrawer}>{query.title}</td>
@@ -120,11 +166,15 @@ export const QueryListItem = memo(
         </td>
         <td onClick={openDrawer}>{date}</td>
         <td className={styles.tableTr}>
-          <IconButton name="share-alt" tooltip={'Share'} />
-          <IconButton name="copy" tooltip={'Copy'} />
-          <IconButton name="upload" tooltip={'Upload'} />
-          <IconButton name="cog" tooltip={'Settings'} />
-          <IconButton name="trash-alt" tooltip={'Delete'} onClick={deleteQuery} />
+          <IconButton name="share-alt" tooltip={'Share'} onClick={implementationComingSoonAlert} />
+          <IconButton name="copy" tooltip={'Copy'} onClick={copyToClipboard} />
+          <IconButton name="upload" tooltip={'Upload'} onClick={implementationComingSoonAlert} />
+          <IconButton name="cog" tooltip={'Settings'} onClick={implementationComingSoonAlert} />
+          <IconButton
+            name="trash-alt"
+            tooltip={'Delete'}
+            onClick={hasGitIntegration ? implementationComingSoonAlert : deleteQuery}
+          />
         </td>
       </tr>
     );
