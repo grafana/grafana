@@ -133,14 +133,14 @@ func (l storageQueriesLoader) isQueryFromGit(file *filestorage.File) bool {
 
 	query, err := simplejson.NewJson(file.Contents)
 	if err != nil {
-		l.logger.Debug("Skipping git query", "path", file.FullPath, "error", err)
+		l.logger.Info("Skipping git query", "path", file.FullPath, "error", err, "contentsLength", len(file.Contents))
 		return false
 	}
 
 	l.logger.Debug("Parsing git query", "path", file.FullPath)
 	_, err = query.Get("queries").Array()
 	if err != nil {
-		l.logger.Debug("Skipping git query - no queries array", "path", file.FullPath, "error", err)
+		l.logger.Info("Skipping git query - no queries array", "path", file.FullPath, "error", err)
 		return false
 	}
 
