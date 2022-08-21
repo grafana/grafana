@@ -232,7 +232,8 @@ func ProvideService(
 			}
 		}
 
-		if !user.IsGrafanaAdmin {
+		// TODO remove, highqdemo
+		if !user.IsGrafanaAdmin && user.OrgRole != org.RoleAdmin {
 			return nil
 		}
 
