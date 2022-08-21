@@ -130,7 +130,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       <div ref={topOfViewRef}>
         <PageToolbar
           aria-label="Explore toolbar"
-          title={exploreId === ExploreId.left ? 'Explore' : undefined}
+          title={exploreId === ExploreId.left ? 'Explore' : ''}
           pageIcon={exploreId === ExploreId.left ? 'compass' : undefined}
           leftItems={[
             exploreId === ExploreId.left && (
