@@ -47,8 +47,8 @@ func (s *standardStorageService) RegisterHTTPRoutes(storageRoute routing.RouteRe
 	storageRoute.Get("/read/*", routing.Wrap(s.read))
 	storageRoute.Get("/options/*", routing.Wrap(s.getOptions))
 
-	// Write paths
-	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
+	// Write paths TODO revert to grafana admin after highqdemo
+	reqGrafanaAdmin := middleware.ReqOrgAdmin
 	storageRoute.Post("/write/*", reqGrafanaAdmin, routing.Wrap(s.doWrite))
 	storageRoute.Post("/delete/*", reqGrafanaAdmin, routing.Wrap(s.doDelete))
 	storageRoute.Post("/upload", reqGrafanaAdmin, routing.Wrap(s.doUpload))
