@@ -31,10 +31,12 @@ func NewCdkBlobStorage(log log.Logger, bucket *blob.Bucket, rootFolder string, f
 }
 
 func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error) {
-	contents, err := c.bucket.ReadAll(ctx, strings.ToLower(filePath))
+	pathToRetrieve := strings.ToLower(filePath)
+	contents, err := c.bucket.ReadAll(ctx, pathToRetrieve)
 
 	if err != nil && gcerrors.Code(err) == gcerrors.NotFound {
 		contents, err = c.bucket.ReadAll(ctx, filePath)
+		pathToRetrieve = filePath
 	}
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
@@ -42,7 +44,7 @@ func (c cdkBlobStorage) Get(ctx context.Context, filePath string) (*File, error)
 		}
 		return nil, err
 	}
-	attributes, err := c.bucket.Attributes(ctx, strings.ToLower(filePath))
+	attributes, err := c.bucket.Attributes(ctx, pathToRetrieve)
 	if err != nil {
 		return nil, err
 	}
