@@ -111,6 +111,8 @@ func (l storageQueriesLoader) LoadQueries(ctx context.Context, orgID int64, uid 
 				return nil, err
 			}
 
+			l.logger.Info("Extracted query", "uid", uid)
+
 			queries = append(queries, query{
 				uid:     uid,
 				slug:    uid,
