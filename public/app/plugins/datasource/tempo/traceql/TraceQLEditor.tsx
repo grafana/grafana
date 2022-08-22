@@ -44,7 +44,7 @@ export function TraceQLEditor(props: Props) {
         scrollBeyondLastLine: false,
         wordWrap: 'on',
       }}
-      onBeforeEditorMount={ensureTempoQL}
+      onBeforeEditorMount={ensureTraceQL}
       onEditorDidMount={(editor, monaco) => {
         setupAutocompleteFn(editor, monaco);
       }}
@@ -105,7 +105,7 @@ function useAutocomplete(datasource: TempoDatasource) {
 let traceqlSetupDone = false;
 const langId = 'traceql';
 
-function ensureTempoQL(monaco: Monaco) {
+function ensureTraceQL(monaco: Monaco) {
   if (!traceqlSetupDone) {
     traceqlSetupDone = true;
     const { aliases, extensions, mimetypes, def } = languageDefinition;
