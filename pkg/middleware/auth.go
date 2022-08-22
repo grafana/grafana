@@ -251,7 +251,7 @@ func ReqRoleForAppRoute(ps plugins.Store, preCond web.Handler) func(c *models.Re
 
 			if normalizePath(i.Path) == path {
 				found = true
-				if c.HasRole(i.Role) {
+				if i.Role == "" || c.HasRole(i.Role) {
 					allowed = true
 				}
 				break

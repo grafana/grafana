@@ -1,10 +1,14 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -110,6 +114,62 @@ func TestMiddlewareAuth(t *testing.T) {
 		sc.fakeReq("GET", "/api/snapshot").exec()
 		assert.Equal(t, 200, sc.resp.Code)
 	})
+
+	t.Run("Verify user's role when requesting app route which requires role", func(t *testing.T) {
+		tcs := []struct {
+			roleRequired org.RoleType
+			role         org.RoleType
+			expStatus    int
+			expBody      string
+		}{
+			{roleRequired: org.RoleViewer, role: org.RoleAdmin, expStatus: http.StatusOK, expBody: ""},
+			{roleRequired: org.RoleAdmin, role: org.RoleAdmin, expStatus: http.StatusOK, expBody: ""},
+			{roleRequired: org.RoleAdmin, role: org.RoleViewer, expStatus: http.StatusForbidden, expBody: ""},
+			{roleRequired: "", role: org.RoleViewer, expStatus: http.StatusOK, expBody: ""},
+			{roleRequired: org.RoleEditor, role: "", expStatus: http.StatusForbidden, expBody: ""},
+		}
+
+		for i, tc := range tcs {
+			t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
+				ps := newPluginStore(map[string]plugins.PluginDTO{
+					"test-datasource": {
+						JSONData: plugins.JSONData{
+							ID: "test-datasource",
+							Includes: []*plugins.Includes{
+								{
+									Type: plugins.PageIncludeType,
+									Role: tc.roleRequired,
+									Path: "/test",
+								},
+							},
+						},
+					},
+				})
+
+				middlewareScenario(t, t.Name(), func(t *testing.T, sc *scenarioContext) {
+					sc.m.Get("/a/:id/*", func(c *models.ReqContext) {
+						c.OrgRole = tc.role
+					}, ReqRoleForAppRoute(ps, sc.cfg), func(c *models.ReqContext) {
+						c.JSON(http.StatusOK, map[string]interface{}{})
+					})
+					sc.fakeReq("GET", "/a/test-datasource/test").exec()
+					assert.Equal(t, tc.expStatus, sc.resp.Code)
+					assert.Equal(t, tc.expBody, sc.resp.Body.String())
+				})
+			})
+		}
+	})
+
+	middlewareScenario(t, "404", func(t *testing.T, sc *scenarioContext) {
+		sc.m.Get("/a/:id/*", func(c *models.ReqContext) {
+			c.OrgRole = org.RoleAdmin
+		}, ReqRoleForAppRoute(newPluginStore(map[string]plugins.PluginDTO{}), sc.cfg), func(c *models.ReqContext) {
+			c.JSON(http.StatusOK, map[string]interface{}{})
+		})
+		sc.fakeReq("GET", "/a/test-datasource/test").exec()
+		assert.Equal(t, 404, sc.resp.Code)
+		assert.Equal(t, "", sc.resp.Body.String())
+	})
 }
 
 func TestRemoveForceLoginparams(t *testing.T) {
@@ -129,4 +189,22 @@ func TestRemoveForceLoginparams(t *testing.T) {
 			require.Equal(t, tc.exp, removeForceLoginParams(tc.inp))
 		})
 	}
+}
+
+type fakePluginStore struct {
+	plugins.Store
+
+	plugins map[string]plugins.PluginDTO
+}
+
+func newPluginStore(p map[string]plugins.PluginDTO) fakePluginStore {
+	return fakePluginStore{
+		plugins: p,
+	}
+}
+
+func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := pr.plugins[pluginID]
+
+	return p, exists
 }
