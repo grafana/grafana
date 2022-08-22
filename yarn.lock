@@ -21858,7 +21858,6 @@ __metadata:
     jest-fail-on-console: 2.4.2
     jest-junit: 14.0.0
     jest-matcher-utils: 28.1.3
-    jest-mock-console: 1.2.3
     jquery: 3.6.0
     js-yaml: ^4.1.0
     json-source-map: 0.6.1
@@ -24720,15 +24719,6 @@ __metadata:
     slash: ^3.0.0
     stack-utils: ^2.0.3
   checksum: 1f266854166dcc6900d75a88b54a25225a2f3710d463063ff1c99021569045c35c7d58557b25447a17eb3a65ce763b2f9b25550248b468a9d4657db365f39e96
-  languageName: node
-  linkType: hard
-
-"jest-mock-console@npm:1.2.3":
-  version: 1.2.3
-  resolution: "jest-mock-console@npm:1.2.3"
-  peerDependencies:
-    jest: ">= 22.4.2"
-  checksum: 16f449e309919309b87b6ffb7171ff1feccb628bac97c44aa59594951447833abaaac4957be4258e1c7ce3c54ef6e24cb1e2a7c310f7b8cbc6b598323819dc10
   languageName: node
   linkType: hard
 

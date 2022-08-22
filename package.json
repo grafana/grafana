@@ -209,7 +209,6 @@
     "jest-fail-on-console": "2.4.2",
     "jest-junit": "14.0.0",
     "jest-matcher-utils": "28.1.3",
-    "jest-mock-console": "1.2.3",
     "lerna": "5.2.0",
     "lint-staged": "13.0.3",
     "mini-css-extract-plugin": "2.6.1",
