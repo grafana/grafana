@@ -1,18 +1,93 @@
 ---
 aliases:
+  - /docs/grafana/latest/panels/transform-data/
+  - /docs/grafana/latest/panels/transformations/
+  - /docs/grafana/latest/panels/transformations/apply-transformations/
+  - /docs/grafana/latest/panels/transformations/config-from-query/
+  - /docs/grafana/latest/panels/transformations/rows-to-fields/
+  - /docs/grafana/latest/panels/transform-data/about-transformation/
+  - /docs/grafana/latest/panels/transform-data/add-transformation-to-data/
+  - /docs/grafana/latest/panels/transform-data/apply-transformation-to-data/
+  - /docs/grafana/latest/panels/transform-data/debug-transformation/
+  - /docs/grafana/latest/panels/transform-data/delete-transformation/
   - /docs/grafana/latest/panels/reference-transformation-functions/
   - /docs/grafana/latest/panels/transform-data/transformation-functions/
   - /docs/grafana/latest/panels/transformations/types-options/
-  - /docs/sources/panels/reference-transformation-functions/
-title: Transformation functions
-weight: 1000
+title: Transform data
+weight: 500
 ---
 
-# Reference: Transformation functions
+# Transform data
+
+Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
+
+- Rename fields
+- Join time series data
+- Perform mathematical operations across queries
+- Use the output of one transformation as the input to another transformation
+
+For users that rely on multiple views of the same dataset, transformations offer an efficient method of creating and maintaining numerous dashboards.
+
+You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
+
+> Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
+
+## Transformation types
+
+Grafana provides a number of ways that you can transform data. For a complete list of transformations, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
+
+## Order of transformations
+
+When there are multiple transformations, Grafana applies them in the order they are listed. Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
+
+The order in which Grafana applies transformations directly impacts the results. For example, if you use a Reduce transformation to condense all the results of one column into a single value, then you can only apply transformations to that single value.
+
+## Add a transformation function to data
+
+The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
+
+1. Navigate to the panel where you want to add one or more transformations.
+1. Click the panel title and then click **Edit**.
+1. Click the **Transform** tab.
+1. Click a transformation.
+
+   A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
+
+   For information about available calculations, refer to [Calculation types]({{< relref "../calculation-types/" >}}).
+
+1. To apply another transformation, click **Add transformation**.
+
+   This transformation acts on the result set returned by the previous transformation.
+
+   {{< figure src="/static/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+## Debug a transformation
+
+To see the input and the output result sets of the transformation, click the bug icon on the right side of the transformation row.
+
+The input and output results sets can help you debug a transformation.
+
+{{< figure src="/static/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+## Delete a transformation
+
+We recommend that you remove transformations that you don't need. When you delete a transformation, you remove the data from the visualization.
+
+**Before you begin:**
+
+- Identify all dashboards that rely on the transformation and inform impacted dashboard users.
+
+**To delete a transformation**:
+
+1. Open a panel for editing.
+1. Click the **Transform** tab.
+1. Click the trash icon next to the transformation you want to delete.
+
+## Transformation functions
 
 You can perform the following transformations on your data.
 
-## Add field from calculation
+### Add field from calculation
 
 Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
@@ -29,7 +104,7 @@ In the example below, I added two fields together and named them Sum.
 
 {{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-## Concatenate fields
+### Concatenate fields
 
 This transformation combines all fields from all frames into one result. Consider:
 
@@ -51,19 +126,19 @@ After you concatenate the fields, the data frame would be:
 | ---- | ------- | --- | ------ |
 | 15.4 | 1230233 | 3.2 | 5      |
 
-## Config from query results
+### Config from query results
 
 This transformation allow you to select one query and from it extract standard options like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
 
 If you want to extract a unique config for every row in the config query result then try the rows to fields transformation.
 
-### Options
+#### Options
 
 - **Config query**: Select the query that returns the data you want to use as configuration.
 - **Apply to**: Select what fields or series to apply the configuration to.
 - **Apply to options**: Usually a field type or field name regex depending on what option you selected in **Apply to**.
 
-## Convert field type
+### Convert field type
 
 This transformation changes the field type of the specified field.
 
@@ -93,7 +168,7 @@ The result:
 | 2019-01-01 00:00:00 | below | 29    |
 | 2020-01-01 00:00:00 | above | 22    |
 
-## Filter data by name
+### Filter data by name
 
 Use this transformation to remove portions of the query results.
 
@@ -118,7 +193,7 @@ Here is the same query using a Stat visualization.
 
 {{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-## Filter data by query
+### Filter data by query
 
 Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 
@@ -130,7 +205,7 @@ In the example below, the panel has three queries (A, B, C). I removed the B que
 
 > **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
 
-## Filter data by value
+### Filter data by value
 
 This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
@@ -191,7 +266,7 @@ In the example above we chose **Match all** because we wanted to include the row
 
 Conditions that are invalid or incompletely configured are ignored.
 
-## Group by
+### Group by
 
 This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types]({{< relref "../calculation-types/" >}}).
 
@@ -249,7 +324,7 @@ We would then get :
 
 This transformation allows you to extract some key information out of your time series and display them in a convenient way.
 
-## Join by field (outer join)
+### Join by field (outer join)
 
 Use this transformation to join multiple time series from a result set by field.
 
@@ -263,7 +338,7 @@ I applied a transformation to join the query results using the time field. Now I
 
 {{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-## Labels to fields
+### Labels to fields
 
 This transformation changes time series results that include labels or tags into a table where each label keys and values are included in the table result. The labels can be displayed either as columns or as row values.
 
@@ -291,7 +366,7 @@ In "Rows" mode, the result has a table for each series and show each label value
 | Server     | Server B |
 | Datacenter | EU       |
 
-### Value field name
+#### Value field name
 
 If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
 
@@ -299,7 +374,7 @@ If you selected Server as the **Value field name**, then you would get one field
 | ------------------- | ---------- | -------- | -------- |
 | 2020-07-07 11:34:20 | EU         | 1        | 2        |
 
-### Merging behavior
+#### Merging behavior
 
 The labels to fields transformer is internally two separate transformations. The first acts on single series and extracts labels to fields. The second is the [merge](#merge) transformation that joins all the results into a single table. The merge transformation tries to join on all matching fields. This merge step is required and cannot be turned off.
 
@@ -325,7 +400,7 @@ After merge:
 | 2020-07-07 11:34:20 | ServerA | 10    |            |
 | 2020-07-07 11:34:20 |         | 20    | EU         |
 
-## Merge
+### Merge
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/" >}}).
 
@@ -352,7 +427,7 @@ Here is the result after applying the Merge transformation.
 | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
 | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
 
-## Organize fields
+### Organize fields
 
 Use this transformation to rename, reorder, or hide fields returned by the query.
 
@@ -368,7 +443,7 @@ In the example below, I hid the value field and renamed Max and Min.
 
 {{< figure src="/static/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-## Reduce
+### Reduce
 
 The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
 
@@ -418,7 +493,7 @@ Query B:
 | --- | ------ |
 | 3.2 | 5      |
 
-## Rename by regex
+### Rename by regex
 
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
@@ -432,7 +507,7 @@ With the transformation applied, you can see we are left with just the remainder
 
 {{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-## Rows to fields
+### Rows to fields
 
 The rows to fields transformation converts rows into separate fields. This can be useful as fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
@@ -454,7 +529,7 @@ Useful when visualizing data in:
 - Stat
 - Pie chart
 
-### Map extra fields to labels
+#### Map extra fields to labels
 
 If a field does not map to config property Grafana will automatically use it as source for a label on the output field-
 
@@ -475,7 +550,7 @@ The extra labels can now be used in the field display name provide more complete
 
 If you want to extract config from one query and appply it to another you should use the config from query results transformation.
 
-### Example
+#### Example
 
 Input:
 
@@ -493,7 +568,7 @@ Output:
 
 As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
-## Prepare time series
+### Prepare time series
 
 > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
@@ -505,7 +580,7 @@ Select the `Multi-frame time series` option to transform the time series data fr
 
 Select the `Wide time series` option to transform the time series data frame from the long to the wide format.
 
-## Series to rows
+### Series to rows
 
 > **Note:** This transformation is available in Grafana 7.1+.
 
@@ -542,11 +617,11 @@ Here is the result after applying the Series to rows transformation.
 | 2020-07-07 09:30:57 | Humidity    | 33    |
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
-## Sort by
+### Sort by
 
 This transformation will sort each frame by the configured field, When `reverse` is checked, the values will return in the opposite order.
 
-## Limit
+### Limit
 
 Use this transformation to limit the number of rows displayed.
 
@@ -569,7 +644,7 @@ Here is the result after adding a Limit transformation with a value of '3':
 | 2020-07-07 11:34:20 | Humidity    | 22    |
 | 2020-07-07 10:32:20 | Humidity    | 29    |
 
-## Join by field (Inner join)
+### Join by field (Inner join)
 
 Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one single result and drop rows where a successful join isn't able to occur - performing an inner join.
 
