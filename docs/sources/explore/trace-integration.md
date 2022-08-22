@@ -24,7 +24,7 @@ For information on how to configure queries for the data sources listed above, r
 
 ## Trace View explanation
 
-This section explains the elements of the Trace View dashboard. 
+This section explains the elements of the Trace View dashboard.
 
 {{< figure src="/static/img/docs/explore/explore-trace-view-full-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 
