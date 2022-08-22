@@ -97,9 +97,6 @@ exports[`no enzyme tests`] = {
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2402631398": [
       [0, 17, 13, "RegExp match", "2409514259"]
-    ],
-    "public/app/plugins/datasource/prometheus/configuration/AzureCredentialsForm.test.tsx:3424320489": [
-      [0, 19, 13, "RegExp match", "2409514259"]
     ]
   }`
 };
