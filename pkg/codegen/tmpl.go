@@ -28,16 +28,29 @@ type (
 		LineageCUEPath string
 		GenLicense     bool
 	}
-
 	tvars_coremodel_registry struct {
 		Coremodels []tplVars
 	}
-
 	tvars_addenda struct {
 		tplVars
 	}
-
 	tvars_coremodel_imports struct {
 		PackageName string
+	}
+	tvars_plugin_lineage_binding struct {
+		SlotName               string
+		LatestMajv, LatestMinv uint
+	}
+	tvars_plugin_lineage_file struct {
+		PackageName string
+		PluginID    string
+		PluginType  string
+		SlotImpls   []tvars_plugin_lineage_binding
+		Header      tvars_autogen_header
+	}
+	tvars_cuetsy_multi struct {
+		Header   tvars_autogen_header
+		Imports  []*tsImport
+		Sections []tsSection
 	}
 )
