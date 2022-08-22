@@ -379,7 +379,7 @@
               "params": {
                 "type": "object",
                 "description": "Parameters for the token authentication request.",
-                "additionalProperties": false,
+                "additionalProperties": true,
                 "properties": {
                   "grant_type": {
                     "type": "string",
@@ -404,7 +404,7 @@
           "jwtTokenAuth": {
             "type": "object",
             "description": "For data source plugins. Token authentication section used with an JWT OAuth API.",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "properties": {
               "url": {
                 "type": "string",

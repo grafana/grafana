@@ -38,10 +38,10 @@ Apart from major performance improvements, the new Time series panel implements 
 The following documentation topics were added for this feature:
 
 - [Time series panel]({{< relref "../visualizations/time-series/" >}})
-- [Graph time series as lines]({{< relref "../visualizations/time-series/graph-time-series-as-lines/" >}})
-- [Graph time series as bars]({{< relref "../visualizations/time-series/graph-time-series-as-bars/" >}})
-- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points/" >}})
-- [Change axis display]({{< relref "../visualizations/time-series/change-axis-display/" >}})
+- [Graph time series as lines]({{< relref "../visualizations/time-series#line-style" >}})
+- [Graph time series as bars]({{< relref "../visualizations/time-series#bar-alignment" >}})
+- [Graph time series as points]({{< relref "../visualizations/time-series#show-points" >}})
+- [Change axis display]({{< relref "../visualizations/time-series#axis-options" >}})
 
 ### Node graph panel visualization (Beta)
 
@@ -61,7 +61,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/transform-data/transformation-functions/#sort-by" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/transform-data/" >}}).
 
 #### Filter data by value transform
 
@@ -69,7 +69,7 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/transformation-functions/#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/#filter-data-by-value" >}}).
 
 ### New override option
 

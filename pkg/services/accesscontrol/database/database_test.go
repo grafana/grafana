@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -79,12 +79,12 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			store, sql := setupTestEnv(t)
+			store, permissionStore, sql := setupTestEnv(t)
 
 			user, team := createUserAndTeam(t, sql, tt.orgID)
 
 			for _, id := range tt.userPermissions {
-				_, err := store.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+				_, err := permissionStore.SetUserResourcePermission(context.Background(), tt.orgID, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:write"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -93,7 +93,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.teamPermissions {
-				_, err := store.SetTeamResourcePermission(context.Background(), tt.orgID, team.Id, types.SetResourcePermissionCommand{
+				_, err := permissionStore.SetTeamResourcePermission(context.Background(), tt.orgID, team.Id, rs.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -102,7 +102,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.builtinPermissions {
-				_, err := store.SetBuiltInResourcePermission(context.Background(), tt.orgID, "Admin", types.SetResourcePermissionCommand{
+				_, err := permissionStore.SetBuiltInResourcePermission(context.Background(), tt.orgID, "Admin", rs.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -142,11 +142,11 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 
 func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	t.Run("expect permissions in all orgs to be deleted", func(t *testing.T) {
-		store, sql := setupTestEnv(t)
+		store, permissionsStore, sql := setupTestEnv(t)
 		user, _ := createUserAndTeam(t, sql, 1)
 
 		// generate permissions in org 1
-		_, err := store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
 			Actions:    []string{"dashboards:write"},
 			Resource:   "dashboards",
 			ResourceID: "1",
@@ -154,7 +154,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 		require.NoError(t, err)
 
 		// generate permissions in org 2
-		_, err = store.SetUserResourcePermission(context.Background(), 2, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+		_, err = permissionsStore.SetUserResourcePermission(context.Background(), 2, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
 			Actions:    []string{"dashboards:write"},
 			Resource:   "dashboards",
 			ResourceID: "1",
@@ -182,11 +182,11 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 
 	t.Run("expect permissions in org 1 to be deleted", func(t *testing.T) {
-		store, sql := setupTestEnv(t)
+		store, permissionsStore, sql := setupTestEnv(t)
 		user, _ := createUserAndTeam(t, sql, 1)
 
 		// generate permissions in org 1
-		_, err := store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+		_, err := permissionsStore.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
 			Actions:    []string{"dashboards:write"},
 			Resource:   "dashboards",
 			ResourceID: "1",
@@ -194,7 +194,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 		require.NoError(t, err)
 
 		// generate permissions in org 2
-		_, err = store.SetUserResourcePermission(context.Background(), 2, accesscontrol.User{ID: user.ID}, types.SetResourcePermissionCommand{
+		_, err = permissionsStore.SetUserResourcePermission(context.Background(), 2, accesscontrol.User{ID: user.ID}, rs.SetResourcePermissionCommand{
 			Actions:    []string{"dashboards:write"},
 			Resource:   "dashboards",
 			ResourceID: "1",
@@ -240,7 +240,9 @@ func createUserAndTeam(t *testing.T, sql *sqlstore.SQLStore, orgID int64) (*user
 	return user, team
 }
 
-func setupTestEnv(t testing.TB) (*AccessControlStore, *sqlstore.SQLStore) {
-	store := sqlstore.InitTestDB(t)
-	return ProvideService(store), store
+func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, *sqlstore.SQLStore) {
+	sql := sqlstore.InitTestDB(t)
+	acstore := ProvideService(sql)
+	permissionStore := rs.NewStore(sql)
+	return acstore, permissionStore, sql
 }

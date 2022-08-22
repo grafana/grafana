@@ -23,6 +23,7 @@ interface Props {
   setScrollTop?: (position: ScrollbarPosition) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
+  onScroll?: React.UIEventHandler;
 }
 
 /**
@@ -42,6 +43,7 @@ export const CustomScrollbar: FC<Props> = ({
   scrollRefCallback,
   updateAfterMountMs,
   scrollTop,
+  onScroll,
   children,
 }) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
@@ -75,7 +77,7 @@ export const CustomScrollbar: FC<Props> = ({
     }, updateAfterMountMs);
   }, [updateAfterMountMs]);
 
-  function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: any) {
+  function renderTrack(className: string, hideTrack: boolean | undefined, passedProps: JSX.IntrinsicElements['div']) {
     if (passedProps.style && hideTrack) {
       passedProps.style.display = 'none';
     }
@@ -84,28 +86,28 @@ export const CustomScrollbar: FC<Props> = ({
   }
 
   const renderTrackHorizontal = useCallback(
-    (passedProps: any) => {
+    (passedProps: JSX.IntrinsicElements['div']) => {
       return renderTrack('track-horizontal', hideHorizontalTrack, passedProps);
     },
     [hideHorizontalTrack]
   );
 
   const renderTrackVertical = useCallback(
-    (passedProps: any) => {
+    (passedProps: JSX.IntrinsicElements['div']) => {
       return renderTrack('track-vertical', hideVerticalTrack, passedProps);
     },
     [hideVerticalTrack]
   );
 
-  const renderThumbHorizontal = useCallback((passedProps: any) => {
+  const renderThumbHorizontal = useCallback((passedProps: JSX.IntrinsicElements['div']) => {
     return <div {...passedProps} className="thumb-horizontal" />;
   }, []);
 
-  const renderThumbVertical = useCallback((passedProps: any) => {
+  const renderThumbVertical = useCallback((passedProps: JSX.IntrinsicElements['div']) => {
     return <div {...passedProps} className="thumb-vertical" />;
   }, []);
 
-  const renderView = useCallback((passedProps: any) => {
+  const renderView = useCallback((passedProps: JSX.IntrinsicElements['div']) => {
     return <div {...passedProps} className="scrollbar-view" />;
   }, []);
 
@@ -132,6 +134,7 @@ export const CustomScrollbar: FC<Props> = ({
       renderThumbHorizontal={renderThumbHorizontal}
       renderThumbVertical={renderThumbVertical}
       renderView={renderView}
+      onScroll={onScroll}
     >
       {children}
     </Scrollbars>
