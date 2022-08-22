@@ -6,15 +6,18 @@ import { connect, ConnectedProps } from 'react-redux';
 import { ExploreUrlState, EventBusExtended, EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Themeable2, withTheme2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import store from 'app/core/store';
 import {
   DEFAULT_RANGE,
   ensureQueries,
+  queryDatasourceDetails,
   getTimeRange,
   getTimeRangeFromUrl,
   lastUsedDatasourceKeyForOrgId,
   parseUrlState,
 } from 'app/core/utils/explore';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
@@ -22,6 +25,7 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
 import Explore from './Explore';
+import { changeDatasource } from './state/datasource';
 import { initializeExplore, refreshExplore } from './state/explorePane';
 import { lastSavedUrl, cleanupPaneAction } from './state/main';
 
@@ -68,19 +72,35 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   async componentDidMount() {
     const { initialized, exploreId, initialDatasource, initialQueries, initialRange, panelsState } = this.props;
     const width = this.el?.offsetWidth ?? 0;
-
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
     if (!initialized) {
-      let datasourceOverride = undefined;
+      let queriesDatasourceOverride = undefined;
+      let rootDatasourceOverride = undefined;
       // if this is starting with no queries and an initial datasource exists, look up the ref to use it (initial datasource can be a UID or name here)
       if (initialQueries.length === 0 && initialDatasource) {
         const datasource = await getDatasourceSrv().get(initialDatasource);
-        datasourceOverride = datasource.getRef();
+        queriesDatasourceOverride = datasource.getRef();
       }
-      const queries = await ensureQueries(initialQueries, datasourceOverride); // this will return an empty array if there are no datasources
+
+      const queries = await ensureQueries(initialQueries, queriesDatasourceOverride); // this will return an empty array if there are no datasources
+
+      const queriesDatasourceDetails = queryDatasourceDetails(queries);
+      if (!queriesDatasourceDetails.noneHaveDatasource) {
+        if (!queryDatasourceDetails(queries).allDatasourceSame) {
+          if (config.featureToggles.exploreMixedDatasource) {
+            rootDatasourceOverride = await getDatasourceSrv().get(MIXED_DATASOURCE_NAME);
+          } else {
+            const changeDatasourceUid = queries.find((query) => query.datasource?.uid)!.datasource!.uid;
+            if (changeDatasourceUid) {
+              this.props.changeDatasource(exploreId, changeDatasourceUid, { importQueries: true });
+            }
+          }
+        }
+      }
+
       this.props.initializeExplore(
         exploreId,
-        queries[0].datasource || initialDatasource,
+        rootDatasourceOverride || queries[0]?.datasource || initialDatasource,
         queries,
         initialRange,
         width,
@@ -150,6 +170,7 @@ const mapDispatchToProps = {
   initializeExplore,
   refreshExplore,
   cleanupPaneAction,
+  changeDatasource,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

@@ -70,7 +70,6 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
    */
   let exploreTargets: DataQuery[] = panel.targets.map((t) => omit(t, 'legendFormat'));
   let url: string | undefined;
-
   // if the mixed datasource is not enabled for explore, choose only one datasource
   if (
     config.featureToggles.exploreMixedDatasource === false &&
@@ -296,10 +295,11 @@ export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: D
   return { ...target, refId, key };
 };
 
-const queryDatasourceDetails = (queries: DataQuery[]) => {
+export const queryDatasourceDetails = (queries: DataQuery[]) => {
   const allUIDs = queries.map((query) => query.datasource?.uid);
   return {
     allHaveDatasource: allUIDs.length === queries.length,
+    noneHaveDatasource: allUIDs.length === 0,
     allDatasourceSame: allUIDs.every((val, i, arr) => val === arr[0]),
   };
 };
@@ -331,35 +331,9 @@ export async function ensureQueries(
     }
     return allQueries;
   }
-
   try {
-    // use override ds if passed
-    let emptyQueryRef = newQueryDataSourceOverride;
-    if (emptyQueryRef === undefined) {
-      // with no queries, last value or default datasource
-      if (!queries || queries.length === 0) {
-        emptyQueryRef = (await getDataSourceSrv().get()).getRef();
-      } else {
-        // if all queries have the same datasource, use that
-        const queryDSDetails = queryDatasourceDetails(queries);
-        if (queryDSDetails.allHaveDatasource && queryDSDetails.allDatasourceSame) {
-          emptyQueryRef = queries[0].datasource || undefined; // will never be undefined
-        } else {
-          // if they all have datasources, they are not all the same, and mixed is allowed, datasource is mixed
-          if (
-            queryDSDetails.allHaveDatasource &&
-            !queryDSDetails.allDatasourceSame &&
-            config.featureToggles.exploreMixedDatasource
-          ) {
-            emptyQueryRef = (await getDataSourceSrv().get('-- Mixed --')).getRef();
-          } else {
-            // otherwise it is some sort of invalid state, use default
-            emptyQueryRef = (await getDataSourceSrv().get()).getRef();
-          }
-        }
-      }
-    }
-
+    // if a datasource override get its ref, otherwise get the default datasource
+    const emptyQueryRef = newQueryDataSourceOverride ?? (await getDataSourceSrv().get()).getRef();
     const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, emptyQueryRef);
     return [emptyQuery];
   } catch {
