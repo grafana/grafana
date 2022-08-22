@@ -139,7 +139,6 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 
 				return "", err
 			}
-
 			continue
 		}
 
@@ -177,7 +176,7 @@ func extractSymlink(basePath string, file *zip.File, filePath string) error {
 		return fmt.Errorf("%v: %w", "failed to extract file", err)
 	}
 	buf := new(bytes.Buffer)
-	if _, err := io.Copy(buf, src); err != nil {
+	if _, err = io.Copy(buf, src); err != nil {
 		return fmt.Errorf("%v: %w", "failed to copy symlink contents", err)
 	}
 
@@ -186,7 +185,7 @@ func extractSymlink(basePath string, file *zip.File, filePath string) error {
 		return fmt.Errorf("symlink %q pointing outside plugin directory is not allowed", filePath)
 	}
 
-	if err := os.Symlink(symlinkPath, filePath); err != nil {
+	if err = os.Symlink(symlinkPath, filePath); err != nil {
 		return fmt.Errorf("failed to make symbolic link for %v: %w", filePath, err)
 	}
 	return nil
@@ -197,17 +196,16 @@ func extractSymlink(basePath string, file *zip.File, filePath string) error {
 func isSymlinkRelativeTo(basePath string, symlinkDestPath string, symlinkOrigPath string) bool {
 	if filepath.IsAbs(symlinkDestPath) {
 		return false
-	} else {
-		fileDir := filepath.Dir(symlinkOrigPath)
-		cleanPath := filepath.Clean(filepath.Join(fileDir, "/", symlinkDestPath))
-		p, err := filepath.Rel(basePath, cleanPath)
-		if err != nil {
-			return false
-		}
+	}
+	fileDir := filepath.Dir(symlinkOrigPath)
+	cleanPath := filepath.Clean(filepath.Join(fileDir, "/", symlinkDestPath))
+	p, err := filepath.Rel(basePath, cleanPath)
+	if err != nil {
+		return false
+	}
 
-		if p == ".." || strings.HasPrefix(p, ".."+string(filepath.Separator)) {
-			return false
-		}
+	if strings.HasPrefix(filepath.Clean(p), "..") {
+		return false
 	}
 
 	return true
