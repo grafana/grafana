@@ -326,11 +326,44 @@ This transformation allows you to extract some key information out of your time 
 
 ### Join by field
 
-Use this transformation to join multiple results into a single table.
+Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
+time series results into a single wide table with a shared time field.
 
-This transformation is especially useful if you want to combine queries so that you can calculate results from the fields.
+#### Inner join
+
+An inner join will merge data from multiple tables where all tables share the same value from the selected field. This will exclude
+data where values do not match in every result.
+
+Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one single result and drop rows where a successful join isn't able to occur - performing an inner join.
+
+In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the inner join transformation.
+
+Query A:
+
+| Time                | Job     | Uptime    |
+| ------------------- | ------- | --------- |
+| 2020-07-07 11:34:20 | node    | 25260122  |
+| 2020-07-07 11:24:20 | postgre | 123001233 |
+| 2020-07-07 11:14:20 | postgre | 345001233 |
+
+Query B:
+
+| Time                | Server   | Errors |
+| ------------------- | -------- | ------ |
+| 2020-07-07 11:34:20 | server 1 | 15     |
+| 2020-07-07 11:24:20 | server 2 | 5      |
+| 2020-07-07 11:04:20 | server 3 | 10     |
+
+Result after applying the inner join transformation:
+
+| Time                | Job     | Uptime    | Server   | Errors |
+| ------------------- | ------- | --------- | -------- | ------ |
+| 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
+| 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
 
 #### Outer join
+
+An outer join will include all data from an inner join, but will also include rows where values do not match in every input.
 
 Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one single result and drop rows where a successful join isn't able to occur - performing an inner join.
 
@@ -366,35 +399,6 @@ In the example below, I have a template query displaying time series data from m
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
 {{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
-#### Inner join
-
-Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one single result and drop rows where a successful join isn't able to occur - performing an inner join.
-
-In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the inner join transformation.
-
-Query A:
-
-| Time                | Job     | Uptime    |
-| ------------------- | ------- | --------- |
-| 2020-07-07 11:34:20 | node    | 25260122  |
-| 2020-07-07 11:24:20 | postgre | 123001233 |
-| 2020-07-07 11:14:20 | postgre | 345001233 |
-
-Query B:
-
-| Time                | Server   | Errors |
-| ------------------- | -------- | ------ |
-| 2020-07-07 11:34:20 | server 1 | 15     |
-| 2020-07-07 11:24:20 | server 2 | 5      |
-| 2020-07-07 11:04:20 | server 3 | 10     |
-
-Result after applying the inner join transformation:
-
-| Time                | Job     | Uptime    | Server   | Errors |
-| ------------------- | ------- | --------- | -------- | ------ |
-| 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
-| 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
 
 ### Labels to fields
 
