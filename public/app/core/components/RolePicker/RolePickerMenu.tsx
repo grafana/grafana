@@ -136,7 +136,7 @@ export const RolePickerMenu = ({
     }
   };
 
-  const onOpenSubMenu = (groupType: 'fixed' | 'custom', value: string) => {
+  const onOpenSubMenu = (groupType: GroupType, value: string) => {
     setOpenedMenuGroup(value);
     setShowSubMenu(true);
     const group = optionGroups[groupType].find((g) => {
