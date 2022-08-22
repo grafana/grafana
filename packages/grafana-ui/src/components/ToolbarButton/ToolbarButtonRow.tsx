@@ -11,6 +11,7 @@ import { useTheme2 } from '../../themes';
 import { ToolbarButton } from './ToolbarButton';
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   className?: string;
+  /** Determine flex-alignment of child buttons. Needed for overflow behaviour. */
   alignment?: 'left' | 'right';
 }
 

@@ -5,8 +5,8 @@ import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { ToolbarButton } from './ToolbarButton';
-import mdx from './ToolbarButton.mdx';
 import { ToolbarButtonRow } from './ToolbarButtonRow';
+import mdx from './ToolbarButtonRow.mdx';
 
 const meta: ComponentMeta<typeof ToolbarButtonRow> = {
   title: 'Buttons/ToolbarButton/ToolbarButtonRow',
