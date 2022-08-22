@@ -101,7 +101,7 @@ Delete a field override when you no longer need it. When you delete an override,
 You can view field overrides in the panel display options.
 
 1. Edit the panel that contains the overrides you want to view.
-1. In the panel display options, click the **Overrides** tab.
+1. In panel options side pane, scroll down until you see the overrides. 
 
 > The override settings that appear on the **All** tab are the same as the settings that appear on the **Overrides** tab.
 
