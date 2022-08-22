@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Node Graph",
   "id": "nodeGraph",
+  "builtIn": true,
   "state": "beta",
 
   "info": {

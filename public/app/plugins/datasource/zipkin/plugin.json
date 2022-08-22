@@ -3,6 +3,7 @@
   "name": "Zipkin",
   "id": "zipkin",
   "category": "tracing",
+  "builtIn": true,
 
   "metrics": true,
   "alerting": false,

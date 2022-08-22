@@ -15,6 +15,7 @@ seqs: [
 				// Unique name of the plugin. If the plugin is published on
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
+				id: string & strings.MinRunes(1)
 				id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([for t in _types {t}], "|")))$"
 
 				// types indicates the set of all plugin types. This private field solely
@@ -46,6 +47,13 @@ seqs: [
 				// If the plugin has a backend component.
 				backend?: bool
 
+				// builtin indicates whether the plugin is developed and shipped as part
+				// of Grafana. Also known as a "core plugin."
+				builtIn: bool | *false
+
+				// hideFromList excludes the plugin from listings in Grafana's UI.
+				hideFromList: bool | *false
+
 				// The first part of the file name of the backend component
 				// executable. There can be multiple executables built for
 				// different operating system and architecture. Grafana will
@@ -63,7 +71,7 @@ seqs: [
 				state?: #ReleaseState
 
 				// ReleaseState indicates release maturity state of a plugin.
-				#ReleaseState: "alpha" | "beta" | *"stable"
+				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
 
 				// Resources to include in plugin.
 				includes?: [...#Include]
@@ -190,7 +198,7 @@ seqs: [
 					}]
 
 					// SVG images that are used as plugin icons.
-					logos: {
+					logos?: {
 						// Link to the "small" version of the plugin logo, which must be
 						// an SVG image. "Large" and "small" logos can be the same image.
 						small: string
@@ -208,10 +216,10 @@ seqs: [
 					}]
 
 					// Date when this plugin was built.
-					updated: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
+					updated?: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
 
 					// Project version of this commit, e.g. `6.7.x`.
-					version: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
+					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
 				}
 
 				#BuildInfo: {

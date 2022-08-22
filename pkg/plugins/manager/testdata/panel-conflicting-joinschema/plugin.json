@@ -1,0 +1,15 @@
+{
+  "type": "panel",
+  "name": "Slot impl testing",
+  "id": "panel-conflicting-joinschema",
+  "builtIn": true,
+  "backend": true,
+  "state": "alpha",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

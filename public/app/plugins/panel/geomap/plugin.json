@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Geomap",
   "id": "geomap",
+  "builtIn": true,
 
   "info": {
     "description": "Geomap panel",

@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Parent",
   "id": "test-ds",
+  "builtIn": true,
   "backend": true,
   "info": {
     "description": "Parent plugin",

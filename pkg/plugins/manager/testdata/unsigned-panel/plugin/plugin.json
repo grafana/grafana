@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Test",
   "id": "test-panel",
+  "builtIn": true,
   "info": {
     "description": "Test panel",
     "author": {

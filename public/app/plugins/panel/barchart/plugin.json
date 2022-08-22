@@ -3,6 +3,7 @@
   "name": "Bar chart",
   "id": "barchart",
   "state": "beta",
+  "builtIn": true,
 
   "info": {
     "description": "Categorical charts with group support",

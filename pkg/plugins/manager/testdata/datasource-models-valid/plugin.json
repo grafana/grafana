@@ -1,0 +1,15 @@
+{
+  "type": "datasource",
+  "name": "Slot impl testing",
+  "id": "datasource-models-valid",
+  "builtIn": true,
+  "backend": true,
+  "state": "alpha",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

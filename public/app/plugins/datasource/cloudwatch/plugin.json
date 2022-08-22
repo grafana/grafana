@@ -3,6 +3,7 @@
   "name": "CloudWatch",
   "id": "cloudwatch",
   "category": "cloud",
+  "builtIn": true,
   "metrics": true,
   "logs": true,
   "alerting": true,

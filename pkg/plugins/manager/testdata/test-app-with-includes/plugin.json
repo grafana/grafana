@@ -2,6 +2,7 @@
   "type": "app",
   "name": "Test App",
   "id": "test-app",
+  "builtIn": true,
   "info": {
     "description": "Official Grafana Test App & Dashboard bundle",
     "author": {

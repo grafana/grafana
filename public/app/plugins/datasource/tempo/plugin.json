@@ -3,6 +3,7 @@
   "name": "Tempo",
   "id": "tempo",
   "category": "tracing",
+  "builtIn": true,
 
   "metrics": true,
   "alerting": false,

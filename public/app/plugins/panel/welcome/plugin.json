@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Welcome",
   "id": "welcome",
+  "builtIn": true,
 
   "skipDataQuery": true,
   "hideFromList": true,

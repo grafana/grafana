@@ -3,6 +3,7 @@
   "name": "Microsoft SQL Server",
   "id": "mssql",
   "category": "sql",
+  "builtIn": true,
 
   "info": {
     "description": "Data source for Microsoft SQL Server compatible databases",

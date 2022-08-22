@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Dashboard list",
   "id": "dashlist",
+  "builtIn": true,
 
   "skipDataQuery": true,
 

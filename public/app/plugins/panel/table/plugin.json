@@ -2,6 +2,7 @@
   "type": "panel",
   "name": "Table",
   "id": "table",
+  "builtIn": true,
 
   "models": {
     "version": [1, 0],

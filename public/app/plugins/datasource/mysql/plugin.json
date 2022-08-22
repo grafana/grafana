@@ -3,6 +3,7 @@
   "name": "MySQL",
   "id": "mysql",
   "category": "sql",
+  "builtIn": true,
 
   "info": {
     "description": "Data source for MySQL databases",

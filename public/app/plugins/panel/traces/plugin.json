@@ -3,6 +3,7 @@
   "name": "Traces",
   "id": "traces",
   "state": "beta",
+  "builtIn": true,
 
   "info": {
     "author": {

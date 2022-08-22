@@ -3,6 +3,7 @@
   "name": "OpenTSDB",
   "id": "opentsdb",
   "category": "tsdb",
+  "builtIn": true,
 
   "metrics": true,
   "defaultMatchFormat": "pipe",

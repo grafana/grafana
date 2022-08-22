@@ -3,6 +3,7 @@
   "name": "Debug",
   "id": "debug",
   "state": "alpha",
+  "builtIn": true,
 
   "info": {
     "description": "Debug Panel for Grafana",

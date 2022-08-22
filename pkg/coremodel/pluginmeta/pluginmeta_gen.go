@@ -32,6 +32,11 @@ const (
 	CategoryTsdb Category = "tsdb"
 )
 
+// Defines values for PluginmetaHideFromList.
+const (
+	HideFromListFalse HideFromList = false
+)
+
 // Defines values for PluginmetaType.
 const (
 	TypeApp Type = "app"
@@ -86,6 +91,8 @@ const (
 
 	ReleaseStateBeta ReleaseState = "beta"
 
+	ReleaseStateDeprecated ReleaseState = "deprecated"
+
 	ReleaseStateStable ReleaseState = "stable"
 )
 
@@ -107,6 +114,10 @@ type Model struct {
 
 	// If the plugin has a backend component.
 	Backend *bool `json:"backend,omitempty"`
+
+	// builtin indicates whether the plugin is developed and shipped as part
+	// of Grafana. Also known as a "core plugin."
+	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
 	Category *Category `json:"category,omitempty"`
@@ -145,6 +156,10 @@ type Model struct {
 	// For data source plugins, include hidden queries in the data
 	// request.
 	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
+
+	// hideFromList excludes the plugin from listings in Grafana's UI. Only
+	// allowed for builtin plugins.
+	HideFromList HideFromList `json:"hideFromList"`
 
 	// Unique name of the plugin. If the plugin is published on
 	// grafana.com, then the plugin id has to follow the naming
@@ -203,10 +218,10 @@ type Model struct {
 		} `json:"screenshots,omitempty"`
 
 		// Date when this plugin was built.
-		Updated string `json:"updated"`
+		Updated *string `json:"updated,omitempty"`
 
 		// Project version of this commit, e.g. `6.7.x`.
-		Version string `json:"version"`
+		Version *string `json:"version,omitempty"`
 	} `json:"info"`
 
 	// For data source plugins, if the plugin supports logs.
@@ -269,6 +284,13 @@ type Model struct {
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Category string
+
+// hideFromList excludes the plugin from listings in Grafana's UI. Only
+// allowed for builtin plugins.
+//
+// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
+// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
+type HideFromList bool
 
 // type indicates which type of Grafana plugin this is, of the defined
 // set of Grafana plugin types.
@@ -438,10 +460,10 @@ type Info struct {
 	} `json:"screenshots,omitempty"`
 
 	// Date when this plugin was built.
-	Updated string `json:"updated"`
+	Updated *string `json:"updated,omitempty"`
 
 	// Project version of this commit, e.g. `6.7.x`.
-	Version string `json:"version"`
+	Version *string `json:"version,omitempty"`
 }
 
 // TODO docs
