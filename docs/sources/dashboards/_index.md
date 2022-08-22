@@ -20,7 +20,7 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Manage dashboards]({{< relref "dashboard-manage/" >}})
 - [Public dashboards]({{< relref "dashboard-public/" >}})
 - [Annotations]({{< relref "annotations/" >}})
-- [Playlist]({{< relref "playlist/" >}})
+- [Playlist]({{< relref "./create-manage-playlists/" >}})
 - [Reporting]({{< relref "../share-dashboards-panels#reporting" >}})
 - [Time range controls]({{< relref "time-range-controls/" >}})
 - [Dashboard version history]({{< relref "dashboard-history/" >}})
