@@ -62,7 +62,7 @@ describe('initListMode', () => {
         action: expect.any(Object),
       },
     };
-    expect(mockDispatch).toHaveBeenCalledTimes(2);
+    expect(mockDispatch).toHaveBeenCalledTimes(1);
     expect(mockDispatch.mock.calls[0][0]).toMatchObject(keyedAction);
   });
 });
