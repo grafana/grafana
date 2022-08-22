@@ -21,11 +21,14 @@
 //
 // SecurityDefinitions:
 // basic:
-//  type: basic
+//
+//	type: basic
+//
 // api_key:
-//  type: apiKey
-//  name: Authorization
-//  in: header
+//
+//	type: apiKey
+//	name: Authorization
+//	in: header
 //
 // swagger:meta
 package api
@@ -65,7 +68,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
-	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.SQLStore)
+	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.userService)
 	quota := middleware.Quota(hs.QuotaService)
 
 	r := hs.RouteRegister

@@ -189,11 +189,10 @@ export class GraphiteDatasource
   }
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
-    const streams: Array<Observable<DataQueryResponse>> = [];
+    if (options.targets.some((target: GraphiteQuery) => target.fromAnnotations)) {
+      const streams: Array<Observable<DataQueryResponse>> = [];
 
-    for (const target of options.targets) {
-      // hiding target is handled in buildGraphiteParams
-      if (target.fromAnnotations) {
+      for (const target of options.targets) {
         streams.push(
           new Observable((subscriber) => {
             this.annotationEvents(options.range, target)
@@ -202,49 +201,46 @@ export class GraphiteDatasource
               .finally(() => subscriber.complete());
           })
         );
-      } else {
-        // handle the queries here
-        const graphOptions = {
-          from: this.translateTime(options.range.from, false, options.timezone),
-          until: this.translateTime(options.range.to, true, options.timezone),
-          targets: options.targets,
-          format: (options as GraphiteQueryRequest).format,
-          cacheTimeout: options.cacheTimeout || this.cacheTimeout,
-          maxDataPoints: options.maxDataPoints,
-        };
-
-        const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
-        if (params.length === 0) {
-          return of({ data: [] });
-        }
-
-        if (this.isMetricTank) {
-          params.push('meta=true');
-        }
-
-        const httpOptions: any = {
-          method: 'POST',
-          url: '/render',
-          data: params.join('&'),
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        };
-
-        this.addTracingHeaders(httpOptions, options);
-
-        if (options.panelId) {
-          httpOptions.requestId = this.name + '.panelId.' + options.panelId;
-        }
-
-        streams.push(this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames)));
       }
+
+      return merge(...streams);
     }
 
-    if (streams.length === 0) {
+    // handle the queries here
+    const graphOptions = {
+      from: this.translateTime(options.range.from, false, options.timezone),
+      until: this.translateTime(options.range.to, true, options.timezone),
+      targets: options.targets,
+      format: (options as GraphiteQueryRequest).format,
+      cacheTimeout: options.cacheTimeout || this.cacheTimeout,
+      maxDataPoints: options.maxDataPoints,
+    };
+
+    const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
+    if (params.length === 0) {
       return of({ data: [] });
     }
-    return merge(...streams);
+
+    if (this.isMetricTank) {
+      params.push('meta=true');
+    }
+
+    const httpOptions: any = {
+      method: 'POST',
+      url: '/render',
+      data: params.join('&'),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    };
+
+    this.addTracingHeaders(httpOptions, options);
+
+    if (options.panelId) {
+      httpOptions.requestId = this.name + '.panelId.' + options.panelId;
+    }
+
+    return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
   }
 
   addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {

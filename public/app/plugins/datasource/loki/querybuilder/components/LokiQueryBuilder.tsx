@@ -31,6 +31,7 @@ export interface Props {
   onChange: (update: LokiVisualQuery) => void;
   onRunQuery: () => void;
 }
+export const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
 
 export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, showExplain }) => {
   const [sampleData, setSampleData] = useState<PanelData>();
@@ -83,7 +84,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
       if (op.length === 1 && op[0].id === LokiOperationId.LineContains && op[0].params[0] === '') {
         return undefined;
       }
-      return 'You need to specify at least 1 label filter (stream selector)';
+      return MISSING_LABEL_FILTER_ERROR_MESSAGE;
     }
     return undefined;
   }, [query]);

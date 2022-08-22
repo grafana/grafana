@@ -4,7 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -19,24 +20,27 @@ type APIKey struct {
 	OrgId            int64
 	Name             string
 	Key              string
-	Role             models.RoleType
+	Role             org.RoleType
 	Created          time.Time
 	Updated          time.Time
 	LastUsedAt       *time.Time `xorm:"last_used_at"`
 	Expires          *int64
 	ServiceAccountId *int64
+	IsRevoked        *bool `xorm:"is_revoked"`
 }
 
 func (k APIKey) TableName() string { return "api_key" }
 
 // swagger:model
 type AddCommand struct {
-	Name          string          `json:"name" binding:"Required"`
-	Role          models.RoleType `json:"role" binding:"Required"`
-	OrgId         int64           `json:"-"`
-	Key           string          `json:"-"`
-	SecondsToLive int64           `json:"secondsToLive"`
-	Result        *APIKey         `json:"-"`
+	Name             string       `json:"name" binding:"Required"`
+	Role             org.RoleType `json:"role" binding:"Required"`
+	OrgId            int64        `json:"-"`
+	Key              string       `json:"-"`
+	SecondsToLive    int64        `json:"secondsToLive"`
+	ServiceAccountID *int64       `json:"-"`
+
+	Result *APIKey `json:"-"`
 }
 
 type DeleteCommand struct {
@@ -47,7 +51,7 @@ type DeleteCommand struct {
 type GetApiKeysQuery struct {
 	OrgId          int64
 	IncludeExpired bool
-	User           *models.SignedInUser
+	User           *user.SignedInUser
 	Result         []*APIKey
 }
 type GetByNameQuery struct {

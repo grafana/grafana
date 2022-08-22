@@ -2,7 +2,7 @@ package graphite
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"reflect"
 	"strings"
@@ -68,7 +68,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		)
 		expectedFrames := data.Frames{expectedFrame}
 
-		httpResponse := &http.Response{StatusCode: 200, Body: ioutil.NopCloser(strings.NewReader(body))}
+		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
 		dataFrames, err := service.toDataFrames(httpResponse)
 
 		require.NoError(t, err)
@@ -101,7 +101,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		)
 		expectedFrames := data.Frames{expectedFrame}
 
-		httpResponse := &http.Response{StatusCode: 200, Body: ioutil.NopCloser(strings.NewReader(body))}
+		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
 		dataFrames, err := service.toDataFrames(httpResponse)
 
 		require.NoError(t, err)

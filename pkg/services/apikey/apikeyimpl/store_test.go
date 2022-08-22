@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func mockTimeNow() {
@@ -141,8 +141,8 @@ func TestIntegrationApiKeyDataAccess(t *testing.T) {
 			// advance mocked getTime by 1s
 			timeNow()
 
-			testUser := &models.SignedInUser{
-				OrgId: 1,
+			testUser := &user.SignedInUser{
+				OrgID: 1,
 				Permissions: map[int64]map[string][]string{
 					1: {accesscontrol.ActionAPIKeyRead: []string{accesscontrol.ScopeAPIKeysAll}},
 				},
@@ -208,7 +208,7 @@ func TestIntegrationApiKeyErrors(t *testing.T) {
 
 type getApiKeysTestCase struct {
 	desc            string
-	user            *models.SignedInUser
+	user            *user.SignedInUser
 	expectedNumKeys int
 }
 
@@ -219,21 +219,21 @@ func TestIntegrationSQLStore_GetAPIKeys(t *testing.T) {
 	tests := []getApiKeysTestCase{
 		{
 			desc: "expect all keys for wildcard scope",
-			user: &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 				1: {"apikeys:read": {"apikeys:*"}},
 			}},
 			expectedNumKeys: 10,
 		},
 		{
 			desc: "expect only api keys that user have scopes for",
-			user: &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 				1: {"apikeys:read": {"apikeys:id:1", "apikeys:id:3"}},
 			}},
 			expectedNumKeys: 2,
 		},
 		{
 			desc: "expect no keys when user have no scopes",
-			user: &models.SignedInUser{OrgId: 1, Permissions: map[int64]map[string][]string{
+			user: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 				1: {"apikeys:read": {}},
 			}},
 			expectedNumKeys: 0,

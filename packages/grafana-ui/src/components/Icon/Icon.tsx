@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes/stylesFactory';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
 
 import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
@@ -18,7 +17,7 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
 }
 
-const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
+const getIconStyles = (theme: GrafanaTheme2) => {
   return {
     // line-height: 0; is needed for correct icon alignment in Safari
     container: css`
@@ -32,14 +31,14 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
       fill: currentColor;
     `,
     orange: css`
-      fill: ${theme.palette.orange};
+      fill: ${theme.v1.palette.orange};
     `,
   };
-});
+};
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   ({ size = 'md', type = 'default', name, className, style, title = '', ...divElementProps }, ref) => {
-    const theme = useTheme();
+    const styles = useStyles2(getIconStyles);
 
     /* Temporary solution to display also font awesome icons */
     if (name?.startsWith('fa fa-')) {
@@ -54,7 +53,6 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
       initIconCache();
     }
 
-    const styles = getIconStyles(theme);
     const svgSize = getSvgSize(size);
     const svgHgt = svgSize;
     const svgWid = name?.startsWith('gf-bar-align') ? 16 : name?.startsWith('gf-interp') ? 30 : svgSize;

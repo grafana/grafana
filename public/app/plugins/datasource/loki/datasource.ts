@@ -568,11 +568,11 @@ export class LokiDatasource
             // and any other that were logged in the same ns but before the row. Right now these rows will be lost
             // because the are before but came it he response that should return only rows after.
             from: timestamp,
-            // convert to ns, we loose some precision here but it is not that important at the far points of the context
+            // convert to ns, we lose some precision here but it is not that important at the far points of the context
             to: toUtc(row.timeEpochMs + contextTimeBuffer),
           }
         : {
-            // convert to ns, we loose some precision here but it is not that important at the far points of the context
+            // convert to ns, we lose some precision here but it is not that important at the far points of the context
             from: toUtc(row.timeEpochMs - contextTimeBuffer),
             to: timestamp,
           };

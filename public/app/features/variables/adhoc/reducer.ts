@@ -26,6 +26,7 @@ export const adHocVariableSlice = createSlice({
       if (instanceState.type !== 'adhoc') {
         return;
       }
+
       instanceState.filters.push(action.payload.data);
     },
     filterRemoved: (state: VariablesState, action: PayloadAction<VariablePayload<number>>) => {
@@ -33,8 +34,8 @@ export const adHocVariableSlice = createSlice({
       if (instanceState.type !== 'adhoc') {
         return;
       }
-      const index = action.payload.data;
 
+      const index = action.payload.data;
       instanceState.filters.splice(index, 1);
     },
     filterUpdated: (state: VariablesState, action: PayloadAction<VariablePayload<AdHocVariabelFilterUpdate>>) => {
@@ -42,8 +43,8 @@ export const adHocVariableSlice = createSlice({
       if (instanceState.type !== 'adhoc') {
         return;
       }
-      const { filter, index } = action.payload.data;
 
+      const { filter, index } = action.payload.data;
       instanceState.filters[index] = filter;
     },
     filtersRestored: (state: VariablesState, action: PayloadAction<VariablePayload<AdHocVariableFilter[]>>) => {
@@ -51,6 +52,7 @@ export const adHocVariableSlice = createSlice({
       if (instanceState.type !== 'adhoc') {
         return;
       }
+
       instanceState.filters = action.payload.data;
     },
   },

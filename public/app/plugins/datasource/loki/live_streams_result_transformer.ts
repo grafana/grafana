@@ -50,7 +50,7 @@ function createUid(ts: string, labelsString: string, line: string, usedUids: any
   let id = uuidv5(`${ts}_${labelsString}_${line}`, UUID_NAMESPACE);
 
   // Check if generated id is unique
-  // If not and we've already used it, append it's count after it
+  // If not and we've already used it, append its count after it
   if (id in usedUids) {
     // Increase the count
     const newCount = usedUids[id] + 1;

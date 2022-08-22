@@ -3,6 +3,8 @@ package models
 import (
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Folder struct {
@@ -91,11 +93,11 @@ type UpdateFolderCommand struct {
 //
 
 type HasEditPermissionInFoldersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       bool
 }
 
 type HasAdminPermissionInDashboardsOrFoldersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       bool
 }
