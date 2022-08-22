@@ -65,9 +65,9 @@ In the future we will add more workflows and integrations so that correlating be
 
 The data you want to visualize can come from many different places and it is usually not in exactly the right form. Users can now transform non-time series data into tables (e.g., JSON files or even simple lookup tables) in seconds without any customization or additional overhead. They can then combine non-time series data with any other data in Grafana; data from an external database or a panel that already exists in one of their current dashboards.
 
-By chaining a simple set of point and click [transformations]({{< relref "../panels/transform-data/transformation-functions/" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
+By chaining a simple set of point and click [transformations]({{< relref "../panels/transform-data/#transformation-functions" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
 
-[Transformations]({{< relref "../panels/transform-data/about-transformation/" >}}) also adds the ability to do math across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
+[Transformations]({{< relref "../panels/transform-data/" >}}) also adds the ability to do math across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
 
 For users with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain for slow queries (e.g log or sql queries). From the data source menu in the query editor, you can choose the `--dashboard--` option and then choose the query result from another panel on the same dashboard.
 
@@ -85,7 +85,7 @@ We are also introducing a new shared data model for both time series and table d
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another and add the result to a new field.
 
-Learn more about this feature in [Transformations]({{< relref "../panels/transform-data/transformation-functions/" >}}).
+Learn more about this feature in [Transformations](({{< relref "../panels/transform-data/#transformation-functions" >}}).
 
 ## Field options and overrides
 
