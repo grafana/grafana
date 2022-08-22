@@ -118,9 +118,9 @@ func (g *dashboardGuardianImpl) logHasPermissionResult(permission models.Permiss
 	}
 
 	if hasPermission {
-		g.log.Debug("User granted access to execute action", "userId", g.user.UserId, "orgId", g.orgId, "uname", g.user.Login, "dashId", g.dashId, "action", permission)
+		g.log.Debug("User granted access to execute action", "userId", g.user.UserID, "orgId", g.orgId, "uname", g.user.Login, "dashId", g.dashId, "action", permission)
 	} else {
-		g.log.Debug("User denied access to execute action", "userId", g.user.UserId, "orgId", g.orgId, "uname", g.user.Login, "dashId", g.dashId, "action", permission)
+		g.log.Debug("User denied access to execute action", "userId", g.user.UserID, "orgId", g.orgId, "uname", g.user.Login, "dashId", g.dashId, "action", permission)
 	}
 
 	return hasPermission, err
@@ -133,7 +133,7 @@ func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl [
 	for _, p := range acl {
 		// user match
 		if !g.user.IsAnonymous && p.UserId > 0 {
-			if p.UserId == g.user.UserId && p.Permission >= permission {
+			if p.UserId == g.user.UserID && p.Permission >= permission {
 				return true, nil
 			}
 		}
@@ -275,7 +275,7 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 		return g.teams, nil
 	}
 
-	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId, SignedInUser: g.user}
+	query := models.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserID, SignedInUser: g.user}
 	err := g.store.GetTeamsByUser(g.ctx, &query)
 
 	g.teams = query.Result

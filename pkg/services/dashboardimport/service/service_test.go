@@ -65,7 +65,7 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:     &user.SignedInUser{UserId: 2, OrgRole: org.RoleAdmin, OrgId: 3},
+			User:     &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
 			FolderId: 5,
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
@@ -75,7 +75,7 @@ func TestImportDashboardService(t *testing.T) {
 
 		require.NotNil(t, importDashboardArg)
 		require.Equal(t, int64(3), importDashboardArg.OrgId)
-		require.Equal(t, int64(2), importDashboardArg.User.UserId)
+		require.Equal(t, int64(2), importDashboardArg.User.UserID)
 		require.Equal(t, "prometheus", importDashboardArg.Dashboard.PluginId)
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderId)
 
@@ -122,7 +122,7 @@ func TestImportDashboardService(t *testing.T) {
 			Inputs: []dashboardimport.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "prom"},
 			},
-			User:     &user.SignedInUser{UserId: 2, OrgRole: org.RoleAdmin, OrgId: 3},
+			User:     &user.SignedInUser{UserID: 2, OrgRole: org.RoleAdmin, OrgID: 3},
 			FolderId: 5,
 		}
 		resp, err := s.ImportDashboard(context.Background(), req)
@@ -132,7 +132,7 @@ func TestImportDashboardService(t *testing.T) {
 
 		require.NotNil(t, importDashboardArg)
 		require.Equal(t, int64(3), importDashboardArg.OrgId)
-		require.Equal(t, int64(2), importDashboardArg.User.UserId)
+		require.Equal(t, int64(2), importDashboardArg.User.UserID)
 		require.Equal(t, "", importDashboardArg.Dashboard.PluginId)
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderId)
 

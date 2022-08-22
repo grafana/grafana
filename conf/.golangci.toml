@@ -13,6 +13,13 @@ ignore-generated-header = false
 severity = "warning"
 confidence = 3
 
+[linters-settings.depguard]
+list-type = "blacklist"
+include-go-root = true
+packages = ["io/ioutil"]
+[[linters-settings.depguard.packages-with-error-message]]
+"io/ioutil" = "Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details."
+
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]

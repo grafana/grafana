@@ -152,19 +152,19 @@ func (h *ContextHandler) Middleware(mContext *web.Context) {
 	case h.initContextWithAnonymousUser(reqContext):
 	}
 
-	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
+	reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
 	span.AddEvents(
 		[]string{"uname", "orgId", "userId"},
 		[]tracing.EventValue{
 			{Str: reqContext.Login},
-			{Num: reqContext.OrgId},
-			{Num: reqContext.UserId}},
+			{Num: reqContext.OrgID},
+			{Num: reqContext.UserID}},
 	)
 
 	// update last seen every 5min
 	if reqContext.ShouldUpdateLastSeenAt() {
-		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
-		if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserId}); err != nil {
+		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)
+		if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID}); err != nil {
 			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
@@ -188,7 +188,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqCont
 	reqContext.AllowAnonymous = true
 	reqContext.SignedInUser = &user.SignedInUser{IsAnonymous: true}
 	reqContext.OrgRole = org.RoleType(h.Cfg.AnonymousOrgRole)
-	reqContext.OrgId = orga.Id
+	reqContext.OrgID = orga.Id
 	reqContext.OrgName = orga.Name
 	return true
 }
@@ -281,6 +281,12 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		return true
 	}
 
+	if apikey.IsRevoked != nil && *apikey.IsRevoked {
+		reqContext.JsonApiErr(http.StatusUnauthorized, "Revoked token", nil)
+
+		return true
+	}
+
 	// update api_key last used date
 	if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(reqContext.Req.Context(), apikey.Id); err != nil {
 		reqContext.JsonApiErr(http.StatusInternalServerError, InvalidAPIKey, errKey)
@@ -291,8 +297,8 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		//Use the old APIkey method.  This provides backwards compatibility.
 		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apikey.Role
-		reqContext.ApiKeyId = apikey.Id
-		reqContext.OrgId = apikey.OrgId
+		reqContext.ApiKeyID = apikey.Id
+		reqContext.OrgID = apikey.OrgId
 		reqContext.IsSignedIn = true
 		return true
 	}
@@ -300,12 +306,13 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser); err != nil {
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	querySignedInUserResult, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
+	if err != nil {
 		reqContext.Logger.Error(
 			"Failed to link API key to service account in",
-			"id", querySignedInUser.UserId,
-			"org", querySignedInUser.OrgId,
+			"id", querySignedInUser.UserID,
+			"org", querySignedInUser.OrgID,
 			"err", err,
 		)
 		reqContext.JsonApiErr(http.StatusInternalServerError, "Unable to link API key to service account", err)
@@ -313,13 +320,13 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	}
 
 	// disabled service accounts are not allowed to access the API
-	if querySignedInUser.Result.IsDisabled {
+	if querySignedInUserResult.IsDisabled {
 		reqContext.JsonApiErr(http.StatusUnauthorized, "Service account is disabled", nil)
 		return true
 	}
 
 	reqContext.IsSignedIn = true
-	reqContext.SignedInUser = querySignedInUser.Result
+	reqContext.SignedInUser = querySignedInUserResult
 
 	return true
 }
@@ -364,8 +371,9 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 
 	usr := authQuery.User
 
-	query := models.GetSignedInUserQuery{UserId: usr.ID, OrgId: orgID}
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
+	query := user.GetSignedInUserQuery{UserID: usr.ID, OrgID: orgID}
+	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
+	if err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
 			"id", usr.ID,
@@ -375,7 +383,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		return true
 	}
 
-	reqContext.SignedInUser = query.Result
+	reqContext.SignedInUser = queryResult
 	reqContext.IsSignedIn = true
 	return true
 }
@@ -395,18 +403,22 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 
 	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
-		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
+		reqContext.Logger.Warn("Failed to look up user based on cookie", "error", err)
+		// Burn the cookie in case of failure
+		reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 		reqContext.LookupTokenErr = err
+
 		return false
 	}
 
-	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err != nil {
+	query := user.GetSignedInUserQuery{UserID: token.UserId, OrgID: orgID}
+	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
+	if err != nil {
 		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}
 
-	reqContext.SignedInUser = query.Result
+	reqContext.SignedInUser = queryResult
 	reqContext.IsSignedIn = true
 	reqContext.UserToken = token
 
@@ -415,6 +427,18 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext, h.AuthTokenService, token))
 
 	return true
+}
+
+func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
+	return func(w web.ResponseWriter) {
+		if w.Written() {
+			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
+			return
+		}
+
+		reqContext.Logger.Debug("Expiring invalid cookie")
+		cookies.DeleteCookie(reqContext.Resp, h.Cfg.LoginCookieName, nil)
+	}
 }
 
 func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
@@ -468,16 +492,17 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 	}
 
 	reqContext.SignedInUser = &user.SignedInUser{
-		OrgId:   renderUser.OrgID,
-		UserId:  renderUser.UserID,
+		OrgID:   renderUser.OrgID,
+		UserID:  renderUser.UserID,
 		OrgRole: org.RoleType(renderUser.OrgRole),
 	}
 
 	// UserID can be 0 for background tasks and, in this case, there is no user info to retrieve
 	if renderUser.UserID != 0 {
-		query := models.GetSignedInUserQuery{UserId: renderUser.UserID, OrgId: renderUser.OrgID}
-		if err := h.SQLStore.GetSignedInUserWithCacheCtx(ctx, &query); err == nil {
-			reqContext.SignedInUser = query.Result
+		query := user.GetSignedInUserQuery{UserID: renderUser.UserID, OrgID: renderUser.OrgID}
+		queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
+		if err == nil {
+			reqContext.SignedInUser = queryResult
 		}
 	}
 
@@ -577,7 +602,7 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 		}
 	}
 
-	logger.Debug("Successfully got user info", "userID", user.UserId, "username", user.Login)
+	logger.Debug("Successfully got user info", "userID", user.UserID, "username", user.Login)
 
 	// Add user info to context
 	reqContext.SignedInUser = user

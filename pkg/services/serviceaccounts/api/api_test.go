@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acDatabase "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
@@ -181,8 +180,8 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 					assert.Equal(t, tc.body["name"], sa.Name)
 					assert.Equal(t, tc.wantID, sa.Login)
 					tempUser := &user.SignedInUser{
-						OrgId:  1,
-						UserId: 1,
+						OrgID:  1,
+						UserID: 1,
 						Permissions: map[int64]map[string][]string{
 							1: {
 								serviceaccounts.ActionRead:       []string{serviceaccounts.ScopeAll},
@@ -279,7 +278,7 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 	acmock *accesscontrolmock.Mock,
 	sqlStore *sqlstore.SQLStore, saStore serviceaccounts.Store) (*web.Mux, *ServiceAccountsAPI) {
 	cfg := setting.NewCfg()
-	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, routing.NewRouteRegister(), sqlStore, acmock, acDatabase.ProvideService(sqlStore), &licensing.OSSLicensingService{}, saStore)
+	saPermissionService, err := ossaccesscontrol.ProvideServiceAccountPermissions(cfg, routing.NewRouteRegister(), sqlStore, acmock, &licensing.OSSLicensingService{}, saStore)
 	require.NoError(t, err)
 
 	a := NewServiceAccountsAPI(cfg, svc, acmock, routerRegister, saStore, saPermissionService)
@@ -289,8 +288,8 @@ func setupTestServer(t *testing.T, svc *tests.ServiceAccountMock,
 
 	m := web.New()
 	signedUser := &user.SignedInUser{
-		OrgId:   1,
-		UserId:  1,
+		OrgID:   1,
+		UserID:  1,
 		OrgRole: org.RoleViewer,
 	}
 

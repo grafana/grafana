@@ -265,7 +265,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user user.Signed
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
-		OrgId:     user.OrgId,
+		OrgId:     user.OrgID,
 		User:      &user,
 		Overwrite: false,
 	}
@@ -274,6 +274,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user user.Signed
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	ac := acmock.New()
 	folderPermissions := acmock.NewMockedPermissionsService()
@@ -293,6 +294,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	t.Helper()
 
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	features := featuremgmt.WithFeatures()
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	ac := acmock.New()
@@ -309,7 +311,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 		features, folderPermissions, ac, busmock.New(),
 	)
 	t.Logf("Creating folder with title and UID %q", title)
-	folder, err := s.CreateFolder(context.Background(), &user, user.OrgId, title, title)
+	folder, err := s.CreateFolder(context.Background(), &user, user.OrgID, title, title)
 	require.NoError(t, err)
 
 	updateFolderACL(t, dashboardStore, folder.Id, items)
@@ -404,7 +406,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		features := featuremgmt.WithFeatures()
-		ac := acmock.New()
+		ac := acmock.New().WithDisabled()
 		// TODO: Update tests to work with rbac
 		sqlStore.Cfg.RBACEnabled = false
 		folderPermissions := acmock.NewMockedPermissionsService()
@@ -424,11 +426,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}
 
 		usr := user.SignedInUser{
-			UserId:     1,
+			UserID:     1,
 			Name:       "Signed In User",
 			Login:      "signed_in_user",
 			Email:      "signed.in.user@test.com",
-			OrgId:      orgID,
+			OrgID:      orgID,
 			OrgRole:    role,
 			LastSeenAt: time.Now(),
 		}

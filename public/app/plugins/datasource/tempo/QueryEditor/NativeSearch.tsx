@@ -270,7 +270,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             invalid={!!inputErrors.limit}
             labelWidth={14}
             grow
-            tooltip="Maximum numbers of returned results"
+            tooltip="Maximum number of returned results"
           >
             <Input
               id="limit"

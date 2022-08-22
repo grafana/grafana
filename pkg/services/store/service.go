@@ -41,8 +41,8 @@ const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
 
 var (
-	SystemBrandingReader = &user.SignedInUser{OrgId: ac.GlobalOrgID}
-	SystemBrandingAdmin  = &user.SignedInUser{OrgId: ac.GlobalOrgID}
+	SystemBrandingReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
+	SystemBrandingAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
@@ -273,7 +273,7 @@ func getOrgId(user *user.SignedInUser) int64 {
 		return ac.GlobalOrgID
 	}
 
-	return user.OrgId
+	return user.OrgID
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error) {
@@ -488,7 +488,7 @@ func (s *standardStorageService) getWorkflowOptions(ctx context.Context, user *u
 	}
 
 	scope, _ := splitFirstSegment(path)
-	root, _ := s.tree.getRoot(user.OrgId, scope)
+	root, _ := s.tree.getRoot(user.OrgID, scope)
 	if root == nil {
 		return options, fmt.Errorf("can not read")
 	}

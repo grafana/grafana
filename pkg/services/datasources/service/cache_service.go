@@ -43,15 +43,15 @@ func (dc *CacheServiceImpl) GetDatasource(
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
 			ds := cached.(*datasources.DataSource)
-			if ds.OrgId == user.OrgId {
+			if ds.OrgId == user.OrgID {
 				return ds, nil
 			}
 		}
 	}
 
-	dc.logger.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
+	dc.logger.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgID)
 
-	query := &datasources.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgId}
+	query := &datasources.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgID}
 	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
@@ -75,22 +75,22 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
 	}
-	if user.OrgId == 0 {
+	if user.OrgID == 0 {
 		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
 	}
-	uidCacheKey := uidKey(user.OrgId, datasourceUID)
+	uidCacheKey := uidKey(user.OrgID, datasourceUID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(uidCacheKey); found {
 			ds := cached.(*datasources.DataSource)
-			if ds.OrgId == user.OrgId {
+			if ds.OrgId == user.OrgID {
 				return ds, nil
 			}
 		}
 	}
 
-	dc.logger.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
-	query := &datasources.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgId}
+	dc.logger.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgID)
+	query := &datasources.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgID}
 	err := dc.SQLStore.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err

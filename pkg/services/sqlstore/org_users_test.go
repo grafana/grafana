@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
 				User: &user.SignedInUser{
-					OrgId:       1,
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
 			},
@@ -38,7 +39,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
 				User: &user.SignedInUser{
-					OrgId:       1,
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
 				},
 			},
@@ -49,7 +50,7 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 			query: &models.GetOrgUsersQuery{
 				OrgId: 1,
 				User: &user.SignedInUser{
-					OrgId: 1,
+					OrgID: 1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
 						"users:id:1",
 						"users:id:5",
@@ -76,11 +77,65 @@ func TestSQLStore_GetOrgUsers(t *testing.T) {
 
 			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
 				for _, u := range tt.query.Result {
-					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgId][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
+					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
 				}
 			}
 		})
 	}
+}
+
+func TestSQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
+	// The millisecond part is not stored in the DB
+	constNow := time.Now().UTC().Truncate(time.Second)
+	defer mockTimeNow(constNow)()
+
+	store := InitTestDB(t, InitTestDBOpt{})
+	_, err := store.CreateUser(context.Background(), user.CreateUserCommand{
+		Login: "Admin",
+		Email: "admin@localhost",
+		OrgID: 1,
+	})
+	require.NoError(t, err)
+
+	newUser, err := store.CreateUser(context.Background(), user.CreateUserCommand{
+		Login:      "Viewer",
+		Email:      "viewer@localhost",
+		OrgID:      1,
+		IsDisabled: true,
+		Name:       "Viewer Localhost",
+	})
+	require.NoError(t, err)
+
+	err = store.AddOrgUser(context.Background(), &models.AddOrgUserCommand{
+		Role:   "Viewer",
+		OrgId:  1,
+		UserId: newUser.ID,
+	})
+	require.NoError(t, err)
+
+	query := &models.GetOrgUsersQuery{
+		OrgId:  1,
+		UserID: newUser.ID,
+		User: &user.SignedInUser{
+			OrgID:       1,
+			Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
+		},
+	}
+	err = store.GetOrgUsers(context.Background(), query)
+	require.NoError(t, err)
+	require.Len(t, query.Result, 1)
+
+	actual := query.Result[0]
+	assert.Equal(t, int64(1), actual.OrgId)
+	assert.Equal(t, newUser.ID, actual.UserId)
+	assert.Equal(t, "viewer@localhost", actual.Email)
+	assert.Equal(t, "Viewer Localhost", actual.Name)
+	assert.Equal(t, "Viewer", actual.Login)
+	assert.Equal(t, "Viewer", actual.Role)
+	assert.Equal(t, constNow.AddDate(-10, 0, 0), actual.LastSeenAt)
+	assert.Equal(t, constNow, actual.Created)
+	assert.Equal(t, constNow, actual.Updated)
+	assert.Equal(t, true, actual.IsDisabled)
 }
 
 type searchOrgUsersTestCase struct {
@@ -96,7 +151,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
 				User: &user.SignedInUser{
-					OrgId:       1,
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
 			},
@@ -107,7 +162,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
 				User: &user.SignedInUser{
-					OrgId:       1,
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {""}}},
 				},
 			},
@@ -118,7 +173,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 			query: &models.SearchOrgUsersQuery{
 				OrgID: 1,
 				User: &user.SignedInUser{
-					OrgId: 1,
+					OrgID: 1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: {
 						"users:id:1",
 						"users:id:5",
@@ -141,7 +196,7 @@ func TestSQLStore_SearchOrgUsers(t *testing.T) {
 
 			if !hasWildcardScope(tt.query.User, ac.ActionOrgUsersRead) {
 				for _, u := range tt.query.Result.OrgUsers {
-					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgId][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
+					assert.Contains(t, tt.query.User.Permissions[tt.query.User.OrgID][ac.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserId))
 				}
 			}
 		})
@@ -272,10 +327,21 @@ func seedOrgUsers(t *testing.T, store *SQLStore, numUsers int) {
 }
 
 func hasWildcardScope(user *user.SignedInUser, action string) bool {
-	for _, scope := range user.Permissions[user.OrgId][action] {
+	for _, scope := range user.Permissions[user.OrgID][action] {
 		if strings.HasSuffix(scope, ":*") {
 			return true
 		}
 	}
 	return false
+}
+
+func mockTimeNow(constTime time.Time) func() {
+	timeNow = func() time.Time {
+		return constTime.Truncate(time.Second)
+	}
+	return resetTimeNow
+}
+
+func resetTimeNow() {
+	timeNow = time.Now
 }

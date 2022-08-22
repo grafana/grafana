@@ -52,7 +52,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
-				UserId: 1,
+				UserID: 1,
 			})
 			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
-				UserId: 1,
+				UserID: 1,
 			})
 			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
-				UserId: 1,
+				UserID: 1,
 			})
 			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
@@ -117,7 +117,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
-				UserId: 1,
+				UserID: 1,
 			})
 			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
@@ -143,7 +143,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			require.NoError(t, err)
 			req := s.NewPostRequest("/api/dashboards/import", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
-				UserId: 1,
+				UserID: 1,
 			})
 			resp, err := s.SendJSON(req)
 			require.NoError(t, err)

@@ -38,10 +38,10 @@ Apart from major performance improvements, the new Time series panel implements 
 The following documentation topics were added for this feature:
 
 - [Time series panel]({{< relref "../visualizations/time-series/" >}})
-- [Graph time series as lines]({{< relref "../visualizations/time-series/graph-time-series-as-lines/" >}})
-- [Graph time series as bars]({{< relref "../visualizations/time-series/graph-time-series-as-bars/" >}})
-- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points/" >}})
-- [Change axis display]({{< relref "../visualizations/time-series/change-axis-display/" >}})
+- [Graph time series as lines]({{< relref "../visualizations/time-series#line-style" >}})
+- [Graph time series as bars]({{< relref "../visualizations/time-series#bar-alignment" >}})
+- [Graph time series as points]({{< relref "../visualizations/time-series#show-points" >}})
+- [Change axis display]({{< relref "../visualizations/time-series#axis-options" >}})
 
 ### Node graph panel visualization (Beta)
 

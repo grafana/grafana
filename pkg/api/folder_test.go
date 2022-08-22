@@ -156,7 +156,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		}, nil)
 
 		req := server.NewGetRequest("/api/folders?accesscontrol=true")
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("2")},
@@ -185,7 +185,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folderUid"}, nil)
 
 		req := server.NewGetRequest("/api/folders/folderUid?accesscontrol=true")
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
@@ -208,7 +208,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		folderService.On("GetFolderByUID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&models.Folder{Uid: "folderUid"}, nil)
 
 		req := server.NewGetRequest("/api/folders/folderUid")
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("folderUid")},
@@ -256,7 +256,7 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{OrgId: testOrgID, UserId: testUserID}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: testOrgID, UserID: testUserID}
 
 			return hs.CreateFolder(c)
 		})
@@ -286,7 +286,7 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{OrgId: testOrgID, UserId: testUserID}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: testOrgID, UserID: testUserID}
 
 			return hs.UpdateFolder(c)
 		})

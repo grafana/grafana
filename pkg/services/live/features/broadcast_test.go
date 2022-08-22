@@ -43,7 +43,7 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	require.NoError(t, err)
 	reply, status, err := handler.OnSubscribe(
 		context.Background(),
-		&user.SignedInUser{OrgId: 1, UserId: 2},
+		&user.SignedInUser{OrgID: 1, UserID: 2},
 		models.SubscribeEvent{Channel: channel, Path: "test"},
 	)
 	require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestBroadcastRunner_OnPublish(t *testing.T) {
 	require.NoError(t, err)
 	reply, status, err := handler.OnPublish(
 		context.Background(),
-		&user.SignedInUser{OrgId: 1, UserId: 2},
+		&user.SignedInUser{OrgID: 1, UserID: 2},
 		models.PublishEvent{Channel: channel, Path: "test", Data: data},
 	)
 	require.NoError(t, err)

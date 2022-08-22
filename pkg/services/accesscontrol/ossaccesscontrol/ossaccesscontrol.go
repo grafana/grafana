@@ -8,16 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(
-	features featuremgmt.FeatureToggles, cfg *setting.Cfg,
-	store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister,
-) (*OSSAccessControlService, error) {
+func ProvideService(cfg *setting.Cfg, store accesscontrol.PermissionsStore, routeRegister routing.RouteRegister) (*OSSAccessControlService, error) {
 	var errDeclareRoles error
 	s := ProvideOSSAccessControl(cfg, store)
 	if !s.IsDisabled() {
@@ -86,21 +82,25 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *user.Sign
 		user.Permissions = map[int64]map[string][]string{}
 	}
 
-	if _, ok := user.Permissions[user.OrgId]; !ok {
+	if _, ok := user.Permissions[user.OrgID]; !ok {
 		permissions, err := ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
 		if err != nil {
 			return false, err
 		}
-		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
+		user.Permissions[user.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	attributeMutator := ac.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
+	attributeMutator := ac.scopeResolvers.GetScopeAttributeMutator(user.OrgID)
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
 	if err != nil {
 		return false, err
 	}
-	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgId]), nil
+	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgID]), nil
 }
+
+var actionsToFetch = append(
+	TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...,
+)
 
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -110,10 +110,11 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	permissions := ac.getFixedPermissions(ctx, user)
 
 	dbPermissions, err := ac.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:   user.OrgId,
-		UserID:  user.UserId,
-		Roles:   accesscontrol.GetOrgRoles(ac.cfg, user),
-		Actions: append(TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...),
+		OrgID:   user.OrgID,
+		UserID:  user.UserID,
+		Roles:   accesscontrol.GetOrgRoles(user),
+		TeamIDs: user.Teams,
+		Actions: actionsToFetch,
 	})
 	if err != nil {
 		return nil, err
@@ -135,7 +136,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *user.SignedInUser) []accesscontrol.Permission {
 	permissions := make([]accesscontrol.Permission, 0)
 
-	for _, builtin := range accesscontrol.GetOrgRoles(ac.cfg, user) {
+	for _, builtin := range accesscontrol.GetOrgRoles(user) {
 		if basicRole, ok := ac.roles[builtin]; ok {
 			permissions = append(permissions, basicRole.Permissions...)
 		}
@@ -199,6 +200,6 @@ func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix st
 	ac.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 }
 
-func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, userID int64) error {
-	return ac.store.DeleteUserPermissions(ctx, userID)
+func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
+	return ac.store.DeleteUserPermissions(ctx, orgID, userID)
 }

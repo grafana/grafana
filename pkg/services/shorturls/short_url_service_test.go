@@ -13,7 +13,7 @@ import (
 )
 
 func TestShortURLService(t *testing.T) {
-	user := &user.SignedInUser{UserId: 1}
+	user := &user.SignedInUser{UserID: 1}
 	sqlStore := sqlstore.InitTestDB(t)
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
