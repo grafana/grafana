@@ -9,9 +9,6 @@ interface Props {
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
  * autocomplete system.
- *
- * At this moment we just pass it all the labels/values we get from Fire backend later on we may do something a bit
- * smarter if there will be lots of labels.
  */
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
@@ -26,7 +23,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
-  private tags: { [label: string]: Set<string> } = {};
+  private tags: { [tag: string]: Set<string> } = {};
 
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
@@ -71,7 +68,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   /**
-   * Get suggestion based on the situation we are in like whether we should suggest label names or values.
+   * Get suggestion based on the situation we are in like whether we should suggest tag names or values.
    * @param situation
    * @private
    */
@@ -89,27 +86,27 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           return {
             label: key,
             insertText: `{${key}="`,
-            type: 'LABEL_NAME',
+            type: 'TAG_NAME',
           };
         });
       }
-      case 'IN_LABEL_NAME':
+      case 'IN_TAG_NAME':
         return Object.keys(this.tags).map((key) => {
           return {
             label: key,
             insertText: key,
-            type: 'LABEL_NAME',
+            type: 'TAG_NAME',
           };
         });
-      case 'IN_LABEL_VALUE':
-        return await this.languageProvider.getOptions(situation.labelName).then((res) => {
+      case 'IN_TAG_VALUE':
+        return await this.languageProvider.getOptions(situation.tagName).then((res) => {
           const items: Completion[] = [];
           res.forEach((val) => {
             if (val?.label) {
               items.push({
                 label: val.label,
                 insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
-                type: 'LABEL_VALUE',
+                type: 'TAG_VALUE',
               });
             }
           });
@@ -128,23 +125,23 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
  */
 function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): monacoTypes.languages.CompletionItemKind {
   switch (type) {
-    case 'LABEL_NAME':
+    case 'TAG_NAME':
       return monaco.languages.CompletionItemKind.Enum;
-    case 'LABEL_VALUE':
+    case 'TAG_VALUE':
       return monaco.languages.CompletionItemKind.EnumMember;
     default:
       throw new Error(`Unexpected CompletionType: ${type}`);
   }
 }
 
-export type CompletionType = 'LABEL_NAME' | 'LABEL_VALUE';
+export type CompletionType = 'TAG_NAME' | 'TAG_VALUE';
 type Completion = {
   type: CompletionType;
   label: string;
   insertText: string;
 };
 
-export type Label = {
+export type Tag = {
   name: string;
   value: string;
 };
@@ -157,14 +154,14 @@ export type Situation =
       type: 'EMPTY';
     }
   | {
-      type: 'IN_LABEL_NAME';
-      otherLabels: Label[];
+      type: 'IN_TAG_NAME';
+      otherTags: Tag[];
     }
   | {
-      type: 'IN_LABEL_VALUE';
-      labelName: string;
+      type: 'IN_TAG_VALUE';
+      tagName: string;
       betweenQuotes: boolean;
-      otherLabels: Label[];
+      otherTags: Tag[];
     };
 
 /**
@@ -181,35 +178,35 @@ function getSituation(text: string, offset: number): Situation {
     };
   }
 
-  // Get all the labels so far in the query so we can do some more filtering.
+  // Get all the tags so far in the query so we can do some more filtering.
   const matches = text.matchAll(/(\w+)="(\w+)"/g);
-  const existingLabels = Array.from(matches).reduce((acc, match) => {
+  const existingTags = Array.from(matches).reduce((acc, match) => {
     const [_, name, value] = match[1];
     acc.push({ name, value });
     return acc;
-  }, [] as Label[]);
+  }, [] as Tag[]);
 
-  // Check if we are editing a label value right now. If so also get name of the label
-  const matchLabelValue = text.substring(0, offset).match(/([\w.]+)=("?)[^"]*$/);
-  if (matchLabelValue) {
+  // Check if we are editing a tag value right now. If so also get name of the tag
+  const matchTagValue = text.substring(0, offset).match(/([\w.]+)=("?)[^"]*$/);
+  if (matchTagValue) {
     return {
-      type: 'IN_LABEL_VALUE',
-      labelName: matchLabelValue[1],
-      betweenQuotes: !!matchLabelValue[2],
-      otherLabels: existingLabels,
+      type: 'IN_TAG_VALUE',
+      tagName: matchTagValue[1],
+      betweenQuotes: !!matchTagValue[2],
+      otherTags: existingTags,
     };
   }
 
-  // Check if we are editing a label name
-  const matchLabelName = text.substring(0, offset).match(/[{,]\s*[^"]*$/);
-  if (matchLabelName) {
+  // Check if we are editing a tag name
+  const matchTagName = text.substring(0, offset).match(/[{,]\s*[^"]*$/);
+  if (matchTagName) {
     return {
-      type: 'IN_LABEL_NAME',
-      otherLabels: existingLabels,
+      type: 'IN_TAG_NAME',
+      otherTags: existingTags,
     };
   }
 
-  // Will happen only if user writes something that isn't really a label selector
+  // Will happen only if user writes something that isn't really a tag selector
   return {
     type: 'UNKNOWN',
   };

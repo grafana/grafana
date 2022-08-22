@@ -6,47 +6,80 @@ import TempoLanguageProvider from '../language_provider';
 
 import { CompletionProvider } from './autocomplete';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
 describe('CompletionProvider', () => {
-  it('suggests labels', () => {
-    const { provider, model } = setup('{}', 1, defaultLabels);
-    const result = provider.provideCompletionItems(model as any, {} as any);
+  it('suggests tags', async () => {
+    const { provider, model } = setup('{}', 1, defaultTags);
+    const result = await provider.provideCompletionItems(model as any, {} as any);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'foo', insertText: 'foo' }),
-    ]);
-  });
-
-  it('suggests label names with quotes', () => {
-    const { provider, model } = setup('{foo=}', 6, defaultLabels);
-    const result = provider.provideCompletionItems(model as any, {} as any);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      expect.objectContaining({ label: 'bar', insertText: '"bar"' }),
-    ]);
-  });
-
-  it('suggests label names without quotes', () => {
-    const { provider, model } = setup('{foo="}', 7, defaultLabels);
-    const result = provider.provideCompletionItems(model as any, {} as any);
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'bar', insertText: 'bar' }),
     ]);
   });
 
-  it('suggests nothing without labels', () => {
+  it('suggests tag names with quotes', async () => {
+    const { provider, model } = setup('{foo=}', 6, defaultTags);
+
+    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolve([
+            {
+              value: 'foobar',
+              label: 'foobar',
+            },
+          ]);
+        })
+    );
+
+    const result = await provider.provideCompletionItems(model as any, {} as any);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      expect.objectContaining({ label: 'foobar', insertText: '"foobar"' }),
+    ]);
+  });
+
+  it('suggests tag names without quotes', async () => {
+    const { provider, model } = setup('{foo="}', 7, defaultTags);
+
+    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolve([
+            {
+              value: 'foobar',
+              label: 'foobar',
+            },
+          ]);
+        })
+    );
+
+    const result = await provider.provideCompletionItems(model as any, {} as any);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      expect.objectContaining({ label: 'foobar', insertText: 'foobar' }),
+    ]);
+  });
+
+  it('suggests nothing without tags', async () => {
     const { provider, model } = setup('{foo="}', 7, []);
-    const result = provider.provideCompletionItems(model as any, {} as any);
+    const result = await provider.provideCompletionItems(model as any, {} as any);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
   });
 
-  it('suggests labels on empty input', () => {
-    const { provider, model } = setup('', 0, defaultLabels);
-    const result = provider.provideCompletionItems(model as any, {} as any);
+  it('suggests tags on empty input', async () => {
+    const { provider, model } = setup('', 0, defaultTags);
+    const result = await provider.provideCompletionItems(model as any, {} as any);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'foo', insertText: '{foo="' }),
+      expect.objectContaining({ label: 'bar', insertText: '{bar="' }),
     ]);
   });
 });
 
-const defaultLabels = ['foo', 'bar'];
+const defaultTags = ['foo', 'bar'];
 
 function setup(value: string, offset: number, tags?: string[]) {
   const ds = new TempoDatasource(defaultSettings);
