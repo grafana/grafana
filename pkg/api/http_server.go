@@ -178,7 +178,7 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
-	secretsPluginMigrator        spm.SecretMigrationServiceImpl
+	secretsPluginMigrator        *spm.SecretMigrationServiceImpl
 	userService                  user.Service
 	tempUserService              tempUser.Service
 	loginAttemptService          loginAttempt.Service
@@ -217,7 +217,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
-	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsPluginMigrator spm.SecretMigrationServiceImpl,
+	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsPluginMigrator *spm.SecretMigrationServiceImpl,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
