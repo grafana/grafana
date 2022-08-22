@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/buffered"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
@@ -415,7 +415,7 @@ func setup(wideFrames bool) (*testContext, error) {
 
 	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}}
 
-	opts, err := buffered.CreateTransportOptions(settings, &azsettings.AzureSettings{}, features, &fakeLogger{})
+	opts, err := buffered.CreateTransportOptions(settings, &setting.Cfg{}, &fakeLogger{})
 	if err != nil {
 		return nil, err
 	}

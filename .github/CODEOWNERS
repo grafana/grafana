@@ -95,6 +95,7 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /packages/grafana-ui/.storybook @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/DateTimePickers @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/GraphNG @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/Logs @grafana/observability-logs
 /packages/grafana-ui/src/components/Table @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/TimeSeries @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/uPlot @grafana/grafana-bi-squad

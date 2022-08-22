@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -33,7 +35,9 @@ var (
 )
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 	dashSvc := dashboards.NewFakeDashboardService(t)
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*models.GetDashboardQuery)
@@ -68,7 +72,7 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 }
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	prefService := preftest.NewPreferenceServiceFake()
@@ -96,7 +100,9 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PutCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -117,7 +123,7 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 }
 
 func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
@@ -146,7 +152,9 @@ func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
 }
 
 func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -177,7 +185,9 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 }
 
 func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
-	sc := setupHTTPServer(t, true, false)
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+	sc := setupHTTPServerWithCfg(t, true, cfg)
 
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)

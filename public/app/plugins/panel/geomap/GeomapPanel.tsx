@@ -100,28 +100,6 @@ export class GeomapPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
-    // TODO: Clean this approach up / potentially support multiple marker layers?
-    // See https://github.com/grafana/grafana/issues/51185 for more details.
-    setTimeout(() => {
-      for (const layer of this.layers) {
-        if (layer.options.type === MARKERS_LAYER_ID) {
-          const colorField = layer.options.config.style.color.field;
-          const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === colorField);
-          // initialize (not override) Standard Options min/max value with color field calc min/max
-          if (colorFieldData) {
-            this.props.onFieldConfigChange({
-              ...this.props.fieldConfig,
-              defaults: {
-                min: colorFieldData.state?.calcs?.min,
-                max: colorFieldData.state?.calcs?.max,
-                ...this.props.fieldConfig.defaults,
-              },
-            });
-            break;
-          }
-        }
-      }
-    }, 50);
   }
 
   componentWillUnmount() {
@@ -276,31 +254,6 @@ export class GeomapPanel extends Component<Props, State> {
 
     if (options.controls !== oldOptions.controls) {
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
-    }
-
-    // TODO: Clean this approach up / potentially support multiple marker layers?
-    // See https://github.com/grafana/grafana/issues/51185 for more details.
-    for (const layer of options.layers) {
-      if (layer.type === MARKERS_LAYER_ID) {
-        const oldLayer = this.props.options.layers.find((lyr) => lyr.name === layer.name);
-        const newLayerColorField = layer.config.style.color.field;
-        const oldLayerColorField = oldLayer?.config.style.color.field;
-        if (layer.config.style.color.field && newLayerColorField !== oldLayerColorField) {
-          const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === newLayerColorField);
-          if (colorFieldData) {
-            // override Standard Options min/max value with color field calc min/max
-            this.props.onFieldConfigChange({
-              ...this.props.fieldConfig,
-              defaults: {
-                ...this.props.fieldConfig.defaults,
-                min: colorFieldData.state?.calcs?.min,
-                max: colorFieldData.state?.calcs?.max,
-              },
-            });
-            break;
-          }
-        }
-      }
     }
   }
 

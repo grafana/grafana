@@ -26,6 +26,7 @@ var (
 	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
 	ErrProtectedUser     = errors.New("cannot adopt protected user")
+	ErrNoUniqueID        = errors.New("identifying id not found")
 )
 
 type User struct {
@@ -132,6 +133,27 @@ type UserSearchHitDTO struct {
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
+}
+
+type GetUserProfileQuery struct {
+	UserID int64
+}
+
+type UserProfileDTO struct {
+	ID             int64           `json:"id"`
+	Email          string          `json:"email"`
+	Name           string          `json:"name"`
+	Login          string          `json:"login"`
+	Theme          string          `json:"theme"`
+	OrgID          int64           `json:"orgId,omitempty"`
+	IsGrafanaAdmin bool            `json:"isGrafanaAdmin"`
+	IsDisabled     bool            `json:"isDisabled"`
+	IsExternal     bool            `json:"isExternal"`
+	AuthLabels     []string        `json:"authLabels"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	AvatarUrl      string          `json:"avatarUrl"`
+	AccessControl  map[string]bool `json:"accessControl,omitempty"`
 }
 
 // implement Conversion interface to define custom field mapping (xorm feature)
@@ -245,6 +267,7 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 		Name:  u.Name,
 	}
 }
+
 func (u *SignedInUser) HasRole(role org.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
@@ -254,7 +277,25 @@ func (u *SignedInUser) HasRole(role org.RoleType) bool {
 }
 
 func (u *SignedInUser) IsRealUser() bool {
-	return u.UserID != 0
+	return u.UserID > 0
+}
+
+func (u *SignedInUser) IsApiKeyUser() bool {
+	return u.ApiKeyID > 0
+}
+
+func (u *SignedInUser) HasUniqueId() bool {
+	return u.IsRealUser() || u.IsApiKeyUser()
+}
+
+func (u *SignedInUser) GetCacheKey() (string, error) {
+	if u.IsRealUser() {
+		return fmt.Sprintf("%d-user-%d", u.OrgID, u.UserID), nil
+	}
+	if u.IsApiKeyUser() {
+		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
+	}
+	return "", ErrNoUniqueID
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {

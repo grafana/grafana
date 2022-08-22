@@ -46,10 +46,12 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	var items []*models.Alert
 
 	setup := func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.RBACEnabled = false
 		store = &sqlStore{
 			db:  sqlstore.InitTestDB(t),
 			log: log.New(),
-			cfg: setting.NewCfg(),
+			cfg: cfg,
 		}
 
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")

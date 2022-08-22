@@ -43,6 +43,7 @@ const (
 // AdaptiveCardsMessage represents a message for adaptive cards.
 type AdaptiveCardsMessage struct {
 	Attachments []AdaptiveCardsAttachment `json:"attachments"`
+	Summary     string                    `json:"summary,omitempty"` // Summary is the text shown in notifications
 	Type        string                    `json:"type"`
 }
 
@@ -317,6 +318,9 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		},
 	})
 
+	msg := NewAdaptiveCardsMessage(card)
+	msg.Summary = tmpl(tn.Title)
+
 	// This check for tmplErr must happen before templating the URL
 	if tmplErr != nil {
 		tn.log.Warn("failed to template Teams message", "err", tmplErr.Error())
@@ -329,7 +333,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		u = tn.URL
 	}
 
-	b, err := json.Marshal(NewAdaptiveCardsMessage(card))
+	b, err := json.Marshal(msg)
 	if err != nil {
 		return false, fmt.Errorf("failed to marshal JSON: %w", err)
 	}

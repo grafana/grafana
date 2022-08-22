@@ -274,6 +274,7 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user user.Signed
 	dashAlertExtractor := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	ac := acmock.New()
 	folderPermissions := acmock.NewMockedPermissionsService()
@@ -293,6 +294,7 @@ func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	t.Helper()
 
 	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
 	features := featuremgmt.WithFeatures()
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	ac := acmock.New()
@@ -404,7 +406,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		sqlStore := sqlstore.InitTestDB(t)
 		dashboardStore := database.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 		features := featuremgmt.WithFeatures()
-		ac := acmock.New()
+		ac := acmock.New().WithDisabled()
 		// TODO: Update tests to work with rbac
 		sqlStore.Cfg.RBACEnabled = false
 		folderPermissions := acmock.NewMockedPermissionsService()

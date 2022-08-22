@@ -21,10 +21,10 @@ while IFS=" " read -r -a package; do
     fi
 
     # Extract the npm package tarballs into separate directories e.g. ./base/@grafana-data.tgz -> ./base/grafana-data/
-    mkdir $PREV
-    tar -xf ./base/@$PACKAGE_PATH.tgz --strip-components=1 -C $PREV
-    mkdir $CURRENT
-    tar -xf ./pr/@$PACKAGE_PATH.tgz --strip-components=1 -C $CURRENT
+    mkdir "$PREV"
+    tar -xf "./base/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$PREV"
+    mkdir "$CURRENT"
+    tar -xf "./pr/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$CURRENT"
 
     # Run the comparison and record the exit code
     echo ""

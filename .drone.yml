@@ -13,7 +13,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -58,7 +58,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -143,7 +143,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -253,7 +253,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -539,7 +539,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -635,7 +635,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
@@ -734,7 +734,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
@@ -828,7 +828,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -910,7 +910,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -1020,7 +1020,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -1474,7 +1474,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1680,7 +1680,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - ./bin/grabpl publish packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
@@ -1769,7 +1769,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -2079,7 +2079,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -2234,7 +2234,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2389,7 +2389,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -2748,7 +2748,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -2939,7 +2939,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -3740,7 +3740,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -4021,7 +4021,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -4170,7 +4170,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -4308,7 +4308,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -4657,7 +4657,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -4839,7 +4839,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15
+  image: alpine:3.15.6
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -5171,6 +5171,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: d3f17852dfffd0a3112098c897af0aa9936ea3c157ec4786f4d61c2f36fed0da
+hmac: ee6ca0d5e6990802f6b69df6616b18f1c4a60dc541326dd4304f9e68f858dda4
 
 ...
