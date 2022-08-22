@@ -1,4 +1,3 @@
-import mockConsole, { RestoreConsole } from 'jest-mock-console';
 import { mapValues } from 'lodash';
 import { Observable, Subject, Subscription, Unsubscribable } from 'rxjs';
 
@@ -123,14 +122,12 @@ const dummyErrorMessage = 'dummy-error';
 describe('LiveDataStream', () => {
   jest.useFakeTimers();
 
-  let restoreConsole: RestoreConsole | undefined;
-
   beforeEach(() => {
-    restoreConsole = mockConsole();
+    jest.spyOn(console, 'log').mockImplementation(jest.fn);
   });
 
   afterEach(() => {
-    restoreConsole?.();
+    jest.clearAllMocks();
   });
 
   const expectValueCollectionState = <T>(
