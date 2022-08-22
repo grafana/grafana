@@ -13,7 +13,6 @@ import (
 
 // MigrateFromPluginService This migrator will handle migration of the configured plugin secrets back to Grafana unified secrets
 type MigrateFromPluginService struct {
-	secretsStore   SecretsKVStore
 	cfg            *setting.Cfg
 	logger         log.Logger
 	sqlStore       sqlstore.Store
@@ -22,13 +21,11 @@ type MigrateFromPluginService struct {
 }
 
 func ProvideMigrateFromPluginService(
-	secretsStore SecretsKVStore,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	manager plugins.SecretsPluginManager,
 ) *MigrateFromPluginService {
 	return &MigrateFromPluginService{
-		secretsStore:   secretsStore,
 		logger:         log.New("sec-plugin-mig"),
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
@@ -64,17 +61,22 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	}
 	for _, k := range res.Keys {
 		// Get each secret description from plugin and handle errors
-		v, exists, err := s.secretsStore.Get(ctx, k.OrgId, k.Namespace, k.Type)
+		resp, err := plugin.GetSecret(ctx, &secretsmanagerplugin.GetSecretRequest{
+			KeyDescriptor: &secretsmanagerplugin.Key{
+				OrgId:     k.OrgId,
+				Namespace: k.Namespace,
+				Type:      k.Type,
+			}})
 		if err != nil {
 			s.logger.Error("Error retrieving secret from plugin", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
 			return err
 		}
-		if !exists {
+		if !resp.Exists {
 			s.logger.Warn("Secret not found on plugin", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
 			continue
 		}
 		// Add to sql store
-		err = secretsSql.Set(ctx, k.OrgId, k.Namespace, k.Type, v)
+		err = secretsSql.Set(ctx, k.OrgId, k.Namespace, k.Type, resp.DecryptedValue)
 		if err != nil {
 			s.logger.Error("Error adding secret to unified secrets", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
 			return err
@@ -83,7 +85,12 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 
 	for _, k := range res.Keys {
 		// Delete from the plugin
-		err := s.secretsStore.Del(ctx, k.OrgId, k.Namespace, k.Type)
+		_, err := plugin.DeleteSecret(ctx, &secretsmanagerplugin.DeleteSecretRequest{
+			KeyDescriptor: &secretsmanagerplugin.Key{
+				OrgId:     k.OrgId,
+				Namespace: k.Namespace,
+				Type:      k.Type,
+			}})
 		if err != nil {
 			s.logger.Error("Error deleting secret from plugin after migration", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
 			continue
