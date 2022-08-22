@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -80,7 +79,7 @@ func TestPersistTemplates(t *testing.T) {
 			paths, changed, persistErr := PersistTemplates(c, dir)
 
 			files := map[string]string{}
-			readFiles, err := ioutil.ReadDir(dir)
+			readFiles, err := os.ReadDir(dir)
 			require.NoError(t, err)
 			for _, f := range readFiles {
 				if f.IsDir() || f.Name() == "" {

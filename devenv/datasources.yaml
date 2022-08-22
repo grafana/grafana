@@ -285,5 +285,5 @@ datasources:
     type: tempo
     uid: gdev-tempo
     access: proxy
-    url: http://localhost:3101
+    url: http://localhost:3200
     editable: false

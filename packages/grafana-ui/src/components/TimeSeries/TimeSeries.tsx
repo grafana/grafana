@@ -20,12 +20,12 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, sync } = this.context as PanelContext;
-    const { theme, timeZones, renderers, tweakAxis, tweakScale } = this.props;
+    const { theme, timeZone, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       theme,
-      timeZones: Array.isArray(timeZones) ? timeZones : [timeZones],
+      timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
       getTimeRange,
       eventBus,
       sync,

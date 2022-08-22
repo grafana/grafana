@@ -179,7 +179,7 @@ function expectCodeEditor() {
 }
 
 async function expectBuilder() {
-  expect(await screen.findByText('Labels')).toBeInTheDocument();
+  expect(await screen.findByText('Label filters')).toBeInTheDocument();
 }
 
 async function switchToMode(mode: QueryEditorMode) {

@@ -10,6 +10,7 @@ import (
 
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -76,7 +77,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("GET returns 404", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgId = 2
+				rc.SignedInUser.OrgID = 2
 
 				response := sut.RouteGetPolicyTree(&rc)
 
@@ -86,7 +87,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("POST returns 404", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				rc.SignedInUser.OrgId = 2
+				rc.SignedInUser.OrgID = 2
 
 				response := sut.RouteGetPolicyTree(&rc)
 
@@ -243,11 +244,13 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				insertRule(t, sut, createTestAlertRule("rule", 1))
-				rule := createInvalidAlertRule()
+				uid := "123123"
+				rule := createTestAlertRule("rule", 1)
+				rule.UID = uid
+				insertRule(t, sut, rule)
+				rule = createInvalidAlertRule()
 
-				response := sut.RoutePutAlertRule(&rc, rule, "rule")
-
+				response := sut.RoutePutAlertRule(&rc, rule, uid)
 				require.Equal(t, 400, response.Status())
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
@@ -405,7 +408,7 @@ func createTestRequestCtx() gfcore.ReqContext {
 			Req: &http.Request{},
 		},
 		SignedInUser: &user.SignedInUser{
-			OrgId: 1,
+			OrgID: 1,
 		},
 	}
 }
@@ -512,7 +515,7 @@ func createInvalidAlertRuleGroup() definitions.AlertRuleGroup {
 	return definitions.AlertRuleGroup{
 		Title:    "invalid",
 		Interval: 10,
-		Rules:    []models.AlertRule{{}},
+		Rules:    []definitions.ProvisionedAlertRule{{}},
 	}
 }
 
@@ -533,7 +536,7 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		},
 		RuleGroup:    "my-cool-group",
 		FolderUID:    "folder-uid",
-		For:          time.Second * 60,
+		For:          model.Duration(60),
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
 	}

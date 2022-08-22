@@ -22,7 +22,7 @@ import (
 )
 
 var orgID = int64(1)
-var usr = &user.SignedInUser{UserId: 1}
+var usr = &user.SignedInUser{UserID: 1}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {
@@ -45,6 +45,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		store := &dashboards.FakeDashboardStore{}
 		cfg := setting.NewCfg()
+		cfg.RBACEnabled = false
 		features := featuremgmt.WithFeatures()
 		cfg.IsFeatureToggleEnabled = features.IsEnabled
 		folderPermissions := acmock.NewMockedPermissionsService()

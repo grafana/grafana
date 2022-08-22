@@ -22,19 +22,37 @@ you can get event description and event tags. The text field can include links t
 
 Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../developers/http_api/annotations/" >}}).
 
-## Adding annotations
+### Add annotation
 
-By holding down Ctrl/Cmd+Click. Adding tags to the annotation will make it searchable from other dashboards.
+1. In the dashboard click on the Time series panel. A context menu will appear.
+1. In the context menu click on **Add annotation**.
+   ![Add annotation context menu](/static/img/docs/time-series-panel/time-series-annotations-context-menu.png)
+1. Add an annotation description and tags(optional).
+   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-annotation.png)
+1. Click save.
 
-{{< figure src="/static/img/docs/annotations/annotation-still.png"
-max-width="600px" animated-gif="/static/img/docs/annotations/annotation.gif" >}}
+Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and the Add annotation popover will appear
 
-### Adding regions events
+### Add region annotation
 
-You can also hold down Ctrl/Cmd and select region to create a region annotation.
+1. In the dashboard Ctrl/Cmd+click and drag on the Time series panel.
+   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-region-annotation.gif)
+1. Add an annotation description and tags(optional).
+1. Click save.
 
-{{< figure src="/static/img/docs/annotations/region-annotation-still.png"
-max-width="600px" animated-gif="/static/img/docs/annotations/region-annotation.gif" >}}
+### Edit annotation
+
+1. In the dashboard hover over an annotation indicator on the Time series panel.
+   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)
+1. Click on the pencil icon in the annotation tooltip.
+1. Modify the description and/or tags.
+1. Click save.
+
+### Delete annotation
+
+1. In the dashboard hover over an annotation indicator on the Time series panel.
+   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)
+1. Click on the trash icon in the annotation tooltip.
 
 ### Built-in query
 

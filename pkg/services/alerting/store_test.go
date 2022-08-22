@@ -46,10 +46,12 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	var items []*models.Alert
 
 	setup := func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.RBACEnabled = false
 		store = &sqlStore{
 			db:  sqlstore.InitTestDB(t),
 			log: log.New(),
-			cfg: setting.NewCfg(),
+			cfg: cfg,
 		}
 
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
@@ -154,7 +156,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Viewer can read alerts", func(t *testing.T) {
 		setup(t)
-		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgId: 1}
+		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgID: 1}
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 

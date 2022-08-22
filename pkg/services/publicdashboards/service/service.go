@@ -192,7 +192,7 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 	datasourceUids := models.GetUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a temp user with read-only datasource permissions
-	anonymousUser := &user.SignedInUser{OrgId: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
+	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
 	permissions := make(map[string][]string)
 	queryScopes := make([]string, 0)
 	readScopes := make([]string, 0)

@@ -27,7 +27,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUser(c *models.ReqContext) response.Response {
-	return hs.getUserUserProfile(c, c.UserId)
+	return hs.getUserUserProfile(c, c.UserID)
 }
 
 // swagger:route GET /users/{user_id} users getUserByID
@@ -66,7 +66,7 @@ func (hs *HTTPServer) getUserUserProfile(c *models.ReqContext, userID int64) res
 		query.Result.IsExternal = true
 	}
 
-	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgId, "global.users:id:", strconv.FormatInt(userID, 10))
+	query.Result.AccessControl = hs.getAccessControlMetadata(c, c.OrgID, "global.users:id:", strconv.FormatInt(userID, 10))
 	query.Result.AvatarUrl = dtos.GetGravatarUrl(query.Result.Email)
 
 	return response.JSON(http.StatusOK, query.Result)
@@ -127,7 +127,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *models.ReqContext) response.Response
 			return response.Error(400, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
-	cmd.UserID = c.UserId
+	cmd.UserID = c.UserID
 	return hs.handleUpdateUser(c.Req.Context(), cmd)
 }
 
@@ -213,7 +213,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUserOrgList(c *models.ReqContext) response.Response {
-	return hs.getUserOrgList(c.Req.Context(), c.UserId)
+	return hs.getUserOrgList(c.Req.Context(), c.UserID)
 }
 
 // swagger:route GET /user/teams signed_in_user getSignedInUserTeamList
@@ -228,7 +228,7 @@ func (hs *HTTPServer) GetSignedInUserOrgList(c *models.ReqContext) response.Resp
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUserTeamList(c *models.ReqContext) response.Response {
-	return hs.getUserTeamList(c, c.OrgId, c.UserId)
+	return hs.getUserTeamList(c, c.OrgID, c.UserID)
 }
 
 // swagger:route GET /users/{user_id}/teams users getUserTeams
@@ -248,7 +248,7 @@ func (hs *HTTPServer) GetUserTeams(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	return hs.getUserTeamList(c, c.OrgId, id)
+	return hs.getUserTeamList(c, c.OrgID, id)
 }
 
 func (hs *HTTPServer) getUserTeamList(c *models.ReqContext, orgID int64, userID int64) response.Response {
@@ -330,11 +330,11 @@ func (hs *HTTPServer) UserSetUsingOrg(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if !hs.validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
+	if !hs.validateUsingOrg(c.Req.Context(), c.UserID, orgID) {
 		return response.Error(401, "Not a valid organization", nil)
 	}
 
-	cmd := models.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
+	cmd := models.SetUsingOrgCommand{UserId: c.UserID, OrgId: orgID}
 
 	if err := hs.SQLStore.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change active organization", err)
@@ -351,11 +351,11 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
 		return
 	}
 
-	if !hs.validateUsingOrg(c.Req.Context(), c.UserId, orgID) {
+	if !hs.validateUsingOrg(c.Req.Context(), c.UserID, orgID) {
 		hs.NotFoundHandler(c)
 	}
 
-	cmd := models.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
+	cmd := models.SetUsingOrgCommand{UserId: c.UserID, OrgId: orgID}
 
 	if err := hs.SQLStore.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
 		hs.NotFoundHandler(c)
@@ -385,7 +385,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	userQuery := user.GetUserByIDQuery{ID: c.UserId}
+	userQuery := user.GetUserByIDQuery{ID: c.UserID}
 
 	user, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
@@ -413,7 +413,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *models.ReqContext) response.Response
 		return response.Error(400, "New password is too short", nil)
 	}
 
-	cmd.UserID = c.UserId
+	cmd.UserID = c.UserID
 	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, user.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
@@ -450,7 +450,7 @@ func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
 	bitmask.AddFlag(user.HelpFlags1(flag))
 
 	cmd := models.SetUserHelpFlagCommand{
-		UserId:     c.UserId,
+		UserId:     c.UserID,
 		HelpFlags1: *bitmask,
 	}
 
@@ -472,7 +472,7 @@ func (hs *HTTPServer) SetHelpFlag(c *models.ReqContext) response.Response {
 // 500: internalServerError
 func (hs *HTTPServer) ClearHelpFlags(c *models.ReqContext) response.Response {
 	cmd := models.SetUserHelpFlagCommand{
-		UserId:     c.UserId,
+		UserId:     c.UserID,
 		HelpFlags1: user.HelpFlags1(0),
 	}
 

@@ -2224,11 +2224,15 @@ var expNonEmailNotifications = map[string][]string{
 				  }
 				],
 				"type": "AdaptiveCard",
-				"version": "1.4"
+				"version": "1.4",
+				"msTeams": {
+				  "width": "Full"
+				}
 			  },
 			  "contentType": "application/vnd.microsoft.card.adaptive"
 		    }
 		  ],
+		  "summary": "[FIRING:1] TeamsAlert (default)",
 		  "type": "message"
 		}`,
 	},

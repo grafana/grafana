@@ -68,8 +68,14 @@ func runMiddleware(request *http.Request, pubdashService *publicdashboardsServic
 		initCtx.Context = c
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
-	m.Get("/api/public/ma/events/:accessToken", RequiresValidAccessToken(pubdashService))
+	m.Get("/api/public/ma/events/:accessToken", RequiresValidAccessToken(pubdashService), mockValidRequestHandler)
 	m.ServeHTTP(recorder, request)
 
 	return recorder
+}
+
+func mockValidRequestHandler(c *models.ReqContext) {
+	resp := make(map[string]interface{})
+	resp["message"] = "Valid request"
+	c.JSON(http.StatusOK, resp)
 }

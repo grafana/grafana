@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -33,12 +34,7 @@ type Store interface {
 	SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
-	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
-	SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error
-	DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error
-	BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error
-	DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error
 	UpdateUserPermissions(userID int64, isAdmin bool) error
 	SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error
 	CreateTeam(name, email string, orgID int64) (models.Team, error)
@@ -82,4 +78,5 @@ type Store interface {
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error
+	GetSqlxSession() *session.SessionDB
 }

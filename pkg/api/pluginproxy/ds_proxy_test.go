@@ -482,7 +482,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
 		ctx := &models.ReqContext{
-			SignedInUser: &user.SignedInUser{UserId: 1},
+			SignedInUser: &user.SignedInUser{UserID: 1},
 			Context:      &web.Context{Req: req},
 		}
 

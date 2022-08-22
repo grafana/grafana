@@ -1,5 +1,5 @@
 import { cloneDeep } from 'lodash';
-import { of, throwError } from 'rxjs';
+import { lastValueFrom, of, throwError } from 'rxjs';
 
 import {
   CoreApp,
@@ -98,6 +98,57 @@ describe('PrometheusDatasource', () => {
       await expect(ds.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard }))).toEmitValuesWith((response) => {
         expect(response[0].data.length).not.toBe(0);
         expect(response[0].state).toBe(LoadingState.Done);
+      });
+    });
+
+    it('throws if using direct access', async () => {
+      const instanceSettings = {
+        url: 'proxied',
+        directUrl: 'direct',
+        user: 'test',
+        password: 'mupp',
+        access: 'direct',
+        jsonData: {
+          customQueryParameters: '',
+        } as any,
+      } as unknown as DataSourceInstanceSettings<PromOptions>;
+      const range = { from: time({ seconds: 63 }), to: time({ seconds: 183 }) };
+      const directDs = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+
+      await expect(
+        lastValueFrom(directDs.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard })))
+      ).rejects.toMatchObject({ message: expect.stringMatching('Browser access') });
+
+      // Cannot test because some other tests need "./metric_find_query" to be mocked and that prevents this to be
+      // tested. Checked manually that this ends up with throwing
+      // await expect(directDs.metricFindQuery('label_names(foo)')).rejects.toBeDefined();
+
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      await expect(directDs.testDatasource()).resolves.toMatchObject({
+        message: expect.stringMatching('Browser access'),
+        status: 'error',
+      });
+      await expect(
+        directDs.annotationQuery({
+          range: { ...range, raw: range },
+          rangeRaw: range,
+          // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
+          dashboard: {},
+          annotation: {
+            expr: 'metric',
+            name: 'test',
+            enable: true,
+            iconColor: '',
+          },
+        })
+      ).rejects.toMatchObject({
+        message: expect.stringMatching('Browser access'),
+      });
+      await expect(directDs.getTagKeys()).rejects.toMatchObject({
+        message: expect.stringMatching('Browser access'),
+      });
+      await expect(directDs.getTagValues()).rejects.toMatchObject({
+        message: expect.stringMatching('Browser access'),
       });
     });
   });
@@ -683,7 +734,7 @@ const HOUR = 60 * MINUTE;
 
 const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR + minutes * MINUTE + seconds * SECOND);
 
-describe('PrometheusDatasource', () => {
+describe('PrometheusDatasource2', () => {
   const instanceSettings = {
     url: 'proxied',
     directUrl: 'direct',

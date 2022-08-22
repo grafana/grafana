@@ -932,9 +932,9 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
-			OrgId:           query.SignedInUser.OrgId,
+			OrgId:           query.SignedInUser.OrgID,
 			Dialect:         d.dialect,
-			UserId:          query.SignedInUser.UserId,
+			UserId:          query.SignedInUser.UserID,
 			PermissionLevel: query.Permission,
 		},
 	}
@@ -954,8 +954,8 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 
 	if query.OrgId != 0 {
 		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
-	} else if query.SignedInUser.OrgId != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgId})
+	} else if query.SignedInUser.OrgID != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgID})
 	}
 
 	if len(query.Tags) > 0 {
@@ -969,7 +969,7 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *models.FindP
 	}
 
 	if query.IsStarred {
-		filters = append(filters, searchstore.StarredFilter{UserId: query.SignedInUser.UserId})
+		filters = append(filters, searchstore.StarredFilter{UserId: query.SignedInUser.UserID})
 	}
 
 	if len(query.Title) > 0 {

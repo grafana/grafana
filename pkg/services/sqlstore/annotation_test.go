@@ -28,7 +28,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	repo := sqlstore.NewSQLAnnotationRepo(sql)
 
 	testUser := &user.SignedInUser{
-		OrgId: 1,
+		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
 			1: {
 				accesscontrol.ActionAnnotationsRead: []string{accesscontrol.ScopeAnnotationsAll},
@@ -438,8 +438,8 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	require.NoError(t, err)
 
 	user := &user.SignedInUser{
-		UserId: 1,
-		OrgId:  1,
+		UserID: 1,
+		OrgID:  1,
 	}
 
 	type testStruct struct {

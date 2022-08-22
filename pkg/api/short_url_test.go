@@ -65,7 +65,7 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{OrgId: testOrgID, UserId: testUserID}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: testOrgID, UserID: testUserID}
 
 			return hs.createShortURL(c)
 		})

@@ -37,8 +37,8 @@ type scenarioFunc func(c *scenarioContext)
 func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		user := &user.SignedInUser{
-			UserId:  userID,
-			OrgId:   orgID,
+			UserID:  userID,
+			OrgID:   orgID,
 			OrgRole: role,
 		}
 		store := mockstore.NewSQLStoreMock()
@@ -58,10 +58,10 @@ func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFu
 func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		user := &user.SignedInUser{
-			UserId:   0,
-			OrgId:    orgID,
+			UserID:   0,
+			OrgID:    orgID,
 			OrgRole:  role,
-			ApiKeyId: 10,
+			ApiKeyID: 10,
 		}
 		store := mockstore.NewSQLStoreMock()
 		guard := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, &dashboards.FakeDashboardService{})
@@ -97,7 +97,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		}).Return(nil)
 
 		sc.permissionScenario = desc
-		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgId, sc.givenUser, store, dashSvc)
+		sc.g = newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc)
 		sc.givenDashboardID = dashboardID
 		sc.givenPermissions = permissions
 		sc.givenTeams = teams
@@ -201,7 +201,7 @@ func (sc *scenarioContext) reportFailure(desc string, expected interface{}, actu
 	buf.WriteString(fmt.Sprintf("Expected: %v\n", expected))
 	buf.WriteString(fmt.Sprintf("Actual: %v\n", actual))
 	buf.WriteString("Context:")
-	buf.WriteString(fmt.Sprintf("\n  Given user: orgRole=%s, id=%d, orgId=%d", sc.givenUser.OrgRole, sc.givenUser.UserId, sc.givenUser.OrgId))
+	buf.WriteString(fmt.Sprintf("\n  Given user: orgRole=%s, id=%d, orgId=%d", sc.givenUser.OrgRole, sc.givenUser.UserID, sc.givenUser.OrgID))
 	buf.WriteString(fmt.Sprintf("\n  Given dashboard id: %d", sc.givenDashboardID))
 
 	for i, p := range sc.givenPermissions {

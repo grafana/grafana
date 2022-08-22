@@ -8,7 +8,6 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -36,12 +35,12 @@ func commentToDto(comment *commentmodel.Comment, userMap map[int64]*commentmodel
 	return comment.ToDTO(u)
 }
 
-func searchUserToCommentUser(searchUser *models.UserSearchHitDTO) *commentmodel.CommentUser {
+func searchUserToCommentUser(searchUser *user.UserSearchHitDTO) *commentmodel.CommentUser {
 	if searchUser == nil {
 		return nil
 	}
 	return &commentmodel.CommentUser{
-		Id:        searchUser.Id,
+		Id:        searchUser.ID,
 		Name:      searchUser.Name,
 		Login:     searchUser.Login,
 		Email:     searchUser.Email,
@@ -53,20 +52,20 @@ type UserIDFilter struct {
 	userIDs []int64
 }
 
-func NewIDFilter(userIDs []int64) models.Filter {
+func NewIDFilter(userIDs []int64) user.Filter {
 	return &UserIDFilter{userIDs: userIDs}
 }
 
-func (a *UserIDFilter) WhereCondition() *models.WhereCondition {
+func (a *UserIDFilter) WhereCondition() *user.WhereCondition {
 	return nil
 }
 
-func (a *UserIDFilter) JoinCondition() *models.JoinCondition {
+func (a *UserIDFilter) JoinCondition() *user.JoinCondition {
 	return nil
 }
 
-func (a *UserIDFilter) InCondition() *models.InCondition {
-	return &models.InCondition{
+func (a *UserIDFilter) InCondition() *user.InCondition {
+	return &user.InCondition{
 		Condition: "u.id",
 		Params:    a.userIDs,
 	}
@@ -97,9 +96,9 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *user.Si
 	}
 
 	userMap := make(map[int64]*commentmodel.CommentUser, 1)
-	if signedInUser.UserId > 0 {
-		userMap[signedInUser.UserId] = &commentmodel.CommentUser{
-			Id:        signedInUser.UserId,
+	if signedInUser.UserID > 0 {
+		userMap[signedInUser.UserID] = &commentmodel.CommentUser{
+			Id:        signedInUser.UserID,
 			Name:      signedInUser.Name,
 			Login:     signedInUser.Login,
 			Email:     signedInUser.Email,
@@ -107,7 +106,7 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *user.Si
 		}
 	}
 
-	m, err := s.storage.Create(ctx, orgID, cmd.ObjectType, cmd.ObjectID, signedInUser.UserId, cmd.Content)
+	m, err := s.storage.Create(ctx, orgID, cmd.ObjectType, cmd.ObjectID, signedInUser.UserID, cmd.Content)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +121,7 @@ func (s *Service) Create(ctx context.Context, orgID int64, signedInUser *user.Si
 }
 
 func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, cmd GetCmd) ([]*commentmodel.CommentDto, error) {
+	var res *user.SearchUserQueryResult
 	ok, err := s.permissions.CheckReadPermissions(ctx, orgID, signedInUser, cmd.ObjectType, cmd.ObjectID)
 	if err != nil {
 		return nil, err
@@ -147,20 +147,20 @@ func (s *Service) Get(ctx context.Context, orgID int64, signedInUser *user.Signe
 	}
 
 	// NOTE: probably replace with comment and user table join.
-	query := &models.SearchUsersQuery{
+	query := &user.SearchUsersQuery{
 		Query:        "",
 		Page:         0,
 		Limit:        len(userIds),
 		SignedInUser: signedInUser,
-		Filters:      []models.Filter{NewIDFilter(userIds)},
+		Filters:      []user.Filter{NewIDFilter(userIds)},
 	}
-	if err := s.sqlStore.SearchUsers(ctx, query); err != nil {
+	if res, err = s.userService.Search(ctx, query); err != nil {
 		return nil, err
 	}
 
-	userMap := make(map[int64]*commentmodel.CommentUser, len(query.Result.Users))
-	for _, v := range query.Result.Users {
-		userMap[v.Id] = searchUserToCommentUser(v)
+	userMap := make(map[int64]*commentmodel.CommentUser, len(res.Users))
+	for _, v := range res.Users {
+		userMap[v.ID] = searchUserToCommentUser(v)
 	}
 
 	result := commentsToDto(messages, userMap)

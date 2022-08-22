@@ -67,11 +67,11 @@ export const Simple: Story = (args) => {
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>AutoSizeInput</div>;
   const prefix = args.prefixVisible;
   const suffix = args.suffixVisible;
-  let prefixEl: any = prefix;
+  let prefixEl = prefix;
   if (prefix && prefix.match(/icon-/g)) {
     prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconName} />;
   }
-  let suffixEl: any = suffix;
+  let suffixEl = suffix;
   if (suffix && suffix.match(/icon-/g)) {
     suffixEl = <Icon name={suffix.replace(/icon-/g, '') as IconName} />;
   }
