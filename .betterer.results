@@ -6441,7 +6441,8 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/dashboard/DashboardQueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/plugins/datasource/dashboard/runSharedRequest.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
