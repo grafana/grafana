@@ -6,6 +6,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, Field, HorizontalGroup, PanelContainer, useStyles2 } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { Correlation } from '../types';
 
@@ -55,7 +56,13 @@ export const AddCorrelationForm = ({ onClose, onSubmit: externalSubmit }: Props)
           <Controller
             control={control}
             name="sourceUID"
-            rules={{ required: { value: true, message: 'This field is required.' } }}
+            rules={{
+              required: { value: true, message: 'This field is required.' },
+              validate: {
+                writable: (uid: string) =>
+                  getDatasourceSrv().getInstanceSettings(uid)?.readOnly && "Source can't be a read-only data source.",
+              },
+            }}
             render={({ field: { onChange, value } }) => (
               <Field label="Source" htmlFor="source" invalid={!!errors.sourceUID} error={errors.sourceUID?.message}>
                 <DataSourcePicker
