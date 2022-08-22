@@ -15,6 +15,10 @@ You can configure Grafana to accept a JWT token provided in the HTTP header. The
 - JSON Web Key Set (JWKS) in a local file
 - JWKS provided by the configured JWKS endpoint
 
+This method of authentication is useful for integrating with other systems that
+use JWKS but can't directly integrate with Grafana or if you want to use pass-through
+authentication in an app embedding Grafana.
+
 ## Enable JWT
 
 To use JWT authentication:
@@ -52,6 +56,36 @@ email_claim = sub
 ```
 
 If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth ID". The `name` claim is used as the user's full name if it is present.
+
+## URL login
+
+If you want to embed Grafana in an iframe, you can use JWT authentication to authenticate the iframe.
+
+`url_login` allows grafana to search for a JWT in the URL and use it as authentication.
+
+```ini
+# [auth.jwt]
+# ...
+url_login = true # enable JWT authentication in the URL
+```
+
+This can be paired with `enable_login_token` to create a session cookie for the user
+allowing them to stay logged in.
+
+```ini
+enable_login_token = true # optional: create a session cookie for the user
+```
+
+An example of an URL for accessing grafana with JWT URL authentication is:
+
+```
+`http://env.grafana.local/d/RciOKLR4z/board-identifier?orgId=1&kiosk&auth_token=eyJhbxxxxxxxxxxxxx`
+```
+
+A sample repository using this authentication method is available
+at [grafana-iframe-oauth-sample](https://github.com/grafana/grafana-iframe-oauth-sample).
+
+> Note: for embedding to work `allow_embedding` must be enabled in the [security section]({{< relref "../../configure-grafana#allow_embedding" >}}).
 
 ## Signature verification
 
