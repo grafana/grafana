@@ -72,7 +72,7 @@ The temperature fields look good, but the humidity must now be changed. We can f
 
 ## Add a field override
 
-You can override a field when you want to change the display of the value in the visualization.
+A field override rule can customize the visualization settings for a specific field or series. 
 
 1. Edit the panel to which you want to add an override.
 1. In the panel display options, in the **Overrides** section, click **Add field override**.
