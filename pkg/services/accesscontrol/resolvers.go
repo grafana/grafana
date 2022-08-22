@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // ScopeAttributeResolver is used to resolve attributes in scopes to one or more scopes that are
@@ -24,21 +23,6 @@ func (f ScopeAttributeResolverFunc) Resolve(ctx context.Context, orgID int64, sc
 }
 
 type ScopeAttributeMutator func(context.Context, string) ([]string, error)
-
-// ScopeKeywordResolver is used to resolve keywords in scopes e.g. "users:self" -> "user:id:1".
-// These type of resolvers is used when fetching stored permissions
-type ScopeKeywordResolver interface {
-	Resolve(ctx context.Context, user *user.SignedInUser) (string, error)
-}
-
-// ScopeKeywordResolverFunc is an adapter to allow functions to implement ScopeKeywordResolver interface
-type ScopeKeywordResolverFunc func(ctx context.Context, user *user.SignedInUser) (string, error)
-
-func (f ScopeKeywordResolverFunc) Resolve(ctx context.Context, user *user.SignedInUser) (string, error) {
-	return f(ctx, user)
-}
-
-type ScopeKeywordMutator func(context.Context, string) (string, error)
 
 const (
 	ttl           = 30 * time.Second
