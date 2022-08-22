@@ -25,7 +25,7 @@ The graph panel can render metrics as a line, a path of dots, or a series of bar
 Graph visualizations allow you to apply:
 
 - [Alerts]({{< relref "../alerting/" >}}) - This is the only type of visualization that allows you to set alerts.
-- [Transform data]({{< relref "../panels/transform-data/add-transformation-to-data/" >}})
+- [Transform data]({{< relref "../panels/transform-data/#add-a-transformation-function-to-data" >}})
 - [Add a field override]({{< relref "../panels/override-field-values/add-a-field-override/" >}})
 - [Configure thresholds]({{< relref "../panels/configure-thresholds/" >}})
 
