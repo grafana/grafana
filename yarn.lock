@@ -3925,11 +3925,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/cli@npm:5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/cli@npm:5.3.7"
+"@betterer/cli@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@betterer/cli@npm:5.4.0"
   dependencies:
-    "@betterer/betterer": ^5.3.7
+    "@betterer/betterer": ^5.4.0
     "@betterer/errors": ^5.3.0
     "@betterer/render": ^5.3.4
     "@betterer/tasks": ^5.3.6
@@ -3944,7 +3944,7 @@ __metadata:
     tslib: ^2.3.1
   bin:
     betterer: bin/betterer
-  checksum: 6a8140e2566f28bfd03e38f02e4bfa4f4c018eccc12e6ae87fc19c7e159789ef3fe0b2cd0f9f9383b3b666832ddeb839a4b11020687c0f4630bbf2b7c43ed879
+  checksum: 1086d7d786bc24187c328cd0d3403060a2c61795fa4786743d1c1f79070366a4e23de7a9c80c0489e2e9d6027af8b94c0cd2ac5387e72196e4e6dee667e3bce2
   languageName: node
   linkType: hard
 
@@ -21702,7 +21702,7 @@ __metadata:
     "@babel/preset-typescript": 7.18.6
     "@babel/runtime": 7.18.9
     "@betterer/betterer": 5.4.0
-    "@betterer/cli": 5.3.7
+    "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.3.7
     "@betterer/regexp": 5.3.7
     "@emotion/css": 11.9.0
