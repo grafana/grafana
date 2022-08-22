@@ -8,6 +8,7 @@ import (
 )
 
 var _ accesscontrol.Service = new(FakeService)
+var _ accesscontrol.RoleRegistry = new(FakeService)
 
 type FakeService struct {
 	ExpectedErr         error
@@ -28,6 +29,10 @@ func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID in
 }
 
 func (f FakeService) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
+	return f.ExpectedErr
+}
+
+func (f FakeService) RegisterFixedRoles(ctx context.Context) error {
 	return f.ExpectedErr
 }
 
