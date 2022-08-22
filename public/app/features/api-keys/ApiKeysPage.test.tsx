@@ -172,7 +172,7 @@ describe('ApiKeysPage', () => {
 
   describe('when a user adds an API key from CTA', () => {
     it('then it should call addApiKey with correct parameters', async () => {
-      const apiKeys: any[] = [];
+      const apiKeys: ApiKey[] = [];
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
       addApiKeyMock.mockClear();
