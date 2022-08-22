@@ -86,6 +86,7 @@ def retrieve_npm_packages_step():
         'depends_on': [
             'yarn-install',
         ],
+        'failure': 'ignore',
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -102,6 +103,7 @@ def release_npm_packages_step():
         'depends_on': [
             'retrieve-npm-packages',
         ],
+        'failure': 'ignore',
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
