@@ -27,14 +27,13 @@ This option formats the content as [markdown](https://en.wikipedia.org/wiki/Mark
 
 ### HTML
 
-This setting renders the content as [sanitized](https://github.com/grafana/grafana/blob/code-in-text-panel/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the 
+This setting renders the content as [sanitized](https://github.com/grafana/grafana/blob/code-in-text-panel/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the
 [disable_sanitize_html]({{< relref "../setup-grafana/configure-grafana/#disable_sanitize_html" >}}) flag which enables you to directly enter HTML.
 
 ### Code
 
-This option renders content inside a read-only code editor. The selected language will provide proper syntax highlighting
-
-you want to use markdown or HTML to style your text, then enter content in the box below. Grafana includes a title and paragraph to help you get started, or you can paste content in from another editor.
+This setting renders content inside a read-only code editor. Select an appropriate language to apply syntax highlighting
+to the embedded text.
 
 ## Variables
 
