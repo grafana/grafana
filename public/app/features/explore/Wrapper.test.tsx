@@ -211,17 +211,17 @@ describe('Wrapper', () => {
     });
   });
 
-  it('can close a pane from a split', async () => {
+  it('can close a panel from a split', async () => {
     const urlParams = {
       left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
       right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
     };
     setupExplore({ urlParams });
-    const closeButtons = await screen.findAllByTitle(/Close split pane/i);
+    const closeButtons = await screen.findAllByLabelText(/Close split pane/i);
     await userEvent.click(closeButtons[1]);
 
     await waitFor(() => {
-      const logsPanels = screen.queryAllByTitle(/Close split pane/i);
+      const logsPanels = screen.queryAllByLabelText(/Close split pane/i);
       expect(logsPanels.length).toBe(0);
     });
   });
