@@ -5,14 +5,13 @@ import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataQuery, GrafanaTheme2, PanelData, SelectableValue, DataTopic } from '@grafana/data';
-import { Field, Select, useStyles2, VerticalGroup, Spinner, Switch, RadioButtonGroup } from '@grafana/ui';
+import { Field, Select, useStyles2, VerticalGroup, Spinner, Switch, RadioButtonGroup, Icon } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
-import { DashboardQueryRow } from './DashboardQueryRow';
 import { DashboardQuery, ResultInfo, SHARED_DASHBOARD_QUERY } from './types';
 
 function getQueryDisplayText(query: DataQuery): string {
@@ -167,7 +166,19 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
             <Field label="Queries">
               <VerticalGroup spacing="sm">
                 {results.map((target, i) => (
-                  <DashboardQueryRow editURL={editURL} target={target} key={`DashboardQueryRow-${i}`} />
+                  <div className={styles.queryEditorRowHeader} key={`DashboardQueryRow-${i}`}>
+                    <div>
+                      <img src={target.img} width={16} />
+                      <span className={styles.refId}>{`${target.refId}:`}</span>
+                    </div>
+                    <div>
+                      <a href={editURL}>
+                        {target.query}
+                        &nbsp;
+                        <Icon name="external-link-alt" />
+                      </a>
+                    </div>
+                  </div>
                 ))}
               </VerticalGroup>
             </Field>
@@ -196,5 +207,16 @@ function getStyles(theme: GrafanaTheme2) {
     noQueriesText: css({
       padding: theme.spacing(1.25),
     }),
+    refId: css({
+      padding: theme.spacing(1.25),
+    }),
+    queryEditorRowHeader: css`
+      label: queryEditorRowHeader;
+      display: flex;
+      padding: 4px 8px;
+      flex-flow: row wrap;
+      background: ${theme.colors.background.secondary};
+      align-items: center;
+    `,
   };
 }
