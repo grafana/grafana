@@ -3871,7 +3871,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:5.3.7, @betterer/betterer@npm:^5.3.7":
+"@betterer/betterer@npm:5.4.0, @betterer/betterer@npm:^5.4.0":
+  version: 5.4.0
+  resolution: "@betterer/betterer@npm:5.4.0"
+  dependencies:
+    "@betterer/constraints": ^5.3.0
+    "@betterer/errors": ^5.3.0
+    "@betterer/logger": ^5.3.4
+    "@betterer/reporter": ^5.4.0
+    "@phenomnomnominal/debug": ^0.2.5
+    "@phenomnomnominal/worker-require": ^0.0.34
+    chokidar: ^3.3.1
+    djb2a: ^1.2.0
+    fast-memoize: ^2.5.2
+    lines-and-columns: ^2.0.3
+    minimatch: ^5.0.1
+    prettier: ^2.3.2
+    simple-git: ^3.6.0
+    ts-node: ^10.2.1
+    tslib: ^2.3.1
+    typescript: ">=2.7"
+  dependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 9f9b8ab6a9980eee77860fc6449b7a6d7c20d71702854f3aa6a59be98e49ff54cd43a1f93273c3a0b9fea95dfcff541188949ddb3333d6178abb07d120ff7437
+  languageName: node
+  linkType: hard
+
+"@betterer/betterer@npm:^5.3.7":
   version: 5.3.7
   resolution: "@betterer/betterer@npm:5.3.7"
   dependencies:
@@ -3991,6 +4018,20 @@ __metadata:
     "@betterer/tasks": ^5.3.6
     tslib: ^2.3.1
   checksum: 5ee6fe9bf564b4243a93c3f4a0ccaa35b01a03b2abec0ae7db68b13e31c6203dffedbae0d81948c470d548bee67dda02410f4ff487c0bcaabc58dc0c18cb1029
+  languageName: node
+  linkType: hard
+
+"@betterer/reporter@npm:^5.4.0":
+  version: 5.4.0
+  resolution: "@betterer/reporter@npm:5.4.0"
+  dependencies:
+    "@betterer/betterer": ^5.4.0
+    "@betterer/errors": ^5.3.0
+    "@betterer/logger": ^5.3.4
+    "@betterer/render": ^5.3.4
+    "@betterer/tasks": ^5.3.6
+    tslib: ^2.3.1
+  checksum: a8a1a4e301d0a9e07551757ac4a90f3013906c2e93fa09a3cf616b9e7fb3fa772535cffc39270f432432c9865a3a48e025e94046876163a9288289c2a5263ed9
   languageName: node
   linkType: hard
 
@@ -21660,7 +21701,7 @@ __metadata:
     "@babel/preset-react": 7.18.6
     "@babel/preset-typescript": 7.18.6
     "@babel/runtime": 7.18.9
-    "@betterer/betterer": 5.3.7
+    "@betterer/betterer": 5.4.0
     "@betterer/cli": 5.3.7
     "@betterer/eslint": 5.3.7
     "@betterer/regexp": 5.3.7
