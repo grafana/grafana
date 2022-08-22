@@ -131,7 +131,8 @@ func setupTestMigratorServiceWithDeletionError(
 		Type:      str,
 		Namespace: str,
 	}] = "bogus"
-	secretskv.SetFallback(fallback)
+	err := secretskv.SetFallback(fallback)
+	require.NoError(t, err)
 	return migratorService
 }
 
