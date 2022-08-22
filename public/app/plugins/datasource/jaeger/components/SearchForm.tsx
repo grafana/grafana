@@ -96,13 +96,14 @@ export function SearchForm({ datasource, query, onChange }: Props) {
   return (
     <div className={css({ maxWidth: '500px' })}>
       <InlineFieldRow>
-        <InlineField label="Service" labelWidth={14} grow>
+        <InlineField label="Service Name" labelWidth={14} grow>
           <Select
             inputId="service"
             options={serviceOptions}
             onOpenMenu={() => loadOptions('/api/services', 'services')}
             isLoading={isLoading.services}
             value={serviceOptions?.find((v) => v?.value === query.service) || undefined}
+            placeholder="Select a service"
             onChange={(v) =>
               onChange({
                 ...query,
@@ -144,7 +145,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Tags" labelWidth={14} grow>
+        <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in the logfmt format.">
           <Input
             id="tags"
             value={transformToLogfmt(query.tags)}
