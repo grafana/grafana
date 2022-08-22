@@ -19,7 +19,7 @@ The text panel enables you to directly include text or HTML in your dashboards. 
 
 ## Mode
 
-The **Mode**, select how the embedded content should be displayed
+**Mode** determines how embedded content appears.
 
 ### Markdown
 
