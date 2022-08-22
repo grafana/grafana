@@ -170,12 +170,6 @@ export const RolePickerMenu = ({
   };
 
   const onUpdateInternal = () => {
-    const selectedCustomRoles: string[] = [];
-    // TODO: needed?
-    for (const key in selectedOptions) {
-      const roleUID = selectedOptions[key]?.uid;
-      selectedCustomRoles.push(roleUID);
-    }
     onUpdate(selectedOptions, selectedBuiltInRole);
   };
 
