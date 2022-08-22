@@ -32,7 +32,7 @@ This setting renders the content as [sanitized](https://github.com/grafana/grafa
 
 ### Code
 
-Content is rendered inside a read only code editor. The selected language will provide proper syntax highlighting
+This option renders content inside a read-only code editor. The selected language will provide proper syntax highlighting
 
 you want to use markdown or HTML to style your text, then enter content in the box below. Grafana includes a title and paragraph to help you get started, or you can paste content in from another editor.
 
