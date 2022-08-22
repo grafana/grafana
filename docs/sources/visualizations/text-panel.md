@@ -23,7 +23,7 @@ The **Mode**, select how the embedded content should be displayed
 
 ### Markdown
 
-The content is formatted as [markdown](https://en.wikipedia.org/wiki/Markdown)
+This option formats the content as [markdown](https://en.wikipedia.org/wiki/Markdown).
 
 ### HTML
 
