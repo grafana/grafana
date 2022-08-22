@@ -29,24 +29,15 @@ const loaderWrapper = css`
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAdding] = useState(false);
-  const { correlations, create, remove, update, isLoading, error, reload } = useCorrelations();
+  const { correlations, create, remove, update, isLoading, error } = useCorrelations();
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const handleAdd = useCallback<ComponentProps<typeof AddCorrelationForm>['onSubmit']>(
     async (correlation) => {
       await create(correlation);
-      reload();
       setIsAdding(false);
     },
-    [create, reload]
-  );
-
-  const handleDelete = useCallback<(correlation: Parameters<typeof remove>[0]) => () => Promise<unknown>>(
-    (correlation) => async () => {
-      await remove(correlation);
-      reload();
-    },
-    [remove, reload]
+    [create]
   );
 
   const RowActions = useCallback(
@@ -59,9 +50,9 @@ export default function CorrelationsPage() {
       },
     }: CellProps<CorrelationData, void>) =>
       !readOnly && (
-        <DeleteButton aria-label="delete correlation" onConfirm={handleDelete({ sourceUID, uid })} closeOnConfirm />
+        <DeleteButton aria-label="delete correlation" onConfirm={() => remove({ sourceUID, uid })} closeOnConfirm />
       ),
-    [handleDelete]
+    [remove]
   );
 
   const columns = useMemo<Array<Column<CorrelationData>>>(
