@@ -216,7 +216,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options), panelId);
+      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId);
       return;
     }
 
