@@ -5,7 +5,7 @@ import { ResourcePermission } from './types';
 
 interface Props {
   title: string;
-  filterKey: 'builtInRole' | 'userLogin' | 'team';
+  compareKey: 'builtInRole' | 'userLogin' | 'team';
   items: ResourcePermission[];
   permissionLevels: string[];
   canSet: boolean;
@@ -13,11 +13,11 @@ interface Props {
   onChange: (resourcePermission: ResourcePermission, permission: string) => void;
 }
 
-export const PermissionList = ({ title, items, filterKey, permissionLevels, canSet, onRemove, onChange }: Props) => {
+export const PermissionList = ({ title, items, compareKey, permissionLevels, canSet, onRemove, onChange }: Props) => {
   const computed = useMemo(() => {
     const keep: { [key: string]: ResourcePermission } = {};
     for (let item of items) {
-      const key = item[filterKey]!;
+      const key = item[compareKey]!;
       if (!keep[key]) {
         keep[key] = item;
         continue;
@@ -28,7 +28,7 @@ export const PermissionList = ({ title, items, filterKey, permissionLevels, canS
       }
     }
     return Object.keys(keep).map((k) => keep[k]);
-  }, [items, filterKey]);
+  }, [items, compareKey]);
 
   if (computed.length === 0) {
     return null;

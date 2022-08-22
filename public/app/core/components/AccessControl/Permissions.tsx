@@ -148,7 +148,7 @@ export const Permissions = ({
         <PermissionList
           title="Role"
           items={builtInRoles}
-          filterKey={'builtInRole'}
+          compareKey={'builtInRole'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
@@ -157,7 +157,7 @@ export const Permissions = ({
         <PermissionList
           title="User"
           items={users}
-          filterKey={'userLogin'}
+          compareKey={'userLogin'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
@@ -166,7 +166,7 @@ export const Permissions = ({
         <PermissionList
           title="Team"
           items={teams}
-          filterKey={'team'}
+          compareKey={'team'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
