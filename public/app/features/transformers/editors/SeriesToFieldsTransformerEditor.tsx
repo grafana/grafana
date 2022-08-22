@@ -23,7 +23,7 @@ export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<Series
     (value: SelectableValue<string>) => {
       onChange({
         ...options,
-        byField: value.value,
+        byField: value?.value,
       });
     },
     [onChange, options]

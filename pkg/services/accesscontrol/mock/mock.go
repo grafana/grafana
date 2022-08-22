@@ -183,8 +183,8 @@ func (m *Mock) RegisterScopeAttributeResolver(scopePrefix string, resolver acces
 	}
 }
 
-func (m *Mock) DeleteUserPermissions(ctx context.Context, userID int64) error {
-	m.Calls.DeleteUserPermissions = append(m.Calls.DeleteUserPermissions, []interface{}{ctx, userID})
+func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
+	m.Calls.DeleteUserPermissions = append(m.Calls.DeleteUserPermissions, []interface{}{ctx, orgID, userID})
 	// Use override if provided
 	if m.DeleteUserPermissionsFunc != nil {
 		return m.DeleteUserPermissionsFunc(ctx, userID)

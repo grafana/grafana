@@ -2229,6 +2229,7 @@ var expNonEmailNotifications = map[string][]string{
 			  "contentType": "application/vnd.microsoft.card.adaptive"
 		    }
 		  ],
+		  "summary": "[FIRING:1] TeamsAlert (default)",
 		  "type": "message"
 		}`,
 	},
