@@ -37,7 +37,8 @@ func SetupTestService(t *testing.T) SecretsKVStore {
 
 // In memory kv store used for testing
 type FakeSecretsKVStore struct {
-	store map[Key]string
+	store    map[Key]string
+	delError bool
 }
 
 func NewFakeSecretsKVStore() FakeSecretsKVStore {
@@ -56,6 +57,9 @@ func (f FakeSecretsKVStore) Set(ctx context.Context, orgId int64, namespace stri
 }
 
 func (f FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
+	if f.delError {
+		return errors.New("bogus")
+	}
 	delete(f.store, buildKey(orgId, namespace, typ))
 	return nil
 }
