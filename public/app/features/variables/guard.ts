@@ -126,7 +126,8 @@ export const hasStandardVariableSupport = <
     return false;
   }
 
-  return Boolean(datasource.variables.toDataQuery);
+  const variableSupport = datasource.variables;
+  return 'toDataQuery' in variableSupport && Boolean(variableSupport.toDataQuery);
 };
 
 export const hasCustomVariableSupport = <
@@ -144,8 +145,12 @@ export const hasCustomVariableSupport = <
   }
 
   const variableSupport = datasource.variables;
-
-  return Boolean(variableSupport.query) && Boolean(variableSupport.editor);
+  return (
+    'query' in variableSupport &&
+    'editor' in variableSupport &&
+    Boolean(variableSupport.query) &&
+    Boolean(variableSupport.editor)
+  );
 };
 
 export const hasDatasourceVariableSupport = <
