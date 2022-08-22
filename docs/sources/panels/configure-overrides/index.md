@@ -75,7 +75,7 @@ The temperature fields look good, but the humidity must now be changed. We can f
 A field override rule can customize the visualization settings for a specific field or series. 
 
 1. Edit the panel to which you want to add an override.
-1. In the panel display options, in the **Overrides** section, click **Add field override**.
+1. In the panel options side pane, click **Add field override** at the bottom of the pane.
 
 1. Select which fields an override rule will be applied to:
    - **Fields with name:** Select a field from the list of all available fields. Properties you add to a rule with this selector are only applied to this single field.
