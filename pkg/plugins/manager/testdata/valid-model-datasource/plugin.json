@@ -1,8 +1,7 @@
 {
   "type": "datasource",
-  "name": "Slot impl testing",
-  "id": "datasource-models-valid",
-  "builtIn": true,
+  "name": "Datasource models valid",
+  "id": "valid-model-datasource",
   "backend": true,
   "state": "alpha",
   "info": {

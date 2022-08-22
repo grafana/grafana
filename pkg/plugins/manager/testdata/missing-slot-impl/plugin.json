@@ -1,8 +1,7 @@
 {
   "type": "datasource",
-  "name": "Slot impl testing",
-  "id": "missing-slot-impl",
-  "builtIn": true,
+  "name": "Missing slot impl",
+  "id": "missing-slot-datasource",
   "backend": true,
   "state": "alpha",
   "info": {

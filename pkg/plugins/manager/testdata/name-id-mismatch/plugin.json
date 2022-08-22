@@ -1,8 +1,7 @@
 {
   "type": "panel",
-  "name": "Slot impl testing",
-  "id": "name-id-mismatch",
-  "builtIn": true,
+  "name": "ID/Name mismatch",
+  "id": "name-mismatch-panel",
   "backend": true,
   "state": "alpha",
   "info": {

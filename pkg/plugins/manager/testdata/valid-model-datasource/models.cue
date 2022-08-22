@@ -3,7 +3,7 @@ package grafanaplugin
 import "github.com/grafana/thema"
 
 Query: thema.#Lineage & {
-	name: "datasource_models_valid"
+	name: "valid_model_datasource"
 	seqs: [
 		{
 			schemas: [
@@ -16,7 +16,7 @@ Query: thema.#Lineage & {
 }
 
 DSOptions: thema.#Lineage & {
-	name: "datasource_models_valid"
+	name: "valid_model_datasource"
 	seqs: [
 		{
 			schemas: [

@@ -2,7 +2,6 @@
   "type": "app",
   "name": "Test App",
   "id": "test-app",
-  "builtIn": true,
 
   "staticRoot": ".",
 

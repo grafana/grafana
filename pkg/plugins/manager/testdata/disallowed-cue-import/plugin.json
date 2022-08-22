@@ -1,8 +1,7 @@
 {
   "type": "panel",
-  "name": "Slot impl testing",
-  "id": "disallowed-cue-import",
-  "builtIn": true,
+  "name": "Disallowed CUE import",
+  "id": "disallowed-import-panel",
   "backend": true,
   "state": "alpha",
   "info": {
