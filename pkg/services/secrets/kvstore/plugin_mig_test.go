@@ -100,5 +100,6 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 		},
 	}
 
+	secretsStoreForPlugin.SetFallback(secretsSql)
 	return migratorService, secretsStoreForPlugin, secretsSql
 }

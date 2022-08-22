@@ -39,6 +39,7 @@ func SetupTestService(t *testing.T) SecretsKVStore {
 type FakeSecretsKVStore struct {
 	store    map[Key]string
 	delError bool
+	fallback SecretsKVStore
 }
 
 func NewFakeSecretsKVStore() FakeSecretsKVStore {
@@ -97,10 +98,11 @@ func (f FakeSecretsKVStore) GetAll(ctx context.Context) ([]Item, error) {
 }
 
 func (f FakeSecretsKVStore) Fallback() SecretsKVStore {
-	return nil
+	return f.fallback
 }
 
 func (f FakeSecretsKVStore) SetFallback(store SecretsKVStore) error {
+	f.fallback = store
 	return nil
 }
 
