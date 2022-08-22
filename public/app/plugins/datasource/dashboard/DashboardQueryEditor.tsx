@@ -61,40 +61,39 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
     );
   }, [panelData, panel]);
 
-  const onPanelChanged = useCallback(
-    (id: number) => {
-      onChange([
-        {
-          ...query,
-          panelId: id,
-        } as DashboardQuery,
-      ]);
+  const onUpdateQuery = useCallback(
+    (query: DashboardQuery) => {
+      onChange([query]);
       onRunQueries();
     },
-    [query, onChange, onRunQueries]
+    [onChange, onRunQueries]
+  );
+
+  const onPanelChanged = useCallback(
+    (id: number) => {
+      onUpdateQuery({
+        ...query,
+        panelId: id,
+      });
+    },
+    [query, onUpdateQuery]
   );
 
   const onTransformToggle = useCallback(() => {
-    onChange([
-      {
-        ...query,
-        withTransforms: !query.withTransforms,
-      } as DashboardQuery,
-    ]);
-    onRunQueries();
-  }, [query, onChange, onRunQueries]);
+    onUpdateQuery({
+      ...query,
+      withTransforms: !query.withTransforms,
+    });
+  }, [query, onUpdateQuery]);
 
   const onTopicChanged = useCallback(
     (t: boolean) => {
-      onChange([
-        {
-          ...query,
-          topic: t ? DataTopic.Annotations : undefined,
-        } as DashboardQuery,
-      ]);
-      onRunQueries();
+      onUpdateQuery({
+        ...query,
+        topic: t ? DataTopic.Annotations : undefined,
+      });
     },
-    [query, onChange, onRunQueries]
+    [query, onUpdateQuery]
   );
 
   const getPanelDescription = useCallback(
@@ -145,6 +144,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
   const selected = panels.find((panel) => panel.value === query.panelId);
   // Same as current URL, but different panelId
   const editURL = `d/${dashboard.uid}/${dashboard.title}?&editPanel=${query.panelId}`;
+  const showTransforms = Boolean(query.withTransforms || panel?.transformations?.length);
 
   return (
     <>
@@ -163,7 +163,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
         <Spinner />
       ) : (
         <>
-          {results && results.length && (
+          {results && Boolean(results.length) && (
             <Field label="Queries">
               <VerticalGroup spacing="sm">
                 {results.map((target, i) => (
@@ -175,7 +175,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
         </>
       )}
 
-      {(query.withTransforms || Boolean(panel?.transformations?.length)) && (
+      {showTransforms && (
         <Field label="Transform" description="Apply panel transformations from the source panel">
           <Switch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
         </Field>
