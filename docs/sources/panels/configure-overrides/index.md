@@ -110,7 +110,7 @@ You can view field overrides in the panel display options.
 Edit a field override when you want to make changes to an override setting. The change you make takes effect immediately.
 
 1. Edit the panel that contains the overrides you want to edit.
-1. In the panel display options, click the **Overrides** tab.
+1. In panel options side pane, scroll down until you see the overrides. 
 1. Locate the override that you want to change.
 1. Perform any of the following:
    - Edit settings on existing overrides or field selection parameters.
