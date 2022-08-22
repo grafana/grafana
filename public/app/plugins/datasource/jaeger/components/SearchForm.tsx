@@ -119,7 +119,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Operation" labelWidth={14} grow disabled={!query.service}>
+        <InlineField label="Operation Name" labelWidth={14} grow disabled={!query.service}>
           <Select
             inputId="operation"
             options={operationOptions}
@@ -131,6 +131,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             }
             isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
+            placeholder="Select operation name"
             onChange={(v) =>
               onChange({
                 ...query,
