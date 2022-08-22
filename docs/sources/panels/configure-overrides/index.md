@@ -7,16 +7,16 @@ aliases:
   - /docs/grafana/latest/panels/override-field-values/delete-a-field-override/
   - /docs/grafana/latest/panels/override-field-values/edit-field-override/
   - /docs/grafana/latest/panels/override-field-values/view-field-override/
-title: Configure field value overrides
-menuTitle: Configure overrides
+title: Configure field overrides
+menuTitle: Configure field overrides
 weight: 400
 ---
 
 # Configure field overrides
 
-Overrides allow you to customize visualization settings for specific fields or series. This is accomplished by adding an override rule that targets a particular set of fields and that can each define multiple options. 
+Overrides allow you to customize visualization settings for specific fields or series. This is accomplished by adding an override rule that targets a particular set of fields and that can each define multiple options.
 
-For example, you set the unit for all fields that include the text 'bytes'  by adding an override using the `Fields with name matching regex` matcher and then add the Unit option to the override rule. 
+For example, you set the unit for all fields that include the text 'bytes' by adding an override using the `Fields with name matching regex` matcher and then add the Unit option to the override rule.
 
 ## Example 1: Format temperature
 
@@ -72,7 +72,7 @@ The temperature fields look good, but the humidity must now be changed. We can f
 
 ## Add a field override
 
-A field override rule can customize the visualization settings for a specific field or series. 
+A field override rule can customize the visualization settings for a specific field or series.
 
 1. Edit the panel to which you want to add an override.
 1. In the panel options side pane, click **Add field override** at the bottom of the pane.
@@ -93,7 +93,7 @@ A field override rule can customize the visualization settings for a specific fi
 Delete a field override when you no longer need it. When you delete an override, the appearance of value defaults to its original format. This change impacts dashboards and dashboard users that rely on an affected panel.
 
 1. Edit the panel that contains the override you want to delete.
-1. In panel options side pane, scroll down until you see the overrides. 
+1. In panel options side pane, scroll down until you see the overrides.
 1. Click the override you want to delete and then click the associated trash icon.
 
 ## View field overrides
@@ -101,7 +101,7 @@ Delete a field override when you no longer need it. When you delete an override,
 You can view field overrides in the panel display options.
 
 1. Edit the panel that contains the overrides you want to view.
-1. In panel options side pane, scroll down until you see the overrides. 
+1. In panel options side pane, scroll down until you see the overrides.
 
 > The override settings that appear on the **All** tab are the same as the settings that appear on the **Overrides** tab.
 
@@ -110,7 +110,7 @@ You can view field overrides in the panel display options.
 Edit a field override when you want to make changes to an override setting. The change you make takes effect immediately.
 
 1. Edit the panel that contains the overrides you want to edit.
-1. In panel options side pane, scroll down until you see the overrides. 
+1. In panel options side pane, scroll down until you see the overrides.
 1. Locate the override that you want to change.
 1. Perform any of the following:
    - Edit settings on existing overrides or field selection parameters.
