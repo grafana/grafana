@@ -126,7 +126,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
     [timeZone, frames, shouldDisplayCloseButton]
   );
 
-  const timezones = useMemo(() => getTimezones(options.timezones, timeZone), [options.timezones, timeZone]);
+  const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!frames || warn) {
     return (
@@ -154,7 +154,7 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
       frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
-      timeZones={timezones}
+      timeZone={timezones}
       width={width}
       height={height}
       legendItems={legendItems}

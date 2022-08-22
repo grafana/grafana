@@ -208,6 +208,7 @@ The friendly names for the time series selectors are shown in Grafana. Here is t
 | SLI Value                  | select_slo_health                       |
 | SLO Compliance             | select_slo_compliance                   |
 | SLO Error Budget Remaining | select_slo_budget_fraction              |
+| SLO Burn Rate              | select_slo_burn_rate                    |
 
 #### Alias patterns for SLO queries
 

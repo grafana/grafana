@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 
 import { Select, Icon, Button } from '@grafana/ui';
-import { dashboardPermissionLevels } from 'app/types/acl';
+import { DashboardAcl, dashboardPermissionLevels } from 'app/types/acl';
 
 export interface Props {
-  item: any;
+  item: DashboardAcl;
 }
 
 export default class DisabledPermissionListItem extends Component<Props, any> {

@@ -1358,6 +1358,10 @@ github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc h1:1PY8n+rXuBNr3r1J
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc/go.mod h1:9Zh6dWPtB3MSzTRt8fIFH60Z351QQ+s7hCU3J/tTlA4=
 github.com/grafana/thema v0.0.0-20220816214754-af057f99a2dd h1:OukQ1Nu4PSreZTAaOfXyYhM9jYBs4UflVfOSAIG8JzM=
 github.com/grafana/thema v0.0.0-20220816214754-af057f99a2dd/go.mod h1:fCV1rqv6XRQg2GfIQ7pU9zdxd5fLRcEBCnrDVwlK+ZY=
+github.com/grafana/thema v0.0.0-20220816215847-acc0b0aca0f0 h1:jp0SAT7/Xo9NMND8zEwPo7urvSx0EhgNKXOQ0x4s2PE=
+github.com/grafana/thema v0.0.0-20220816215847-acc0b0aca0f0/go.mod h1:fCV1rqv6XRQg2GfIQ7pU9zdxd5fLRcEBCnrDVwlK+ZY=
+github.com/grafana/thema v0.0.0-20220817114012-ebeee841c104 h1:dYpwFYIChrMfpq3wDa/ZBxAbUGSW5NYmYBeSezhaoao=
+github.com/grafana/thema v0.0.0-20220817114012-ebeee841c104/go.mod h1:fCV1rqv6XRQg2GfIQ7pU9zdxd5fLRcEBCnrDVwlK+ZY=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6/go.mod h1:ZkJLEYLoVyg7amJK/5r779bHyzs2AU8f8VMiP6BM7uY=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
@@ -2483,6 +2487,8 @@ github.com/xlab/treeprint v1.1.0/go.mod h1:gj5Gd3gPdKtR1ikdDK6fnFLdmIS0X30kTTuNd
 github.com/xorcare/pointer v1.1.0 h1:sFwXOhRF8QZ0tyVZrtxWGIoVZNEmRzBCaFWdONPQIUM=
 github.com/xorcare/pointer v1.1.0/go.mod h1:6KLhkOh6YbuvZkT4YbxIbR/wzLBjyMxOiNzZhJTor2Y=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
+github.com/yalue/merged_fs v1.2.2 h1:vXHTpJBluJryju7BBpytr3PDIkzsPMpiEknxVGPhN/I=
+github.com/yalue/merged_fs v1.2.2/go.mod h1:WqqchfVYQyclV2tnR7wtRhBddzBvLVR83Cjw9BKQw0M=
 github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d/go.mod h1:rHwXgn7JulP+udvsHwJoVG1YGAP6VLg4y9I5dyZdqmA=
 github.com/yudai/gojsondiff v1.0.0 h1:27cbfqXLVEJ1o8I6v3y9lg8Ydm53EKqHXAOMxEGlCOA=
 github.com/yudai/gojsondiff v1.0.0/go.mod h1:AY32+k2cwILAkW1fbgxQ5mUmMiZFgLIV+FBNExI05xg=

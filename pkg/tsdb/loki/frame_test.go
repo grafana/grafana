@@ -66,11 +66,10 @@ func TestAdjustFrame(t *testing.T) {
 			}),
 		)
 
-		frame.RefID = "A"
-
 		query := &lokiQuery{
 			Expr:      `{type="important"}`,
 			QueryType: QueryTypeRange,
+			RefID:     "A",
 		}
 
 		err := adjustFrame(frame, query)
