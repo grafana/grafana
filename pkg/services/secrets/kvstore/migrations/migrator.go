@@ -69,8 +69,8 @@ func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
 	})
 }
 
-// Kick off a migration to or from the plugin. This will block until all services have exited.
-func (s SecretMigrationServiceImpl) TriggerPluginMigration(ctx context.Context, toPlugin bool) error {
+// TriggerPluginMigration Kick off a migration to or from the plugin. This will block until all services have exited.
+func (s *SecretMigrationServiceImpl) TriggerPluginMigration(ctx context.Context, toPlugin bool) error {
 	// Don't migrate if there is already one happening
 	return s.ServerLockService.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
 		var err error
