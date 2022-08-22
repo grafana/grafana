@@ -79,10 +79,13 @@ func (f FakeSecretsKVStore) Rename(ctx context.Context, orgId int64, namespace s
 func (f FakeSecretsKVStore) GetAll(ctx context.Context) ([]Item, error) {
 	items := make([]Item, 0)
 	for k := range f.store {
+		orgId := k.OrgId
+		namespace := k.Namespace
+		typ := k.Type
 		items = append(items, Item{
-			OrgId:     &k.OrgId,
-			Namespace: &k.Namespace,
-			Type:      &k.Type,
+			OrgId:     &orgId,
+			Namespace: &namespace,
+			Type:      &typ,
 			Value:     f.store[k],
 		})
 	}
