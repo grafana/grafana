@@ -3,9 +3,11 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 
 import { AliasBy, PeriodSelect, AlignmentPeriodLabel, Project, QueryEditorRow } from '..';
-import { ALIGNMENT_PERIODS, SELECT_WIDTH } from '../../constants';
+import { ALIGNMENT_PERIODS, SELECT_WIDTH, SLO_BURN_RATE_SELECTOR_NAME } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
+
+import { LookbackPeriodSelect } from './LookbackPeriodSelect';
 
 import { Selector, Service, SLO } from '.';
 
@@ -29,6 +31,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
   serviceName: '',
   sloId: '',
   sloName: '',
+  lookbackPeriod: '',
 });
 
 export function SLOQueryEditor({
@@ -69,6 +72,15 @@ export function SLOQueryEditor({
         query={query}
         onChange={onChange}
       ></Selector>
+
+      {query.selectorName === SLO_BURN_RATE_SELECTOR_NAME && (
+        <LookbackPeriodSelect
+          refId={refId}
+          onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
+          current={query.lookbackPeriod}
+          templateVariableOptions={variableOptionGroup.options}
+        />
+      )}
 
       <QueryEditorRow label="Alignment period" htmlFor={`${refId}-alignment-period`}>
         <PeriodSelect

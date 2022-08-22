@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -21,12 +22,14 @@ func ProvideService(
 	userService user.Service,
 	quotaService quota.Service,
 	authInfoService login.AuthInfoService,
+	accessControl accesscontrol.AccessControl,
 ) *Implementation {
 	s := &Implementation{
 		SQLStore:        sqlStore,
 		userService:     userService,
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
+		accessControl:   accessControl,
 	}
 	return s
 }
@@ -37,6 +40,7 @@ type Implementation struct {
 	AuthInfoService login.AuthInfoService
 	QuotaService    quota.Service
 	TeamSync        login.TeamSyncFunc
+	accessControl   accesscontrol.AccessControl
 }
 
 // CreateUser creates inserts a new one.
@@ -126,9 +130,9 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 		if extUser.AuthModule == login.LDAPAuthModule && usr.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if errDisableUser := ls.SQLStore.DisableUser(ctx,
-				&models.DisableUserCommand{
-					UserId: cmd.Result.ID, IsDisabled: false}); errDisableUser != nil {
+			if errDisableUser := ls.userService.Disable(ctx,
+				&user.DisableUserCommand{
+					UserID: cmd.Result.ID, IsDisabled: false}); errDisableUser != nil {
 				return errDisableUser
 			}
 		}
@@ -176,12 +180,12 @@ func (ls *Implementation) DisableExternalUser(ctx context.Context, username stri
 	)
 
 	// Mark user as disabled in grafana db
-	disableUserCmd := &models.DisableUserCommand{
-		UserId:     userQuery.Result.UserId,
+	disableUserCmd := &user.DisableUserCommand{
+		UserID:     userQuery.Result.UserId,
 		IsDisabled: true,
 	}
 
-	if err := ls.SQLStore.DisableUser(ctx, disableUserCmd); err != nil {
+	if err := ls.userService.Disable(ctx, disableUserCmd); err != nil {
 		logger.Debug(
 			"Error disabling external user",
 			"user",
@@ -310,6 +314,9 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 			if errors.Is(err, models.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
 				continue
+			}
+			if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserId); err != nil {
+				logger.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", orgId)
 			}
 
 			return err

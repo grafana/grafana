@@ -36,7 +36,9 @@ type AccessControl interface {
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
 
-	DeleteUserPermissions(ctx context.Context, userID int64) error
+	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
+	// If orgID is set to 0 remove permissions from all orgs
+	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
 
 type RoleRegistry interface {
@@ -47,7 +49,7 @@ type RoleRegistry interface {
 type PermissionsStore interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
-	DeleteUserPermissions(ctx context.Context, userID int64) error
+	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
 
 type TeamPermissionsService interface {
@@ -270,15 +272,8 @@ func IsDisabled(cfg *setting.Cfg) bool {
 }
 
 // GetOrgRoles returns legacy org roles for a user
-func GetOrgRoles(cfg *setting.Cfg, user *user.SignedInUser) []string {
+func GetOrgRoles(user *user.SignedInUser) []string {
 	roles := []string{string(user.OrgRole)}
-
-	// With built-in role simplifying, inheritance is performed upon role registration.
-	if cfg.RBACBuiltInRoleAssignmentEnabled {
-		for _, br := range user.OrgRole.Children() {
-			roles = append(roles, string(br))
-		}
-	}
 
 	if user.IsGrafanaAdmin {
 		roles = append(roles, RoleGrafanaAdmin)

@@ -44,7 +44,7 @@ describe('LokiQueryBuilder', () => {
 
     render(<LokiQueryBuilder {...props} query={defaultQuery} />);
     await userEvent.click(screen.getByLabelText('Add'));
-    const labels = screen.getByText(/Labels/);
+    const labels = screen.getByText(/Label filters/);
     const selects = getAllByRole(labels.parentElement!.parentElement!.parentElement!, 'combobox');
     await userEvent.click(selects[3]);
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());

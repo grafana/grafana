@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -103,19 +102,19 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	return rule, nil
 }
 
-func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (definitions.AlertRuleGroup, error) {
+func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (models.AlertRuleGroup, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folder},
 		RuleGroup:     group,
 	}
 	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
-		return definitions.AlertRuleGroup{}, err
+		return models.AlertRuleGroup{}, err
 	}
 	if len(q.Result) == 0 {
-		return definitions.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
+		return models.AlertRuleGroup{}, store.ErrAlertRuleGroupNotFound
 	}
-	res := definitions.AlertRuleGroup{
+	res := models.AlertRuleGroup{
 		Title:     q.Result[0].RuleGroup,
 		FolderUID: q.Result[0].NamespaceUID,
 		Interval:  q.Result[0].IntervalSeconds,
@@ -160,7 +159,7 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, orgID int6
 	})
 }
 
-func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group definitions.AlertRuleGroup, userID int64, provenance models.Provenance) error {
+func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int64, group models.AlertRuleGroup, userID int64, provenance models.Provenance) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
 	}
@@ -353,7 +352,7 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 }
 
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.
-func syncGroupRuleFields(group *definitions.AlertRuleGroup, orgID int64) *definitions.AlertRuleGroup {
+func syncGroupRuleFields(group *models.AlertRuleGroup, orgID int64) *models.AlertRuleGroup {
 	for i := range group.Rules {
 		group.Rules[i].IntervalSeconds = group.Interval
 		group.Rules[i].RuleGroup = group.Title
