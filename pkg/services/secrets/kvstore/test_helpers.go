@@ -76,6 +76,27 @@ func (f FakeSecretsKVStore) Rename(ctx context.Context, orgId int64, namespace s
 	return nil
 }
 
+func (f FakeSecretsKVStore) GetAll(ctx context.Context) ([]Item, error) {
+	items := make([]Item, 0)
+	for k, v := range f.store {
+		items = append(items, Item{
+			OrgId:     &k.OrgId,
+			Namespace: &k.Namespace,
+			Type:      &k.Type,
+			Value:     v,
+		})
+	}
+	return items, nil
+}
+
+func (f FakeSecretsKVStore) Fallback() SecretsKVStore {
+	return nil
+}
+
+func (f FakeSecretsKVStore) SetFallback(store SecretsKVStore) error {
+	return nil
+}
+
 func buildKey(orgId int64, namespace string, typ string) Key {
 	return Key{
 		OrgId:     orgId,
@@ -126,6 +147,16 @@ func (c *fakeGRPCSecretsPlugin) ListSecrets(ctx context.Context, in *secretsmana
 
 func (c *fakeGRPCSecretsPlugin) RenameSecret(ctx context.Context, in *secretsmanagerplugin.RenameSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.RenameSecretResponse, error) {
 	return &secretsmanagerplugin.RenameSecretResponse{}, nil
+}
+
+func (c *fakeGRPCSecretsPlugin) GetAllSecrets(ctx context.Context, in *secretsmanagerplugin.GetAllSecretsRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.GetAllSecretsResponse, error) {
+	return &secretsmanagerplugin.GetAllSecretsResponse{
+		Items: []*secretsmanagerplugin.Item{
+			{
+				Value: "bogus",
+			},
+		},
+	}, nil
 }
 
 var _ SecretsKVStore = FakeSecretsKVStore{}

@@ -62,6 +62,7 @@ func ProvideService(
 				log:                            logger,
 				kvstore:                        namespacedKVStore,
 				backwardsCompatibilityDisabled: features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility),
+				fallback:                       store,
 			}
 		}
 	}
@@ -80,6 +81,9 @@ type SecretsKVStore interface {
 	Del(ctx context.Context, orgId int64, namespace string, typ string) error
 	Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error)
 	Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error
+	GetAll(ctx context.Context) ([]Item, error)
+	Fallback() SecretsKVStore
+	SetFallback(store SecretsKVStore) error
 }
 
 // WithType returns a kvstore wrapper with fixed orgId and type.
