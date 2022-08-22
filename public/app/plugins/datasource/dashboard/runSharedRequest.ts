@@ -57,14 +57,11 @@ export function runSharedRequest(options: QueryRunnerOptions, query: DashboardQu
       })
       .subscribe({
         next: (data: PanelData) => {
-          // Move annotations to the main series value
+          // Use annotation data for series
           if (query?.topic === DataTopic.Annotations) {
             data = {
               ...data,
-              series: (data.annotations ?? []).map((v) => ({
-                ...v,
-                meta: { ...v.meta, topic: undefined }, // remove the annotation label
-              })),
+              series: data.annotations ?? [],
               annotations: undefined, // remove annotations
             };
           }
