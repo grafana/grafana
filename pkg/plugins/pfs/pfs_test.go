@@ -38,7 +38,7 @@ func TestParseTreeTestdata(t *testing.T) {
 			skip: "schema violation, dependencies don't follow naming constraints",
 		},
 		"installer": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"invalid-plugin-json": {
@@ -46,27 +46,27 @@ func TestParseTreeTestdata(t *testing.T) {
 			err:    ErrInvalidRootFile,
 		},
 		"invalid-v1-signature": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"invalid-v2-extra-file": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"invalid-v2-missing-file": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"lacking-files": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"nested-plugins": {
-			rootid:  "test-ds",
+			rootid:  "test-datasource",
 			subpath: "parent",
 		},
 		"non-pvt-with-root-url": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"symbolic-plugin-dirs": {
@@ -81,7 +81,7 @@ func TestParseTreeTestdata(t *testing.T) {
 			skip:   "has a 'page'-type include which isn't a known part of spec",
 		},
 		"unsigned-datasource": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"unsigned-panel": {
@@ -89,23 +89,23 @@ func TestParseTreeTestdata(t *testing.T) {
 			subpath: "plugin",
 		},
 		"valid-v2-pvt-signature": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"valid-v2-pvt-signature-root-url-uri": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"valid-v2-signature": {
-			rootid:  "test",
+			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
 		"no-rootfile": {
 			err: ErrNoRootFile,
 		},
-		"panel-models-valid":      {},
-		"datasource-models-valid": {},
-		"wrong-slot-for-type": {
+		"valid-model-panel":      {},
+		"valid-model-datasource": {},
+		"wrong-slot-panel": {
 			err: ErrImplementedSlots,
 		},
 		"missing-slot-impl": {

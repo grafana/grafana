@@ -32,11 +32,6 @@ const (
 	CategoryTsdb Category = "tsdb"
 )
 
-// Defines values for PluginmetaHideFromList.
-const (
-	HideFromListFalse HideFromList = false
-)
-
 // Defines values for PluginmetaType.
 const (
 	TypeApp Type = "app"
@@ -159,7 +154,7 @@ type Model struct {
 
 	// hideFromList excludes the plugin from listings in Grafana's UI. Only
 	// allowed for builtin plugins.
-	HideFromList HideFromList `json:"hideFromList"`
+	HideFromList bool `json:"hideFromList"`
 
 	// Unique name of the plugin. If the plugin is published on
 	// grafana.com, then the plugin id has to follow the naming
@@ -200,7 +195,7 @@ type Model struct {
 		} `json:"links,omitempty"`
 
 		// SVG images that are used as plugin icons.
-		Logos struct {
+		Logos *struct {
 			// Link to the "large" version of the plugin logo, which must be
 			// an SVG image. "Large" and "small" logos can be the same image.
 			Large string `json:"large"`
@@ -208,7 +203,7 @@ type Model struct {
 			// Link to the "small" version of the plugin logo, which must be
 			// an SVG image. "Large" and "small" logos can be the same image.
 			Small string `json:"small"`
-		} `json:"logos"`
+		} `json:"logos,omitempty"`
 
 		// An array of screenshot objects in the form `{name: 'bar', path:
 		// 'img/screenshot.png'}`
@@ -284,13 +279,6 @@ type Model struct {
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Category string
-
-// hideFromList excludes the plugin from listings in Grafana's UI. Only
-// allowed for builtin plugins.
-//
-// THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
-// Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
-type HideFromList bool
 
 // type indicates which type of Grafana plugin this is, of the defined
 // set of Grafana plugin types.
@@ -442,7 +430,7 @@ type Info struct {
 	} `json:"links,omitempty"`
 
 	// SVG images that are used as plugin icons.
-	Logos struct {
+	Logos *struct {
 		// Link to the "large" version of the plugin logo, which must be
 		// an SVG image. "Large" and "small" logos can be the same image.
 		Large string `json:"large"`
@@ -450,7 +438,7 @@ type Info struct {
 		// Link to the "small" version of the plugin logo, which must be
 		// an SVG image. "Large" and "small" logos can be the same image.
 		Small string `json:"small"`
-	} `json:"logos"`
+	} `json:"logos,omitempty"`
 
 	// An array of screenshot objects in the form `{name: 'bar', path:
 	// 'img/screenshot.png'}`

@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "Stat",
   "id": "stat",
-  "builtIn": true,
 
   "info": {
     "description": "Big stat values & sparklines",

@@ -1,8 +1,7 @@
 {
   "type": "datasource",
   "name": "Test",
-  "id": "test",
-  "builtIn": true,
+  "id": "test-datasource",
   "backend": true,
   "state": "alpha",
   "info": {

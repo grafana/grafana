@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "Annotations list",
   "id": "annolist",
-  "builtIn": true,
 
   "skipDataQuery": true,
 
