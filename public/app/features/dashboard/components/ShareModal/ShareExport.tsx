@@ -54,11 +54,11 @@ export class ShareExport extends PureComponent<Props, State> {
     const { trimDefaults } = this.state;
 
     if (shareExternally) {
-      this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
+      this.exporter.makeExportable(dashboard).then((dashboardJson) => {
         if (trimDefaults) {
           getBackendSrv()
             .post('/api/dashboards/trim', { dashboard: dashboardJson })
-            .then((resp: any) => {
+            .then((resp) => {
               this.openSaveAsDialog(resp.dashboard);
             });
         } else {
@@ -69,7 +69,7 @@ export class ShareExport extends PureComponent<Props, State> {
       if (trimDefaults) {
         getBackendSrv()
           .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
-          .then((resp: any) => {
+          .then((resp) => {
             this.openSaveAsDialog(resp.dashboard);
           });
       } else {
@@ -84,11 +84,11 @@ export class ShareExport extends PureComponent<Props, State> {
     const { trimDefaults } = this.state;
 
     if (shareExternally) {
-      this.exporter.makeExportable(dashboard).then((dashboardJson: any) => {
+      this.exporter.makeExportable(dashboard).then((dashboardJson) => {
         if (trimDefaults) {
           getBackendSrv()
             .post('/api/dashboards/trim', { dashboard: dashboardJson })
-            .then((resp: any) => {
+            .then((resp) => {
               this.openJsonModal(resp.dashboard);
             });
         } else {
@@ -99,7 +99,7 @@ export class ShareExport extends PureComponent<Props, State> {
       if (trimDefaults) {
         getBackendSrv()
           .post('/api/dashboards/trim', { dashboard: dashboard.getSaveModelClone() })
-          .then((resp: any) => {
+          .then((resp) => {
             this.openJsonModal(resp.dashboard);
           });
       } else {

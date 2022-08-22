@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 
-import { SelectableValue, urlUtil } from '@grafana/data';
+import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup } from '@grafana/ui';
 
@@ -22,7 +22,7 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
   ];
 
   const onStart = () => {
-    const params: any = {};
+    const params: UrlQueryMap = {};
     if (mode) {
       params.kiosk = mode;
     }
