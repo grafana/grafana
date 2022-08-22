@@ -258,19 +258,47 @@ export const RolePickerMenu = ({
               </div>
             ))}
           {!!customRoles.length && (
-            <div>
+            <div className={customStyles.menuSection}>
               <div className={customStyles.groupHeader}>Custom roles</div>
               <div className={styles.optionBody}>
-                {customRoles.map((option, i) => (
-                  <RoleMenuOption
-                    data={option}
-                    key={i}
-                    isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
-                    disabled={isNotDelegatable(option)}
-                    onChange={onChange}
-                    hideDescription
-                  />
-                ))}
+                {showGroups && !!optionGroups.custom.length
+                  ? optionGroups.custom.map((option, i) => (
+                      <RoleMenuGroupOption
+                        data={option}
+                        key={i}
+                        isSelected={
+                          groupSelected(GroupType.custom, option.value) ||
+                          groupPartiallySelected(GroupType.custom, option.value)
+                        }
+                        partiallySelected={groupPartiallySelected(GroupType.custom, option.value)}
+                        disabled={option.options?.every(isNotDelegatable)}
+                        onChange={(group: string) => onGroupChange(GroupType.custom, group)}
+                        onOpenSubMenu={(group: string) => onOpenSubMenu(GroupType.custom, group)}
+                        onCloseSubMenu={onCloseSubMenu}
+                        root={subMenuNode?.current!}
+                        isFocused={showSubMenu && openedMenuGroup === option.value}
+                      >
+                        {showSubMenu && openedMenuGroup === option.value && (
+                          <RolePickerSubMenu
+                            options={subMenuOptions}
+                            selectedOptions={selectedOptions}
+                            onSelect={onChange}
+                            onClear={onClearSubMenu}
+                            showOnLeft={offset.horizontal > 0}
+                          />
+                        )}
+                      </RoleMenuGroupOption>
+                    ))
+                  : customRoles.map((option, i) => (
+                      <RoleMenuOption
+                        data={option}
+                        key={i}
+                        isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
+                        disabled={isNotDelegatable(option)}
+                        onChange={onChange}
+                        hideDescription
+                      />
+                    ))}
               </div>
             </div>
           )}
