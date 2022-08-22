@@ -112,7 +112,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	dbPermissions, err := ac.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:   user.OrgID,
 		UserID:  user.UserID,
-		Roles:   accesscontrol.GetOrgRoles(ac.cfg, user),
+		Roles:   accesscontrol.GetOrgRoles(user),
 		TeamIDs: user.Teams,
 		Actions: actionsToFetch,
 	})
@@ -136,7 +136,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 func (ac *OSSAccessControlService) getFixedPermissions(ctx context.Context, user *user.SignedInUser) []accesscontrol.Permission {
 	permissions := make([]accesscontrol.Permission, 0)
 
-	for _, builtin := range accesscontrol.GetOrgRoles(ac.cfg, user) {
+	for _, builtin := range accesscontrol.GetOrgRoles(user) {
 		if basicRole, ok := ac.roles[builtin]; ok {
 			permissions = append(permissions, basicRole.Permissions...)
 		}
@@ -200,6 +200,6 @@ func (ac *OSSAccessControlService) RegisterScopeAttributeResolver(scopePrefix st
 	ac.scopeResolvers.AddScopeAttributeResolver(scopePrefix, resolver)
 }
 
-func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, userID int64) error {
-	return ac.store.DeleteUserPermissions(ctx, userID)
+func (ac *OSSAccessControlService) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
+	return ac.store.DeleteUserPermissions(ctx, orgID, userID)
 }
