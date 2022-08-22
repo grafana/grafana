@@ -19,7 +19,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   bucketOffset: 0,
 };
 
-export interface PanelFieldConfig extends ui.HideableFieldConfig {
+export interface PanelFieldConfig extends ui.AxisConfig, ui.HideableFieldConfig {
   fillOpacity?: number;
   gradientMode?: ui.GraphGradientMode;
   lineWidth?: number;
