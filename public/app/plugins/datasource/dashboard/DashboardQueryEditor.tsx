@@ -175,7 +175,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
         </>
       )}
 
-      {(query.withTransforms || panel?.transformations?.length) && (
+      {(query.withTransforms || Boolean(panel?.transformations?.length)) && (
         <Field label="Transform" description="Apply panel transformations from the source panel">
           <Switch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
         </Field>
@@ -184,8 +184,6 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
       <Field label="Data">
         <RadioButtonGroup options={topics} value={query.topic === DataTopic.Annotations} onChange={onTopicChanged} />
       </Field>
-
-      <div></div>
     </>
   );
 }

@@ -57,8 +57,16 @@ export function runSharedRequest(options: QueryRunnerOptions, query: DashboardQu
       })
       .subscribe({
         next: (data: PanelData) => {
-          if (query?.queryType === DataTopic.Annotations) {
-            console.log('PROCESS topic!');
+          // Move annotations to the main series value
+          if (query?.topic === DataTopic.Annotations) {
+            data = {
+              ...data,
+              series: (data.annotations ?? []).map((v) => ({
+                ...v,
+                meta: { ...v.meta, topic: undefined }, // remove the annotation label
+              })),
+              annotations: undefined, // remove annotations
+            };
           }
           subscriber.next(data);
         },
