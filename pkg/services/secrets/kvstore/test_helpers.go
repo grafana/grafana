@@ -42,22 +42,22 @@ type FakeSecretsKVStore struct {
 	fallback SecretsKVStore
 }
 
-func NewFakeSecretsKVStore() FakeSecretsKVStore {
-	return FakeSecretsKVStore{store: make(map[Key]string)}
+func NewFakeSecretsKVStore() *FakeSecretsKVStore {
+	return &FakeSecretsKVStore{store: make(map[Key]string)}
 }
 
-func (f FakeSecretsKVStore) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
+func (f *FakeSecretsKVStore) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	value := f.store[buildKey(orgId, namespace, typ)]
 	found := value != ""
 	return value, found, nil
 }
 
-func (f FakeSecretsKVStore) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
+func (f *FakeSecretsKVStore) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
 	f.store[buildKey(orgId, namespace, typ)] = value
 	return nil
 }
 
-func (f FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
+func (f *FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
 	if f.delError {
 		return errors.New("bogus")
 	}
@@ -65,7 +65,7 @@ func (f FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace stri
 	return nil
 }
 
-func (f FakeSecretsKVStore) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
+func (f *FakeSecretsKVStore) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
 	res := make([]Key, 0)
 	for k := range f.store {
 		if k.OrgId == orgId && k.Namespace == namespace && k.Type == typ {
@@ -75,13 +75,13 @@ func (f FakeSecretsKVStore) Keys(ctx context.Context, orgId int64, namespace str
 	return res, nil
 }
 
-func (f FakeSecretsKVStore) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
+func (f *FakeSecretsKVStore) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
 	f.store[buildKey(orgId, newNamespace, typ)] = f.store[buildKey(orgId, namespace, typ)]
 	delete(f.store, buildKey(orgId, namespace, typ))
 	return nil
 }
 
-func (f FakeSecretsKVStore) GetAll(ctx context.Context) ([]Item, error) {
+func (f *FakeSecretsKVStore) GetAll(ctx context.Context) ([]Item, error) {
 	items := make([]Item, 0)
 	for k := range f.store {
 		orgId := k.OrgId
@@ -97,11 +97,11 @@ func (f FakeSecretsKVStore) GetAll(ctx context.Context) ([]Item, error) {
 	return items, nil
 }
 
-func (f FakeSecretsKVStore) Fallback() SecretsKVStore {
+func (f *FakeSecretsKVStore) Fallback() SecretsKVStore {
 	return f.fallback
 }
 
-func (f FakeSecretsKVStore) SetFallback(store SecretsKVStore) error {
+func (f *FakeSecretsKVStore) SetFallback(store SecretsKVStore) error {
 	f.fallback = store
 	return nil
 }
@@ -168,7 +168,7 @@ func (c *fakeGRPCSecretsPlugin) GetAllSecrets(ctx context.Context, in *secretsma
 	}, nil
 }
 
-var _ SecretsKVStore = FakeSecretsKVStore{}
+var _ SecretsKVStore = &FakeSecretsKVStore{}
 var _ secretsmanagerplugin.SecretsManagerPlugin = &fakeGRPCSecretsPlugin{}
 
 // Fake plugin manager
