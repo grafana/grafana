@@ -3,7 +3,6 @@
   "name": "Elasticsearch",
   "id": "elasticsearch",
   "category": "logging",
-  "builtIn": true,
 
   "info": {
     "description": "Open source logging & analytics database",

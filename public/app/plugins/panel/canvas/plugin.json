@@ -3,7 +3,6 @@
   "name": "Canvas",
   "id": "canvas",
   "state": "alpha",
-  "builtIn": true,
 
   "info": {
     "description": "Explicit element placement",

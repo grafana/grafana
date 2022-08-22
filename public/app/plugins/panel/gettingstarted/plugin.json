@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "Getting Started",
   "id": "gettingstarted",
-  "builtIn": true,
 
   "skipDataQuery": true,
   "hideFromList": true,

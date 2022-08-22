@@ -3,7 +3,6 @@
   "name": "Candlestick",
   "id": "candlestick",
   "state": "beta",
-  "builtIn": true,
 
   "info": {
     "author": {

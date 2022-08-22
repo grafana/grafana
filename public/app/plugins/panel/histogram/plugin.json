@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "Histogram",
   "id": "histogram",
-  "builtIn": true,
 
   "state": "beta",
 

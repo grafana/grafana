@@ -3,7 +3,6 @@
   "name": "Graph (old)",
   "id": "graph",
   "state": "deprecated",
-  "builtIn": true,
 
   "info": {
     "description": "The old default graph panel",

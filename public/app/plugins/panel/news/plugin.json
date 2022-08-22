@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "News",
   "id": "news",
-  "builtIn": true,
 
   "skipDataQuery": true,
 

@@ -3,7 +3,6 @@
   "name": "Alert groups",
   "id": "alertGroups",
   "state": "alpha",
-  "builtIn": true,
 
   "skipDataQuery": true,
   "info": {

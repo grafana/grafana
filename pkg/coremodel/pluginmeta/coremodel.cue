@@ -15,9 +15,7 @@ seqs: [
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
 				id: string & strings.MinRunes(1)
-				if !builtIn {
-						id: =~"^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
-				}
+				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin)$"
 
 				// type indicates which type of Grafana plugin this is, of the defined
 				// set of Grafana plugin types.
@@ -54,9 +52,6 @@ seqs: [
 				// hideFromList excludes the plugin from listings in Grafana's UI. Only
 				// allowed for builtin plugins.
 				hideFromList: bool | *false
-				if !builtIn {
-					hideFromList: false
-				}
 
 				// The first part of the file name of the backend component
 				// executable. There can be multiple executables built for
@@ -146,9 +141,6 @@ seqs: [
 					// Required Grafana version for this plugin. Validated using
 					// https://github.com/npm/node-semver.
 					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
-					if !builtIn { // required for non-core plugins
-						grafanaDependency: string
-					}
 
 					// An array of required plugins on which this plugin depends.
 					plugins?: [...#Dependency]
@@ -213,9 +205,6 @@ seqs: [
 						// Link to the "large" version of the plugin logo, which must be
 						// an SVG image. "Large" and "small" logos can be the same image.
 						large: string
-					}
-					if !builtIn { // required for non-core plugins
-						logos: {...}
 					}
 
 					// An array of screenshot objects in the form `{name: 'bar', path:

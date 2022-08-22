@@ -3,7 +3,6 @@
   "name": "Azure Monitor",
   "id": "grafana-azure-monitor-datasource",
   "category": "cloud",
-  "builtIn": true,
   "includes": [
     { "type": "dashboard", "name": "Azure / Alert Consumption", "path": "dashboards/v1Alerts.json" },
     {

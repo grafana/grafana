@@ -3,7 +3,6 @@
   "type": "datasource",
   "id": "graphite",
   "category": "tsdb",
-  "builtIn": true,
 
   "includes": [
     { "type": "dashboard", "name": "Graphite Carbon Metrics", "path": "dashboards/carbon_metrics.json" },
