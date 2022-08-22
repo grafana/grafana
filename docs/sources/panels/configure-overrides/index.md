@@ -14,9 +14,9 @@ weight: 400
 
 # Configure field value overrides
 
-Overrides allow you to change the settings for one or more fields. Field options for overrides are the same as the field options available in a particular visualization. The only difference is that you choose which fields to apply them to.
+Overrides allow you to customize visualization settings for specific fields or series. This is accomplished by adding an override rule that targets a particular set of fields and that can each define multiple options. 
 
-For example, you could change the number of decimal places shown in all numeric fields or columns by changing the **Decimals** option for **Fields with type** that matches **Numeric**.
+For example, you set the unit for all fields that include the text 'bytes'  by adding an override using the `Fields with name matching regex` matcher and then add the Unit option to the override rule. 
 
 ## Example 1: Format temperature
 
