@@ -77,7 +77,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
       let queriesDatasourceOverride = undefined;
       let rootDatasourceOverride = undefined;
       // if this is starting with no queries and an initial datasource exists, look up the ref to use it (initial datasource can be a UID or name here)
-      if (initialQueries.length === 0 && initialDatasource) {
+      if ((!initialQueries || initialQueries.length === 0) && initialDatasource) {
         const datasource = await getDatasourceSrv().get(initialDatasource);
         queriesDatasourceOverride = datasource.getRef();
       }
