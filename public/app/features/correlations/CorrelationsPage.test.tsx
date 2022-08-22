@@ -1,6 +1,7 @@
 import { render, waitFor, screen, fireEvent } from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
+import { DeepPartial } from 'react-hook-form';
 import { Provider } from 'react-redux';
 import { Observable } from 'rxjs';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -15,18 +16,6 @@ import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
 
 import CorrelationsPage from './CorrelationsPage';
 import { Correlation, CreateCorrelationParams } from './types';
-
-type DeepPartial<T> = T extends Array<infer U>
-  ? Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U>
-  ? ReadonlyArray<DeepPartial<U>>
-  : T extends {
-      [key in keyof T]: T[key];
-    }
-  ? {
-      [K in keyof T]?: DeepPartial<T[K]>;
-    }
-  : T;
 
 function createFetchResponse<T>(overrides?: DeepPartial<FetchResponse>): FetchResponse<T> {
   return merge(
