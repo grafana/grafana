@@ -34,7 +34,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
   return (
-    <VerticalGroup>
+    <VerticalGroup spacing="lg">
       <Form
         defaultValues={{ ...team }}
         onSubmit={async (formTeam: Team) => {
