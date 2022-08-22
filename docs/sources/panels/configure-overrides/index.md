@@ -12,7 +12,7 @@ menuTitle: Configure overrides
 weight: 400
 ---
 
-# Configure field value overrides
+# Configure field overrides
 
 Overrides allow you to customize visualization settings for specific fields or series. This is accomplished by adding an override rule that targets a particular set of fields and that can each define multiple options. 
 
