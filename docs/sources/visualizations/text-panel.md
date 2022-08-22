@@ -15,7 +15,7 @@ weight: 1100
 
 # Text
 
-The text panel allows you to directly include text/html in your dashboards. This can be used to add contextual information and descriptions, or embed complex HTML.
+The text panel enables you to directly include text or HTML in your dashboards. This can be used to add contextual information and descriptions or embed complex HTML.
 
 ## Mode
 
