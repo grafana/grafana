@@ -228,8 +228,8 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
-	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
-	if err := hs.SQLStore.DisableUser(c.Req.Context(), &disableCmd); err != nil {
+	disableCmd := user.DisableUserCommand{UserID: userID, IsDisabled: true}
+	if err := hs.userService.Disable(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
@@ -271,8 +271,8 @@ func (hs *HTTPServer) AdminEnableUser(c *models.ReqContext) response.Response {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 
-	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
-	if err := hs.SQLStore.DisableUser(c.Req.Context(), &disableCmd); err != nil {
+	disableCmd := user.DisableUserCommand{UserID: userID, IsDisabled: false}
+	if err := hs.userService.Disable(c.Req.Context(), &disableCmd); err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}

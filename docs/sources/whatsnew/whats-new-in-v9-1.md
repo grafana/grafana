@@ -31,7 +31,7 @@ Service accounts are an evolution in machine access within Grafana.
 You can create multiple API tokens per service account with independent expiration dates, and temporarily disable a service account without deleting it.
 These benefits make service accounts a more flexible way for Terraform and other apps to authenticate with Grafana.
 
-Service accounts also work with [role-based access control]({{< relref "../enterprise/access-control/" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
+Service accounts also work with [role-based access control]({{< relref "../administration/roles-and-permissions/access-control" >}}) in [Grafana Enterprise]({{< relref "../enterprise/" >}}).
 You can improve security by granting service accounts specific roles to limit the functions they can perform.
 Service accounts have been in beta since Grafana v8.5.
 During that time, we've improved the UI and migration path from API keys, made it possible to add service accounts to teams, and inherit team permissions.
@@ -194,7 +194,7 @@ This is an early-access feature available only to self-managed customers.
 
 #### RBAC for app plugins, usage insights, and query caching
 
-As part of our continued improvements to RBAC, we are rolling out role-based access control (RBAC) across all of Grafana's features.
+As part of our continued improvements to role-based access control (RBAC), we are rolling out RBAC across all of Grafana's features.
 In v9.1, you can determine which users, teams, and roles can access app plugins like OnCall and Synthetics.
 
 > **Note:** You can't yet define view or edit roles for app plugins.
