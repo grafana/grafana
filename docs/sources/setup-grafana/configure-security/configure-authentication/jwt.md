@@ -88,13 +88,6 @@ can use URL login instead.
 url_login = true # enable JWT authentication in the URL
 ```
 
-This can be paired with `enable_login_token` to create a session cookie for the user
-allowing them to stay logged in.
-
-```ini
-enable_login_token = true # optional: create a session cookie for the user
-```
-
 An example of an URL for accessing grafana with JWT URL authentication is:
 
 ```
