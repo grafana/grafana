@@ -10,6 +10,19 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    licensedAccessControlEnabled: () => false,
+    hasPermission: () => true,
+    hasPermissionInMetadata: () => true,
+    user: { orgId: 1 },
+  },
+}));
+
+jest.mock('app/core/components/RolePicker/hooks', () => ({
+  useRoleOptions: jest.fn().mockReturnValue([{ roleOptions: [] }, jest.fn()]),
+}));
+
 const mockPost = jest.fn(() => {
   return Promise.resolve({});
 });

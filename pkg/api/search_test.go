@@ -16,7 +16,7 @@ import (
 )
 
 func TestHTTPServer_Search(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	sc.initCtx.IsSignedIn = true
 	sc.initCtx.SignedInUser = &user.SignedInUser{}
 

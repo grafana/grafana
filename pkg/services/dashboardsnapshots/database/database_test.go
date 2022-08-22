@@ -86,7 +86,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		t.Run("And the user has the editor role and has created a snapshot", func(t *testing.T) {
 			query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 				OrgId:        1,
-				SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor, UserId: 1000},
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor, UserID: 1000},
 			}
 			err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
@@ -100,7 +100,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 		t.Run("And the user has the editor role and has not created any snapshot", func(t *testing.T) {
 			query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 				OrgId:        1,
-				SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor, UserId: 2},
+				SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor, UserID: 2},
 			}
 			err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 			require.NoError(t, err)
@@ -127,7 +127,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			t.Run("Should not return any snapshots", func(t *testing.T) {
 				query := dashboardsnapshots.GetDashboardSnapshotsQuery{
 					OrgId:        1,
-					SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor, IsAnonymous: true, UserId: 0},
+					SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor, IsAnonymous: true, UserID: 0},
 				}
 				err := dashStore.SearchDashboardSnapshots(context.Background(), &query)
 				require.NoError(t, err)

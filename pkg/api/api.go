@@ -69,7 +69,7 @@ func (hs *HTTPServer) registerRoutes() {
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	reqRoleForAppRoute := middleware.ReqRoleForAppRoute(hs.pluginStore, reqSignedIn)
 	authorize := ac.Middleware(hs.AccessControl)
-	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.SQLStore)
+	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.userService)
 	quota := middleware.Quota(hs.QuotaService)
 
 	r := hs.RouteRegister

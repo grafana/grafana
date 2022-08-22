@@ -21,7 +21,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	t.Run("Testing Team commands & queries", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		testUser := &user.SignedInUser{
-			OrgId: 1,
+			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
 				1: {
 					ac.ActionTeamsRead:         []string{ac.ScopeTeamsAll},
@@ -227,7 +227,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					OrgId:  testOrgID,
 					UserId: userIds[0],
 					SignedInUser: &user.SignedInUser{
-						OrgId:       testOrgID,
+						OrgID:       testOrgID,
 						Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}, ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
 					},
 				}
@@ -319,12 +319,12 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				err = sqlStore.AddTeamMember(userIds[1], testOrgID, groupId, false, models.PERMISSION_ADMIN)
 				require.NoError(t, err)
 
-				query := &models.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgId: testOrgID, UserId: userIds[0]}}
+				query := &models.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgID: testOrgID, UserID: userIds[0]}}
 				err = sqlStore.IsAdminOfTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.False(t, query.Result)
 
-				query = &models.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgId: testOrgID, UserId: userIds[1]}}
+				query = &models.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgID: testOrgID, UserID: userIds[1]}}
 				err = sqlStore.IsAdminOfTeams(context.Background(), query)
 				require.NoError(t, err)
 				require.True(t, query.Result)
@@ -335,7 +335,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				setup()
 				signedInUser := &user.SignedInUser{
 					Login: "loginuser0",
-					OrgId: testOrgID,
+					OrgID: testOrgID,
 					Permissions: map[int64]map[string][]string{
 						testOrgID: {
 							ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
@@ -424,7 +424,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 			query: &models.SearchTeamsQuery{
 				OrgId: 1,
 				SignedInUser: &user.SignedInUser{
-					OrgId:       1,
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
 				},
 			},
@@ -435,7 +435,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 			query: &models.SearchTeamsQuery{
 				OrgId: 1,
 				SignedInUser: &user.SignedInUser{
-					OrgId:       1,
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {""}}},
 				},
 			},
@@ -446,7 +446,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 			query: &models.SearchTeamsQuery{
 				OrgId: 1,
 				SignedInUser: &user.SignedInUser{
-					OrgId: 1,
+					OrgID: 1,
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {
 						"teams:id:1",
 						"teams:id:5",
@@ -475,7 +475,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionTeamsRead) {
 				for _, team := range tt.query.Result.Teams {
-					assert.Contains(t, tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgId][ac.ActionTeamsRead], fmt.Sprintf("teams:id:%d", team.Id))
+					assert.Contains(t, tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgID][ac.ActionTeamsRead], fmt.Sprintf("teams:id:%d", team.Id))
 				}
 			}
 		})
@@ -534,7 +534,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			query: &models.GetTeamMembersQuery{
 				OrgId: testOrgID,
 				SignedInUser: &user.SignedInUser{
-					OrgId:       testOrgID,
+					OrgID:       testOrgID,
 					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {ac.ScopeUsersAll}}},
 				},
 			},
@@ -545,7 +545,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			query: &models.GetTeamMembersQuery{
 				OrgId: testOrgID,
 				SignedInUser: &user.SignedInUser{
-					OrgId:       testOrgID,
+					OrgID:       testOrgID,
 					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {""}}},
 				},
 			},
@@ -557,7 +557,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			query: &models.GetTeamMembersQuery{
 				OrgId: testOrgID,
 				SignedInUser: &user.SignedInUser{
-					OrgId: testOrgID,
+					OrgID: testOrgID,
 					Permissions: map[int64]map[string][]string{testOrgID: {ac.ActionOrgUsersRead: {
 						ac.Scope("users", "id", fmt.Sprintf("%d", userIds[0])),
 						ac.Scope("users", "id", fmt.Sprintf("%d", userIds[2])),
@@ -577,7 +577,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionOrgUsersRead) {
 				for _, member := range tt.query.Result {
 					assert.Contains(t,
-						tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgId][ac.ActionOrgUsersRead],
+						tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgID][ac.ActionOrgUsersRead],
 						ac.Scope("users", "id", fmt.Sprintf("%d", member.UserId)),
 					)
 				}

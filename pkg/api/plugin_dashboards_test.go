@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -54,7 +54,7 @@ func TestGetPluginDashboards(t *testing.T) {
 
 	t.Run("Signed in and not org admin should return 403 Forbidden", func(t *testing.T) {
 		user := &user.SignedInUser{
-			UserId:  1,
+			UserID:  1,
 			OrgRole: org.RoleEditor,
 		}
 
@@ -66,8 +66,8 @@ func TestGetPluginDashboards(t *testing.T) {
 
 	t.Run("Signed in and org admin", func(t *testing.T) {
 		user := &user.SignedInUser{
-			UserId:  1,
-			OrgId:   1,
+			UserID:  1,
+			OrgID:   1,
 			OrgRole: org.RoleAdmin,
 		}
 
@@ -89,7 +89,7 @@ func TestGetPluginDashboards(t *testing.T) {
 			resp, err := sendGetPluginDashboardsRequestForSignedInUser(t, s, existingPluginID, user)
 			require.NoError(t, err)
 			require.Equal(t, http.StatusOK, resp.StatusCode)
-			bytes, err := ioutil.ReadAll(resp.Body)
+			bytes, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 			var listResp []*plugindashboards.PluginDashboard

@@ -3,7 +3,7 @@ package pluginproxy
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -27,8 +27,8 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 	appID string, cfg *setting.Cfg, pluginSettingsService pluginsettings.Service,
 	secretsService secrets.Service) *httputil.ReverseProxy {
 	appProxyLogger := logger.New(
-		"userId", ctx.UserId,
-		"orgId", ctx.OrgId,
+		"userId", ctx.UserID,
+		"orgId", ctx.OrgID,
 		"uname", ctx.Login,
 		"app", appID,
 		"path", ctx.Req.URL.Path,
@@ -37,7 +37,7 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 	)
 
 	director := func(req *http.Request) {
-		query := pluginsettings.GetByPluginIDArgs{OrgID: ctx.OrgId, PluginID: appID}
+		query := pluginsettings.GetByPluginIDArgs{OrgID: ctx.OrgID, PluginID: appID}
 		ps, err := pluginSettingsService.GetPluginSettingByPluginID(ctx.Req.Context(), &query)
 		if err != nil {
 			ctx.JsonApiErr(500, "Failed to fetch plugin settings", err)
@@ -107,16 +107,16 @@ func logAppPluginProxyRequest(appID string, cfg *setting.Cfg, c *models.ReqConte
 
 	var body string
 	if c.Req.Body != nil {
-		buffer, err := ioutil.ReadAll(c.Req.Body)
+		buffer, err := io.ReadAll(c.Req.Body)
 		if err == nil {
-			c.Req.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			c.Req.Body = io.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
 	}
 
 	logger.Info("Proxying incoming request",
-		"userid", c.UserId,
-		"orgid", c.OrgId,
+		"userid", c.UserID,
+		"orgid", c.OrgID,
 		"username", c.Login,
 		"app", appID,
 		"uri", c.Req.RequestURI,

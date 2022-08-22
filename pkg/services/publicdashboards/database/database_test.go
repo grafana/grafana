@@ -64,6 +64,38 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		publicdashboardStore = ProvideStore(sqlStore)
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
+	t.Run("AccessTokenExists will return true when at least one public dashboard has a matching access token", func(t *testing.T) {
+		setup()
+
+		_, err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+			DashboardUid: savedDashboard.Uid,
+			OrgId:        savedDashboard.OrgId,
+			PublicDashboard: PublicDashboard{
+				IsEnabled:    true,
+				Uid:          "abc123",
+				DashboardUid: savedDashboard.Uid,
+				OrgId:        savedDashboard.OrgId,
+				CreatedAt:    time.Now(),
+				CreatedBy:    7,
+				AccessToken:  "accessToken",
+			},
+		})
+		require.NoError(t, err)
+
+		res, err := publicdashboardStore.AccessTokenExists(context.Background(), "accessToken")
+		require.NoError(t, err)
+
+		require.True(t, res)
+	})
+
+	t.Run("AccessTokenExists will return false when no public dashboard has matching access token", func(t *testing.T) {
+		setup()
+
+		res, err := publicdashboardStore.AccessTokenExists(context.Background(), "accessToken")
+
+		require.NoError(t, err)
+		require.False(t, res)
+	})
 
 	t.Run("PublicDashboardEnabled Will return true when dashboard has at least one enabled public dashboard", func(t *testing.T) {
 		setup()

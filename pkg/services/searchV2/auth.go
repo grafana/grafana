@@ -34,9 +34,9 @@ func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *user.SignedInUs
 	if a.ac.IsDisabled() {
 		return permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,
-			OrgId:           user.OrgId,
+			OrgId:           user.OrgID,
 			Dialect:         a.sql.Dialect,
-			UserId:          user.UserId,
+			UserId:          user.UserID,
 			PermissionLevel: models.PERMISSION_VIEW,
 		}
 	}
@@ -52,7 +52,7 @@ func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (
 		sql, params := filter.Where()
 		sess.Table("dashboard").
 			Where(sql, params...).
-			Where("org_id = ?", user.OrgId).
+			Where("org_id = ?", user.OrgID).
 			Cols("uid")
 
 		err := sess.Find(&rows)

@@ -33,7 +33,7 @@ func (hs *HTTPServer) ValidateOrgAlert(c *models.ReqContext) {
 		return
 	}
 
-	if c.OrgId != query.Result.OrgId {
+	if c.OrgID != query.Result.OrgId {
 		c.JsonApiErr(403, "You are not allowed to edit/view alert", nil)
 		return
 	}
@@ -56,7 +56,7 @@ func (hs *HTTPServer) GetAlertStatesForDashboard(c *models.ReqContext) response.
 	}
 
 	query := models.GetAlertStatesForDashboardQuery{
-		OrgId:       c.OrgId,
+		OrgId:       c.OrgID,
 		DashboardId: c.QueryInt64("dashboardId"),
 	}
 
@@ -103,7 +103,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 			Tags:         dashboardTags,
 			SignedInUser: c.SignedInUser,
 			Limit:        1000,
-			OrgId:        c.OrgId,
+			OrgId:        c.OrgID,
 			DashboardIds: dashboardIDs,
 			Type:         string(models.DashHitDB),
 			FolderIds:    folderIDs,
@@ -128,7 +128,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 	}
 
 	query := models.GetAlertsQuery{
-		OrgId:        c.OrgId,
+		OrgId:        c.OrgID,
 		DashboardIDs: dashboardIDs,
 		PanelId:      c.QueryInt64("panelId"),
 		Limit:        c.QueryInt64("limit"),
@@ -171,7 +171,7 @@ func (hs *HTTPServer) AlertTest(c *models.ReqContext) response.Response {
 		return response.Error(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
 	}
 
-	res, err := hs.AlertEngine.AlertTest(c.OrgId, dto.Dashboard, dto.PanelId, c.SignedInUser)
+	res, err := hs.AlertEngine.AlertTest(c.OrgID, dto.Dashboard, dto.PanelId, c.SignedInUser)
 	if err != nil {
 		var validationErr alerting.ValidationError
 		if errors.As(err, &validationErr) {
@@ -294,7 +294,7 @@ func (hs *HTTPServer) GetAlertNotifications(c *models.ReqContext) response.Respo
 }
 
 func (hs *HTTPServer) getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotification, error) {
-	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
+	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgID}
 
 	if err := hs.AlertNotificationService.GetAllAlertNotifications(c.Req.Context(), query); err != nil {
 		return nil, err
@@ -321,7 +321,7 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Re
 		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
 	}
 	query := &models.GetAlertNotificationsQuery{
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 		Id:    notificationId,
 	}
 
@@ -354,7 +354,7 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Re
 // 500: internalServerError
 func (hs *HTTPServer) GetAlertNotificationByUID(c *models.ReqContext) response.Response {
 	query := &models.GetAlertNotificationsWithUidQuery{
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 		Uid:   web.Params(c.Req)[":uid"],
 	}
 
@@ -390,7 +390,7 @@ func (hs *HTTPServer) CreateAlertNotification(c *models.ReqContext) response.Res
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	if err := hs.AlertNotificationService.CreateAlertNotificationCommand(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrAlertNotificationWithSameNameExists) || errors.Is(err, models.ErrAlertNotificationWithSameUIDExists) {
@@ -423,7 +423,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 
 	err := hs.fillWithSecureSettingsData(c.Req.Context(), &cmd)
 	if err != nil {
@@ -442,7 +442,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 	}
 
 	query := models.GetAlertNotificationsQuery{
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 		Id:    cmd.Id,
 	}
 
@@ -470,7 +470,7 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) respons
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	cmd.Uid = web.Params(c.Req)[":uid"]
 
 	err := hs.fillWithSecureSettingsDataByUID(c.Req.Context(), &cmd)
@@ -572,7 +572,7 @@ func (hs *HTTPServer) DeleteAlertNotification(c *models.ReqContext) response.Res
 	}
 
 	cmd := models.DeleteAlertNotificationCommand{
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 		Id:    notificationId,
 	}
 
@@ -600,7 +600,7 @@ func (hs *HTTPServer) DeleteAlertNotification(c *models.ReqContext) response.Res
 // 500: internalServerError
 func (hs *HTTPServer) DeleteAlertNotificationByUID(c *models.ReqContext) response.Response {
 	cmd := models.DeleteAlertNotificationWithUidCommand{
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 		Uid:   web.Params(c.Req)[":uid"],
 	}
 
@@ -636,7 +636,7 @@ func (hs *HTTPServer) NotificationTest(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd := &alerting.NotificationTestCommand{
-		OrgID:          c.OrgId,
+		OrgID:          c.OrgID,
 		ID:             dto.ID,
 		Name:           dto.Name,
 		Type:           dto.Type,
@@ -693,7 +693,7 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 			return response.Error(500, "Get Alert failed", err)
 		}
 
-		guardian := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgId, c.SignedInUser)
+		guardian := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgID, c.SignedInUser)
 		if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
 			if err != nil {
 				return response.Error(500, "Error while checking permissions for Alert", err)
@@ -714,7 +714,7 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 		}
 
 		cmd := models.PauseAlertCommand{
-			OrgId:    c.OrgId,
+			OrgId:    c.OrgID,
 			AlertIds: []int64{alertID},
 			Paused:   dto.Paused,
 		}

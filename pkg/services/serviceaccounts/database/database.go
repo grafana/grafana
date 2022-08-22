@@ -24,6 +24,7 @@ type ServiceAccountsStoreImpl struct {
 	apiKeyService apikey.Service
 	kvStore       kvstore.KVStore
 	log           log.Logger
+	userService   user.Service
 }
 
 func ProvideServiceAccountsStore(store *sqlstore.SQLStore, apiKeyService apikey.Service, kvStore kvstore.KVStore) *ServiceAccountsStoreImpl {
@@ -456,7 +457,7 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 		}
 
 		if err := s.assignApiKeyToServiceAccount(sess, key.Id, newSA.ID); err != nil {
-			if err := s.sqlStore.DeleteUser(ctx, &models.DeleteUserCommand{UserId: newSA.ID}); err != nil {
+			if err := s.userService.Delete(ctx, &user.DeleteUserCommand{UserID: newSA.ID}); err != nil {
 				s.log.Error("Error deleting service account", "error", err)
 			}
 			return fmt.Errorf("failed to migrate API key to service account token: %w", err)
@@ -482,7 +483,10 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 		return ErrServiceAccountAndTokenMismatch
 	}
 
-	tokens, err := s.ListTokens(ctx, key.OrgId, *key.ServiceAccountId)
+	tokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
+		OrgID:            &key.OrgId,
+		ServiceAccountID: key.ServiceAccountId,
+	})
 	if err != nil {
 		return fmt.Errorf("cannot revert token: %w", err)
 	}

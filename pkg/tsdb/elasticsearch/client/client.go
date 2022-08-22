@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -224,13 +224,13 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 
 	var bodyBytes []byte
 	if c.debugEnabled {
-		tmpBytes, err := ioutil.ReadAll(res.Body)
+		tmpBytes, err := io.ReadAll(res.Body)
 		if err != nil {
 			clientLog.Error("failed to read http response bytes", "error", err)
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
 			copy(bodyBytes, tmpBytes)
-			res.Body = ioutil.NopCloser(bytes.NewBuffer(tmpBytes))
+			res.Body = io.NopCloser(bytes.NewBuffer(tmpBytes))
 		}
 	}
 

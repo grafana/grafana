@@ -51,8 +51,8 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		sql, params = permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,
 			Dialect:         dialect,
-			UserId:          user.UserId,
-			OrgId:           user.OrgId,
+			UserId:          user.UserID,
+			OrgId:           user.OrgID,
 			PermissionLevel: permission,
 		}.Where()
 	}

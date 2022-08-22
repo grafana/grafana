@@ -363,8 +363,8 @@ func updateFolderPermissionScenario(t *testing.T, ctx updatePermissionContext, h
 			c.Req.Body = mockRequestBody(ctx.cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.OrgId = testOrgID
-			sc.context.UserId = testUserID
+			sc.context.OrgID = testOrgID
+			sc.context.UserID = testUserID
 
 			return hs.UpdateFolderPermissions(c)
 		})

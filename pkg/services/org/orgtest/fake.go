@@ -7,8 +7,9 @@ import (
 )
 
 type FakeOrgService struct {
-	ExpectedOrgUserID int64
-	ExpectedError     error
+	ExpectedOrgUserID  int64
+	ExpectedError      error
+	ExpectedUserOrgDTO []*org.UserOrgDTO
 }
 
 func NewOrgServiceFake() *FakeOrgService {
@@ -29,4 +30,8 @@ func (f *FakeOrgService) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (i
 
 func (f *FakeOrgService) DeleteUserFromAll(ctx context.Context, userID int64) error {
 	return f.ExpectedError
+}
+
+func (f *FakeOrgService) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
+	return f.ExpectedUserOrgDTO, f.ExpectedError
 }
