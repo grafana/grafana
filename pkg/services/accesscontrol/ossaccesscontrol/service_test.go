@@ -32,15 +32,6 @@ func setupTestEnv(t testing.TB) *Service {
 	return ac
 }
 
-// extractRawPermissionsHelper extracts action and scope fields only from a permission slice
-func extractRawPermissionsHelper(perms []accesscontrol.Permission) []accesscontrol.Permission {
-	res := make([]accesscontrol.Permission, len(perms))
-	for i, p := range perms {
-		res[i] = accesscontrol.Permission{Action: p.Action, Scope: p.Scope}
-	}
-	return res
-}
-
 func TestUsageMetrics(t *testing.T) {
 	tests := []struct {
 		name          string

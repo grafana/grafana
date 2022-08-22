@@ -25,7 +25,6 @@ type Calls struct {
 	DeleteUserPermissions          []interface{}
 }
 
-// Deprecated: Use fakes instead
 type Mock struct {
 	// Unless an override is provided, permissions will be returned by GetUserPermissions
 	permissions []accesscontrol.Permission
