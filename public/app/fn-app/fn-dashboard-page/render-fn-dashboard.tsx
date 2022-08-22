@@ -19,10 +19,11 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
         theme: data.theme,
         controlsContainer: data.controlsContainer,
         pageTitle: data?.pageTitle || '',
-        fnPathname: window.location.pathname,
       })
     );
+    console.log(locationService.getLocation(), locationService.getHistory, 'location params');
     locationService.fnPathnameChange(window.location.pathname);
+
     return () => {};
   }, [data, dispatch]);
 
@@ -38,7 +39,9 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
     // eslint-disable-next-line
     history: {} as any,
     // eslint-disable-next-line
-    location: {} as any,
+    location: {
+      ...locationService.getLocation(),
+    },
     queryParams: {},
     route: {
       routeName: DashboardRoutes.Normal,
