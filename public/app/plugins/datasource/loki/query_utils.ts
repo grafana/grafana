@@ -21,9 +21,9 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   const tree = parser.parse(input);
   const filters: SyntaxNode[] = [];
   tree.iterate({
-    enter: (type, from, to, get): void => {
+    enter: ({ type, node }): void => {
       if (type.id === LineFilter) {
-        filters.push(get());
+        filters.push(node);
       }
     },
   });
@@ -135,9 +135,9 @@ export function isQueryPipelineErrorFiltering(query: string): boolean {
   let isQueryPipelineErrorFiltering = false;
   const tree = parser.parse(query);
   tree.iterate({
-    enter: (type, from, to, get): false | void => {
-      if (type.name === 'LabelFilter') {
-        const label = get().getChild('Matcher')?.getChild('Identifier');
+    enter: ({ name, node }): false | void => {
+      if (name === 'LabelFilter') {
+        const label = node.getChild('Matcher')?.getChild('Identifier');
         if (label) {
           const labelName = query.substring(label.from, label.to);
           if (labelName === '__error__') {
@@ -174,8 +174,8 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   // Log query in metrics query composes of Selector & PipelineExpr
   let selector = '';
   tree.iterate({
-    enter: (type, from, to): false | void => {
-      if (type.name === 'Selector') {
+    enter: ({ name, from, to }): false | void => {
+      if (name === 'Selector') {
         selector = query.substring(from, to);
         return false;
       }
@@ -184,8 +184,8 @@ export function getLogQueryFromMetricsQuery(query: string): string {
 
   let pipelineExpr = '';
   tree.iterate({
-    enter: (type, from, to): false | void => {
-      if (type.name === 'PipelineExpr') {
+    enter: ({ name, from, to }): false | void => {
+      if (name === 'PipelineExpr') {
         pipelineExpr = query.substring(from, to);
         return false;
       }

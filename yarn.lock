@@ -4981,14 +4981,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.0.14":
-  version: 0.0.14
-  resolution: "@grafana/lezer-logql@npm:0.0.14"
-  dependencies:
-    lezer: ^0.13.5
+"@grafana/lezer-logql@npm:0.0.15":
+  version: 0.0.15
+  resolution: "@grafana/lezer-logql@npm:0.0.15"
   peerDependencies:
-    "@lezer/lr": ^0.15.8
-  checksum: 4e35f455b6b7c286dfca9f3770df0d4c325057352dc8241665b667d798db09de54e1c14f7bfd34d4ae5bbef782d28994ceaf5c517fc18cff46ae3a47527e1990
+    "@lezer/lr": ^1.0.0
+  checksum: 2dac2654b46ee255ae56f12e2c23ecb71a0eda2753f98117d61b79a10dd0f0b443420aa34dd3cbc243a92cd8983411823cb2bebfe04d5b86cf9c72236c054de1
   languageName: node
   linkType: hard
 
@@ -6978,19 +6976,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:0.15.12, @lezer/common@npm:^0.15.0":
-  version: 0.15.12
-  resolution: "@lezer/common@npm:0.15.12"
-  checksum: dae65816187bd690bf446bec116313d3b5328e70e3e1f7c806273d9356ca2017cf82aa650ea53b95260fb98898ea73d44f33319f9dbbd48d473e2f20771b2377
+"@lezer/common@npm:1.0.0, @lezer/common@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@lezer/common@npm:1.0.0"
+  checksum: 0ba652b39f9ff073a6a8a3376a74279f2c2d2ccdd4d2bb57c7b607341dbdbf64baf9c23a196314f09349d175623bc73a6a0b6a0eeb2cc63f3a1190fd631f7c31
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:0.15.8":
-  version: 0.15.8
-  resolution: "@lezer/lr@npm:0.15.8"
+"@lezer/highlight@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@lezer/highlight@npm:1.0.0"
   dependencies:
-    "@lezer/common": ^0.15.0
-  checksum: e741225d6ac9cf08f8016bad49622fbd4a4e0d20c2e8c2b38a0abf0ddca69c58275b0ebdb9d5dde2905cf84f6977bc302f7ed5e5ba42c23afa27e9e65b900f36
+    "@lezer/common": ^1.0.0
+  checksum: 9ce6c4ea041598e2500f11610e74163eba0361954df8dbf5d12b96dc8b5ab5da8af2defda7ff5728ca460d49f053a7502f2840361bcd8dcf30e8a23f7c30672a
+  languageName: node
+  linkType: hard
+
+"@lezer/lr@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@lezer/lr@npm:1.0.0"
+  dependencies:
+    "@lezer/common": ^1.0.0
+  checksum: 1365a2d1fa0a40815a03a635506a0215475b778d8b8907d274b8ee4b0732fcb7266799b50db7c4517254da1d245c153c348fd0d7b1db93b7d66926b9c538ee43
   languageName: node
   linkType: hard
 
@@ -8071,6 +8078,16 @@ __metadata:
   version: 2.11.2
   resolution: "@popperjs/core@npm:2.11.2"
   checksum: 5695bf020eda54636e16a62dc9b5fdd92beaf7b2d19f62fcef049d57c5cff92773562d80cbf760b217c3ec928da310eb24994ab6a00fd39dffa0af9b5dfc01a6
+  languageName: node
+  linkType: hard
+
+"@prometheus-io/lezer-promql@npm:^0.37.0-rc.1":
+  version: 0.37.0
+  resolution: "@prometheus-io/lezer-promql@npm:0.37.0"
+  peerDependencies:
+    "@lezer/highlight": ^1.0.0
+    "@lezer/lr": ^1.0.0
+  checksum: 17722456a67dbbbc92c923656f43c65d99e0e8f7d4a7086fb63438286cc51b02bc1713506ec1b1f3a7337aa4dd9840261d8abdcb6518c90d8b8ebaf2608bb672
   languageName: node
   linkType: hard
 
@@ -21660,7 +21677,7 @@ __metadata:
     "@grafana/eslint-config": 5.0.0
     "@grafana/experimental": ^0.0.2-canary.36
     "@grafana/google-sdk": 0.0.3
-    "@grafana/lezer-logql": 0.0.14
+    "@grafana/lezer-logql": 0.0.15
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/slate-react": 0.22.10-grafana
@@ -21669,8 +21686,9 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 5.1.8
-    "@lezer/common": 0.15.12
-    "@lezer/lr": 0.15.8
+    "@lezer/common": 1.0.0
+    "@lezer/highlight": ^1.0.0
+    "@lezer/lr": 1.0.0
     "@lingui/cli": 3.14.0
     "@lingui/core": 3.14.0
     "@lingui/macro": 3.14.0
@@ -21681,6 +21699,7 @@ __metadata:
     "@opentelemetry/semantic-conventions": 1.5.0
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.7
     "@popperjs/core": 2.11.5
+    "@prometheus-io/lezer-promql": ^0.37.0-rc.1
     "@react-aria/button": 3.5.1
     "@react-aria/dialog": 3.2.1
     "@react-aria/focus": 3.6.1
@@ -21846,7 +21865,6 @@ __metadata:
     jsurl: ^0.1.5
     kbar: 0.1.0-beta.36
     lerna: 5.2.0
-    lezer-promql: 0.22.0
     lint-staged: 13.0.3
     lodash: 4.17.21
     logfmt: ^1.3.2
@@ -25966,31 +25984,6 @@ __metadata:
     prelude-ls: ~1.1.2
     type-check: ~0.3.2
   checksum: 0d084a524231a8246bb10fec48cdbb35282099f6954838604f3c7fc66f2e16fa66fd9cc2f3f20a541a113c4dafdf181e822c887c8a319c9195444e6c64ac395e
-  languageName: node
-  linkType: hard
-
-"lezer-promql@npm:0.22.0":
-  version: 0.22.0
-  resolution: "lezer-promql@npm:0.22.0"
-  peerDependencies:
-    "@lezer/lr": ^0.15.8
-  checksum: cdce054700874ef95c779899bc8a6a774f83bc613d509011b7d3b8003f07fa853962291c44edf9232e7a927d0753fec77ec55d795abddda9d2efc044f78bb58a
-  languageName: node
-  linkType: hard
-
-"lezer-tree@npm:^0.13.2":
-  version: 0.13.2
-  resolution: "lezer-tree@npm:0.13.2"
-  checksum: b8be213c780191e0669c7f440aa563218ada762d2cf399b94e755a563cc7da8951929fa3ee65df9ef6586a81223c55cd662e1ec5b49060d892acca4198cf3596
-  languageName: node
-  linkType: hard
-
-"lezer@npm:^0.13.5":
-  version: 0.13.5
-  resolution: "lezer@npm:0.13.5"
-  dependencies:
-    lezer-tree: ^0.13.2
-  checksum: a5c3aa01c539aba3377a927063bcd63b311737a7abfd71ad2c2229ed4e48b7858f2e8e11e925f8f5286c2629251f77dfabf7505ea6c707499cd9917ca90934c8
   languageName: node
   linkType: hard
 
