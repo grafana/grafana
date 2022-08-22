@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 import React from 'react';
 
+import { DashboardModel } from '../../state/DashboardModel';
 import { historySrv } from '../VersionHistory/HistorySrv';
 
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
@@ -23,12 +24,12 @@ const queryByFullText = (text: string) =>
   });
 
 describe('VersionSettings', () => {
-  const dashboard: any = {
+  const dashboard = new DashboardModel({
     id: 74,
     version: 11,
     formatDate: jest.fn(() => 'date'),
     getRelativeTime: jest.fn(() => 'time ago'),
-  };
+  });
 
   let user: UserEvent;
 
