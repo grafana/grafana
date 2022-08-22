@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,6 +46,7 @@ func setupTestMigrateFromPluginService(t *testing.T) (*MigrateFromPluginService,
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	manager := NewFakeSecretsPluginManager(t, false)
 	migratorService := ProvideMigrateFromPluginService(
+		&setting.Cfg{},
 		sqlStore,
 		secretsService,
 		manager,

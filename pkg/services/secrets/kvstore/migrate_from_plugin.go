@@ -21,11 +21,13 @@ type MigrateFromPluginService struct {
 }
 
 func ProvideMigrateFromPluginService(
+	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	manager plugins.SecretsPluginManager,
 ) *MigrateFromPluginService {
 	return &MigrateFromPluginService{
+		cfg:            cfg,
 		logger:         log.New("sec-plugin-mig"),
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
@@ -97,5 +99,13 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 		}
 	}
 
+	// if `use_plugin` wasn't set, stop the plugin after migration
+	if !s.cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool(false) {
+		err := s.manager.SecretsManager().Stop(ctx)
+		if err != nil {
+			// Log a warning but don't throw an error
+			s.logger.Error("Error stopping secrets plugin after migration", "error", err.Error())
+		}
+	}
 	return nil
 }
