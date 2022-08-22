@@ -3,12 +3,13 @@ import React, { useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/ui';
 
-import { ALIGNMENT_PERIODS } from '../../constants';
+import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { alignmentPeriodLabel } from '../../functions';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
 
 import { AliasBy } from './AliasBy';
+import { LookbackPeriodSelect } from './LookbackPeriodSelect';
 import { PeriodSelect } from './PeriodSelect';
 import { Project } from './Project';
 import { SLO } from './SLO';
@@ -35,6 +36,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
   serviceName: '',
   sloId: '',
   sloName: '',
+  lookbackPeriod: '',
 });
 
 export function SLOQueryEditor({
@@ -77,6 +79,14 @@ export function SLOQueryEditor({
           query={query}
           onChange={onChange}
         />
+        {query.selectorName === SLO_BURN_RATE_SELECTOR_NAME && (
+          <LookbackPeriodSelect
+            refId={refId}
+            onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
+            current={query.lookbackPeriod}
+            templateVariableOptions={variableOptionGroup.options}
+          />
+        )}
 
         <EditorFieldGroup>
           <EditorField label="Alignment period" tooltip={alignmentLabel}>
