@@ -106,7 +106,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 			Created:          updated,
 			Updated:          updated,
 			Expires:          expires,
-			ServiceAccountId: nil,
+			ServiceAccountId: cmd.ServiceAccountID,
 			IsRevoked:        &isRevoked,
 		}
 
