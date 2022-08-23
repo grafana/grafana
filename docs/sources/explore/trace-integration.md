@@ -86,7 +86,7 @@ Click the document icon to open a split view in Explore with the configured data
 Application performance management (APM) uses data gathered from services, agents, systems, and microservices to visualize and identify areas of concern.
 
 The Grafana APM dashboard visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
-Once the requirements are set up, this pre-configured dashboard is immediately available.  
+Once the requirements are set up, this pre-configured dashboard is immediately available.
 
 For more information, refer to the [APM table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#apm-table) of the Tempo data source page and the [APM dashboard page](https://grafana.com/docs/tempo/latest/metrics-generator/app-performance-mgmt/) in the Tempo documentation.
 
