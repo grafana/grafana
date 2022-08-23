@@ -32,7 +32,6 @@ func ProvideServiceAccountsService(
 	serviceAccountsStore serviceaccounts.Store,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) (*ServiceAccountsService, error) {
-	initMetrics()
 	s := &ServiceAccountsService{
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),

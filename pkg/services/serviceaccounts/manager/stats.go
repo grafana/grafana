@@ -22,30 +22,26 @@ var (
 	Initialised bool = false
 )
 
-func initMetrics() {
-	once.Do(func() {
-		MStatTotalServiceAccounts = prometheus.NewGauge(prometheus.GaugeOpts{
-			Name:      "stat_total_service_accounts",
-			Help:      "total amount of service accounts",
-			Namespace: ExporterName,
-		})
-
-		MStatTotalServiceAccountTokens = prometheus.NewGauge(prometheus.GaugeOpts{
-			Name:      "stat_total_service_account_tokens",
-			Help:      "total amount of service account tokens",
-			Namespace: ExporterName,
-		})
-
-		prometheus.MustRegister(
-			MStatTotalServiceAccounts,
-			MStatTotalServiceAccountTokens,
-		)
+func init() {
+	MStatTotalServiceAccounts = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_total_service_accounts",
+		Help:      "total amount of service accounts",
+		Namespace: ExporterName,
 	})
+
+	MStatTotalServiceAccountTokens = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_total_service_account_tokens",
+		Help:      "total amount of service account tokens",
+		Namespace: ExporterName,
+	})
+
+	prometheus.MustRegister(
+		MStatTotalServiceAccounts,
+		MStatTotalServiceAccountTokens,
+	)
 }
 
 func (sa *ServiceAccountsService) getUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
-	initMetrics()
-
 	stats := map[string]interface{}{}
 
 	sqlStats, err := sa.store.GetUsageMetrics(ctx)
