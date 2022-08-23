@@ -35,5 +35,4 @@ func TestStore_UsageStats(t *testing.T) {
 
 	assert.Equal(t, int64(1), stats.ServiceAccounts)
 	assert.Equal(t, int64(1), stats.Tokens)
-	assert.Equal(t, int64(0), stats.InTeams)
 }

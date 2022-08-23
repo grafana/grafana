@@ -129,5 +129,4 @@ const (
 type Stats struct {
 	ServiceAccounts int64 `xorm:"serviceaccounts"`
 	Tokens          int64 `xorm:"serviceaccount_tokens"`
-	InTeams         int64 `xorm:"serviceaccounts_in_teams"`
 }

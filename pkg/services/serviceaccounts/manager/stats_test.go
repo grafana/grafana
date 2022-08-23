@@ -14,7 +14,6 @@ func Test_UsageStats(t *testing.T) {
 	storeMock := &tests.ServiceAccountsStoreMock{Calls: tests.Calls{}, Stats: &serviceaccounts.Stats{
 		ServiceAccounts: 1,
 		Tokens:          1,
-		InTeams:         0,
 	}}
 	svc := ServiceAccountsService{store: storeMock}
 	err := svc.DeleteServiceAccount(context.Background(), 1, 1)
@@ -26,5 +25,4 @@ func Test_UsageStats(t *testing.T) {
 
 	assert.Equal(t, int64(1), stats["stats.serviceaccounts.count"].(int64))
 	assert.Equal(t, int64(1), stats["stats.serviceaccounts.tokens.count"].(int64))
-	assert.Equal(t, int64(0), stats["stats.serviceaccounts.in_teams.count"].(int64))
 }

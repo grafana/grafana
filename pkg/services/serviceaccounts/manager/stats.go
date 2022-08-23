@@ -55,7 +55,6 @@ func (sa *ServiceAccountsService) getUsageMetrics(ctx context.Context) (map[stri
 
 	stats["stats.serviceaccounts.count"] = sqlStats.ServiceAccounts
 	stats["stats.serviceaccounts.tokens.count"] = sqlStats.Tokens
-	stats["stats.serviceaccounts.in_teams.count"] = sqlStats.InTeams
 
 	MStatTotalServiceAccountTokens.Set(float64(sqlStats.Tokens))
 	MStatTotalServiceAccounts.Set(float64(sqlStats.ServiceAccounts))
