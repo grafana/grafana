@@ -103,6 +103,8 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         min = 0;
         max! *= 2;
       }
+
+      return [min, max];
     }
 
     return [
