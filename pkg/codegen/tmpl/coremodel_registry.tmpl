@@ -37,8 +37,8 @@ var (
 {{range .Coremodels }}
 // {{ .TitleName }} returns the {{ .Name }} coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
-func (s *Base) {{ .TitleName }}() *{{ .Name }}.Coremodel {
-	return s.{{ .Name }}
+func (b *Base) {{ .TitleName }}() *{{ .Name }}.Coremodel {
+	return b.{{ .Name }}
 }
 {{end}}
 

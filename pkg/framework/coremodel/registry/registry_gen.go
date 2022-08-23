@@ -38,14 +38,14 @@ var (
 
 // Dashboard returns the dashboard coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
-func (s *Base) Dashboard() *dashboard.Coremodel {
-	return s.dashboard
+func (b *Base) Dashboard() *dashboard.Coremodel {
+	return b.dashboard
 }
 
 // Pluginmeta returns the pluginmeta coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
-func (s *Base) Pluginmeta() *pluginmeta.Coremodel {
-	return s.pluginmeta
+func (b *Base) Pluginmeta() *pluginmeta.Coremodel {
+	return b.pluginmeta
 }
 
 func doProvideBase(lib thema.Library) *Base {
