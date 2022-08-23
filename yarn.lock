@@ -5239,7 +5239,7 @@ __metadata:
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
-    "@monaco-editor/react": 4.3.1
+    "@monaco-editor/react": 4.4.5
     "@popperjs/core": 2.11.5
     "@react-aria/button": 3.5.1
     "@react-aria/dialog": 3.2.1
@@ -5324,7 +5324,7 @@ __metadata:
     memoize-one: 6.0.0
     mock-raf: 1.0.1
     moment: 2.29.4
-    monaco-editor: ^0.31.1
+    monaco-editor: 0.34.0
     ol: 6.15.1
     postcss: 8.4.14
     postcss-loader: 7.0.1
@@ -7342,28 +7342,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/loader@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@monaco-editor/loader@npm:1.2.0"
+"@monaco-editor/loader@npm:^1.3.2":
+  version: 1.3.2
+  resolution: "@monaco-editor/loader@npm:1.3.2"
   dependencies:
     state-local: ^1.0.6
   peerDependencies:
     monaco-editor: ">= 0.21.0 < 1"
-  checksum: b483d8d74830f8bcfe18111b0dfe526e038b704e9a461ce2ecb25d66db2abb19fbb704569ba84b06e4b5ead4e483ae7335e3d5e2201613d4f0c077401d540bd3
+  checksum: 7a1b65052bbaf4ef826392687bd7cfaf839509611034d2d616783b5d3fee91ed304d9086517c3b5f9099707828c57c855ff43407b3c2f5ae480faebb104d4343
   languageName: node
   linkType: hard
 
-"@monaco-editor/react@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@monaco-editor/react@npm:4.3.1"
+"@monaco-editor/react@npm:4.4.5":
+  version: 4.4.5
+  resolution: "@monaco-editor/react@npm:4.4.5"
   dependencies:
-    "@monaco-editor/loader": ^1.2.0
+    "@monaco-editor/loader": ^1.3.2
     prop-types: ^15.7.2
   peerDependencies:
     monaco-editor: ">= 0.25.0 < 1"
-    react: ^16.8.0 || ^17.0.0
-    react-dom: ^16.8.0 || ^17.0.0
-  checksum: 477349e64078ab3fc30e75577fbe51519c5af621cd1e3fa557e21f2a5e7291c4eabe34caa3013d578be0379c5bc43b199ee1c74853d571b05598ce866ad5a3a1
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 7a9568e3c6c27ecb7b4e07803a85554a6decbf0ad789b98fe5cb3d65b3a3682356e7553475b3eaeed5376a963bdc60d94ceb79ed6c3dd212d72a5122164590f2
   languageName: node
   linkType: hard
 
@@ -21912,7 +21912,7 @@ __metadata:
     mini-css-extract-plugin: 2.6.1
     moment: 2.29.4
     moment-timezone: 0.5.34
-    monaco-editor: ^0.31.1
+    monaco-editor: 0.34.0
     monaco-promql: 1.7.4
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
@@ -27441,10 +27441,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-editor@npm:^0.31.1":
-  version: 0.31.1
-  resolution: "monaco-editor@npm:0.31.1"
-  checksum: 65be40c5570e1186938490e47ac3a23ecd8faf1bda631091a6da1de8275f049efb8d9514fcb780ca40053adf8fe9229413b4c801d86ebbade078371acbb9df3b
+"monaco-editor@npm:0.34.0":
+  version: 0.34.0
+  resolution: "monaco-editor@npm:0.34.0"
+  checksum: 10a28c1fe07268a23106ec9b743339af603e00c3ce646de72bf74f77e3d44065536f1a11f1a86ed459dfd9cb891261e6c7974377fc511eb65f354d6ddc89275b
   languageName: node
   linkType: hard
 
