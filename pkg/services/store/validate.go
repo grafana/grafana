@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -87,8 +86,7 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 
 	types := map[EntityType]coremodel.Interface{}
 	for _, t := range s.base.All() {
-		pkg := path.Base(t.Lineage().Name())
-		types[EntityType(pkg)] = t
+		types[coremodelPrefix+"/"+EntityType(t.Lineage().Name())] = t
 	}
 
 	switch et := req.EntityType; et {
