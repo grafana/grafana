@@ -19,7 +19,7 @@ seqs: [
 				// TODO: Figure out the type of this, and validate that it's how long between shifts between items in the playlist.
 				interval?: string @reviewme()
 				// Playlist item
-				items?: [#Items]
+				items?: [...#Items]
 
 				///////////////////////////////////////
 				// Definitions (referenced above) are declared below
