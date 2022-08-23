@@ -1,7 +1,9 @@
 package manager
 
 import (
+	"archive/zip"
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -10,16 +12,18 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
 func TestPluginManager_Run(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakeLoader{}
-		pm := NewManager(&plugins.Cfg{}, newFakePluginRegistry(), []PluginSource{
+		pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []plugins.PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader)
+		}, loader, &fakePluginRepo{})
 
 		err := pm.Run(context.Background())
 		require.NoError(t, err)
@@ -29,7 +33,7 @@ func TestPluginManager_Run(t *testing.T) {
 
 func TestPluginManager_loadPlugins(t *testing.T) {
 	t.Run("Managed backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, true, true)
+		p, pc := createPlugin(t, testPluginID, plugins.External, true, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -55,7 +59,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, true)
+		p, pc := createPlugin(t, testPluginID, plugins.External, false, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -81,7 +85,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Managed non-backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, true)
+		p, pc := createPlugin(t, testPluginID, plugins.External, false, true)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -107,7 +111,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged non-backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, false)
+		p, pc := createPlugin(t, testPluginID, plugins.External, false, false)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -266,4 +270,75 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 			})
 		})
 	})
+}
+
+type fakePluginRepo struct {
+	store map[string]fakePluginEntry
+
+	repo.Service
+}
+
+type fakePluginEntry struct {
+	z        *zip.ReadCloser
+	zipURL   string
+	version  string
+	checksum string
+}
+
+// GetPluginArchive fetches the requested plugin archive.
+func (r *fakePluginRepo) GetPluginArchive(_ context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
+	key := fmt.Sprintf("%s-%s-%s", pluginID, version, opts.String())
+	v, exists := r.store[key]
+	if !exists {
+		return nil, fmt.Errorf("plugin archive not found")
+	}
+
+	return &repo.PluginArchive{
+		File: v.z,
+	}, nil
+}
+
+// GetPluginArchiveByURL fetches the requested plugin from the specified URL.
+func (r *fakePluginRepo) GetPluginArchiveByURL(_ context.Context, archiveURL string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
+	key := fmt.Sprintf("%s-%s", archiveURL, opts.String())
+	v, exists := r.store[key]
+	if !exists {
+		return nil, fmt.Errorf("plugin archive not found")
+	}
+
+	return &repo.PluginArchive{
+		File: v.z,
+	}, nil
+}
+
+// GetPluginDownloadOptions fetches information for downloading the requested plugin.
+func (r *fakePluginRepo) GetPluginDownloadOptions(_ context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+	key := fmt.Sprintf("%s-%s-%s", pluginID, version, opts.String())
+	v, exists := r.store[key]
+	if !exists {
+		return nil, fmt.Errorf("plugin archive not found")
+	}
+
+	return &repo.PluginDownloadOptions{
+		PluginZipURL: v.zipURL,
+		Version:      v.version,
+		Checksum:     v.checksum,
+	}, nil
+}
+
+type fakeFsManager struct {
+	storage.Manager
+
+	added   int
+	removed int
+}
+
+func (fsm *fakeFsManager) Add(_ context.Context, _ string, _ *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	fsm.added++
+	return &storage.ExtractedPluginArchive{}, nil
+}
+
+func (fsm *fakeFsManager) Remove(_ context.Context, _ string) error {
+	fsm.removed++
+	return nil
 }

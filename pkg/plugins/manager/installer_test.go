@@ -25,23 +25,23 @@ const (
 
 func TestPluginInstaller(t *testing.T) {
 	t.Run("Adding a plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "1.0.0", plugins.External, true, true)
+		p, pc := createPlugin(t, testPluginID, plugins.External, true, true)
 
-		l := &fakeLoader{
+		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
 		}
 
-		i := &fakePluginInstaller{}
-		pm, ps := createInstaller(t, func(pm *PluginInstaller) {
-			pm.installerSvc = i
-			pm.pluginLoader = l
-		})
+		repo := &fakePluginRepo{}
 
-		err := pm.Add(context.Background(), testPluginID, "1.0.0")
+		reg := newFakePluginRegistry()
+
+		pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, loader, repo)
+
+		err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, i.installCount)
-		assert.Equal(t, 0, i.uninstallCount)
+		//assert.Equal(t, 1, i.installCount)
+		//assert.Equal(t, 0, i.uninstallCount)
 
 		verifyNoPluginErrors(t, pm.pluginRegistry)
 
@@ -50,13 +50,13 @@ func TestPluginInstaller(t *testing.T) {
 		assert.False(t, pc.exited)
 		assert.False(t, pc.decommissioned)
 
-		testPlugin, exists := ps.Plugin(context.Background(), testPluginID)
+		testPlugin, exists := reg.Plugin(context.Background(), testPluginID)
 		assert.True(t, exists)
 		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, ps.Plugins(context.Background()), 1)
+		assert.Len(t, reg.Plugins(context.Background()), 1)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Add(context.Background(), testPluginID, "1.0.0")
+			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 			require.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
@@ -64,38 +64,40 @@ func TestPluginInstaller(t *testing.T) {
 		})
 
 		t.Run("Update", func(t *testing.T) {
-			p, pc := createPlugin(t, testPluginID, "1.2.0", plugins.External, true, true)
+			p, pc := createPlugin(t, testPluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+				plugin.Info.Version = "1.2.0"
+			})
 
 			l := &fakeLoader{
 				mockedLoadedPlugins: []*plugins.Plugin{p},
 			}
 			pm.pluginLoader = l
 
-			err = pm.Add(context.Background(), testPluginID, "1.2.0")
+			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.CompatOpts{})
 			assert.NoError(t, err)
 
-			assert.Equal(t, 2, i.installCount)
-			assert.Equal(t, 1, i.uninstallCount)
+			//assert.Equal(t, 2, i.installCount)
+			//assert.Equal(t, 1, i.uninstallCount)
 
 			assert.Equal(t, 1, pc.startCount)
 			assert.Equal(t, 0, pc.stopCount)
 			assert.False(t, pc.exited)
 			assert.False(t, pc.decommissioned)
 
-			testPlugin, exists := ps.Plugin(context.Background(), testPluginID)
+			testPlugin, exists := reg.Plugin(context.Background(), testPluginID)
 			assert.True(t, exists)
 			assert.Equal(t, p.ToDTO(), testPlugin)
-			assert.Len(t, ps.Plugins(context.Background()), 1)
+			assert.Len(t, reg.Plugins(context.Background()), 1)
 		})
 
 		t.Run("Removing a plugin", func(t *testing.T) {
 			err = pm.Remove(context.Background(), p.ID)
 			require.NoError(t, err)
 
-			assert.Equal(t, 2, i.installCount)
-			assert.Equal(t, 2, i.uninstallCount)
+			//assert.Equal(t, 2, i.installCount)
+			//assert.Equal(t, 2, i.uninstallCount)
 
-			p, exists := ps.Plugin(context.Background(), p.ID)
+			p, exists := reg.Plugin(context.Background(), p.ID)
 			assert.False(t, exists)
 			assert.Equal(t, plugins.PluginDTO{}, p)
 
@@ -203,8 +205,7 @@ func TestPluginInstaller(t *testing.T) {
 func createManager(t *testing.T, cbs ...func(*PluginManager)) (*PluginManager, plugins.Store) {
 	t.Helper()
 
-	fakeRegistry := newFakePluginRegistry()
-	pm := NewManager(&plugins.Cfg{}, fakeRegistry, nil, &fakeLoader{})
+	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []plugins.PluginSource{}, &fakeLoader{}, &fakePluginRepo{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -213,20 +214,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) (*PluginManager, p
 	return pm, store.ProvideService(pm.pluginRegistry)
 }
 
-func createInstaller(t *testing.T, cbs ...func(*PluginInstaller)) (*PluginInstaller, plugins.Store) {
-	t.Helper()
-
-	fakeRegistry := newFakePluginRegistry()
-	pm := New(&plugins.Cfg{}, fakeRegistry, &fakeLoader{})
-
-	for _, cb := range cbs {
-		cb(pm)
-	}
-
-	return pm, store.ProvideService(pm.pluginRegistry)
-}
-
-func createPlugin(t *testing.T, pluginID, version string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) (*plugins.Plugin, *fakePluginClient) {
+func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) (*plugins.Plugin, *fakePluginClient) {
 	t.Helper()
 
 	p := &plugins.Plugin{
@@ -236,7 +224,7 @@ func createPlugin(t *testing.T, pluginID, version string, class plugins.Class, m
 			Type:    plugins.DataSource,
 			Backend: backend,
 			Info: plugins.Info{
-				Version: version,
+				Version: "1.0.0",
 			},
 		},
 	}
@@ -262,7 +250,7 @@ func createPlugin(t *testing.T, pluginID, version string, class plugins.Class, m
 
 type managerScenarioCtx struct {
 	processManager *process.Manager
-	manager        *PluginInstaller
+	manager        *PluginManager
 	plugin         *plugins.Plugin
 	pluginClient   *fakePluginClient
 }
@@ -279,14 +267,14 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	}
 
 	pluginRegistry := registry.NewInMemory()
-	manager := New(cfg, pluginRegistry, &fakeLoader{})
+	manager := New(cfg, pluginRegistry, []plugins.PluginSource{}, &fakeLoader{}, &fakePluginRepo{})
 	processManager := process.NewManager(pluginRegistry)
 	ctx := &managerScenarioCtx{
 		manager:        manager,
 		processManager: processManager,
 	}
 
-	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, "", plugins.External, managed, true)
+	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, plugins.External, managed, true)
 
 	fn(t, ctx)
 }
@@ -323,23 +311,23 @@ func verifyNoPluginErrors(t *testing.T, pr registry.Service) {
 //
 //}
 
-type fakePluginInstaller struct {
+type fakePluginManager struct {
 	installCount   int
 	uninstallCount int
 }
 
-func (f *fakePluginInstaller) Install(_ context.Context, _, _, _, _, _ string) error {
+func (f *fakePluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
 	f.installCount++
 	return nil
 }
 
-func (f *fakePluginInstaller) Uninstall(_ context.Context, _ string) error {
+func (f *fakePluginManager) Remove(ctx context.Context, pluginID string) error {
 	f.uninstallCount++
 	return nil
 }
 
-func (f *fakePluginInstaller) GetUpdateInfo(_ context.Context, _, _, _ string) (plugins.UpdateInfo, error) {
-	return plugins.UpdateInfo{}, nil
+func (f *fakePluginManager) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
+	return nil
 }
 
 type fakeLoader struct {

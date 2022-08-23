@@ -37,7 +37,7 @@ const LOGQL_EXAMPLES = [
 ];
 
 export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<LokiQuery>, { userExamples: string[] }> {
-  declare userLabelTimer: NodeJS.Timeout;
+  declare userLabelTimer: ReturnType<typeof setTimeout>;
   state = {
     userExamples: [],
   };

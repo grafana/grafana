@@ -7,10 +7,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setAngularLoader, setDataSourceSrv } from '@grafana/runtime';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
+import { DashboardModel } from '../../state/DashboardModel';
+
 import { AnnotationsSettings } from './AnnotationsSettings';
 
 describe('AnnotationsSettings', () => {
-  let dashboard: any;
+  let dashboard: DashboardModel;
 
   const dataSources = {
     grafana: mockDataSource(
@@ -57,7 +59,7 @@ describe('AnnotationsSettings', () => {
   });
 
   beforeEach(() => {
-    dashboard = {
+    dashboard = new DashboardModel({
       id: 74,
       version: 7,
       annotations: {
@@ -74,7 +76,7 @@ describe('AnnotationsSettings', () => {
         ],
       },
       links: [],
-    };
+    });
   });
 
   test('it renders a header and cta if no annotations or only builtIn annotation', async () => {
@@ -143,12 +145,12 @@ describe('AnnotationsSettings', () => {
         type: 'dashboard',
       },
     ];
-    const dashboardWithAnnotations = {
+    const dashboardWithAnnotations = new DashboardModel({
       ...dashboard,
       annotations: {
         list: [...annotationsList],
       },
-    };
+    });
     render(<AnnotationsSettings dashboard={dashboardWithAnnotations} />);
     // Check that we have the correct annotations
     expect(screen.queryByText(/prometheus/i)).toBeInTheDocument();
@@ -177,12 +179,12 @@ describe('AnnotationsSettings', () => {
         type: 'dashboard',
       },
     ];
-    const dashboardWithAnnotations = {
+    const dashboardWithAnnotations = new DashboardModel({
       ...dashboard,
       annotations: {
         list: [...annotationsList],
       },
-    };
+    });
     render(<AnnotationsSettings dashboard={dashboardWithAnnotations} />);
     // Check that we have sorting buttons
     expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-up' })).not.toBeInTheDocument();

@@ -2,37 +2,224 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var _ plugins.Installer = (*PluginManager)(nil)
+
 type PluginManager struct {
-	pluginInstaller plugins.Installer
-	pluginSources   []plugins.PluginSource
-	log             log.Logger
+	cfg            *plugins.Cfg
+	pluginSources  []plugins.PluginSource
+	pluginRepo     repo.Service
+	pluginStorage  storage.Manager
+	processManager process.Service
+	pluginRegistry registry.Service
+	pluginLoader   loader.Service
+	log            log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, pluginInstaller plugins.Installer) *PluginManager {
-	return NewManager(pluginInstaller, pluginSources(cfg))
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+	pluginRepo repo.Service) *PluginManager {
+	return New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader, pluginRepo)
 }
 
-func NewManager(pluginInstaller plugins.Installer, pluginSources []plugins.PluginSource) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plugins.PluginSource,
+	pluginLoader loader.Service, pluginRepo repo.Service) *PluginManager {
 	return &PluginManager{
-		pluginInstaller: pluginInstaller,
-		pluginSources:   pluginSources,
-		log:             log.New("plugin.manager"),
+		cfg:            cfg,
+		pluginSources:  pluginSources,
+		pluginRepo:     pluginRepo,
+		pluginLoader:   pluginLoader,
+		pluginRegistry: pluginRegistry,
+		processManager: process.NewManager(pluginRegistry),
+		log:            log.New("plugin.manager"),
 	}
 }
 
 func (m *PluginManager) Run(ctx context.Context) error {
 	for _, ps := range m.pluginSources {
-		if err := m.pluginInstaller.AddFromSource(ctx, ps); err != nil {
+		if err := m.AddFromSource(ctx, ps); err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	compatOpts := repo.NewCompatOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
+
+	var pluginArchive *repo.PluginArchive
+	if plugin, exists := m.plugin(ctx, pluginID); exists {
+		if !plugin.IsExternalPlugin() {
+			return plugins.ErrInstallCorePlugin
+		}
+
+		if plugin.Info.Version == version {
+			return plugins.DuplicateError{
+				PluginID:          plugin.ID,
+				ExistingPluginDir: plugin.PluginDir,
+			}
+		}
+
+		// get plugin update information to confirm if target update is possible
+		dlOpts, err := m.pluginRepo.GetPluginDownloadOptions(ctx, pluginID, version, compatOpts)
+		if err != nil {
+			return err
+		}
+
+		// if existing plugin version is the same as the target update version
+		if dlOpts.Version == plugin.Info.Version {
+			return plugins.DuplicateError{
+				PluginID:          plugin.ID,
+				ExistingPluginDir: plugin.PluginDir,
+			}
+		}
+
+		if dlOpts.PluginZipURL == "" && dlOpts.Version == "" {
+			return fmt.Errorf("could not determine update options for %s", pluginID)
+		}
+
+		// remove existing installation of plugin
+		err = m.Remove(ctx, plugin.ID)
+		if err != nil {
+			return err
+		}
+
+		if dlOpts.PluginZipURL != "" {
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL, compatOpts)
+			if err != nil {
+				return err
+			}
+		} else {
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, dlOpts.Version, compatOpts)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		var err error
+		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		if err != nil {
+			return err
+		}
+	}
+
+	extractedArchive, err := m.pluginStorage.Add(ctx, pluginID, pluginArchive.File)
+	if err != nil {
+		return err
+	}
+
+	// download dependency plugins
+	pathsToScan := []string{extractedArchive.Path}
+	for _, dep := range extractedArchive.Dependencies {
+		m.log.Info("Fetching %s dependencies...", dep.ID)
+		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
+		if err != nil {
+			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
+		}
+
+		depArchive, err := m.pluginStorage.Add(ctx, dep.ID, d.File)
+		if err != nil {
+			return err
+		}
+
+		pathsToScan = append(pathsToScan, depArchive.Path)
+	}
+
+	err = m.loadPlugins(context.Background(), plugins.External, pathsToScan...)
+	if err != nil {
+		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
+		return err
+	}
+
+	return nil
+}
+
+func (m *PluginManager) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
+	return m.loadPlugins(ctx, source.Class, source.Paths...)
+}
+
+func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
+	plugin, exists := m.plugin(ctx, pluginID)
+	if !exists {
+		return plugins.ErrPluginNotInstalled
+	}
+
+	if !plugin.IsExternalPlugin() {
+		return plugins.ErrUninstallCorePlugin
+	}
+
+	if err := m.unregisterAndStop(ctx, plugin); err != nil {
+		return err
+	}
+
+	return m.pluginStorage.Remove(ctx, plugin.ID)
+}
+
+// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
+func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists {
+		return nil, false
+	}
+
+	if p.IsDecommissioned() {
+		return nil, false
+	}
+
+	return p, true
+}
+
+func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pluginPaths ...string) error {
+	// get all registered plugins
+	registeredPlugins := make(map[string]struct{})
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
+		registeredPlugins[p.ID] = struct{}{}
+	}
+
+	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, registeredPlugins)
+	if err != nil {
+		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
+		return err
+	}
+
+	for _, p := range loadedPlugins {
+		if err = m.registerAndStart(context.Background(), p); err != nil {
+			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+		}
+	}
+
+	return nil
+}
+
+func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin) error {
+	if err := m.pluginRegistry.Add(ctx, p); err != nil {
+		return err
+	}
+	return m.processManager.Start(ctx, p.ID)
+}
+
+func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
+	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
+
+	if err := m.processManager.Stop(ctx, p.ID); err != nil {
+		return err
+	}
+
+	if err := m.pluginRegistry.Remove(ctx, p.ID); err != nil {
+		return err
+	}
+	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
 	return nil
 }
 

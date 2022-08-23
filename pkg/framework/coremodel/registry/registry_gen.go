@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/coremodel/dashboard"
+	"github.com/grafana/grafana/pkg/coremodel/pluginmeta"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/thema"
 )
@@ -23,19 +24,27 @@ import (
 // Prefer All() when performing operations generically across all coremodels. For example,
 // a validation HTTP middleware for any coremodel-schematized object type.
 type Base struct {
-	all       []coremodel.Interface
-	dashboard *dashboard.Coremodel
+	all        []coremodel.Interface
+	dashboard  *dashboard.Coremodel
+	pluginmeta *pluginmeta.Coremodel
 }
 
 // type guards
 var (
 	_ coremodel.Interface = &dashboard.Coremodel{}
+	_ coremodel.Interface = &pluginmeta.Coremodel{}
 )
 
 // Dashboard returns the dashboard coremodel. The return value is guaranteed to
 // implement coremodel.Interface.
 func (s *Base) Dashboard() *dashboard.Coremodel {
 	return s.dashboard
+}
+
+// Pluginmeta returns the pluginmeta coremodel. The return value is guaranteed to
+// implement coremodel.Interface.
+func (s *Base) Pluginmeta() *pluginmeta.Coremodel {
+	return s.pluginmeta
 }
 
 func doProvideBase(lib thema.Library) *Base {
@@ -47,6 +56,12 @@ func doProvideBase(lib thema.Library) *Base {
 		panic(fmt.Sprintf("error while initializing dashboard coremodel: %s", err))
 	}
 	reg.all = append(reg.all, reg.dashboard)
+
+	reg.pluginmeta, err = pluginmeta.New(lib)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing pluginmeta coremodel: %s", err))
+	}
+	reg.all = append(reg.all, reg.pluginmeta)
 
 	return reg
 }
