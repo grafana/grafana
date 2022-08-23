@@ -31,7 +31,6 @@ func WithCancelCause(parent context.Context) (context.Context, CancelCauseFunc) 
 	errOnce := sync.Once{}
 	result := &contextWithCancellableReason{
 		Context: ctx,
-		mtx:     sync.Mutex{},
 	}
 	cancelFn := func(reason error) {
 		errOnce.Do(func() {
