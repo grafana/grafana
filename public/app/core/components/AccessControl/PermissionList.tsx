@@ -24,6 +24,7 @@ export const PermissionList = ({ title, items, permissionLevels, canSet, onRemov
           <tr>
             <th style={{ width: '1%' }} />
             <th>{title}</th>
+            <th style={{ width: '1%' }} />
             <th>Permission</th>
             <th style={{ width: '1%' }} />
             <th style={{ width: '1%' }} />
