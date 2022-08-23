@@ -6,7 +6,7 @@ import { Button, useStyles } from '@grafana/ui';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {}
 
-export const ListNewButton: React.FC<Props> = ({ children, ...restProps }) => {
+export const ListNewButton = ({ children, ...restProps }: Props) => {
   const styles = useStyles(getStyles);
   return (
     <div className={styles.buttonWrapper}>

@@ -12,7 +12,7 @@ interface Props {
   dashboard: DashboardModel;
 }
 
-export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
+export const AnnotationsSettings = ({ dashboard }: Props) => {
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const onGoBack = () => {

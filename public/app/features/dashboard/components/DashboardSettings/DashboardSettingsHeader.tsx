@@ -8,7 +8,7 @@ type Props = {
   isEditing: boolean;
 };
 
-export const DashboardSettingsHeader: React.FC<Props> = ({ onGoBack, isEditing, title }) => {
+export const DashboardSettingsHeader = ({ onGoBack, isEditing, title }: Props) => {
   return (
     <div className="dashboard-settings__header">
       <HorizontalGroup align="center" justify="space-between">

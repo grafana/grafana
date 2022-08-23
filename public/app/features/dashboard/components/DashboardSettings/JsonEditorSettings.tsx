@@ -13,7 +13,7 @@ interface Props {
   dashboard: DashboardModel;
 }
 
-export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
+export const JsonEditorSettings = ({ dashboard }: Props) => {
   const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboard.getSaveModelClone(), null, 2));
   const onBlur = (value: string) => {
     setDashboardJson(value);

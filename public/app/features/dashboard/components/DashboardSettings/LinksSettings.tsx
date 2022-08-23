@@ -11,7 +11,7 @@ interface Props {
 
 export type LinkSettingsMode = 'list' | 'new' | 'edit';
 
-export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
+export const LinksSettings = ({ dashboard }: Props) => {
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const onGoBack = () => {
