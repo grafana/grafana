@@ -331,7 +331,7 @@ time series results into a single wide table with a shared time field.
 
 #### Inner join
 
-An inner join will merge data from multiple tables where all tables share the same value from the selected field. This will exclude
+An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes
 data where values do not match in every result.
 
 Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur - performing an inner join.
