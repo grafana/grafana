@@ -76,7 +76,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			evalChan <- &evaluation{
 				scheduledAt: expectedTime,
-				rule:        rule,
+				evaluationData: evaluationData{
+					rule: rule,
+				},
 			}
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
@@ -234,7 +236,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		// init evaluation loop so it got the rule version
 		evalChan <- &evaluation{
 			scheduledAt: sch.clock.Now(),
-			rule:        rule,
+			evaluationData: evaluationData{
+				rule: rule,
+			},
 		}
 
 		waitForTimeChannel(t, evalAppliedChan)
@@ -313,7 +317,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		evalChan <- &evaluation{
 			scheduledAt: sch.clock.Now(),
-			rule:        rule,
+			evaluationData: evaluationData{
+				rule: rule,
+			},
 		}
 
 		waitForTimeChannel(t, evalAppliedChan)
@@ -383,7 +389,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			evalChan <- &evaluation{
 				scheduledAt: sch.clock.Now(),
-				rule:        rule,
+				evaluationData: evaluationData{
+					rule: rule,
+				},
 			}
 
 			waitForTimeChannel(t, evalAppliedChan)
@@ -416,7 +424,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		evalChan <- &evaluation{
 			scheduledAt: sch.clock.Now(),
-			rule:        rule,
+			evaluationData: evaluationData{
+				rule: rule,
+			},
 		}
 
 		waitForTimeChannel(t, evalAppliedChan)

@@ -96,7 +96,7 @@ func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 //   - true when message was sent
 //   - false when the send operation is stopped
 // the second element contains a dropped message that was sent by a concurrent sender.
-func (a *alertRuleInfo) eval(t time.Time, rule *models.AlertRule) (bool, *evaluation) {
+func (a *alertRuleInfo) eval(t time.Time, data evaluationData) (bool, *evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *evaluation
 	select {
@@ -106,8 +106,8 @@ func (a *alertRuleInfo) eval(t time.Time, rule *models.AlertRule) (bool, *evalua
 
 	select {
 	case a.evalCh <- &evaluation{
-		scheduledAt: t,
-		rule:        rule,
+		scheduledAt:    t,
+		evaluationData: data,
 	}:
 		return true, droppedMsg
 	case <-a.ctx.Done():
@@ -140,7 +140,11 @@ func (a *alertRuleInfo) update(lastVersion ruleVersion) bool {
 
 type evaluation struct {
 	scheduledAt time.Time
-	rule        *models.AlertRule
+	evaluationData
+}
+
+type evaluationData struct {
+	rule *models.AlertRule
 }
 
 type alertRulesRegistry struct {

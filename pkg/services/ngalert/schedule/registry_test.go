@@ -91,14 +91,16 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			expected := time.Now()
 			resultCh := make(chan evalResponse)
-			rule := models.AlertRuleGen()()
+			data := evaluationData{
+				rule: models.AlertRuleGen()(),
+			}
 			go func() {
-				result, dropped := r.eval(expected, rule)
+				result, dropped := r.eval(expected, data)
 				resultCh <- evalResponse{result, dropped}
 			}()
 			select {
 			case ctx := <-r.evalCh:
-				require.Equal(t, rule, ctx.rule)
+				require.Equal(t, data, ctx.evaluationData)
 				require.Equal(t, expected, ctx.scheduledAt)
 				result := <-resultCh
 				require.True(t, result.success)
@@ -113,12 +115,14 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			time2 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			resultCh1 := make(chan evalResponse)
 			resultCh2 := make(chan evalResponse)
-			rule := models.AlertRuleGen()()
+			data := evaluationData{
+				rule: models.AlertRuleGen()(),
+			}
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				result, dropped := r.eval(time1, rule)
+				result, dropped := r.eval(time1, data)
 				wg.Done()
 				resultCh1 <- evalResponse{result, dropped}
 			}()
@@ -126,7 +130,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				result, dropped := r.eval(time2, rule)
+				result, dropped := r.eval(time2, data)
 				resultCh2 <- evalResponse{result, dropped}
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
@@ -147,9 +151,11 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			resultCh := make(chan evalResponse)
-			rule := models.AlertRuleGen()()
+			data := evaluationData{
+				rule: models.AlertRuleGen()(),
+			}
 			go func() {
-				result, dropped := r.eval(time.Now(), rule)
+				result, dropped := r.eval(time.Now(), data)
 				resultCh <- evalResponse{result, dropped}
 			}()
 			runtime.Gosched()
@@ -173,8 +179,10 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop(nil)
-			rule := models.AlertRuleGen()()
-			success, dropped := r.eval(time.Now(), rule)
+			data := evaluationData{
+				rule: models.AlertRuleGen()(),
+			}
+			success, dropped := r.eval(time.Now(), data)
 			require.False(t, success)
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
@@ -218,7 +226,9 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					case 1:
 						r.update(ruleVersion(rand.Int63()))
 					case 2:
-						r.eval(time.Now(), models.AlertRuleGen()())
+						r.eval(time.Now(), evaluationData{
+							rule: models.AlertRuleGen()(),
+						})
 					case 3:
 						r.stop(nil)
 					}

@@ -209,7 +209,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 			type readyToRunItem struct {
 				ruleInfo *alertRuleInfo
-				rule     *ngmodels.AlertRule
+				evaluationData
 			}
 
 			readyToRun := make([]readyToRunItem, 0)
@@ -240,7 +240,10 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, rule: item})
+					data := evaluationData{
+						rule: item,
+					}
+					readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluationData: data})
 				}
 
 				// remove the alert rule from the registered alert rules
@@ -257,7 +260,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
 					key := item.rule.GetKey()
-					success, dropped := item.ruleInfo.eval(tick, item.rule)
+					success, dropped := item.ruleInfo.eval(tick, item.evaluationData)
 					if !success {
 						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", key.UID, "org", key.OrgID, "time", tick)
 						return
