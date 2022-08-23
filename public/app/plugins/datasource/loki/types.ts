@@ -142,3 +142,14 @@ export interface TransformerOptions {
   scopedVars: ScopedVars;
   meta?: QueryResultMeta;
 }
+
+export enum LokiVariableQueryType {
+  labelNames,
+  labelValues,
+}
+
+export interface LokiVariableQuery extends DataQuery {
+  type: LokiVariableQueryType;
+  label: string;
+  stream: string;
+}

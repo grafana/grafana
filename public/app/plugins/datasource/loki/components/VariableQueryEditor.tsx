@@ -1,21 +1,17 @@
 import React, { FC, FormEvent, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-enum QueryType {
-  labelNames,
-  labelValues,
-}
+import { LokiDatasource } from '../datasource';
+import { LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType as QueryType } from '../types';
 
 const variableOptions = [
   { label: 'Label names', value: QueryType.labelNames },
   { label: 'Label values', value: QueryType.labelValues },
 ];
 
-interface Props {
-  onChange: (query?: string) => void;
-}
+type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, LokiVariableQuery>;
 
 export const LokiVariableQueryEditor: FC<Props> = ({ onChange }) => {
   const [type, setType] = useState<number | undefined>(undefined);
@@ -24,6 +20,14 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange }) => {
 
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {
     setType(newType.value);
+    if (newType.value !== undefined) {
+      onChange({
+        type: newType.value,
+        label,
+        stream,
+        refId: 'LokiVariableQueryEditor-VariableQuery',
+      });
+    }
   };
 
   const onLabelChange = (e: FormEvent<HTMLInputElement>) => {
@@ -34,12 +38,16 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange }) => {
     setStream(e.currentTarget.value);
   };
 
-  const handleBlur = () => {};
+  const handleBlur = () => {
+    if (type !== undefined) {
+      onChange({ type, label, stream, refId: 'LokiVariableQueryEditor-VariableQuery' });
+    }
+  };
 
   return (
     <InlineFieldRow>
       <InlineField label="Query type" labelWidth={20}>
-        <Select onChange={onQueryTypeChange} value={type} options={variableOptions} width={16} />
+        <Select onChange={onQueryTypeChange} onBlur={handleBlur} value={type} options={variableOptions} width={16} />
       </InlineField>
       {type === QueryType.labelValues && (
         <>
