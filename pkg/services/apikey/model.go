@@ -16,17 +16,17 @@ var (
 )
 
 type APIKey struct {
-	Id               int64
-	OrgId            int64
-	Name             string
-	Key              string
-	Role             org.RoleType
-	Created          time.Time
-	Updated          time.Time
-	LastUsedAt       *time.Time `xorm:"last_used_at"`
-	Expires          *int64
-	ServiceAccountId *int64
-	IsRevoked        *bool `xorm:"is_revoked"`
+	Id               int64        `db:"id"`
+	OrgId            int64        `db:"org_id"`
+	Name             string       `db:"name"`
+	Key              string       `db:"key"`
+	Role             org.RoleType `db:"role"`
+	Created          time.Time    `db:"created"`
+	Updated          time.Time    `db:"updated"`
+	LastUsedAt       *time.Time   `xorm:"last_used_at" db:"last_used_at"`
+	Expires          *int64       `db:"expires"`
+	ServiceAccountId *int64       `db:"service_account_id"`
+	IsRevoked        *bool        `xorm:"is_revoked" db:"is_revoked"`
 }
 
 func (k APIKey) TableName() string { return "api_key" }
