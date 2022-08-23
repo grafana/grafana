@@ -25,7 +25,6 @@ import (
 var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
 var defaultPubdashTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
 var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})
-var mergedDashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-12", "to": "now"}})
 
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.service")
