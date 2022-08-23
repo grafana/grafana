@@ -159,39 +159,6 @@ func (ss *SQLStore) CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand)
 	return nil
 }
 
-func (ss *SQLStore) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
-	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
-		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
-			return err
-		} else if isNameTaken {
-			return models.ErrOrgNameTaken
-		}
-
-		org := models.Org{
-			Name:    cmd.Name,
-			Updated: time.Now(),
-		}
-
-		affectedRows, err := sess.ID(cmd.OrgId).Update(&org)
-
-		if err != nil {
-			return err
-		}
-
-		if affectedRows == 0 {
-			return models.ErrOrgNotFound
-		}
-
-		sess.publishAfterCommit(&events.OrgUpdated{
-			Timestamp: org.Updated,
-			Id:        org.Id,
-			Name:      org.Name,
-		})
-
-		return nil
-	})
-}
-
 func (ss *SQLStore) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		org := models.Org{
