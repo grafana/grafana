@@ -19,9 +19,15 @@ type Store interface {
 
 type Manager interface {
 	// Add adds a plugin to the store.
-	Add(ctx context.Context, pluginID, version string) error
+	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
+}
+
+type CompatOpts struct {
+	GrafanaVersion string
+	OS             string
+	Arch           string
 }
 
 type UpdateInfo struct {

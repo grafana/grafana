@@ -419,16 +419,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return searchQuery;
   }
 
-  async getServiceGraphLabels() {
-    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
-    return ds.getTagKeys!();
-  }
-
-  async getServiceGraphLabelValues(key: string) {
-    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
-    return ds.getTagValues!({ key });
-  }
-
   // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
   getLokiSearchDS = (): string | undefined => {
     const legacyLogsDatasourceUid =

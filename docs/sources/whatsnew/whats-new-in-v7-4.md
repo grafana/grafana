@@ -75,7 +75,7 @@ For more information, refer to [Filter data by value]({{< relref "../panels/tran
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [About field overrides]({{< relref "../panels/override-field-values/about-field-overrides/" >}}).
+For more information, refer to [About field overrides]({{< relref "../panels/configure-overrides" >}}).
 
 ### Exemplar support
 

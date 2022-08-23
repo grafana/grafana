@@ -1,4 +1,4 @@
-package manager
+package logger
 
 import (
 	"fmt"
@@ -7,58 +7,51 @@ import (
 )
 
 type InfraLogWrapper struct {
-	l log.Logger
-
-	debugMode bool
+	log log.Logger
 }
 
-func newInstallerLogger(name string, debugMode bool) (l *InfraLogWrapper) {
+func NewLogger(name string) (l *InfraLogWrapper) {
 	return &InfraLogWrapper{
-		debugMode: debugMode,
-		l:         log.New(name),
+		log: log.New(name),
 	}
 }
 
 func (l *InfraLogWrapper) Successf(format string, args ...interface{}) {
-	l.l.Info(fmt.Sprintf(format, args...))
+	l.log.Info(fmt.Sprintf(format, args...))
 }
 
 func (l *InfraLogWrapper) Failuref(format string, args ...interface{}) {
-	l.l.Error(fmt.Sprintf(format, args...))
+	l.log.Error(fmt.Sprintf(format, args...))
 }
 
 func (l *InfraLogWrapper) Info(args ...interface{}) {
-	l.l.Info(fmt.Sprint(args...))
+	l.log.Info(fmt.Sprint(args...))
 }
 
 func (l *InfraLogWrapper) Infof(format string, args ...interface{}) {
-	l.l.Info(fmt.Sprintf(format, args...))
+	l.log.Info(fmt.Sprintf(format, args...))
 }
 
 func (l *InfraLogWrapper) Debug(args ...interface{}) {
-	if l.debugMode {
-		l.l.Debug(fmt.Sprint(args...))
-	}
+	l.log.Debug(fmt.Sprint(args...))
 }
 
 func (l *InfraLogWrapper) Debugf(format string, args ...interface{}) {
-	if l.debugMode {
-		l.l.Debug(fmt.Sprintf(format, args...))
-	}
+	l.log.Debug(fmt.Sprintf(format, args...))
 }
 
 func (l *InfraLogWrapper) Warn(args ...interface{}) {
-	l.l.Warn(fmt.Sprint(args...))
+	l.log.Warn(fmt.Sprint(args...))
 }
 
 func (l *InfraLogWrapper) Warnf(format string, args ...interface{}) {
-	l.l.Warn(fmt.Sprintf(format, args...))
+	l.log.Warn(fmt.Sprintf(format, args...))
 }
 
 func (l *InfraLogWrapper) Error(args ...interface{}) {
-	l.l.Error(fmt.Sprint(args...))
+	l.log.Error(fmt.Sprint(args...))
 }
 
 func (l *InfraLogWrapper) Errorf(format string, args ...interface{}) {
-	l.l.Error(fmt.Sprintf(format, args...))
+	l.log.Error(fmt.Sprintf(format, args...))
 }
