@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { negate } from 'lodash';
-import React, { ComponentProps, memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { CellProps, SortByFn } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -30,7 +30,7 @@ const loaderWrapper = css`
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAdding] = useState(false);
-  const { create, remove, update, get } = useCorrelations();
+  const { remove, get } = useCorrelations();
 
   useEffect(() => {
     get.execute();
@@ -40,27 +40,14 @@ export default function CorrelationsPage() {
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
-  const handleAdd = useCallback<ComponentProps<typeof AddCorrelationForm>['onSubmit']>(
-    async (correlation) => {
-      if (!create.loading) {
-        await create.execute(correlation);
-        get.execute();
-        setIsAdding(false);
-      }
-    },
-    [create, get]
-  );
+  const handleAdd = useCallback(() => {
+    get.execute();
+    setIsAdding(false);
+  }, [get]);
 
-  const handleUpdate = useCallback<ComponentProps<typeof EditCorrelationForm>['onSubmit']>(
-    async (correlation) => {
-      if (!update.loading) {
-        await update.execute(correlation);
-        get.execute();
-        setIsAdding(false);
-      }
-    },
-    [update, get]
-  );
+  const handleUpdate = useCallback(() => {
+    get.execute();
+  }, [get]);
 
   const handleRemove = useCallback<(params: RemoveCorrelationParams) => void>(
     async (correlation) => {
@@ -162,14 +149,14 @@ export default function CorrelationsPage() {
           )
         }
 
-        {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onSubmit={handleAdd} />}
+        {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdd} />}
 
         {data && data.length >= 1 && (
           <Table
             renderExpandedRow={({ target, source, ...correlation }) => (
               <EditCorrelationForm
                 defaultValues={{ sourceUID: source.uid, ...correlation }}
-                onSubmit={handleUpdate}
+                onUpdated={handleUpdate}
                 readOnly={isSourceReadOnly({ source }) || !canWriteCorrelations}
               />
             )}

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Controller } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -8,7 +8,7 @@ import { Button, Field, HorizontalGroup, PanelContainer, useStyles2 } from '@gra
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { Correlation } from '../types';
+import { useCorrelations } from '../useCorrelations';
 
 import { CorrelationDetailsFormPart } from './CorrelationDetailsFormPart';
 import { FormDTO } from './types';
@@ -39,14 +39,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 interface Props {
   onClose: () => void;
-  onSubmit: (correlation: Omit<Correlation, 'uid'>) => void;
+  onCreated: () => void;
 }
 
 const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
 
-export const AddCorrelationForm = ({ onClose, onSubmit: externalSubmit }: Props) => {
+export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
   const styles = useStyles2(getStyles);
-  const { control, handleSubmit, register, errors } = useCorrelationForm<FormDTO>({ onSubmit: externalSubmit });
+
+  const { create } = useCorrelations();
+
+  const onSubmit = useCallback(
+    async (correlation) => {
+      await create.execute(correlation);
+      onCreated();
+    },
+    [create, onCreated]
+  );
+
+  const { control, handleSubmit, register, errors } = useCorrelationForm<FormDTO>({ onSubmit });
 
   return (
     <PanelContainer className={styles.panelContainer}>
@@ -97,7 +108,12 @@ export const AddCorrelationForm = ({ onClose, onSubmit: externalSubmit }: Props)
         <CorrelationDetailsFormPart register={register} />
 
         <HorizontalGroup justify="flex-end">
-          <Button variant="primary" icon="plus" type="submit">
+          <Button
+            variant="primary"
+            icon={create.loading ? 'fa fa-spinner' : 'plus'}
+            type="submit"
+            disabled={create.loading}
+          >
             Add
           </Button>
         </HorizontalGroup>
