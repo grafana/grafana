@@ -10,6 +10,10 @@ import (
 type stubSearchService struct {
 }
 
+func (s *stubSearchService) IsReady(ctx context.Context, orgId int64) *backend.DataResponse {
+	return &backend.DataResponse{}
+}
+
 func (s *stubSearchService) IsDisabled() bool {
 	return true
 }

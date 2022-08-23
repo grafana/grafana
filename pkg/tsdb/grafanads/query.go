@@ -7,6 +7,9 @@ const (
 	// QueryTypeList will list the files in a folder
 	queryTypeSearch = "search"
 
+	// QueryTypeSearchReadiness will indicate whether search is ready to serve requests
+	queryTypeSearchReadiness = "searchReadiness"
+
 	// QueryTypeList will list the files in a folder
 	queryTypeList = "list"
 

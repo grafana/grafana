@@ -15,6 +15,7 @@ export enum GrafanaQueryType {
   List = 'list',
   Read = 'read',
   Search = 'search',
+  SearchReadiness = 'searchReadiness',
 }
 
 export interface GrafanaQuery extends DataQuery {
@@ -24,6 +25,9 @@ export interface GrafanaQuery extends DataQuery {
   buffer?: number;
   path?: string; // for list and read
   search?: SearchQuery;
+  searchReadiness?: {
+    stream: boolean;
+  };
 }
 
 export const defaultQuery: GrafanaQuery = {

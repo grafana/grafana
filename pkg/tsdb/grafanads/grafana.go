@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -36,6 +38,7 @@ const DatasourceUID = "grafana"
 var (
 	_ backend.QueryDataHandler   = (*Service)(nil)
 	_ backend.CheckHealthHandler = (*Service)(nil)
+	_ backend.StreamHandler      = (*Service)(nil)
 )
 
 func ProvideService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
@@ -46,6 +49,7 @@ func newService(cfg *setting.Cfg, search searchV2.SearchService, store store.Sto
 	s := &Service{
 		search: search,
 		store:  store,
+		log:    log.New("grafanads"),
 	}
 
 	return s
@@ -55,6 +59,7 @@ func newService(cfg *setting.Cfg, search searchV2.SearchService, store store.Sto
 type Service struct {
 	search searchV2.SearchService
 	store  store.StorageService
+	log    log.Logger
 }
 
 func DataSourceModel(orgId int64) *datasources.DataSource {
@@ -82,6 +87,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			response.Responses[q.RefID] = s.doReadQuery(ctx, q)
 		case queryTypeSearch:
 			response.Responses[q.RefID] = s.doSearchQuery(ctx, req, q)
+		case queryTypeSearchReadiness:
+			response.Responses[q.RefID] = s.checkSearchReadiness(ctx, req)
 		default:
 			response.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("unknown query type"),
@@ -165,6 +172,82 @@ func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataReque
 		}
 	}
 	return *s.search.DoDashboardQuery(ctx, req.PluginContext.User, req.PluginContext.OrgID, m.Search)
+}
+
+func (s *Service) checkSearchReadiness(ctx context.Context, req *backend.QueryDataRequest) backend.DataResponse {
+	return *s.search.IsReady(ctx, req.PluginContext.OrgID)
+}
+
+const searchReadinessChannelName = "search-readiness"
+
+func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if req.Path != searchReadinessChannelName {
+		return &backend.SubscribeStreamResponse{Status: backend.SubscribeStreamStatusNotFound}, nil
+	}
+
+	initialData := s.search.IsReady(ctx, req.PluginContext.OrgID)
+	frame := initialData.Frames[0]
+
+	initialFrame, _ := backend.NewInitialFrame(frame, data.IncludeAll)
+	return &backend.SubscribeStreamResponse{
+		Status:      backend.SubscribeStreamStatusOK,
+		InitialData: initialFrame,
+	}, nil
+}
+
+func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	return &backend.PublishStreamResponse{
+		Status: backend.PublishStreamStatusPermissionDenied,
+	}, nil
+}
+
+func isSearchReady(resp *backend.DataResponse) (bool, error) {
+	if resp.Error != nil {
+		return false, resp.Error
+	}
+
+	if len(resp.Frames) < 1 {
+		return false, nil
+	}
+
+	frame := resp.Frames[0]
+
+	if frame.Rows() < 1 {
+		return false, nil
+	}
+
+	for _, f := range frame.Fields {
+		if f.Name == "is_ready" {
+			val, ok := f.At(0).(bool)
+			return ok && val, nil
+		}
+	}
+
+	return false, nil
+}
+
+func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if req.Path != searchReadinessChannelName {
+		return errors.New("unknown streaming path: " + req.Path)
+	}
+
+	// check readiness status every second until the search is ready
+	ticker := time.NewTicker(time.Second * 1)
+
+	ready := false
+	for !ready {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			resp := s.search.IsReady(ctx, req.PluginContext.OrgID)
+			ready, _ = isSearchReady(resp)
+			if err := sender.SendFrame(resp.Frames[0], data.IncludeDataOnly); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 type requestModel struct {
