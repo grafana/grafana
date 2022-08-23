@@ -44,14 +44,12 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 		return err
 	}
 	// Get full list of secrets from the plugin
-	res, err := plugin.ListSecrets(ctx, &secretsmanagerplugin.ListSecretsRequest{
-		AllKeys: true,
-	})
+	res, err := plugin.GetAllSecrets(ctx, &secretsmanagerplugin.GetAllSecretsRequest{})
 	if err != nil {
 		s.logger.Error("Failed to retrieve all secrets from plugin")
 		return err
 	}
-	s.logger.Debug("retrieved all secrets from plugin", "num secrets", len(res.Keys))
+	s.logger.Debug("retrieved all secrets from plugin", "num secrets", len(res.Items))
 	// create a secret sql store manually
 	secretsSql := &secretsKVStoreSQL{
 		sqlStore:       s.sqlStore,
@@ -61,40 +59,27 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 			cache: make(map[int64]cachedDecrypted),
 		},
 	}
-	for _, k := range res.Keys {
-		// Get each secret description from plugin and handle errors
-		resp, err := plugin.GetSecret(ctx, &secretsmanagerplugin.GetSecretRequest{
-			KeyDescriptor: &secretsmanagerplugin.Key{
-				OrgId:     k.OrgId,
-				Namespace: k.Namespace,
-				Type:      k.Type,
-			}})
-		if err != nil {
-			s.logger.Error("Error retrieving secret from plugin", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
-			return err
-		}
-		if !resp.Exists {
-			s.logger.Warn("Secret not found on plugin", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
-			continue
-		}
+	for _, item := range res.Items {
 		// Add to sql store
-		err = secretsSql.Set(ctx, k.OrgId, k.Namespace, k.Type, resp.DecryptedValue)
+		err = secretsSql.Set(ctx, item.Key.OrgId, item.Key.Namespace, item.Key.Type, item.Value)
 		if err != nil {
-			s.logger.Error("Error adding secret to unified secrets", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
+			s.logger.Error("Error adding secret to unified secrets", "orgId", item.Key.OrgId,
+				"namespace", item.Key.Namespace, "type", item.Key.Type)
 			return err
 		}
 	}
 
-	for _, k := range res.Keys {
+	for _, item := range res.Items {
 		// Delete from the plugin
 		_, err := plugin.DeleteSecret(ctx, &secretsmanagerplugin.DeleteSecretRequest{
 			KeyDescriptor: &secretsmanagerplugin.Key{
-				OrgId:     k.OrgId,
-				Namespace: k.Namespace,
-				Type:      k.Type,
+				OrgId:     item.Key.OrgId,
+				Namespace: item.Key.Namespace,
+				Type:      item.Key.Type,
 			}})
 		if err != nil {
-			s.logger.Error("Error deleting secret from plugin after migration", "orgId", k.OrgId, "namespace", k.Namespace, "type", k.Type)
+			s.logger.Error("Error deleting secret from plugin after migration", "orgId", item.Key.OrgId,
+				"namespace", item.Key.Namespace, "type", item.Key.Type)
 			continue
 		}
 	}

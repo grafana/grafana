@@ -99,20 +99,13 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 // Keys get all keys for a given namespace. To query for all
 // organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
 func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
-	var req *smp.ListSecretsRequest
-	if orgId == AllOrganizations && namespace == AllKeys && typ == AllKeys {
-		req = &smp.ListSecretsRequest{
-			AllKeys: true,
-		}
-	} else {
-		req = &smp.ListSecretsRequest{
-			KeyDescriptor: &smp.Key{
-				OrgId:     orgId,
-				Namespace: namespace,
-				Type:      typ,
-			},
-			AllOrganizations: orgId == AllOrganizations,
-		}
+	req := &smp.ListSecretsRequest{
+		KeyDescriptor: &smp.Key{
+			OrgId:     orgId,
+			Namespace: namespace,
+			Type:      typ,
+		},
+		AllOrganizations: orgId == AllOrganizations,
 	}
 
 	res, err := kv.secretsPlugin.ListSecrets(ctx, req)

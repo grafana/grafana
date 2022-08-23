@@ -17,7 +17,6 @@ import (
 const (
 	// Wildcard to query all organizations
 	AllOrganizations = -1
-	AllKeys          = "ALL_KEYS"
 )
 
 func ProvideService(

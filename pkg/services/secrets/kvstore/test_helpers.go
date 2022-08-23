@@ -167,7 +167,7 @@ func (c *fakeGRPCSecretsPlugin) DeleteSecret(ctx context.Context, in *secretsman
 func (c *fakeGRPCSecretsPlugin) ListSecrets(ctx context.Context, in *secretsmanagerplugin.ListSecretsRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.ListSecretsResponse, error) {
 	res := make([]*secretsmanagerplugin.Key, 0)
 	for k := range c.kv {
-		if in.AllKeys || (in.KeyDescriptor.OrgId == AllOrganizations && in.KeyDescriptor.Namespace == "" && in.KeyDescriptor.Type == "") {
+		if in.KeyDescriptor.OrgId == AllOrganizations && in.KeyDescriptor.Namespace == "" && in.KeyDescriptor.Type == "" {
 			res = append(res, internalToProtoKey(k))
 		} else if k.OrgId == in.KeyDescriptor.OrgId && k.Namespace == in.KeyDescriptor.Namespace && k.Type == in.KeyDescriptor.Type {
 			res = append(res, internalToProtoKey(k))
@@ -187,12 +187,15 @@ func (c *fakeGRPCSecretsPlugin) RenameSecret(ctx context.Context, in *secretsman
 }
 
 func (c *fakeGRPCSecretsPlugin) GetAllSecrets(ctx context.Context, in *secretsmanagerplugin.GetAllSecretsRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.GetAllSecretsResponse, error) {
+	items := make([]*secretsmanagerplugin.Item, 0)
+	for k, v := range c.kv {
+		items = append(items, &secretsmanagerplugin.Item{
+			Key:   internalToProtoKey(k),
+			Value: v,
+		})
+	}
 	return &secretsmanagerplugin.GetAllSecretsResponse{
-		Items: []*secretsmanagerplugin.Item{
-			{
-				Value: "bogus",
-			},
-		},
+		Items: items,
 	}, nil
 }
 
@@ -238,5 +241,9 @@ func (pc *fakePluginClient) Start(_ context.Context) error {
 	if pc.shouldFailOnStart {
 		return errors.New("failed to start")
 	}
+	return nil
+}
+
+func (pc *fakePluginClient) Stop(_ context.Context) error {
 	return nil
 }

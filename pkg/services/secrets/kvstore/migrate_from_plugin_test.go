@@ -46,7 +46,7 @@ func setupTestMigrateFromPluginService(t *testing.T) (*MigrateFromPluginService,
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	manager := NewFakeSecretsPluginManager(t, false)
 	migratorService := ProvideMigrateFromPluginService(
-		&setting.Cfg{},
+		setting.NewCfg(),
 		sqlStore,
 		secretsService,
 		manager,
@@ -80,11 +80,9 @@ func addSecretToPluginStore(t *testing.T, plugin secretsmanagerplugin.SecretsMan
 // validates that secrets on the plugin were deleted
 func validatePluginSecretsWereDeleted(t *testing.T, plugin secretsmanagerplugin.SecretsManagerPlugin, ctx context.Context) {
 	t.Helper()
-	res, err := plugin.ListSecrets(ctx, &secretsmanagerplugin.ListSecretsRequest{
-		AllKeys: true,
-	})
+	res, err := plugin.GetAllSecrets(ctx, &secretsmanagerplugin.GetAllSecretsRequest{})
 	require.NoError(t, err)
-	require.Equal(t, 0, len(res.Keys))
+	require.Equal(t, 0, len(res.Items))
 }
 
 // validates that secrets are in sql
