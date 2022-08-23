@@ -4,9 +4,9 @@ import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { PanelProps, renderTextPanelMarkdown, textUtil } from '@grafana/data';
+import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil } from '@grafana/data';
 // Utils
-import { CustomScrollbar, CodeEditor } from '@grafana/ui';
+import { CustomScrollbar, CodeEditor, stylesFactory, ThemeContext } from '@grafana/ui';
 import config from 'app/core/config';
 
 // Types
@@ -19,6 +19,8 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
+  static contextType = ThemeContext;
+
   readonly markdownClassName = cx(
     'markdown-html',
     css`
@@ -97,6 +99,7 @@ export class TextPanel extends PureComponent<Props, State> {
   render() {
     const { html } = this.state;
     const { options } = this.props;
+    const styles = getStyles(this.context);
 
     if (options.mode === TextMode.Code) {
       const { width, height } = this.props;
@@ -108,6 +111,7 @@ export class TextPanel extends PureComponent<Props, State> {
           language={code.language ?? defaultCodeOptions.language!}
           width={width}
           height={height}
+          containerStyles={styles.codeEditorContainer}
           showMiniMap={code.showMiniMap}
           showLineNumbers={code.showLineNumbers}
           readOnly={true} // future
@@ -126,3 +130,12 @@ export class TextPanel extends PureComponent<Props, State> {
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  codeEditorContainer: css`
+    .monaco-editor .margin,
+    .monaco-editor-background {
+      background-color: ${theme.colors.background.primary};
+    }
+  `,
+}));
