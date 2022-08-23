@@ -482,6 +482,7 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 		Created:     first.Created,
 		Updated:     first.Updated,
 		IsManaged:   first.IsManaged(scope),
+		IsInherited: first.IsInherited(scope),
 	}
 }
 
