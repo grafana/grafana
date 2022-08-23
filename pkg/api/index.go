@@ -269,7 +269,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	if hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Correlations",
-			Icon:        "database",
+			Icon:        "gf-glue",
 			Description: "Add and configure correlations",
 			Id:          "correlations",
 			Url:         hs.Cfg.AppSubURL + "/datasources/correlations",
