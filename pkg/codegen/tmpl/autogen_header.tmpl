@@ -21,10 +21,7 @@
 {{- end }}
 {{- if ne .LineagePath "" }}
 //
-// Derived from the Thema lineage declared in {{ .LineagePath }}
-{{- if ne .LineageCUEPath "" }}
-// at CUE path "{{ .LineageCUEPath }}"
-{{- end }}
+// Derived from the Thema lineage declared in {{ .LineagePath }}{{ if ne .LineageCUEPath "" }} at CUE path "{{ .LineageCUEPath }}"{{ end }}
 {{- end }}
 //
 // Run `make gen-cue` from repository root to regenerate.

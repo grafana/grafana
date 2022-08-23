@@ -5,9 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"go/format"
-	"go/parser"
-	"go/token"
 	"io"
 	"os"
 	"path/filepath"
@@ -23,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/openapi"
-	"golang.org/x/tools/imports"
 )
 
 // ExtractedLineage contains the results of statically analyzing a Grafana
@@ -208,27 +204,18 @@ func (ls *ExtractedLineage) GenerateGoCoremodel(path string) (WriteDiffer, error
 		panic(err)
 	}
 
-	fset := token.NewFileSet()
-	fname := fmt.Sprintf("%s_gen.go", lin.Name())
-	gf, err := parser.ParseFile(fset, fname, buf.String(), parser.ParseComments)
+	fullp := filepath.Join(path, fmt.Sprintf("%s_gen.go", lin.Name()))
+	byt, err := postprocessGoFile(genGoFile{
+		path:   fullp,
+		walker: makePrefixDropper(strings.Title(lin.Name()), "Model"),
+		in:     buf.Bytes(),
+	})
 	if err != nil {
-		return nil, fmt.Errorf("generated go file parsing failed: %w", err)
-	}
-	ast.Walk(prefixDropper(strings.Title(lin.Name())), gf)
-
-	buf.Reset()
-	err = format.Node(buf, fset, gf)
-	if err != nil {
-		return nil, fmt.Errorf("ast printing failed: %w", err)
-	}
-
-	byt, err := imports.Process(fname, buf.Bytes(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("goimports processing failed: %w", err)
+		return nil, err
 	}
 
 	wd := NewWriteDiffer()
-	wd[filepath.Join(path, fname)] = byt
+	wd[fullp] = byt
 
 	return wd, nil
 }
@@ -296,16 +283,34 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 	return wd, nil
 }
 
-type prefixDropper string
+type prefixDropper struct {
+	str     string
+	base    string
+	rxp     *regexp.Regexp
+	rxpsuff *regexp.Regexp
+}
+
+func makePrefixDropper(str, base string) prefixDropper {
+	return prefixDropper{
+		str:     str,
+		base:    base,
+		rxpsuff: regexp.MustCompile(fmt.Sprintf(`%s([a-zA-Z_]*)`, str)),
+		rxp:     regexp.MustCompile(fmt.Sprintf(`%s([\s.,;-])`, str)),
+	}
+}
 
 func (d prefixDropper) Visit(n ast.Node) ast.Visitor {
-	asstr := string(d)
 	switch x := n.(type) {
 	case *ast.Ident:
-		if x.Name != asstr {
-			x.Name = strings.TrimPrefix(x.Name, asstr)
+		if x.Name != d.str {
+			x.Name = strings.TrimPrefix(x.Name, d.str)
 		} else {
-			x.Name = "Model"
+			x.Name = d.base
+		}
+	case *ast.CommentGroup:
+		for _, c := range x.List {
+			c.Text = d.rxp.ReplaceAllString(c.Text, d.base+"$1")
+			c.Text = d.rxpsuff.ReplaceAllString(c.Text, "$1")
 		}
 	}
 	return d
@@ -339,18 +344,20 @@ func GenerateCoremodelRegistry(path string, ecl []*ExtractedLineage) (WriteDiffe
 		return nil, fmt.Errorf("failed executing template: %w", err)
 	}
 
-	byt, err := imports.Process(path, buf.Bytes(), nil)
+	byt, err := postprocessGoFile(genGoFile{
+		path: path,
+		in:   buf.Bytes(),
+	})
 	if err != nil {
-		return nil, fmt.Errorf("goimports processing failed: %w", err)
+		return nil, err
 	}
-
 	wd := NewWriteDiffer()
 	wd[path] = byt
 	return wd, nil
 }
 
 var tmplTypedef = `{{range .Types}}
-{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
+{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} is the Go representation of a {{.JsonName}}.{{ end }}
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.

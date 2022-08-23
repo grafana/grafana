@@ -1,5 +1,5 @@
-//go:build ignore
-// +build ignore
+// //go:build ignore
+// // +build ignore
 
 package main
 
@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -29,6 +30,8 @@ var skipPlugins = map[string]bool{
 	"opentsdb":       true, // plugin.json fails validation (defaultMatchFormat)
 }
 
+const sep = string(filepath.Separator)
+
 // Generate TypeScript for all plugin models.cue
 func main() {
 	if len(os.Args) > 1 {
@@ -41,6 +44,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
 		os.Exit(1)
 	}
+	grootp := strings.Split(cwd, sep)
+	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
 
 	wd := codegen.NewWriteDiffer()
 	lib := cuectx.ProvideThemaLibrary()
@@ -83,12 +88,24 @@ func main() {
 	})
 
 	for _, ptp := range ptrees {
-		twd, err := ptp.tree.GenerateTS(ptp.fullpath)
+		genwd, err := ptp.tree.GenerateTS(ptp.fullpath)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "generating typescript failed for %s: %s\n", ptp.fullpath, err)
 			os.Exit(1)
 		}
-		wd.Merge(twd)
+		wd.Merge(genwd)
+
+		relp, _ := filepath.Rel(groot, ptp.fullpath)
+		genwd, err = ptp.tree.GenerateGo(ptp.fullpath, codegen.GoGenConfig{
+			Types:         string((*pfs.Tree)(ptp.tree).RootPlugin().Meta().Type) == "datasource",
+			ThemaBindings: true,
+			DocPathPrefix: relp,
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "generating Go failed for %s: %s\n", ptp.fullpath, err)
+			os.Exit(1)
+		}
+		wd.Merge(genwd)
 	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {

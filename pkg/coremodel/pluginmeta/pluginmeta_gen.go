@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/thema"
 )
 
-// Defines values for PluginmetaCategory.
+// Defines values for Category.
 const (
 	CategoryCloud Category = "cloud"
 
@@ -47,7 +47,7 @@ const (
 	TypeSecretsmanager Type = "secretsmanager"
 )
 
-// Defines values for PluginmetaDependencyType.
+// Defines values for DependencyType.
 const (
 	DependencyTypeApp DependencyType = "app"
 
@@ -56,7 +56,7 @@ const (
 	DependencyTypePanel DependencyType = "panel"
 )
 
-// Defines values for PluginmetaIncludeRole.
+// Defines values for IncludeRole.
 const (
 	IncludeRoleAdmin IncludeRole = "Admin"
 
@@ -65,7 +65,7 @@ const (
 	IncludeRoleViewer IncludeRole = "Viewer"
 )
 
-// Defines values for PluginmetaIncludeType.
+// Defines values for IncludeType.
 const (
 	IncludeTypeApp IncludeType = "app"
 
@@ -82,7 +82,7 @@ const (
 	IncludeTypeSecretsmanager IncludeType = "secretsmanager"
 )
 
-// Defines values for PluginmetaReleaseState.
+// Defines values for ReleaseState.
 const (
 	ReleaseStateAlpha ReleaseState = "alpha"
 
@@ -93,7 +93,7 @@ const (
 	ReleaseStateStable ReleaseState = "stable"
 )
 
-// Pluginmeta defines model for pluginmeta.
+// Model is the Go representation of a pluginmeta.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
@@ -289,7 +289,7 @@ type Category string
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Type string
 
-// PluginmetaBuildInfo defines model for pluginmeta.BuildInfo.
+// BuildInfo is the Go representation of a pluginmeta.BuildInfo.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
@@ -309,7 +309,7 @@ type BuildInfo struct {
 	Time *int64 `json:"time,omitempty"`
 }
 
-// PluginmetaDependencies defines model for pluginmeta.Dependencies.
+// Dependencies is the Go representation of a pluginmeta.Dependencies.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
@@ -340,7 +340,7 @@ type Dependency struct {
 	Version string         `json:"version"`
 }
 
-// PluginmetaDependencyType defines model for PluginmetaDependency.Type.
+// DependencyType is the Go representation of a Dependency.Type.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
@@ -385,13 +385,13 @@ type Include struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
-// PluginmetaIncludeRole defines model for PluginmetaInclude.Role.
+// IncludeRole is the Go representation of a Include.Role.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type IncludeRole string
 
-// PluginmetaIncludeType defines model for PluginmetaInclude.Type.
+// IncludeType is the Go representation of a Include.Type.
 //
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
