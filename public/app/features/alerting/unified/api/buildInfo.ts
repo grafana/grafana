@@ -194,6 +194,7 @@ export async function fetchPromBuildInfoFallback(url: string): Promise<PromBuild
     })
   ).catch((e) => {
     // We have failed to get the version number
+    console.warn('Failed to get prometheus build information. This may cause problems in future versions of Grafana.');
     return undefined;
   });
 
