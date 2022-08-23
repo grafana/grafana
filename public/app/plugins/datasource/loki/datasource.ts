@@ -61,6 +61,7 @@ import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { LokiOptions, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiVariableSupport } from './variables';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -107,6 +108,7 @@ export class LokiDatasource
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
+    this.variables = new LokiVariableSupport(this);
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
