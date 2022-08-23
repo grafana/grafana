@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -23,7 +24,7 @@ func TestPluginManager_Run(t *testing.T) {
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader, &fakePluginRepo{})
+		}, loader, &fakePluginRepo{}, &fakePluginStorage{}, &fakeProcessManager{})
 
 		err := pm.Run(context.Background())
 		require.NoError(t, err)
@@ -326,19 +327,31 @@ func (r *fakePluginRepo) GetPluginDownloadOptions(_ context.Context, pluginID, v
 	}, nil
 }
 
-type fakeFsManager struct {
+type fakePluginStorage struct {
 	storage.Manager
 
 	added   int
 	removed int
 }
 
-func (fsm *fakeFsManager) Add(_ context.Context, _ string, _ *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
-	fsm.added++
+func (s *fakePluginStorage) Add(_ context.Context, _ string, _ *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	s.added++
 	return &storage.ExtractedPluginArchive{}, nil
 }
 
-func (fsm *fakeFsManager) Remove(_ context.Context, _ string) error {
-	fsm.removed++
+func (s *fakePluginStorage) Remove(_ context.Context, _ string) error {
+	s.removed++
+	return nil
+}
+
+type fakeProcessManager struct {
+	process.Service
+}
+
+func (m *fakeProcessManager) Start(ctx context.Context, pluginID string) error {
+	return nil
+}
+
+func (m *fakeProcessManager) Stop(ctx context.Context, pluginID string) error {
 	return nil
 }

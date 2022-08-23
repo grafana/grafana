@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -30,18 +31,23 @@ type PluginManager struct {
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginManager {
-	return New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader, pluginRepo)
+	return New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader,
+		pluginRepo, storage.FileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath),
+		process.NewManager(pluginRegistry),
+	)
 }
 
 func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plugins.PluginSource,
-	pluginLoader loader.Service, pluginRepo repo.Service) *PluginManager {
+	pluginLoader loader.Service, pluginRepo repo.Service, pluginStorage storage.Manager,
+	processManager process.Service) *PluginManager {
 	return &PluginManager{
 		cfg:            cfg,
 		pluginSources:  pluginSources,
 		pluginRepo:     pluginRepo,
 		pluginLoader:   pluginLoader,
 		pluginRegistry: pluginRegistry,
-		processManager: process.NewManager(pluginRegistry),
+		processManager: processManager,
+		pluginStorage:  pluginStorage,
 		log:            log.New("plugin.manager"),
 	}
 }
