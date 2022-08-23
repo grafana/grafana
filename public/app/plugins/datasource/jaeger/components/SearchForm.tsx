@@ -131,7 +131,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
             }
             isLoading={isLoading.operations}
             value={operationOptions?.find((v) => v.value === query.operation) || null}
-            placeholder="Select operation name"
+            placeholder="Select an operation"
             onChange={(v) =>
               onChange({
                 ...query,
