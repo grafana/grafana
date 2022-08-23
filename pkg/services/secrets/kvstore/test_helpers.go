@@ -214,7 +214,7 @@ func (mg *fakePluginManager) SecretsManager() *plugins.Plugin {
 	}
 	p := &plugins.Plugin{
 		SecretsManager: &fakeGRPCSecretsPlugin{
-			kv: make(map[Key]string, 0),
+			kv: make(map[Key]string),
 		},
 	}
 	p.RegisterClient(&fakePluginClient{
