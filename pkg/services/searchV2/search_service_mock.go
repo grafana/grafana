@@ -45,6 +45,22 @@ func (_m *MockSearchService) IsDisabled() bool {
 	return r0
 }
 
+// IsReady provides a mock function with given fields: ctx, orgId
+func (_m *MockSearchService) IsReady(ctx context.Context, orgId int64) *backend.DataResponse {
+	ret := _m.Called(ctx, orgId)
+
+	var r0 *backend.DataResponse
+	if rf, ok := ret.Get(0).(func(context.Context, int64) *backend.DataResponse); ok {
+		r0 = rf(ctx, orgId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*backend.DataResponse)
+		}
+	}
+
+	return r0
+}
+
 // RegisterDashboardIndexExtender provides a mock function with given fields: ext
 func (_m *MockSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
 	_m.Called(ext)

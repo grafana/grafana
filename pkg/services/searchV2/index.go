@@ -111,7 +111,7 @@ func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender Doc
 
 func (i *searchIndex) isInitialized(_ context.Context, orgId int64) bool {
 	i.initializationMutex.RLock()
-	orgInitialized, _ := i.initializedOrgs[orgId]
+	orgInitialized := i.initializedOrgs[orgId]
 	initialInitComplete := i.initialIndexingComplete
 	i.initializationMutex.RUnlock()
 
