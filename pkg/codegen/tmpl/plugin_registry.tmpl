@@ -1,0 +1,14 @@
+{{ template "autogen_header.tmpl" .Header -}}
+package registry
+
+import (
+  {{ range .Plugins }}
+  {{ .PkgName }} "{{ .Path }}"{{ end }}
+)
+
+func init() {
+  coreTreeLoaders = []func(*thema.Library) *pfs.Tree{
+    {{ range .Plugins }}
+    {{ .PkgName }}.PluginTree,{{ end }}
+  }
+}

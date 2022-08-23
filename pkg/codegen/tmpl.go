@@ -29,6 +29,7 @@ type (
 		GenLicense     bool
 	}
 	tvars_coremodel_registry struct {
+		Header     tvars_autogen_header
 		Coremodels []tplVars
 	}
 	tvars_addenda struct {
@@ -52,5 +53,11 @@ type (
 		Header   tvars_autogen_header
 		Imports  []*tsImport
 		Sections []tsSection
+	}
+	tvars_plugin_registry struct {
+		Plugins []struct {
+			PkgName string
+			Path    string
+		}
 	}
 )
