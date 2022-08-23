@@ -49,7 +49,7 @@ func TestGetPublicDashboard(t *testing.T) {
 			Name:        "returns a dashboard",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
-				pd:  &PublicDashboard{IsEnabled: true},
+				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: true},
 				d:   &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
 				err: nil,
 			},
@@ -57,21 +57,10 @@ func TestGetPublicDashboard(t *testing.T) {
 			DashResp: &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
 		},
 		{
-			Name:        "puts pubdash time settings into dashboard",
-			AccessToken: "abc123",
-			StoreResp: &storeResp{
-				pd:  &PublicDashboard{IsEnabled: true, TimeSettings: timeSettings},
-				d:   &models.Dashboard{Data: dashboardData},
-				err: nil,
-			},
-			ErrResp:  nil,
-			DashResp: &models.Dashboard{Data: mergedDashboardData},
-		},
-		{
 			Name:        "returns ErrPublicDashboardNotFound when isEnabled is false",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
-				pd:  &PublicDashboard{IsEnabled: false},
+				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
 				d:   &models.Dashboard{Uid: "mydashboard"},
 				err: nil,
 			},
@@ -105,17 +94,18 @@ func TestGetPublicDashboard(t *testing.T) {
 			fakeStore.On("GetPublicDashboard", mock.Anything, mock.Anything).
 				Return(test.StoreResp.pd, test.StoreResp.d, test.StoreResp.err)
 
-			dashboard, err := service.GetPublicDashboard(context.Background(), test.AccessToken)
+			pdc, dash, err := service.GetPublicDashboard(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
 				assert.Error(t, test.ErrResp, err)
 			} else {
 				require.NoError(t, err)
 			}
 
-			assert.Equal(t, test.DashResp, dashboard)
+			assert.Equal(t, test.DashResp, dash)
 
 			if test.DashResp != nil {
-				assert.NotNil(t, dashboard.CreatedBy)
+				assert.NotNil(t, dash.CreatedBy)
+				assert.Equal(t, test.StoreResp.pd, pdc)
 			}
 		})
 	}

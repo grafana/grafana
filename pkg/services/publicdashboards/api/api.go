@@ -74,14 +74,13 @@ func (api *Api) RegisterAPIEndpoints() {
 func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 
-	dash, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), accessToken)
+	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboard(
+		c.Req.Context(),
+		web.Params(c.Req)[":accessToken"],
+	)
+
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
-	}
-
-	pubDash, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), dash.OrgId, dash.Uid)
-	if err != nil {
-		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard config", err)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -98,7 +97,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		IsFolder:                   false,
 		FolderId:                   dash.FolderId,
 		PublicDashboardAccessToken: accessToken,
-		PublicDashboardUID:         pubDash.Uid,
+		PublicDashboardUID:         pubdash.Uid,
 	}
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
@@ -149,20 +148,15 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "invalid panel ID", err)
 	}
 
-	dashboard, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":accessToken"])
+	pubdash, dashboard, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":accessToken"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not fetch dashboard", err)
-	}
-
-	publicDashboard, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), dashboard.OrgId, dashboard.Uid)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not fetch public dashboard", err)
 	}
 
 	reqDTO, err := api.PublicDashboardService.BuildPublicDashboardMetricRequest(
 		c.Req.Context(),
 		dashboard,
-		publicDashboard,
+		pubdash,
 		panelId,
 	)
 	if err != nil {

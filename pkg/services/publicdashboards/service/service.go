@@ -56,26 +56,22 @@ func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboar
 }
 
 // Gets public dashboard via access token
-func (pd *PublicDashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error) {
-	pubdash, d, err := pd.store.GetPublicDashboard(ctx, accessToken)
+func (pd *PublicDashboardServiceImpl) GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
+	pubdash, dash, err := pd.store.GetPublicDashboard(ctx, accessToken)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	if pubdash == nil || d == nil {
-		return nil, ErrPublicDashboardNotFound
+	if pubdash == nil || dash == nil {
+		return nil, nil, ErrPublicDashboardNotFound
 	}
 
 	if !pubdash.IsEnabled {
-		return nil, ErrPublicDashboardNotFound
+		return nil, nil, ErrPublicDashboardNotFound
 	}
 
-	ts := pubdash.BuildTimeSettings(d)
-	d.Data.SetPath([]string{"time", "from"}, ts.From)
-	d.Data.SetPath([]string{"time", "to"}, ts.To)
-
-	return d, nil
+	return pubdash, dash, nil
 }
 
 // GetPublicDashboardConfig is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
