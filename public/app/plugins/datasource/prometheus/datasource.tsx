@@ -952,6 +952,12 @@ export class PrometheusDatasource
             <div>{buildInfo.features.rulerApiEnabled ? enabled : disabled}</div>
           )}
         </>
+        {buildInfo.version && (
+          <>
+            <div>Version</div>
+            <div>{buildInfo.version}</div>
+          </>
+        )}
       </div>
     );
   }

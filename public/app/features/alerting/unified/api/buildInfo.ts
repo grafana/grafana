@@ -110,6 +110,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
   const { features } = buildInfoResponse.data;
   if (!features) {
     return {
+      version: buildInfoResponse.data.version,
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
