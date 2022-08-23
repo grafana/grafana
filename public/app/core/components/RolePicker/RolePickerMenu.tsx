@@ -17,7 +17,7 @@ import {
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { OrgRole, Role } from 'app/types';
 
-import { MENU_MAX_HEIGHT } from './constants';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_SUBMENU_MIN_WIDTH } from './constants';
 
 const BasicRoles = Object.values(OrgRole);
 const BasicRoleOption: Array<SelectableValue<OrgRole>> = BasicRoles.map((r) => ({
@@ -551,7 +551,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       min-width: auto;
     `,
     menu: css`
-      min-width: 260px;
+      min-width: ${ROLE_PICKER_SUBMENU_MIN_WIDTH}px;
 
       & > div {
         padding-top: ${theme.spacing(1)};
@@ -563,7 +563,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     subMenu: css`
       height: 100%;
-      min-width: 260px;
+      min-width: ${ROLE_PICKER_SUBMENU_MIN_WIDTH}px;
       display: flex;
       flex-direction: column;
       border-left: 1px solid ${theme.components.input.borderColor};

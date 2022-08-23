@@ -5,7 +5,7 @@ import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_SUBMENU_MIN_WIDTH, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
   basicRole?: OrgRole;
@@ -67,7 +67,10 @@ export const RolePicker = ({
       vertical = offsetVertical;
     }
 
-    if (window.innerWidth - right < currentRolePickerWidth && currentRolePickerWidth < 520) {
+    if (
+      window.innerWidth - right < currentRolePickerWidth &&
+      currentRolePickerWidth < 2 * ROLE_PICKER_SUBMENU_MIN_WIDTH
+    ) {
       horizontal = offsetHorizontal;
     }
 
