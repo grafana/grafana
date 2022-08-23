@@ -127,7 +127,7 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 				zf.Name, fs.pluginsDir)
 		}
 
-		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginID)))
+		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginID))) // lgtm[go/unsafe-unzip-symlink]
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
