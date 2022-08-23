@@ -102,5 +102,7 @@ func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, Sec
 		},
 	}
 
+	err = secretsStoreForPlugin.SetFallback(secretsSql)
+	require.NoError(t, err)
 	return migratorService, secretsStoreForPlugin, secretsSql
 }

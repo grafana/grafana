@@ -2,6 +2,7 @@ package kvstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -22,7 +23,6 @@ type MigrateToPluginService struct {
 	secretsService secrets.Service
 	kvstore        kvstore.KVStore
 	manager        plugins.SecretsPluginManager
-	getAllFunc     func(ctx context.Context) ([]Item, error)
 }
 
 func ProvideMigrateToPluginService(
@@ -36,7 +36,7 @@ func ProvideMigrateToPluginService(
 	return &MigrateToPluginService{
 		secretsStore:   secretsStore,
 		cfg:            cfg,
-		logger:         log.New("sec-plugin-mig"),
+		logger:         log.New("secret.migration.plugin"),
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		kvstore:        kvstore,
@@ -47,16 +47,10 @@ func ProvideMigrateToPluginService(
 func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 	if err := EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		s.logger.Debug("starting migration of unified secrets to the plugin")
-		// we need to instantiate the secretsKVStore as this is not on wire, and in this scenario,
-		// the secrets store would be the plugin.
-		secretsSql := &secretsKVStoreSQL{
-			sqlStore:       s.sqlStore,
-			secretsService: s.secretsService,
-			log:            s.logger,
-			decryptionCache: decryptionCache{
-				cache: make(map[int64]cachedDecrypted),
-			},
-			GetAllFuncOverride: s.getAllFunc,
+		// we need to get the fallback store since in this scenario the secrets store would be the plugin.
+		fallbackStore := s.secretsStore.Fallback()
+		if fallbackStore == nil {
+			return errors.New("unable to get fallback secret store for migration")
 		}
 
 		// before we start migrating, check see if plugin startup failures were already fatal
@@ -66,7 +60,7 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 			s.logger.Warn("unable to determine whether plugin startup failures are fatal - continuing migration anyway.")
 		}
 
-		allSec, err := secretsSql.GetAll(ctx)
+		allSec, err := fallbackStore.GetAll(ctx)
 		if err != nil {
 			return nil
 		}
@@ -85,7 +79,7 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 		for index, sec := range allSec {
 			s.logger.Debug(fmt.Sprintf("Cleaning secret %d of %d", index+1, totalSec), "current", index+1, "secretCount", totalSec)
 
-			err = secretsSql.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
+			err = fallbackStore.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
 			if err != nil {
 				s.logger.Error("plugin migrator encountered error while deleting unified secrets")
 				if index == 0 && !wasFatal {
@@ -103,11 +97,4 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 		s.logger.Debug("deleted unified secrets after migration", "number of secrets", totalSec)
 	}
 	return nil
-}
-
-// This is here to support testing and should normally not be called
-// An edge case we are unit testing requires the GetAll function to return a value, but the Del function to return an error.
-// This is not possible with the code as written, so this override function is a workaround. Should be refactored.
-func (s *MigrateToPluginService) overrideGetAllFunc(getAllFunc func(ctx context.Context) ([]Item, error)) {
-	s.getAllFunc = getAllFunc
 }

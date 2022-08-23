@@ -95,7 +95,7 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-Learn more about this feature in [Field overrides]({{< relref "../panels/override-field-values/about-field-overrides/" >}}).
+Learn more about this feature in [Field overrides]({{< relref "../panels/configure-overrides/" >}}).
 
 ## Inspect panels and export data to CSV
 

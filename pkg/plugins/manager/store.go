@@ -2,10 +2,10 @@ package manager
 
 import (
 	"context"
-	"path/filepath"
-	"strings"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 )
 
 func (m *PluginManager) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -68,9 +68,10 @@ func (m *PluginManager) registeredPlugins(ctx context.Context) map[string]struct
 	return pluginsByID
 }
 
-func (m *PluginManager) Add(ctx context.Context, pluginID, version string) error {
-	var pluginZipURL string
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	compatOpts := repo.NewCompatOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
 
+	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID); exists {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
@@ -83,28 +84,74 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string) error
 			}
 		}
 
-		// get plugin update information to confirm if upgrading is possible
-		updateInfo, err := m.pluginInstaller.GetUpdateInfo(ctx, pluginID, version, grafanaComURL)
+		// get plugin update information to confirm if target update is possible
+		dlOpts, err := m.pluginRepo.GetPluginDownloadOptions(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
 
-		pluginZipURL = updateInfo.PluginZipURL
+		// if existing plugin version is the same as the target update version
+		if dlOpts.Version == plugin.Info.Version {
+			return plugins.DuplicateError{
+				PluginID:          plugin.ID,
+				ExistingPluginDir: plugin.PluginDir,
+			}
+		}
+
+		if dlOpts.PluginZipURL == "" && dlOpts.Version == "" {
+			return fmt.Errorf("could not determine update options for %s", pluginID)
+		}
 
 		// remove existing installation of plugin
 		err = m.Remove(ctx, plugin.ID)
 		if err != nil {
 			return err
 		}
+
+		if dlOpts.PluginZipURL != "" {
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL, compatOpts)
+			if err != nil {
+				return err
+			}
+		} else {
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, dlOpts.Version, compatOpts)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		var err error
+		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		if err != nil {
+			return err
+		}
 	}
 
-	err := m.pluginInstaller.Install(ctx, pluginID, version, m.cfg.PluginsPath, pluginZipURL, grafanaComURL)
+	extractedArchive, err := m.pluginStorage.Add(ctx, pluginID, pluginArchive.File)
 	if err != nil {
 		return err
 	}
 
-	err = m.loadPlugins(context.Background(), plugins.External, m.cfg.PluginsPath)
+	// download dependency plugins
+	pathsToScan := []string{extractedArchive.Path}
+	for _, dep := range extractedArchive.Dependencies {
+		m.log.Info("Fetching %s dependencies...", dep.ID)
+		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
+		if err != nil {
+			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
+		}
+
+		depArchive, err := m.pluginStorage.Add(ctx, dep.ID, d.File)
+		if err != nil {
+			return err
+		}
+
+		pathsToScan = append(pathsToScan, depArchive.Path)
+	}
+
+	err = m.loadPlugins(context.Background(), plugins.External, pathsToScan...)
 	if err != nil {
+		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
 		return err
 	}
 
@@ -121,15 +168,9 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
-	path, err := filepath.Rel(m.cfg.PluginsPath, plugin.PluginDir)
-	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
-		return plugins.ErrUninstallOutsideOfPluginDir
-	}
-
 	if err := m.unregisterAndStop(ctx, plugin); err != nil {
 		return err
 	}
 
-	return m.pluginInstaller.Uninstall(ctx, plugin.PluginDir)
+	return m.pluginStorage.Remove(ctx, plugin.ID)
 }
