@@ -51,11 +51,8 @@ export default function CorrelationsPage() {
 
   const handleRemove = useCallback<(params: RemoveCorrelationParams) => void>(
     async (correlation) => {
-      if (!remove.loading) {
-        await remove.execute(correlation);
-        get.execute();
-        setIsAdding(false);
-      }
+      await remove.execute(correlation);
+      get.execute();
     },
     [remove, get]
   );
