@@ -29,7 +29,7 @@ import {
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { useComponentInstanceId } from '@grafana/ui/src/utils/useComponetInstanceId';
 
-import { PieChartType, PieChartLabels } from './types';
+import { PieChartType, PieChartLabels } from './models.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**

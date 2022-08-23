@@ -272,15 +272,8 @@ func IsDisabled(cfg *setting.Cfg) bool {
 }
 
 // GetOrgRoles returns legacy org roles for a user
-func GetOrgRoles(cfg *setting.Cfg, user *user.SignedInUser) []string {
+func GetOrgRoles(user *user.SignedInUser) []string {
 	roles := []string{string(user.OrgRole)}
-
-	// With built-in role simplifying, inheritance is performed upon role registration.
-	if cfg.RBACBuiltInRoleAssignmentEnabled {
-		for _, br := range user.OrgRole.Children() {
-			roles = append(roles, string(br))
-		}
-	}
 
 	if user.IsGrafanaAdmin {
 		roles = append(roles, RoleGrafanaAdmin)

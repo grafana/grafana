@@ -483,7 +483,10 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 		return ErrServiceAccountAndTokenMismatch
 	}
 
-	tokens, err := s.ListTokens(ctx, key.OrgId, *key.ServiceAccountId)
+	tokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
+		OrgID:            &key.OrgId,
+		ServiceAccountID: key.ServiceAccountId,
+	})
 	if err != nil {
 		return fmt.Errorf("cannot revert token: %w", err)
 	}
