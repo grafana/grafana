@@ -318,7 +318,7 @@ func genThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (WriteD
 		return nil, fmt.Errorf("error executing plugin lineage file template: %w", err)
 	}
 
-	fullpath := filepath.Join(path, subpath, "lineage_gen.go")
+	fullpath := filepath.Join(path, subpath, "pfs_gen.go")
 	if byt, err := postprocessGoFile(genGoFile{
 		path: fullpath,
 		in:   buf.Bytes(),
