@@ -165,6 +165,7 @@ compilation-stats.json
 !pkg/services/featuremgmt/toggles_gen.go
 !pkg/coremodel/**/*_gen.go
 !pkg/framework/**/*_gen.go
+!pkg/plugins/pfs/**/*_gen.go
 !public/app/plugins/**/*_gen.go
 
 # Auto-generated internationalization files

@@ -301,9 +301,6 @@ func genThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (WriteD
 			LatestMinv: lv[1],
 		})
 	}
-	if len(bindings) == 0 {
-		return nil, nil
-	}
 
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("plugin_lineage_file.tmpl").Execute(buf, tvars_plugin_lineage_file{
@@ -311,9 +308,11 @@ func genThemaBindings(plug pfs.PluginInfo, path, subpath, prefix string) (WriteD
 		PluginType:  string(plug.Meta().Type),
 		PluginID:    plug.Meta().Id,
 		SlotImpls:   bindings,
+		HasModels:   len(bindings) != 0,
 		Header: tvars_autogen_header{
-			GenLicense:  true,
-			LineagePath: filepath.Join(prefix, subpath),
+			GeneratorPath: "public/app/plugins/gen.go", // FIXME hardcoding is not OK
+			GenLicense:    true,
+			LineagePath:   filepath.Join(prefix, subpath),
 		},
 	}); err != nil {
 		return nil, fmt.Errorf("error executing plugin lineage file template: %w", err)
@@ -352,6 +351,59 @@ func sanitizePluginId(s string) string {
 			return -1
 		}
 	}, s)
+}
+
+// FIXME unexport this and refactor, this is way too one-off to be in here
+func GenPluginTreeList(trees []TreeAndPath, prefix, target string) (WriteDiffer, error) {
+	buf := new(bytes.Buffer)
+	vars := tvars_plugin_registry{
+		Header: tvars_autogen_header{
+			GenLicense: true,
+		},
+		Plugins: make([]struct {
+			PkgName, Path string
+			NoAlias       bool
+		}, 0, len(trees)),
+	}
+
+	type tpl struct {
+		PkgName, Path string
+		NoAlias       bool
+	}
+
+	// No sub-plugin support here. If we never allow subplugins in core, that's probably fine.
+	// But still worth noting.
+	for _, pt := range trees {
+		rp := (*pfs.Tree)(pt.Tree).RootPlugin()
+		vars.Plugins = append(vars.Plugins, tpl{
+			PkgName: sanitizePluginId(rp.Meta().Id),
+			NoAlias: sanitizePluginId(rp.Meta().Id) != filepath.Base(pt.Path),
+			Path:    filepath.ToSlash(filepath.Join(prefix, pt.Path)),
+		})
+	}
+
+	if err := tmpls.Lookup("plugin_registry.tmpl").Execute(buf, vars); err != nil {
+		return nil, fmt.Errorf("failed executing plugin registry template: %w", err)
+	}
+
+	byt, err := postprocessGoFile(genGoFile{
+		path: target,
+		in:   buf.Bytes(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error postprocessing plugin registry: %w", err)
+	}
+
+	wd := NewWriteDiffer()
+	wd[target] = byt
+	return wd, nil
+}
+
+// FIXME unexport this and refactor, this is way too one-off to be in here
+type TreeAndPath struct {
+	Tree *PluginTree
+	// path relative to path prefix UUUGHHH (basically {panel,datasource}/<dir>}
+	Path string
 }
 
 // TODO convert this to use cuetsy ts types, once import * form is supported

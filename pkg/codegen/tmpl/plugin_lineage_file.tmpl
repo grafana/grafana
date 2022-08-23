@@ -15,7 +15,7 @@ import (
 var parseOnce sync.Once
 var ptree *pfs.Tree
 
-//go:embed plugin.json models.cue
+//go:embed plugin.{{ if .RootCUE }}cue{{ else }}json{{ end }}{{ if .HasModels }} models.cue{{ end }}
 var plugFS embed.FS
 
 // PluginTree returns the plugin tree representing the statically analyzable contents of the {{ .PluginID }} plugin.

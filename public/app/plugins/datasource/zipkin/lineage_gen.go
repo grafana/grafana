@@ -18,7 +18,7 @@
 //
 // Run `make gen-cue` from repository root to regenerate.
 
-package text
+package zipkin
 
 import (
 	"embed"
@@ -33,10 +33,10 @@ import (
 var parseOnce sync.Once
 var ptree *pfs.Tree
 
-//go:embed plugin.json models.cue
+//go:embed plugin.json
 var plugFS embed.FS
 
-// PluginTree returns the plugin tree representing the statically analyzable contents of the text plugin.
+// PluginTree returns the plugin tree representing the statically analyzable contents of the zipkin plugin.
 func PluginTree(lib *thema.Library) *pfs.Tree {
 	var err error
 	if lib == nil {
@@ -54,20 +54,3 @@ func PluginTree(lib *thema.Library) *pfs.Tree {
 
 	return ptree
 }
-
-// PanelLineage returns the Thema lineage for the text panel plugin's
-// Panel ["github.com/grafana/grafana/pkg/framework/coremodel".Slot] implementation.
-func PanelLineage(lib *thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	t := PluginTree(lib)
-	lin, has := t.RootPlugin().SlotImplementations()["Panel"]
-	if !has {
-		panic("unreachable: lineage for Panel does not exist, but code is only generated for existing lineages")
-	}
-	return lin, nil
-}
-
-// The current schema version of the Panel slot implementation.
-//
-// Code generation ensures that this is always the version number for the latest schema
-// in the Panel Thema lineage.
-var currentVersionPanel = thema.SV(0, 0)

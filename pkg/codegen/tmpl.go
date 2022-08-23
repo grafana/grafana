@@ -46,6 +46,8 @@ type (
 		PackageName string
 		PluginID    string
 		PluginType  string
+		HasModels   bool
+		RootCUE     bool
 		SlotImpls   []tvars_plugin_lineage_binding
 		Header      tvars_autogen_header
 	}
@@ -55,9 +57,11 @@ type (
 		Sections []tsSection
 	}
 	tvars_plugin_registry struct {
+		Header  tvars_autogen_header
 		Plugins []struct {
 			PkgName string
 			Path    string
+			NoAlias bool
 		}
 	}
 )

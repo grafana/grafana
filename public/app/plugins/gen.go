@@ -51,10 +51,10 @@ func main() {
 	lib := cuectx.ProvideThemaLibrary()
 
 	type ptreepath struct {
-		fullpath string
-		tree     *codegen.PluginTree
+		Path string
+		Tree *codegen.PluginTree
 	}
-	var ptrees []ptreepath
+	var ptrees []codegen.TreeAndPath
 	for _, typ := range []string{"datasource", "panel"} {
 		dir := filepath.Join(cwd, typ)
 		treeor, err := codegen.ExtractPluginTrees(os.DirFS(dir), lib)
@@ -69,9 +69,9 @@ func main() {
 			}
 
 			if option.Tree != nil {
-				ptrees = append(ptrees, ptreepath{
-					fullpath: filepath.Join(typ, name),
-					tree:     option.Tree,
+				ptrees = append(ptrees, codegen.TreeAndPath{
+					Path: filepath.Join(typ, name),
+					Tree: option.Tree,
 				})
 			} else if !errors.Is(option.Err, pfs.ErrNoRootFile) {
 				fmt.Fprintf(os.Stderr, "error parsing plugin directory %s: %s\n", filepath.Join(dir, name), option.Err)
@@ -84,29 +84,37 @@ func main() {
 	// having multiple core plugins with errors can cause confusing error
 	// flip-flopping
 	sort.Slice(ptrees, func(i, j int) bool {
-		return ptrees[i].fullpath < ptrees[j].fullpath
+		return ptrees[i].Path < ptrees[j].Path
 	})
 
+	var wdm codegen.WriteDiffer
 	for _, ptp := range ptrees {
-		genwd, err := ptp.tree.GenerateTS(ptp.fullpath)
+		wdm, err = ptp.Tree.GenerateTS(ptp.Path)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "generating typescript failed for %s: %s\n", ptp.fullpath, err)
+			fmt.Fprintf(os.Stderr, "generating typescript failed for %s: %s\n", ptp.Path, err)
 			os.Exit(1)
 		}
-		wd.Merge(genwd)
+		wd.Merge(wdm)
 
-		relp, _ := filepath.Rel(groot, ptp.fullpath)
-		genwd, err = ptp.tree.GenerateGo(ptp.fullpath, codegen.GoGenConfig{
-			Types:         string((*pfs.Tree)(ptp.tree).RootPlugin().Meta().Type) == "datasource",
+		relp, _ := filepath.Rel(groot, ptp.Path)
+		wdm, err = ptp.Tree.GenerateGo(ptp.Path, codegen.GoGenConfig{
+			Types:         string((*pfs.Tree)(ptp.Tree).RootPlugin().Meta().Type) == "datasource",
 			ThemaBindings: true,
 			DocPathPrefix: relp,
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "generating Go failed for %s: %s\n", ptp.fullpath, err)
+			fmt.Fprintf(os.Stderr, "generating Go failed for %s: %s\n", ptp.Path, err)
 			os.Exit(1)
 		}
-		wd.Merge(genwd)
+		wd.Merge(wdm)
 	}
+
+	wdm, err = codegen.GenPluginTreeList(ptrees, "github.com/grafana/grafana/public/app/plugins", filepath.Join(groot, "pkg", "plugins", "pfs", "registry", "loadlist_gen.go"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "generating plugin loader registry failed: %s\n", err)
+		os.Exit(1)
+	}
+	wd.Merge(wdm)
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		err = wd.Verify()

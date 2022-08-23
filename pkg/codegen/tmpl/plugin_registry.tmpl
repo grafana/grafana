@@ -2,13 +2,17 @@
 package registry
 
 import (
+	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/thema"
   {{ range .Plugins }}
-  {{ .PkgName }} "{{ .Path }}"{{ end }}
+  {{ if .NoAlias }}{{ .PkgName }} {{end}}"{{ .Path }}"{{ end }}
 )
+
+var coreTreeLoaders []func(*thema.Library) *pfs.Tree
 
 func init() {
   coreTreeLoaders = []func(*thema.Library) *pfs.Tree{
-    {{ range .Plugins }}
+    {{- range .Plugins }}
     {{ .PkgName }}.PluginTree,{{ end }}
   }
 }

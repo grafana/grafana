@@ -60,7 +60,7 @@ func postprocessGoFile(cfg genGoFile) ([]byte, error) {
 
 	if len(added) != 0 {
 		// TODO improve the guidance in this error if/when we better abstract over imports to generate
-		fmt.Fprintf(os.Stderr, "The following imports were added by goimports while generating %s: \n\t%s\nRelying on goimports to find imports significantly slows down code generation. Consider adding these to the relevant template.", cfg.path, strings.Join(added, "\n\t"))
+		fmt.Fprintf(os.Stderr, "The following imports were added by goimports while generating %s: \n\t%s\nRelying on goimports to find imports significantly slows down code generation. Consider adding these to the relevant template.\n", cfg.path, strings.Join(added, "\n\t"))
 	}
 
 	return byt, nil
