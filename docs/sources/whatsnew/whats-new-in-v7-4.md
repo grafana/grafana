@@ -61,7 +61,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/transform-data/transformation-functions/#sort-by" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/transform-data/" >}}).
 
 #### Filter data by value transform
 
@@ -69,13 +69,13 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/transformation-functions/#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/#filter-data-by-value" >}}).
 
 ### New override option
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [About field overrides]({{< relref "../panels/override-field-values/about-field-overrides/" >}}).
+For more information, refer to [About field overrides]({{< relref "../panels/configure-overrides" >}}).
 
 ### Exemplar support
 
