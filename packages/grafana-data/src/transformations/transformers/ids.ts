@@ -33,4 +33,5 @@ export enum DataTransformerID {
   joinByLabels = 'joinByLabels',
   extractFields = 'extractFields',
   groupingToMatrix = 'groupingToMatrix',
+  limit = 'limit',
 }

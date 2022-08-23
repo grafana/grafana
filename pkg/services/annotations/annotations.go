@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -39,7 +39,7 @@ type ItemQuery struct {
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
 	MatchAny     bool     `json:"matchAny"`
-	SignedInUser *models.SignedInUser
+	SignedInUser *user.SignedInUser
 
 	Limit int64 `json:"limit"`
 }

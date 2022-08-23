@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -113,7 +114,7 @@ type fakeCacheService struct {
 	err        error
 }
 
-func (f fakeCacheService) GetDatasource(_ context.Context, datasourceID int64, _ *models.SignedInUser, _ bool) (*datasources.DataSource, error) {
+func (f fakeCacheService) GetDatasource(_ context.Context, datasourceID int64, _ *user.SignedInUser, _ bool) (*datasources.DataSource, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -121,7 +122,7 @@ func (f fakeCacheService) GetDatasource(_ context.Context, datasourceID int64, _
 	return f.datasource, nil
 }
 
-func (f fakeCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
+func (f fakeCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	if f.err != nil {
 		return nil, f.err
 	}

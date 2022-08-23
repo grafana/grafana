@@ -298,8 +298,8 @@ export const pipelineOptions: PipelineOptions = {
 
 /**
  * Given a metric `MetricA` and an array of metrics, returns all children of `MetricA`.
- * `MetricB` is considered a child of `MetricA` if `MetricA` is referenced by `MetricB` in it's `field` attribute
- * (`MetricA.id === MetricB.field`) or in it's pipeline aggregation variables (for bucket_scripts).
+ * `MetricB` is considered a child of `MetricA` if `MetricA` is referenced by `MetricB` in its `field` attribute
+ * (`MetricA.id === MetricB.field`) or in its pipeline aggregation variables (for bucket_scripts).
  * @param metric
  * @param metrics
  */

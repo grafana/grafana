@@ -3,7 +3,7 @@ package es
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -350,7 +350,7 @@ func httpClientScenario(t *testing.T, desc string, ds *DatasourceInfo, fn scenar
 		}
 		ts := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			sc.request = r
-			buf, err := ioutil.ReadAll(r.Body)
+			buf, err := io.ReadAll(r.Body)
 			require.NoError(t, err)
 
 			sc.requestBody = bytes.NewBuffer(buf)

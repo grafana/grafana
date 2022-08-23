@@ -10,7 +10,7 @@ function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
 }
 
-// returns a new frame, with meta shallow merged with it's original meta
+// returns a new frame, with meta shallow merged with its original meta
 function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   const { meta: oldMeta, ...rest } = frame;
   // meta maybe be undefined, we need to handle that

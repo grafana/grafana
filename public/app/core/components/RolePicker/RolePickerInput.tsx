@@ -13,9 +13,9 @@ const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopP
 
 interface InputProps extends HTMLProps<HTMLInputElement> {
   appliedRoles: Role[];
-  builtInRole?: string;
+  basicRole?: string;
   query: string;
-  showBuiltInRole?: boolean;
+  showBasicRole?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
   onQueryChange: (query?: string) => void;
@@ -25,11 +25,11 @@ interface InputProps extends HTMLProps<HTMLInputElement> {
 
 export const RolePickerInput = ({
   appliedRoles,
-  builtInRole,
+  basicRole,
   disabled,
   isFocused,
   query,
-  showBuiltInRole,
+  showBasicRole,
   onOpen,
   onClose,
   onQueryChange,
@@ -53,12 +53,12 @@ export const RolePickerInput = ({
 
   return !isFocused ? (
     <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
-      {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
-      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBuiltInRole} />
+      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
+      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBasicRole} />
     </div>
   ) : (
     <div className={styles.wrapper}>
-      {showBuiltInRole && <ValueContainer>{builtInRole}</ValueContainer>}
+      {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
       {appliedRoles.map((role) => (
         <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
       ))}

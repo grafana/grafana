@@ -1,8 +1,8 @@
 package manager
 
 import (
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
@@ -20,7 +20,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	saCreator := accesscontrol.RoleRegistration{
@@ -35,7 +35,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	saWriter := accesscontrol.RoleRegistration{
@@ -66,7 +66,7 @@ func RegisterRoles(ac accesscontrol.AccessControl) error {
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	if err := ac.DeclareFixedRoles(saReader, saCreator, saWriter); err != nil {

@@ -1,6 +1,7 @@
+import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { parser } from '@grafana/lezer-logql';
+import { parser, LineFilter, PipeExact, PipeMatch, Filter, String } from '@grafana/lezer-logql';
 
 import { ErrorName } from '../prometheus/querybuilder/shared/parsingUtils';
 
@@ -15,61 +16,51 @@ export function formatQuery(selector: string | undefined): string {
  * E.g., `{} |= foo |=bar != baz` returns `['foo', 'bar']`.
  */
 export function getHighlighterExpressionsFromQuery(input: string): string[] {
-  let expression = input;
   const results = [];
 
-  // Consume filter expression from left to right
-  while (expression) {
-    const filterStart = expression.search(/\|=|\|~|!=|!~/);
-    // Nothing more to search
-    if (filterStart === -1) {
-      break;
-    }
-    // Drop terms for negative filters
-    const filterOperator = expression.slice(filterStart, filterStart + 2);
-    const skip = expression.slice(filterStart).search(/!=|!~/) === 0;
-    expression = expression.slice(filterStart + 2);
-    if (skip) {
+  const tree = parser.parse(input);
+  const filters: SyntaxNode[] = [];
+  tree.iterate({
+    enter: (type, from, to, get): void => {
+      if (type.id === LineFilter) {
+        filters.push(get());
+      }
+    },
+  });
+
+  for (let filter of filters) {
+    const pipeExact = filter.getChild(Filter)?.getChild(PipeExact);
+    const pipeMatch = filter.getChild(Filter)?.getChild(PipeMatch);
+    const string = filter.getChild(String);
+
+    if ((!pipeExact && !pipeMatch) || !string) {
       continue;
     }
-    // Check if there is more chained, by just looking for the next pipe-operator
-    const filterEnd = expression.search(/\|/);
-    let filterTerm;
-    if (filterEnd === -1) {
-      filterTerm = expression.trim();
-    } else {
-      filterTerm = expression.slice(0, filterEnd).trim();
-      expression = expression.slice(filterEnd);
+
+    const filterTerm = input.substring(string.from, string.to).trim();
+    const backtickedTerm = filterTerm[0] === '`';
+    const unwrappedFilterTerm = filterTerm.substring(1, filterTerm.length - 1);
+
+    if (!unwrappedFilterTerm) {
+      continue;
     }
 
-    const quotedTerm = filterTerm.match(/"(.*?)"/);
-    const backtickedTerm = filterTerm.match(/`(.*?)`/);
-    const term = quotedTerm || backtickedTerm;
+    let resultTerm = '';
 
-    if (term) {
-      const unwrappedFilterTerm = term[1];
-      const regexOperator = filterOperator === '|~';
-
-      let resultTerm = '';
-
-      // Only filter expressions with |~ operator are treated as regular expressions
-      if (regexOperator) {
-        // When using backticks, Loki doesn't require to escape special characters and we can just push regular expression to highlights array
-        // When using quotes, we have extra backslash escaping and we need to replace \\ with \
-        resultTerm = backtickedTerm ? unwrappedFilterTerm : unwrappedFilterTerm.replace(/\\\\/g, '\\');
-      } else {
-        // We need to escape this string so it is not matched as regular expression
-        resultTerm = escapeRegExp(unwrappedFilterTerm);
-      }
-
-      if (resultTerm) {
-        results.push(resultTerm);
-      }
+    // Only filter expressions with |~ operator are treated as regular expressions
+    if (pipeMatch) {
+      // When using backticks, Loki doesn't require to escape special characters and we can just push regular expression to highlights array
+      // When using quotes, we have extra backslash escaping and we need to replace \\ with \
+      resultTerm = backtickedTerm ? unwrappedFilterTerm : unwrappedFilterTerm.replace(/\\\\/g, '\\');
     } else {
-      return results;
+      // We need to escape this string so it is not matched as regular expression
+      resultTerm = escapeRegExp(unwrappedFilterTerm);
+    }
+
+    if (resultTerm) {
+      results.push(resultTerm);
     }
   }
-
   return results;
 }
 

@@ -111,27 +111,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const prefs = await this.service.load();
-    const dashboards = (await backendSrv.search({ starred: true })) as DashboardSearchItem[];
+    const dashboards = await backendSrv.search({ starred: true });
 
     if (prefs.homeDashboardUID && !dashboards.find((d) => d.uid === prefs.homeDashboardUID)) {
-      const missingDash = await backendSrv.getDashboardByUid(prefs.homeDashboardUID);
+      const missingDash = await backendSrv.search({ dashboardUIDs: prefs.homeDashboardUID });
 
-      if (missingDash?.dashboard) {
-        dashboards.push({
-          title: missingDash.dashboard.title,
-          tags: [],
-          type: DashboardSearchItemType.DashDB,
-          uid: missingDash.dashboard.uid,
-          uri: '', // uri is not part of dashboard metadata
-          url: missingDash.meta.url || '',
-          folderId: missingDash.meta.folderId,
-          folderTitle: missingDash.meta.folderTitle,
-          folderUid: missingDash.meta.folderUid,
-          folderUrl: missingDash.meta.folderUrl,
-          isStarred: missingDash.meta.isStarred || false,
-          slug: missingDash.meta.slug,
-          items: [],
-        });
+      if (missingDash.length > 0) {
+        dashboards.push(missingDash[0]);
       }
     }
 

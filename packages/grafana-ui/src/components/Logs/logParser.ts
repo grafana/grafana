@@ -1,6 +1,6 @@
 import memoizeOne from 'memoize-one';
 
-import { Field, getParser, LinkModel, LogRowModel } from '@grafana/data';
+import { Field, FieldType, getParser, LinkModel, LogRowModel } from '@grafana/data';
 
 import { MAX_CHARACTERS } from './LogRowMessage';
 
@@ -62,31 +62,18 @@ const parseMessage = memoizeOne((rowEntry): FieldDef[] => {
 
 const getDerivedFields = memoizeOne(
   (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>): FieldDef[] => {
-    return (
-      row.dataFrame.fields
-        .map((field, index) => ({ ...field, index }))
-        // Remove Id which we use for react key and entry field which we are showing as the log message. Also remove hidden fields.
-        .filter(
-          (field, index) => !('id' === field.name || row.entryFieldIndex === index || field.config.custom?.hidden)
-        )
-        // Filter out fields without values. For example in elastic the fields are parsed from the document which can
-        // have different structure per row and so the dataframe is pretty sparse.
-        .filter((field) => {
-          const value = field.values.get(row.rowIndex);
-          // Not sure exactly what will be the empty value here. And we want to keep 0 as some values can be non
-          // string.
-          return value !== null && value !== undefined;
-        })
-        .map((field) => {
-          const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
-          return {
-            key: field.name,
-            value: field.values.get(row.rowIndex).toString(),
-            links: links,
-            fieldIndex: field.index,
-          };
-        })
-    );
+    return row.dataFrame.fields
+      .map((field, index) => ({ ...field, index }))
+      .filter((field, index) => !shouldRemoveField(field, index, row))
+      .map((field) => {
+        const links = getFieldLinks ? getFieldLinks(field, row.rowIndex) : [];
+        return {
+          key: field.name,
+          value: field.values.get(row.rowIndex).toString(),
+          links: links,
+          fieldIndex: field.index,
+        };
+      });
   }
 );
 
@@ -98,4 +85,29 @@ function sortFieldsLinkFirst(fieldA: FieldDef, fieldB: FieldDef) {
     return 1;
   }
   return fieldA.key > fieldB.key ? 1 : fieldA.key < fieldB.key ? -1 : 0;
+}
+
+function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
+  // Remove field if it is:
+  // "labels" field that is in Loki used to store all labels
+  if (field.name === 'labels' && field.type === FieldType.other) {
+    return true;
+  }
+  // "id" field which we use for react key
+  if (field.name === 'id') {
+    return true;
+  }
+  // entry field which we are showing as the log message
+  if (row.entryFieldIndex === index) {
+    return true;
+  }
+  // hidden field
+  if (field.config.custom?.hidden) {
+    return true;
+  }
+  // field that has empty value (we want to keep 0 or empty string)
+  if (field.values.get(row.rowIndex) == null) {
+    return true;
+  }
+  return false;
 }

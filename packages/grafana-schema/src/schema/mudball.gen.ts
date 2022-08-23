@@ -168,6 +168,7 @@ export interface GraphThresholdsStyleConfig {
 export type LegendPlacement = ('bottom' | 'right');
 
 export enum LegendDisplayMode {
+  Hidden = 'hidden',
   List = 'list',
   Table = 'table',
 }
@@ -208,11 +209,11 @@ export interface OptionsWithLegend {
 }
 
 export interface OptionsWithTimezones {
-  timezones?: string[];
+  timezone?: string[];
 }
 
 export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
-  timezones: [],
+  timezone: [],
 };
 
 export interface OptionsWithTextFormatting {

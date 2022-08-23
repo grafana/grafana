@@ -9,11 +9,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -105,7 +105,7 @@ func TestAllowedActionsForPermissionsWithScopeAll(t *testing.T) {
 		err := frame.UnmarshalJSON([]byte(exampleListFrameJSON))
 		require.NoError(t, err)
 
-		err = service(t).addAllowedActionsField(context.Background(), orgId, &models.SignedInUser{
+		err = service(t).addAllowedActionsField(context.Background(), orgId, &user.SignedInUser{
 			Permissions: map[int64]map[string][]string{
 				orgId: tt.permissions,
 			},

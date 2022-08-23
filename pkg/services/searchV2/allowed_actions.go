@@ -9,13 +9,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func (s *StandardSearchService) addAllowedActionsField(ctx context.Context, orgId int64, user *models.SignedInUser, response *backend.DataResponse) error {
+func (s *StandardSearchService) addAllowedActionsField(ctx context.Context, orgId int64, user *user.SignedInUser, response *backend.DataResponse) error {
 	references, err := getEntityReferences(response)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ type allowedActions struct {
 	Actions    []string   `json:"actions"`
 }
 
-func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId int64, user *models.SignedInUser, references []entityReferences) ([][]allowedActions, error) {
+func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId int64, user *user.SignedInUser, references []entityReferences) ([][]allowedActions, error) {
 	uidsPerKind := make(map[entityKind][]string)
 	for _, refs := range references {
 		if _, ok := uidsPerKind[refs.entityKind]; !ok {
@@ -136,7 +136,7 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 	return out, nil
 }
 
-func (s *StandardSearchService) getAllowedActionsByUid(ctx context.Context, user *models.SignedInUser,
+func (s *StandardSearchService) getAllowedActionsByUid(ctx context.Context, user *user.SignedInUser,
 	orgID int64, prefix string, resourceIDs []string) map[string][]string {
 	if s.ac.IsDisabled() {
 		return map[string][]string{}

@@ -30,7 +30,7 @@ import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-import { constraintViewable, dimensionViewable } from './ables';
+import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -59,6 +59,7 @@ export class Scene {
   div?: HTMLDivElement;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
+  shouldShowAdvancedTypes?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
 
@@ -66,8 +67,13 @@ export class Scene {
 
   inlineEditingCallback?: () => void;
 
-  constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
-    this.root = this.load(cfg, enableEditing);
+  constructor(
+    cfg: CanvasFrameOptions,
+    enableEditing: boolean,
+    showAdvancedTypes: boolean,
+    public onSave: (cfg: CanvasFrameOptions) => void
+  ) {
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes);
   }
 
   getNextElementName = (isFrame = false) => {
@@ -89,7 +95,7 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasFrameOptions, enableEditing: boolean) {
+  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean) {
     this.root = new RootElement(
       cfg ?? {
         type: 'frame',
@@ -100,6 +106,7 @@ export class Scene {
     );
 
     this.isEditingEnabled = enableEditing;
+    this.shouldShowAdvancedTypes = showAdvancedTypes;
 
     setTimeout(() => {
       if (this.div) {
@@ -334,10 +341,11 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
-      ables: [dimensionViewable, constraintViewable(this)],
+      ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
         dimensionViewable: allowChanges,
         constraintViewable: allowChanges,
+        settingsViewable: allowChanges,
       },
       origin: false,
       className: this.styles.selected,

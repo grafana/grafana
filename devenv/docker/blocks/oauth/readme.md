@@ -101,14 +101,14 @@ auto_sign_up = true
 
 ## Backing up keycloak DB
 
-In case you want to make changes to the devenv setup, you can dump keycloack's DB:
+In case you want to make changes to the devenv setup, you can dump keycloak's DB:
 
 ```bash
 cd devenv;
 docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > docker/blocks/oauth/cloak.sql
 ```
 
-## Connecting to keycloack:
+## Connecting to keycloak:
 
 - keycloak admin:                     http://localhost:8087
 - keycloak admin login:               admin:admin
@@ -120,15 +120,15 @@ docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > 
 
 ## Mac M1 Users
 
-The new arm64 architecture does not build for the latest docker image of keycloack. Refer to https://github.com/docker/for-mac/issues/5310 for the issue to see if it resolved.
+The new arm64 architecture does not build for the latest docker image of keycloak. Refer to https://github.com/docker/for-mac/issues/5310 for the issue to see if it resolved.
 Until then you need to build the docker image locally and then run `devenv`.
 
-1. Remove any lingering keycloack image
+1. Remove any lingering keycloak image
 ```sh
-$ docker rmi $(docker images | grep 'keycloack')
+$ docker rmi $(docker images | grep 'keycloak')
 ```
-1. Build keycloack image locally
+1. Build keycloak image locally
 ```sh
-$ ./docker-build-keycloack-m1-image.sh
+$ ./docker-build-keycloak-m1-image.sh
 ```
 1. Start from beginning of this readme

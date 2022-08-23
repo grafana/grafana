@@ -21,6 +21,8 @@ type PublicDashboardStoreImpl struct {
 	dialect  migrator.Dialect
 }
 
+var LogPrefix = "publicdashboards.store"
+
 // Gives us a compile time error if our database does not adhere to contract of
 // the interface
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
@@ -29,7 +31,7 @@ var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
 		sqlStore: sqlStore,
-		log:      log.New("publicdashboards.store"),
+		log:      log.New(LogPrefix),
 		dialect:  sqlStore.Dialect,
 	}
 }
@@ -184,6 +186,24 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=true"
 
 		result, err := dbSession.SQL(sql, dashboardUid).Count()
+		if err != nil {
+			return err
+		}
+
+		hasPublicDashboard = result > 0
+
+		return err
+	})
+
+	return hasPublicDashboard, err
+}
+
+func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+	hasPublicDashboard := false
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
+
+		result, err := dbSession.SQL(sql, accessToken).Count()
 		if err != nil {
 			return err
 		}

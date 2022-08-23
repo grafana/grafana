@@ -3,7 +3,6 @@ package store
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -32,7 +31,7 @@ func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 	if _, err := os.Stat(fpath); err == nil {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning since the path is hardcoded above
-		body, err := ioutil.ReadFile(fpath)
+		body, err := os.ReadFile(fpath)
 		if err != nil {
 			return g, err
 		}
@@ -96,7 +95,7 @@ func (c *GlobalStorageConfig) save() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(c.filepath, out, 0600)
+	return os.WriteFile(c.filepath, out, 0600)
 }
 
 type RootStorageConfig struct {

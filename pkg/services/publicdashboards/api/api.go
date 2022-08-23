@@ -79,6 +79,11 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard", err)
 	}
 
+	pubDash, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), dash.OrgId, dash.Uid)
+	if err != nil {
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard config", err)
+	}
+
 	meta := dtos.DashboardMeta{
 		Slug:                       dash.Slug,
 		Type:                       models.DashTypeDB,
@@ -93,6 +98,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		IsFolder:                   false,
 		FolderId:                   dash.FolderId,
 		PublicDashboardAccessToken: accessToken,
+		PublicDashboardUID:         pubDash.Uid,
 	}
 
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
@@ -102,7 +108,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 
 // gets public dashboard configuration for dashboard
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
-	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgId, web.Params(c.Req)[":uid"])
+	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboard config", err)
 	}
@@ -117,12 +123,12 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	}
 
 	// Always set the org id to the current auth session orgId
-	pubdash.OrgId = c.OrgId
+	pubdash.OrgId = c.OrgID
 
 	dto := SavePublicDashboardConfigDTO{
-		OrgId:           c.OrgId,
+		OrgId:           c.OrgID,
 		DashboardUid:    web.Params(c.Req)[":uid"],
-		UserId:          c.UserId,
+		UserId:          c.UserID,
 		PublicDashboard: pubdash,
 	}
 

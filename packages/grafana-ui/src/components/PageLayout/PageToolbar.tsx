@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Link } from '..';
-import { styleMixins } from '../../themes';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
@@ -61,12 +60,6 @@ export const PageToolbar: FC<Props> = React.memo(
       className
     );
 
-    const leftItemChildren = leftItems?.map((child, index) => (
-      <div className={styles.leftActionItem} key={index}>
-        {child}
-      </div>
-    ));
-
     const titleEl = (
       <>
         <span className={styles.noLinkTitle}>{title}</span>
@@ -112,22 +105,29 @@ export const PageToolbar: FC<Props> = React.memo(
               </>
             )}
 
-            {title && (
+            {(title || leftItems?.length) && (
               <div className={styles.titleWrapper}>
-                <h1 className={styles.h1Styles}>
-                  {titleHref ? (
-                    <Link
-                      aria-label="Search dashboard by name"
-                      className={cx(styles.titleText, styles.titleLink)}
-                      href={titleHref}
-                    >
-                      {titleEl}
-                    </Link>
-                  ) : (
-                    <div className={styles.titleText}>{titleEl}</div>
-                  )}
-                </h1>
-                {leftItemChildren}
+                {title && (
+                  <h1 className={styles.h1Styles}>
+                    {titleHref ? (
+                      <Link
+                        aria-label="Search dashboard by name"
+                        className={cx(styles.titleText, styles.titleLink)}
+                        href={titleHref}
+                      >
+                        {titleEl}
+                      </Link>
+                    ) : (
+                      <div className={styles.titleText}>{titleEl}</div>
+                    )}
+                  </h1>
+                )}
+
+                {leftItems?.map((child, index) => (
+                  <div className={styles.leftActionItem} key={index}>
+                    {child}
+                  </div>
+                ))}
               </div>
             )}
           </nav>
@@ -172,7 +172,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     pageIcon: css`
       display: none;
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
+      ${theme.breakpoints.up('md')} {
         display: flex;
         padding-right: ${theme.spacing(1)};
         align-items: center;
@@ -220,7 +220,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     parentLink: css`
       display: none;
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
+      ${theme.breakpoints.up('md')} {
         display: unset;
       }
     `,
@@ -229,7 +229,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     leftActionItem: css`
       display: none;
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
+      ${theme.breakpoints.up('md')} {
         align-items: center;
         display: flex;
         padding-left: ${spacing(0.5)};

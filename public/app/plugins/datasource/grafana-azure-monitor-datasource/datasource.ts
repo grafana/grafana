@@ -19,7 +19,7 @@ import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_
 import ResourcePickerData from './resourcePicker/resourcePickerData';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
-import { datasourceMigrations } from './utils/migrateQuery';
+import migrateQuery from './utils/migrateQuery';
 import { VariableSupport } from './variables';
 
 export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
@@ -70,7 +70,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
     for (const baseTarget of options.targets) {
       // Migrate old query structures
-      const target = datasourceMigrations(baseTarget, this.templateSrv);
+      const target = migrateQuery(baseTarget);
 
       // Skip hidden or invalid queries or ones without properties
       if (!target.queryType || target.hide || !hasQueryForType(target)) {

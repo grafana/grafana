@@ -52,7 +52,12 @@ export class CanvasPanel extends Component<Props, State> {
 
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
-    this.scene = new Scene(this.props.options.root, this.props.options.inlineEditing, this.onUpdateScene);
+    this.scene = new Scene(
+      this.props.options.root,
+      this.props.options.inlineEditing,
+      this.props.options.showAdvancedTypes,
+      this.onUpdateScene
+    );
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
     this.scene.inlineEditingCallback = this.openInlineEdit;
@@ -154,9 +159,11 @@ export class CanvasPanel extends Component<Props, State> {
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
     const shouldUpdateSceneAndPanel = this.needsReload && this.props.options !== nextProps.options;
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
-    if (shouldUpdateSceneAndPanel || inlineEditingSwitched) {
+    const shouldShowAdvancedTypesSwitched =
+      this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
+    if (shouldUpdateSceneAndPanel || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
       this.needsReload = false;
-      this.scene.load(nextProps.options.root, nextProps.options.inlineEditing);
+      this.scene.load(nextProps.options.root, nextProps.options.inlineEditing, nextProps.options.showAdvancedTypes);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
@@ -194,6 +201,7 @@ export class CanvasPanel extends Component<Props, State> {
   renderInlineEdit = () => {
     return <InlineEdit onClose={() => this.closeInlineEdit()} id={this.props.id} scene={activeCanvasPanel!.scene} />;
   };
+
   render() {
     return (
       <>
