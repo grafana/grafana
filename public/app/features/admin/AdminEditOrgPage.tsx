@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { UrlQueryValue } from '@grafana/data';
+import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -66,8 +66,12 @@ export default function AdminEditOrgPage({ match }: Props) {
     );
   };
 
+  const pageNav: NavModelItem = {
+    text: orgState?.value?.name ?? '',
+  };
+
   return (
-    <Page navId="global-orgs" subTitle="Manage and create orgs across the whole Grafana server.">
+    <Page navId="global-orgs" pageNav={pageNav} subTitle="Manage settings for this specific org.">
       <Page.Contents>
         <>
           <Legend>Edit organization</Legend>
