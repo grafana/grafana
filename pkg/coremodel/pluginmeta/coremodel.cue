@@ -1,8 +1,9 @@
 package pluginmeta
 
 import (
-	"github.com/grafana/thema"
 	"strings"
+
+	"github.com/grafana/thema"
 )
 
 thema.#Lineage
@@ -15,18 +16,19 @@ seqs: [
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
 				id: string & strings.MinRunes(1)
-				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin)$"
+				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin)$"
+
+				// The set of all plugin types. This hidden field exists solely
+				// so that the set can be string-interpolated into other fields.
+				_types: ["app", "datasource", "panel", "renderer", "secretsmanager"]
 
 				// type indicates which type of Grafana plugin this is, of the defined
 				// set of Grafana plugin types.
-				type: #Type
-
-				// Type is a string identifier of the Grafana plugin type.
-				#Type: "app" | "datasource" | "panel" | "renderer" | "secretsmanager"
+				type: or(_types)
 
 				// IncludeType is a string identifier of a plugin include type, which is
 				// a superset of plugin types.
-				#IncludeType: #Type | "dashboard" | "page"
+				#IncludeType: type | "dashboard" | "page"
 
 				// Human-readable name of the plugin that is shown to the user in
 				// the UI.
