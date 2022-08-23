@@ -56,6 +56,24 @@ export enum PromApplication {
   Prometheus = 'Prometheus',
 }
 
+export interface PromBuilderInfoSeriesMetric {
+  metric: {
+    branch: string;
+    goversion: string;
+    instance: string;
+    job: string;
+    revision: string;
+    version: string;
+  };
+}
+export interface PromBuildInfoSeriesResponse {
+  status: string;
+  data: {
+    resultType: string;
+    result: PromBuilderInfoSeriesMetric[];
+  };
+}
+
 export interface PromBuildInfoResponse {
   data: {
     application?: string;
@@ -72,6 +90,7 @@ export interface PromBuildInfoResponse {
 }
 
 export interface PromApiFeatures {
+  version?: string;
   application?: PromApplication;
   features: {
     rulerApiEnabled: boolean;

@@ -6,6 +6,7 @@ import {
   PromApiFeatures,
   PromApplication,
   PromBuildInfoResponse,
+  PromBuildInfoSeriesResponse,
 } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
@@ -61,13 +62,22 @@ export async function discoverDataSourceFeatures(dsSettings: {
   // The current implementation of Loki's build info endpoint is useless
   // because it doesn't provide information about Loki's available features (e.g. Ruler API)
   // It's better to skip fetching it for Loki and go the Cortex path (manual discovery)
-  const buildInfoResponse = type === 'loki' ? undefined : await fetchPromBuildInfo(url);
 
+  let fallBackInfoResponse: PromBuildInfoSeriesResponse | undefined;
+  const isLoki = type === 'loki';
+  const buildInfoResponse = isLoki
+    ? undefined
+    : await fetchPromBuildInfo(url).catch(async (e) => {
+        fallBackInfoResponse = await fetchPromBuildInfoFallback(url);
+      });
+
+  const metric = fallBackInfoResponse?.data.result[0].metric;
   // check if the component returns buildinfo
   const hasBuildInfo = buildInfoResponse !== undefined;
 
+  // Assuming we couldn't get build info, and the fetchPromBuildInfo didn't throw an Error causing the fallback to get triggered,
   // we are dealing with a Cortex or Loki datasource since the response for buildinfo came up empty
-  if (!hasBuildInfo) {
+  if (!hasBuildInfo && !metric) {
     // check if we can fetch rules via the prometheus compatible api
     const promRulesSupported = await hasPromRulesSupport(name);
     if (!promRulesSupported) {
@@ -81,6 +91,17 @@ export async function discoverDataSourceFeatures(dsSettings: {
       application: PromApplication.Lotex,
       features: {
         rulerApiEnabled: rulerSupported,
+      },
+    };
+  }
+
+  // Otherwise if we don't have build info, but we did trigger the fallback, we should be dealing with a prometheus datasource that's older than 2.14.0
+  else if (!hasBuildInfo) {
+    return {
+      version: metric?.version,
+      application: PromApplication.Prometheus,
+      features: {
+        rulerApiEnabled: false,
       },
     };
   }
@@ -145,18 +166,34 @@ function getDataSourceConfig(amSourceName: string) {
 }
 
 export async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResponse | undefined> {
+  // This API endpoint only works on versions of prometheus 2.14.0 and up
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromBuildInfoResponse>({
       url: `${url}/api/v1/status/buildinfo`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-  ).catch((e) => {
+  ).catch(async (e) => {
     if ('status' in e && e.status === 404) {
       return undefined; // Cortex does not support buildinfo endpoint, we return an empty response
     }
 
     throw e;
+  });
+
+  return response?.data;
+}
+
+export async function fetchPromBuildInfoFallback(url: string): Promise<PromBuildInfoSeriesResponse | undefined> {
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<PromBuildInfoSeriesResponse>({
+      url: `${url}/api/v1/query?query=prometheus_build_info`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  ).catch((e) => {
+    // We have failed to get the version number
+    return undefined;
   });
 
   return response?.data;
