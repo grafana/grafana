@@ -46,6 +46,11 @@ type AlertsSender interface {
 	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
 
+// RulesStore is a store that provides alert rules for scheduling
+type RulesStore interface {
+	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
+}
+
 type schedule struct {
 	// base tick rate (fastest possible configured check)
 	baseInterval time.Duration
@@ -73,7 +78,7 @@ type schedule struct {
 
 	evaluator eval.Evaluator
 
-	ruleStore store.RuleStore
+	ruleStore RulesStore
 
 	stateManager *state.Manager
 
@@ -100,7 +105,7 @@ type SchedulerCfg struct {
 	EvalAppliedFunc func(ngmodels.AlertRuleKey, time.Time)
 	StopAppliedFunc func(ngmodels.AlertRuleKey)
 	Evaluator       eval.Evaluator
-	RuleStore       store.RuleStore
+	RuleStore       RulesStore
 	InstanceStore   store.InstanceStore
 	Metrics         *metrics.Scheduler
 	AlertSender     AlertsSender
