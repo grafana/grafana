@@ -172,7 +172,7 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 		ruleInfo.stop(errRuleDeleted)
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
-	alertRules := sch.schedulableAlertRules.all()
+	alertRules, _ := sch.schedulableAlertRules.all()
 	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
 	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
@@ -194,7 +194,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			if err := sch.updateSchedulableAlertRules(ctx); err != nil {
 				sch.log.Error("scheduler failed to update alert rules", "err", err)
 			}
-			alertRules := sch.schedulableAlertRules.all()
+			alertRules, _ := sch.schedulableAlertRules.all()
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle

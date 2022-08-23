@@ -233,25 +233,33 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 
 func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	r := alertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.AlertRule)}
-	assert.Len(t, r.all(), 0)
+	rules, folders := r.all()
+	assert.Len(t, rules, 0)
+	assert.Len(t, folders, 0)
 
+	expectedFolders := map[string]string{"test-uid": "test-title"}
 	// replace all rules in the registry with foo
-	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}})
-	assert.Len(t, r.all(), 1)
+	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}}, expectedFolders)
+	rules, folders = r.all()
+	assert.Len(t, rules, 1)
+	assert.Equal(t, expectedFolders, folders)
+
 	foo := r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
 	require.NotNil(t, foo)
 	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 1}, *foo)
 
 	// update foo to a newer version
 	r.update(&models.AlertRule{OrgID: 1, UID: "foo", Version: 2})
-	assert.Len(t, r.all(), 1)
+	rules, _ = r.all()
+	assert.Len(t, rules, 1)
 	foo = r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
 	require.NotNil(t, foo)
 	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 2}, *foo)
 
 	// update bar which does not exist in the registry
 	r.update(&models.AlertRule{OrgID: 1, UID: "bar", Version: 1})
-	assert.Len(t, r.all(), 2)
+	rules, _ = r.all()
+	assert.Len(t, rules, 2)
 	foo = r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
 	require.NotNil(t, foo)
 	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 2}, *foo)
@@ -260,8 +268,10 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "bar", Version: 1}, *bar)
 
 	// replace all rules in the registry with baz
-	r.set([]*models.AlertRule{{OrgID: 1, UID: "baz", Version: 1}})
-	assert.Len(t, r.all(), 1)
+	r.set([]*models.AlertRule{{OrgID: 1, UID: "baz", Version: 1}}, nil)
+	rules, folders = r.all()
+	assert.Len(t, rules, 1)
+	assert.Nil(t, folders)
 	baz := r.get(models.AlertRuleKey{OrgID: 1, UID: "baz"})
 	require.NotNil(t, baz)
 	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "baz", Version: 1}, *baz)
@@ -273,7 +283,9 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	assert.True(t, ok)
 	require.NotNil(t, deleted)
 	assert.Equal(t, *deleted, *baz)
-	assert.Len(t, r.all(), 0)
+	rules, folders = r.all()
+	assert.Len(t, rules, 0)
+	assert.Len(t, folders, 0)
 	assert.Nil(t, r.get(models.AlertRuleKey{OrgID: 1, UID: "baz"}))
 
 	// baz cannot be deleted twice
