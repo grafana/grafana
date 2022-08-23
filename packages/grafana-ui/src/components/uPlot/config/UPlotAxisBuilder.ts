@@ -1,6 +1,15 @@
 import uPlot, { Axis } from 'uplot';
 
-import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
+import {
+  dateTimeFormat,
+  DecimalCount,
+  GrafanaTheme2,
+  guessDecimals,
+  isBooleanUnit,
+  roundDecimals,
+  systemDateFormats,
+  TimeZone,
+} from '@grafana/data';
 import { AxisPlacement } from '@grafana/schema';
 
 import { measureText } from '../../../utils/measureText';
@@ -21,7 +30,7 @@ export interface AxisProps {
   ticks?: Axis.Ticks;
   filter?: Axis.Filter;
   space?: Axis.Space;
-  formatValue?: (v: any) => string;
+  formatValue?: (v: any, decimals?: DecimalCount) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: Axis.Values;
@@ -151,7 +160,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         ticks
       ),
       splits,
-      values: values,
+      values,
       space:
         space ??
         ((self, axisIdx, scaleMin, scaleMax, plotDim) => {
@@ -176,7 +185,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map(formatValue!);
+      config.values = (u: uPlot, splits, axisIdx, tickSpace, tickIncr) => {
+        let decimals = guessDecimals(roundDecimals(tickIncr, 6));
+        return splits.map((v) => formatValue!(v, decimals > 0 ? decimals : undefined));
+      };
     }
 
     // store timezone
@@ -227,7 +239,7 @@ export function formatTime(
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map((v) => dateTimeFormat(v, { format, timeZone }));
+  return splits.map((v) => (v == null ? '' : dateTimeFormat(v, { format, timeZone })));
 }
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {

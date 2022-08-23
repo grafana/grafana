@@ -92,7 +92,7 @@ func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 //   - true when message was sent
 //   - false when the send operation is stopped
 // the second element contains a dropped message that was sent by a concurrent sender.
-func (a *alertRuleInfo) eval(t time.Time, version int64) (bool, *evaluation) {
+func (a *alertRuleInfo) eval(t time.Time, rule *models.AlertRule) (bool, *evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *evaluation
 	select {
@@ -103,7 +103,7 @@ func (a *alertRuleInfo) eval(t time.Time, version int64) (bool, *evaluation) {
 	select {
 	case a.evalCh <- &evaluation{
 		scheduledAt: t,
-		version:     version,
+		rule:        rule,
 	}:
 		return true, droppedMsg
 	case <-a.ctx.Done():
@@ -136,52 +136,52 @@ func (a *alertRuleInfo) update(lastVersion ruleVersion) bool {
 
 type evaluation struct {
 	scheduledAt time.Time
-	version     int64
+	rule        *models.AlertRule
 }
 
-type schedulableAlertRulesRegistry struct {
-	rules map[models.AlertRuleKey]*models.SchedulableAlertRule
+type alertRulesRegistry struct {
+	rules map[models.AlertRuleKey]*models.AlertRule
 	mu    sync.Mutex
 }
 
 // all returns all rules in the registry.
-func (r *schedulableAlertRulesRegistry) all() []*models.SchedulableAlertRule {
+func (r *alertRulesRegistry) all() []*models.AlertRule {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	result := make([]*models.SchedulableAlertRule, 0, len(r.rules))
+	result := make([]*models.AlertRule, 0, len(r.rules))
 	for _, rule := range r.rules {
 		result = append(result, rule)
 	}
 	return result
 }
 
-func (r *schedulableAlertRulesRegistry) get(k models.AlertRuleKey) *models.SchedulableAlertRule {
+func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	return r.rules[k]
 }
 
 // set replaces all rules in the registry.
-func (r *schedulableAlertRulesRegistry) set(rules []*models.SchedulableAlertRule) {
+func (r *alertRulesRegistry) set(rules []*models.AlertRule) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.rules = make(map[models.AlertRuleKey]*models.SchedulableAlertRule)
+	r.rules = make(map[models.AlertRuleKey]*models.AlertRule)
 	for _, rule := range rules {
 		r.rules[rule.GetKey()] = rule
 	}
 }
 
 // update inserts or replaces a rule in the registry.
-func (r *schedulableAlertRulesRegistry) update(rule *models.SchedulableAlertRule) {
+func (r *alertRulesRegistry) update(rule *models.AlertRule) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.rules[rule.GetKey()] = rule
 }
 
-// del removes pair that has specific key from schedulableAlertRulesRegistry.
+// del removes pair that has specific key from alertRulesRegistry.
 // Returns 2-tuple where the first element is value of the removed pair
 // and the second element indicates whether element with the specified key existed.
-func (r *schedulableAlertRulesRegistry) del(k models.AlertRuleKey) (*models.SchedulableAlertRule, bool) {
+func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	rule, ok := r.rules[k]

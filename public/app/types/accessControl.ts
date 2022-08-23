@@ -50,6 +50,7 @@ export enum AccessControlAction {
   DataSourcesWrite = 'datasources:write',
   DataSourcesDelete = 'datasources:delete',
   DataSourcesPermissionsRead = 'datasources.permissions:read',
+  DataSourcesCachingRead = 'datasources.caching:read',
   DataSourcesInsightsRead = 'datasources.insights:read',
 
   ActionServerStatsRead = 'server.stats:read',
@@ -62,7 +63,6 @@ export enum AccessControlAction {
   ActionTeamsPermissionsWrite = 'teams.permissions:write',
 
   ActionRolesList = 'roles:read',
-  ActionBuiltinRolesList = 'roles.builtin:list',
   ActionTeamsRolesList = 'teams.roles:read',
   ActionTeamsRolesAdd = 'teams.roles:add',
   ActionTeamsRolesRemove = 'teams.roles:remove',

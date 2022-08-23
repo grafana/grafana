@@ -123,7 +123,7 @@ describe('NativeSearch', () => {
     expect(select).toBeInTheDocument();
 
     await user.type(select, 'd');
-    var option = await screen.findByText('driver');
+    let option = await screen.findByText('driver');
     expect(option).toBeDefined();
 
     await user.type(select, 'a');
@@ -149,7 +149,7 @@ describe('NativeSearch', () => {
     jest.advanceTimersByTime(3000);
 
     await user.type(asyncServiceSelect, '$');
-    var serviceOption = await screen.findByText('$service');
+    const serviceOption = await screen.findByText('$service');
     expect(serviceOption).toBeDefined();
 
     const asyncSpanSelect = screen.getByRole('combobox', { name: 'select-span-name' });
@@ -158,7 +158,7 @@ describe('NativeSearch', () => {
     jest.advanceTimersByTime(3000);
 
     await user.type(asyncSpanSelect, '$');
-    var operationOption = await screen.findByText('$span');
+    const operationOption = await screen.findByText('$span');
     expect(operationOption).toBeDefined();
   });
 });

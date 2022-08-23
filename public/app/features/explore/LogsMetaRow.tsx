@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
-import { Button, Tooltip, Icon, LogLabels } from '@grafana/ui';
+import { Button, Tooltip, LogLabels } from '@grafana/ui';
 import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
 
 import { MetaInfoText, MetaItemProps } from './MetaInfoText';
@@ -77,8 +77,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
             placement="right"
           >
             <Button variant="secondary" size="sm" onClick={onEscapeNewlines}>
-              <span>{forceEscape ? 'Remove escaping' : 'Escape newlines'}&nbsp;</span>
-              <Icon name="exclamation-triangle" className="muted" size="sm" />
+              {forceEscape ? 'Remove escaping' : 'Escape newlines'}
             </Button>
           </Tooltip>
         ),
@@ -106,11 +105,7 @@ LogsMetaRow.displayName = 'LogsMetaRow';
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
-    return (
-      <span className="logs-meta-item__labels">
-        <LogLabels labels={value} />
-      </span>
-    );
+    return <LogLabels labels={value} />;
   } else if (kind === LogsMetaKind.Error) {
     return <span className="logs-meta-item__error">{value}</span>;
   }

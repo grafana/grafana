@@ -1,7 +1,12 @@
 import { DataFrame, QueryHint } from '@grafana/data';
 
-import { isQueryPipelineErrorFiltering, isQueryWithParser } from './query_utils';
-import { extractHasErrorLabelFromDataFrame, extractLogParserFromDataFrame } from './responseUtils';
+import { isQueryPipelineErrorFiltering, isQueryWithLabelFormat, isQueryWithParser } from './query_utils';
+import {
+  dataFrameHasLevelLabel,
+  extractHasErrorLabelFromDataFrame,
+  extractLevelLikeLabelFromDataFrame,
+  extractLogParserFromDataFrame,
+} from './responseUtils';
 
 export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
   if (series.length === 0) {
@@ -60,6 +65,31 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
           },
         });
       }
+    }
+  }
+
+  const queryWithLabelFormat = isQueryWithLabelFormat(query);
+  if (!queryWithLabelFormat) {
+    const hasLevel = dataFrameHasLevelLabel(series[0]);
+    const levelLikeLabel = extractLevelLikeLabelFromDataFrame(series[0]);
+
+    // Add hint only if we don't have "level" label and have level-like label
+    if (!hasLevel && levelLikeLabel) {
+      hints.push({
+        type: 'ADD_LEVEL_LABEL_FORMAT',
+        label: `Some logs in your selected log stream have "${levelLikeLabel}" label.`,
+        fix: {
+          label: `If ${levelLikeLabel} label has level values, consider using label_format to rename it to "level". Level label can be then visualized in log volumes.`,
+          action: {
+            type: 'ADD_LEVEL_LABEL_FORMAT',
+            query,
+            options: {
+              renameTo: 'level',
+              originalLabel: levelLikeLabel,
+            },
+          },
+        },
+      });
     }
   }
 

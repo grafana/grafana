@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 
 	models2 "github.com/grafana/grafana/pkg/models"
@@ -183,14 +184,7 @@ func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.
 		return err
 	}
 	for _, rules := range f.Rules {
-		for _, rule := range rules {
-			q.Result = append(q.Result, &models.SchedulableAlertRule{
-				UID:             rule.UID,
-				OrgID:           rule.OrgID,
-				IntervalSeconds: rule.IntervalSeconds,
-				Version:         rule.Version,
-			})
-		}
+		q.Result = append(q.Result, rules...)
 	}
 	return nil
 }
@@ -269,7 +263,7 @@ func (f *FakeRuleStore) GetRuleGroups(_ context.Context, q *models.ListRuleGroup
 	return nil
 }
 
-func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *models2.SignedInUser) (map[string]*models2.Folder, error) {
+func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *user.SignedInUser) (map[string]*models2.Folder, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
@@ -286,7 +280,7 @@ func (f *FakeRuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64,
 	return namespacesMap, nil
 }
 
-func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *models2.SignedInUser, _ bool) (*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser, _ bool) (*models2.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {
@@ -296,7 +290,7 @@ func (f *FakeRuleStore) GetNamespaceByTitle(_ context.Context, title string, org
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *models2.SignedInUser) (*models2.Folder, error) {
+func (f *FakeRuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ *user.SignedInUser) (*models2.Folder, error) {
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
 		Params: []interface{}{orgID, uid},
@@ -356,6 +350,30 @@ func (f *FakeRuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namesp
 		}
 	}
 	return nil
+}
+
+func (f *FakeRuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "IncreaseVersionForAllRulesInNamespace",
+		Params: []interface{}{orgID, namespaceUID},
+	})
+
+	var result []models.AlertRuleKeyWithVersion
+
+	for _, rule := range f.Rules[orgID] {
+		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
+			rule.Version++
+			rule.Updated = TimeNow()
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
+			})
+		}
+	}
+	return result, nil
 }
 
 type FakeInstanceStore struct {

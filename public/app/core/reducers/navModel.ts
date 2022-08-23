@@ -12,13 +12,15 @@ export function buildInitialState(): NavIndex {
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   for (const node of children) {
-    navIndex[node.id!] = {
+    const newNode = {
       ...node,
       parentItem: parentItem,
     };
 
+    navIndex[node.id!] = newNode;
+
     if (node.children) {
-      buildNavIndex(navIndex, node.children, node);
+      buildNavIndex(navIndex, node.children, newNode);
     }
   }
 

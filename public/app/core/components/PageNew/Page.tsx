@@ -4,9 +4,8 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
-// Components
-import { appChromeService } from '../AppChrome/AppChromeService';
 import { Footer } from '../Footer/Footer';
 import { PageLayoutType, PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
@@ -31,6 +30,7 @@ export const Page: PageType = ({
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
+  const { chrome } = useGrafana();
 
   usePageTitle(navModel, pageNav);
 
@@ -38,12 +38,12 @@ export const Page: PageType = ({
 
   useEffect(() => {
     if (navModel) {
-      appChromeService.update({
+      chrome.update({
         sectionNav: navModel.node,
         ...(pageNav && { pageNav }),
       });
     }
-  }, [navModel, pageNav]);
+  }, [navModel, pageNav, chrome]);
 
   return (
     <div className={cx(styles.wrapper, className)}>

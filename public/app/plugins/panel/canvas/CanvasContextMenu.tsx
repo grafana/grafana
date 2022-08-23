@@ -4,8 +4,7 @@ import { useObservable } from 'react-use';
 import { first } from 'rxjs/operators';
 
 import { ContextMenu, MenuItem } from '@grafana/ui';
-
-import { Scene } from '../../../features/canvas/runtime/scene';
+import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { activePanelSubject } from './CanvasPanel';
 import { LayerActionID } from './types';

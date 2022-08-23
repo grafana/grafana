@@ -16,7 +16,7 @@ import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { GroupBy } from './GroupByWithLoading';
 import { UnifiedAlertList } from './UnifiedAlertList';
 import { AlertListSuggestionsSupplier } from './suggestions';
-import { AlertListOptions, GroupMode, ShowOption, SortOrder, UnifiedAlertListOptions } from './types';
+import { AlertListOptions, GroupMode, ShowOption, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 
 function showIfCurrentState(options: AlertListOptions) {
   return options.showOptions === ShowOption.Current;
@@ -155,6 +155,19 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertList).setPanelOptions((builder) => {
   builder
+    .addRadio({
+      path: 'viewMode',
+      name: 'View mode',
+      description: 'Toggle between list view and stat view',
+      defaultValue: ViewMode.List,
+      settings: {
+        options: [
+          { label: 'List', value: ViewMode.List },
+          { label: 'Stat', value: ViewMode.Stat },
+        ],
+      },
+      category: ['Options'],
+    })
     .addRadio({
       path: 'groupMode',
       name: 'Group mode',

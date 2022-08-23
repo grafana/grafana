@@ -109,6 +109,9 @@ func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJson
 		if err != nil {
 			return nil, err
 		}
+		if secureJsonData["clientSecret"] == "" {
+			return nil, fmt.Errorf("unable to instantiate credentials, clientSecret must be set")
+		}
 		credentials := &azcredentials.AzureClientSecretCredentials{
 			AzureCloud:   cloud,
 			TenantId:     jsonData.Get("tenantId").MustString(),

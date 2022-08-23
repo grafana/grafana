@@ -1,11 +1,11 @@
-import { Story, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React, { useState, ChangeEvent } from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { SecretTextArea, Props } from './SecretTextArea';
+import { SecretTextArea } from './SecretTextArea';
 
-export default {
+const meta: ComponentMeta<typeof SecretTextArea> = {
   title: 'Forms/SecretTextArea',
   component: SecretTextArea,
   decorators: [withCenteredStory],
@@ -34,9 +34,9 @@ export default {
     rows: { control: { type: 'range', min: 1, max: 50, step: 1 } },
     cols: { control: { type: 'range', min: 1, max: 200, step: 10 } },
   },
-} as Meta;
+};
 
-const Template: Story<Props> = (args) => {
+const Template: ComponentStory<typeof SecretTextArea> = (args) => {
   const [secret, setSecret] = useState('');
 
   return (
@@ -63,3 +63,5 @@ export const secretIsConfigured = Template.bind({});
 secretIsConfigured.args = {
   isConfigured: true,
 };
+
+export default meta;

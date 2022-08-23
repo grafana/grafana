@@ -1,3 +1,4 @@
+import { ComponentMeta } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
 import { VerticalGroup } from '../Layout/Layout';
@@ -6,7 +7,7 @@ import { Checkbox } from './Checkbox';
 import mdx from './Checkbox.mdx';
 import { Field } from './Field';
 
-export default {
+const meta: ComponentMeta<typeof Checkbox> = {
   title: 'Forms/Checkbox',
   component: Checkbox,
   parameters: {
@@ -79,3 +80,5 @@ export const InAField = () => {
     </div>
   );
 };
+
+export default meta;

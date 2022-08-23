@@ -75,7 +75,7 @@ You can configure report-specific template variables for the dashboard on the re
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
 
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to the [Repeat panels or rows]({{< relref "../panels/add-panels-dynamically/" >}}) section.
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to the [Repeat panels or rows]({{< relref "../panels/configure-panel-options/#configure-repeating-rows-or-panels" >}}) section.
 
 #### Caveats:
 

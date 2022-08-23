@@ -100,7 +100,7 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   const putSpy = jest.spyOn(backendSrv, 'put');
   const getSpy = jest
     .spyOn(backendSrv, 'get')
-    .mockResolvedValue({ timezone: 'UTC', homeDashboardId: 0, theme: 'dark' });
+    .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
   const props = { ...defaultProps, ...overrides };

@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/mail"
 	"regexp"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"golang.org/x/oauth2"
 )
 
@@ -180,7 +181,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		userInfo.Login = userInfo.Email
 	}
 
-	if s.roleAttributeStrict && !models.RoleType(userInfo.Role).IsValid() {
+	if s.roleAttributeStrict && !org.RoleType(userInfo.Role).IsValid() {
 		return nil, errors.New("invalid role")
 	}
 
@@ -258,7 +259,7 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 				s.log.Warn("Failed closing zlib reader", "error", err)
 			}
 		}()
-		rawJSON, err = ioutil.ReadAll(fr)
+		rawJSON, err = io.ReadAll(fr)
 		if err != nil {
 			s.log.Error("Error decompressing payload", "error", err)
 			return nil

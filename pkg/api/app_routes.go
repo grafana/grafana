@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -49,10 +50,10 @@ func (hs *HTTPServer) initAppPluginRoutes(r *web.Mux) {
 				ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))))
 
 			if route.ReqRole != "" {
-				if route.ReqRole == models.ROLE_ADMIN {
-					handlers = append(handlers, middleware.RoleAuth(models.ROLE_ADMIN))
-				} else if route.ReqRole == models.ROLE_EDITOR {
-					handlers = append(handlers, middleware.RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN))
+				if route.ReqRole == org.RoleAdmin {
+					handlers = append(handlers, middleware.RoleAuth(org.RoleAdmin))
+				} else if route.ReqRole == org.RoleEditor {
+					handlers = append(handlers, middleware.RoleAuth(org.RoleEditor, org.RoleAdmin))
 				}
 			}
 

@@ -51,11 +51,11 @@ See [configuration examples](#configuration-examples) for more information.
 ```bash
 [[servers]]
 # Ldap server host (specify multiple hosts space separated)
-host = "127.0.0.1"
+host = "ldap.my_secure_remote_server.org"
 # Default port is 389 or 636 if use_ssl = true
-port = 389
+port = 636
 # Set to true if LDAP server should use an encrypted TLS connection (either with STARTTLS or LDAPS)
-use_ssl = false
+use_ssl = true
 # If set to true, use LDAP with STARTTLS instead of LDAPS
 start_tls = false
 # set to true if you want to skip SSL cert validation

@@ -2,59 +2,79 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "9.1.0-pre",
+  "version": "9.2.0-pre",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
     "typescript"
   ],
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git",
     "directory": "packages/grafana-runtime"
   },
   "main": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
   "scripts": {
-    "build": "grafana-toolkit package:build --scope=runtime",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
-    "clean": "rimraf ./dist ./compiled",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
-    "@grafana/agent-web": "^0.3.0",
-    "@grafana/data": "9.1.0-pre",
-    "@grafana/e2e-selectors": "9.1.0-pre",
-    "@grafana/ui": "9.1.0-pre",
+    "@grafana/agent-web": "^0.4.0",
+    "@grafana/data": "9.2.0-pre",
+    "@grafana/e2e-selectors": "9.2.0-pre",
+    "@grafana/ui": "9.2.0-pre",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
-    "rxjs": "7.5.5",
+    "rxjs": "7.5.6",
     "systemjs": "0.20.19",
     "tslib": "2.4.0"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
-    "@rollup/plugin-commonjs": "22.0.0",
+    "@rollup/plugin-commonjs": "22.0.1",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@testing-library/dom": "8.13.0",
     "@testing-library/react": "12.1.4",
-    "@testing-library/user-event": "14.2.0",
+    "@testing-library/user-event": "14.3.0",
     "@types/angular": "1.8.4",
     "@types/history": "4.7.11",
-    "@types/jest": "28.1.1",
+    "@types/jest": "28.1.6",
     "@types/lodash": "4.14.182",
     "@types/react": "17.0.42",
     "@types/react-dom": "17.0.14",
     "@types/systemjs": "^0.20.6",
+    "esbuild": "^0.14.47",
     "lodash": "4.17.21",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
     "rimraf": "3.0.2",
-    "rollup": "2.75.6",
+    "rollup": "2.77.2",
+    "rollup-plugin-dts": "^4.2.2",
+    "rollup-plugin-esbuild": "^4.9.1",
+    "rollup-plugin-node-externals": "^4.1.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.6.4"
+    "typescript": "4.7.4"
   },
-  "types": "src/index.ts"
+  "peerDependencies": {
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
+  }
 }

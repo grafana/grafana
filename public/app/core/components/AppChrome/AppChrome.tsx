@@ -4,10 +4,10 @@ import React, { PropsWithChildren } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 
-import { appChromeService } from './AppChromeService';
 import { NavToolbar } from './NavToolbar';
 import { TopSearchBar } from './TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -16,10 +16,11 @@ export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
-  const state = appChromeService.useState();
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
 
   if (state.chromeless || !config.featureToggles.topnav) {
-    return <main className="main-view">{children} </main>;
+    return <main className="main-view">{children}</main>;
   }
 
   return (
@@ -31,14 +32,12 @@ export function AppChrome({ children }: Props) {
           sectionNav={state.sectionNav}
           pageNav={state.pageNav}
           actions={state.actions}
-          onToggleSearchBar={appChromeService.toggleSearchBar}
-          onToggleMegaMenu={appChromeService.toggleMegaMenu}
+          onToggleSearchBar={chrome.toggleSearchBar}
+          onToggleMegaMenu={chrome.toggleMegaMenu}
         />
       </div>
       <div className={cx(styles.content, state.searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
-      {state.megaMenuOpen && (
-        <MegaMenu searchBarHidden={state.searchBarHidden} onClose={appChromeService.toggleMegaMenu} />
-      )}
+      <MegaMenu searchBarHidden={state.searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
     </main>
   );
 }

@@ -245,6 +245,25 @@ describe('VariableEditor:', () => {
       );
     });
 
+    it('should clean up related fields', async () => {
+      const onChange = jest.fn();
+      const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
+      // wait for initial load
+      await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
+      // Select a new query type
+      await selectAndRerender('select query type', 'Subscriptions', onChange, rerender);
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryType: AzureQueryType.SubscriptionsQuery,
+          subscription: undefined,
+          resourceGroup: undefined,
+          namespace: undefined,
+          resource: undefined,
+          refId: 'A',
+        })
+      );
+    });
+
     it('should run the query if requesting workspaces', async () => {
       const onChange = jest.fn();
       const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);

@@ -149,6 +149,10 @@ const VariableEditor = (props: Props) => {
       onChange({
         ...query,
         queryType: selectableValue.value,
+        subscription: undefined,
+        resourceGroup: undefined,
+        namespace: undefined,
+        resource: undefined,
       });
     }
   };
@@ -158,6 +162,9 @@ const VariableEditor = (props: Props) => {
       onChange({
         ...query,
         subscription: selectableValue.value,
+        resourceGroup: undefined,
+        namespace: undefined,
+        resource: undefined,
       });
     }
   };
@@ -166,6 +173,8 @@ const VariableEditor = (props: Props) => {
     onChange({
       ...query,
       resourceGroup: selectableValue.value,
+      namespace: undefined,
+      resource: undefined,
     });
   };
 
@@ -173,6 +182,7 @@ const VariableEditor = (props: Props) => {
     onChange({
       ...query,
       namespace: selectableValue.value,
+      resource: undefined,
     });
   };
 
@@ -229,7 +239,7 @@ const VariableEditor = (props: Props) => {
             onChange={onChangeSubscription}
             options={subscriptions.concat(variableOptionGroup)}
             width={25}
-            value={query.subscription}
+            value={query.subscription || null}
           />
         </InlineField>
       )}
@@ -244,8 +254,8 @@ const VariableEditor = (props: Props) => {
                 : resourceGroups.concat(variableOptionGroup, removeOption)
             }
             width={25}
-            value={query.resourceGroup}
-            placeholder={requireResourceGroup ? '' : 'Optional'}
+            value={query.resourceGroup || null}
+            placeholder={requireResourceGroup ? undefined : 'Optional'}
           />
         </InlineField>
       )}
@@ -260,8 +270,8 @@ const VariableEditor = (props: Props) => {
                 : namespaces.concat(variableOptionGroup, removeOption)
             }
             width={25}
-            value={query.namespace}
-            placeholder={requireNamespace ? '' : 'Optional'}
+            value={query.namespace || null}
+            placeholder={requireNamespace ? undefined : 'Optional'}
           />
         </InlineField>
       )}
@@ -272,7 +282,7 @@ const VariableEditor = (props: Props) => {
             onChange={onChangeResource}
             options={resources.concat(variableOptionGroup)}
             width={25}
-            value={query.resource}
+            value={query.resource || null}
           />
         </InlineField>
       )}

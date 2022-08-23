@@ -4,6 +4,7 @@ import { NavModel } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
 import { NewDataSource } from '../components/NewDataSource';
+import { DATASOURCES_ROUTES } from '../constants';
 
 const navModel = getNavModel();
 
@@ -22,7 +23,7 @@ export function getNavModel(): NavModel {
     icon: 'database',
     id: 'datasource-new',
     text: 'Add data source',
-    href: 'datasources/new',
+    href: DATASOURCES_ROUTES.New,
     subTitle: 'Choose a data source type',
   };
 

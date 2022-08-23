@@ -66,8 +66,9 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	return manager
 }
 
-func (st *Manager) Close() {
+func (st *Manager) Close(ctx context.Context) {
 	st.quit <- struct{}{}
+	st.flushState(ctx)
 }
 
 func (st *Manager) Warm(ctx context.Context) {
@@ -158,8 +159,11 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
+// ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
+// if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
-	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
+	logger := st.log.New(alertRule.GetKey().LogContext())
+	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
@@ -167,7 +171,13 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
+
 	st.cleanupStaleResults(ctx, evaluatedAt, alertRule, processedResults)
+	if len(states) > 0 {
+		logger.Debug("saving new states to the database", "count", len(states))
+		_, _ = st.saveAlertStates(ctx, states...)
+	}
+
 	return states
 }
 
@@ -295,6 +305,80 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
+// flushState dumps the entire state to the database
+func (st *Manager) flushState(ctx context.Context) {
+	t := st.clock.Now()
+	st.log.Info("flushing the state")
+	st.cache.mtxStates.Lock()
+	defer st.cache.mtxStates.Unlock()
+	totalStates, errorsCnt := 0, 0
+	var stateSlice []*State
+	for _, orgStates := range st.cache.states {
+		for _, ruleStates := range orgStates {
+			stateSlice = stateSlice[:0]
+			for _, state := range ruleStates {
+				stateSlice = append(stateSlice, state)
+			}
+			savedCount, failedCount := st.saveAlertStates(ctx, stateSlice...)
+			if failedCount != 0 {
+				st.log.Error("failed to save alert states.", "count", failedCount)
+			}
+			errorsCnt += failedCount
+			totalStates += savedCount
+		}
+	}
+
+	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
+}
+
+// TODO: Is the `State` type necessary? Should it embed the instance?
+func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved, failed int) {
+	st.log.Debug("saving alert states", "count", len(states))
+	instances := make([]models.AlertInstance, 0, len(states))
+
+	type debugInfo struct {
+		OrgID  int64
+		Uid    string
+		State  string
+		Labels string
+	}
+	debug := make([]debugInfo, 0)
+
+	for _, s := range states {
+		labels := models.InstanceLabels(s.Labels)
+		_, hash, err := labels.StringAndHash()
+		if err != nil {
+			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.String(), s.Labels.String()})
+			st.log.Error("failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "err", err)
+			continue
+		}
+		fields := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  s.OrgID,
+				RuleUID:    s.AlertRuleUID,
+				LabelsHash: hash,
+			},
+			Labels:            models.InstanceLabels(s.Labels),
+			CurrentState:      models.InstanceStateType(s.State.String()),
+			CurrentReason:     s.StateReason,
+			LastEvalTime:      s.LastEvaluationTime,
+			CurrentStateSince: s.StartsAt,
+			CurrentStateEnd:   s.EndsAt,
+		}
+		instances = append(instances, fields)
+	}
+	err := st.instanceStore.SaveAlertInstances(ctx, instances...)
+	if err != nil {
+		for _, inst := range instances {
+			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
+		}
+		st.log.Error("failed to save alert states", "states", debug, "err", err)
+		return 0, len(debug)
+	}
+
+	return len(instances), len(debug)
+}
+
 // TODO: why wouldn't you allow other types like NoData or Error?
 func translateInstanceState(state models.InstanceStateType) eval.State {
 	switch {
@@ -379,7 +463,7 @@ func (st *Manager) cleanupStaleResults(
 
 	for _, s := range allStates {
 		// Is the cached state in our recently processed results? If not, is it stale?
-		if _, ok := newStates[s.CacheId]; !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
+		if _, ok := newStates[s.CacheId]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
 			ilbs := models.InstanceLabels(s.Labels)
@@ -404,7 +488,7 @@ func (st *Manager) cleanupStaleResults(
 	}
 }
 
-func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
+func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
 }
 

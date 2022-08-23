@@ -1,13 +1,17 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // API related actions
@@ -71,11 +75,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	if setting.ViewersCanEdit {
-		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(models.ROLE_VIEWER))
+		datasourcesExplorerRole.Grants = append(datasourcesExplorerRole.Grants, string(org.RoleViewer))
 	}
 
 	datasourcesReaderRole := ac.RoleRegistration{
@@ -95,12 +99,33 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
+	builtInDatasourceReader := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:datasources.builtin:reader",
+			DisplayName: "Built in data source reader",
+			Description: "Read and query Grafana's built in test data sources.",
+			Group:       "Data sources",
+			Permissions: []ac.Permission{
+				{
+					Action: datasources.ActionRead,
+					Scope:  fmt.Sprintf("%s%s", datasources.ScopePrefix, grafanads.DatasourceUID),
+				},
+				{
+					Action: datasources.ActionQuery,
+					Scope:  fmt.Sprintf("%s%s", datasources.ScopePrefix, grafanads.DatasourceUID),
+				},
+			},
+			Hidden: true,
+		},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	// when running oss or enterprise without a license all users should be able to query data sources
 	if !hs.License.FeatureEnabled("accesscontrol.enforcement") {
-		datasourcesReaderRole.Grants = []string{string(models.ROLE_VIEWER)}
+		datasourcesReaderRole.Grants = []string{string(org.RoleViewer)}
 	}
 
 	datasourcesWriterRole := ac.RoleRegistration{
@@ -123,7 +148,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	datasourcesIdReaderRole := ac.RoleRegistration{
@@ -139,7 +164,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	apikeyReaderRole := ac.RoleRegistration{
@@ -155,7 +180,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			},
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	apikeyWriterRole := ac.RoleRegistration{
@@ -174,7 +199,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				},
 			}),
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	orgReaderRole := ac.RoleRegistration{
@@ -188,7 +213,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{Action: ActionOrgsQuotasRead},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER), ac.RoleGrafanaAdmin},
+		Grants: []string{string(org.RoleViewer), ac.RoleGrafanaAdmin},
 	}
 
 	orgWriterRole := ac.RoleRegistration{
@@ -203,7 +228,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{Action: ActionOrgsPreferencesWrite},
 			}),
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	orgMaintainerRole := ac.RoleRegistration{
@@ -222,20 +247,19 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{string(ac.RoleGrafanaAdmin)},
 	}
 
-	teamCreatorGrants := []string{string(models.ROLE_ADMIN)}
+	teamCreatorGrants := []string{string(org.RoleAdmin)}
 	if hs.Cfg.EditorsCanAdmin {
-		teamCreatorGrants = append(teamCreatorGrants, string(models.ROLE_EDITOR))
+		teamCreatorGrants = append(teamCreatorGrants, string(org.RoleEditor))
 	}
 	teamsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:teams:creator",
 			DisplayName: "Team creator",
-			Description: "Create teams and read organisation users and service accounts (required to manage the created teams).",
+			Description: "Create teams and read organisation users (required to manage the created teams).",
 			Group:       "Teams",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionTeamsCreate},
 				{Action: ac.ActionOrgUsersRead, Scope: ac.ScopeUsersAll},
-				{Action: serviceaccounts.ActionRead, Scope: serviceaccounts.ScopeAll},
 			},
 		},
 		Grants: teamCreatorGrants,
@@ -256,7 +280,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{Action: ac.ActionTeamsWrite, Scope: ac.ScopeTeamsAll},
 			},
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	annotationsReaderRole := ac.RoleRegistration{
@@ -269,7 +293,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsAll},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	dashboardAnnotationsWriterRole := ac.RoleRegistration{
@@ -284,7 +308,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeDashboard},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	annotationsWriterRole := ac.RoleRegistration{
@@ -299,7 +323,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsAll},
 			},
 		},
-		Grants: []string{string(models.ROLE_EDITOR)},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	dashboardsCreatorRole := ac.RoleRegistration{
@@ -396,7 +420,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 	}
 
 	return hs.AccessControl.DeclareFixedRoles(
-		provisioningWriterRole, datasourcesReaderRole, datasourcesWriterRole,
+		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
@@ -428,13 +452,6 @@ var orgsAccessEvaluator = ac.EvalPermission(ActionOrgsRead)
 var orgsCreateAccessEvaluator = ac.EvalAll(
 	ac.EvalPermission(ActionOrgsRead),
 	ac.EvalPermission(ActionOrgsCreate),
-)
-
-// usersInviteEvaluator is used to protect the "Configuration > Users > Invite" page access
-// accessible to org admins and server admins by default
-var usersInviteEvaluator = ac.EvalAny(
-	ac.EvalPermission(ac.ActionUsersCreate),
-	ac.EvalPermission(ac.ActionOrgUsersAdd),
 )
 
 // teamsAccessEvaluator is used to protect the "Configuration > Teams" page access

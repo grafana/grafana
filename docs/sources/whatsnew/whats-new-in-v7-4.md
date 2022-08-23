@@ -38,10 +38,10 @@ Apart from major performance improvements, the new Time series panel implements 
 The following documentation topics were added for this feature:
 
 - [Time series panel]({{< relref "../visualizations/time-series/" >}})
-- [Graph time series as lines]({{< relref "../visualizations/time-series/graph-time-series-as-lines/" >}})
-- [Graph time series as bars]({{< relref "../visualizations/time-series/graph-time-series-as-bars/" >}})
-- [Graph time series as points]({{< relref "../visualizations/time-series/graph-time-series-as-points/" >}})
-- [Change axis display]({{< relref "../visualizations/time-series/change-axis-display/" >}})
+- [Graph time series as lines]({{< relref "../visualizations/time-series#line-style" >}})
+- [Graph time series as bars]({{< relref "../visualizations/time-series#bar-alignment" >}})
+- [Graph time series as points]({{< relref "../visualizations/time-series#show-points" >}})
+- [Change axis display]({{< relref "../visualizations/time-series#axis-options" >}})
 
 ### Node graph panel visualization (Beta)
 
@@ -61,7 +61,7 @@ The following transformations were added in Grafana 7.4.
 
 The _Sort by_ transformation allows you to sort data before sending it to the visualization.
 
-For more information, refer to [Sort by]({{< relref "../panels/transform-data/transformation-functions/#sort-by" >}}).
+For more information, refer to [Sort by]({{< relref "../panels/transform-data/" >}}).
 
 #### Filter data by value transform
 
@@ -69,13 +69,13 @@ The new _Filter data by value_ transformation allows you to filter your data dir
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
-For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/transformation-functions/#filter-data-by-value" >}}).
+For more information, refer to [Filter data by value]({{< relref "../panels/transform-data/#filter-data-by-value" >}}).
 
 ### New override option
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [About field overrides]({{< relref "../panels/override-field-values/about-field-overrides/" >}}).
+For more information, refer to [About field overrides]({{< relref "../panels/configure-overrides" >}}).
 
 ### Exemplar support
 
@@ -113,8 +113,6 @@ For more information, refer to [About expressions]({{< relref "../panels/query-a
 You can now provide detailed information to alert notification recipients by injecting alert label data as template variables into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields using the `${Label}` syntax. The alert label data is automatically injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
-
-For more information, refer to the [alert notification docs]({{< ref "/docs/grafana/v8.5/alerting/old-alerting/add-notification-template/" >}}).
 
 ### Content security policy support
 

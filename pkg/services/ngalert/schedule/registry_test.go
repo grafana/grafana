@@ -91,14 +91,14 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			expected := time.Now()
 			resultCh := make(chan evalResponse)
-			version := rand.Int63()
+			rule := models.AlertRuleGen()()
 			go func() {
-				result, dropped := r.eval(expected, version)
+				result, dropped := r.eval(expected, rule)
 				resultCh <- evalResponse{result, dropped}
 			}()
 			select {
 			case ctx := <-r.evalCh:
-				require.Equal(t, version, ctx.version)
+				require.Equal(t, rule, ctx.rule)
 				require.Equal(t, expected, ctx.scheduledAt)
 				result := <-resultCh
 				require.True(t, result.success)
@@ -113,12 +113,12 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			time2 := time.UnixMilli(rand.Int63n(math.MaxInt64))
 			resultCh1 := make(chan evalResponse)
 			resultCh2 := make(chan evalResponse)
-			version := rand.Int63()
+			rule := models.AlertRuleGen()()
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				result, dropped := r.eval(time1, version)
+				result, dropped := r.eval(time1, rule)
 				wg.Done()
 				resultCh1 <- evalResponse{result, dropped}
 			}()
@@ -126,7 +126,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				result, dropped := r.eval(time2, version)
+				result, dropped := r.eval(time2, rule)
 				resultCh2 <- evalResponse{result, dropped}
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
@@ -147,8 +147,9 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			resultCh := make(chan evalResponse)
+			rule := models.AlertRuleGen()()
 			go func() {
-				result, dropped := r.eval(time.Now(), rand.Int63())
+				result, dropped := r.eval(time.Now(), rule)
 				resultCh <- evalResponse{result, dropped}
 			}()
 			runtime.Gosched()
@@ -171,7 +172,8 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop()
-			success, dropped := r.eval(time.Now(), rand.Int63())
+			rule := models.AlertRuleGen()()
+			success, dropped := r.eval(time.Now(), rule)
 			require.False(t, success)
 			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
 		})
@@ -209,7 +211,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					case 1:
 						r.update(ruleVersion(rand.Int63()))
 					case 2:
-						r.eval(time.Now(), rand.Int63())
+						r.eval(time.Now(), models.AlertRuleGen()())
 					case 3:
 						r.stop()
 					}
@@ -223,39 +225,39 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 }
 
 func TestSchedulableAlertRulesRegistry(t *testing.T) {
-	r := schedulableAlertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.SchedulableAlertRule)}
+	r := alertRulesRegistry{rules: make(map[models.AlertRuleKey]*models.AlertRule)}
 	assert.Len(t, r.all(), 0)
 
 	// replace all rules in the registry with foo
-	r.set([]*models.SchedulableAlertRule{{OrgID: 1, UID: "foo", Version: 1}})
+	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}})
 	assert.Len(t, r.all(), 1)
 	foo := r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
 	require.NotNil(t, foo)
-	assert.Equal(t, models.SchedulableAlertRule{OrgID: 1, UID: "foo", Version: 1}, *foo)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 1}, *foo)
 
 	// update foo to a newer version
-	r.update(&models.SchedulableAlertRule{OrgID: 1, UID: "foo", Version: 2})
+	r.update(&models.AlertRule{OrgID: 1, UID: "foo", Version: 2})
 	assert.Len(t, r.all(), 1)
 	foo = r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
 	require.NotNil(t, foo)
-	assert.Equal(t, models.SchedulableAlertRule{OrgID: 1, UID: "foo", Version: 2}, *foo)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 2}, *foo)
 
 	// update bar which does not exist in the registry
-	r.update(&models.SchedulableAlertRule{OrgID: 1, UID: "bar", Version: 1})
+	r.update(&models.AlertRule{OrgID: 1, UID: "bar", Version: 1})
 	assert.Len(t, r.all(), 2)
 	foo = r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"})
 	require.NotNil(t, foo)
-	assert.Equal(t, models.SchedulableAlertRule{OrgID: 1, UID: "foo", Version: 2}, *foo)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "foo", Version: 2}, *foo)
 	bar := r.get(models.AlertRuleKey{OrgID: 1, UID: "bar"})
 	require.NotNil(t, foo)
-	assert.Equal(t, models.SchedulableAlertRule{OrgID: 1, UID: "bar", Version: 1}, *bar)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "bar", Version: 1}, *bar)
 
 	// replace all rules in the registry with baz
-	r.set([]*models.SchedulableAlertRule{{OrgID: 1, UID: "baz", Version: 1}})
+	r.set([]*models.AlertRule{{OrgID: 1, UID: "baz", Version: 1}})
 	assert.Len(t, r.all(), 1)
 	baz := r.get(models.AlertRuleKey{OrgID: 1, UID: "baz"})
 	require.NotNil(t, baz)
-	assert.Equal(t, models.SchedulableAlertRule{OrgID: 1, UID: "baz", Version: 1}, *baz)
+	assert.Equal(t, models.AlertRule{OrgID: 1, UID: "baz", Version: 1}, *baz)
 	assert.Nil(t, r.get(models.AlertRuleKey{OrgID: 1, UID: "foo"}))
 	assert.Nil(t, r.get(models.AlertRuleKey{OrgID: 1, UID: "bar"}))
 

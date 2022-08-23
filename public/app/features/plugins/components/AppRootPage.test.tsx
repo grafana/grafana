@@ -1,9 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
 import React, { Component } from 'react';
 import { Route, Router } from 'react-router-dom';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
 import { locationService, setEchoSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 
@@ -66,7 +68,9 @@ function renderUnderRouter() {
 
   render(
     <Router history={locationService.getHistory()}>
-      <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+      <GrafanaContext.Provider value={getGrafanaContextMock()}>
+        <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+      </GrafanaContext.Provider>
     </Router>
   );
 }

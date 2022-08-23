@@ -47,6 +47,9 @@ function setupTestContext(options: Partial<Props>) {
       panelInitialized: jest.fn(),
       getTimezone: () => 'browser',
       events: new EventBusSrv(),
+      canAddAnnotations: jest.fn(),
+      canEditAnnotations: jest.fn(),
+      canDeleteAnnotations: jest.fn(),
       meta: {
         isPublic: false,
       },

@@ -20,7 +20,7 @@ const prefixSuffixOpts = {
   }, {}),
 };
 
-export default {
+const meta: Meta = {
   title: 'Forms/Input',
   component: Input,
   decorators: [withCenteredStory],
@@ -62,18 +62,18 @@ export default {
     // validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
     width: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
-} as Meta;
+};
 
 export const Simple: Story = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>Input</div>;
   const prefix = args.prefixVisible;
   const suffix = args.suffixVisible;
-  let prefixEl: any = prefix;
+  let prefixEl = prefix;
   if (prefix && prefix.match(/icon-/g)) {
     prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconName} />;
   }
-  let suffixEl: any = suffix;
+  let suffixEl = suffix;
   if (suffix && suffix.match(/icon-/g)) {
     suffixEl = <Icon name={suffix.replace(/icon-/g, '') as IconName} />;
   }
@@ -111,3 +111,5 @@ export const WithFieldValidation: Story = (args) => {
     </div>
   );
 };
+
+export default meta;

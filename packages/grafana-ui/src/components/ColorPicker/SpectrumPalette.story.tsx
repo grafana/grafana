@@ -1,14 +1,14 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 import mdx from './ColorPicker.mdx';
-import SpectrumPalette, { SpectrumPaletteProps } from './SpectrumPalette';
+import SpectrumPalette from './SpectrumPalette';
 
-const meta: Meta = {
+const meta: ComponentMeta<typeof SpectrumPalette> = {
   title: 'Pickers and Editors/ColorPicker/Palettes/SpectrumPalette',
   component: SpectrumPalette,
   decorators: [withCenteredStory],
@@ -25,7 +25,7 @@ const meta: Meta = {
   },
 };
 
-export const Simple: Story<SpectrumPaletteProps> = ({ color }) => {
+export const Simple: ComponentStory<typeof SpectrumPalette> = ({ color }) => {
   const [, updateArgs] = useArgs();
   return renderComponentWithTheme(SpectrumPalette, {
     color,

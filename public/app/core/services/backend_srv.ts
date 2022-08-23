@@ -17,6 +17,7 @@ import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
+import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { getGrafanaStorage } from 'app/features/storage/storage';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
@@ -127,6 +128,17 @@ export class BackendSrv implements BackendService {
     }
 
     options = this.parseRequestOptions(options);
+
+    const token = loadUrlToken();
+    if (token !== null && token !== '') {
+      if (!options.headers) {
+        options.headers = {};
+      }
+
+      if (config.jwtUrlLogin && config.jwtHeaderName) {
+        options.headers[config.jwtHeaderName] = `${token}`;
+      }
+    }
 
     const fromFetchStream = this.getFromFetchStream<T>(options);
     const failureStream = fromFetchStream.pipe(this.toFailureStream<T>(options));

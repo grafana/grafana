@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (
@@ -83,16 +83,16 @@ type Dependencies struct {
 }
 
 type Includes struct {
-	Name       string          `json:"name"`
-	Path       string          `json:"path"`
-	Type       string          `json:"type"`
-	Component  string          `json:"component"`
-	Role       models.RoleType `json:"role"`
-	AddToNav   bool            `json:"addToNav"`
-	DefaultNav bool            `json:"defaultNav"`
-	Slug       string          `json:"slug"`
-	Icon       string          `json:"icon"`
-	UID        string          `json:"uid"`
+	Name       string       `json:"name"`
+	Path       string       `json:"path"`
+	Type       string       `json:"type"`
+	Component  string       `json:"component"`
+	Role       org.RoleType `json:"role"`
+	AddToNav   bool         `json:"addToNav"`
+	DefaultNav bool         `json:"defaultNav"`
+	Slug       string       `json:"slug"`
+	Icon       string       `json:"icon"`
+	UID        string       `json:"uid"`
 
 	ID string `json:"-"`
 }
@@ -176,9 +176,20 @@ const (
 type SignatureType string
 
 const (
-	GrafanaSignature SignatureType = "grafana"
-	PrivateSignature SignatureType = "private"
+	GrafanaSignature     SignatureType = "grafana"
+	CommercialSignature  SignatureType = "commercial"
+	CommunitySignature   SignatureType = "community"
+	PrivateSignature     SignatureType = "private"
+	PrivateGlobSignature SignatureType = "private-glob"
 )
+
+func (s SignatureType) IsValid() bool {
+	switch s {
+	case GrafanaSignature, CommercialSignature, CommunitySignature, PrivateSignature, PrivateGlobSignature:
+		return true
+	}
+	return false
+}
 
 type PluginFiles map[string]struct{}
 

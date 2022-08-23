@@ -31,7 +31,7 @@ export const DashboardListPage: FC<Props> = memo(({ match, location }) => {
       const path = locationUtil.stripBaseFromUrl(folder.url);
 
       if (path !== location.pathname) {
-        locationService.push(path);
+        locationService.replace(path);
       }
 
       return { folder, pageNav: folderNav };

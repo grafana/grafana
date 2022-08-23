@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
@@ -9,10 +9,9 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 import mdx from './ColorPicker.mdx';
-import { ColorPickerInput, ColorPickerInputProps } from './ColorPickerInput';
-import { ColorPickerProps } from './ColorPickerPopover';
+import { ColorPickerInput } from './ColorPickerInput';
 
-const meta: Meta = {
+const meta: ComponentMeta<typeof ColorPicker> = {
   title: 'Pickers and Editors/ColorPicker',
   component: ColorPicker,
   subcomponents: { SeriesColorPicker, ColorPickerInput },
@@ -31,7 +30,7 @@ const meta: Meta = {
   },
 };
 
-export const Basic: Story<ColorPickerProps> = ({ color, enableNamedColors }) => {
+export const Basic: ComponentStory<typeof ColorPicker> = ({ color, enableNamedColors }) => {
   const [, updateArgs] = useArgs();
   return renderComponentWithTheme(ColorPicker, {
     enableNamedColors,
@@ -43,7 +42,7 @@ export const Basic: Story<ColorPickerProps> = ({ color, enableNamedColors }) => 
   });
 };
 
-export const SeriesPicker: Story<ColorPickerProps> = ({ color, enableNamedColors }) => {
+export const SeriesPicker: ComponentStory<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
   const [, updateArgs] = useArgs();
   return (
     <SeriesColorPicker
@@ -65,7 +64,7 @@ export const SeriesPicker: Story<ColorPickerProps> = ({ color, enableNamedColors
   );
 };
 
-export const Input: Story<ColorPickerInputProps> = ({ color }) => {
+export const Input: ComponentStory<typeof ColorPickerInput> = ({ color }) => {
   const [, updateArgs] = useArgs();
   return (
     <ColorPickerInput

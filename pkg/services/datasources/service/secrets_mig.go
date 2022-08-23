@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -21,6 +23,7 @@ type DataSourceSecretMigrationService struct {
 	dataSourcesService datasources.DataSourceService
 	kvStore            *kvstore.NamespacedKVStore
 	features           featuremgmt.FeatureToggles
+	log                log.Logger
 }
 
 func ProvideDataSourceMigrationService(
@@ -32,6 +35,7 @@ func ProvideDataSourceMigrationService(
 		dataSourcesService: dataSourcesService,
 		kvStore:            kvstore.WithNamespace(kvStore, 0, secretType),
 		features:           features,
+		log:                log.New("secrets.migration"),
 	}
 }
 
@@ -40,7 +44,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
+	s.log.Debug(fmt.Sprint("secret migration status is ", migrationStatus))
 	// If this flag is true, delete secrets from the legacy secrets store as they are migrated
 	disableSecretsCompatibility := s.features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility)
 	// If migration hasn't happened, migrate to unified secrets and keep copy in legacy
@@ -51,6 +55,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	needMigration := migrationStatus != completeSecretMigrationValue && disableSecretsCompatibility
 
 	if needCompatibility || needMigration {
+		s.log.Debug("performing secret migration", "needs migration", needMigration, "needs compatibility", needCompatibility)
 		query := &datasources.GetAllDataSourcesQuery{}
 		err := s.dataSourcesService.GetAllDataSources(ctx, query)
 		if err != nil {
@@ -85,15 +90,17 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 			}
 		}
 
+		var newMigStatus string
 		if disableSecretsCompatibility {
-			err = s.kvStore.Set(ctx, secretMigrationStatusKey, completeSecretMigrationValue)
+			newMigStatus = completeSecretMigrationValue
 		} else {
-			err = s.kvStore.Set(ctx, secretMigrationStatusKey, compatibleSecretMigrationValue)
+			newMigStatus = compatibleSecretMigrationValue
 		}
-
+		err = s.kvStore.Set(ctx, secretMigrationStatusKey, newMigStatus)
 		if err != nil {
 			return err
 		}
+		s.log.Debug(fmt.Sprint("set secret migration status to ", newMigStatus))
 	}
 
 	return nil

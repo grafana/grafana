@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -76,19 +77,18 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	cfg := &setting.Cfg{Raw: raw}
 	// this would be the plugin - mocked at the moment
 	secretsStoreForPlugin := NewFakeSecretsKVStore()
-	// Mocked remote plugin check, always return true
-	remoteCheck := provideMockRemotePluginCheck()
 
 	// this is to init the sql secret store inside the migration
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-
+	manager := NewFakeSecretsPluginManager(t, false)
 	migratorService := ProvidePluginSecretMigrationService(
 		secretsStoreForPlugin,
 		cfg,
 		sqlStore,
 		secretsService,
-		remoteCheck,
+		kvstore.ProvideService(sqlStore),
+		manager,
 	)
 
 	secretsSql := &secretsKVStoreSQL{
@@ -101,21 +101,4 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	}
 
 	return migratorService, secretsStoreForPlugin, secretsSql
-}
-
-//
-type mockRemoteSecretsPluginCheck struct {
-	UseRemoteSecretsPluginCheck
-}
-
-func provideMockRemotePluginCheck() *mockRemoteSecretsPluginCheck {
-	return &mockRemoteSecretsPluginCheck{}
-}
-
-func (c *mockRemoteSecretsPluginCheck) ShouldUseRemoteSecretsPlugin() bool {
-	return true
-}
-
-func (c *mockRemoteSecretsPluginCheck) GetPlugin() (secretsmanagerplugin.SecretsManagerPlugin, error) {
-	return nil, nil
 }

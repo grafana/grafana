@@ -19,8 +19,8 @@ import { MssqlOptions } from './types';
 
 export class MssqlDatasource extends SqlDatasource {
   completionProvider: LanguageCompletionProvider | undefined = undefined;
-  constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>, templateSrv?: TemplateSrv) {
-    super(instanceSettings, templateSrv);
+  constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>) {
+    super(instanceSettings);
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MSSqlQueryModel {

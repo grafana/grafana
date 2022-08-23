@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -162,7 +164,12 @@ func (ng *AlertNG) init() error {
 	}
 
 	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk)
-	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager, ng.bus)
+	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
+
+	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
+	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
+		subscribeToFolderChanges(ng.Log, ng.bus, store, scheduler)
+	}
 
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
@@ -205,6 +212,31 @@ func (ng *AlertNG) init() error {
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
 	return DeclareFixedRoles(ng.accesscontrol)
+}
+
+func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore store.RuleStore, scheduler schedule.ScheduleService) {
+	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
+	// clean up the current state
+	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {
+		// do not block the upstream execution
+		go func(evt *events.FolderTitleUpdated) {
+			logger.Debug("Got folder title updated event. updating rules in the folder", "folder_uid", evt.UID)
+			updated, err := dbStore.IncreaseVersionForAllRulesInNamespace(context.Background(), evt.OrgID, evt.UID)
+			if err != nil {
+				logger.Error("Failed to update alert rules in the folder after its title was changed", "err", err, "folder_uid", evt.UID, "folder", evt.Title)
+				return
+			}
+			if len(updated) > 0 {
+				logger.Debug("rules that belong to the folder have been updated successfully. clearing their status", "updated_rules", len(updated))
+				for _, key := range updated {
+					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version)
+				}
+			} else {
+				logger.Debug("no alert rules found in the folder. nothing to update", "folder_uid", evt.UID, "folder", evt.Title)
+			}
+		}(e)
+		return nil
+	})
 }
 
 // Run starts the scheduler and Alertmanager.

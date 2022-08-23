@@ -8,6 +8,7 @@ import {
   ApplyFieldOverrideOptions,
   DataFrame,
   DataLink,
+  DecimalCount,
   DisplayProcessor,
   DisplayValue,
   DynamicConfigValue,
@@ -213,9 +214,18 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 // 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
 // 3. sufficently optimize text formatting and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
-  const cache = new Map<any, DisplayValue>();
+  type dispCache = Map<any, DisplayValue>;
+  // decimals -> cache mapping, -1 is unspecified decimals
+  const caches = new Map<number, dispCache>();
 
-  return (value: any) => {
+  // pre-init caches for up to 15 decimals
+  for (let i = -1; i <= 15; i++) {
+    caches.set(i, new Map());
+  }
+
+  return (value: any, decimals?: DecimalCount) => {
+    let cache = caches.get(decimals ?? -1)!;
+
     let v = cache.get(value);
 
     if (!v) {
@@ -224,7 +234,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
         cache.clear();
       }
 
-      v = disp(value);
+      v = disp(value, decimals);
 
       // convert to hex6 or hex8 so downstream we can cheaply test for alpha (and set new alpha)
       // via a simple length check (in colorManipulator) rather using slow parsing via tinycolor

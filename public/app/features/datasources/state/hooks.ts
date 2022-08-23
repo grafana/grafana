@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { DataSourcePluginMeta, DataSourceSettings, urlUtil } from '@grafana/data';
@@ -21,6 +21,7 @@ import {
   updateDataSource,
   deleteLoadedDataSource,
 } from './actions';
+import { DataSourcesRoutesContext } from './contexts';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from './navModel';
 import { getDataSource, getDataSourceMeta } from './selectors';
 
@@ -72,9 +73,10 @@ export const useLoadDataSourcePlugins = () => {
 
 export const useAddDatasource = () => {
   const dispatch = useDispatch();
+  const dataSourcesRoutes = useDataSourcesRoutes();
 
   return (plugin: DataSourcePluginMeta) => {
-    dispatch(addDataSource(plugin));
+    dispatch(addDataSource(plugin, dataSourcesRoutes.Edit));
   };
 };
 
@@ -113,8 +115,8 @@ export const useDataSourceExploreUrl = (uid: string) => {
   return exploreUrl;
 };
 
-export const useDataSourceMeta = (uid: string): DataSourcePluginMeta => {
-  return useSelector((state: StoreState) => getDataSourceMeta(state.dataSources, uid));
+export const useDataSourceMeta = (pluginType: string): DataSourcePluginMeta => {
+  return useSelector((state: StoreState) => getDataSourceMeta(state.dataSources, pluginType));
 };
 
 export const useDataSourceSettings = () => {
@@ -158,4 +160,8 @@ export const useDataSourceRights = (uid: string): DataSourceRights => {
     hasWriteRights,
     hasDeleteRights,
   };
+};
+
+export const useDataSourcesRoutes = () => {
+  return useContext(DataSourcesRoutesContext);
 };

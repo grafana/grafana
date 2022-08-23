@@ -76,3 +76,7 @@ func (kv *CachedKVStore) Rename(ctx context.Context, orgId int64, namespace stri
 	}
 	return nil
 }
+
+func (kv *CachedKVStore) GetUnwrappedStore() SecretsKVStore {
+	return kv.store
+}

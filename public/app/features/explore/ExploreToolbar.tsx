@@ -146,7 +146,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
               <DataSourcePicker
                 key={`${exploreId}-ds-picker`}
                 onChange={this.onChangeDatasource}
-                current={this.props.datasourceName}
+                current={this.props.datasourceRef}
                 hideTextValue={showSmallDataSourcePicker}
                 width={showSmallDataSourcePicker ? 8 : undefined}
               />
@@ -155,11 +155,11 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         >
           <ToolbarButtonRow>
             {!splitted ? (
-              <ToolbarButton title="Split" onClick={() => split()} icon="columns" disabled={isLive}>
+              <ToolbarButton tooltip="Split the pane" onClick={() => split()} icon="columns" disabled={isLive}>
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton title="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
+              <ToolbarButton tooltip="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
                 Close
               </ToolbarButton>
             )}
@@ -233,7 +233,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
 
   return {
     datasourceMissing,
-    datasourceName: datasourceInstance?.name,
+    datasourceRef: datasourceInstance?.getRef(),
     datasourceType: datasourceInstance?.type,
     loading,
     range,

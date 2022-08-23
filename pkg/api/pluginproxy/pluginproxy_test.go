@@ -2,17 +2,19 @@ package pluginproxy
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +47,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			secretsService,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
 				Context: &web.Context{
@@ -71,7 +73,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			secretsService,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
 				Context: &web.Context{
@@ -98,7 +100,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			secretsService,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
 				Context: &web.Context{
@@ -124,7 +126,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			secretsService,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{IsAnonymous: true},
+				SignedInUser: &user.SignedInUser{IsAnonymous: true},
 				Context: &web.Context{
 					Req: httpReq,
 				},
@@ -158,7 +160,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			secretsService,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
 				Context: &web.Context{
@@ -189,7 +191,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			secretsService,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
 				Context: &web.Context{
@@ -228,7 +230,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			secretsService,
 			&models.ReqContext{
-				SignedInUser: &models.SignedInUser{
+				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
 				Context: &web.Context{
@@ -239,7 +241,7 @@ func TestPluginProxy(t *testing.T) {
 			route,
 			store,
 		)
-		content, err := ioutil.ReadAll(req.Body)
+		content, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 	})
@@ -261,7 +263,7 @@ func TestPluginProxy(t *testing.T) {
 		}
 
 		ctx := &models.ReqContext{
-			SignedInUser: &models.SignedInUser{},
+			SignedInUser: &user.SignedInUser{},
 			Context: &web.Context{
 				Req:  httptest.NewRequest("GET", "/", nil),
 				Resp: responseWriter,
@@ -292,7 +294,7 @@ func getPluginProxiedRequest(t *testing.T, secretsService secrets.Service, ctx *
 		route = &plugins.Route{
 			Path:    "api/v4/",
 			URL:     "https://www.google.com",
-			ReqRole: models.ROLE_EDITOR,
+			ReqRole: org.RoleEditor,
 		}
 	}
 	proxy := NewApiPluginProxy(ctx, "", route, "", cfg, pluginSettingsService, secretsService)

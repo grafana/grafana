@@ -3,6 +3,7 @@ var config = {
     concurrency: 1,
     runners: ['axe'],
     useIncognitoBrowserContext: false,
+    standard: 'WCAG2AA',
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
     },
@@ -60,7 +61,7 @@ var config = {
       rootElement: '.main-view',
       // the unified alerting promotion alert's content contrast is too low
       // see https://github.com/grafana/grafana/pull/41829
-      threshold: 5,
+      threshold: 4,
     },
     {
       url: '${HOST}/datasources',
@@ -96,7 +97,7 @@ var config = {
       url: '${HOST}/org/apikeys',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 4,
+      threshold: 3,
     },
     {
       url: '${HOST}/dashboards',

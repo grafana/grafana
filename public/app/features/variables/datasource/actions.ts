@@ -10,7 +10,6 @@ import { validateVariableSelectionState } from '../state/actions';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable } from '../state/selectors';
 import { KeyedVariableIdentifier } from '../state/types';
-import { DataSourceVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
 import { createDataSourceOptions } from './reducer';
@@ -27,7 +26,11 @@ export const updateDataSourceVariableOptions =
   async (dispatch, getState) => {
     const { rootStateKey } = identifier;
     const sources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: false });
-    const variableInState = getVariable<DataSourceVariableModel>(identifier, getState());
+    const variableInState = getVariable(identifier, getState());
+    if (variableInState.type !== 'datasource') {
+      return;
+    }
+
     let regex;
 
     if (variableInState.regex) {

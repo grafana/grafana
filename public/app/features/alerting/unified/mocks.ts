@@ -1,3 +1,5 @@
+import produce from 'immer';
+
 import {
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -19,7 +21,8 @@ import {
   Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction, FolderDTO } from 'app/types';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
 import { Alert, AlertingRule, CombinedRule, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
@@ -480,3 +483,34 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action) => permissions.includes(action as AccessControlAction));
 };
+
+export function mockDataSourcesStore(partial?: Partial<StoreState['dataSources']>) {
+  const defaultState = configureStore().getState();
+  const store = configureStore({
+    ...defaultState,
+    dataSources: {
+      ...defaultState.dataSources,
+      ...partial,
+    },
+  });
+
+  return store;
+}
+
+export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {
+  const defaultState = configureStore().getState();
+
+  return configureStore({
+    ...defaultState,
+    unifiedAlerting: {
+      ...defaultState.unifiedAlerting,
+      ...unifiedAlerting,
+    },
+  });
+}
+
+export function mockStore(recipe: (state: StoreState) => void) {
+  const defaultState = configureStore().getState();
+
+  return configureStore(produce(defaultState, recipe));
+}
