@@ -122,6 +122,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
 
   onDelete = () => {
     this.props.removeVariable(this.props.identifier);
+    locationService.partial({ editIndex: null });
   };
 
   onApply = () => {

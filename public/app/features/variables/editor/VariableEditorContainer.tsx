@@ -2,14 +2,11 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button } from '@grafana/ui';
 import { Page } from 'app/core/components/PageNew/Page';
 import { SettingsPageProps } from 'app/features/dashboard/components/DashboardSettings/types';
 
 import { StoreState, ThunkDispatch } from '../../../types';
-import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getEditorVariables, getVariablesState } from '../state/selectors';
@@ -96,22 +93,6 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 
     return (
       <Page navModel={this.props.sectionNav} pageNav={subPageNav}>
-        <div className="page-action-bar">
-          <div className="page-action-bar__spacer" />
-          {this.props.variables.length > 0 && variableToEdit === null && (
-            <>
-              <VariablesDependenciesButton variables={this.props.variables} />
-              <Button
-                type="button"
-                onClick={this.onNewVariable}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
-              >
-                New
-              </Button>
-            </>
-          )}
-        </div>
-
         {!variableToEdit && (
           <VariableEditorList
             variables={this.props.variables}
