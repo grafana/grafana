@@ -72,7 +72,6 @@ func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, Sec
 	rawCfg := `
 		[secrets]
 		use_plugin = true
-		migrate_to_plugin = true
 		`
 	raw, err := ini.Load([]byte(rawCfg))
 	require.NoError(t, err)
