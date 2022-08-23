@@ -221,14 +221,6 @@ const VariableEditor = (props: Props) => {
             setError={setError}
             hideFormatAs={true}
           />
-          {errorMessage && (
-            <>
-              <Space v={2} />
-              <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
-                {errorMessage}
-              </Alert>
-            </>
-          )}
         </>
       )}
       {query.queryType === AzureQueryType.GrafanaTemplateVariableFn && (
@@ -298,14 +290,6 @@ const VariableEditor = (props: Props) => {
             variableOptionGroup={variableOptionGroup}
             setError={setError}
           />
-          {errorMessage && (
-            <>
-              <Space v={2} />
-              <Alert severity="error" title="An error occurred while requesting data from Azure Monitor">
-                {errorMessage}
-              </Alert>
-            </>
-          )}
         </>
       )}
     </>
