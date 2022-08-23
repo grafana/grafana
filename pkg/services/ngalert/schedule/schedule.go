@@ -194,7 +194,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 			if err := sch.updateSchedulableAlertRules(ctx); err != nil {
 				sch.log.Error("scheduler failed to update alert rules", "err", err)
 			}
-			alertRules, _ := sch.schedulableAlertRules.all()
+			alertRules, folderTitles := sch.schedulableAlertRules.all()
 
 			// registeredDefinitions is a map used for finding deleted alert rules
 			// initially it is assigned to all known alert rules from the previous cycle
@@ -209,10 +209,11 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 			type readyToRunItem struct {
 				ruleInfo *alertRuleInfo
-				rule     *ngmodels.AlertRule
+				evaluation
 			}
 
 			readyToRun := make([]readyToRunItem, 0)
+			missingFolder := make(map[string][]string)
 			for _, item := range alertRules {
 				key := item.GetKey()
 				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
@@ -240,11 +241,28 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, rule: item})
+					var folderTitle string
+					if !sch.disableGrafanaFolder {
+						title, ok := folderTitles[item.NamespaceUID]
+						if ok {
+							folderTitle = title
+						} else {
+							missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
+						}
+					}
+					readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
+						scheduledAt: tick,
+						rule:        item,
+						folderTitle: folderTitle,
+					}})
 				}
 
 				// remove the alert rule from the registered alert rules
 				delete(registeredDefinitions, key)
+			}
+
+			if len(missingFolder) > 0 { // if this happens then there can be problems with fetching folders from the database.
+				sch.log.Warn("unable to find obtain folder titles for some rules", "folder_to_rule_map", missingFolder)
 			}
 
 			var step int64 = 0
@@ -257,7 +275,7 @@ func (sch *schedule) schedulePeriodic(ctx context.Context) error {
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
 					key := item.rule.GetKey()
-					success, dropped := item.ruleInfo.eval(tick, item.rule)
+					success, dropped := item.ruleInfo.eval(&item.evaluation)
 					if !success {
 						sch.log.Debug("scheduled evaluation was canceled because evaluation routine was stopped", "uid", key.UID, "org", key.OrgID, "time", tick)
 						return
