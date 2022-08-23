@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -126,7 +126,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   };
 
-  if (state.error) {
+  if (state.error && isFetchError(state.error)) {
     return (
       <SaveDashboardErrorProxy
         error={state.error}
