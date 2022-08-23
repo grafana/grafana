@@ -103,7 +103,7 @@ func (ss *sqlxStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) erro
 	}
 
 	t.Id, err = ss.sess.ExecWithReturningId(ctx,
-		`INSERT INTO api_key (org_id, name, role, "key", created, updated, expires, service_account_id, is_revoked) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)`, t.OrgId, t.Name, t.Role, t.Key, t.Created, t.Updated, t.Expires, t.ServiceAccountId, t.IsRevoked)
+		`INSERT INTO api_key (org_id, name, role, "key", created, updated, expires, service_account_id, is_revoked) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, t.OrgId, t.Name, t.Role, t.Key, t.Created, t.Updated, t.Expires, t.ServiceAccountId, t.IsRevoked)
 	cmd.Result = &t
 	return err
 }
