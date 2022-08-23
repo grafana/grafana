@@ -84,8 +84,21 @@ export const SaveDashboardForm = ({
               aria-label={selectors.pages.SaveDashboardModal.saveVariables}
             />
           )}
-
-          <TextArea {...register('message')} placeholder="Add a note to describe your changes." autoFocus rows={5} />
+          <TextArea
+            {...register('message')}
+            aria-label="message"
+            value={options.message}
+            onChange={(e) => {
+              onOptionsChange({
+                ...options,
+                message: e.currentTarget.value,
+              });
+              register('message').onChange(e);
+            }}
+            placeholder="Add a note to describe your changes."
+            autoFocus
+            rows={5}
+          />
 
           <Stack alignItems="center">
             <Button variant="secondary" onClick={onCancel} fill="outline">
