@@ -15,7 +15,7 @@ weight: 1400
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
+Grafana ships with built-in support for Tempo, a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Add data source
 
@@ -182,7 +182,7 @@ A service graph is a visual representation of the relationships between services
 
 To display the service graph:
 
-- [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) or [Tempo/GET](https://grafana.com/docs/tempo/latest/server_side_metrics/service_graphs/#tempo) to generate service graph data
+- [Configure Grafana Agent](https://grafana.com/docs/tempo/latest/grafana-agent/service-graphs/#quickstart) or [Tempo/GET](https://grafana.com/docs/tempo/latest/server_side_metrics/service_graphs/#tempo) to generate service graph data
 - Link a Prometheus data source in the Tempo data source settings.
 - Navigate to [Explore]({{< relref "../explore/" >}}).
 - Select the Tempo data source.
@@ -206,7 +206,7 @@ Click on the service to see a context menu with additional links for quick navig
 
 The Application Performance Management (APM) table lets you view several APM metrics out of the box.
 The APM table is part of the APM dashboard.
-For more information, refer to the [APM dashboard documentation](https://grafana.com/docs/tempo/next/metrics-generator/app-performance-mgmt/).
+For more information, refer to the [APM dashboard documentation](https://grafana.com/docs/tempo/latest/metrics-generator/app-performance-mgmt/).
 
 To display the APM table:
 
