@@ -237,9 +237,7 @@ func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 	return frame, nil
 }
 
-func (e *cloudWatchExecutor) handleDescribeAllLogGroups(ctx context.Context,
-	logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
-
+func (e *cloudWatchExecutor) handleDescribeAllLogGroups(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI, parameters LogQueryJson) (*data.Frame, error) {
 	var namePrefix, nextToken *string
 	if len(parameters.LogGroupNamePrefix) != 0 {
 		namePrefix = aws.String(parameters.LogGroupNamePrefix)
