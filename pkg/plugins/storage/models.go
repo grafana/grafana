@@ -1,4 +1,26 @@
-package installer
+package storage
+
+import "fmt"
+
+type ErrPermissionDenied struct {
+	Path string
+}
+
+func (e ErrPermissionDenied) Error() string {
+	return fmt.Sprintf("could not create %q, permission denied, make sure you have write access to plugin dir", e.Path)
+}
+
+type ExtractedPluginArchive struct {
+	ID           string
+	Version      string
+	Dependencies []*Dependency
+	Path         string
+}
+
+type Dependency struct {
+	ID      string
+	Version string
+}
 
 type InstalledPlugin struct {
 	ID           string       `json:"id"`
@@ -23,26 +45,4 @@ type PluginDependency struct {
 type PluginInfo struct {
 	Version string `json:"version"`
 	Updated string `json:"updated"`
-}
-
-type Plugin struct {
-	ID       string    `json:"id"`
-	Category string    `json:"category"`
-	Versions []Version `json:"versions"`
-}
-
-type Version struct {
-	Commit  string              `json:"commit"`
-	URL     string              `json:"url"`
-	Version string              `json:"version"`
-	Arch    map[string]ArchMeta `json:"arch"`
-}
-
-type ArchMeta struct {
-	SHA256 string `json:"sha256"`
-}
-
-type PluginRepo struct {
-	Plugins []Plugin `json:"plugins"`
-	Version string   `json:"version"`
 }

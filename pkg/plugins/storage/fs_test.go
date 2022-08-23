@@ -1,6 +1,7 @@
-package installer
+package storage
 
 import (
+	"archive/zip"
 	"context"
 	"fmt"
 	"os"
@@ -11,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInstall(t *testing.T) {
+func TestAdd(t *testing.T) {
 	testDir := "./testdata/tmpInstallPluginDir"
-	err := os.Mkdir(testDir, os.ModePerm)
+	err := os.MkdirAll(testDir, os.ModePerm)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
@@ -23,8 +24,9 @@ func TestInstall(t *testing.T) {
 
 	pluginID := "test-app"
 
-	i := &Installer{log: &fakeLogger{}}
-	err = i.Install(context.Background(), pluginID, "", testDir, "./testdata/plugin-with-symlinks.zip", "")
+	fs := FileSystem(&fakeLogger{}, testDir)
+	archive, err := fs.Add(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
+	require.NotNil(t, archive)
 	require.NoError(t, err)
 
 	// verify extracted contents
@@ -46,15 +48,22 @@ func TestInstall(t *testing.T) {
 	require.Equal(t, files[5].Name(), "text.txt")
 }
 
-func TestUninstall(t *testing.T) {
-	i := &Installer{log: &fakeLogger{}}
-
+func TestRemove(t *testing.T) {
 	pluginDir := t.TempDir()
 	pluginJSON := filepath.Join(pluginDir, "plugin.json")
 	_, err := os.Create(pluginJSON)
 	require.NoError(t, err)
 
-	err = i.Uninstall(context.Background(), pluginDir)
+	pluginID := "test-datasource"
+	i := &FS{
+		pluginsDir: filepath.Dir(pluginDir),
+		store: map[string]string{
+			pluginID: pluginDir,
+		},
+		log: &fakeLogger{},
+	}
+
+	err = i.Remove(context.Background(), pluginID)
 	require.NoError(t, err)
 
 	_, err = os.Stat(pluginDir)
@@ -70,7 +79,15 @@ func TestUninstall(t *testing.T) {
 
 		pluginDir = filepath.Dir(pluginDistDir)
 
-		err = i.Uninstall(context.Background(), pluginDir)
+		i = &FS{
+			pluginsDir: filepath.Dir(pluginDir),
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
 		require.NoError(t, err)
 
 		_, err = os.Stat(pluginDir)
@@ -79,8 +96,33 @@ func TestUninstall(t *testing.T) {
 
 	t.Run("Uninstall will not delete folder if cannot recognize plugin structure", func(t *testing.T) {
 		pluginDir = t.TempDir()
-		err = i.Uninstall(context.Background(), pluginDir)
-		require.EqualError(t, err, fmt.Sprintf("tried to remove %s, but it doesn't seem to be a plugin", pluginDir))
+		i = &FS{
+			pluginsDir: filepath.Dir(pluginDir),
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
+		require.EqualError(t, err, "cannot recognize as plugin folder")
+
+		_, err = os.Stat(pluginDir)
+		require.False(t, os.IsNotExist(err))
+	})
+
+	t.Run("Uninstall will not delete folder if plugin's directory is not a subdirectory of specified plugins directory", func(t *testing.T) {
+		pluginDir = t.TempDir()
+		i = &FS{
+			pluginsDir: "/some/other/path",
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
+		require.EqualError(t, err, "cannot uninstall a plugin outside of the plugins directory")
 
 		_, err = os.Stat(pluginDir)
 		require.False(t, os.IsNotExist(err))
@@ -88,14 +130,16 @@ func TestUninstall(t *testing.T) {
 }
 
 func TestExtractFiles(t *testing.T) {
-	i := &Installer{log: &fakeLogger{}}
 	pluginsDir := setupFakePluginsDir(t)
+
+	i := &FS{log: &fakeLogger{}, pluginsDir: pluginsDir}
 
 	t.Run("Should preserve file permissions for plugin backend binaries for linux and darwin", func(t *testing.T) {
 		skipWindows(t)
 
-		archive := filepath.Join("testdata", "grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip")
-		err := i.extractFiles(archive, "grafana-simple-json-datasource", pluginsDir)
+		pluginID := "grafana-simple-json-datasource"
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip"), pluginID)
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		// File in zip has permissions 755
@@ -122,7 +166,9 @@ func TestExtractFiles(t *testing.T) {
 	t.Run("Should extract file with relative symlink", func(t *testing.T) {
 		skipWindows(t)
 
-		err := i.extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginsDir)
+		pluginID := "plugin-with-symlink"
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-symlink.zip"), pluginID)
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		_, err = os.Stat(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
@@ -136,7 +182,9 @@ func TestExtractFiles(t *testing.T) {
 	t.Run("Should extract directory with relative symlink", func(t *testing.T) {
 		skipWindows(t)
 
-		err := i.extractFiles("testdata/plugin-with-symlink-dir.zip", "plugin-with-symlink-dir", pluginsDir)
+		pluginID := "plugin-with-symlink-dir"
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-symlink-dir.zip"), pluginID)
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		_, err = os.Stat(pluginsDir + "/plugin-with-symlink-dir/symlink_to_dir")
@@ -150,7 +198,9 @@ func TestExtractFiles(t *testing.T) {
 	t.Run("Should not extract file with absolute symlink", func(t *testing.T) {
 		skipWindows(t)
 
-		err := i.extractFiles("testdata/plugin-with-absolute-symlink.zip", "plugin-with-absolute-symlink", pluginsDir)
+		pluginID := "plugin-with-absolute-symlink"
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-symlink.zip"), pluginID)
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		_, err = os.Stat(pluginsDir + "/plugin-with-absolute-symlink/test.txt")
@@ -160,7 +210,9 @@ func TestExtractFiles(t *testing.T) {
 	t.Run("Should not extract directory with absolute symlink", func(t *testing.T) {
 		skipWindows(t)
 
-		err := i.extractFiles("testdata/plugin-with-absolute-symlink-dir.zip", "plugin-with-absolute-symlink-dir", pluginsDir)
+		pluginID := "plugin-with-absolute-symlink-dir"
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-symlink-dir.zip"), pluginID)
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		_, err = os.Stat(pluginsDir + "/plugin-with-absolute-symlink-dir/target")
@@ -168,7 +220,8 @@ func TestExtractFiles(t *testing.T) {
 	})
 
 	t.Run("Should detect if archive members point outside of the destination directory", func(t *testing.T) {
-		err := i.extractFiles("testdata/plugin-with-parent-member.zip", "plugin-with-parent-member", pluginsDir)
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-parent-member.zip"), "plugin-with-parent-member")
+		require.Empty(t, path)
 		require.EqualError(t, err, fmt.Sprintf(
 			`archive member "../member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
 			pluginsDir,
@@ -176,7 +229,8 @@ func TestExtractFiles(t *testing.T) {
 	})
 
 	t.Run("Should detect if archive members are absolute", func(t *testing.T) {
-		err := i.extractFiles("testdata/plugin-with-absolute-member.zip", "plugin-with-absolute-member", pluginsDir)
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-member.zip"), "plugin-with-absolute-member")
+		require.Empty(t, path)
 		require.EqualError(t, err, fmt.Sprintf(
 			`archive member "/member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
 			pluginsDir,
@@ -184,47 +238,11 @@ func TestExtractFiles(t *testing.T) {
 	})
 }
 
-func TestSelectVersion(t *testing.T) {
-	i := &Installer{log: &fakeLogger{}}
+func zipFile(t *testing.T, zipPath string) *zip.ReadCloser {
+	rc, err := zip.OpenReader(zipPath)
+	require.NoError(t, err)
 
-	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
-		_, err := i.selectVersion(createPlugin(versionArg{version: "version"}), "1.1.1")
-		require.Error(t, err)
-	})
-
-	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
-		_, err := i.selectVersion(createPlugin(versionArg{version: "version", arch: []string{"non-existent"}}), "")
-		require.Error(t, err)
-	})
-
-	t.Run("Should return error when requested version does not support current arch", func(t *testing.T) {
-		_, err := i.selectVersion(createPlugin(
-			versionArg{version: "2.0.0"},
-			versionArg{version: "1.1.1", arch: []string{"non-existent"}},
-		), "1.1.1")
-		require.Error(t, err)
-	})
-
-	t.Run("Should return latest available for arch when no version specified", func(t *testing.T) {
-		ver, err := i.selectVersion(createPlugin(
-			versionArg{version: "2.0.0", arch: []string{"non-existent"}},
-			versionArg{version: "1.0.0"},
-		), "")
-		require.NoError(t, err)
-		require.Equal(t, "1.0.0", ver.Version)
-	})
-
-	t.Run("Should return latest version when no version specified", func(t *testing.T) {
-		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "")
-		require.NoError(t, err)
-		require.Equal(t, "2.0.0", ver.Version)
-	})
-
-	t.Run("Should return requested version", func(t *testing.T) {
-		ver, err := i.selectVersion(createPlugin(versionArg{version: "2.0.0"}, versionArg{version: "1.0.0"}), "1.0.0")
-		require.NoError(t, err)
-		require.Equal(t, "1.0.0", ver.Version)
-	})
+	return rc
 }
 
 func TestRemoveGitBuildFromName(t *testing.T) {
@@ -344,36 +362,6 @@ func skipWindows(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping test on Windows")
 	}
-}
-
-type versionArg struct {
-	version string
-	arch    []string
-}
-
-func createPlugin(versions ...versionArg) *Plugin {
-	p := &Plugin{
-		Versions: []Version{},
-	}
-
-	for _, version := range versions {
-		ver := Version{
-			Version: version.version,
-			Commit:  fmt.Sprintf("commit_%s", version.version),
-			URL:     fmt.Sprintf("url_%s", version.version),
-		}
-		if version.arch != nil {
-			ver.Arch = map[string]ArchMeta{}
-			for _, arch := range version.arch {
-				ver.Arch[arch] = ArchMeta{
-					SHA256: fmt.Sprintf("sha256_%s", arch),
-				}
-			}
-		}
-		p.Versions = append(p.Versions, ver)
-	}
-
-	return p
 }
 
 type fakeLogger struct{}

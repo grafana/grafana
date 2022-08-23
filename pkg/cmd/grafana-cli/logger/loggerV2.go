@@ -8,12 +8,12 @@ import (
 )
 
 type CLILogger struct {
-	DebugMode bool
+	debugMode bool
 }
 
 func New(debugMode bool) *CLILogger {
 	return &CLILogger{
-		DebugMode: debugMode,
+		debugMode: debugMode,
 	}
 }
 
@@ -36,13 +36,13 @@ func (l *CLILogger) Infof(format string, args ...interface{}) {
 
 func (l *CLILogger) Debug(args ...interface{}) {
 	args = append(args, "\n\n")
-	if l.DebugMode {
+	if l.debugMode {
 		fmt.Print(color.HiBlueString(fmt.Sprint(args...)))
 	}
 }
 
 func (l *CLILogger) Debugf(format string, args ...interface{}) {
-	if l.DebugMode {
+	if l.debugMode {
 		fmt.Print(color.HiBlueString(fmt.Sprintf(addNewlines(format), args...)))
 	}
 }
