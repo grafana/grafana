@@ -322,7 +322,7 @@ We would then get :
 | server 2  | 88.6                   | 90                     | 2020-07-07 10:32:20 | Overload             |
 | server 3  | 59.6                   | 62                     | 2020-07-07 11:34:20 | OK                   |
 
-This transformation allows you to extract some key information out of your time series and display them in a convenient way.
+This transformation enables you to extract key information from your time series and display it in a convenient way.
 
 ### Join by field
 
