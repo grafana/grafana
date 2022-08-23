@@ -1,0 +1,10 @@
+  prometheus-1.8.1:
+    build: docker/blocks/prometheus-1.8.1
+    ports:
+      - "19091:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >
+      --config.file=/etc/prometheus/prometheus.yml
+      --web.console.libraries=/usr/share/prometheus/console_libraries
+      --web.console.templates=/usr/share/prometheus/consoles

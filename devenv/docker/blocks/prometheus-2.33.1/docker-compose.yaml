@@ -1,0 +1,11 @@
+  prometheus-2.31.1:
+    build: docker/blocks/prometheus-2.33.1
+    ports:
+      - "19099:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+      --web.console.libraries=/usr/share/prometheus/console_libraries
+      --web.console.templates=/usr/share/prometheus/consoles
