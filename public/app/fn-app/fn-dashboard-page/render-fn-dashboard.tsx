@@ -19,10 +19,11 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
         theme: data.theme,
         controlsContainer: data.controlsContainer,
         pageTitle: data?.pageTitle || '',
+        queryParams: data.queryParams,
       })
     );
     console.log(locationService.getLocation(), locationService.getHistory, 'location params');
-    locationService.fnPathnameChange(window.location.pathname);
+    locationService.fnPathnameChange(window.location.pathname, data.queryParams);
 
     return () => {};
   }, [data, dispatch]);
@@ -42,7 +43,9 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
     location: {
       ...locationService.getLocation(),
     },
-    queryParams: {},
+    queryParams: {
+      ...data.queryParams,
+    },
     route: {
       routeName: DashboardRoutes.Normal,
       path: '/d/:uid/:slug?',

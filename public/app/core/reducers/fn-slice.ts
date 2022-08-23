@@ -7,6 +7,7 @@ interface FNState {
   theme: string;
   controlsContainer: HTMLElement | undefined;
   pageTitle: string;
+  queryParams: object;
 }
 
 const initialState: FNState = {
@@ -16,6 +17,7 @@ const initialState: FNState = {
   theme: '',
   controlsContainer: undefined,
   pageTitle: '',
+  queryParams: {},
 };
 
 const fnSlice = createSlice({
