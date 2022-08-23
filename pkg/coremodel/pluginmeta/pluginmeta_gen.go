@@ -34,7 +34,7 @@ const (
 	CategoryTsdb Category = "tsdb"
 )
 
-// Defines values for PluginmetaType.
+// Defines values for Type.
 const (
 	TypeApp Type = "app"
 
