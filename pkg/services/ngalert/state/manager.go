@@ -13,13 +13,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	gModels "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
@@ -83,20 +83,20 @@ func (st *Manager) Warm(ctx context.Context) {
 	var states []*State
 	for _, orgId := range orgIds {
 		// Get Rules
-		ruleCmd := ngModels.ListAlertRulesQuery{
+		ruleCmd := models.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
 		if err := st.ruleStore.ListAlertRules(ctx, &ruleCmd); err != nil {
 			st.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
-		ruleByUID := make(map[string]*ngModels.AlertRule, len(ruleCmd.Result))
+		ruleByUID := make(map[string]*models.AlertRule, len(ruleCmd.Result))
 		for _, rule := range ruleCmd.Result {
 			ruleByUID[rule.UID] = rule
 		}
 
 		// Get Instances
-		cmd := ngModels.ListAlertInstancesQuery{
+		cmd := models.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
 		}
 		if err := st.instanceStore.ListAlertInstances(ctx, &cmd); err != nil {
@@ -137,7 +137,7 @@ func (st *Manager) Warm(ctx context.Context) {
 	}
 }
 
-func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+func (st *Manager) getOrCreate(ctx context.Context, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels) *State {
 	return st.cache.getOrCreate(ctx, alertRule, result, extraLabels)
 }
 
@@ -161,7 +161,7 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *models.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
 	logger := st.log.New(alertRule.GetKey().LogContext())
 	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
@@ -171,15 +171,13 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+
+	st.cleanupStaleResults(ctx, evaluatedAt, alertRule, processedResults)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
-		for _, state := range states {
-			if err := st.saveState(ctx, state); err != nil {
-				logger.Error("failed to save alert state", "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error())
-			}
-		}
+		_, _ = st.saveAlertStates(ctx, states...)
 	}
+
 	return states
 }
 
@@ -189,7 +187,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 // 3. The state is alerting and there is no screenshot annotation on the alert state.
 func (st *Manager) maybeTakeScreenshot(
 	ctx context.Context,
-	alertRule *ngModels.AlertRule,
+	alertRule *models.AlertRule,
 	state *State,
 	oldState eval.State,
 ) error {
@@ -215,7 +213,7 @@ func (st *Manager) maybeTakeScreenshot(
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+func (st *Manager) setNextState(ctx context.Context, alertRule *models.AlertRule, result eval.Result, extraLabels data.Labels) *State {
 	currentState := st.getOrCreate(ctx, alertRule, result, extraLabels)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -314,41 +312,79 @@ func (st *Manager) flushState(ctx context.Context) {
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
 	totalStates, errorsCnt := 0, 0
+	var stateSlice []*State
 	for _, orgStates := range st.cache.states {
 		for _, ruleStates := range orgStates {
+			stateSlice = stateSlice[:0]
 			for _, state := range ruleStates {
-				err := st.saveState(ctx, state)
-				totalStates++
-				if err != nil {
-					st.log.Error("failed to save alert state", append(state.GetRuleKey().LogContext(), "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error()))
-					errorsCnt++
-				}
+				stateSlice = append(stateSlice, state)
 			}
+			savedCount, failedCount := st.saveAlertStates(ctx, stateSlice...)
+			if failedCount != 0 {
+				st.log.Error("failed to save alert states.", "count", failedCount)
+			}
+			errorsCnt += failedCount
+			totalStates += savedCount
 		}
 	}
+
 	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
 }
 
-func (st *Manager) saveState(ctx context.Context, s *State) error {
-	cmd := ngModels.SaveAlertInstanceCommand{
-		RuleOrgID:         s.OrgID,
-		RuleUID:           s.AlertRuleUID,
-		Labels:            ngModels.InstanceLabels(s.Labels),
-		State:             ngModels.InstanceStateType(s.State.String()),
-		StateReason:       s.StateReason,
-		LastEvalTime:      s.LastEvaluationTime,
-		CurrentStateSince: s.StartsAt,
-		CurrentStateEnd:   s.EndsAt,
+// TODO: Is the `State` type necessary? Should it embed the instance?
+func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved, failed int) {
+	st.log.Debug("saving alert states", "count", len(states))
+	instances := make([]models.AlertInstance, 0, len(states))
+
+	type debugInfo struct {
+		OrgID  int64
+		Uid    string
+		State  string
+		Labels string
 	}
-	return st.instanceStore.SaveAlertInstance(ctx, &cmd)
+	debug := make([]debugInfo, 0)
+
+	for _, s := range states {
+		labels := models.InstanceLabels(s.Labels)
+		_, hash, err := labels.StringAndHash()
+		if err != nil {
+			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.String(), s.Labels.String()})
+			st.log.Error("failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "err", err)
+			continue
+		}
+		fields := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  s.OrgID,
+				RuleUID:    s.AlertRuleUID,
+				LabelsHash: hash,
+			},
+			Labels:            models.InstanceLabels(s.Labels),
+			CurrentState:      models.InstanceStateType(s.State.String()),
+			CurrentReason:     s.StateReason,
+			LastEvalTime:      s.LastEvaluationTime,
+			CurrentStateSince: s.StartsAt,
+			CurrentStateEnd:   s.EndsAt,
+		}
+		instances = append(instances, fields)
+	}
+	err := st.instanceStore.SaveAlertInstances(ctx, instances...)
+	if err != nil {
+		for _, inst := range instances {
+			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
+		}
+		st.log.Error("failed to save alert states", "states", debug, "err", err)
+		return 0, len(debug)
+	}
+
+	return len(instances), len(debug)
 }
 
 // TODO: why wouldn't you allow other types like NoData or Error?
-func translateInstanceState(state ngModels.InstanceStateType) eval.State {
+func translateInstanceState(state models.InstanceStateType) eval.State {
 	switch {
-	case state == ngModels.InstanceStateFiring:
+	case state == models.InstanceStateFiring:
 		return eval.Alerting
-	case state == ngModels.InstanceStateNormal:
+	case state == models.InstanceStateNormal:
 		return eval.Normal
 	default:
 		return eval.Error
@@ -369,7 +405,7 @@ func (i InstanceStateAndReason) String() string {
 	return s
 }
 
-func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
+func (st *Manager) annotateState(ctx context.Context, alertRule *models.AlertRule, labels data.Labels, evaluatedAt time.Time, currentData, previousData InstanceStateAndReason) {
 	st.log.Debug("alert state changed creating annotation", "alertRuleUID", alertRule.UID, "newState", currentData.String(), "oldState", previousData.String())
 
 	labels = removePrivateLabels(labels)
@@ -384,9 +420,9 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 		Epoch:     evaluatedAt.UnixNano() / int64(time.Millisecond),
 	}
 
-	dashUid, ok := alertRule.Annotations[ngModels.DashboardUIDAnnotation]
+	dashUid, ok := alertRule.Annotations[models.DashboardUIDAnnotation]
 	if ok {
-		panelUid := alertRule.Annotations[ngModels.PanelIDAnnotation]
+		panelUid := alertRule.Annotations[models.PanelIDAnnotation]
 
 		panelId, err := strconv.ParseInt(panelUid, 10, 64)
 		if err != nil {
@@ -394,7 +430,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 			return
 		}
 
-		query := &models.GetDashboardQuery{
+		query := &gModels.GetDashboardQuery{
 			Uid:   dashUid,
 			OrgId: alertRule.OrgID,
 		}
@@ -416,22 +452,27 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) {
+func (st *Manager) cleanupStaleResults(
+	ctx context.Context,
+	evaluatedAt time.Time,
+	alertRule *models.AlertRule,
+	newStates map[string]*State,
+) {
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	toDelete := make([]models.AlertInstanceKey, 0)
+
 	for _, s := range allStates {
-		_, ok := states[s.CacheId]
-		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
+		// Is the cached state in our recently processed results? If not, is it stale?
+		if _, ok := newStates[s.CacheId]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
-			ilbs := ngModels.InstanceLabels(s.Labels)
+			ilbs := models.InstanceLabels(s.Labels)
 			_, labelsHash, err := ilbs.StringAndHash()
 			if err != nil {
 				st.log.Error("unable to get labelsHash", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
-			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
-				st.log.Error("unable to delete stale instance from database", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
-			}
+			toDelete = append(toDelete, models.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
 				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
@@ -440,9 +481,14 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			}
 		}
 	}
+
+	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
+		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
+			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
+	}
 }
 
-func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
+func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
 }
 
