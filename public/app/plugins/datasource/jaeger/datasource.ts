@@ -48,12 +48,23 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     return res.data.data;
   }
 
+  // Return false if the search form has not been filled in sufficiently. Currently, this only checks if a service
+  // has been selected, but this func can later be expanded if the search form becomes more complex.
+  formValid(query: JaegerQuery): boolean {
+    return !!query.service;
+  }
+
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
+
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
+    }
+
+    if (target.queryType === 'search' && !this.formValid(target)) {
+      return of({ error: { message: 'You must select a service name.' }, data: [] });
     }
 
     if (target.queryType !== 'search' && target.query) {
