@@ -97,6 +97,7 @@ To learn more about the Geomap panel, see the [documentation]({{< relref "../vis
 
 You can now link metrics queries to your traces.
 This feature can be accessed by enabling the `traceToMetrics` feature toggle.
+Grafana Cloud users can access this feature by opening a support ticket in the Cloud Portal.
 
 In your tracing datasource configuration, select a metrics datasource, add tags, and write your queries.
 Each query appears as a link on each span.
@@ -114,6 +115,7 @@ You can now get Application Performance Management (APM) data with Grafana.
 The data is shown in a table in the Tempo datasource under the Service Graph tab.
 To access the feature, enable the `tempoApmTable` feature toggle.
 To receive the data for the APM table, you must also enable the metrics generator.
+Grafana Cloud users can access this feature by opening a support ticket in the Cloud Portal.
 
 The APM table displays rate, errors, and duration (RED) metrics.
 To view your top five RED span metrics, use the table summary view.
@@ -132,6 +134,7 @@ To learn more about the APM table, see the [documentation]({{< relref "../dataso
 #### (Alpha) Public dashboards
 
 Public dashboards are available as an alpha feature that can be enabled with the `publicDashboards` feature toggle.
+Grafana Cloud users can access this feature by opening a support ticket in the Cloud Portal.
 
 You can generate a link for dashboards that you'd like to share publicly.
 Anyone with the link will be able to access that dashboard, and nothing else.
