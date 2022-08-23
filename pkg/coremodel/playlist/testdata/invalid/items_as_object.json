@@ -1,0 +1,9 @@
+{
+  "uid": "abcxyz",
+  "name": "A mixtape of dashboards for testing the Cue model",
+  "interval": "30s",
+  "items": {
+    "type": "dashboard_by_tag",
+    "value": "officeStats"
+  }
+}
