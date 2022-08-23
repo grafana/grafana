@@ -10,6 +10,7 @@ import {
   getValueFormat,
   formattedValueToString,
   DataFrameJSON,
+  LoadingState,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
@@ -131,11 +132,19 @@ function getTransformsRow(saveModel: any): string {
 }
 
 function getDataRow(data: PanelData, raw: string): string {
-  const size = getValueFormat('decbytes')(raw?.length);
+  let frameCount = data.series.length ?? 0;
+  let fieldCount = 0;
+  for (const frame of data.series) {
+    fieldCount += frame.fields.length;
+  }
   return `<tr>
-  <th>Data</th>
-  <td>${data.state} // Frames: ${data.series?.length} (${formattedValueToString(size)} JSON)</td>
-</tr>`;
+    <th>Data</th>
+    <td>
+     ${data.state !== LoadingState.Done ? data.state : ''} 
+     ${frameCount} frames, ${fieldCount} fields
+     (${formattedValueToString(getValueFormat('decbytes')(raw?.length))} JSON)
+    </td>
+  </tr>`;
 }
 
 function getAnnotationsRow(data: PanelData): string {
@@ -145,7 +154,7 @@ function getAnnotationsRow(data: PanelData): string {
 
   return `<tr>
   <th>Annotations</th>
-  <td>${data.annotations.length}</td>
+  <td>${data.annotations.map((a, idx) => `<span>${a.length}</span>`)}</td>
 </tr>`;
 }
 
