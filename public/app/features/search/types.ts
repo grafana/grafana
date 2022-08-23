@@ -12,7 +12,7 @@ export enum DashboardSearchItemType {
  * @deprecated
  */
 export interface DashboardSection {
-  id: number;
+  id?: number;
   uid?: string;
   title: string;
   expanded?: boolean;
@@ -37,7 +37,7 @@ export interface DashboardSectionItem {
   folderTitle?: string;
   folderUid?: string;
   folderUrl?: string;
-  id: number;
+  id?: number;
   isStarred: boolean;
   selected?: boolean;
   tags: string[];

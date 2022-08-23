@@ -104,7 +104,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     e.stopPropagation();
 
     // FIXME: Do not use dash ID. Use UID to star a dashboard once the backend allows it
-    const isStarred = dash?.id ? await getDashboardSrv().starDashboard(dash.id.toString(), dash.isStarred) : false;
+    const isStarred = await getDashboardSrv().starDashboard(dash.id!.toString(), dash.isStarred);
     const updatedDashboards = new Map(dashboards);
     updatedDashboards.set(dash?.uid ?? '', { ...dash, isStarred });
     setDashboards(updatedDashboards);
