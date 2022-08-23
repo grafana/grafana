@@ -392,7 +392,7 @@ Result after applying the inner join transformation:
 | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
 | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
 
-In the example below, I have a template query displaying time series data from multiple servers in a table visualization. I can only view the results of one query at a time.
+In the following example, a template query displays time series data from multiple servers in a table visualization. The results of only one query can be viewed at a time.
 
 {{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
