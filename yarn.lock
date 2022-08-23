@@ -21889,7 +21889,6 @@ __metadata:
     html-webpack-plugin: 5.5.0
     http-server: 14.1.1
     husky: 8.0.1
-    iconscout-unicons-tarball: "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28"
     immer: 9.0.15
     immutable: 4.1.0
     jest: 28.1.3
@@ -22857,13 +22856,6 @@ __metadata:
   version: 1.0.4
   resolution: "hyphenate-style-name@npm:1.0.4"
   checksum: 4f5bf4b055089754924babebaa23c17845937bcca6aee95d5d015f8fa1e6814279002bd6a9e541e3fac2cd02519fc76305396727066c57c8e21a7e73e7a12137
-  languageName: node
-  linkType: hard
-
-"iconscout-unicons-tarball@https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28":
-  version: 1.0.0
-  resolution: "iconscout-unicons-tarball@https://github.com/grafana/icons.git#commit=63056cd833ba7ee4e94904492b3a8c0cabc38d28"
-  checksum: 9e2ffe79d686e5c811e594a1c813e0e9b6a42c12850d93fb353e81d1445ce7a71480083e7d4c66399705103ad6ec5736d0352439d4f9d282505991c2f39e599f
   languageName: node
   linkType: hard
 
