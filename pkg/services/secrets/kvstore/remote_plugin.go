@@ -174,7 +174,7 @@ func parseItems(items []*smp.Item) []Item {
 	var newItems []Item
 
 	for _, i := range items {
-		newItem := Item{OrgId: &i.OrgId, Namespace: &i.Namespace, Type: &i.Type, Value: i.Value}
+		newItem := Item{OrgId: &i.Key.OrgId, Namespace: &i.Key.Namespace, Type: &i.Key.Type, Value: i.Value}
 		newItems = append(newItems, newItem)
 	}
 
