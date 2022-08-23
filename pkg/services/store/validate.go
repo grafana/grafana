@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	issvg "github.com/grafana/grafana/pkg/services/store/go-is-svg"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -82,7 +85,13 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 		return fail(fmt.Sprintf("path validation failed. error: %s. path: %s", err.Error(), storagePath))
 	}
 
-	switch req.EntityType {
+	types := map[EntityType]coremodel.Interface{}
+	for _, t := range s.base.All() {
+		pkg := path.Base(t.Lineage().Name())
+		types[EntityType(pkg)] = t
+	}
+
+	switch et := req.EntityType; et {
 	case EntityTypeJSON:
 		fallthrough
 	case EntityTypeFolder:
@@ -96,6 +105,21 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 	case EntityTypeImage:
 		return s.validateImage(ctx, user, req)
 	default:
+		if t, exists := types[et]; exists {
+			val, err := cuectx.JSONtoCUE("", req.Contents)
+			if err != nil {
+				// TODO: Use Go errors
+				return fail(err.Error())
+			}
+
+			_, err = t.CurrentSchema().Validate(val)
+			if err != nil {
+				// TODO: Use Go errors
+				return fail(err.Error())
+			}
+			return success()
+		}
+
 		return fail("unknown entity")
 	}
 }

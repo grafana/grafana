@@ -122,10 +122,18 @@ func (s *standardStorageService) doUpload(c *models.ReqContext) response.Respons
 				path = folder + "/" + fileHeader.Filename
 			}
 
+			var mimeType string
+
 			entityType := EntityTypeJSON
-			mimeType := http.DetectContentType(data)
+			if mt := fileHeader.Header.Get("Content-Type"); mt != "" {
+				mimeType = mt
+			} else {
+				mimeType = http.DetectContentType(data)
+			}
 			if strings.HasPrefix(mimeType, "image") || strings.HasSuffix(path, ".svg") {
 				entityType = EntityTypeImage
+			} else if strings.HasPrefix(mimeType, "vnd.grafana.coremodel") {
+				entityType = EntityType(strings.TrimPrefix(mimeType, "vnd.grafana.coremodel/"))
 			}
 
 			err = s.Upload(c.Req.Context(), c.SignedInUser, &UploadRequest{

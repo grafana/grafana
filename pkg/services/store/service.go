@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	cm "github.com/grafana/grafana/pkg/framework/coremodel/registry"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
@@ -88,6 +89,7 @@ type standardStorageService struct {
 	cfg          *GlobalStorageConfig
 	authService  storageAuthService
 	quotaService quota.Service
+	base         *cm.Base
 }
 
 func ProvideService(
@@ -95,6 +97,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
+	base *cm.Base,
 ) StorageService {
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
@@ -227,7 +230,7 @@ func ProvideService(
 		}
 	})
 
-	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg)
+	s := newStandardStorageService(sql, globalRoots, initializeOrgStorages, authService, cfg, base)
 	s.quotaService = quotaService
 	s.cfg = settings
 	return s
@@ -247,6 +250,7 @@ func newStandardStorageService(
 	initializeOrgStorages func(orgId int64) []storageRuntime,
 	authService storageAuthService,
 	cfg *setting.Cfg,
+	base *cm.Base,
 ) *standardStorageService {
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
@@ -260,6 +264,7 @@ func newStandardStorageService(
 		sql:         sql,
 		tree:        res,
 		authService: authService,
+		base:        base,
 	}
 }
 
