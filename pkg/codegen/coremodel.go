@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing/fstest"
 
+	cerrors "cuelang.org/go/cue/errors"
 	"cuelang.org/go/pkg/encoding/yaml"
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -242,7 +243,7 @@ func (ls *ExtractedLineage) GenerateTypescriptCoremodel(path string) (WriteDiffe
 
 	top, err := cuetsy.GenerateSingleAST(strings.Title(ls.Lineage.Name()), schv, cuetsy.TypeInterface)
 	if err != nil {
-		return nil, fmt.Errorf("cuetsy top gen failed: %w", err)
+		return nil, fmt.Errorf("cuetsy top gen failed: %s", cerrors.Details(err, nil))
 	}
 
 	// TODO until cuetsy can toposort its outputs, put the top/parent type at the bottom of the file.
