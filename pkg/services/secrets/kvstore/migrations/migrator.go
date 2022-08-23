@@ -37,7 +37,10 @@ func ProvideSecretMigrationService(
 ) *SecretMigrationServiceImpl {
 	services := make([]SecretMigrationService, 0)
 	services = append(services, dataSourceSecretMigrationService)
-	// plugin migration should always be last; should either migrate to or from, not both
+	// Plugin migration should always be last; should either migrate to or from, not both
+	// This is because the migrateTo checks for use_plugin = true, in which case we should always
+	// migrate by default to ensure users don't lose access to secrets. If migration has
+	// already occurred, the migrateTo function will be called but it won't do anything
 	if cfg.SectionWithEnvOverrides("secrets").Key("migrate_from_plugin").MustBool(false) {
 		services = append(services, migrateFromPluginService)
 	} else {
