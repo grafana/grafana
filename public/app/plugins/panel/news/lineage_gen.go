@@ -34,7 +34,8 @@ var ptree *pfs.Tree
 //go:embed plugin.json models.cue
 var plugFS embed.FS
 
-func loadPluginTree(lib *thema.Library) *pfs.Tree {
+// PluginTree returns the plugin tree representing the statically analyzable contents of the news plugin.
+func PluginTree(lib *thema.Library) *pfs.Tree {
 	var err error
 	if lib == nil {
 		parseOnce.Do(func() {
@@ -55,7 +56,7 @@ func loadPluginTree(lib *thema.Library) *pfs.Tree {
 // PanelLineage returns the Thema lineage for the news panel plugin's
 // Panel ["github.com/grafana/grafana/pkg/framework/coremodel".Slot] implementation.
 func PanelLineage(lib *thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
-	t := loadPluginTree(lib)
+	t := PluginTree(lib)
 	lin, has := t.RootPlugin().SlotImplementations()["Panel"]
 	if !has {
 		panic("unreachable: lineage for Panel does not exist, but code is only generated for existing lineages")

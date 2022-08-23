@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 	"testing/fstest"
-	"text/template"
 
 	"cuelang.org/go/pkg/encoding/yaml"
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
@@ -326,22 +325,13 @@ func GenerateCoremodelRegistry(path string, ecl []*ExtractedLineage) (WriteDiffe
 	}
 
 	buf := new(bytes.Buffer)
-	tmpl := template.Must(tmpls.New("registry").Parse(`{{ template "autogen_header.tmpl" .Header }}
-{{ template "registry_coremodel.tmpl" .Body }}
-`))
-
-	if err := tmpl.Execute(buf, struct {
-		Header tvars_autogen_header
-		Body   tvars_coremodel_registry
-	}{
+	if err := tmpls.Lookup("coremodel_registry.tmpl").Execute(buf, tvars_coremodel_registry{
 		Header: tvars_autogen_header{
 			GeneratorPath: "pkg/framework/coremodel/gen.go", // FIXME hardcoding is not OK
 		},
-		Body: tvars_coremodel_registry{
-			Coremodels: cml,
-		},
+		Coremodels: cml,
 	}); err != nil {
-		return nil, fmt.Errorf("failed executing template: %w", err)
+		return nil, fmt.Errorf("failed executing coremodel registry template: %w", err)
 	}
 
 	byt, err := postprocessGoFile(genGoFile{
