@@ -363,7 +363,7 @@ Result after applying the inner join transformation:
 
 #### Outer join
 
-An outer join will include all data from an inner join, but will also include rows where values do not match in every input.
+An outer join includes all data from an inner join and rows where values do not match in every input.
 
 Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one single result and drop rows where a successful join isn't able to occur - performing an inner join.
 
