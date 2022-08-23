@@ -65,10 +65,8 @@ import (
 	"github.com/grafana/grafana/public/app/plugins/panel/xychart"
 )
 
-var coreTreeLoaders []func(*thema.Library) *pfs.Tree
-
-func init() {
-	coreTreeLoaders = []func(*thema.Library) *pfs.Tree{
+func coreTreeLoaders() []func(*thema.Library) *pfs.Tree {
+	return []func(*thema.Library) *pfs.Tree{
 		alertmanager.PluginTree,
 		stackdriver.PluginTree,
 		cloudwatch.PluginTree,
