@@ -41,8 +41,7 @@ func TestToMacaronPath(t *testing.T) {
 func TestAlertingProxy_createProxyContext(t *testing.T) {
 	ctx := &models.ReqContext{
 		Context: &web.Context{
-			Router: web.NewRouter(),
-			Req:    &http.Request{},
+			Req: &http.Request{},
 		},
 		SignedInUser:          &user.SignedInUser{},
 		UserToken:             &models.UserToken{},
@@ -92,7 +91,6 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 		newCtx := proxy.createProxyContext(ctx, req, resp)
 
 		require.NotEqual(t, ctx.Context.Resp, newCtx.Context.Resp)
-		require.Equal(t, ctx.Context.Router, newCtx.Context.Router)
 		require.Equal(t, ctx.Context.Req, newCtx.Context.Req)
 
 		require.NotEqual(t, 123, resp.Status())

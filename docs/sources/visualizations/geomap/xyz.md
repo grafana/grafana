@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: XYZ tile layer
-weight: 400
+weight: 5
 ---
 
 # XYZ tile layer

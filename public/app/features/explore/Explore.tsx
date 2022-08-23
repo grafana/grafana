@@ -13,6 +13,7 @@ import {
   RawTimeRange,
   ExploreGraphStyle,
   ExploreId,
+  QueryFixAction,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
@@ -168,10 +169,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     makeAbsoluteTime();
   };
 
-  onModifyQueries = (action: any, index?: number) => {
+  onModifyQueries = (action: QueryFixAction, index?: number) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance?.modifyQuery) {
-      const modifier = (queries: DataQuery, modification: any) =>
+      const modifier = (queries: DataQuery, modification: QueryFixAction) =>
         datasourceInstance.modifyQuery!(queries, modification);
       this.props.modifyQueries(this.props.exploreId, action, modifier, index);
     }

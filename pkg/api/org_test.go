@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,10 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -191,18 +188,17 @@ func TestAPIEndpoint_PutCurrentOrgAddress_AccessControl(t *testing.T) {
 
 // `/api/orgs/` endpoints test
 
-// setupOrgsDBForAccessControlTests stores users and create specified number of orgs
-func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, usr user.SignedInUser, orgsCount int) {
+// setupOrgsDBForAccessControlTests creates orgs up until orgID and fake user as member of org
+func setupOrgsDBForAccessControlTests(t *testing.T, db sqlstore.Store, c accessControlScenarioContext, orgID int64) {
 	t.Helper()
-
-	_, err := db.CreateUser(context.Background(), user.CreateUserCommand{Email: usr.Email, SkipOrgSetup: true, Login: usr.Login})
-	require.NoError(t, err)
+	setInitCtxSignedInViewer(c.initCtx)
+	u := *c.initCtx.SignedInUser
+	u.OrgID = orgID
+	c.usermock.ExpectedSignedInUser = &u
 
 	// Create `orgsCount` orgs
-	for i := 1; i <= orgsCount; i++ {
-		_, err = db.CreateOrgWithMember(fmt.Sprintf("TestOrg%v", i), 0)
-		require.NoError(t, err)
-		err = db.AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: usr.Login, Role: usr.OrgRole, OrgId: int64(i), UserId: usr.UserID})
+	for i := 1; i <= int(orgID); i++ {
+		_, err := db.CreateOrgWithMember(fmt.Sprintf("TestOrg%v", i), 0)
 		require.NoError(t, err)
 	}
 }
@@ -240,7 +236,7 @@ func TestAPIEndpoint_CreateOrgs_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 0)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 0)
 
 	input := strings.NewReader(fmt.Sprintf(testCreateOrgCmd, 2))
 	t.Run("AccessControl allows creating Orgs with correct permissions", func(t *testing.T) {
@@ -263,7 +259,7 @@ func TestAPIEndpoint_DeleteOrgs_LegacyAccessControl(t *testing.T) {
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	setInitCtxSignedInViewer(sc.initCtx)
 
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	t.Run("Viewer cannot delete Orgs", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodDelete, fmt.Sprintf(deleteOrgsURL, 2), nil, t)
@@ -279,9 +275,7 @@ func TestAPIEndpoint_DeleteOrgs_LegacyAccessControl(t *testing.T) {
 
 func TestAPIEndpoint_DeleteOrgs_AccessControl(t *testing.T) {
 	sc := setupHTTPServer(t, true)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	t.Run("AccessControl prevents deleting Orgs with incorrect permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, 2)
@@ -346,7 +340,7 @@ func TestAPIEndpoint_GetOrg_LegacyAccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to fetch another one than the logged in one
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	t.Run("Viewer cannot view another Org", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsURL, 2), nil, t)
@@ -365,7 +359,7 @@ func TestAPIEndpoint_GetOrg_AccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to fetch another one than the logged in one
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	t.Run("AccessControl allows viewing another org with correct permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, 2)
@@ -391,7 +385,7 @@ func TestAPIEndpoint_GetOrgByName_LegacyAccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to fetch another one than the logged in one
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	t.Run("Viewer cannot view another Org", func(t *testing.T) {
 		response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(getOrgsByNameURL, "TestOrg2"), nil, t)
@@ -410,7 +404,7 @@ func TestAPIEndpoint_GetOrgByName_AccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to fetch another one than the logged in one
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	t.Run("AccessControl allows viewing another org with correct permissions", func(t *testing.T) {
 		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: ActionOrgsRead}}, accesscontrol.GlobalOrgID)
@@ -431,7 +425,7 @@ func TestAPIEndpoint_PutOrg_LegacyAccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to update another one than the logged in one
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	input := strings.NewReader(testUpdateOrgNameForm)
 
@@ -452,7 +446,7 @@ func TestAPIEndpoint_PutOrg_AccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to update another one than the logged in one
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	input := strings.NewReader(testUpdateOrgNameForm)
 	t.Run("AccessControl allows updating another org with correct permissions", func(t *testing.T) {
@@ -481,7 +475,7 @@ func TestAPIEndpoint_PutOrgAddress_LegacyAccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to update another one than the logged in one
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	input := strings.NewReader(testUpdateOrgAddressForm)
 
@@ -502,7 +496,7 @@ func TestAPIEndpoint_PutOrgAddress_AccessControl(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create two orgs, to update another one than the logged in one
-	setupOrgsDBForAccessControlTests(t, sc.db, *sc.initCtx.SignedInUser, 2)
+	setupOrgsDBForAccessControlTests(t, sc.db, sc, 2)
 
 	input := strings.NewReader(testUpdateOrgAddressForm)
 	t.Run("AccessControl allows updating another org address with correct permissions", func(t *testing.T) {

@@ -25,7 +25,7 @@ import {
   StringLiteral,
   VectorSelector,
   Without,
-} from 'lezer-promql';
+} from '@prometheus-io/lezer-promql';
 
 import { binaryScalarOperatorToOperatorName } from './binaryScalarOperations';
 import {
