@@ -42,7 +42,8 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
     return (
       <div className={tabsStyles.item}>
         <a
-          href={href}
+          // in case there is no href '#' is set in order to maintain a11y
+          href={href ? href : '#'}
           className={linkClass}
           {...otherProps}
           onClick={onChangeTab}

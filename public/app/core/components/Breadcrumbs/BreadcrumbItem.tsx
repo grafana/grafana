@@ -44,6 +44,10 @@ export function BreadcrumbItem(props: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const separator = css({
+    color: theme.colors.text.secondary,
+  });
+
   return {
     breadcrumb: css({
       alignItems: 'center',
@@ -61,9 +65,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       display: 'flex',
       fontWeight: theme.typography.fontWeightMedium,
+
+      // logic for small screens
+      // hide any breadcrumbs that aren't the second to last child (the parent)
+      [theme.breakpoints.down('md')]: {
+        display: 'none',
+        '&:nth-last-child(2)': {
+          display: 'flex',
+          flexDirection: 'row-reverse',
+
+          [`.${separator}`]: {
+            transform: 'rotate(180deg)',
+          },
+        },
+      },
     }),
-    separator: css({
-      color: theme.colors.text.secondary,
-    }),
+    separator,
   };
 };

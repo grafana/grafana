@@ -51,7 +51,7 @@ export function addLocationFields<TOptions>(
 
     case FrameGeometrySourceMode.Geohash:
       builder.addFieldNamePicker({
-        path: `${prefix}.geohash`,
+        path: `${prefix}geohash`,
         name: 'Geohash field',
         settings: {
           filter: (f: Field) => f.type === FieldType.string,
