@@ -56,6 +56,9 @@ func ProvideService(
 				return nil, err
 			}
 		} else {
+			// as the plugin is installed, secretsKVStoreSQL is now replaced with
+			// an instance of secretsKVStorePlugin with the sql store as a fallback
+			// (used for migration and in case a secret is not found).
 			store = &secretsKVStorePlugin{
 				secretsPlugin:                  secretsPlugin,
 				secretsService:                 secretsService,
