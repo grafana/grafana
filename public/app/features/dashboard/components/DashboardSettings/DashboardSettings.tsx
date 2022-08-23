@@ -73,7 +73,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   if (dashboard.meta.canEdit) {
     pages.push({
-      title: 'Settings',
+      title: 'General',
       id: 'settings',
       icon: 'sliders-v-alt',
       component: GeneralSettings,
@@ -158,7 +158,7 @@ function getSectionNav(
   location: H.Location
 ): NavModel {
   const main: NavModelItem = {
-    text: 'Dashboard',
+    text: 'Settings',
     children: [],
     icon: 'apps',
     hideFromBreadcrumbs: true,
