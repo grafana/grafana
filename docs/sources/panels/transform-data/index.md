@@ -354,7 +354,7 @@ Query B:
 | 2020-07-07 11:24:20 | server 2 | 5      |
 | 2020-07-07 11:04:20 | server 3 | 10     |
 
-Result after applying the inner join transformation:
+The result after applying the inner join transformation looks like the following:
 
 | Time                | Job     | Uptime    | Server   | Errors |
 | ------------------- | ------- | --------- | -------- | ------ |
