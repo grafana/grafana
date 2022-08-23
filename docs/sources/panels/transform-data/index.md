@@ -334,7 +334,7 @@ time series results into a single wide table with a shared time field.
 An inner join will merge data from multiple tables where all tables share the same value from the selected field. This will exclude
 data where values do not match in every result.
 
-Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one single result and drop rows where a successful join isn't able to occur - performing an inner join.
+Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur - performing an inner join.
 
 In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the inner join transformation.
 
