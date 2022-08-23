@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { negate } from 'lodash';
-import React, { ComponentProps, memo, useCallback, useMemo, useState } from 'react';
+import React, { ComponentProps, memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { CellProps, SortByFn } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -14,6 +14,7 @@ import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
 import { Column, Table } from './components/Table';
+import { RemoveCorrelationParams } from './types';
 import { CorrelationData, useCorrelations } from './useCorrelations';
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
@@ -29,15 +30,47 @@ const loaderWrapper = css`
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAdding] = useState(false);
-  const { correlations, create, remove, update, isLoading, error } = useCorrelations();
+  const { create, remove, update, get } = useCorrelations();
+
+  useEffect(() => {
+    get.execute();
+    // we only want to fetch data on first render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const handleAdd = useCallback<ComponentProps<typeof AddCorrelationForm>['onSubmit']>(
     async (correlation) => {
-      await create(correlation);
-      setIsAdding(false);
+      if (!create.loading) {
+        await create.execute(correlation);
+        get.execute();
+        setIsAdding(false);
+      }
     },
-    [create]
+    [create, get]
+  );
+
+  const handleUpdate = useCallback<ComponentProps<typeof EditCorrelationForm>['onSubmit']>(
+    async (correlation) => {
+      if (!update.loading) {
+        await update.execute(correlation);
+        get.execute();
+        setIsAdding(false);
+      }
+    },
+    [update, get]
+  );
+
+  const handleRemove = useCallback<(params: RemoveCorrelationParams) => void>(
+    async (correlation) => {
+      if (!remove.loading) {
+        await remove.execute(correlation);
+        get.execute();
+        setIsAdding(false);
+      }
+    },
+    [remove, get]
   );
 
   const RowActions = useCallback(
@@ -50,9 +83,13 @@ export default function CorrelationsPage() {
       },
     }: CellProps<CorrelationData, void>) =>
       !readOnly && (
-        <DeleteButton aria-label="delete correlation" onConfirm={() => remove({ sourceUID, uid })} closeOnConfirm />
+        <DeleteButton
+          aria-label="delete correlation"
+          onConfirm={() => handleRemove({ sourceUID, uid })}
+          closeOnConfirm
+        />
       ),
-    [remove]
+    [handleRemove]
   );
 
   const columns = useMemo<Array<Column<CorrelationData>>>(
@@ -84,11 +121,9 @@ export default function CorrelationsPage() {
     [RowActions, canWriteCorrelations]
   );
 
-  const data = useMemo(() => correlations, [correlations]);
+  const data = useMemo(() => get.value, [get.value]);
 
-  const showEmptyListCTA = data?.length === 0 && !isAdding && (!error || error.status === 404);
-
-  const showErrorAlert = error && error.status !== 404;
+  const showEmptyListCTA = data?.length === 0 && !isAdding && (!get.error || get.error.status === 404);
 
   return (
     <Page navModel={navModel}>
@@ -107,7 +142,7 @@ export default function CorrelationsPage() {
           </HorizontalGroup>
         </div>
 
-        {!data && isLoading && (
+        {!data && get.loading && (
           <div className={loaderWrapper}>
             <LoadingPlaceholder text="loading..." />
           </div>
@@ -117,10 +152,11 @@ export default function CorrelationsPage() {
 
         {
           // This error is not actionable, it'd be nice to have a recovery button
-          showErrorAlert && (
+          get.error && get.error.status !== 404 && (
             <Alert severity="error" title="Error fetching correlation data" topSpacing={2}>
               <HorizontalGroup>
-                {error.data.message || 'An unknown error occurred while fetching correlation data. Please try again.'}
+                {get.error.data.message ||
+                  'An unknown error occurred while fetching correlation data. Please try again.'}
               </HorizontalGroup>
             </Alert>
           )
@@ -133,7 +169,7 @@ export default function CorrelationsPage() {
             renderExpandedRow={({ target, source, ...correlation }) => (
               <EditCorrelationForm
                 defaultValues={{ sourceUID: source.uid, ...correlation }}
-                onSubmit={update}
+                onSubmit={handleUpdate}
                 readOnly={isSourceReadOnly({ source }) || !canWriteCorrelations}
               />
             )}

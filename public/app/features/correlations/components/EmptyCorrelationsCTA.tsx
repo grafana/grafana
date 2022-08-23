@@ -11,7 +11,7 @@ export const EmptyCorrelationsCTA = ({ onClick }: Props) => {
   return (
     <EmptyListCTA
       title="You haven't defined any correlation yet."
-      buttonIcon="sitemap"
+      buttonIcon="gf-glue"
       onClick={onClick}
       buttonTitle="Add correlation"
       proTip="you can also define correlations via datasource provisioning"

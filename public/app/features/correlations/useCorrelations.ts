@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
@@ -34,42 +34,55 @@ export const useCorrelations = () => {
   const { backend } = useGrafana();
   const [error, setError] = useState<FetchError | null>(null);
 
-  const getCorrelations = useCallback(() => {
-    return lastValueFrom(
-      backend.fetch<Correlation[]>({ url: '/api/datasources/correlations', method: 'GET', showErrorAlert: false })
-    )
-      .then(getData, (e) => {
-        setError(e);
-        return [];
-      })
-      .then(toEnrichedCorrelationsData);
-  }, [backend]);
+  const [getInfo, get] = useAsyncFn<() => Promise<CorrelationData[]>>(
+    () =>
+      lastValueFrom(
+        backend.fetch<Correlation[]>({ url: '/api/datasources/correlations', method: 'GET', showErrorAlert: false })
+      )
+        .then(getData, (e) => {
+          setError(e);
+          return [];
+        })
+        .then(toEnrichedCorrelationsData),
+    [backend]
+  );
 
-  const [{ value: correlations, loading }, reload] = useAsyncFn(getCorrelations, [getCorrelations]);
+  const [createInfo, create] = useAsyncFn<(params: CreateCorrelationParams) => Promise<CorrelationData>>(
+    ({ sourceUID, ...correlation }) =>
+      backend.post(`/api/datasources/uid/${sourceUID}/correlations`, correlation).then(toEnrichedCorrelationData),
+    [backend]
+  );
 
-  useEffect(() => {
-    reload();
-    // we only want to fetch data on first render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [removeInfo, remove] = useAsyncFn<(params: RemoveCorrelationParams) => Promise<void>>(
+    ({ sourceUID, uid }) => backend.delete(`/api/datasources/uid/${sourceUID}/correlations/${uid}`),
+    [backend]
+  );
 
-  const create = ({ sourceUID, ...correlation }: CreateCorrelationParams) => {
-    return backend.post(`/api/datasources/uid/${sourceUID}/correlations`, correlation).then((data) => {
-      reload();
-      return toEnrichedCorrelationData(data);
-    });
+  const [updateInfo, update] = useAsyncFn<(params: UpdateCorrelationParams) => Promise<CorrelationData>>(
+    ({ sourceUID, uid, ...correlation }) =>
+      backend
+        .patch(`/api/datasources/uid/${sourceUID}/correlations/${uid}`, correlation)
+        .then(toEnrichedCorrelationData),
+    [backend]
+  );
+
+  return {
+    create: {
+      execute: create,
+      ...createInfo,
+    },
+    update: {
+      execute: update,
+      ...updateInfo,
+    },
+    get: {
+      execute: get,
+      ...getInfo,
+      error,
+    },
+    remove: {
+      execute: remove,
+      ...removeInfo,
+    },
   };
-
-  const remove = ({ sourceUID, uid }: RemoveCorrelationParams) => {
-    return backend.delete(`/api/datasources/uid/${sourceUID}/correlations/${uid}`).then(reload);
-  };
-
-  const update = ({ sourceUID, uid, ...correlation }: UpdateCorrelationParams) => {
-    return backend.patch(`/api/datasources/uid/${sourceUID}/correlations/${uid}`, correlation).then((data) => {
-      reload();
-      return toEnrichedCorrelationData(data);
-    });
-  };
-
-  return { correlations, create, update, reload, remove, isLoading: loading, error };
 };
