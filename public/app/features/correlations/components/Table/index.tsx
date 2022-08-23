@@ -29,14 +29,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       min-width: ${theme.spacing(3)};
     }
   `,
-  th: css`
-    position: relative;
-  `,
-  sortIcon: css`
-    position: absolute;
-    width: 16px;
-    overflow: hidden;
-  `,
   evenRow: css`
     background: ${theme.colors.background.primary};
   `,
@@ -123,14 +115,10 @@ export function Table<TableData extends object>({
                 );
 
                 return (
-                  <th key={key} className={cx(styles.th, column.width === 0 && styles.shrink)} {...headerCellProps}>
+                  <th key={key} className={cx(column.width === 0 && styles.shrink)} {...headerCellProps}>
                     {column.render('Header')}
 
-                    {column.isSorted && (
-                      <span className={styles.sortIcon}>
-                        <Icon name={column.isSortedDesc ? 'angle-down' : 'angle-up'} />
-                      </span>
-                    )}
+                    {column.isSorted && <Icon name={column.isSortedDesc ? 'angle-down' : 'angle-up'} />}
                   </th>
                 );
               })}
