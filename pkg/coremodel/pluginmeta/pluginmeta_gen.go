@@ -86,6 +86,8 @@ const (
 
 	ReleaseStateBeta ReleaseState = "beta"
 
+	ReleaseStateDeprecated ReleaseState = "deprecated"
+
 	ReleaseStateStable ReleaseState = "stable"
 )
 
@@ -107,6 +109,10 @@ type Model struct {
 
 	// If the plugin has a backend component.
 	Backend *bool `json:"backend,omitempty"`
+
+	// builtin indicates whether the plugin is developed and shipped as part
+	// of Grafana. Also known as a "core plugin."
+	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
 	Category *Category `json:"category,omitempty"`
@@ -145,6 +151,10 @@ type Model struct {
 	// For data source plugins, include hidden queries in the data
 	// request.
 	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
+
+	// hideFromList excludes the plugin from listings in Grafana's UI. Only
+	// allowed for builtin plugins.
+	HideFromList bool `json:"hideFromList"`
 
 	// Unique name of the plugin. If the plugin is published on
 	// grafana.com, then the plugin id has to follow the naming
@@ -185,7 +195,7 @@ type Model struct {
 		} `json:"links,omitempty"`
 
 		// SVG images that are used as plugin icons.
-		Logos struct {
+		Logos *struct {
 			// Link to the "large" version of the plugin logo, which must be
 			// an SVG image. "Large" and "small" logos can be the same image.
 			Large string `json:"large"`
@@ -193,7 +203,7 @@ type Model struct {
 			// Link to the "small" version of the plugin logo, which must be
 			// an SVG image. "Large" and "small" logos can be the same image.
 			Small string `json:"small"`
-		} `json:"logos"`
+		} `json:"logos,omitempty"`
 
 		// An array of screenshot objects in the form `{name: 'bar', path:
 		// 'img/screenshot.png'}`
@@ -203,10 +213,10 @@ type Model struct {
 		} `json:"screenshots,omitempty"`
 
 		// Date when this plugin was built.
-		Updated string `json:"updated"`
+		Updated *string `json:"updated,omitempty"`
 
 		// Project version of this commit, e.g. `6.7.x`.
-		Version string `json:"version"`
+		Version *string `json:"version,omitempty"`
 	} `json:"info"`
 
 	// For data source plugins, if the plugin supports logs.
@@ -420,7 +430,7 @@ type Info struct {
 	} `json:"links,omitempty"`
 
 	// SVG images that are used as plugin icons.
-	Logos struct {
+	Logos *struct {
 		// Link to the "large" version of the plugin logo, which must be
 		// an SVG image. "Large" and "small" logos can be the same image.
 		Large string `json:"large"`
@@ -428,7 +438,7 @@ type Info struct {
 		// Link to the "small" version of the plugin logo, which must be
 		// an SVG image. "Large" and "small" logos can be the same image.
 		Small string `json:"small"`
-	} `json:"logos"`
+	} `json:"logos,omitempty"`
 
 	// An array of screenshot objects in the form `{name: 'bar', path:
 	// 'img/screenshot.png'}`
@@ -438,10 +448,10 @@ type Info struct {
 	} `json:"screenshots,omitempty"`
 
 	// Date when this plugin was built.
-	Updated string `json:"updated"`
+	Updated *string `json:"updated,omitempty"`
 
 	// Project version of this commit, e.g. `6.7.x`.
-	Version string `json:"version"`
+	Version *string `json:"version,omitempty"`
 }
 
 // TODO docs

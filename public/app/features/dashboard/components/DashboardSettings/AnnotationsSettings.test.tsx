@@ -10,7 +10,7 @@ import { locationService, setAngularLoader, setDataSourceSrv } from '@grafana/ru
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
-import { DashboardModel } from '../../state';
+import { DashboardModel } from '../../state/DashboardModel';
 
 import { AnnotationsSettings } from './AnnotationsSettings';
 
