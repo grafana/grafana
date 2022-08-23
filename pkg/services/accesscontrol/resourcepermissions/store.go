@@ -44,7 +44,8 @@ func (p *flatResourcePermission) IsManaged(scope string) bool {
 }
 
 func (p *flatResourcePermission) IsInherited(scope string) bool {
-	return p.Scope != scope
+	prefix, _, _ := strings.Cut(scope, ":")
+	return !strings.HasPrefix(p.Scope, strings.ReplaceAll(prefix, "*", ""))
 }
 
 func (s *store) SetUserResourcePermission(
