@@ -406,7 +406,10 @@ func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int
 }
 
 func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) error {
-	basicKeys := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
+	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
+	if err != nil {
+		return err
+	}
 	if len(basicKeys) > 0 {
 		for _, key := range basicKeys {
 			err := s.CreateServiceAccountFromApikey(ctx, key)
@@ -424,7 +427,10 @@ func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.C
 }
 
 func (s *ServiceAccountsStoreImpl) MigrateApiKey(ctx context.Context, orgId int64, keyId int64) error {
-	basicKeys := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
+	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
+	if err != nil {
+		return err
+	}
 	if len(basicKeys) == 0 {
 		return fmt.Errorf("no API keys to convert found")
 	}

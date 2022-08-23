@@ -513,8 +513,6 @@ func (hs *HTTPServer) applyRoutes() {
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
 	hs.RouteRegister.Register(hs.web, hs.namedMiddlewares...)
-	// then custom app proxy routes
-	hs.initAppPluginRoutes(hs.web)
 	// lastly not found route
 	hs.web.NotFound(middleware.ReqSignedIn, hs.NotFoundHandler)
 }

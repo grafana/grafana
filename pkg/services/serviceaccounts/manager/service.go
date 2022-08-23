@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,7 +32,6 @@ func ProvideServiceAccountsService(
 	serviceAccountsStore serviceaccounts.Store,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) (*ServiceAccountsService, error) {
-	database.InitMetrics()
 	s := &ServiceAccountsService{
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),
@@ -44,7 +42,7 @@ func ProvideServiceAccountsService(
 		s.log.Error("Failed to register roles", "error", err)
 	}
 
-	usageStats.RegisterMetricsFunc(s.store.GetUsageMetrics)
+	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, permissionService)
 	serviceaccountsAPI.RegisterAPIEndpoints()
@@ -55,7 +53,7 @@ func ProvideServiceAccountsService(
 func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 	sa.backgroundLog.Debug("service initialized")
 
-	if _, err := sa.store.GetUsageMetrics(ctx); err != nil {
+	if _, err := sa.getUsageMetrics(ctx); err != nil {
 		sa.log.Warn("Failed to get usage metrics", "error", err.Error())
 	}
 
@@ -75,7 +73,7 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 		case <-updateStatsTicker.C:
 			sa.backgroundLog.Debug("updating usage metrics")
 
-			if _, err := sa.store.GetUsageMetrics(ctx); err != nil {
+			if _, err := sa.getUsageMetrics(ctx); err != nil {
 				sa.backgroundLog.Warn("Failed to get usage metrics", "error", err.Error())
 			}
 		}
