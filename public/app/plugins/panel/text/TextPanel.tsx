@@ -21,13 +21,6 @@ interface State {
 export class TextPanel extends PureComponent<Props, State> {
   static contextType = ThemeContext;
 
-  readonly markdownClassName = cx(
-    'markdown-html',
-    css`
-      height: 100%;
-    `
-  );
-
   constructor(props: Props) {
     super(props);
 
@@ -121,11 +114,7 @@ export class TextPanel extends PureComponent<Props, State> {
 
     return (
       <CustomScrollbar autoHeightMin="100%">
-        <DangerouslySetHtmlContent
-          html={html}
-          className={this.markdownClassName}
-          data-testid="TextPanel-converted-content"
-        />
+        <DangerouslySetHtmlContent html={html} className={styles.markdown} data-testid="TextPanel-converted-content" />
       </CustomScrollbar>
     );
   }
@@ -138,4 +127,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
       background-color: ${theme.colors.background.primary};
     }
   `,
+  markdown: cx(
+    'markdown-html',
+    css`
+      height: 100%;
+    `
+  ),
 }));
