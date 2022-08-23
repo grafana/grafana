@@ -435,6 +435,22 @@ func (st DBstore) getFilterByOrgsString() string {
 	return builder.String()
 }
 
+func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
+	var result []ngmodels.AlertRuleKeyWithVersion
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		alertRulesSql := "SELECT org_id, uid, version  FROM alert_rule"
+		filter := st.getFilterByOrgsString()
+		if filter != "" {
+			alertRulesSql += " WHERE " + filter
+		}
+		if err := sess.SQL(alertRulesSql).Find(&result); err != nil {
+			return err
+		}
+		return nil
+	})
+	return result, err
+}
+
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var folders []struct {

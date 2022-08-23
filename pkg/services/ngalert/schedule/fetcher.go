@@ -43,6 +43,17 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) error {
 			time.Since(start).Seconds())
 	}()
 
+	if !sch.schedulableAlertRules.isEmpty() {
+		keys, err := sch.ruleStore.GetAlertRulesKeysForScheduling(ctx)
+		if err != nil {
+			return err
+		}
+		if !sch.schedulableAlertRules.needsUpdate(keys) {
+			sch.log.Info("no changes detected. Skip updating")
+			return nil
+		}
+	}
+
 	q := models.GetAlertRulesForSchedulingQuery{
 		PopulateFolders: !sch.disableGrafanaFolder,
 	}

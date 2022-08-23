@@ -48,6 +48,7 @@ type AlertsSender interface {
 
 // RulesStore is a store that provides alert rules for scheduling
 type RulesStore interface {
+	GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error)
 	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
 }
 

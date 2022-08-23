@@ -195,3 +195,22 @@ func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool
 	}
 	return rule, ok
 }
+
+func (r *alertRulesRegistry) isEmpty() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.rules) == 0
+}
+
+func (r *alertRulesRegistry) needsUpdate(keys []models.AlertRuleKeyWithVersion) bool {
+	if len(r.rules) != len(keys) {
+		return true
+	}
+	for _, key := range keys {
+		rule, ok := r.rules[key.AlertRuleKey]
+		if !ok || rule.Version != key.Version {
+			return true
+		}
+	}
+	return false
+}

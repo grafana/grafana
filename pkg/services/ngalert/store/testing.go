@@ -174,6 +174,24 @@ func (f *FakeRuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models
 	}
 	return nil
 }
+func (f *FakeRuleStore) GetAlertRulesKeysForScheduling(_ context.Context) ([]models.AlertRuleKeyWithVersion, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+		Name:   "GetAlertRulesKeysForScheduling",
+		Params: []interface{}{},
+	})
+	result := make([]models.AlertRuleKeyWithVersion, 0, len(f.Rules))
+	for _, rules := range f.Rules {
+		for _, rule := range rules {
+			result = append(result, models.AlertRuleKeyWithVersion{
+				Version:      rule.Version,
+				AlertRuleKey: rule.GetKey(),
+			})
+		}
+	}
+	return result, nil
+}
 
 // For now, we're not implementing namespace filtering.
 func (f *FakeRuleStore) GetAlertRulesForScheduling(_ context.Context, q *models.GetAlertRulesForSchedulingQuery) error {
