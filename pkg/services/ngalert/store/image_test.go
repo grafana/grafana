@@ -91,10 +91,17 @@ func TestIntegrationGetImages(t *testing.T) {
 	assert.Equal(t, []models.Image{image1}, images)
 
 	// create an image with a long URL (e.g signed URL)
-	image2 := models.Image{URL: "https://example.com/example.png?Signature=3r4r4r34r34r34r34dfeergef3t343t34erg443" +
-		"kjwjdwdisdihdw3903999333u3uru23hsdjhfjsh38rr82r23r2rdsfhfh39frhfhf5e9316a2841e8ff4a8496def8e260c1dbe25e3a" +
-		"c530b22ceaa1c23hsdjhfjsh38rr82r23r2rdsfhfh39frhfhf5e924f722292d21e24d31dcfb38cee25e3a85a7dbb891d8rr82r23r" +
-		"9edf4d187d54e7cc46e4731b1e6273242c4f4c39a1d2507a0e58706e25e3a85a7dbb891d62afa8496def8e260c1dbf4c39a1d2507"}
+	image2 := models.Image{URL: "https://example.com/example.png?Signature=fPow8xzlrNpQqZp2K4KE9Xs7KfrUEzBmINHwICX9" +
+		"yXkTcVrIb3CmyfpdAl9glG6RHFnkg8Lkg7L88CwltPV3QhUTReLXKwWH364dwU0HgHmYtfZTVFJd33Y1r4a1SvuXWWyciGeI7YtQC8NYoNswZJ" +
+		"R7lpbdF968Y95BX99vqJLgjPV3zppuRKWEMObGd05GCEKN9wMr1y3wIpUMLkZxwCx0i59afBNnCewEEL1k6HywtvGukP0mI2XDQOdGTVpZYc8L" +
+		"j7JcLur5pwgF6XzmCWxDTUEnYI2TGFdSlhhXbMp7ZINs32QXqOMX0TzaNP7TpmTO09p6UBRntMIRacb6p6nZNbIe2L0uInOZFVTwdzMDsCExBw" +
+		"sPa6uIftFjJG6rU8YHpDYBAIkdn9RBBMpgxJ7PW5cm8zmAmWNhXILkJoudqLnL7pGVS6JwEnTRvCeoUEK9bBcvcUIyfj0wuHZphQz0bG01v9c6" +
+		"3RghISMfeJl8nulfvph9A4CqMRfqdTQkNBuyw6UXJlMWLONMmuIB8XPDRquABFSeRhRx8LGRzlmJfgGI80IIS9If7Kyb5VmINJvnnHqNd8GTyW" +
+		"910WMK4bUUMtyMQgdPHTsAt4BseQ6ShhfZt1fxQS88NgpJf4tNkyxOEqNoIme4KneIiue6T2g8GEYBOcsw9U9oc1h8Nv1mPshaQ0cx8acPX9Mt" +
+		"kcgyRF49HV92HBXYghZx0LudPSvVv73XgIBn6eZvP12BPS9Lgzz5gfGULWkPhlOuot1Lsnu1NzVsYY94EbgiPk6AEjpsl2OZmHHqnsVXamIXhX" +
+		"dvY8KxwYd5VDvw3q1mlUZfG4FipZU0NRRSVm9bLlyazabTnPBkCDUG6o4YZHqIuYCk0zsEWErEYvTf5DZmQCXC6Igu8lkKmWdW7ei70fUVYixA" +
+		"4js7S0DuECKE5tzAcPvgCKFBJ6imQjPnCaAv62SL8Qd9VHKohtcinRAn1uJ1AGhjjtwfTSTvwJxdeFlsUXl95sVivlLqZZAsN4Q12y8M2JTwDJ" +
+		"ztYxvr9m2FixQZ2IqhLmc8dVgtQedrIf0ZEHflMiWlPavvJsAf8OXXdspYj3Nrn"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
 
 	// should return both images
