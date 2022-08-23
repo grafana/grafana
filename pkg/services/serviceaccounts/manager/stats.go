@@ -2,7 +2,6 @@ package manager
 
 import (
 	"context"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -18,7 +17,6 @@ var (
 	// MStatTotalServiceAccountTokens is a metric gauge for total number of service account tokens
 	MStatTotalServiceAccountTokens prometheus.Gauge
 
-	once        sync.Once
 	Initialised bool = false
 )
 
