@@ -1198,6 +1198,9 @@ def artifacts_page_step():
         'depends_on': [
             'grabpl',
         ],
+        'environment': {
+            'GCP_KEY': from_secret('gcp_key'),
+        },
         'commands': [
             './bin/grabpl artifacts-page',
         ],
