@@ -3,7 +3,7 @@ import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   FileDropzone,
   InlineField,
@@ -33,9 +33,12 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
     super(props);
   }
 
+  // Set the default query type when the component mounts.
+  // Also do this if queryType is 'clear' (which is the case when the user changes the query type)
+  // otherwise if the user changes the query type and refreshes the page, no query type will be selected
+  // which is inconsistent with how the UI was originally when they selected the Tempo data source.
   async componentDidMount() {
-    // Set initial query type to ensure traceID field appears
-    if (!this.props.query.queryType) {
+    if (!this.props.query.queryType || this.props.query.queryType === 'clear') {
       this.props.onChange({
         ...this.props.query,
         queryType: DEFAULT_QUERY_TYPE,
@@ -75,14 +78,8 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceId', label: 'TraceID' },
       { value: 'upload', label: 'JSON file' },
+      { value: 'serviceMap', label: 'Service Graph' },
     ];
-
-    if (config.featureToggles.tempoServiceGraph) {
-      queryTypeOptions.push({ value: 'serviceMap', label: 'Service Graph' });
-      // span names in Tempo search links (generated on the service graph page) are in camel case (for Prometheus queries)
-      // but the span name dropdown menu in the search tab is lower case
-      query.spanName = query.spanName?.toLowerCase();
-    }
 
     if (!datasource?.search?.hide) {
       queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });

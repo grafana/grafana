@@ -12,7 +12,6 @@ import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { getVariable, getVariablesState } from '../state/selectors';
 import { changeVariableProp } from '../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../state/types';
-import { QueryVariableModel } from '../types';
 import { hasOngoingTransaction, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { getVariableQueryRunner } from './VariableQueryRunner';
@@ -30,7 +29,11 @@ export const updateQueryVariableOptions = (
         return;
       }
 
-      const variableInState = getVariable<QueryVariableModel>(identifier, getState());
+      const variableInState = getVariable(identifier, getState());
+      if (variableInState.type !== 'query') {
+        return;
+      }
+
       if (getVariablesState(rootStateKey, getState()).editor.id === variableInState.id) {
         dispatch(toKeyedAction(rootStateKey, removeVariableEditorError({ errorProp: 'update' })));
       }
@@ -65,7 +68,11 @@ export const updateQueryVariableOptions = (
 export const initQueryVariableEditor =
   (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
   async (dispatch, getState) => {
-    const variable = getVariable<QueryVariableModel>(identifier, getState());
+    const variable = getVariable(identifier, getState());
+    if (variable.type !== 'query') {
+      return;
+    }
+
     await dispatch(changeQueryVariableDataSource(toKeyedVariableIdentifier(variable), variable.datasource));
   };
 
@@ -111,7 +118,11 @@ export const changeQueryVariableQuery =
   (identifier: KeyedVariableIdentifier, query: any, definition?: string): ThunkResult<void> =>
   async (dispatch, getState) => {
     const { rootStateKey } = identifier;
-    const variableInState = getVariable<QueryVariableModel>(identifier, getState());
+    const variableInState = getVariable(identifier, getState());
+    if (variableInState.type !== 'query') {
+      return;
+    }
+
     if (hasSelfReferencingQuery(variableInState.name, query)) {
       const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
       dispatch(toKeyedAction(rootStateKey, addVariableEditorError({ errorProp: 'query', errorText })));

@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	prometheusModel "github.com/prometheus/common/model"
 )
 
 type cache struct {
@@ -33,18 +32,42 @@ func newCache(logger log.Logger, metrics *metrics.State, externalURL *url.URL) *
 	}
 }
 
-func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
+func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	// clone the labels so we don't change eval.Result
-	labels := result.Instance.Copy()
-	attachRuleLabels(labels, alertRule)
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, labels, result)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(ctx, alertRule, result, extraLabels)
 
-	// if duplicate labels exist, alertRule label will take precedence
-	lbs := mergeLabels(ruleLabels, result.Instance)
-	attachRuleLabels(lbs, alertRule)
+	lbs := make(data.Labels, len(extraLabels)+len(ruleLabels)+len(result.Instance))
+	dupes := make(data.Labels)
+	for key, val := range extraLabels {
+		lbs[key] = val
+	}
+	for key, val := range ruleLabels {
+		_, ok := lbs[key]
+		// if duplicate labels exist, reserved label will take precedence
+		if ok {
+			dupes[key] = val
+		} else {
+			lbs[key] = val
+		}
+	}
+	if len(dupes) > 0 {
+		c.log.Warn("rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
+	}
+	dupes = make(data.Labels)
+	for key, val := range result.Instance {
+		_, ok := lbs[key]
+		// if duplicate labels exist, reserved or alert rule label will take precedence
+		if ok {
+			dupes[key] = val
+		} else {
+			lbs[key] = val
+		}
+	}
+	if len(dupes) > 0 {
+		c.log.Warn("evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+	}
 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
@@ -93,17 +116,14 @@ func (c *cache) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, 
 	return newState
 }
 
-func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
-	m[ngModels.RuleUIDLabel] = alertRule.UID
-	m[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
-	m[prometheusModel.AlertNameLabel] = alertRule.Title
-}
+func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, alertInstance eval.Result, extraLabels data.Labels) (data.Labels, data.Labels) {
+	// use labels from the result and extra labels to expand the labels and annotations declared by the rule
+	templateLabels := mergeLabels(extraLabels, alertInstance.Instance)
 
-func (c *cache) expandRuleLabelsAndAnnotations(ctx context.Context, alertRule *ngModels.AlertRule, labels map[string]string, alertInstance eval.Result) (map[string]string, map[string]string) {
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(ctx, alertRule.Title, v, labels, alertInstance, c.externalURL)
+			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, c.externalURL)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
@@ -204,7 +224,7 @@ func (c *cache) recordMetrics() {
 
 // if duplicate labels exist, keep the value from the first set
 func mergeLabels(a, b data.Labels) data.Labels {
-	newLbs := data.Labels{}
+	newLbs := make(data.Labels, len(a)+len(b))
 	for k, v := range a {
 		newLbs[k] = v
 	}

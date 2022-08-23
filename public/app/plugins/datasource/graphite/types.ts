@@ -1,11 +1,21 @@
-import { DataQuery, DataSourceJsonData, TimeRange } from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import { GraphiteDatasource } from './datasource';
 
+export enum GraphiteQueryType {
+  Default = 'Default',
+  Value = 'Value',
+  MetricName = 'Metric Name',
+}
+
 export interface GraphiteQuery extends DataQuery {
+  queryType?: string;
+  textEditor?: boolean;
   target?: string;
+  tags?: string[];
+  fromAnnotations?: boolean;
 }
 
 export interface GraphiteOptions extends DataSourceJsonData {
@@ -87,3 +97,7 @@ export type GraphiteQueryEditorDependencies = {
   // schedule onChange/onRunQuery after the reducer actions finishes
   refresh: () => void;
 };
+
+export interface GraphiteQueryRequest extends DataQueryRequest {
+  format: string;
+}

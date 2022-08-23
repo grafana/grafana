@@ -69,8 +69,8 @@ import { CloudWatchVariableSupport } from './variables';
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
 // Constants also defined in tsdb/cloudwatch/cloudwatch.go
-const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
-const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
+export const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
+export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
@@ -89,7 +89,7 @@ const displayCustomError = (title: string, message: string) =>
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport
+  implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
 {
   proxyUrl: any;
   defaultRegion: any;
@@ -101,6 +101,7 @@ export class CloudWatchDatasource
 
   tracingDataSourceUid?: string;
   logsTimeout: string;
+  defaultLogGroups: string[];
 
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
@@ -127,6 +128,7 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLanguageProvider(this);
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
     this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
+    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups || [];
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
     this.variables = new CloudWatchVariableSupport(this);
@@ -176,7 +178,14 @@ export class CloudWatchDatasource
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const validLogQueries = logQueries.filter((item) => item.logGroupNames?.length);
+    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
+      queryString: target.expression || '',
+      refId: target.refId,
+      logGroupNames: target.logGroupNames || this.defaultLogGroups,
+      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
+    }));
+
+    const validLogQueries = queryParams.filter((item) => item.logGroupNames?.length);
     if (logQueries.length > validLogQueries.length) {
       return of({ data: [], error: { message: 'Log group is required' } });
     }
@@ -185,13 +194,6 @@ export class CloudWatchDatasource
     if (isEmpty(validLogQueries)) {
       return of({ data: [], state: LoadingState.Done });
     }
-
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression || '',
-      refId: target.refId,
-      logGroupNames: target.logGroupNames,
-      region: this.replace(this.getActualRegion(target.region), options.scopedVars, true, 'region'),
-    }));
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -237,7 +239,7 @@ export class CloudWatchDatasource
               options,
               this.timeSrv.timeRange(),
               this.replace.bind(this),
-              this.getVariableValue.bind(this),
+              this.expandVariableToArray.bind(this),
               this.getActualRegion.bind(this),
               this.tracingDataSourceUid
             );
@@ -472,6 +474,13 @@ export class CloudWatchDatasource
     return logGroupNames;
   }
 
+  async describeAllLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeAllLogGroups', [params]));
+
+    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
+    return logGroupNames;
+  }
+
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
     const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
 
@@ -486,7 +495,8 @@ export class CloudWatchDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {}
+    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {},
+    query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;
     let logField = null;
@@ -508,6 +518,7 @@ export class CloudWatchDatasource
     const requestParams: GetLogEventsRequest = {
       limit,
       startFromHead: direction !== 'BACKWARD',
+      region: query?.region,
       logGroupName: parseLogGroupName(logField!.values.get(row.rowIndex)),
       logStreamName: logStreamField!.values.get(row.rowIndex),
     };
@@ -650,7 +661,7 @@ export class CloudWatchDatasource
             if (Array.isArray(anyQuery[fieldName])) {
               anyQuery[fieldName] = anyQuery[fieldName].flatMap((val: string) => {
                 if (fieldName === 'logGroupNames') {
-                  return this.getVariableValue(val, options.scopedVars || {});
+                  return this.expandVariableToArray(val, options.scopedVars || {});
                 }
                 return this.replace(val, options.scopedVars, true, fieldName);
               });
@@ -659,9 +670,7 @@ export class CloudWatchDatasource
             }
           }
         }
-        // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
-        //  if you select different than default region in editor you will get results for autocomplete from wrong
-        //  region.
+
         if (anyQuery.region) {
           anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
           anyQuery.region = this.getActualRegion(anyQuery.region);
@@ -851,22 +860,20 @@ export class CloudWatchDatasource
         return { ...result, [key]: null };
       }
 
-      const newValues = this.getVariableValue(value, scopedVars);
+      const newValues = this.expandVariableToArray(value, scopedVars);
       return { ...result, [key]: newValues };
     }, {});
   }
 
   // get the value for a given template variable
-  getVariableValue(value: string, scopedVars: ScopedVars): string[] {
+  expandVariableToArray(value: string, scopedVars: ScopedVars): string[] {
     const variableName = this.templateSrv.getVariableName(value);
     const valueVar = this.templateSrv.getVariables().find(({ name }) => {
       return name === variableName;
     });
     if (variableName && valueVar) {
       if ((valueVar as unknown as VariableWithMultiSupport).multi) {
-        // rebuild the variable name to handle old migrated queries
-        const values = this.templateSrv.replace('$' + variableName, scopedVars, 'pipe').split('|');
-        return values;
+        return this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
       }
       return [this.templateSrv.replace(value, scopedVars)];
     }
@@ -881,7 +888,7 @@ export class CloudWatchDatasource
       }
       const initialVal: string[] = [];
       const newValues = values.reduce((result, value) => {
-        const vals = this.getVariableValue(value, {});
+        const vals = this.expandVariableToArray(value, {});
         return [...result, ...vals];
       }, initialVal);
       return { ...result, [key]: newValues };

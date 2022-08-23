@@ -25,23 +25,15 @@ types of template variables.
 
 The Azure Monitor data source provides the following queries you can specify in the Query field in the Variable edit view
 
-| Name                                                                               | Description                                                                                            |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `Subscriptions()`                                                                  | Returns subscriptions.                                                                                 |
-| `ResourceGroups()`                                                                 | Returns resource groups.                                                                               |
-| `ResourceGroups(subscriptionID)`                                                   | Returns resource groups for a specified subscription.                                                  |
-| `Namespaces(aResourceGroup)`                                                       | Returns namespaces for the default subscription and specified resource group.                          |
-| `Namespaces(subscriptionID, aResourceGroup)`                                       | Returns namespaces for the specified subscription and resource group.                                  |
-| `ResourceNames(aResourceGroup, aNamespace)`                                        | Returns a list of resource names.                                                                      |
-| `ResourceNames(subscriptionID, aResourceGroup, aNamespace)`                        | Returns a list of resource names for a specified subscription.                                         |
-| `MetricNamespace(aResourceGroup, aNamespace, aResourceName)`                       | Returns a list of metric namespaces.                                                                   |
-| `MetricNamespace(subscriptionID, aResourceGroup, aNamespace, aResourceName)`       | Returns a list of metric namespaces for a specified subscription.                                      |
-| `MetricNames(aResourceGroup, aMetricDefinition, aResourceName, aMetricNamespace)`  | Returns a list of metric names.                                                                        |
-| `MetricNames(aSubscriptionID, aMetricDefinition, aResourceName, aMetricNamespace)` | Returns a list of metric names for a specified subscription.                                           |
-| `workspaces()`                                                                     | Returns a list of workspaces for the default subscription.                                             |
-| `workspaces(subscriptionID)`                                                       | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
-
-Where a subscription ID is not specified, a default subscription must be specified in the data source configuration, which will be used.
+| Name            | Description                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| Subscriptions   | Returns subscriptions.                                                                       |
+| Resource Groups | Returns resource groups for a specified subscription.                                        |
+| Namespaces      | Returns metric namespaces for the specified subscription and resource group.                 |
+| Resource Names  | Returns a list of resource names for a specified subscription, resource group and namespace. |
+| Metric Names    | Returns a list of metric names for a resource.                                               |
+| Workspaces      | Returns a list of workspaces for the specified subscription.                                 |
+| Logs            | Use a KQL query to return values.                                                            |
 
 Any Log Analytics KQL query that returns a single list of values can also be used in the Query field. For example:
 

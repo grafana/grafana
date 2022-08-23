@@ -115,10 +115,11 @@ type libraryElementConnection struct {
 
 // libraryElementConnectionWithMeta is the model for library element connections with meta.
 type libraryElementConnectionWithMeta struct {
-	ID             int64 `xorm:"pk autoincr 'id'"`
-	ElementID      int64 `xorm:"element_id"`
-	Kind           int64 `xorm:"kind"`
-	ConnectionID   int64 `xorm:"connection_id"`
+	ID             int64  `xorm:"pk autoincr 'id'"`
+	ElementID      int64  `xorm:"element_id"`
+	Kind           int64  `xorm:"kind"`
+	ConnectionID   int64  `xorm:"connection_id"`
+	ConnectionUID  string `xorm:"connection_uid"`
 	Created        time.Time
 	CreatedBy      int64
 	CreatedByName  string
@@ -127,12 +128,13 @@ type libraryElementConnectionWithMeta struct {
 
 // LibraryElementConnectionDTO is the frontend DTO for element connections.
 type LibraryElementConnectionDTO struct {
-	ID           int64                     `json:"id"`
-	Kind         int64                     `json:"kind"`
-	ElementID    int64                     `json:"elementId"`
-	ConnectionID int64                     `json:"connectionId"`
-	Created      time.Time                 `json:"created"`
-	CreatedBy    LibraryElementDTOMetaUser `json:"createdBy"`
+	ID            int64                     `json:"id"`
+	Kind          int64                     `json:"kind"`
+	ElementID     int64                     `json:"elementId"`
+	ConnectionID  int64                     `json:"connectionId"`
+	ConnectionUID string                    `json:"connectionUid"`
+	Created       time.Time                 `json:"created"`
+	CreatedBy     LibraryElementDTOMetaUser `json:"createdBy"`
 }
 
 var (

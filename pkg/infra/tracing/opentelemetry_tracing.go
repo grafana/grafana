@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/level"
 	"github.com/grafana/grafana/pkg/setting"
 	"go.etcd.io/etcd/api/v3/version"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
@@ -96,11 +96,11 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	ots.enabled = noopExporter
 
 	ots.address = section.Key("address").MustString("")
+	ots.propagation = section.Key("propagation").MustString("")
 	if ots.address != "" {
 		ots.enabled = jaegerExporter
 		return nil
 	}
-	ots.propagation = section.Key("propagation").MustString("")
 
 	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.otlp")
 	if err != nil {
@@ -234,7 +234,7 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 }
 
 func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
-	ctx, span := ots.tracer.Start(ctx, spanName)
+	ctx, span := ots.tracer.Start(ctx, spanName, opts...)
 	opentelemetrySpan := OpentelemetrySpan{
 		span: span,
 	}

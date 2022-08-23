@@ -77,6 +77,7 @@ export interface CloudWatchMathExpressionQuery extends DataQuery {
 
 export type LogAction =
   | 'DescribeLogGroups'
+  | 'DescribeAllLogGroups'
   | 'GetQueryResults'
   | 'GetLogGroupFields'
   | 'GetLogEvents'
@@ -121,6 +122,7 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
+  defaultLogGroups?: string[];
 }
 
 export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonData {
@@ -198,6 +200,7 @@ export interface GetLogEventsRequest {
    * If the value is true, the earliest log events are returned first. If the value is false, the latest log events are returned first. The default value is false. If you are using nextToken in this operation, you must specify true for startFromHead.
    */
   startFromHead?: boolean;
+  region?: string;
 }
 
 export interface GetQueryResultsResponse {

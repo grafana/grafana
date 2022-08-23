@@ -9,6 +9,8 @@ import { AlertInstancesTable } from 'app/features/alerting/unified/components/ru
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { Alert } from 'app/types/unified-alerting';
 
+import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
+
 import { GroupMode, UnifiedAlertListOptions } from './types';
 import { filterAlerts } from './util';
 
@@ -27,6 +29,8 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
     setDisplayInstances((display) => !display);
   }, []);
 
+  // TODO Filtering instances here has some implications
+  // If a rule has 0 instances after filtering there is no way not to show that rule
   const filteredAlerts = useMemo(
     (): Alert[] => filterAlerts(options, sortAlerts(options.sortOrder, alerts)) ?? [],
     [alerts, options]
@@ -52,7 +56,12 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
           {hiddenInstances > 0 && <span>, {`${hiddenInstances} hidden by filters`}</span>}
         </div>
       )}
-      {displayInstances && <AlertInstancesTable instances={filteredAlerts} />}
+      {displayInstances && (
+        <AlertInstancesTable
+          instances={filteredAlerts}
+          pagination={{ itemsPerPage: 2 * DEFAULT_PER_PAGE_PAGINATION }}
+        />
+      )}
     </div>
   );
 };

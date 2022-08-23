@@ -36,7 +36,7 @@ import {
   isMulti,
   isQuery,
 } from '../guard';
-import { getAllAffectedPanelIdsForVariableChange } from '../inspect/utils';
+import { getAllAffectedPanelIdsForVariableChange, getPanelVars } from '../inspect/utils';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
 import {
@@ -54,7 +54,6 @@ import {
   VariablesChangedEvent,
   VariablesChangedInUrl,
   VariablesTimeRangeProcessDone,
-  VariableWithMultiSupport,
   VariableWithOptions,
 } from '../types';
 import {
@@ -256,7 +255,11 @@ export const addSystemTemplateVariables = (key: string, dashboard: DashboardMode
 export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { rootStateKey: key } = identifier;
-    const variable = getVariable<VariableWithMultiSupport>(identifier, getState());
+    const variable = getVariable(identifier, getState());
+    if (!isMulti(variable)) {
+      return;
+    }
+
     const current = alignCurrentWithMulti(variable.current, multi);
 
     dispatch(
@@ -404,7 +407,11 @@ export const setOptionFromUrl = (
     }
 
     // get variable from state
-    const variableFromState = getVariable<VariableWithOptions>(toKeyedVariableIdentifier(variable), getState());
+    const variableFromState = getVariable(toKeyedVariableIdentifier(variable), getState());
+    if (!hasOptions(variableFromState)) {
+      return;
+    }
+
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -486,7 +493,11 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier, getState());
+    const variableInState = getVariable(identifier, getState());
+    if (!hasOptions(variableInState)) {
+      return Promise.resolve();
+    }
+
     const current = variableInState.current || ({} as unknown as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
@@ -549,7 +560,7 @@ export const setOptionAsCurrent = (
   };
 };
 
-const createGraph = (variables: VariableModel[]) => {
+export const createGraph = (variables: VariableModel[]) => {
   const g = new Graph();
 
   variables.forEach((v) => {
@@ -594,9 +605,14 @@ export const variableUpdated = (
     const variables = getVariablesByKey(rootStateKey, state);
     const g = createGraph(variables);
     const panels = state.dashboard?.getModel()?.panels ?? [];
+    const panelVars = getPanelVars(panels);
+
     const event: VariablesChangedEvent = isAdHoc(variableInState)
       ? { refreshAll: true, panelIds: [] } // for adhoc variables we don't know which panels that will be impacted
-      : { refreshAll: false, panelIds: getAllAffectedPanelIdsForVariableChange(variableInState.id, variables, panels) };
+      : {
+          refreshAll: false,
+          panelIds: Array.from(getAllAffectedPanelIdsForVariableChange([variableInState.id], g, panelVars)),
+        };
 
     const node = g.getNode(variableInState.name);
     let promises: Array<Promise<any>> = [];
@@ -643,7 +659,7 @@ export const onTimeRangeUpdated =
     }) as VariableWithOptions[];
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
-    const promises = variablesThatNeedRefresh.map((variable: VariableWithOptions) =>
+    const promises = variablesThatNeedRefresh.map((variable) =>
       dispatch(timeRangeUpdated(toKeyedVariableIdentifier(variable)))
     );
 
@@ -659,12 +675,20 @@ export const onTimeRangeUpdated =
 const timeRangeUpdated =
   (identifier: KeyedVariableIdentifier): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier, getState());
+    const variableInState = getVariable(identifier, getState());
+    if (!hasOptions(variableInState)) {
+      return;
+    }
+
     const previousOptions = variableInState.options.slice();
 
     await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), true));
 
-    const updatedVariable = getVariable<VariableWithOptions>(identifier, getState());
+    const updatedVariable = getVariable(identifier, getState());
+    if (!hasOptions(updatedVariable)) {
+      return;
+    }
+
     const updatedOptions = updatedVariable.options;
 
     if (JSON.stringify(previousOptions) !== JSON.stringify(updatedOptions)) {
@@ -678,7 +702,9 @@ export const templateVarsChangedInUrl =
   async (dispatch, getState) => {
     const update: Array<Promise<any>> = [];
     const dashboard = getState().dashboard.getModel();
-    for (const variable of getVariablesByKey(key, getState())) {
+    const variables = getVariablesByKey(key, getState());
+
+    for (const variable of variables) {
       const key = `var-${variable.name}`;
       if (!vars.hasOwnProperty(key)) {
         // key not found quick exit
@@ -708,9 +734,27 @@ export const templateVarsChangedInUrl =
       update.push(promise);
     }
 
+    const filteredVars = variables.filter((v) => {
+      const key = `var-${v.name}`;
+      return vars.hasOwnProperty(key) && isVariableUrlValueDifferentFromCurrent(v, vars[key].value) && !isAdHoc(v);
+    });
+    const varGraph = createGraph(variables);
+    const panelVars = getPanelVars(dashboard?.panels ?? []);
+    const affectedPanels = getAllAffectedPanelIdsForVariableChange(
+      filteredVars.map((v) => v.id),
+      varGraph,
+      panelVars
+    );
+
     if (update.length) {
       await Promise.all(update);
-      events.publish(new VariablesChangedInUrl({ panelIds: [], refreshAll: true }));
+
+      events.publish(
+        new VariablesChangedInUrl({
+          refreshAll: affectedPanels.size === 0,
+          panelIds: Array.from(affectedPanels),
+        })
+      );
     }
   };
 
@@ -893,9 +937,8 @@ export function upgradeLegacyQueries(
       return;
     }
 
-    const variable = getVariable<QueryVariableModel>(identifier, getState());
-
-    if (!isQuery(variable)) {
+    const variable = getVariable(identifier, getState());
+    if (variable.type !== 'query') {
       return;
     }
 

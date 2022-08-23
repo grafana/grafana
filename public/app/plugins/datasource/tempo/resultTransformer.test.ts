@@ -1,20 +1,12 @@
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 
-import {
-  ArrayVector,
-  FieldType,
-  MutableDataFrame,
-  PluginType,
-  DataSourceInstanceSettings,
-  dateTime,
-} from '@grafana/data';
+import { FieldType, MutableDataFrame, PluginType, DataSourceInstanceSettings, dateTime } from '@grafana/data';
 
 import {
   SearchResponse,
   createTableFrame,
   transformToOTLP,
   transformFromOTLP,
-  transformTrace,
   createTableFrameFromSearch,
 } from './resultTransformer';
 import {
@@ -152,44 +144,5 @@ describe('transformFromOTLP()', () => {
         ],
       },
     }).not.toBeFalsy();
-  });
-});
-
-describe('transformTrace()', () => {
-  // Mock the console error so that running the test suite doesnt throw the error
-  const origError = console.error;
-  const consoleErrorMock = jest.fn();
-  afterEach(() => (console.error = origError));
-  beforeEach(() => (console.error = consoleErrorMock));
-
-  const badFrame = new MutableDataFrame({
-    fields: [
-      {
-        name: 'serviceTags',
-        values: new ArrayVector([undefined]),
-      },
-    ],
-  });
-
-  const goodFrame = new MutableDataFrame({
-    fields: [
-      {
-        name: 'serviceTags',
-        values: new ArrayVector(),
-      },
-    ],
-  });
-
-  test('if passed bad data, will surface an error', () => {
-    const response = transformTrace({ data: [badFrame] }, false);
-    expect(response.data[0]).toBeFalsy();
-    expect(response.error?.message).toBeTruthy();
-  });
-
-  test('if passed good data, will parse successfully', () => {
-    const response2 = transformTrace({ data: [goodFrame] }, false);
-    expect(response2.data[0]).toBeTruthy();
-    expect(response2.data[0]).toMatchObject(goodFrame);
-    expect(response2.error).toBeFalsy();
   });
 });

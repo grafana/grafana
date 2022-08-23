@@ -123,7 +123,7 @@ describe('SearchForm', () => {
     jest.advanceTimersByTime(3000);
 
     await user.type(asyncServiceSelect, 'j');
-    var option = await screen.findByText('jaeger-query');
+    let option = await screen.findByText('jaeger-query');
     expect(option).toBeDefined();
 
     await user.type(asyncServiceSelect, 'c');
@@ -147,7 +147,7 @@ describe('SearchForm', () => {
     jest.advanceTimersByTime(3000);
 
     await user.type(asyncServiceSelect, '$');
-    var serviceOption = await screen.findByText('$service');
+    const serviceOption = await screen.findByText('$service');
     expect(serviceOption).toBeDefined();
 
     const asyncOperationSelect = screen.getByRole('combobox', { name: 'select-operation-name' });
@@ -156,7 +156,7 @@ describe('SearchForm', () => {
     jest.advanceTimersByTime(3000);
 
     await user.type(asyncOperationSelect, '$');
-    var operationOption = await screen.findByText('$operation');
+    const operationOption = await screen.findByText('$operation');
     expect(operationOption).toBeDefined();
   });
 });

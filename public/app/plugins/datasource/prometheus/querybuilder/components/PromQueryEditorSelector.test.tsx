@@ -9,6 +9,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromQuery } from '../../types';
 import { QueryEditorMode } from '../shared/types';
 
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 import { PromQueryEditorSelector } from './PromQueryEditorSelector';
 
 // We need to mock this because it seems jest has problem importing monaco in tests
@@ -82,11 +83,6 @@ describe('PromQueryEditorSelector', () => {
     expectBuilder();
   });
 
-  it('shows explain when explain mode is set', async () => {
-    renderWithMode(QueryEditorMode.Explain);
-    expectExplain();
-  });
-
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
     await switchToMode(QueryEditorMode.Builder);
@@ -113,6 +109,13 @@ describe('PromQueryEditorSelector', () => {
     expect(screen.getByLabelText('selector').textContent).toBe('my_metric');
   });
 
+  it('Can enable explain', async () => {
+    renderWithMode(QueryEditorMode.Builder);
+    expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+    screen.getByLabelText('Explain').click();
+    expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
+  });
+
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
     await switchToMode(QueryEditorMode.Code);
@@ -121,17 +124,6 @@ describe('PromQueryEditorSelector', () => {
       expr: defaultQuery.expr,
       range: true,
       editorMode: QueryEditorMode.Code,
-    });
-  });
-
-  it('changes to explain mode', async () => {
-    const { onChange } = renderWithMode(QueryEditorMode.Code);
-    await switchToMode(QueryEditorMode.Explain);
-    expect(onChange).toBeCalledWith({
-      refId: 'A',
-      expr: defaultQuery.expr,
-      range: true,
-      editorMode: QueryEditorMode.Explain,
     });
   });
 
@@ -181,15 +173,9 @@ function expectBuilder() {
   expect(screen.getByText('Metric')).toBeInTheDocument();
 }
 
-function expectExplain() {
-  // Base message when there is no query
-  expect(screen.getByText(/Fetch all series/)).toBeInTheDocument();
-}
-
 async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,
-    [QueryEditorMode.Explain]: /Explain/,
     [QueryEditorMode.Builder]: /Builder/,
   }[mode];
 

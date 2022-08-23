@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -35,6 +36,7 @@ type Manager struct {
 	log     log.Logger
 	metrics *metrics.State
 
+	clock       clock.Clock
 	cache       *cache
 	quit        chan struct{}
 	ResendDelay time.Duration
@@ -47,7 +49,7 @@ type Manager struct {
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore,
-	dashboardService dashboards.DashboardService, imageService image.ImageService) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -58,13 +60,15 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		instanceStore:    instanceStore,
 		dashboardService: dashboardService,
 		imageService:     imageService,
+		clock:            clock,
 	}
 	go manager.recordMetrics()
 	return manager
 }
 
-func (st *Manager) Close() {
+func (st *Manager) Close(ctx context.Context) {
 	st.quit <- struct{}{}
+	st.flushState(ctx)
 }
 
 func (st *Manager) Warm(ctx context.Context) {
@@ -133,8 +137,8 @@ func (st *Manager) Warm(ctx context.Context) {
 	}
 }
 
-func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
-	return st.cache.getOrCreate(ctx, alertRule, result)
+func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+	return st.cache.getOrCreate(ctx, alertRule, result, extraLabels)
 }
 
 func (st *Manager) set(entry *State) {
@@ -155,20 +159,28 @@ func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
 	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results) []*State {
-	st.log.Debug("state manager processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
+// ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
+// if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
+	logger := st.log.New(alertRule.GetKey().LogContext())
+	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
 	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result)
+		s := st.setNextState(ctx, alertRule, result, extraLabels)
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
 	resolvedStates := st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
-	if len(resolvedStates) > 0 {
-		states = append(states, resolvedStates...)
+	if len(states) > 0 {
+		logger.Debug("saving new states to the database", "count", len(states))
+		for _, state := range states {
+			if err := st.saveState(ctx, state); err != nil {
+				logger.Error("failed to save alert state", "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error())
+			}
+		}
 	}
-	return states
+	return append(states, resolvedStates...)
 }
 
 // Maybe take a screenshot. Do it if:
@@ -203,8 +215,8 @@ func (st *Manager) maybeTakeScreenshot(
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result) *State {
-	currentState := st.getOrCreate(ctx, alertRule, result)
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+	currentState := st.getOrCreate(ctx, alertRule, result, extraLabels)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
@@ -275,14 +287,14 @@ func (st *Manager) recordMetrics() {
 	// TODO: parameterize?
 	// Setting to a reasonable default scrape interval for Prometheus.
 	dur := time.Duration(15) * time.Second
-	ticker := time.NewTicker(dur)
+	ticker := st.clock.Ticker(dur)
 	for {
 		select {
 		case <-ticker.C:
-			st.log.Debug("recording state cache metrics", "now", time.Now())
+			st.log.Debug("recording state cache metrics", "now", st.clock.Now())
 			st.cache.recordMetrics()
 		case <-st.quit:
-			st.log.Debug("stopping state cache metrics recording", "now", time.Now())
+			st.log.Debug("stopping state cache metrics recording", "now", st.clock.Now())
 			ticker.Stop()
 			return
 		}
@@ -293,6 +305,42 @@ func (st *Manager) Put(states []*State) {
 	for _, s := range states {
 		st.set(s)
 	}
+}
+
+// flushState dumps the entire state to the database
+func (st *Manager) flushState(ctx context.Context) {
+	t := st.clock.Now()
+	st.log.Info("flushing the state")
+	st.cache.mtxStates.Lock()
+	defer st.cache.mtxStates.Unlock()
+	totalStates, errorsCnt := 0, 0
+	for _, orgStates := range st.cache.states {
+		for _, ruleStates := range orgStates {
+			for _, state := range ruleStates {
+				err := st.saveState(ctx, state)
+				totalStates++
+				if err != nil {
+					st.log.Error("failed to save alert state", append(state.GetRuleKey().LogContext(), "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error()))
+					errorsCnt++
+				}
+			}
+		}
+	}
+	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
+}
+
+func (st *Manager) saveState(ctx context.Context, s *State) error {
+	cmd := ngModels.SaveAlertInstanceCommand{
+		RuleOrgID:         s.OrgID,
+		RuleUID:           s.AlertRuleUID,
+		Labels:            ngModels.InstanceLabels(s.Labels),
+		State:             ngModels.InstanceStateType(s.State.String()),
+		StateReason:       s.StateReason,
+		LastEvalTime:      s.LastEvaluationTime,
+		CurrentStateSince: s.StartsAt,
+		CurrentStateEnd:   s.EndsAt,
+	}
+	return st.instanceStore.SaveAlertInstance(ctx, &cmd)
 }
 
 // TODO: why wouldn't you allow other types like NoData or Error?
@@ -342,7 +390,7 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 
 		panelId, err := strconv.ParseInt(panelUid, 10, 64)
 		if err != nil {
-			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "error", err.Error())
+			st.log.Error("error parsing panelUID for alert annotation", "panelUID", panelUid, "alertRuleUID", alertRule.UID, "err", err.Error())
 			return
 		}
 

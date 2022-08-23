@@ -1,6 +1,6 @@
 import { DataSourceSettings } from '@grafana/data';
 
-import { createDatasourceSettings } from '../../../features/datasources/mocks';
+import { getMockDataSource } from '../../../features/datasources/__mocks__';
 
 import { LokiDatasource } from './datasource';
 import { LokiOptions } from './types';
@@ -51,7 +51,7 @@ export function makeMockLokiDatasource(labelsAndValues: Labels, series?: SeriesF
 }
 
 export function createDefaultConfigOptions(): DataSourceSettings<LokiOptions> {
-  return createDatasourceSettings<LokiOptions>({
-    maxLines: '531',
+  return getMockDataSource<LokiOptions>({
+    jsonData: { maxLines: '531' },
   });
 }

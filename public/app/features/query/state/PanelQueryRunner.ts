@@ -46,8 +46,10 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
+  /** @deprecate */
   dashboardId?: number;
-  publicDashboardUid?: string;
+  dashboardUID?: string;
+  publicDashboardAccessToken?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -203,7 +205,8 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardId,
-      publicDashboardUid,
+      dashboardUID,
+      publicDashboardAccessToken,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -223,7 +226,8 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardId,
-      publicDashboardUid,
+      dashboardUID,
+      publicDashboardAccessToken,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -239,7 +243,7 @@ export class PanelQueryRunner {
     (request as any).rangeRaw = timeRange.raw;
 
     try {
-      const ds = await getDataSource(datasource, request.scopedVars, publicDashboardUid);
+      const ds = await getDataSource(datasource, request.scopedVars, publicDashboardAccessToken);
       const isMixedDS = ds.meta?.mixed;
 
       // Attach the data source to each query
@@ -359,10 +363,10 @@ export class PanelQueryRunner {
 async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
   scopedVars: ScopedVars,
-  publicDashboardUid?: string
+  publicDashboardAccessToken?: string
 ): Promise<DataSourceApi> {
-  if (publicDashboardUid) {
-    return new PublicDashboardDataSource();
+  if (publicDashboardAccessToken) {
+    return new PublicDashboardDataSource(datasource);
   }
 
   if (datasource && (datasource as any).query) {

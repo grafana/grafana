@@ -7,7 +7,6 @@ import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import TestProvider from '../../../test/helpers/TestProvider';
-import { getNavModel } from '../../core/selectors/navModel';
 import { backendSrv } from '../../core/services/backend_srv';
 import { TeamPermissionLevel } from '../../types';
 
@@ -66,23 +65,6 @@ const defaultProps: Props = {
       seenAt: new Date().toUTCString(),
     },
   ],
-  navModel: getNavModel(
-    {
-      'profile-settings': {
-        icon: 'sliders-v-alt',
-        id: 'profile-settings',
-        parentItem: {
-          id: 'profile',
-          text: 'Test User',
-          img: '/avatar/46d229b033af06a191ff2267bca9ae56',
-          url: '/profile',
-        },
-        text: 'Preferences',
-        url: '/profile',
-      },
-    },
-    'profile-settings'
-  ),
   initUserProfilePage: jest.fn().mockResolvedValue(undefined),
   revokeUserSession: jest.fn().mockResolvedValue(undefined),
   changeUserOrg: jest.fn().mockResolvedValue(undefined),
@@ -118,7 +100,7 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   const putSpy = jest.spyOn(backendSrv, 'put');
   const getSpy = jest
     .spyOn(backendSrv, 'get')
-    .mockResolvedValue({ timezone: 'UTC', homeDashboardId: 0, theme: 'dark' });
+    .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
   const props = { ...defaultProps, ...overrides };

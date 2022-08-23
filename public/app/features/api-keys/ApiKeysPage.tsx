@@ -3,10 +3,11 @@ import { connect, ConnectedProps } from 'react-redux';
 
 // Utils
 import { rangeUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { InlineField, InlineSwitch, VerticalGroup } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -142,8 +143,14 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   };
 
   onHideApiKeys = async () => {
-    await this.props.hideApiKeys();
-    window.location.reload();
+    try {
+      await this.props.hideApiKeys();
+      let serviceAccountsUrl = '/org/serviceaccounts';
+      locationService.push(serviceAccountsUrl);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   render() {
@@ -177,13 +184,8 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               const showTable = apiKeysCount > 0;
               return (
                 <>
-                  {/* TODO: remove feature flag check before GA */}
-                  {config.featureToggles.serviceAccounts && !apiKeysMigrated && (
-                    <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />
-                  )}
-                  {config.featureToggles.serviceAccounts && apiKeysMigrated && (
-                    <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />
-                  )}
+                  {!apiKeysMigrated && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
+                  {apiKeysMigrated && <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} />}
                   {showCTA ? (
                     <EmptyListCTA
                       title="You haven't added any API keys yet."

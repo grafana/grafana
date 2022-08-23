@@ -7,7 +7,7 @@ import {
   SelectableValue,
   StandardEditorProps,
 } from '@grafana/data';
-import { AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
+import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
 import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
 
@@ -20,6 +20,8 @@ export function addAxisConfig(
   hideScale?: boolean
 ) {
   const category = ['Axis'];
+
+  // options for axis appearance
   builder
     .addRadio({
       path: 'axisPlacement',
@@ -51,6 +53,52 @@ export function addAxisConfig(
       },
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     })
+    .addRadio({
+      path: 'axisGridShow',
+      name: 'Show grid lines',
+      category,
+      defaultValue: undefined,
+      settings: {
+        options: [
+          { value: undefined, label: 'Auto' },
+          { value: true, label: 'On' },
+          { value: false, label: 'Off' },
+        ],
+      },
+    })
+    .addRadio({
+      path: 'axisColorMode',
+      name: 'Color',
+      category,
+      defaultValue: AxisColorMode.Text,
+      settings: {
+        options: [
+          { value: AxisColorMode.Text, label: 'Text' },
+          { value: AxisColorMode.Series, label: 'Series' },
+        ],
+      },
+    });
+
+  // options for scale range
+  builder
+    .addCustomEditor<void, ScaleDistributionConfig>({
+      id: 'scaleDistribution',
+      path: 'scaleDistribution',
+      name: 'Scale',
+      category,
+      editor: ScaleDistributionEditor as any,
+      override: ScaleDistributionEditor as any,
+      defaultValue: { type: ScaleDistribution.Linear },
+      shouldApply: (f) => f.type === FieldType.number,
+      process: identityOverrideProcessor,
+    })
+    .addBooleanSwitch({
+      path: 'axisCenteredZero',
+      name: 'Centered zero',
+      category,
+      defaultValue: false,
+      showIf: (c) => c.scaleDistribution?.type !== ScaleDistribution.Log,
+    })
     .addNumberInput({
       path: 'axisSoftMin',
       name: 'Soft min',
@@ -68,34 +116,7 @@ export function addAxisConfig(
       settings: {
         placeholder: 'See: Standard options > Max',
       },
-    })
-    .addRadio({
-      path: 'axisGridShow',
-      name: 'Show grid lines',
-      category,
-      defaultValue: undefined,
-      settings: {
-        options: [
-          { value: undefined, label: 'Auto' },
-          { value: true, label: 'On' },
-          { value: false, label: 'Off' },
-        ],
-      },
     });
-
-  if (!hideScale) {
-    builder.addCustomEditor<void, ScaleDistributionConfig>({
-      id: 'scaleDistribution',
-      path: 'scaleDistribution',
-      name: 'Scale',
-      category,
-      editor: ScaleDistributionEditor as any,
-      override: ScaleDistributionEditor as any,
-      defaultValue: { type: ScaleDistribution.Linear },
-      shouldApply: (f) => f.type === FieldType.number,
-      process: identityOverrideProcessor,
-    });
-  }
 }
 
 const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [

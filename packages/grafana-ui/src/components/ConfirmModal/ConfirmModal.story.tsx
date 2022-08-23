@@ -1,17 +1,16 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, Story } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { ConfirmModal } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { ConfirmModalProps } from './ConfirmModal';
 import mdx from './ConfirmModal.mdx';
 
 const defaultExcludes = ['onConfirm', 'onDismiss', 'onAlternative'];
 
-export default {
+const meta: ComponentMeta<typeof ConfirmModal> = {
   title: 'Overlays/ConfirmModal',
   component: ConfirmModal,
   decorators: [withCenteredStory],
@@ -28,7 +27,7 @@ export default {
     body: { control: { type: 'text' } },
     description: { control: { type: 'text' } },
   },
-} as Meta;
+};
 
 const defaultActions = {
   onConfirm: () => {
@@ -42,7 +41,7 @@ const defaultActions = {
   },
 };
 
-export const Basic: Story<ConfirmModalProps> = ({
+export const Basic: ComponentStory<typeof ConfirmModal> = ({
   title,
   body,
   description,
@@ -83,7 +82,7 @@ Basic.args = {
   isOpen: true,
 };
 
-export const AlternativeAction: Story<ConfirmModalProps> = ({
+export const AlternativeAction: ComponentStory<typeof ConfirmModal> = ({
   title,
   body,
   description,
@@ -127,7 +126,7 @@ AlternativeAction.args = {
   isOpen: true,
 };
 
-export const WithConfirmation: Story<ConfirmModalProps> = ({
+export const WithConfirmation: ComponentStory<typeof ConfirmModal> = ({
   title,
   body,
   description,
@@ -170,3 +169,5 @@ WithConfirmation.args = {
   icon: 'trash-alt',
   isOpen: true,
 };
+
+export default meta;

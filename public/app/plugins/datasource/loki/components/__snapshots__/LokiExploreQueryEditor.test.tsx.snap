@@ -70,6 +70,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "allowStale": false,
           "disposeAfter": null,
           "disposed": null,
+          "fetchContext": undefined,
           "fetchMethod": null,
           "free": Stack {
             "heap": Uint8Array [
@@ -116,6 +117,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
             0,
           ],
           "noDeleteOnFetchRejection": false,
+          "noDeleteOnStaleGet": false,
           "noDisposeOnSet": false,
           "noUpdateTTL": false,
           "prev": Uint8Array [
@@ -157,6 +159,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "allowStale": false,
           "disposeAfter": null,
           "disposed": null,
+          "fetchContext": undefined,
           "fetchMethod": null,
           "free": Stack {
             "heap": Uint8Array [
@@ -203,6 +206,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
             0,
           ],
           "noDeleteOnFetchRejection": false,
+          "noDeleteOnStaleGet": false,
           "noDisposeOnSet": false,
           "noUpdateTTL": false,
           "prev": Uint8Array [

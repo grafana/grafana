@@ -6,7 +6,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { compose } from 'redux';
 import { Unsubscribable } from 'rxjs';
 
-import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, RawTimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, DataQuery, GrafanaTheme2, LoadingState, QueryFixAction, RawTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse, CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
@@ -150,11 +150,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onClickFilterLabel = (key: string, value: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', key, value });
+    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
   };
 
   onClickFilterOutLabel = (key: string, value: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', key, value });
+    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
   };
 
   onClickAddQueryRowButton = () => {
@@ -167,10 +167,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     makeAbsoluteTime();
   };
 
-  onModifyQueries = (action: any, index?: number) => {
+  onModifyQueries = (action: QueryFixAction, index?: number) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance?.modifyQuery) {
-      const modifier = (queries: DataQuery, modification: any) =>
+      const modifier = (queries: DataQuery, modification: QueryFixAction) =>
         datasourceInstance.modifyQuery!(queries, modification);
       this.props.modifyQueries(this.props.exploreId, action, modifier, index);
     }
@@ -280,12 +280,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderNodeGraphPanel() {
-    const { exploreId, showTrace, queryResponse } = this.props;
+    const { exploreId, showTrace, queryResponse, datasourceInstance } = this.props;
+    const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
+
     return (
       <NodeGraphContainer
         dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
         exploreId={exploreId}
         withTraceView={showTrace}
+        datasourceType={datasourceType}
       />
     );
   }

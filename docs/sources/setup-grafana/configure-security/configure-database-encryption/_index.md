@@ -18,7 +18,7 @@ Grafana encrypts these secrets before they are written to the database, by using
 Since Grafana v9.0, it uses [envelope encryption](#envelope-encryption) by default, which adds a layer of indirection to the
 encryption process that represents an [**implicit breaking change**](#implicit-breaking-change) for older versions of Grafana.
 
-For further details about how to operate a Grafana instance with envelope encryption, see the [Operational work]({{< relref "/#operational-work" >}}) section below.
+For further details about how to operate a Grafana instance with envelope encryption, see the [Operational work](#operational-work) section below.
 
 > **Note:** In Grafana Enterprise, you can also choose to [encrypt secrets in AES-GCM mode]({{< relref "#changing-your-encryption-mode-to-aes-gcm" >}}) instead of AES-CFB.
 
@@ -31,7 +31,7 @@ Instead of encrypting all secrets with a single key, Grafana uses a set of keys 
 encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK), configured
 through the `secret_key` attribute in your
 [Grafana configuration]({{< relref "../../configure-grafana/#secret_key" >}}) or with a
-[KMS integration](#kms-integration).
+[KMS integration](#encrypting-your-database-with-a-key-from-a-key-management-system-kms).
 
 ## Implicit breaking change
 
@@ -67,7 +67,8 @@ Secrets re-encryption can be performed when a Grafana administrator wants to eit
 - Re-encrypt secrets after a [data keys rotation](#rotate-data-keys).
 
 > **Note:** This operation is available through Grafana CLI by running `grafana-cli admin secrets-migration re-encrypt`
-> command. It's safe to run more than once. Recommended to run under maintenance mode.
+> command and through Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#re-encrypt-secrets" >}}).
+> It's safe to run more than once. Recommended to run under maintenance mode.
 
 ## Roll back secrets
 
@@ -75,16 +76,18 @@ Used to roll back secrets encrypted with envelope encryption to legacy encryptio
 a Grafana version earlier than Grafana v9.0 after an unsuccessful upgrade.
 
 > **Note:** This operation is available through Grafana CLI by running `grafana-cli admin secrets-migration rollback`
-> command. It's safe to run more than once. Recommended to run under maintenance mode.
+> command and through Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#roll-back-secrets" >}}).
+> It's safe to run more than once. Recommended to run under maintenance mode.
 
 ## Re-encrypt data keys
 
 Used to re-encrypt data keys encrypted with a specific key encryption key (KEK). It can be used to either re-encrypt
-existing data keys with a new key encryption key version (see [KMS integration](#kms-integration) rotation) or to
+existing data keys with a new key encryption key version (see [KMS integration](#encrypting-your-database-with-a-key-from-a-key-management-system-kms) rotation) or to
 re-encrypt them with a completely different key encryption key.
 
 > **Note:** This operation is available through Grafana CLI by running `grafana-cli admin secrets-migration re-encrypt-data-keys`
-> command. It's safe to run more than once. Recommended to run under maintenance mode.
+> command and through Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#re-encrypt-data-encryption-keys" >}}).
+> It's safe to run more than once. Recommended to run under maintenance mode.
 
 ## Rotate data keys
 

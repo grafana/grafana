@@ -25,6 +25,7 @@ export interface DashboardSection {
 interface SectionHeaderProps {
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
+  onClickItem?: (e: React.MouseEvent<HTMLElement>) => void;
   onTagSelected: (tag: string) => void;
   section: DashboardSection;
   renderStandaloneBody?: boolean; // render the body on its own
@@ -34,6 +35,7 @@ interface SectionHeaderProps {
 export const FolderSection: FC<SectionHeaderProps> = ({
   section,
   selectionToggle,
+  onClickItem,
   onTagSelected,
   selection,
   renderStandaloneBody,
@@ -99,12 +101,6 @@ export const FolderSection: FC<SectionHeaderProps> = ({
     }
   };
 
-  const onToggleChecked = (item: DashboardSectionItem) => {
-    if (selectionToggle) {
-      selectionToggle('dashboard', item.uid!);
-    }
-  };
-
   const id = useUniqueId();
   const labelId = `section-header-label-${id}`;
 
@@ -137,8 +133,13 @@ export const FolderSection: FC<SectionHeaderProps> = ({
           key={v.uid}
           item={v}
           onTagSelected={onTagSelected}
-          onToggleChecked={onToggleChecked as any}
+          onToggleChecked={(item) => {
+            if (selectionToggle) {
+              selectionToggle('dashboard', item.uid!);
+            }
+          }}
           editable={Boolean(selection != null)}
+          onClickItem={onClickItem}
         />
       );
     });

@@ -12,7 +12,7 @@ import config from 'app/core/config';
 // Types
 import { PanelOptions, TextMode } from './models.gen';
 
-interface Props extends PanelProps<PanelOptions> {}
+export interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   html: string;
@@ -41,24 +41,34 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareHTML(html: string): string {
-    return this.interpolateAndSanitizeString(html);
+    const result = this.interpolateString(html);
+    return config.disableSanitizeHtml ? result : this.sanitizeString(result);
   }
 
   prepareMarkdown(content: string): string {
-    // Sanitize is disabled here as we handle that after variable interpolation
-    return this.interpolateAndSanitizeString(
-      renderTextPanelMarkdown(content, {
-        noSanitize: config.disableSanitizeHtml,
-      })
-    );
+    // Always interpolate variables before converting to markdown
+    // because `marked` replaces '{' and '}' in URLs with '%7B' and '%7D'
+    // See https://marked.js.org/demo
+    let result = this.interpolateString(content);
+
+    if (config.disableSanitizeHtml) {
+      result = renderTextPanelMarkdown(result, {
+        noSanitize: true,
+      });
+      return result;
+    }
+
+    result = renderTextPanelMarkdown(result);
+    return this.sanitizeString(result);
   }
 
-  interpolateAndSanitizeString(content: string): string {
+  interpolateString(content: string): string {
     const { replaceVariables } = this.props;
+    return replaceVariables(content, {}, 'html');
+  }
 
-    content = replaceVariables(content, {}, 'html');
-
-    return config.disableSanitizeHtml ? content : textUtil.sanitizeTextPanelContent(content);
+  sanitizeString(content: string): string {
+    return textUtil.sanitizeTextPanelContent(content);
   }
 
   processContent(options: PanelOptions): string {
@@ -80,7 +90,11 @@ export class TextPanel extends PureComponent<Props, State> {
     const styles = getStyles();
     return (
       <CustomScrollbar autoHeightMin="100%">
-        <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.content)} />
+        <DangerouslySetHtmlContent
+          html={html}
+          className={cx('markdown-html', styles.content)}
+          data-testid="TextPanel-converted-content"
+        />
       </CustomScrollbar>
     );
   }

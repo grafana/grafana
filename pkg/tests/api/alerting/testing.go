@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
@@ -25,7 +24,8 @@ const defaultAlertmanagerConfigJSON = `
 	"template_files": null,
 	"alertmanager_config": {
 		"route": {
-			"receiver": "grafana-default-email"
+			"receiver": "grafana-default-email",
+			"group_by": ["grafana_folder", "alertname"]
 		},
 		"templates": null,
 		"receivers": [{
@@ -49,12 +49,12 @@ func getRequest(t *testing.T, url string, expStatusCode int) *http.Response {
 	t.Helper()
 	// nolint:gosec
 	resp, err := http.Get(url)
+	require.NoError(t, err)
 	t.Cleanup(func() {
 		require.NoError(t, resp.Body.Close())
 	})
-	require.NoError(t, err)
 	if expStatusCode != resp.StatusCode {
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		t.Fatal(string(b))
 	}
@@ -71,7 +71,7 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 		require.NoError(t, resp.Body.Close())
 	})
 	if expStatusCode != resp.StatusCode {
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		t.Fatal(string(b))
 	}
@@ -80,16 +80,17 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 
 func getBody(t *testing.T, body io.ReadCloser) string {
 	t.Helper()
-	b, err := ioutil.ReadAll(body)
+	b, err := io.ReadAll(body)
 	require.NoError(t, err)
 	return string(b)
 }
 
-func AlertRuleGen() func() apimodels.PostableExtendedRuleNode {
+func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 	return func() apimodels.PostableExtendedRuleNode {
+		forDuration := model.Duration(10 * time.Second)
 		return apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
-				For:         model.Duration(10 * time.Second),
+				For:         &forDuration,
 				Labels:      map[string]string{"label1": "val1"},
 				Annotations: map[string]string{"annotation1": "val1"},
 			},
@@ -115,7 +116,7 @@ func AlertRuleGen() func() apimodels.PostableExtendedRuleNode {
 	}
 }
 
-func GenerateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtendedRuleNode) apimodels.PostableRuleGroupConfig {
+func generateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtendedRuleNode) apimodels.PostableRuleGroupConfig {
 	rules := make([]apimodels.PostableExtendedRuleNode, 0, rulesCount)
 	for i := 0; i < rulesCount; i++ {
 		rules = append(rules, gen())
@@ -127,10 +128,10 @@ func GenerateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtende
 	}
 }
 
-func ConvertGettableRuleGroupToPostable(gettable apimodels.GettableRuleGroupConfig) apimodels.PostableRuleGroupConfig {
+func convertGettableRuleGroupToPostable(gettable apimodels.GettableRuleGroupConfig) apimodels.PostableRuleGroupConfig {
 	rules := make([]apimodels.PostableExtendedRuleNode, 0, len(gettable.Rules))
 	for _, rule := range gettable.Rules {
-		rules = append(rules, ConvertGettableRuleToPostable(rule))
+		rules = append(rules, convertGettableRuleToPostable(rule))
 	}
 	return apimodels.PostableRuleGroupConfig{
 		Name:     gettable.Name,
@@ -139,14 +140,14 @@ func ConvertGettableRuleGroupToPostable(gettable apimodels.GettableRuleGroupConf
 	}
 }
 
-func ConvertGettableRuleToPostable(gettable apimodels.GettableExtendedRuleNode) apimodels.PostableExtendedRuleNode {
+func convertGettableRuleToPostable(gettable apimodels.GettableExtendedRuleNode) apimodels.PostableExtendedRuleNode {
 	return apimodels.PostableExtendedRuleNode{
 		ApiRuleNode:         gettable.ApiRuleNode,
-		GrafanaManagedAlert: ConvertGettableGrafanaRuleToPostable(gettable.GrafanaManagedAlert),
+		GrafanaManagedAlert: convertGettableGrafanaRuleToPostable(gettable.GrafanaManagedAlert),
 	}
 }
 
-func ConvertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRule) *apimodels.PostableGrafanaRule {
+func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRule) *apimodels.PostableGrafanaRule {
 	if gettable == nil {
 		return nil
 	}
@@ -171,7 +172,21 @@ func newAlertingApiClient(host, user, pass string) apiClient {
 	return apiClient{url: fmt.Sprintf("http://%s:%s@%s", user, pass, host)}
 }
 
-// CreateFolder creates a folder for storing our alerts under.
+// ReloadCachedPermissions sends a request to access control API to refresh cached user permissions
+func (a apiClient) ReloadCachedPermissions(t *testing.T) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/access-control/user/permissions?reloadcache=true", a.url)
+	// nolint:gosec
+	resp, err := http.Get(u)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	require.NoErrorf(t, err, "failed to reload permissions cache")
+	require.Equalf(t, http.StatusOK, resp.StatusCode, "failed to reload permissions cache")
+}
+
+// CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
 func (a apiClient) CreateFolder(t *testing.T, uID string, title string) {
 	t.Helper()
 	payload := fmt.Sprintf(`{"uid": "%s","title": "%s"}`, uID, title)
@@ -184,6 +199,7 @@ func (a apiClient) CreateFolder(t *testing.T, uID string, title string) {
 	}()
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	a.ReloadCachedPermissions(t)
 }
 
 func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (int, string) {
@@ -200,7 +216,7 @@ func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	return resp.StatusCode, string(b)
 }
@@ -214,7 +230,7 @@ func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apim
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusAccepted, resp.StatusCode)
 
@@ -232,7 +248,7 @@ func (a apiClient) GetAllRulesGroupInFolder(t *testing.T, folder string) apimode
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 

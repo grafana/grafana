@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -26,7 +25,9 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -41,8 +42,8 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -57,7 +58,7 @@ func TestTestReceivers(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		res := Response{}
 		err = json.Unmarshal(b, &res)
@@ -75,8 +76,8 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -108,7 +109,7 @@ func TestTestReceivers(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -157,8 +158,8 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -187,7 +188,7 @@ func TestTestReceivers(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -234,8 +235,8 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -274,7 +275,7 @@ func TestTestReceivers(t *testing.T) {
 		})
 		require.Equal(t, http.StatusRequestTimeout, resp.StatusCode)
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -321,8 +322,8 @@ func TestTestReceivers(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -373,7 +374,7 @@ func TestTestReceivers(t *testing.T) {
 		})
 		require.Equal(t, http.StatusMultiStatus, resp.StatusCode)
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -434,8 +435,8 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -476,7 +477,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -527,8 +528,8 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -566,7 +567,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -615,8 +616,8 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 
 		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
-		createUser(t, env.SQLStore, models.CreateUserCommand{
-			DefaultOrgRole: string(models.ROLE_EDITOR),
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
 			Login:          "grafana",
 			Password:       "password",
 		})
@@ -653,7 +654,7 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
 		var result apimodels.TestReceiversResult
@@ -721,7 +722,7 @@ func TestNotificationChannels(t *testing.T) {
 	channels.DefaultTemplateString = channels.TemplateForTestsString
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
 	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
-	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s", mockChannel.server.Addr)
+	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
 	channels.PushoverEndpoint = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
 	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
 	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
@@ -738,8 +739,8 @@ func TestNotificationChannels(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, env.SQLStore, models.CreateUserCommand{
-		DefaultOrgRole: string(models.ROLE_EDITOR),
+	createUser(t, env.SQLStore, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
@@ -750,7 +751,7 @@ func TestNotificationChannels(t *testing.T) {
 		// There are no notification channel config initially - so it returns the default configuration.
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, string(b))
 	}
@@ -758,7 +759,6 @@ func TestNotificationChannels(t *testing.T) {
 	{
 		// Create the namespace we'll save our alerts to.
 		apiClient.CreateFolder(t, "default", "default")
-		reloadCachedPermissions(t, grafanaListedAddr, "grafana", "password")
 
 		// Post the alertmanager config.
 		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
@@ -811,14 +811,14 @@ func TestNotificationChannels(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 202, resp.StatusCode)
 		require.JSONEq(t, `{"message":"configuration deleted; the default is applied"}`, string(b))
 
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 		resp = getRequest(t, alertsURL, http.StatusOK) // nolint
-		b, err = ioutil.ReadAll(resp.Body)
+		b, err = io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, string(b))
 	}
@@ -933,8 +933,8 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 	nc.receivedNotificationsMtx.Lock()
 	defer nc.receivedNotificationsMtx.Unlock()
 
-	urlParts := strings.Split(req.URL.String(), "/")
-	key := fmt.Sprintf("%s/%s", urlParts[len(urlParts)-2], urlParts[len(urlParts)-1])
+	paths := strings.Split(req.URL.Path[1:], "/")
+	key := strings.Join(paths[0:2], "/")
 	body := getBody(nc.t, req.Body)
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
@@ -974,7 +974,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map
 			case "slack_recv1/slack_test_without_token":
 				// It has a time component "ts".
 				r1 = regexp.MustCompile(`.*"ts"\s*:\s*([0-9]+)`)
-			case "sensugo/events":
+			case "sensugo_recv/sensugo_test":
 				// It has a time component "ts".
 				r1 = regexp.MustCompile(`.*"issued"\s*:\s*([0-9]+)`)
 			case "pagerduty_recvX/pagerduty_testX":
@@ -986,7 +986,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map
 			case "victorops_recv/victorops_test":
 				// It has a time component "timestamp".
 				r1 = regexp.MustCompile(`.*"timestamp"\s*:\s*([0-9]+)`)
-			case "v1/alerts":
+			case "alertmanager_recv/alertmanager_test":
 				// It has a changing time fields.
 				r1 = regexp.MustCompile(`.*"startsAt"\s*:\s*"([^"]+)"`)
 				r2 = regexp.MustCompile(`.*"UpdatedAt"\s*:\s*"([^"]+)"`)
@@ -994,7 +994,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map
 			if r1 != nil {
 				parts := r1.FindStringSubmatch(actVals[i])
 				require.Len(t, parts, 2)
-				if expKey == "v1/alerts" {
+				if expKey == "alertmanager_recv/alertmanager_test" {
 					// 2 fields for Prometheus Alertmanager.
 					parts2 := r2.FindStringSubmatch(actVals[i])
 					require.Len(t, parts2, 2)
@@ -2099,6 +2099,7 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
+          "text": "Integration Test [FIRING:1] SlackAlert1 (default)",
 		  "username": "Integration Test",
 		  "icon_emoji": "🚀",
 		  "icon_url": "https://awesomeemoji.com/rocket",
@@ -2128,6 +2129,7 @@ var expNonEmailNotifications = map[string][]string{
 	"slack_recvX/slack_testX": {
 		`{
 		  "channel": "#test-channel",
+          "text": "[FIRING:1] SlackAlert2 (default)",
 		  "username": "Integration Test",
 		  "attachments": [
 			{
@@ -2194,30 +2196,44 @@ var expNonEmailNotifications = map[string][]string{
 	},
 	"teams_recv/teams_test": {
 		`{
-		  "@context": "http://schema.org/extensions",
-		  "@type": "MessageCard",
-		  "potentialAction": [
+		  "attachments": [
 			{
-			  "@context": "http://schema.org",
-			  "@type": "OpenUri",
-			  "name": "View Rule",
-			  "targets": [
-				{
-				  "os": "default",
-				  "uri": "http://localhost:3000/alerting/list"
+			  "content": {
+			    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+				"body": [
+				  {
+				    "color": "attention",
+				    "size": "large",
+				    "text": "[FIRING:1] TeamsAlert (default)",
+				    "type": "TextBlock",
+				    "weight": "bolder",
+				    "wrap": true
+				  }, {
+				  	"text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = TeamsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TeamsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana\u0026matcher=alertname%3DTeamsAlert\u0026matcher=grafana_folder%3Ddefault\n",
+				  	"type": "TextBlock",
+				  	"wrap": true
+				  }, {
+				  	"actions": [
+				  	  {
+				  	  	"title": "View URL",
+				  	  	"type": "Action.OpenUrl",
+				  	  	"url": "http://localhost:3000/alerting/list"
+				  	  }
+				  	],
+				  	"type": "ActionSet"
+				  }
+				],
+				"type": "AdaptiveCard",
+				"version": "1.4",
+				"msTeams": {
+				  "width": "Full"
 				}
-			  ]
-			}
-		  ],
-		  "sections": [
-			{
-			  "text": "**Firing**\n\nValue: [ var='A' labels={} value=1 ]\nLabels:\n - alertname = TeamsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TeamsAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTeamsAlert&matcher=grafana_folder%3Ddefault\n",
-			  "title": ""
-			}
+			  },
+			  "contentType": "application/vnd.microsoft.card.adaptive"
+		    }
 		  ],
 		  "summary": "[FIRING:1] TeamsAlert (default)",
-		  "themeColor": "#D63232",
-		  "title": "[FIRING:1] TeamsAlert (default)"
+		  "type": "message"
 		}`,
 	},
 	"webhook_recv/webhook_test": {
@@ -2278,7 +2294,7 @@ var expNonEmailNotifications = map[string][]string{
 		  "username": "Grafana"
 		}`,
 	},
-	"sensugo/events": {
+	"sensugo_recv/sensugo_test": {
 		`{
 		  "check": {
 			"handlers": null,
@@ -2397,7 +2413,7 @@ var expNonEmailNotifications = map[string][]string{
 		}`,
 	},
 	// Prometheus Alertmanager.
-	"v1/alerts": {
+	"alertmanager_recv/alertmanager_test": {
 		`[
 		  {
 			"labels": {

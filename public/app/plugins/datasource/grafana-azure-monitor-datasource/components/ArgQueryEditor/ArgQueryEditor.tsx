@@ -1,8 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { InlineFieldRow } from '@grafana/ui';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
@@ -54,62 +52,34 @@ const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
       .catch((err) => setError(ERROR_SOURCE, err));
   }, [datasource, onChange, query, setError]);
 
-  if (config.featureToggles.azureMonitorExperimentalUI) {
-    return (
-      <span data-testid="azure-monitor-arg-query-editor-with-experimental-ui">
-        <EditorRows>
-          <EditorRow>
-            <EditorFieldGroup>
-              <SubscriptionField
-                multiSelect
-                subscriptions={subscriptions}
-                query={query}
-                datasource={datasource}
-                subscriptionId={subscriptionId}
-                variableOptionGroup={variableOptionGroup}
-                onQueryChange={onChange}
-                setError={setError}
-              />
-            </EditorFieldGroup>
-          </EditorRow>
-        </EditorRows>
-        <QueryField
-          query={query}
-          datasource={datasource}
-          subscriptionId={subscriptionId}
-          variableOptionGroup={variableOptionGroup}
-          onQueryChange={onChange}
-          setError={setError}
-        />
-      </span>
-    );
-  } else {
-    return (
-      <div data-testid="azure-monitor-arg-query-editor">
-        <InlineFieldRow>
-          <SubscriptionField
-            multiSelect
-            subscriptions={subscriptions}
-            query={query}
-            datasource={datasource}
-            subscriptionId={subscriptionId}
-            variableOptionGroup={variableOptionGroup}
-            onQueryChange={onChange}
-            setError={setError}
-          />
-        </InlineFieldRow>
-
-        <QueryField
-          query={query}
-          datasource={datasource}
-          subscriptionId={subscriptionId}
-          variableOptionGroup={variableOptionGroup}
-          onQueryChange={onChange}
-          setError={setError}
-        />
-      </div>
-    );
-  }
+  return (
+    <span data-testid="azure-monitor-arg-query-editor-with-experimental-ui">
+      <EditorRows>
+        <EditorRow>
+          <EditorFieldGroup>
+            <SubscriptionField
+              multiSelect
+              subscriptions={subscriptions}
+              query={query}
+              datasource={datasource}
+              subscriptionId={subscriptionId}
+              variableOptionGroup={variableOptionGroup}
+              onQueryChange={onChange}
+              setError={setError}
+            />
+          </EditorFieldGroup>
+        </EditorRow>
+      </EditorRows>
+      <QueryField
+        query={query}
+        datasource={datasource}
+        subscriptionId={subscriptionId}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={setError}
+      />
+    </span>
+  );
 };
 
 export default ArgQueryEditor;

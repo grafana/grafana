@@ -12,7 +12,7 @@ import { JaegerDatasource } from '../datasource';
 import { JaegerQuery } from '../types';
 import { transformToLogfmt } from '../util';
 
-import { AdvancedOptions } from './AdvancedOptions';
+const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 
 type Props = {
   datasource: JaegerDatasource;
@@ -158,7 +158,54 @@ export function SearchForm({ datasource, query, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      <AdvancedOptions query={query} onChange={onChange} />
+      <InlineFieldRow>
+        <InlineField label="Min Duration" labelWidth={14} grow>
+          <Input
+            id="minDuration"
+            name="minDuration"
+            value={query.minDuration || ''}
+            placeholder={durationPlaceholder}
+            onChange={(v) =>
+              onChange({
+                ...query,
+                minDuration: v.currentTarget.value,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Max Duration" labelWidth={14} grow>
+          <Input
+            id="maxDuration"
+            name="maxDuration"
+            value={query.maxDuration || ''}
+            placeholder={durationPlaceholder}
+            onChange={(v) =>
+              onChange({
+                ...query,
+                maxDuration: v.currentTarget.value,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Limit" labelWidth={14} grow tooltip="Maximum number of returned results">
+          <Input
+            id="limit"
+            name="limit"
+            value={query.limit || ''}
+            type="number"
+            onChange={(v) =>
+              onChange({
+                ...query,
+                limit: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
     </div>
   );
 }

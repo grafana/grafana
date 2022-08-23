@@ -5,11 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type LoginServiceFake struct{}
 
-func (l *LoginServiceFake) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
+func (l *LoginServiceFake) CreateUser(cmd user.CreateUserCommand) (*user.User, error) {
 	return nil, nil
 }
 func (l *LoginServiceFake) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
@@ -22,13 +23,17 @@ func (l *LoginServiceFake) SetTeamSyncFunc(login.TeamSyncFunc) {}
 
 type AuthInfoServiceFake struct {
 	LatestUserID         int64
-	ExpectedUser         *models.User
+	ExpectedUser         *user.User
 	ExpectedExternalUser *models.ExternalUserInfo
 	ExpectedError        error
 }
 
-func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*models.User, error) {
-	a.LatestUserID = query.UserId
+func (a *AuthInfoServiceFake) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error) {
+	if query.UserLookupParams.UserID != nil {
+		a.LatestUserID = *query.UserLookupParams.UserID
+	} else {
+		a.LatestUserID = 0
+	}
 	return a.ExpectedUser, a.ExpectedError
 }
 
@@ -51,7 +56,7 @@ func (a *AuthInfoServiceFake) GetExternalUserInfoByLogin(ctx context.Context, qu
 }
 
 type AuthenticatorFake struct {
-	ExpectedUser  *models.User
+	ExpectedUser  *user.User
 	ExpectedError error
 }
 

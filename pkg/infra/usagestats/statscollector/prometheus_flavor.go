@@ -3,11 +3,11 @@ package statscollector
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 const promFlavorCacheLifetime = time.Hour
@@ -37,7 +37,7 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 		return s.promFlavorCache.variants, nil
 	}
 
-	dsProm := &models.GetDataSourcesByTypeQuery{Type: "prometheus"}
+	dsProm := &datasources.GetDataSourcesByTypeQuery{Type: "prometheus"}
 	err := s.datasources.GetDataSourcesByType(ctx, dsProm)
 	if err != nil {
 		s.log.Error("Failed to read all Prometheus data sources", "error", err)
@@ -65,7 +65,7 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 	return variants, nil
 }
 
-func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSource) (string, error) {
+func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	type buildInfo struct {
 		Data struct {
 			Application *string                `json:"application"`
@@ -107,7 +107,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *models.DataSo
 		return "unknown", nil
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		s.log.Error("Failed to read Prometheus build info", "error", err)
 		return "", err

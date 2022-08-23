@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Stack } from '@grafana/experimental';
-import { Button, Checkbox, Form, TextArea } from '@grafana/ui';
+import { Button, Checkbox, Form, Stack, TextArea } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { SaveDashboardData, SaveDashboardOptions } from '../types';
@@ -11,12 +10,12 @@ interface FormDTO {
   message: string;
 }
 
-type Props = {
+export type SaveProps = {
   dashboard: DashboardModel; // original
   saveModel: SaveDashboardData; // already cloned
   onCancel: () => void;
   onSuccess: () => void;
-  onSubmit?: (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
+  onSubmit?: (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => Promise<any>;
   options: SaveDashboardOptions;
   onOptionsChange: (opts: SaveDashboardOptions) => void;
 };
@@ -29,7 +28,7 @@ export const SaveDashboardForm = ({
   onCancel,
   onSuccess,
   onOptionsChange,
-}: Props) => {
+}: SaveProps) => {
   const hasTimeChanged = useMemo(() => dashboard.hasTimeChanged(), [dashboard]);
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 

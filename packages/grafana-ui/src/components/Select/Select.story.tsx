@@ -13,7 +13,7 @@ import mdx from './Select.mdx';
 import { generateOptions } from './mockOptions';
 import { SelectCommonProps } from './types';
 
-export default {
+const meta: Meta = {
   title: 'Forms/Select',
   component: Select,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -69,7 +69,7 @@ export default {
       },
     },
   },
-} as Meta;
+};
 
 const loadAsyncOptions = () => {
   return new Promise<Array<SelectableValue<string>>>((resolve) => {
@@ -340,3 +340,5 @@ export const CustomValueCreation: Story = (args) => {
 CustomValueCreation.args = {
   allowCustomValue: true,
 };
+
+export default meta;

@@ -19,6 +19,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import config from 'app/core/config';
+import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types';
 import {
@@ -49,6 +50,15 @@ export interface GridPos {
   static?: boolean;
 }
 
+type RunPanelQueryOptions = {
+  /** @deprecate */
+  dashboardId: number;
+  dashboardUID: string;
+  dashboardTimezone: string;
+  timeData: TimeOverrideResult;
+  width: number;
+  publicDashboardAccessToken?: string;
+};
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   isViewing: true,
@@ -76,7 +86,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   title: true,
   scopedVars: true,
   repeat: true,
-  repeatIteration: true,
   repeatPanelId: true,
   repeatDirection: true,
   repeatedByRow: true,
@@ -224,10 +233,17 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       (this as any)[property] = model[property];
     }
 
-    // Special 'graph' migration logic
-    if (this.type === 'graph' && config?.featureToggles?.autoMigrateGraphPanels) {
-      this.autoMigrateFrom = this.type;
-      this.type = 'timeseries';
+    switch (this.type) {
+      case 'graph':
+        if (config?.featureToggles?.autoMigrateGraphPanels) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'timeseries';
+        }
+        break;
+      case 'heatmap-new':
+        this.autoMigrateFrom = this.type;
+        this.type = 'heatmap';
+        break;
     }
 
     // defaults
@@ -297,7 +313,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.isViewing = isViewing;
   }
 
-  updateGridPos(newPos: GridPos) {
+  updateGridPos(newPos: GridPos, manuallyUpdated = true) {
     if (
       newPos.x === this.gridPos.x &&
       newPos.y === this.gridPos.y &&
@@ -311,22 +327,26 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
-    this.configRev++;
+    if (manuallyUpdated) {
+      this.configRev++;
+    }
   }
 
-  runAllPanelQueries(
-    dashboardId: number,
-    dashboardTimezone: string,
-    timeData: TimeOverrideResult,
-    width: number,
-    publicDashboardUid?: string
-  ) {
+  runAllPanelQueries({
+    dashboardId,
+    dashboardUID,
+    dashboardTimezone,
+    timeData,
+    width,
+    publicDashboardAccessToken,
+  }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardId: dashboardId,
-      publicDashboardUid,
+      dashboardUID: dashboardUID,
+      publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
@@ -645,4 +665,19 @@ function getPluginVersion(plugin: PanelPlugin): string {
 interface PanelOptionsCache {
   properties: any;
   fieldConfig: FieldConfigSource;
+}
+
+// For cases where we immediately want to stringify the panel model without cloning each property
+export function stringifyPanelModel(panel: PanelModel) {
+  const model: any = {};
+
+  Object.entries(panel)
+    .filter(
+      ([prop, val]) => !notPersistedProperties[prop] && panel.hasOwnProperty(prop) && !isEqual(val, defaults[prop])
+    )
+    .forEach(([k, v]) => {
+      model[k] = v;
+    });
+
+  return safeStringifyValue(model);
 }

@@ -2,40 +2,138 @@ package thumbs
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 type CrawlerAuthSetupService interface {
 	Setup(ctx context.Context) (CrawlerAuth, error)
 }
 
-func ProvideCrawlerAuthSetupService() *OSSCrawlerAuthSetupService {
-	return &OSSCrawlerAuthSetupService{}
+func ProvideCrawlerAuthSetupService(serviceAccounts serviceaccounts.Service, serviceAccountsStore serviceaccounts.Store, sqlStore *sqlstore.SQLStore) *OSSCrawlerAuthSetupService {
+	return &OSSCrawlerAuthSetupService{
+		serviceAccountNamePrefix: "dashboard-previews-crawler-org-",
+		serviceAccounts:          serviceAccounts,
+		log:                      log.New("oss_crawler_account_setup_service"),
+		sqlStore:                 sqlStore,
+		serviceAccountsStore:     serviceAccountsStore,
+	}
 }
 
-type OSSCrawlerAuthSetupService struct{}
+type OSSCrawlerAuthSetupService struct {
+	log                      log.Logger
+	serviceAccountNamePrefix string
+	serviceAccounts          serviceaccounts.Service
+	serviceAccountsStore     serviceaccounts.Store
+	sqlStore                 *sqlstore.SQLStore
+}
 
 type CrawlerAuth interface {
 	GetUserId(orgId int64) int64
-	GetOrgRole() models.RoleType
+	GetLogin(orgId int64) string
+	GetOrgRole() org.RoleType
 }
 
-type staticCrawlerAuth struct {
-	userId  int64
-	orgRole models.RoleType
+func (o *OSSCrawlerAuthSetupService) findAllOrgIds(ctx context.Context) ([]int64, error) {
+	searchAllOrgsQuery := &models.SearchOrgsQuery{}
+	if err := o.sqlStore.SearchOrgs(ctx, searchAllOrgsQuery); err != nil {
+		o.log.Error("Error when searching for orgs", "err", err)
+		return nil, err
+	}
+
+	orgIds := make([]int64, 0)
+	for i := range searchAllOrgsQuery.Result {
+		orgIds = append(orgIds, searchAllOrgsQuery.Result[i].Id)
+	}
+
+	return orgIds, nil
 }
 
-func (o *staticCrawlerAuth) GetOrgRole() models.RoleType {
+type crawlerAuth struct {
+	accountIdByOrgId map[int64]int64
+	loginByOrgId     map[int64]string
+	orgRole          org.RoleType
+}
+
+func (o *crawlerAuth) GetOrgRole() org.RoleType {
 	return o.orgRole
 }
 
-func (o *staticCrawlerAuth) GetUserId(orgId int64) int64 {
-	return o.userId
+func (o *crawlerAuth) GetUserId(orgId int64) int64 {
+	return o.accountIdByOrgId[orgId]
+}
+
+func (o *crawlerAuth) GetLogin(orgId int64) string {
+	return o.loginByOrgId[orgId]
 }
 
 func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, error) {
-	// userId:0 and ROLE_ADMIN grants the crawler process permissions to view all dashboards in all folders & orgs
+	orgIds, err := o.findAllOrgIds(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// userId:0 and RoleAdmin grants the crawler process permissions to view all dashboards in all folders & orgs
 	// the process doesn't and shouldn't actually need to edit/modify any resources from the UI
-	return &staticCrawlerAuth{userId: 0, orgRole: models.ROLE_ADMIN}, nil
+	orgRole := org.RoleAdmin
+
+	accountIdByOrgId := make(map[int64]int64)
+	loginByOrgId := make(map[int64]string)
+	for _, orgId := range orgIds {
+		o.log.Info("Creating account for org", "orgId", orgId)
+
+		serviceAccountNameOrg := o.serviceAccountNamePrefix + strconv.FormatInt(orgId, 10)
+
+		saForm := serviceaccounts.CreateServiceAccountForm{
+			Name: serviceAccountNameOrg,
+			Role: &orgRole,
+		}
+
+		serviceAccount, err := o.serviceAccounts.CreateServiceAccount(ctx, orgId, &saForm)
+		accountAlreadyExists := errors.Is(err, database.ErrServiceAccountAlreadyExists)
+
+		if !accountAlreadyExists && err != nil {
+			o.log.Error("Failed to create the service account", "err", err, "accountName", serviceAccountNameOrg, "orgId", orgId)
+			return nil, err
+		}
+
+		var serviceAccountLogin string
+		var serviceAccountId int64
+		if accountAlreadyExists {
+			id, err := o.serviceAccounts.RetrieveServiceAccountIdByName(ctx, orgId, serviceAccountNameOrg)
+			if err != nil {
+				o.log.Error("Failed to retrieve service account", "err", err, "accountName", serviceAccountNameOrg)
+				return nil, err
+			}
+
+			// update org_role to make sure everything works properly if someone has changed the role since SA's original creation
+			dto, err := o.serviceAccountsStore.UpdateServiceAccount(ctx, orgId, id, &serviceaccounts.UpdateServiceAccountForm{
+				Name: &serviceAccountNameOrg,
+				Role: &orgRole,
+			})
+
+			if err != nil {
+				o.log.Error("Failed to update service account's role", "err", err, "accountName", serviceAccountNameOrg)
+				return nil, err
+			}
+
+			serviceAccountLogin = dto.Login
+			serviceAccountId = id
+		} else {
+			serviceAccountLogin = serviceAccount.Login
+			serviceAccountId = serviceAccount.Id
+		}
+
+		accountIdByOrgId[orgId] = serviceAccountId
+		loginByOrgId[orgId] = serviceAccountLogin
+	}
+
+	return &crawlerAuth{accountIdByOrgId: accountIdByOrgId, loginByOrgId: loginByOrgId, orgRole: orgRole}, nil
 }

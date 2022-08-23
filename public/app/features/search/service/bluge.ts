@@ -1,9 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, getDisplayProcessor, SelectableValue } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { GrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
+import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { replaceCurrentFolderQuery } from './utils';
@@ -13,13 +13,26 @@ import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, Sear
 export class BlugeSearcher implements GrafanaSearcher {
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
-      throw 'facets not supported!';
+      throw new Error('facets not supported!');
     }
     return doSearchQuery(query);
   }
 
+  async starred(query: SearchQuery): Promise<QueryResponse> {
+    if (query.facet?.length) {
+      throw new Error('facets not supported!');
+    }
+    // get the starred dashboards
+    const starsUIDS = await getBackendSrv().get('api/user/stars');
+    const starredQuery = {
+      uid: starsUIDS,
+      query: query.query ?? '*',
+    };
+    return doSearchQuery(starredQuery);
+  }
+
   async tags(query: SearchQuery): Promise<TermCount[]> {
-    const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+    const ds = await getGrafanaDatasource();
     const target = {
       refId: 'TagsQuery',
       queryType: GrafanaQueryType.Search,
@@ -59,6 +72,10 @@ export class BlugeSearcher implements GrafanaSearcher {
         opts.push({ value: `-${sf.name}`, label: `${sf.display} (most)` });
         opts.push({ value: `${sf.name}`, label: `${sf.display} (least)` });
       }
+      for (const sf of sortTimeFields) {
+        opts.push({ value: `-${sf.name}`, label: `${sf.display} (recent)` });
+        opts.push({ value: `${sf.name}`, label: `${sf.display} (oldest)` });
+      }
     }
 
     return Promise.resolve(opts);
@@ -70,14 +87,14 @@ const nextPageSizes = 100;
 
 async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
   query = await replaceCurrentFolderQuery(query);
-  const ds = (await getDataSourceSrv().get('-- Grafana --')) as GrafanaDatasource;
+  const ds = await getGrafanaDatasource();
   const target = {
     refId: 'Search',
     queryType: GrafanaQueryType.Search,
     search: {
       ...query,
       query: query.query ?? '*',
-      limit: firstPageSize,
+      limit: query.limit ?? firstPageSize,
     },
   };
   const rsp = await lastValueFrom(
@@ -117,21 +134,29 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     }
   }
 
-  const view = new DataFrameView<DashboardQueryResult>(first);
-  return {
-    totalRows: meta.count ?? first.length,
-    view,
-    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
-      console.log('LOAD NEXT PAGE', { startIndex, stopIndex, length: view.dataFrame.length });
+  let loadMax = 0;
+  let pending: Promise<void> | undefined = undefined;
+  const getNextPage = async () => {
+    while (loadMax > view.dataFrame.length) {
       const from = view.dataFrame.length;
-      const limit = stopIndex - from;
-      if (limit < 0) {
+      if (from >= meta.count) {
         return;
       }
       const frame = (
         await lastValueFrom(
           ds.query({
-            targets: [{ ...target, refId: 'Page', facet: undefined, from, limit: Math.max(limit, nextPageSizes) }],
+            targets: [
+              {
+                ...target,
+                search: {
+                  ...(target?.search ?? {}),
+                  from,
+                  limit: nextPageSizes,
+                },
+                refId: 'Page',
+                facet: undefined,
+              },
+            ],
           } as any)
         )
       ).data?.[0] as DataFrame;
@@ -160,7 +185,20 @@ async function doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
           meta.locationInfo[key] = value;
         }
       }
-      return;
+    }
+    pending = undefined;
+  };
+
+  const view = new DataFrameView<DashboardQueryResult>(first);
+  return {
+    totalRows: meta.count ?? first.length,
+    view,
+    loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+      loadMax = Math.max(loadMax, stopIndex);
+      if (!pending) {
+        pending = getNextPage();
+      }
+      return pending;
     },
     isItemLoaded: (index: number): boolean => {
       return index < view.dataFrame.length;
@@ -186,9 +224,20 @@ const sortFields = [
   { name: 'errors_last_30_days', display: 'Errors 30 days' },
 ];
 
+// Enterprise only time sort field values for dashboards
+const sortTimeFields = [
+  { name: 'created_at', display: 'Created time' },
+  { name: 'updated_at', display: 'Updated time' },
+];
+
 /** Given the internal field name, this gives a reasonable display name for the table colum header */
 function getSortFieldDisplayName(name: string) {
   for (const sf of sortFields) {
+    if (sf.name === name) {
+      return sf.display;
+    }
+  }
+  for (const sf of sortTimeFields) {
     if (sf.name === name) {
       return sf.display;
     }

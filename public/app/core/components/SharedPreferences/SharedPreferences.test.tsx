@@ -9,23 +9,48 @@ import { UserPreferencesDTO } from 'app/types';
 
 import SharedPreferences from './SharedPreferences';
 
+jest.mock('@grafana/runtime', () => {
+  const originalModule = jest.requireActual('@grafana/runtime');
+  return {
+    ...originalModule,
+    config: {
+      ...originalModule.config,
+      featureToggles: {
+        internationalization: true,
+      },
+    },
+  };
+});
+
 jest.mock('app/core/services/backend_srv', () => {
   return {
     backendSrv: {
+      getDashboardByUid: jest.fn().mockResolvedValue({
+        dashboard: {
+          id: 2,
+          title: 'My Dashboard',
+          uid: 'myDash',
+          templating: {
+            list: [],
+          },
+          panels: [],
+        },
+        meta: {},
+      }),
       search: jest.fn().mockResolvedValue([
         {
           id: 2,
           title: 'My Dashboard',
           tags: [],
           type: '',
-          uid: '',
+          uid: 'myDash',
           uri: '',
           url: '',
           folderId: 0,
           folderTitle: '',
           folderUid: '',
           folderUrl: '',
-          isStarred: false,
+          isStarred: true,
           slug: '',
           items: [],
         },
@@ -34,14 +59,14 @@ jest.mock('app/core/services/backend_srv', () => {
           title: 'Another Dashboard',
           tags: [],
           type: '',
-          uid: '',
+          uid: 'anotherDash',
           uri: '',
           url: '',
           folderId: 0,
           folderTitle: '',
           folderUid: '',
           folderUrl: '',
-          isStarred: false,
+          isStarred: true,
           slug: '',
           items: [],
         },
@@ -54,10 +79,11 @@ const mockPreferences: UserPreferencesDTO = {
   timezone: 'browser',
   weekStart: 'monday',
   theme: 'light',
-  homeDashboardId: 2,
+  homeDashboardUID: 'myDash',
   queryHistory: {
     homeTab: '',
   },
+  locale: '',
 };
 
 const mockPrefsPatch = jest.fn();
@@ -126,6 +152,11 @@ describe('SharedPreferences', () => {
     expect(weekSelect).toHaveTextContent('Monday');
   });
 
+  it('renders the locale preference', async () => {
+    const weekSelect = getSelectParent(screen.getByLabelText(/language/i));
+    expect(weekSelect).toHaveTextContent('Default');
+  });
+
   it("saves the user's new preferences", async () => {
     const darkThemeRadio = assertInstanceOf(screen.getByLabelText('Dark'), HTMLInputElement);
     await userEvent.click(darkThemeRadio);
@@ -133,16 +164,40 @@ describe('SharedPreferences', () => {
     await selectOptionInTest(screen.getByLabelText('Home Dashboard'), 'Another Dashboard');
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
     await selectOptionInTest(screen.getByLabelText('Week start'), 'Saturday');
+    await selectOptionInTest(screen.getByLabelText(/language/i), 'French');
 
     await userEvent.click(screen.getByText('Save'));
     expect(mockPrefsUpdate).toHaveBeenCalledWith({
       timezone: 'Australia/Sydney',
       weekStart: 'saturday',
       theme: 'dark',
-      homeDashboardId: 3,
+      homeDashboardUID: 'anotherDash',
       queryHistory: {
         homeTab: '',
       },
+      locale: 'fr-FR',
+    });
+  });
+
+  it("saves the user's default preferences", async () => {
+    const defThemeRadio = assertInstanceOf(screen.getByLabelText('Default'), HTMLInputElement);
+    await userEvent.click(defThemeRadio);
+
+    await selectOptionInTest(screen.getByLabelText('Home Dashboard'), 'Default');
+    await selectOptionInTest(screen.getByLabelText('Timezone'), 'Default');
+    await selectOptionInTest(screen.getByLabelText('Week start'), 'Default');
+    await selectOptionInTest(screen.getByLabelText(/language/i), 'Default');
+
+    await userEvent.click(screen.getByText('Save'));
+    expect(mockPrefsUpdate).toHaveBeenCalledWith({
+      timezone: 'browser',
+      weekStart: '',
+      theme: '',
+      homeDashboardUID: undefined,
+      queryHistory: {
+        homeTab: '',
+      },
+      locale: '',
     });
   });
 

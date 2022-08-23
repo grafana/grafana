@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { getTimeZone, GrafanaTheme2, NavModel } from '@grafana/data';
+import { getTimeZone, GrafanaTheme2 } from '@grafana/data';
 import { Button, ConfirmModal, IconButton, useStyles2 } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { AccessControlAction, ApiKey, Role, ServiceAccountDTO, StoreState } from 'app/types';
 
+import { ServiceAccountPermissions } from './ServiceAccountPermissions';
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
 import { ServiceAccountProfile } from './components/ServiceAccountProfile';
 import { ServiceAccountTokensTable } from './components/ServiceAccountTokensTable';
@@ -24,22 +24,18 @@ import {
 } from './state/actionsServiceAccountPage';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
-  navModel: NavModel;
   serviceAccount?: ServiceAccountDTO;
   tokens: ApiKey[];
   isLoading: boolean;
   roleOptions: Role[];
-  builtInRoles: Record<string, Role[]>;
 }
 
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'serviceaccounts'),
     serviceAccount: state.serviceAccountProfile.serviceAccount,
     tokens: state.serviceAccountProfile.tokens,
     isLoading: state.serviceAccountProfile.isLoading,
     roleOptions: state.serviceAccounts.roleOptions,
-    builtInRoles: state.serviceAccounts.builtInRoles,
     timezone: getTimeZone(state.user),
   };
 }
@@ -58,14 +54,12 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const ServiceAccountPageUnconnected = ({
-  navModel,
   match,
   serviceAccount,
   tokens,
   timezone,
   isLoading,
   roleOptions,
-  builtInRoles,
   createServiceAccountToken,
   deleteServiceAccount,
   deleteServiceAccountToken,
@@ -83,6 +77,11 @@ export const ServiceAccountPageUnconnected = ({
     !contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite) || serviceAccount.isDisabled;
 
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
+  const canReadPermissions = contextSrv.hasAccessInMetadata(
+    AccessControlAction.ServiceAccountsPermissionsRead,
+    serviceAccount!,
+    false
+  );
 
   useEffect(() => {
     loadServiceAccount(serviceAccountId);
@@ -131,7 +130,7 @@ export const ServiceAccountPageUnconnected = ({
   };
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="serviceaccounts">
       <Page.Contents isLoading={isLoading}>
         {serviceAccount && (
           <div className={styles.headerContainer}>
@@ -185,12 +184,11 @@ export const ServiceAccountPageUnconnected = ({
               serviceAccount={serviceAccount}
               timeZone={timezone}
               roleOptions={roleOptions}
-              builtInRoles={builtInRoles}
               onChange={onProfileChange}
             />
           )}
           <div className={styles.tokensListHeader}>
-            <h4>Tokens</h4>
+            <h3>Tokens</h3>
             <Button onClick={() => setIsTokenModalOpen(true)} disabled={tokenActionsDisabled}>
               Add service account token
             </Button>
@@ -203,6 +201,7 @@ export const ServiceAccountPageUnconnected = ({
               tokenActionsDisabled={tokenActionsDisabled}
             />
           )}
+          {canReadPermissions && <ServiceAccountPermissions serviceAccount={serviceAccount} />}
         </div>
         <ConfirmModal
           isOpen={isDeleteModalOpen}

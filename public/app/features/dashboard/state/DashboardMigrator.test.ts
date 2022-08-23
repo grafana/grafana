@@ -193,7 +193,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(36);
+      expect(model.schemaVersion).toBe(37);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -2023,6 +2023,72 @@ describe('DashboardModel', () => {
     it('should update target datasource props to default data source', () => {
       expect(model.panels[0].targets[0].datasource).toEqual({ type: 'prometheus', uid: 'prom2-uid' });
     });
+  });
+});
+
+describe('when generating the legend for a panel', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    model = new DashboardModel({
+      panels: [
+        {
+          id: 0,
+          options: {
+            legend: {
+              displayMode: 'hidden',
+              placement: 'bottom',
+            },
+            tooltipOptions: {
+              mode: 'single',
+            },
+          },
+        },
+        {
+          id: 1,
+          options: {
+            legend: {
+              displayMode: 'list',
+              placement: 'right',
+            },
+            tooltipOptions: {
+              mode: 'single',
+            },
+          },
+        },
+        {
+          id: 2,
+          options: {
+            legend: {
+              displayMode: 'table',
+              placement: 'bottom',
+            },
+            tooltipOptions: {
+              mode: 'single',
+            },
+          },
+        },
+      ],
+      schemaVersion: 30,
+    });
+  });
+
+  it('should update displayMode = hidden to showLegend = false and displayMode = list', () => {
+    expect(model.panels[0].options.legend).toEqual({ displayMode: 'list', showLegend: false, placement: 'bottom' });
+  });
+
+  it('should keep displayMode = list and update to showLegend = true', () => {
+    expect(model.panels[1].options.legend).toEqual({ displayMode: 'list', showLegend: true, placement: 'right' });
+  });
+
+  it('should keep displayMode = table and update to showLegend = true', () => {
+    expect(model.panels[2].options.legend).toEqual({ displayMode: 'table', showLegend: true, placement: 'bottom' });
+  });
+
+  it('should preserve the placement', () => {
+    expect(model.panels[0].options.legend.placement).toEqual('bottom');
+    expect(model.panels[1].options.legend.placement).toEqual('right');
+    expect(model.panels[2].options.legend.placement).toEqual('bottom');
   });
 });
 

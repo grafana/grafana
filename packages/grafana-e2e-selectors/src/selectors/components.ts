@@ -123,7 +123,7 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
-    applyButton: 'panel editor apply',
+    applyButton: 'Apply changes and go back to dashboard',
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
     toggleTableView: 'toggle-table-view',
@@ -268,6 +268,12 @@ export const Components = {
     spanBar: 'data-testid SpanBar--wrapper',
   },
   QueryField: { container: 'Query field' },
+  QueryBuilder: {
+    queryPatterns: 'Query patterns',
+    labelSelect: 'Select label',
+    valueSelect: 'Select value',
+    matchOperatorSelect: 'Select match operator',
+  },
   ValuePicker: {
     button: (name: string) => `Value picker button ${name}`,
     select: (name: string) => `Value picker select ${name}`,

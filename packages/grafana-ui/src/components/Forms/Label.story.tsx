@@ -1,9 +1,10 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { Label } from './Label';
 import mdx from './Label.mdx';
 
-export default {
+const meta: ComponentMeta<typeof Label> = {
   title: 'Forms/Label',
   component: Label,
   parameters: {
@@ -13,14 +14,16 @@ export default {
   },
 };
 
-export const simple = () => {
+export const simple: ComponentStory<typeof Label> = () => {
   return <Label description="Option description">Option name</Label>;
 };
 
-export const categorised = () => {
+export const categorised: ComponentStory<typeof Label> = () => {
   return (
     <Label category={['Category', 'Nested category']} description="Option description">
       Option name
     </Label>
   );
 };
+
+export default meta;

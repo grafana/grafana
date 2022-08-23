@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/stretchr/testify/assert"
@@ -18,24 +17,22 @@ func TestStore_UsageStats(t *testing.T) {
 	sa := tests.SetupUserServiceAccount(t, db, saToCreate)
 
 	keyName := t.Name()
-	key, err := apikeygen.New(sa.OrgId, keyName)
+	key, err := apikeygen.New(sa.OrgID, keyName)
 	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
 		Name:          keyName,
-		OrgId:         sa.OrgId,
+		OrgId:         sa.OrgID,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,
-		Result:        &models.ApiKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), sa.Id, &cmd)
+	err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
 	require.NoError(t, err)
 
 	stats, err := store.GetUsageMetrics(context.Background())
 	require.NoError(t, err)
 
-	assert.Equal(t, int64(1), stats["stats.serviceaccounts.count"].(int64))
-	assert.Equal(t, int64(1), stats["stats.serviceaccounts.tokens.count"].(int64))
-	assert.Equal(t, int64(1), stats["stats.serviceaccounts.enabled.count"].(int64))
+	assert.Equal(t, int64(1), stats.ServiceAccounts)
+	assert.Equal(t, int64(1), stats.Tokens)
 }

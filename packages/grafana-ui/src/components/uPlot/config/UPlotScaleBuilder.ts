@@ -17,6 +17,7 @@ export interface ScaleProps {
   orientation: ScaleOrientation;
   direction: ScaleDirection;
   log?: number;
+  centeredZero?: boolean;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -26,7 +27,18 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   }
 
   getConfig(): Scale {
-    let { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range, direction, orientation } = this.props;
+    let {
+      isTime,
+      scaleKey,
+      min: hardMin,
+      max: hardMax,
+      softMin,
+      softMax,
+      range,
+      direction,
+      orientation,
+      centeredZero,
+    } = this.props;
     const distribution = !isTime
       ? {
           distr:
@@ -60,18 +72,32 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
     let hardMinOnly = softMin == null && hardMin != null;
     let hardMaxOnly = softMax == null && hardMax != null;
+    let hasFixedRange = hardMinOnly && hardMaxOnly;
 
     // uPlot range function
-    const rangeFn = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
+    const rangeFn = (u: uPlot, dataMin: number | null, dataMax: number | null, scaleKey: string) => {
       const scale = u.scales[scaleKey];
 
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
+      // happens when all series on a scale are `show: false`, re-returning nulls will auto-disable axis
+      if (!hasFixedRange && dataMin == null && dataMax == null) {
+        return minMax;
+      }
+
       if (scale.distr === 1 || scale.distr === 2) {
+        if (centeredZero) {
+          let absMin = Math.abs(dataMin!);
+          let absMax = Math.abs(dataMax!);
+          let max = Math.max(absMin, absMax);
+          dataMin = -max;
+          dataMax = max;
+        }
+
         // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
         minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
       } else if (scale.distr === 3) {
-        minMax = uPlot.rangeLog(dataMin, dataMax, scale.log ?? 10, true);
+        minMax = uPlot.rangeLog(dataMin!, dataMax!, scale.log ?? 10, true);
       }
 
       // if all we got were hard limits, treat them as static min/max
@@ -83,10 +109,17 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         minMax[1] = hardMax!;
       }
 
+      // guard against invalid y ranges
+      if (minMax[0]! >= minMax[1]!) {
+        minMax[0] = 0;
+        minMax[1] = 100;
+      }
+
       return minMax;
     };
 
-    let auto = !isTime && !(hardMinOnly && hardMaxOnly);
+    let auto = !isTime && !hasFixedRange;
+
     if (isBooleanUnit(scaleKey)) {
       auto = false;
       range = [0, 1];
