@@ -336,7 +336,7 @@ data where values do not match in every result.
 
 Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur - performing an inner join.
 
-In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the inner join transformation.
+In the following example, two queries return table data. It is visualized as two separate tables before applying the inner join transformation.
 
 Query A:
 
