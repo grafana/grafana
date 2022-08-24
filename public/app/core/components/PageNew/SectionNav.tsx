@@ -22,7 +22,7 @@ export function SectionNav(props: Props) {
         {main.img && <img className={styles.sectionImg} src={main.img} alt={`logo of ${main.text}`} />}
         {props.model.main.text}
       </h2>
-      <ul className={styles.items} role="tablist">
+      <div className={styles.items} role="tablist">
         {directChildren.map((child, index) => {
           return (
             !child.hideFromTabs &&
@@ -39,7 +39,7 @@ export function SectionNav(props: Props) {
         })}
         {nestedItems.map((child) => (
           <>
-            <li className={styles.subSection}>{child.text}</li>
+            <div className={styles.subSection}>{child.text}</div>
             {child.children!.map((child, index) => {
               return (
                 !child.hideFromTabs &&
@@ -56,7 +56,7 @@ export function SectionNav(props: Props) {
             })}
           </>
         ))}
-      </ul>
+      </div>
     </nav>
   );
 }
