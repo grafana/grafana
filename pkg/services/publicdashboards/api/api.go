@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -154,6 +155,10 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	if err = validateRequest(reqDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
 	dashboard, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":accessToken"])
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not fetch dashboard", err)
@@ -244,4 +249,16 @@ func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.
 	}
 
 	return response.JSONStreaming(statusCode, qdr)
+}
+
+func validateRequest(req *PublicDashboardQueryDTO) error {
+	if req.IntervalMs < 0 {
+		return fmt.Errorf("intervalMS should be greater than 0")
+	}
+
+	if req.MaxDataPoints < 0 {
+		return fmt.Errorf("maxDataPoints should be greater than 0")
+	}
+
+	return nil
 }

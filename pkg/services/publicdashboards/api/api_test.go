@@ -346,6 +346,18 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
+	t.Run("Status code is 400 when the intervalMS is lesser than 0", func(t *testing.T) {
+		server, _ := setup(true)
+		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/2/query", strings.NewReader(`{"intervalMs":-100,"maxDataPoints":1000}`), t)
+		require.Equal(t, http.StatusBadRequest, resp.Code)
+	})
+
+	t.Run("Status code is 400 when the maxDataPoints is lesser than 0", func(t *testing.T) {
+		server, _ := setup(true)
+		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/2/query", strings.NewReader(`{"intervalMs":100,"maxDataPoints":-1000}`), t)
+		require.Equal(t, http.StatusBadRequest, resp.Code)
+	})
+
 	t.Run("Returns query data when feature toggle is enabled", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 

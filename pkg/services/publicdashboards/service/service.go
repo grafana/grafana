@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,14 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // Define the Service Implementation. We're generating mock implementation
 // automatically
 type PublicDashboardServiceImpl struct {
-	log   log.Logger
-	cfg   *setting.Cfg
-	store publicdashboards.Store
+	log                log.Logger
+	cfg                *setting.Cfg
+	store              publicdashboards.Store
+	intervalCalculator intervalv2.Calculator
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -39,9 +43,10 @@ func ProvideService(
 	store publicdashboards.Store,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
-		log:   log.New(LogPrefix),
-		cfg:   cfg,
-		store: store,
+		log:                log.New(LogPrefix),
+		cfg:                cfg,
+		store:              store,
+		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
 
@@ -181,9 +186,11 @@ func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx cont
 
 	ts := publicDashboard.BuildTimeSettings(dashboard)
 
+	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
+
 	for i := range queries {
-		queries[i].Set("intervalMs", reqDTO.IntervalMs)
-		queries[i].Set("maxDataPoints", reqDTO.MaxDataPoints)
+		queries[i].Set("intervalMs", safeInterval)
+		queries[i].Set("maxDataPoints", safeResolution)
 	}
 
 	return dtos.MetricRequest{
@@ -229,4 +236,28 @@ func GenerateAccessToken() (string, error) {
 	}
 
 	return fmt.Sprintf("%x", token[:]), nil
+}
+
+func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO *PublicDashboardQueryDTO, ts *TimeSettings) (int64, int64) {
+	// arbitrary max value for all datasources, it is actually a hard limit defined in prometheus
+	safeResolution := int64(11000)
+
+	// interval calculated on the frontend
+	interval := time.Duration(reqDTO.IntervalMs) * time.Millisecond
+
+	// calculate a safe interval with time range from dashboard and safeResolution
+	dataTimeRange := legacydata.NewDataTimeRange(ts.From, ts.To)
+	tr := backend.TimeRange{
+		From: dataTimeRange.GetFromAsTimeUTC(),
+		To:   dataTimeRange.GetToAsTimeUTC(),
+	}
+	safeInterval := pd.intervalCalculator.CalculateSafeInterval(tr, safeResolution)
+
+	adjustedInterval := safeInterval.Value
+	if interval > safeInterval.Value {
+		adjustedInterval = interval
+		return reqDTO.IntervalMs, reqDTO.MaxDataPoints
+	}
+
+	return adjustedInterval.Milliseconds(), safeResolution
 }
