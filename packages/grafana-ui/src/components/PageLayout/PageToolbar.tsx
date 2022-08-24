@@ -4,7 +4,7 @@ import React, { FC, ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Link } from '..';
+import { Link, ToolbarButtonRow } from '..';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
@@ -132,15 +132,7 @@ export const PageToolbar: FC<Props> = React.memo(
             )}
           </nav>
         </div>
-        {React.Children.toArray(children)
-          .filter(Boolean)
-          .map((child, index) => {
-            return (
-              <div className={styles.actionWrapper} key={index}>
-                {child}
-              </div>
-            );
-          })}
+        <ToolbarButtonRow alignment="right">{React.Children.toArray(children).filter(Boolean)}</ToolbarButtonRow>
       </nav>
     );
   }
@@ -161,14 +153,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       background: ${theme.colors.background.canvas};
       display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
+      gap: ${theme.spacing(2)};
+      justify-content: space-between;
       padding: ${theme.spacing(1.5, 2)};
     `,
     leftWrapper: css`
       display: flex;
       flex-wrap: nowrap;
-      flex-grow: 1;
     `,
     pageIcon: css`
       display: none;
@@ -190,7 +181,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     navElement: css`
       display: flex;
-      flex-grow: 1;
       align-items: center;
       max-width: calc(100vw - 78px);
     `,
@@ -223,9 +213,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       ${theme.breakpoints.up('md')} {
         display: unset;
       }
-    `,
-    actionWrapper: css`
-      padding: ${spacing(0.5, 0, 0.5, 1)};
     `,
     leftActionItem: css`
       display: none;
