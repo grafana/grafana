@@ -31,16 +31,17 @@ func SetupTestMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, kvStor
 
 func TestMigrate(t *testing.T) {
 	t.Run("should migrate from legacy to unified without compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
-		kvStore := kvstore.ProvideService(sqlStore)
+		db := sqlstore.InitTestDB(t)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
+		kvStore := kvstore.ProvideService(db)
 		secretsStore := secretsStore.SetupTestService(t)
-		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, false)
+		migService := SetupTestMigrationService(t, db, kvStore, secretsStore, false)
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgId:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
@@ -54,7 +55,7 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secret json data was added
 		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.NotEmpty(t, query.Result.SecureJsonData)
@@ -77,7 +78,7 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was deleted
 		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.Empty(t, query.Result.SecureJsonData)
@@ -96,16 +97,17 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
-		kvStore := kvstore.ProvideService(sqlStore)
+		db := sqlstore.InitTestDB(t)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
+		kvStore := kvstore.ProvideService(db)
 		secretsStore := secretsStore.SetupTestService(t)
-		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, true)
+		migService := SetupTestMigrationService(t, db, kvStore, secretsStore, true)
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgId:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
@@ -119,7 +121,7 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secret json data was added
 		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.NotEmpty(t, query.Result.SecureJsonData)
@@ -142,7 +144,7 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was maintained for compatibility
 		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.NotEmpty(t, query.Result.SecureJsonData)
@@ -161,16 +163,17 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should replicate from unified to legacy for compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
-		kvStore := kvstore.ProvideService(sqlStore)
+		db := sqlstore.InitTestDB(t)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
+		kvStore := kvstore.ProvideService(db)
 		secretsStore := secretsStore.SetupTestService(t)
-		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, false)
+		migService := SetupTestMigrationService(t, db, kvStore, secretsStore, false)
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgId:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
@@ -184,7 +187,7 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secret json data was added
 		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.NotEmpty(t, query.Result.SecureJsonData)
@@ -207,7 +210,7 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was deleted
 		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.Empty(t, query.Result.SecureJsonData)
@@ -225,13 +228,13 @@ func TestMigrate(t *testing.T) {
 		assert.True(t, exist)
 
 		// Run the migration with compatibility
-		migService = SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, true)
+		migService = SetupTestMigrationService(t, db, kvStore, secretsStore, true)
 		err = migService.Migrate(context.Background())
 		assert.NoError(t, err)
 
 		// Check if the secure json data was re-added for compatibility
 		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.NotEmpty(t, query.Result.SecureJsonData)
@@ -250,16 +253,17 @@ func TestMigrate(t *testing.T) {
 	})
 
 	t.Run("should delete from legacy to remove compatibility", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
-		kvStore := kvstore.ProvideService(sqlStore)
+		db := sqlstore.InitTestDB(t)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
+		kvStore := kvstore.ProvideService(db)
 		secretsStore := secretsStore.SetupTestService(t)
-		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, true)
+		migService := SetupTestMigrationService(t, db, kvStore, secretsStore, true)
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgId:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
@@ -273,7 +277,7 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secret json data was added
 		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.NotEmpty(t, query.Result.SecureJsonData)
@@ -296,7 +300,7 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was maintained for compatibility
 		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.NotEmpty(t, query.Result.SecureJsonData)
@@ -314,13 +318,13 @@ func TestMigrate(t *testing.T) {
 		assert.True(t, exist)
 
 		// Run the migration without compatibility
-		migService = SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, false)
+		migService = SetupTestMigrationService(t, db, kvStore, secretsStore, false)
 		err = migService.Migrate(context.Background())
 		assert.NoError(t, err)
 
 		// Check if the secure json data was deleted
 		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
-		err = sqlStore.GetDataSource(context.Background(), query)
+		err = ss.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
 		assert.Empty(t, query.Result.SecureJsonData)

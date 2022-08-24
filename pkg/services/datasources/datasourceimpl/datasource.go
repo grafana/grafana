@@ -55,7 +55,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 ) *Service {
 	dslogger := log.New("datasources")
-	store := &sqlStore{db: db, dialect: db.GetDialect(), logger: dslogger}
+	store := &sqlStore{db: db, dialect: db.GetDialect()}
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,

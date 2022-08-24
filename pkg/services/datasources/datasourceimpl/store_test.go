@@ -1,4 +1,4 @@
-package sqlstore
+package datasourceimpl
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func TestIntegrationDataAccess(t *testing.T) {
@@ -36,13 +37,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 		Url:    "http://test",
 	}
 
-	initDatasource := func(sqlStore *SQLStore) *datasources.DataSource {
+	initDatasource := func(db *sqlstore.SQLStore) *datasources.DataSource {
 		cmd := defaultAddDatasourceCommand
-		err := sqlStore.AddDataSource(context.Background(), &cmd)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
+		err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		query := datasources.GetDataSourcesQuery{OrgId: 10}
-		err = sqlStore.GetDataSources(context.Background(), &query)
+		err = ss.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(query.Result))
 
@@ -51,9 +53,9 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("AddDataSource", func(t *testing.T) {
 		t.Run("Can add datasource", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-
-			err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			db := sqlstore.InitTestDB(t)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
+			err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgId:    10,
 				Name:     "laban",
 				Type:     datasources.DS_GRAPHITE,
@@ -65,7 +67,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(context.Background(), &query)
+			err = ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -77,29 +79,30 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		t.Run("generates uid if not specified", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-			ds := initDatasource(sqlStore)
+			db := sqlstore.InitTestDB(t)
+			ds := initDatasource(db)
 			require.NotEmpty(t, ds.Uid)
 		})
 
 		t.Run("fails to insert ds with same uid", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
+			db := sqlstore.InitTestDB(t)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 			cmd1 := defaultAddDatasourceCommand
 			cmd2 := defaultAddDatasourceCommand
 			cmd1.Uid = "test"
 			cmd2.Uid = "test"
-			err := sqlStore.AddDataSource(context.Background(), &cmd1)
+			err := ss.AddDataSource(context.Background(), &cmd1)
 			require.NoError(t, err)
-			err = sqlStore.AddDataSource(context.Background(), &cmd2)
+			err = ss.AddDataSource(context.Background(), &cmd2)
 			require.Error(t, err)
 			require.IsType(t, datasources.ErrDataSourceUidExists, err)
 		})
 
 		t.Run("fires an event when the datasource is added", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-
+			db := sqlstore.InitTestDB(t)
+			sqlStore := sqlStore{db: db, dialect: db.GetDialect()}
 			var created *events.DataSourceCreated
-			sqlStore.bus.AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
+			db.Bus().AddEventListener(func(ctx context.Context, e *events.DataSourceCreated) error {
 				created = e
 				return nil
 			})
@@ -125,34 +128,37 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("UpdateDataSource", func(t *testing.T) {
 		t.Run("updates datasource with version", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-			ds := initDatasource(sqlStore)
+			db := sqlstore.InitTestDB(t)
+			ds := initDatasource(db)
 			cmd := defaultUpdateDatasourceCommand
 			cmd.Id = ds.Id
 			cmd.Version = ds.Version
-			err := sqlStore.UpdateDataSource(context.Background(), &cmd)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
+			err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 		})
 
 		t.Run("does not overwrite Uid if not specified", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-			ds := initDatasource(sqlStore)
+			db := sqlstore.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 			require.NotEmpty(t, ds.Uid)
 
 			cmd := defaultUpdateDatasourceCommand
 			cmd.Id = ds.Id
-			err := sqlStore.UpdateDataSource(context.Background(), &cmd)
+			err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourceQuery{Id: ds.Id, OrgId: 10}
-			err = sqlStore.GetDataSource(context.Background(), &query)
+			err = ss.GetDataSource(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, ds.Uid, query.Result.Uid)
 		})
 
 		t.Run("prevents update if version changed", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-			ds := initDatasource(sqlStore)
+			db := sqlstore.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 			cmd := datasources.UpdateDataSourceCommand{
 				Id:      ds.Id,
@@ -166,16 +172,17 @@ func TestIntegrationDataAccess(t *testing.T) {
 			// Make a copy as UpdateDataSource modifies it
 			cmd2 := cmd
 
-			err := sqlStore.UpdateDataSource(context.Background(), &cmd)
+			err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 
-			err = sqlStore.UpdateDataSource(context.Background(), &cmd2)
+			err = ss.UpdateDataSource(context.Background(), &cmd2)
 			require.Error(t, err)
 		})
 
 		t.Run("updates ds without version specified", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-			ds := initDatasource(sqlStore)
+			db := sqlstore.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 			cmd := &datasources.UpdateDataSourceCommand{
 				Id:     ds.Id,
@@ -186,13 +193,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 				Url:    "http://test",
 			}
 
-			err := sqlStore.UpdateDataSource(context.Background(), cmd)
+			err := ss.UpdateDataSource(context.Background(), cmd)
 			require.NoError(t, err)
 		})
 
 		t.Run("updates ds without higher version", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-			ds := initDatasource(sqlStore)
+			db := sqlstore.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 			cmd := &datasources.UpdateDataSourceCommand{
 				Id:      ds.Id,
@@ -204,36 +212,38 @@ func TestIntegrationDataAccess(t *testing.T) {
 				Version: 90000,
 			}
 
-			err := sqlStore.UpdateDataSource(context.Background(), cmd)
+			err := ss.UpdateDataSource(context.Background(), cmd)
 			require.NoError(t, err)
 		})
 	})
 
 	t.Run("DeleteDataSourceById", func(t *testing.T) {
 		t.Run("can delete datasource", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-			ds := initDatasource(sqlStore)
+			db := sqlstore.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 
-			err := sqlStore.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{ID: ds.Id, OrgID: ds.OrgId})
+			err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{ID: ds.Id, OrgID: ds.OrgId})
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(context.Background(), &query)
+			err = ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 0, len(query.Result))
 		})
 
 		t.Run("Can not delete datasource with wrong orgId", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
-			ds := initDatasource(sqlStore)
+			db := sqlstore.InitTestDB(t)
+			ds := initDatasource(db)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 
-			err := sqlStore.DeleteDataSource(context.Background(),
+			err := ss.DeleteDataSource(context.Background(),
 				&datasources.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourcesQuery{OrgId: 10}
-			err = sqlStore.GetDataSources(context.Background(), &query)
+			err = ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(query.Result))
@@ -241,16 +251,17 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("fires an event when the datasource is deleted", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
-		ds := initDatasource(sqlStore)
+		db := sqlstore.InitTestDB(t)
+		ds := initDatasource(db)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 		var deleted *events.DataSourceDeleted
-		sqlStore.bus.AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
+		db.Bus().AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
 			deleted = e
 			return nil
 		})
 
-		err := sqlStore.DeleteDataSource(context.Background(),
+		err := ss.DeleteDataSource(context.Background(),
 			&datasources.DeleteDataSourceCommand{ID: ds.Id, UID: ds.Uid, Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
@@ -265,15 +276,16 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
+		db := sqlstore.InitTestDB(t)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 		var called bool
-		sqlStore.bus.AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
+		db.Bus().AddEventListener(func(ctx context.Context, e *events.DataSourceDeleted) error {
 			called = true
 			return nil
 		})
 
-		err := sqlStore.DeleteDataSource(context.Background(),
+		err := ss.DeleteDataSource(context.Background(),
 			&datasources.DeleteDataSourceCommand{ID: 1, UID: "non-existing", Name: "non-existing", OrgID: int64(10)})
 		require.NoError(t, err)
 
@@ -283,25 +295,27 @@ func TestIntegrationDataAccess(t *testing.T) {
 	})
 
 	t.Run("DeleteDataSourceByName", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
-		ds := initDatasource(sqlStore)
+		db := sqlstore.InitTestDB(t)
+		ds := initDatasource(db)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
 		query := datasources.GetDataSourcesQuery{OrgId: 10}
 
-		err := sqlStore.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId})
+		err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId})
 		require.NoError(t, err)
 
-		err = sqlStore.GetDataSources(context.Background(), &query)
+		err = ss.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 
 		require.Equal(t, 0, len(query.Result))
 	})
 
 	t.Run("DeleteDataSourceAccessControlPermissions", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
-		ds := initDatasource(sqlStore)
+		db := sqlstore.InitTestDB(t)
+		ds := initDatasource(db)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 		// Init associated permission
-		errAddPermissions := sqlStore.WithTransactionalDbSession(context.TODO(), func(sess *DBSession) error {
+		errAddPermissions := db.WithTransactionalDbSession(context.TODO(), func(sess *sqlstore.DBSession) error {
 			_, err := sess.Table("permission").Insert(ac.Permission{
 				RoleID:  1,
 				Action:  "datasources:read",
@@ -314,14 +328,14 @@ func TestIntegrationDataAccess(t *testing.T) {
 		require.NoError(t, errAddPermissions)
 		query := datasources.GetDataSourcesQuery{OrgId: 10}
 
-		errDeletingDS := sqlStore.DeleteDataSource(context.Background(),
+		errDeletingDS := ss.DeleteDataSource(context.Background(),
 			&datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId},
 		)
 		require.NoError(t, errDeletingDS)
 
 		// Check associated permission
 		permCount := int64(0)
-		errGetPermissions := sqlStore.WithTransactionalDbSession(context.TODO(), func(sess *DBSession) error {
+		errGetPermissions := db.WithTransactionalDbSession(context.TODO(), func(sess *sqlstore.DBSession) error {
 			var err error
 			permCount, err = sess.Table("permission").Count()
 			return err
@@ -334,10 +348,11 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("GetDataSources", func(t *testing.T) {
 		t.Run("Number of data sources returned limited to 6 per organization", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
+			db := sqlstore.InitTestDB(t)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 			datasourceLimit := 6
 			for i := 0; i < datasourceLimit+1; i++ {
-				err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgId:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -350,17 +365,18 @@ func TestIntegrationDataAccess(t *testing.T) {
 			}
 			query := datasources.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: datasourceLimit}
 
-			err := sqlStore.GetDataSources(context.Background(), &query)
+			err := ss.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, datasourceLimit, len(query.Result))
 		})
 
 		t.Run("No limit should be applied on the returned data sources if the limit is not set", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
+			db := sqlstore.InitTestDB(t)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
-				err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgId:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -373,17 +389,18 @@ func TestIntegrationDataAccess(t *testing.T) {
 			}
 			query := datasources.GetDataSourcesQuery{OrgId: 10}
 
-			err := sqlStore.GetDataSources(context.Background(), &query)
+			err := ss.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
 		})
 
 		t.Run("No limit should be applied on the returned data sources if the limit is negative", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
+			db := sqlstore.InitTestDB(t)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
-				err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgId:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -396,7 +413,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			}
 			query := datasources.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: -1}
 
-			err := sqlStore.GetDataSources(context.Background(), &query)
+			err := ss.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
@@ -405,9 +422,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 	t.Run("GetDataSourcesByType", func(t *testing.T) {
 		t.Run("Only returns datasources of specified type", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
+			db := sqlstore.InitTestDB(t)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 
-			err := sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgId:    10,
 				Name:     "Elasticsearch",
 				Type:     datasources.DS_ES,
@@ -418,7 +436,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			err = sqlStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			err = ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgId:    10,
 				Name:     "Graphite",
 				Type:     datasources.DS_GRAPHITE,
@@ -431,18 +449,19 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			query := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
 
-			err = sqlStore.GetDataSourcesByType(context.Background(), &query)
+			err = ss.GetDataSourcesByType(context.Background(), &query)
 
 			require.NoError(t, err)
 			require.Equal(t, 1, len(query.Result))
 		})
 
 		t.Run("Returns an error if no type specified", func(t *testing.T) {
-			sqlStore := InitTestDB(t)
+			db := sqlstore.InitTestDB(t)
+			ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 			query := datasources.GetDataSourcesByTypeQuery{}
 
-			err := sqlStore.GetDataSourcesByType(context.Background(), &query)
+			err := ss.GetDataSourcesByType(context.Background(), &query)
 
 			require.Error(t, err)
 		})
@@ -453,10 +472,10 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	InitTestDB(t)
 
 	t.Run("should return error if there is no default datasource", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
+		db := sqlstore.InitTestDB(t)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 		cmd := datasources.AddDataSourceCommand{
 			OrgId:  10,
@@ -466,17 +485,18 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 			Url:    "http://test",
 		}
 
-		err := sqlStore.AddDataSource(context.Background(), &cmd)
+		err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		query := datasources.GetDefaultDataSourceQuery{OrgId: 10}
-		err = sqlStore.GetDefaultDataSource(context.Background(), &query)
+		err = ss.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))
 	})
 
 	t.Run("should return default datasource if exists", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
+		db := sqlstore.InitTestDB(t)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
 
 		cmd := datasources.AddDataSourceCommand{
 			OrgId:     10,
@@ -487,19 +507,20 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 			IsDefault: true,
 		}
 
-		err := sqlStore.AddDataSource(context.Background(), &cmd)
+		err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		query := datasources.GetDefaultDataSourceQuery{OrgId: 10}
-		err = sqlStore.GetDefaultDataSource(context.Background(), &query)
+		err = ss.GetDefaultDataSource(context.Background(), &query)
 		require.NoError(t, err)
 		assert.Equal(t, "default datasource", query.Result.Name)
 	})
 
 	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
-		sqlStore := InitTestDB(t)
+		db := sqlstore.InitTestDB(t)
+		ss := sqlStore{db: db, dialect: db.GetDialect()}
 		query := datasources.GetDefaultDataSourceQuery{OrgId: 1}
-		err := sqlStore.GetDefaultDataSource(context.Background(), &query)
+		err := ss.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))
 	})

@@ -24,7 +24,10 @@ func (s simpleSecret) rollback(
 		Secret []byte
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	session := sqlStore.NewSession(ctx)
+	defer session.Close()
+
+	if err := session.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -82,7 +85,10 @@ func (s b64Secret) rollback(
 		Secret string
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	session := sqlStore.NewSession(ctx)
+	defer session.Close()
+
+	if err := session.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -154,7 +160,10 @@ func (s jsonSecret) rollback(
 		SecureJsonData map[string][]byte
 	}
 
-	if err := sqlStore.NewSession(ctx).Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
+	session := sqlStore.NewSession(ctx)
+	defer session.Close()
+
+	if err := session.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to roll back", "table", s.tableName)
 		return true
 	}
@@ -217,7 +226,10 @@ func (s alertingSecret) rollback(
 	}
 
 	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
-	if err := sqlStore.NewSession(ctx).SQL(selectSQL).Find(&results); err != nil {
+	session := sqlStore.NewSession(ctx)
+	defer session.Close()
+
+	if err := session.SQL(selectSQL).Find(&results); err != nil {
 		logger.Warn("Could not find any alert_configuration secret to roll back")
 		return true
 	}

@@ -103,8 +103,10 @@ func (m *SecretsMigrator) RollBackSecrets(ctx context.Context) (bool, error) {
 		logger.Warn("Some errors happened, not cleaning up data keys table...")
 		return false, nil
 	}
+	session := m.sqlStore.NewSession(ctx)
+	defer session.Close()
 
-	_, sqlErr := m.sqlStore.NewSession(ctx).Exec("DELETE FROM data_keys")
+	_, sqlErr := session.Exec("DELETE FROM data_keys")
 	if sqlErr != nil {
 		logger.Warn("Error while cleaning up data keys table...", "error", sqlErr)
 		return false, nil
