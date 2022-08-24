@@ -32,6 +32,19 @@ var (
 	ErrNoPanel = errors.New("no panel")
 )
 
+// DeleteExpiredService is a service to delete expired images.
+type DeleteExpiredService struct {
+	store store.ImageAdminStore
+}
+
+func (s *DeleteExpiredService) DeleteExpired(ctx context.Context) (int64, error) {
+	return s.store.DeleteExpiredImages(ctx)
+}
+
+func ProvideDeleteExpiredService(store *store.DBstore) *DeleteExpiredService {
+	return &DeleteExpiredService{store: store}
+}
+
 //go:generate mockgen -destination=mock.go -package=image github.com/grafana/grafana/pkg/services/ngalert/image ImageService
 type ImageService interface {
 	// NewImage returns a new image for the alert instance.
@@ -127,14 +140,16 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 	return &v, nil
 }
 
+// NotAvailableImageService is a service that returns ErrScreenshotsUnavailable.
 type NotAvailableImageService struct{}
 
-func (s *NotAvailableImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*ngmodels.Image, error) {
+func (s *NotAvailableImageService) NewImage(_ context.Context, _ *ngmodels.AlertRule) (*ngmodels.Image, error) {
 	return nil, screenshot.ErrScreenshotsUnavailable
 }
 
+// NoopImageService is a no-op image service.
 type NoopImageService struct{}
 
-func (s *NoopImageService) NewImage(ctx context.Context, r *ngmodels.AlertRule) (*ngmodels.Image, error) {
+func (s *NoopImageService) NewImage(_ context.Context, _ *ngmodels.AlertRule) (*ngmodels.Image, error) {
 	return &ngmodels.Image{}, nil
 }

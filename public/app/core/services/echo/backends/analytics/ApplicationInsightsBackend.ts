@@ -23,13 +23,13 @@ export class ApplicationInsightsBackend implements EchoBackend<PageviewEchoEvent
       dataType: 'script',
       cache: true,
     }).done(function () {
-      var applicationInsightsOpts = {
+      const applicationInsightsOpts = {
         config: {
           connectionString: options.connectionString,
           endpointUrl: options.endpointUrl,
         },
       };
-      var init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
+      const init = new (window as any).Microsoft.ApplicationInsights.ApplicationInsights(applicationInsightsOpts);
       (window as any).applicationInsights = init.loadAppInsights();
     });
   }

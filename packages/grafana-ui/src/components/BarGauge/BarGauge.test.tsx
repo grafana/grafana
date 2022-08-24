@@ -159,6 +159,10 @@ describe('BarGauge', () => {
     it('-30 to 30 and value 30', () => {
       expect(getValuePercent(30, -30, 30)).toEqual(1);
     });
+
+    it('returns 0 if the min, max and value are all the same value', () => {
+      expect(getValuePercent(25, 25, 25)).toEqual(0);
+    });
   });
 
   describe('Vertical bar', () => {

@@ -1,20 +1,17 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 interface InputGroupProps {}
 
 export const InputGroup: React.FC<InputGroupProps> = ({ children }) => {
-  const theme = useTheme2();
-  const styles = useStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return <div className={styles.root}>{children}</div>;
 };
 
-const useStyles = stylesFactory((theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   root: css({
     display: 'flex',
 
@@ -51,4 +48,4 @@ const useStyles = stylesFactory((theme: GrafanaTheme2) => ({
       },
     },
   }),
-}));
+});

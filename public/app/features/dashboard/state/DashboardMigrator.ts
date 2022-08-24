@@ -23,6 +23,8 @@ import {
   ValueMap,
   ValueMapping,
 } from '@grafana/data';
+import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
+import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
@@ -44,8 +46,6 @@ import { CloudWatchMetricsQuery, LegacyAnnotationQuery } from 'app/plugins/datas
 import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
 import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
 
-import { labelsToFieldsTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/labelsToFields';
-import { mergeTransformer } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
 import {
   migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,

@@ -29,6 +29,7 @@ export interface GrafanaTheme2 {
   shadows: ThemeShadows;
   visualization: ThemeVisualizationColors;
   transitions: ThemeTransitions;
+  /** @deprecated Will be removed in a future version */
   v1: GrafanaTheme;
   /** feature flags that might impact component looks */
   flags: { topnav?: boolean };

@@ -106,8 +106,8 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 
 	var url string
 	cmd.ExternalUrl = ""
-	cmd.OrgId = c.OrgId
-	cmd.UserId = c.UserId
+	cmd.OrgId = c.OrgID
+	cmd.UserId = c.UserID
 
 	if cmd.External {
 		if !setting.ExternalEnabled {
@@ -175,19 +175,20 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 //
 // Responses:
 // 200: getDashboardSnapshotResponse
+// 400: badRequestError
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Response {
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
-		return response.Error(404, "Snapshot not found", nil)
+		return response.Error(http.StatusBadRequest, "Empty snapshot key", nil)
 	}
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
 
 	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		return response.Err(err)
 	}
 
 	snapshot := query.Result
@@ -265,7 +266,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{DeleteKey: key}
 	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		return response.Err(err)
 	}
 
 	if query.Result.External {
@@ -306,7 +307,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 
 	err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard snapshot", err)
+		return response.Err(err)
 	}
 	if query.Result == nil {
 		return response.Error(404, "Failed to get dashboard snapshot", nil)
@@ -324,14 +325,14 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 		// all permissions must be explicit, so the lack of a rule for dashboard 0 means the guardian will reject.
 		dashboardID := query.Result.Dashboard.Get("id").MustInt64()
 
-		guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
+		guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 		canEdit, err := guardian.CanEdit()
 		// check for permissions only if the dahboard is found
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return response.Error(500, "Error while checking permissions for snapshot", err)
 		}
 
-		if !canEdit && query.Result.UserId != c.SignedInUser.UserId && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+		if !canEdit && query.Result.UserId != c.SignedInUser.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return response.Error(403, "Access denied to this snapshot", nil)
 		}
 	}
@@ -366,7 +367,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Re
 	searchQuery := dashboardsnapshots.GetDashboardSnapshotsQuery{
 		Name:         query,
 		Limit:        limit,
-		OrgId:        c.OrgId,
+		OrgId:        c.OrgID,
 		SignedInUser: c.SignedInUser,
 	}
 

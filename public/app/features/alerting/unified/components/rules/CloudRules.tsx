@@ -11,6 +11,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
+import { isAsyncRequestStatePending } from '../../utils/redux';
 
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
@@ -29,9 +30,16 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
   const groupsWithNamespaces = useCombinedGroupNamespace(namespaces);
 
   const dataSourcesLoading = useMemo(
-    () => rulesDataSources.filter((ds) => rules[ds.name]?.loading || dsConfigs[ds.name]?.loading),
+    () =>
+      rulesDataSources.filter(
+        (ds) => isAsyncRequestStatePending(rules[ds.name]) || isAsyncRequestStatePending(dsConfigs[ds.name])
+      ),
     [rules, dsConfigs, rulesDataSources]
   );
+
+  const hasDataSourcesConfigured = rulesDataSources.length > 0;
+  const hasDataSourcesLoading = dataSourcesLoading.length > 0;
+  const hasNamespaces = namespaces.length > 0;
 
   const { numberOfPages, onPageChange, page, pageItems } = usePagination(
     groupsWithNamespaces,
@@ -60,11 +68,14 @@ export const CloudRules: FC<Props> = ({ namespaces, expandAll }) => {
             key={`${getRulesSourceUid(namespace.rulesSource)}-${namespace.name}-${group.name}`}
             namespace={namespace}
             expandAll={expandAll}
+            viewMode={'grouped'}
           />
         );
       })}
-      {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
-      {!rulesDataSources.length && <p>There are no Prometheus or Loki data sources configured.</p>}
+
+      {!hasDataSourcesConfigured && <p>There are no Prometheus or Loki data sources configured.</p>}
+      {hasDataSourcesConfigured && !hasDataSourcesLoading && !hasNamespaces && <p>No rules found.</p>}
+
       <Pagination
         className={styles.pagination}
         currentPage={page}

@@ -80,10 +80,11 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
 }
 
 function getDecimalsForValue(value: number): number {
-  const log10 = Math.floor(Math.log(Math.abs(value)) / Math.LN10);
+  const absValue = Math.abs(value);
+  const log10 = Math.floor(Math.log(absValue) / Math.LN10);
   let dec = -log10 + 1;
   const magn = Math.pow(10, -dec);
-  const norm = value / magn; // norm is between 1.0 and 10.0
+  const norm = absValue / magn; // norm is between 1.0 and 10.0
 
   // special case for 2.5, requires an extra decimal
   if (norm > 2.25) {

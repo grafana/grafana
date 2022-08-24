@@ -516,14 +516,13 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 	}
 
 	schedCfg := SchedulerCfg{
-		Cfg:           cfg,
-		C:             mockedClock,
-		Evaluator:     evaluator,
-		RuleStore:     rs,
-		InstanceStore: is,
-		Logger:        logger,
-		Metrics:       m.GetSchedulerMetrics(),
-		AlertSender:   senderMock,
+		Cfg:         cfg,
+		C:           mockedClock,
+		Evaluator:   evaluator,
+		RuleStore:   rs,
+		Logger:      logger,
+		Metrics:     m.GetSchedulerMetrics(),
+		AlertSender: senderMock,
 	}
 	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock)
 	return NewScheduler(schedCfg, appUrl, st)

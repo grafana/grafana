@@ -7,15 +7,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 type FakeEvalHandler struct {
@@ -46,15 +48,11 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 // A mock implementation of the AlertStore interface, allowing to override certain methods individually
 type AlertStoreMock struct {
 	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
-	getDataSource                      func(context.Context, *datasources.GetDataSourceQuery) error
 	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
 	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
 }
 
-func (a *AlertStoreMock) GetDataSource(c context.Context, cmd *datasources.GetDataSourceQuery) error {
-	if a.getDataSource != nil {
-		return a.getDataSource(c, cmd)
-	}
+func (a *AlertStoreMock) GetAlertById(c context.Context, cmd *models.GetAlertByIdQuery) error {
 	return nil
 }
 
@@ -99,12 +97,38 @@ func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStat
 	return nil
 }
 
+func (a *AlertStoreMock) GetAlertStatesForDashboard(_ context.Context, _ *models.GetAlertStatesForDashboardQuery) error {
+	return nil
+}
+
+func (a *AlertStoreMock) HandleAlertsQuery(context.Context, *models.GetAlertsQuery) error {
+	return nil
+}
+
+func (a *AlertStoreMock) PauseAlert(context.Context, *models.PauseAlertCommand) error {
+	return nil
+}
+
+func (a *AlertStoreMock) PauseAllAlerts(context.Context, *models.PauseAllAlertCommand) error {
+	return nil
+}
+
 func TestEngineProcessJob(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
+
+	encProvider := encryptionprovider.ProvideEncryptionProvider()
+	cfg := setting.NewCfg()
+	settings := &setting.OSSImpl{Cfg: cfg}
+
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, settings)
+	require.NoError(t, err)
 	tracer := tracing.InitializeTracerForTest()
 
 	store := &AlertStoreMock{}
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, ossencryption.ProvideService(), nil, tracer, store, setting.NewCfg(), nil, nil)
+	dsMock := &fd.FakeDataSourceService{
+		DataSources: []*datasources.DataSource{{Id: 1, Type: datasources.DS_PROMETHEUS}},
+	}
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, store, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock)
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
@@ -118,11 +142,6 @@ func TestEngineProcessJob(t *testing.T) {
 				return err
 			}
 			q.Result = []*models.Alert{{Settings: settings}}
-			return nil
-		}
-
-		store.getDataSource = func(ctx context.Context, q *datasources.GetDataSourceQuery) error {
-			q.Result = &datasources.DataSource{Id: 1, Type: datasources.DS_PROMETHEUS}
 			return nil
 		}
 
