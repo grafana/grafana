@@ -3898,33 +3898,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:^5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/betterer@npm:5.3.7"
-  dependencies:
-    "@betterer/constraints": ^5.3.0
-    "@betterer/errors": ^5.3.0
-    "@betterer/logger": ^5.3.4
-    "@betterer/reporter": ^5.3.7
-    "@phenomnomnominal/debug": ^0.2.5
-    "@phenomnomnominal/worker-require": ^0.0.34
-    chokidar: ^3.3.1
-    djb2a: ^1.2.0
-    fast-memoize: ^2.5.2
-    lines-and-columns: ^2.0.3
-    minimatch: ^5.0.1
-    prettier: ^2.3.2
-    simple-git: ^3.6.0
-    ts-node: ^10.2.1
-    tslib: ^2.3.1
-    typescript: ">=2.7"
-  dependenciesMeta:
-    typescript:
-      optional: true
-  checksum: e2aca3b22c1c69fc1378cb280f2080bae2223de48eba4b9d80a65e8dc5c7f5825bef0f10877137d66c0b31af73d64001ffd69036c3e6772a7a4f99b56b72db2d
-  languageName: node
-  linkType: hard
-
 "@betterer/cli@npm:5.4.0":
   version: 5.4.0
   resolution: "@betterer/cli@npm:5.4.0"
@@ -3964,16 +3937,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/eslint@npm:5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/eslint@npm:5.3.7"
+"@betterer/eslint@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@betterer/eslint@npm:5.4.0"
   dependencies:
-    "@betterer/betterer": ^5.3.7
+    "@betterer/betterer": ^5.4.0
     "@betterer/errors": ^5.3.0
     tslib: ^2.3.1
   peerDependencies:
     eslint: ">=7.0.0"
-  checksum: 0faebc4fa7c29d6265c42521a2270a76149bc9c83c7a05df7fe0374a98d12217fafb1bac5a9776b1a3a25e858a9f9b052d13ff26b70a18d647971769ae87d3eb
+  checksum: 98677a9f2071d7ae2e209a5d075b795764d7685eaa48673101416fa28e40b5ad0becfb15e06d29e295f08ccb2b6d8c206d64fecc8cd7ee84cedb9b64189959dc
   languageName: node
   linkType: hard
 
@@ -3989,14 +3962,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/regexp@npm:5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/regexp@npm:5.3.7"
+"@betterer/regexp@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@betterer/regexp@npm:5.4.0"
   dependencies:
-    "@betterer/betterer": ^5.3.7
+    "@betterer/betterer": ^5.4.0
     "@betterer/errors": ^5.3.0
     tslib: ^2.3.1
-  checksum: 76dd9104fa5249aff90e75b76d8e12612e66afa02387e16b7c02bc20fcb391a331e1a5b1fa06c641524c12fb29bd09ba93dad40c3e1c999cd1e577e17f72ad7e
+  checksum: eaa16b3ec83f587ea12f67ac76e92e40ebdc839a264baa600ea82282fff45f27351a863289e4425b753066242bd6ef017cdbef8e06d9229cf40ccbaeb8ad6b71
   languageName: node
   linkType: hard
 
@@ -4004,20 +3977,6 @@ __metadata:
   version: 5.3.4
   resolution: "@betterer/render@npm:5.3.4"
   checksum: cd39bb092f100eb90189de39a703fabec85ce78793da30d10891026b399c617651d6eee8b1bbf8a8b46b8dc7037d1240865fbd0f742b86f283b33236aeab2a7d
-  languageName: node
-  linkType: hard
-
-"@betterer/reporter@npm:^5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/reporter@npm:5.3.7"
-  dependencies:
-    "@betterer/betterer": ^5.3.7
-    "@betterer/errors": ^5.3.0
-    "@betterer/logger": ^5.3.4
-    "@betterer/render": ^5.3.4
-    "@betterer/tasks": ^5.3.6
-    tslib: ^2.3.1
-  checksum: 5ee6fe9bf564b4243a93c3f4a0ccaa35b01a03b2abec0ae7db68b13e31c6203dffedbae0d81948c470d548bee67dda02410f4ff487c0bcaabc58dc0c18cb1029
   languageName: node
   linkType: hard
 
@@ -5239,7 +5198,7 @@ __metadata:
     "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
-    "@monaco-editor/react": 4.3.1
+    "@monaco-editor/react": 4.4.5
     "@popperjs/core": 2.11.5
     "@react-aria/button": 3.5.1
     "@react-aria/dialog": 3.2.1
@@ -5324,7 +5283,7 @@ __metadata:
     memoize-one: 6.0.0
     mock-raf: 1.0.1
     moment: 2.29.4
-    monaco-editor: ^0.31.1
+    monaco-editor: 0.34.0
     ol: 6.15.1
     postcss: 8.4.14
     postcss-loader: 7.0.1
@@ -7342,28 +7301,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/loader@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@monaco-editor/loader@npm:1.2.0"
+"@monaco-editor/loader@npm:^1.3.2":
+  version: 1.3.2
+  resolution: "@monaco-editor/loader@npm:1.3.2"
   dependencies:
     state-local: ^1.0.6
   peerDependencies:
     monaco-editor: ">= 0.21.0 < 1"
-  checksum: b483d8d74830f8bcfe18111b0dfe526e038b704e9a461ce2ecb25d66db2abb19fbb704569ba84b06e4b5ead4e483ae7335e3d5e2201613d4f0c077401d540bd3
+  checksum: 7a1b65052bbaf4ef826392687bd7cfaf839509611034d2d616783b5d3fee91ed304d9086517c3b5f9099707828c57c855ff43407b3c2f5ae480faebb104d4343
   languageName: node
   linkType: hard
 
-"@monaco-editor/react@npm:4.3.1":
-  version: 4.3.1
-  resolution: "@monaco-editor/react@npm:4.3.1"
+"@monaco-editor/react@npm:4.4.5":
+  version: 4.4.5
+  resolution: "@monaco-editor/react@npm:4.4.5"
   dependencies:
-    "@monaco-editor/loader": ^1.2.0
+    "@monaco-editor/loader": ^1.3.2
     prop-types: ^15.7.2
   peerDependencies:
     monaco-editor: ">= 0.25.0 < 1"
-    react: ^16.8.0 || ^17.0.0
-    react-dom: ^16.8.0 || ^17.0.0
-  checksum: 477349e64078ab3fc30e75577fbe51519c5af621cd1e3fa557e21f2a5e7291c4eabe34caa3013d578be0379c5bc43b199ee1c74853d571b05598ce866ad5a3a1
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 7a9568e3c6c27ecb7b4e07803a85554a6decbf0ad789b98fe5cb3d65b3a3682356e7553475b3eaeed5376a963bdc60d94ceb79ed6c3dd212d72a5122164590f2
   languageName: node
   linkType: hard
 
@@ -21703,8 +21662,8 @@ __metadata:
     "@babel/runtime": 7.18.9
     "@betterer/betterer": 5.4.0
     "@betterer/cli": 5.4.0
-    "@betterer/eslint": 5.3.7
-    "@betterer/regexp": 5.3.7
+    "@betterer/eslint": 5.4.0
+    "@betterer/regexp": 5.4.0
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.3
@@ -21889,7 +21848,6 @@ __metadata:
     html-webpack-plugin: 5.5.0
     http-server: 14.1.1
     husky: 8.0.1
-    iconscout-unicons-tarball: "https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28"
     immer: 9.0.15
     immutable: 4.1.0
     jest: 28.1.3
@@ -21913,7 +21871,7 @@ __metadata:
     mini-css-extract-plugin: 2.6.1
     moment: 2.29.4
     moment-timezone: 0.5.34
-    monaco-editor: ^0.31.1
+    monaco-editor: 0.34.0
     monaco-promql: 1.7.4
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
@@ -22857,13 +22815,6 @@ __metadata:
   version: 1.0.4
   resolution: "hyphenate-style-name@npm:1.0.4"
   checksum: 4f5bf4b055089754924babebaa23c17845937bcca6aee95d5d015f8fa1e6814279002bd6a9e541e3fac2cd02519fc76305396727066c57c8e21a7e73e7a12137
-  languageName: node
-  linkType: hard
-
-"iconscout-unicons-tarball@https://github.com/grafana/icons/tarball/63056cd833ba7ee4e94904492b3a8c0cabc38d28":
-  version: 1.0.0
-  resolution: "iconscout-unicons-tarball@https://github.com/grafana/icons.git#commit=63056cd833ba7ee4e94904492b3a8c0cabc38d28"
-  checksum: 9e2ffe79d686e5c811e594a1c813e0e9b6a42c12850d93fb353e81d1445ce7a71480083e7d4c66399705103ad6ec5736d0352439d4f9d282505991c2f39e599f
   languageName: node
   linkType: hard
 
@@ -27449,10 +27400,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"monaco-editor@npm:^0.31.1":
-  version: 0.31.1
-  resolution: "monaco-editor@npm:0.31.1"
-  checksum: 65be40c5570e1186938490e47ac3a23ecd8faf1bda631091a6da1de8275f049efb8d9514fcb780ca40053adf8fe9229413b4c801d86ebbade078371acbb9df3b
+"monaco-editor@npm:0.34.0":
+  version: 0.34.0
+  resolution: "monaco-editor@npm:0.34.0"
+  checksum: 10a28c1fe07268a23106ec9b743339af603e00c3ce646de72bf74f77e3d44065536f1a11f1a86ed459dfd9cb891261e6c7974377fc511eb65f354d6ddc89275b
   languageName: node
   linkType: hard
 

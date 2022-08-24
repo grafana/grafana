@@ -222,9 +222,10 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	cfg := setting.NewCfg()
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	mock := accesscontrolmock.New().WithPermissions(permissions)
 	service, err := New(
 		ops, cfg, routing.NewRouteRegister(), license,
-		accesscontrolmock.New().WithPermissions(permissions), sql,
+		accesscontrolmock.New().WithPermissions(permissions), mock, sql,
 	)
 	require.NoError(t, err)
 
