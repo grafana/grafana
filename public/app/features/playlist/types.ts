@@ -24,7 +24,7 @@ export interface Playlist {
 export interface PlaylistItem {
   id?: number;
   value: string; //tag or id.toString()
-  type: 'dashboard_by_id' | 'dashboard_by_tag';
+  type: 'dashboard_by_id' | 'dashboard_by_tag' | 'dashboard_by_uid';
   order: number;
   title: string;
   playlistId?: number;

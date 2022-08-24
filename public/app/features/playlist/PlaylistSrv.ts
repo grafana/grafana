@@ -94,16 +94,22 @@ export class PlaylistSrv {
       if (!item.value) {
         continue; // invalid item
       }
-      const query: SearchQuery = {
-        kind: ['dashboard'],
-      };
-      if (item.type === 'dashboard_by_tag') {
-        query.tags = item.value.split(' ');
-      } else {
-        query.uid = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${item.value}`);
-        if (!query.uid?.length) {
-          continue; // internal ID not found
-        }
+      const query: SearchQuery = { kind: ['dashboard'] };
+      switch (item.type) {
+        case 'dashboard_by_uid':
+          query.uid = [item.value];
+          break;
+
+        case 'dashboard_by_id':
+          query.uid = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${item.value}`);
+          if (!query.uid.length) {
+            continue;
+          }
+          break;
+
+        case 'dashboard_by_tag':
+          query.tags = [item.value];
+          break;
       }
 
       const rsp = await searcher.search(query);
