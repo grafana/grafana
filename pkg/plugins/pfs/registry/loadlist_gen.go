@@ -19,94 +19,68 @@
 package registry
 
 import (
+	"fmt"
+	"io/fs"
+
+	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/thema"
-
-	"github.com/grafana/grafana/public/app/plugins/datasource/alertmanager"
-	stackdriver "github.com/grafana/grafana/public/app/plugins/datasource/cloud-monitoring"
-	"github.com/grafana/grafana/public/app/plugins/datasource/cloudwatch"
-	"github.com/grafana/grafana/public/app/plugins/datasource/dashboard"
-	"github.com/grafana/grafana/public/app/plugins/datasource/elasticsearch"
-	"github.com/grafana/grafana/public/app/plugins/datasource/grafana"
-	grafana_azure_monitor_datasource "github.com/grafana/grafana/public/app/plugins/datasource/grafana-azure-monitor-datasource"
-	"github.com/grafana/grafana/public/app/plugins/datasource/graphite"
-	"github.com/grafana/grafana/public/app/plugins/datasource/jaeger"
-	"github.com/grafana/grafana/public/app/plugins/datasource/loki"
-	"github.com/grafana/grafana/public/app/plugins/datasource/mssql"
-	"github.com/grafana/grafana/public/app/plugins/datasource/mysql"
-	"github.com/grafana/grafana/public/app/plugins/datasource/postgres"
-	"github.com/grafana/grafana/public/app/plugins/datasource/prometheus"
-	"github.com/grafana/grafana/public/app/plugins/datasource/tempo"
-	"github.com/grafana/grafana/public/app/plugins/datasource/testdata"
-	"github.com/grafana/grafana/public/app/plugins/datasource/zipkin"
-	"github.com/grafana/grafana/public/app/plugins/panel/alertGroups"
-	"github.com/grafana/grafana/public/app/plugins/panel/alertlist"
-	"github.com/grafana/grafana/public/app/plugins/panel/annolist"
-	"github.com/grafana/grafana/public/app/plugins/panel/barchart"
-	"github.com/grafana/grafana/public/app/plugins/panel/bargauge"
-	"github.com/grafana/grafana/public/app/plugins/panel/dashlist"
-	"github.com/grafana/grafana/public/app/plugins/panel/debug"
-	"github.com/grafana/grafana/public/app/plugins/panel/gauge"
-	"github.com/grafana/grafana/public/app/plugins/panel/geomap"
-	"github.com/grafana/grafana/public/app/plugins/panel/gettingstarted"
-	"github.com/grafana/grafana/public/app/plugins/panel/graph"
-	"github.com/grafana/grafana/public/app/plugins/panel/histogram"
-	"github.com/grafana/grafana/public/app/plugins/panel/icon"
-	"github.com/grafana/grafana/public/app/plugins/panel/live"
-	"github.com/grafana/grafana/public/app/plugins/panel/logs"
-	"github.com/grafana/grafana/public/app/plugins/panel/news"
-	"github.com/grafana/grafana/public/app/plugins/panel/nodeGraph"
-	"github.com/grafana/grafana/public/app/plugins/panel/piechart"
-	"github.com/grafana/grafana/public/app/plugins/panel/stat"
-	table_old "github.com/grafana/grafana/public/app/plugins/panel/table-old"
-	"github.com/grafana/grafana/public/app/plugins/panel/text"
-	"github.com/grafana/grafana/public/app/plugins/panel/traces"
-	"github.com/grafana/grafana/public/app/plugins/panel/welcome"
-	"github.com/grafana/grafana/public/app/plugins/panel/xychart"
 )
 
-func coreTreeLoaders() []func(*thema.Library) *pfs.Tree {
-	return []func(*thema.Library) *pfs.Tree{
-		alertmanager.PluginTree,
-		stackdriver.PluginTree,
-		cloudwatch.PluginTree,
-		dashboard.PluginTree,
-		elasticsearch.PluginTree,
-		grafana.PluginTree,
-		grafana_azure_monitor_datasource.PluginTree,
-		graphite.PluginTree,
-		jaeger.PluginTree,
-		loki.PluginTree,
-		mssql.PluginTree,
-		mysql.PluginTree,
-		postgres.PluginTree,
-		prometheus.PluginTree,
-		tempo.PluginTree,
-		testdata.PluginTree,
-		zipkin.PluginTree,
-		alertGroups.PluginTree,
-		alertlist.PluginTree,
-		annolist.PluginTree,
-		barchart.PluginTree,
-		bargauge.PluginTree,
-		dashlist.PluginTree,
-		debug.PluginTree,
-		gauge.PluginTree,
-		geomap.PluginTree,
-		gettingstarted.PluginTree,
-		graph.PluginTree,
-		histogram.PluginTree,
-		icon.PluginTree,
-		live.PluginTree,
-		logs.PluginTree,
-		news.PluginTree,
-		nodeGraph.PluginTree,
-		piechart.PluginTree,
-		stat.PluginTree,
-		table_old.PluginTree,
-		text.PluginTree,
-		traces.PluginTree,
-		welcome.PluginTree,
-		xychart.PluginTree,
+func makeTreeOrPanic(path string, pkgname string, lib thema.Library) *pfs.Tree {
+	sub, err := fs.Sub(grafana.CueSchemaFS, path)
+	if err != nil {
+		panic("could not create fs sub to " + path)
+	}
+	tree, err := pfs.ParsePluginFS(sub, lib)
+	if err != nil {
+		panic(fmt.Sprintf("error parsing plugin metadata for %s: %s", pkgname, err))
+	}
+	return tree
+}
+
+func coreTreeList(lib thema.Library) TreeList {
+	return TreeList{
+		makeTreeOrPanic("public/app/plugins/datasource/alertmanager", "alertmanager", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/cloud-monitoring", "stackdriver", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/cloudwatch", "cloudwatch", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/dashboard", "dashboard", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/elasticsearch", "elasticsearch", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/grafana", "grafana", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/grafana-azure-monitor-datasource", "grafana_azure_monitor_datasource", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/graphite", "graphite", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/jaeger", "jaeger", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/loki", "loki", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/mssql", "mssql", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/mysql", "mysql", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/postgres", "postgres", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/prometheus", "prometheus", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/tempo", "tempo", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/testdata", "testdata", lib),
+		makeTreeOrPanic("public/app/plugins/datasource/zipkin", "zipkin", lib),
+		makeTreeOrPanic("public/app/plugins/panel/alertGroups", "alertGroups", lib),
+		makeTreeOrPanic("public/app/plugins/panel/alertlist", "alertlist", lib),
+		makeTreeOrPanic("public/app/plugins/panel/annolist", "annolist", lib),
+		makeTreeOrPanic("public/app/plugins/panel/barchart", "barchart", lib),
+		makeTreeOrPanic("public/app/plugins/panel/bargauge", "bargauge", lib),
+		makeTreeOrPanic("public/app/plugins/panel/dashlist", "dashlist", lib),
+		makeTreeOrPanic("public/app/plugins/panel/debug", "debug", lib),
+		makeTreeOrPanic("public/app/plugins/panel/gauge", "gauge", lib),
+		makeTreeOrPanic("public/app/plugins/panel/geomap", "geomap", lib),
+		makeTreeOrPanic("public/app/plugins/panel/gettingstarted", "gettingstarted", lib),
+		makeTreeOrPanic("public/app/plugins/panel/graph", "graph", lib),
+		makeTreeOrPanic("public/app/plugins/panel/histogram", "histogram", lib),
+		makeTreeOrPanic("public/app/plugins/panel/icon", "icon", lib),
+		makeTreeOrPanic("public/app/plugins/panel/live", "live", lib),
+		makeTreeOrPanic("public/app/plugins/panel/logs", "logs", lib),
+		makeTreeOrPanic("public/app/plugins/panel/news", "news", lib),
+		makeTreeOrPanic("public/app/plugins/panel/nodeGraph", "nodeGraph", lib),
+		makeTreeOrPanic("public/app/plugins/panel/piechart", "piechart", lib),
+		makeTreeOrPanic("public/app/plugins/panel/stat", "stat", lib),
+		makeTreeOrPanic("public/app/plugins/panel/table-old", "table_old", lib),
+		makeTreeOrPanic("public/app/plugins/panel/text", "text", lib),
+		makeTreeOrPanic("public/app/plugins/panel/traces", "traces", lib),
+		makeTreeOrPanic("public/app/plugins/panel/welcome", "welcome", lib),
+		makeTreeOrPanic("public/app/plugins/panel/xychart", "xychart", lib),
 	}
 }

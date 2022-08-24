@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -354,21 +355,21 @@ func sanitizePluginId(s string) string {
 }
 
 // FIXME unexport this and refactor, this is way too one-off to be in here
-func GenPluginTreeList(trees []TreeAndPath, prefix, target string) (WriteDiffer, error) {
+func GenPluginTreeList(trees []TreeAndPath, prefix, target string, ref bool) (WriteDiffer, error) {
 	buf := new(bytes.Buffer)
 	vars := tvars_plugin_registry{
 		Header: tvars_autogen_header{
 			GenLicense: true,
 		},
 		Plugins: make([]struct {
-			PkgName, Path string
-			NoAlias       bool
+			PkgName, Path, ImportPath string
+			NoAlias                   bool
 		}, 0, len(trees)),
 	}
 
 	type tpl struct {
-		PkgName, Path string
-		NoAlias       bool
+		PkgName, Path, ImportPath string
+		NoAlias                   bool
 	}
 
 	// No sub-plugin support here. If we never allow subplugins in core, that's probably fine.
@@ -376,13 +377,19 @@ func GenPluginTreeList(trees []TreeAndPath, prefix, target string) (WriteDiffer,
 	for _, pt := range trees {
 		rp := (*pfs.Tree)(pt.Tree).RootPlugin()
 		vars.Plugins = append(vars.Plugins, tpl{
-			PkgName: sanitizePluginId(rp.Meta().Id),
-			NoAlias: sanitizePluginId(rp.Meta().Id) != filepath.Base(pt.Path),
-			Path:    filepath.ToSlash(filepath.Join(prefix, pt.Path)),
+			PkgName:    sanitizePluginId(rp.Meta().Id),
+			NoAlias:    sanitizePluginId(rp.Meta().Id) != filepath.Base(pt.Path),
+			ImportPath: filepath.ToSlash(filepath.Join(prefix, pt.Path)),
+			Path:       path.Join(append(strings.Split(prefix, "/")[3:], pt.Path)...),
 		})
 	}
 
-	if err := tmpls.Lookup("plugin_registry.tmpl").Execute(buf, vars); err != nil {
+	tmplname := "plugin_registry.tmpl"
+	if ref {
+		tmplname = "plugin_registry_ref.tmpl"
+	}
+
+	if err := tmpls.Lookup(tmplname).Execute(buf, vars); err != nil {
 		return nil, fmt.Errorf("failed executing plugin registry template: %w", err)
 	}
 

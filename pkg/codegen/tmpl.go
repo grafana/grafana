@@ -56,9 +56,10 @@ type (
 	tvars_plugin_registry struct {
 		Header  tvars_autogen_header
 		Plugins []struct {
-			PkgName string
-			Path    string
-			NoAlias bool
+			PkgName    string
+			Path       string
+			ImportPath string
+			NoAlias    bool
 		}
 	}
 )

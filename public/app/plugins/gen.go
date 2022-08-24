@@ -98,7 +98,7 @@ func main() {
 
 		relp, _ := filepath.Rel(groot, ptp.Path)
 		wdm, err = ptp.Tree.GenerateGo(ptp.Path, codegen.GoGenConfig{
-			Types:         string((*pfs.Tree)(ptp.Tree).RootPlugin().Meta().Type) == "datasource",
+			Types:         isDatasource(ptp.Tree),
 			ThemaBindings: true,
 			DocPathPrefix: relp,
 		})
@@ -109,7 +109,7 @@ func main() {
 		wd.Merge(wdm)
 	}
 
-	wdm, err = codegen.GenPluginTreeList(ptrees, "github.com/grafana/grafana/public/app/plugins", filepath.Join(groot, "pkg", "plugins", "pfs", "registry", "loadlist_gen.go"))
+	wdm, err = codegen.GenPluginTreeList(ptrees, "github.com/grafana/grafana/public/app/plugins", filepath.Join(groot, "pkg", "plugins", "pfs", "registry", "loadlist_gen.go"), false)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "generating plugin loader registry failed: %s\n", err)
 		os.Exit(1)
@@ -129,4 +129,8 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func isDatasource(pt *codegen.PluginTree) bool {
+	return string((*pfs.Tree)(pt).RootPlugin().Meta().Type) == "datasource"
 }
