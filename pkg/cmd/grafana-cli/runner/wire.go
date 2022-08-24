@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -129,6 +130,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
+	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -156,6 +158,7 @@ var wireSet = wire.NewSet(
 	hooks.ProvideService,
 	legacydataservice.ProvideService,
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
+	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	api.ProvideHTTPServer,
@@ -169,6 +172,8 @@ var wireSet = wire.NewSet(
 	uss.ProvideService,
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	repo.ProvideService,
+	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
@@ -307,7 +312,6 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.TempUserStore), new(*mockstore.SQLStoreMock)),
@@ -318,6 +322,9 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
+	opentsdb.ProvideService,
+	ossaccesscontrol.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {

@@ -52,7 +52,7 @@ class ColorGenerator {
   }
 
   hashCode(key: string) {
-    var hash = 0,
+    let hash = 0,
       i,
       chr;
     for (i = 0; i < key.length; i++) {

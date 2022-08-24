@@ -1,2 +1,2 @@
-declare var CloudWatchDatasource: any;
+declare let CloudWatchDatasource: any;
 export default CloudWatchDatasource;

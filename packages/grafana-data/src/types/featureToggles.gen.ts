@@ -27,7 +27,6 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   tempoApmTable?: boolean;
-  prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;

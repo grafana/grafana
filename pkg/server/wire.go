@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -74,8 +75,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/login_attempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -112,6 +116,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	teamguardianDatabase "github.com/grafana/grafana/pkg/services/teamguardian/database"
 	teamguardianManager "github.com/grafana/grafana/pkg/services/teamguardian/manager"
+	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -139,6 +144,7 @@ import (
 var wireBasicSet = wire.NewSet(
 	legacydataservice.ProvideService,
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
+	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	setting.NewCfgFromArgs,
@@ -161,6 +167,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	repo.ProvideService,
+	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
@@ -210,6 +218,8 @@ var wireBasicSet = wire.NewSet(
 	contexthandler.ProvideService,
 	jwt.ProvideService,
 	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
+	ngstore.ProvideDBStore,
+	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
@@ -306,17 +316,20 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
+	tempuserimpl.ProvideService,
+	loginattemptimpl.ProvideService,
 	datasourceservice.ProvideDataSourceMigrationService,
 	secretsStore.ProvidePluginSecretMigrationService,
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
+	ossaccesscontrol.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
 )
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	sqlstore.ProvideService,
-	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.TempUserStore), new(*sqlstore.SQLStore)),
@@ -333,7 +346,6 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
-	wire.Bind(new(alerting.AlertStore), new(*sqlstore.SQLStore)),
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
 
 	notifications.MockNotificationService,

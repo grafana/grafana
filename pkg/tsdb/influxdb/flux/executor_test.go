@@ -3,9 +3,9 @@ package flux
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -34,7 +34,7 @@ type MockRunner struct {
 }
 
 func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableResult, error) {
-	bytes, err := ioutil.ReadFile(filepath.Join("testdata", r.testDataPath))
+	bytes, err := os.ReadFile(filepath.Join("testdata", r.testDataPath))
 	if err != nil {
 		return nil, err
 	}

@@ -3,10 +3,10 @@ package guardian
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type Provider struct{}
@@ -26,7 +26,7 @@ func ProvideService(
 }
 
 func InitLegacyGuardian(store sqlstore.Store, dashSvc dashboards.DashboardService) {
-	New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+	New = func(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser) DashboardGuardian {
 		return newDashboardGuardian(ctx, dashId, orgId, user, store, dashSvc)
 	}
 }
@@ -35,7 +35,7 @@ func InitAccessControlGuardian(
 	store sqlstore.Store, ac accesscontrol.AccessControl, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardService dashboards.DashboardService,
 ) {
-	New = func(ctx context.Context, dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
+	New = func(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser) DashboardGuardian {
 		return NewAccessControlDashboardGuardian(ctx, dashId, user, store, ac, folderPermissionsService, dashboardPermissionsService, dashboardService)
 	}
 }

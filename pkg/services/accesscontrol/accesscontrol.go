@@ -7,34 +7,37 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type Options struct {
-	ReloadCache bool
-}
-
 type AccessControl interface {
-	registry.ProvidesUsageStats
-
 	// Evaluate evaluates access to the given resources.
-	Evaluate(ctx context.Context, user *models.SignedInUser, evaluator Evaluator) (bool, error)
-
-	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, user *models.SignedInUser, options Options) ([]Permission, error)
-
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
-
-	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
-	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-	DeclareFixedRoles(...RoleRegistration) error
-
+	Evaluate(ctx context.Context, user *user.SignedInUser, evaluator Evaluator) (bool, error)
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
-	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
+	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
+	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
+	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+	// FIXME: Remove from access control interface and inject service where this is needed
+	DeclareFixedRoles(registrations ...RoleRegistration) error
+	//IsDisabled returns if access control is enabled or not
+	IsDisabled() bool
+}
 
-	DeleteUserPermissions(ctx context.Context, userID int64) error
+type Service interface {
+	registry.ProvidesUsageStats
+	// GetUserPermissions returns user permissions with only action and scope fields set.
+	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
+	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
+	// If orgID is set to 0 remove permissions from all orgs
+	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
+	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+	DeclareFixedRoles(registrations ...RoleRegistration) error
+	//IsDisabled returns if access control is enabled or not
+	IsDisabled() bool
 }
 
 type RoleRegistry interface {
@@ -42,14 +45,18 @@ type RoleRegistry interface {
 	RegisterFixedRoles(ctx context.Context) error
 }
 
-type PermissionsStore interface {
+type Options struct {
+	ReloadCache bool
+}
+
+type Store interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
-	DeleteUserPermissions(ctx context.Context, userID int64) error
+	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
 }
 
 type TeamPermissionsService interface {
-	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 }
 
@@ -71,7 +78,7 @@ type ServiceAccountPermissionsService interface {
 
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
-	GetPermissions(ctx context.Context, user *models.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
@@ -101,7 +108,7 @@ func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(
 		}
 
 		userCopy := *c.SignedInUser
-		userCopy.OrgId = GlobalOrgID
+		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""
 		userCopy.OrgName = ""
 		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)
@@ -138,17 +145,17 @@ var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
-// ReqViewer returns true if the current user has models.ROLE_VIEWER. Note: this can be anonymous user as well
+// ReqViewer returns true if the current user has org.RoleViewer. Note: this can be anonymous user as well
 var ReqViewer = func(c *models.ReqContext) bool {
-	return c.OrgRole.Includes(models.ROLE_VIEWER)
+	return c.OrgRole.Includes(org.RoleViewer)
 }
 
 var ReqOrgAdmin = func(c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN
+	return c.OrgRole == org.RoleAdmin
 }
 
 var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR
+	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
 }
 
 func BuildPermissionsMap(permissions []Permission) map[string]bool {
@@ -268,15 +275,8 @@ func IsDisabled(cfg *setting.Cfg) bool {
 }
 
 // GetOrgRoles returns legacy org roles for a user
-func GetOrgRoles(cfg *setting.Cfg, user *models.SignedInUser) []string {
+func GetOrgRoles(user *user.SignedInUser) []string {
 	roles := []string{string(user.OrgRole)}
-
-	// With built-in role simplifying, inheritance is performed upon role registration.
-	if cfg.RBACBuiltInRoleAssignmentEnabled {
-		for _, br := range user.OrgRole.Children() {
-			roles = append(roles, string(br))
-		}
-	}
 
 	if user.IsGrafanaAdmin {
 		roles = append(roles, RoleGrafanaAdmin)

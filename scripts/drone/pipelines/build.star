@@ -29,7 +29,6 @@ load(
     'store_storybook_step',
     'release_canary_npm_packages_step',
     'upload_packages_step',
-    'store_packages_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
     'test_a11y_frontend_step',

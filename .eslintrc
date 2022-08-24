@@ -18,7 +18,11 @@
         "newlines-between": "always",
         "alphabetize": { "order": "asc" }
       }
-    ]
+    ],
+
+    // Use typescript's no-redeclare for compatibility with overrides
+    "no-redeclare": "off",
+    "@typescript-eslint/no-redeclare": ["error"]
   },
   "overrides": [
     {
@@ -34,6 +38,13 @@
         "@emotion/jsx-import": "off",
         "react/jsx-uses-react": "off",
         "react/react-in-jsx-scope": "off"
+      }
+    },
+    {
+      "files": ["public/dashboards/scripted*.js"],
+      "rules": {
+        "no-redeclare": "error",
+        "@typescript-eslint/no-redeclare": "off"
       }
     }
   ]

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -41,6 +42,7 @@ type scenarioContext struct {
 	contextHandler       *contexthandler.ContextHandler
 	loginService         *loginservice.LoginServiceMock
 	apiKeyService        *apikeytest.Service
+	userService          *usertest.FakeUserService
 
 	req *http.Request
 }
@@ -119,7 +121,6 @@ func (sc *scenarioContext) exec() {
 			Value: sc.tokenSessionCookie,
 		})
 	}
-
 	sc.m.ServeHTTP(sc.resp, sc.req)
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {

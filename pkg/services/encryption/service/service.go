@@ -108,7 +108,7 @@ func (s *Service) Decrypt(ctx context.Context, payload []byte, secret string) ([
 		algorithm string
 		toDecrypt []byte
 	)
-	algorithm, toDecrypt, err = deriveEncryptionAlgorithm(payload)
+	algorithm, toDecrypt, err = s.deriveEncryptionAlgorithm(payload)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (s *Service) Decrypt(ctx context.Context, payload []byte, secret string) ([
 	return decrypted, err
 }
 
-func deriveEncryptionAlgorithm(payload []byte) (string, []byte, error) {
+func (s *Service) deriveEncryptionAlgorithm(payload []byte) (string, []byte, error) {
 	if len(payload) == 0 {
 		return "", nil, fmt.Errorf("unable to derive encryption algorithm")
 	}
@@ -148,6 +148,19 @@ func deriveEncryptionAlgorithm(payload []byte) (string, []byte, error) {
 	_, err := base64.RawStdEncoding.Decode(algorithm, algorithmB64)
 	if err != nil {
 		return "", nil, err
+	}
+
+	// For historical reasons, I guess a bug introduced in the past,
+	// the algorithm metadata could be missing at this point.
+	//
+	// Until now, it hasn't failed because we're used to fall back
+	// to the default encryption algorithm.
+	//
+	// Therefore, we want to keep doing the same to be able to
+	// decrypt legacy secrets.
+	if string(algorithm) == "" {
+		s.log.Warn("Encryption algorithm derivation found an empty string", "error", err)
+		return encryption.AesCfb, payload, nil
 	}
 
 	return string(algorithm), payload, nil

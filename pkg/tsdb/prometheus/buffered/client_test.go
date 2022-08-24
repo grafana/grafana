@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,8 +20,25 @@ func TestCreateTransportOptions(t *testing.T) {
 				"httpHeaderValue1": "bar",
 			},
 		}
-		opts, err := CreateTransportOptions(settings, &azsettings.AzureSettings{}, featuremgmt.WithFeatures(), &logtest.Fake{})
+		opts, err := CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{"foo": "bar"}, opts.Headers)
+		require.Equal(t, 2, len(opts.Middlewares))
+	})
+
+	t.Run("add azure credentials if configured", func(t *testing.T) {
+		settings := backend.DataSourceInstanceSettings{
+			BasicAuthEnabled: false,
+			BasicAuthUser:    "",
+			JSONData: []byte(`{
+				"azureCredentials": {
+					"authType": "msi"
+				}
+			}`),
+			DecryptedSecureJSONData: map[string]string{},
+		}
+		opts, err := CreateTransportOptions(settings, &setting.Cfg{AzureAuthEnabled: true, Azure: &azsettings.AzureSettings{}}, &logtest.Fake{})
+		require.NoError(t, err)
+		require.Equal(t, 3, len(opts.Middlewares))
 	})
 }

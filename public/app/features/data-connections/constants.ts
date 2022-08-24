@@ -11,5 +11,4 @@ export enum ROUTES {
   DataSourcesDashboards = '/data-connections/datasources/edit/:uid/dashboards',
   Plugins = '/data-connections/plugins',
   CloudIntegrations = '/data-connections/cloud-integrations',
-  RecordedQueries = '/data-connections/recorded-queries',
 }

@@ -9,6 +9,7 @@ import {
   DataFrame,
   dataFrameToJSON,
   DataQueryResponse,
+  DataSourceInstanceSettings,
   dateTime,
   FieldType,
   LogRowModel,
@@ -24,7 +25,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource } from './datasource';
 import { makeMockLokiDatasource } from './mocks';
-import { LokiQuery, LokiQueryType } from './types';
+import { LokiOptions, LokiQuery, LokiQueryType } from './types';
 
 const rawRange = {
   from: toUtc('2018-04-25 10:00'),
@@ -133,19 +134,19 @@ describe('LokiDatasource', () => {
       dsMaxLines: number | undefined,
       expectedMaxLines: number
     ) => {
-      let settings: any = {
+      let settings = {
         url: 'myloggingurl',
         jsonData: {
           maxLines: dsMaxLines,
         },
-      };
+      } as DataSourceInstanceSettings<LokiOptions>;
 
       const templateSrvMock = {
         getAdhocFilters: (): any[] => [],
         replace: (a: string) => a,
       } as unknown as TemplateSrv;
 
-      const ds = new LokiDatasource(settings, templateSrvMock, timeSrvStub as any);
+      const ds = new LokiDatasource(settings, templateSrvMock, timeSrvStub);
 
       // we need to check the final query before it is sent out,
       // and applyTemplateVariables is a convenient place to do that.
@@ -181,7 +182,11 @@ describe('LokiDatasource', () => {
     const DEFAULT_EXPR = 'rate({bar="baz", job="foo"} |= "bar" [5m])';
     const query: LokiQuery = { expr: DEFAULT_EXPR, refId: 'A' };
     const originalAdhocFiltersMock = templateSrvStub.getAdhocFilters();
-    const ds = new LokiDatasource({} as any, templateSrvStub as any, timeSrvStub as any);
+    const ds = new LokiDatasource(
+      {} as DataSourceInstanceSettings,
+      templateSrvStub as unknown as TemplateSrv,
+      timeSrvStub
+    );
 
     afterAll(() => {
       templateSrvStub.getAdhocFilters.mockReturnValue(originalAdhocFiltersMock);
@@ -848,14 +853,14 @@ function createLokiDSForTests(
     replace: (a: string) => a,
   } as unknown as TemplateSrv
 ): LokiDatasource {
-  const instanceSettings: any = {
+  const instanceSettings = {
     url: 'myloggingurl',
-  };
+  } as DataSourceInstanceSettings;
 
   const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
-  const customSettings = { ...instanceSettings, jsonData: customData };
+  const customSettings: DataSourceInstanceSettings = { ...instanceSettings, jsonData: customData };
 
-  return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub as any);
+  return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub as TimeSrv);
 }
 
 function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQuery> {

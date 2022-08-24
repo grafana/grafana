@@ -109,7 +109,7 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.seriesToColumnsTransformer.operator({}))
+    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}))
     : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
 
   return transformer.pipe(

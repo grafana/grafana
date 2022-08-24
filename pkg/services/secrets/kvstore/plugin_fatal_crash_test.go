@@ -80,25 +80,23 @@ func TestFatalPluginErr_MigrationTestWithErrorDeletingUnifiedSecrets(t *testing.
 
 func setupFatalCrashTest(
 	t *testing.T,
-	shouldRemoteCheckError bool,
+	shouldFailOnStart bool,
 	isPluginErrorFatal bool,
 	isBackwardsCompatDisabled bool,
 ) (SecretsKVStore, kvstore.KVStore, *sqlstore.SQLStore, error) {
 	t.Helper()
+	fatalFlagOnce = sync.Once{}
+	startupOnce = sync.Once{}
+	cfg := setupTestConfig(t)
 	sqlStore := sqlstore.InitTestDB(t)
 	secretService := fakes.FakeSecretsService{}
-	var remoteCheck *mockRemoteSecretsPluginCheck
-	if shouldRemoteCheckError {
-		remoteCheck = provideMockRemotePluginCheckWithErr()
-	} else {
-		remoteCheck = provideMockRemotePluginCheck()
-	}
 	kvstore := kvstore.ProvideService(sqlStore)
 	if isPluginErrorFatal {
 		_ = setPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(kvstore), true)
 	}
 	features := NewFakeFeatureToggles(t, isBackwardsCompatDisabled)
-	svc, err := ProvideService(sqlStore, secretService, remoteCheck, kvstore, features)
+	manager := NewFakeSecretsPluginManager(t, shouldFailOnStart)
+	svc, err := ProvideService(sqlStore, secretService, manager, kvstore, features, cfg)
 	t.Cleanup(func() {
 		fatalFlagOnce = sync.Once{}
 	})
@@ -112,6 +110,35 @@ func setupTestMigratorServiceWithDeletionError(
 	kvstore kvstore.KVStore,
 ) *PluginSecretMigrationService {
 	t.Helper()
+	fatalFlagOnce = sync.Once{}
+	startupOnce = sync.Once{}
+	cfg := setupTestConfig(t)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	manager := NewFakeSecretsPluginManager(t, false)
+	migratorService := ProvidePluginSecretMigrationService(
+		secretskv,
+		cfg,
+		sqlStore,
+		secretsService,
+		kvstore,
+		manager,
+	)
+	fallback := NewFakeSecretsKVStore()
+	var orgId int64 = 1
+	str := "random string"
+	fallback.store[Key{
+		OrgId:     orgId,
+		Type:      str,
+		Namespace: str,
+	}] = "bogus"
+	fallback.delError = true
+	err := secretskv.SetFallback(fallback)
+	require.NoError(t, err)
+	return migratorService
+}
+
+func setupTestConfig(t *testing.T) *setting.Cfg {
+	t.Helper()
 	rawCfg := `
 		[secrets]
 		use_plugin = true
@@ -119,31 +146,5 @@ func setupTestMigratorServiceWithDeletionError(
 		`
 	raw, err := ini.Load([]byte(rawCfg))
 	require.NoError(t, err)
-	cfg := &setting.Cfg{Raw: raw}
-	remoteCheck := provideMockRemotePluginCheck()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	getAllFuncOverride := func(ctx context.Context) ([]Item, error) {
-		items := make([]Item, 0)
-		var orgId int64 = 1
-		str := "random string"
-		items = append(items, Item{
-			Id:        1,
-			OrgId:     &orgId,
-			Type:      &str,
-			Namespace: &str,
-			Value:     "bogus",
-		})
-		return items, nil
-	}
-	migratorService := ProvidePluginSecretMigrationService(
-		secretskv,
-		cfg,
-		sqlStore,
-		secretsService,
-		remoteCheck,
-		kvstore,
-	)
-	// TODO refactor Migrator to allow us to override the entire sqlstore with a mock instead
-	migratorService.overrideGetAllFunc(getAllFuncOverride)
-	return migratorService
+	return &setting.Cfg{Raw: raw}
 }

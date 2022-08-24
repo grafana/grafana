@@ -1,6 +1,6 @@
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
-import { DataSourceInstanceSettings } from '../../../../../../packages/grafana-data/src';
 import {
   locationDisplayNames,
   logsSupportedLocationsKusto,

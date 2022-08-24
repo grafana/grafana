@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
+import { DataSourcePluginMeta } from '@grafana/data';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { LokiDatasource } from '../../datasource';
@@ -24,7 +25,7 @@ jest.mock('app/core/store', () => {
       return undefined;
     },
     set() {},
-    getObject(key: string, defaultValue: any) {
+    getObject(key: string, defaultValue: unknown) {
       return defaultValue;
     },
   };
@@ -44,7 +45,7 @@ const datasource = new LokiDatasource(
     access: 'proxy',
     url: '',
     jsonData: {},
-    meta: {} as any,
+    meta: {} as DataSourcePluginMeta,
   },
   undefined,
   undefined
@@ -161,7 +162,7 @@ describe('LokiQueryEditorSelector', () => {
 });
 
 function renderWithMode(mode: QueryEditorMode) {
-  return renderWithProps({ editorMode: mode } as any);
+  return renderWithProps({ editorMode: mode });
 }
 
 function renderWithProps(overrides?: Partial<LokiQuery>) {
@@ -178,7 +179,7 @@ function expectCodeEditor() {
 }
 
 async function expectBuilder() {
-  expect(await screen.findByText('Labels')).toBeInTheDocument();
+  expect(await screen.findByText('Label filters')).toBeInTheDocument();
 }
 
 async function switchToMode(mode: QueryEditorMode) {

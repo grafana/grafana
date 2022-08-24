@@ -257,7 +257,7 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 func (s *Service) collectElasticStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	esDataSourcesQuery := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
-	if err := s.sqlstore.GetDataSourcesByType(ctx, &esDataSourcesQuery); err != nil {
+	if err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery); err != nil {
 		s.log.Error("Failed to get elasticsearch json data", "error", err)
 		return nil, err
 	}

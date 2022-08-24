@@ -62,6 +62,9 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 	var toUpdate []RuleDelta
 	loadedRulesByUID := map[string]*models.AlertRule{} // auxiliary cache to avoid unnecessary queries if there are multiple moves from the same group
 	for _, r := range submittedRules {
+		if r == nil {
+			continue
+		}
 		var existing *models.AlertRule = nil
 		if r.UID != "" {
 			if existingGroupRule, ok := existingGroupRulesUIDs[r.UID]; ok {
