@@ -149,7 +149,7 @@ export const RolePicker = ({
       data-testid="role-picker"
       style={{
         position: 'relative',
-        maxWidth: maxWidth,
+        maxWidth,
       }}
       ref={ref}
     >
