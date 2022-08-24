@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
+	datasources "github.com/grafana/grafana/pkg/services/datasources/datasourceimpl"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
