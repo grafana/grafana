@@ -77,6 +77,7 @@ export interface CloudWatchMathExpressionQuery extends DataQuery {
 
 export type LogAction =
   | 'DescribeLogGroups'
+  | 'DescribeAllLogGroups'
   | 'GetQueryResults'
   | 'GetLogGroupFields'
   | 'GetLogEvents'

@@ -3,6 +3,7 @@ package kvstore
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"sync"
 	"time"
 
@@ -17,8 +18,6 @@ type secretsKVStoreSQL struct {
 	sqlStore        sqlstore.Store
 	secretsService  secrets.Service
 	decryptionCache decryptionCache
-	// This is here to support testing and should normally not be set
-	GetAllFuncOverride func(ctx context.Context) ([]Item, error)
 }
 
 type decryptionCache struct {
@@ -31,7 +30,10 @@ type cachedDecrypted struct {
 	value   string
 }
 
-var b64 = base64.RawStdEncoding
+var (
+	b64                   = base64.RawStdEncoding
+	errFallbackNotAllowed = errors.New("fallback not allowed for sql secret store")
+)
 
 // Get an item from the store
 func (kv *secretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
@@ -210,9 +212,6 @@ func (kv *secretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 // GetAll this returns all the secrets stored in the database. This is not part of the kvstore interface as we
 // only need it for migration from sql to plugin at this moment
 func (kv *secretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
-	if kv.GetAllFuncOverride != nil {
-		return kv.GetAllFuncOverride(ctx)
-	}
 	var items []Item
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		return dbSession.Find(&items)
@@ -232,6 +231,14 @@ func (kv *secretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
 	}
 
 	return items, err
+}
+
+func (kv *secretsKVStoreSQL) Fallback() SecretsKVStore {
+	return nil
+}
+
+func (kv *secretsKVStoreSQL) SetFallback(_ SecretsKVStore) error {
+	return errFallbackNotAllowed
 }
 
 func (kv *secretsKVStoreSQL) getDecryptedValue(ctx context.Context, item Item) ([]byte, error) {
