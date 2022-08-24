@@ -114,7 +114,6 @@ export class PanelPlugin<
   // TODO: this creates type error in configureStore.ts not sure why
   // explorePanel?: ComponentType<ExplorePanelProps> | null;
   explorePanel?: any;
-  visType?: string[];
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -385,9 +384,13 @@ export class PanelPlugin<
     return this.meta.id === pluginId;
   }
 
-  setExplorePanel(panel: ComponentType<ExplorePanelProps>, visType: string[]) {
+  /**
+   * Use more specific component in explore to take advantage of some Explore specific features and props.
+   * @param panel
+   * @alpha
+   */
+  setExplorePanel(panel: ComponentType<ExplorePanelProps>) {
     this.explorePanel = panel;
-    this.visType = visType;
     return this;
   }
 }

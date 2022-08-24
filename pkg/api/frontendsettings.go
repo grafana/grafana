@@ -63,16 +63,17 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:            panel.ID,
-			Name:          panel.Name,
-			Info:          panel.Info,
-			Module:        panel.Module,
-			BaseURL:       panel.BaseURL,
-			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  panel.HideFromList,
-			ReleaseState:  string(panel.State),
-			Signature:     string(panel.Signature),
-			Sort:          getPanelSort(panel.ID),
+			ID:                panel.ID,
+			Name:              panel.Name,
+			Info:              panel.Info,
+			Module:            panel.Module,
+			BaseURL:           panel.BaseURL,
+			SkipDataQuery:     panel.SkipDataQuery,
+			HideFromList:      panel.HideFromList,
+			VisualizationType: panel.VisualizationType,
+			ReleaseState:      string(panel.State),
+			Signature:         string(panel.Signature),
+			Sort:              getPanelSort(panel.ID),
 		}
 	}
 

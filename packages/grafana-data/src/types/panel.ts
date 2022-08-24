@@ -30,7 +30,7 @@ export interface PanelPluginMeta extends PluginMeta {
   /** Sort order */
   sort: number;
 
-  visualizationType?: string[];
+  visualizationType?: string;
 }
 
 export interface PanelData {

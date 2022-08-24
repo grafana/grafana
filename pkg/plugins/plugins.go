@@ -119,7 +119,8 @@ type JSONData struct {
 	Routes       []*Route     `json:"routes"`
 
 	// Panel settings
-	SkipDataQuery bool `json:"skipDataQuery"`
+	SkipDataQuery     bool   `json:"skipDataQuery"`
+	VisualizationType string `json:"visualizationType"`
 
 	// App settings
 	AutoEnabled bool `json:"autoEnabled"`

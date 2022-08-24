@@ -41,11 +41,17 @@ export async function getPanelForVisType(visType: string): Promise<React.Compone
       const panels = getAllPanelPluginMeta();
       for (const panel of panels) {
         const panelPlugin = await importPanelPlugin(panel.id);
-        if (panelPlugin.explorePanel && panelPlugin.visType?.includes(visType)) {
-          return panelPlugin.explorePanel;
+        if (panelPlugin.meta.visualizationType?.includes(visType)) {
+          // If there is explorePanel component use that.
+          if (panelPlugin.explorePanel) {
+            return panelPlugin.explorePanel;
+          } else if (panelPlugin.panel) {
+            return makePanelExploreCompatible(panelPlugin.panel!);
+          } else {
+            // TODO: not sure if this can reasonably happen
+          }
         }
       }
-
       // Probably ok fallback but maybe it makes sense to throw or show some info message that we did not find anything
       // better.
       return TablePanel;

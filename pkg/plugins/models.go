@@ -236,16 +236,17 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Info          Info   `json:"info"`
-	HideFromList  bool   `json:"hideFromList"`
-	Sort          int    `json:"sort"`
-	SkipDataQuery bool   `json:"skipDataQuery"`
-	ReleaseState  string `json:"state"`
-	BaseURL       string `json:"baseUrl"`
-	Signature     string `json:"signature"`
-	Module        string `json:"module"`
+	ID                string `json:"id"`
+	Name              string `json:"name"`
+	Info              Info   `json:"info"`
+	HideFromList      bool   `json:"hideFromList"`
+	Sort              int    `json:"sort"`
+	SkipDataQuery     bool   `json:"skipDataQuery"`
+	ReleaseState      string `json:"state"`
+	BaseURL           string `json:"baseUrl"`
+	Signature         string `json:"signature"`
+	Module            string `json:"module"`
+	VisualizationType string `json:"visualizationType"`
 }
 
 const (
