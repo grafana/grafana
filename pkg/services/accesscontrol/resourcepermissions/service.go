@@ -48,8 +48,8 @@ type Store interface {
 }
 
 func New(
-	options Options, cfg *setting.Cfg, router routing.RouteRegister,
-	license models.Licensing, ac accesscontrol.AccessControl, sqlStore *sqlstore.SQLStore,
+	options Options, cfg *setting.Cfg, router routing.RouteRegister, license models.Licensing,
+	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
 ) (*Service, error) {
 	var permissions []string
 	actionSet := make(map[string]struct{})
@@ -79,6 +79,7 @@ func New(
 		permissions: permissions,
 		actions:     actions,
 		sqlStore:    sqlStore,
+		service:     service,
 	}
 
 	s.api = newApi(ac, router, s)
@@ -96,6 +97,7 @@ func New(
 type Service struct {
 	cfg     *setting.Cfg
 	ac      accesscontrol.AccessControl
+	service accesscontrol.Service
 	store   Store
 	api     *api
 	license models.Licensing
@@ -334,5 +336,5 @@ func (s *Service) declareFixedRoles() error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return s.ac.DeclareFixedRoles(readerRole, writerRole)
+	return s.service.DeclareFixedRoles(readerRole, writerRole)
 }

@@ -23,7 +23,7 @@ var _ FutureAuthService = (*simpleSQLAuthService)(nil)
 
 type simpleSQLAuthService struct {
 	sql *sqlstore.SQLStore
-	ac  accesscontrol.AccessControl
+	ac  accesscontrol.Service
 }
 
 type dashIdQueryResult struct {
