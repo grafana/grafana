@@ -138,6 +138,7 @@ type Calls struct {
 
 type ServiceAccountsStoreMock struct {
 	serviceaccounts.Store
+	Stats *serviceaccounts.Stats
 	Calls Calls
 }
 
@@ -223,6 +224,10 @@ func (s *ServiceAccountsStoreMock) AddServiceAccountToken(ctx context.Context, s
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) GetUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+func (s *ServiceAccountsStoreMock) GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error) {
+	if s.Stats == nil {
+		return &serviceaccounts.Stats{}, nil
+	}
+
+	return s.Stats, nil
 }
