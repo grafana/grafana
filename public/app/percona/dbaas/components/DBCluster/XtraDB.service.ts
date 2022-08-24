@@ -161,8 +161,8 @@ const toAPI = (dbCluster: DBCluster): DBClusterPayload => ({
     // Temporary mock data
     haproxy: {
       compute_resources: {
-        cpu_m: THOUSAND,
-        memory_bytes: 2 * BILLION,
+        cpu_m: THOUSAND / 2,
+        memory_bytes: 0.5 * BILLION,
       },
     },
   },
