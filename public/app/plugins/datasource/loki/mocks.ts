@@ -1,4 +1,5 @@
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceSettings, PluginType, toUtc } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { getMockDataSource } from '../../../features/datasources/__mocks__';
 
@@ -54,4 +55,56 @@ export function createDefaultConfigOptions(): DataSourceSettings<LokiOptions> {
   return getMockDataSource<LokiOptions>({
     jsonData: { maxLines: '531' },
   });
+}
+
+const rawRange = {
+  from: toUtc('2018-04-25 10:00'),
+  to: toUtc('2018-04-25 11:00'),
+};
+
+const defaultTimeSrvMock = {
+  timeRange: () => ({
+    from: rawRange.from,
+    to: rawRange.to,
+    raw: rawRange,
+  }),
+};
+
+export function createLokiDatasource(templateSrvMock: TemplateSrv, timeSrvStub = defaultTimeSrvMock): LokiDatasource {
+  const instanceSettings: DataSourceInstanceSettings = {
+    url: 'myloggingurl',
+    id: 0,
+    uid: '',
+    type: '',
+    name: '',
+    meta: {
+      id: 'id',
+      name: 'name',
+      type: PluginType.datasource,
+      module: '',
+      baseUrl: '',
+      info: {
+        author: {
+          name: 'Test',
+        },
+        description: '',
+        links: [],
+        logos: {
+          large: '',
+          small: '',
+        },
+        screenshots: [],
+        updated: '',
+        version: '',
+      },
+    },
+    jsonData: {},
+    access: 'direct',
+  };
+
+  const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+  const customSettings: DataSourceInstanceSettings = { ...instanceSettings, jsonData: customData };
+
+  // @ts-expect-error
+  return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub);
 }
