@@ -45,9 +45,9 @@ func doLoadCoreTrees(lib *thema.Library) []*pfs.Tree {
 	tload := coreTreeLoaders()
 	trees := make(TreeList, len(tload))
 	for i, loader := range tload {
-		ii := i
+		l, ii := loader, i
 		g.Go(func() error {
-			trees[ii] = loader(lib)
+			trees[ii] = l(lib)
 			return nil
 		})
 	}
