@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// PluginSecretMigrationService This migrator will handle migration of datasource secrets (aka Unified secrets)
+// MigrateToPluginService This migrator will handle migration of datasource secrets (aka Unified secrets)
 // into the plugin secrets configured
-type PluginSecretMigrationService struct {
+type MigrateToPluginService struct {
 	secretsStore   SecretsKVStore
 	cfg            *setting.Cfg
 	logger         log.Logger
@@ -25,15 +25,15 @@ type PluginSecretMigrationService struct {
 	manager        plugins.SecretsPluginManager
 }
 
-func ProvidePluginSecretMigrationService(
+func ProvideMigrateToPluginService(
 	secretsStore SecretsKVStore,
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	kvstore kvstore.KVStore,
 	manager plugins.SecretsPluginManager,
-) *PluginSecretMigrationService {
-	return &PluginSecretMigrationService{
+) *MigrateToPluginService {
+	return &MigrateToPluginService{
 		secretsStore:   secretsStore,
 		cfg:            cfg,
 		logger:         log.New("secret.migration.plugin"),
@@ -44,8 +44,7 @@ func ProvidePluginSecretMigrationService(
 	}
 }
 
-func (s *PluginSecretMigrationService) Migrate(ctx context.Context) error {
-	// Check if we should migrate to plugin - default false
+func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 	if err := EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		s.logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to get the fallback store since in this scenario the secrets store would be the plugin.

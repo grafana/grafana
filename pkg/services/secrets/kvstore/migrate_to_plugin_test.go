@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -17,12 +16,12 @@ import (
 
 // This tests will create a mock sql database and an inmemory
 // implementation of the secret manager to simulate the plugin.
-func TestPluginSecretMigrationService_Migrate(t *testing.T) {
+func TestPluginSecretMigrationService_MigrateToPlugin(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("migration run ok - 2 secrets migrated", func(t *testing.T) {
 		// --- SETUP
-		migratorService, secretsStore, sqlSecretStore := setupTestMigratorService(t)
+		migratorService, secretsStore, sqlSecretStore := setupTestMigrateToPluginService(t)
 		var orgId int64 = 1
 		namespace1, namespace2 := "namespace-test", "namespace-test2"
 		typ := "type-test"
@@ -36,41 +35,43 @@ func TestPluginSecretMigrationService_Migrate(t *testing.T) {
 		require.NoError(t, err)
 
 		// --- VALIDATIONS
-		validateSecretWasDeleted(t, sqlSecretStore, ctx, orgId, namespace1, typ)
-		validateSecretWasDeleted(t, sqlSecretStore, ctx, orgId, namespace2, typ)
+		validateSqlSecretWasDeleted(t, sqlSecretStore, ctx, orgId, namespace1, typ)
+		validateSqlSecretWasDeleted(t, sqlSecretStore, ctx, orgId, namespace2, typ)
 
-		validateSecretWasStoreInPlugin(t, secretsStore, ctx, orgId, namespace1, typ)
-		validateSecretWasStoreInPlugin(t, secretsStore, ctx, orgId, namespace1, typ)
+		validateSecretWasStoredInPlugin(t, secretsStore, ctx, orgId, namespace1, typ)
+		validateSecretWasStoredInPlugin(t, secretsStore, ctx, orgId, namespace1, typ)
 	})
 }
 
 func addSecretToSqlStore(t *testing.T, sqlSecretStore *secretsKVStoreSQL, ctx context.Context, orgId int64, namespace1 string, typ string, value string) {
+	t.Helper()
 	err := sqlSecretStore.Set(ctx, orgId, namespace1, typ, value)
 	require.NoError(t, err)
 }
 
 // validates that secrets on the sql store were deleted.
-func validateSecretWasDeleted(t *testing.T, sqlSecretStore *secretsKVStoreSQL, ctx context.Context, orgId int64, namespace1 string, typ string) {
+func validateSqlSecretWasDeleted(t *testing.T, sqlSecretStore *secretsKVStoreSQL, ctx context.Context, orgId int64, namespace1 string, typ string) {
+	t.Helper()
 	res, err := sqlSecretStore.Keys(ctx, orgId, namespace1, typ)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(res))
 }
 
 // validates that secrets should be on the plugin
-func validateSecretWasStoreInPlugin(t *testing.T, secretsStore SecretsKVStore, ctx context.Context, orgId int64, namespace1 string, typ string) {
+func validateSecretWasStoredInPlugin(t *testing.T, secretsStore SecretsKVStore, ctx context.Context, orgId int64, namespace1 string, typ string) {
+	t.Helper()
 	resPlugin, err := secretsStore.Keys(ctx, orgId, namespace1, typ)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(resPlugin))
 }
 
-//
-func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, SecretsKVStore, *secretsKVStoreSQL) {
+// Set up services used in migration
+func setupTestMigrateToPluginService(t *testing.T) (*MigrateToPluginService, SecretsKVStore, *secretsKVStoreSQL) {
 	t.Helper()
 
 	rawCfg := `
 		[secrets]
 		use_plugin = true
-		migrate_to_plugin = true
 		`
 	raw, err := ini.Load([]byte(rawCfg))
 	require.NoError(t, err)
@@ -82,7 +83,7 @@ func setupTestMigratorService(t *testing.T) (*PluginSecretMigrationService, Secr
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	manager := NewFakeSecretsPluginManager(t, false)
-	migratorService := ProvidePluginSecretMigrationService(
+	migratorService := ProvideMigrateToPluginService(
 		secretsStoreForPlugin,
 		cfg,
 		sqlStore,
