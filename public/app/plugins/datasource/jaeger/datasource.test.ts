@@ -143,7 +143,7 @@ describe('JaegerDatasource', () => {
         targets: [{ queryType: 'search', refId: 'a', service: undefined, operation: '/api/services' }],
       })
     );
-    expect(response.error?.message).toBe('You must select a service name.');
+    expect(response.error?.message).toBe('You must select a service.');
   });
 
   it('should remove operation from the query when all is selected', async () => {

@@ -64,7 +64,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     }
 
     if (target.queryType === 'search' && !this.isFormValid(target)) {
-      return of({ error: { message: 'You must select a service name.' }, data: [] });
+      return of({ error: { message: 'You must select a service.' }, data: [] });
     }
 
     if (target.queryType !== 'search' && target.query) {
