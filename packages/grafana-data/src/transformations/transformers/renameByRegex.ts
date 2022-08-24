@@ -42,15 +42,15 @@ export const renameByRegexTransformer: DataTransformerInfo<RenameByRegexTransfor
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
-        return data.map(renameFieldsByRegex(options));
+        return data.map(renameFieldsByRegex(options, data));
       })
     ),
 };
 
-const renameFieldsByRegex = (options: RenameByRegexTransformerOptions) => (frame: DataFrame) => {
+const renameFieldsByRegex = (options: RenameByRegexTransformerOptions, data: DataFrame[]) => (frame: DataFrame) => {
   const regex = stringToJsRegex(options.regex);
   const fields = frame.fields.map((field) => {
-    const displayName = getFieldDisplayName(field, frame);
+    const displayName = getFieldDisplayName(field, frame, data);
     if (!regex.test(displayName)) {
       return field;
     }

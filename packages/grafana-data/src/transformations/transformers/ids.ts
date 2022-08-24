@@ -21,6 +21,7 @@ export enum DataTransformerID {
   noop = 'noop',
   ensureColumns = 'ensureColumns',
   groupBy = 'groupBy',
+  splitBy = 'splitBy',
   sortBy = 'sortBy',
   histogram = 'histogram',
   configFromData = 'configFromData',

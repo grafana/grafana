@@ -24,6 +24,7 @@ import { getReduceTransformRegistryItem } from './editors/ReduceTransformerEdito
 import { getRenameByRegexTransformRegistryItem } from './editors/RenameByRegexTransformer';
 import { getSeriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTransformerEditor';
 import { getSortByTransformRegistryItem } from './editors/SortByTransformerEditor';
+import { getSplitByTransformRegistryItem } from './editors/SplitByTransformerEditor';
 import { getTransposeTransformerRegistryItem } from './editors/TransposeTransformerEditor';
 import { getExtractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
 import { getJoinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTransformerEditor';
@@ -50,6 +51,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     getLabelsToFieldsTransformerRegistryItem(),
     getGroupByTransformRegistryItem(),
     getSortByTransformRegistryItem(),
+    getSplitByTransformRegistryItem(),
     getMergeTransformerRegistryItem(),
     getHistogramTransformRegistryItem(),
     getRowsToFieldsTransformRegistryItem(),
