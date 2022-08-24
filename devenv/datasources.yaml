@@ -255,7 +255,6 @@ datasources:
         label: "Zipkin traces"
         description: "Related traces stored in Zipkin"
     jsonData:
-      something: here
       manageAlerts: false
       derivedFields:
         - name: "traceID"

@@ -76,7 +76,7 @@ export interface TempoQuery extends DataQuery {
   query: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
-  search: string;
+  search?: string;
   queryType: TempoQueryType;
   serviceName?: string;
   spanName?: string;
@@ -90,7 +90,7 @@ interface SearchQueryParams {
   minDuration?: string;
   maxDuration?: string;
   limit?: number;
-  tags: string;
+  tags?: string;
   start?: number;
   end?: number;
 }

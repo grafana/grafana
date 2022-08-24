@@ -5,7 +5,7 @@ import { transformDataFrame } from '../transformDataFrame';
 
 import { ensureColumnsTransformer } from './ensureColumns';
 import { DataTransformerID } from './ids';
-import { seriesToColumnsTransformer } from './seriesToColumns';
+import { joinByFieldTransformer } from './joinByField';
 
 const seriesA = toDataFrame({
   fields: [
@@ -33,7 +33,7 @@ const seriesNoTime = toDataFrame({
 
 describe('ensureColumns transformer', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([ensureColumnsTransformer, seriesToColumnsTransformer]);
+    mockTransformationsRegistry([ensureColumnsTransformer, joinByFieldTransformer]);
   });
 
   it('will transform to columns if time field exists and multiple frames', async () => {
