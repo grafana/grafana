@@ -25,6 +25,7 @@ import { renameByRegexTransformRegistryItem } from './editors/RenameByRegexTrans
 import { seriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTransformerEditor';
 import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { transposeTransformerRegistryItem } from './editors/TransposeTransformerEditor';
+import { splitByTransformRegistryItem } from './editors/SplitByTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
 import { joinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTransformerEditor';
 import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupTransformerEditor';
@@ -50,6 +51,7 @@ export const getStandardTransformers = (): TransformerRegistryItem[] => {
     labelsToFieldsTransformerRegistryItem,
     groupByTransformRegistryItem,
     sortByTransformRegistryItem,
+    splitByTransformRegistryItem,
     mergeTransformerRegistryItem,
     histogramTransformRegistryItem,
     rowsToFieldsTransformRegistryItem,
