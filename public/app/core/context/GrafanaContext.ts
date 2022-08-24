@@ -20,6 +20,5 @@ export function useGrafana(): GrafanaContextType {
   if (!context) {
     throw new Error('No GrafanaContext found');
   }
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return context as GrafanaContextType;
+  return context;
 }

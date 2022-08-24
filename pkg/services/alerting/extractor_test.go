@@ -3,7 +3,7 @@ package alerting
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -27,7 +27,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	defaultDs := &datasources.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
 	graphite2Ds := &datasources.DataSource{Id: 15, OrgId: 1, Name: "graphite2", Uid: "graphite2-uid"}
 
-	json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
+	json, err := os.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
 
 	dsPermissions := permissions.NewMockDatasourcePermissionService()
@@ -117,7 +117,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Panels missing id should return error", func(t *testing.T) {
-		panelWithoutID, err := ioutil.ReadFile("./testdata/panels-missing-id.json")
+		panelWithoutID, err := os.ReadFile("./testdata/panels-missing-id.json")
 		require.Nil(t, err)
 
 		dashJSON, err := simplejson.NewJson(panelWithoutID)
@@ -133,7 +133,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Panels missing id should return error", func(t *testing.T) {
-		panelWithIDZero, err := ioutil.ReadFile("./testdata/panel-with-id-0.json")
+		panelWithIDZero, err := os.ReadFile("./testdata/panel-with-id-0.json")
 		require.Nil(t, err)
 
 		dashJSON, err := simplejson.NewJson(panelWithIDZero)
@@ -149,7 +149,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Cannot save panel with query that is referenced by legacy alerting", func(t *testing.T) {
-		panelWithQuery, err := ioutil.ReadFile("./testdata/panel-with-bad-query-id.json")
+		panelWithQuery, err := os.ReadFile("./testdata/panel-with-bad-query-id.json")
 		require.Nil(t, err)
 		dashJSON, err := simplejson.NewJson(panelWithQuery)
 		require.Nil(t, err)
@@ -163,7 +163,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Panel does not have datasource configured, use the default datasource", func(t *testing.T) {
-		panelWithoutSpecifiedDatasource, err := ioutil.ReadFile("./testdata/panel-without-specified-datasource.json")
+		panelWithoutSpecifiedDatasource, err := os.ReadFile("./testdata/panel-without-specified-datasource.json")
 		require.Nil(t, err)
 
 		dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
@@ -183,7 +183,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Parse alerts from dashboard without rows", func(t *testing.T) {
-		json, err := ioutil.ReadFile("./testdata/v5-dashboard.json")
+		json, err := os.ReadFile("./testdata/v5-dashboard.json")
 		require.Nil(t, err)
 
 		dashJSON, err := simplejson.NewJson(json)
@@ -200,7 +200,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Alert notifications are in DB", func(t *testing.T) {
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
 
 		firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
@@ -210,7 +210,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 		require.Nil(t, err)
 
-		json, err := ioutil.ReadFile("./testdata/influxdb-alert.json")
+		json, err := os.ReadFile("./testdata/influxdb-alert.json")
 		require.Nil(t, err)
 
 		dashJSON, err := simplejson.NewJson(json)
@@ -236,7 +236,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Should be able to extract collapsed panels", func(t *testing.T) {
-		json, err := ioutil.ReadFile("./testdata/collapsed-panels.json")
+		json, err := os.ReadFile("./testdata/collapsed-panels.json")
 		require.Nil(t, err)
 
 		dashJSON, err := simplejson.NewJson(json)
@@ -255,7 +255,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Parse and validate dashboard without id and containing an alert", func(t *testing.T) {
-		json, err := ioutil.ReadFile("./testdata/dash-without-id.json")
+		json, err := os.ReadFile("./testdata/dash-without-id.json")
 		require.Nil(t, err)
 
 		dashJSON, err := simplejson.NewJson(json)
@@ -275,7 +275,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Extract data source given new DataSourceRef object model", func(t *testing.T) {
-		json, err := ioutil.ReadFile("./testdata/panel-with-datasource-ref.json")
+		json, err := os.ReadFile("./testdata/panel-with-datasource-ref.json")
 		require.Nil(t, err)
 
 		dashJSON, err := simplejson.NewJson(json)
@@ -308,7 +308,7 @@ func TestFilterPermissionsErrors(t *testing.T) {
 	// mock data
 	defaultDs := &datasources.DataSource{Id: 12, OrgId: 1, Name: "I am default", IsDefault: true, Uid: "def-uid"}
 
-	json, err := ioutil.ReadFile("./testdata/graphite-alert.json")
+	json, err := os.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
 	dashJSON, err := simplejson.NewJson(json)
 	require.Nil(t, err)

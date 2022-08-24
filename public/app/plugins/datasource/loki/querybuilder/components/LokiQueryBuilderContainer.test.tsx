@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { DataSourcePluginMeta } from '@grafana/data';
 import { addOperation } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList.testUtils';
 
 import { LokiDatasource } from '../../datasource';
@@ -23,7 +24,7 @@ describe('LokiQueryBuilderContainer', () => {
           access: 'proxy',
           url: '',
           jsonData: {},
-          meta: {} as any,
+          meta: {} as DataSourcePluginMeta,
         },
         undefined,
         undefined
@@ -31,6 +32,7 @@ describe('LokiQueryBuilderContainer', () => {
       onChange: jest.fn(),
       onRunQuery: () => {},
       showRawQuery: true,
+      showExplain: false,
     };
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
 

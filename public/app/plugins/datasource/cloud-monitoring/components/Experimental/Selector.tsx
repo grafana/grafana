@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow, Select } from '@grafana/ui';
+import { EditorField, Select } from '@grafana/ui';
 
 import { SELECTORS } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
@@ -17,23 +17,21 @@ export interface Props {
 
 export const Selector: React.FC<Props> = ({ refId, query, templateVariableOptions, onChange, datasource }) => {
   return (
-    <EditorRow>
-      <EditorField label="Selector" htmlFor={`${refId}-slo-selector`}>
-        <Select
-          inputId={`${refId}-slo-selector`}
-          width="auto"
-          allowCustomValue
-          value={[...SELECTORS, ...templateVariableOptions].find((s) => s.value === query?.selectorName ?? '')}
-          options={[
-            {
-              label: 'Template Variables',
-              options: templateVariableOptions,
-            },
-            ...SELECTORS,
-          ]}
-          onChange={({ value: selectorName }) => onChange({ ...query, selectorName: selectorName ?? '' })}
-        />
-      </EditorField>
-    </EditorRow>
+    <EditorField label="Selector" htmlFor={`${refId}-slo-selector`}>
+      <Select
+        inputId={`${refId}-slo-selector`}
+        width="auto"
+        allowCustomValue
+        value={[...SELECTORS, ...templateVariableOptions].find((s) => s.value === query?.selectorName ?? '')}
+        options={[
+          {
+            label: 'Template Variables',
+            options: templateVariableOptions,
+          },
+          ...SELECTORS,
+        ]}
+        onChange={({ value: selectorName }) => onChange({ ...query, selectorName: selectorName ?? '' })}
+      />
+    </EditorField>
   );
 };

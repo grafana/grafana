@@ -19,25 +19,34 @@ describe('AzureMonitorUrlBuilder', () => {
   describe('buildResourceUri', () => {
     it('builds a resource uri when the required properties are provided', () => {
       expect(
-        UrlBuilder.buildResourceUri('sub', 'group', templateSrv, 'Microsoft.NetApp/netAppAccounts', 'name')
+        UrlBuilder.buildResourceUri(templateSrv, {
+          subscription: 'sub',
+          resourceGroup: 'group',
+          metricNamespace: 'Microsoft.NetApp/netAppAccounts',
+          resourceName: 'name',
+        })
       ).toEqual('/subscriptions/sub/resourceGroups/group/providers/Microsoft.NetApp/netAppAccounts/name');
     });
 
     it('builds a resource uri correctly when a template variable is used as namespace', () => {
-      expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns', 'name')).toEqual(
-        '/subscriptions/sub/resourceGroups/group/providers/$ns/name'
-      );
+      expect(
+        UrlBuilder.buildResourceUri(templateSrv, {
+          subscription: 'sub',
+          resourceGroup: 'group',
+          metricNamespace: '$ns',
+          resourceName: 'name',
+        })
+      ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/name');
     });
 
     it('builds a resource uri correctly when the namespace includes a storage sub-resource', () => {
       expect(
-        UrlBuilder.buildResourceUri(
-          'sub',
-          'group',
-          templateSrv,
-          'Microsoft.Storage/storageAccounts/tableServices',
-          'name'
-        )
+        UrlBuilder.buildResourceUri(templateSrv, {
+          subscription: 'sub',
+          resourceGroup: 'group',
+          metricNamespace: 'Microsoft.Storage/storageAccounts/tableServices',
+          resourceName: 'name',
+        })
       ).toEqual(
         '/subscriptions/sub/resourceGroups/group/providers/Microsoft.Storage/storageAccounts/name/tableServices/default'
       );
@@ -56,27 +65,64 @@ describe('AzureMonitorUrlBuilder', () => {
       templateSrv = getTemplateSrv();
 
       it('builds a resource uri without specifying a subresource (default)', () => {
-        expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns/tableServices', 'name')).toEqual(
-          '/subscriptions/sub/resourceGroups/group/providers/$ns/name/tableServices/default'
-        );
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+            metricNamespace: '$ns/tableServices',
+            resourceName: 'name',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/name/tableServices/default');
       });
 
       it('builds a resource uri specifying a subresource (default)', () => {
-        expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns/tableServices', 'name/default')).toEqual(
-          '/subscriptions/sub/resourceGroups/group/providers/$ns/name/tableServices/default'
-        );
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+            metricNamespace: '$ns/tableServices',
+            resourceName: 'name/default',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/name/tableServices/default');
       });
 
       it('builds a resource uri specifying a resource template variable', () => {
-        expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns/tableServices', '$rs/default')).toEqual(
-          '/subscriptions/sub/resourceGroups/group/providers/$ns/$rs/tableServices/default'
-        );
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+            metricNamespace: '$ns/tableServices',
+            resourceName: '$rs/default',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/$rs/tableServices/default');
       });
 
       it('builds a resource uri specifying multiple template variables', () => {
-        expect(UrlBuilder.buildResourceUri('sub', 'group', templateSrv, '$ns/$ns2', '$rs/$rs2')).toEqual(
-          '/subscriptions/sub/resourceGroups/group/providers/$ns/$rs/$ns2/$rs2'
-        );
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+            metricNamespace: '$ns/$ns2',
+            resourceName: '$rs/$rs2',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group/providers/$ns/$rs/$ns2/$rs2');
+      });
+
+      it('builds a resource uri with only a subscription', () => {
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+          })
+        ).toEqual('/subscriptions/sub');
+      });
+
+      it('builds a resource uri with a subscription and a resource group', () => {
+        expect(
+          UrlBuilder.buildResourceUri(templateSrv, {
+            subscription: 'sub',
+            resourceGroup: 'group',
+          })
+        ).toEqual('/subscriptions/sub/resourceGroups/group');
       });
     });
   });

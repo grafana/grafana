@@ -155,7 +155,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     default: {
-      // Any other nodes we just ignore and go to it's children. This should be fine as there are lot's of wrapper
+      // Any other nodes we just ignore and go to its children. This should be fine as there are lots of wrapper
       // nodes that can be skipped.
       // TODO: there are probably cases where we will just skip nodes we don't support and we should be able to
       //  detect those and report back.
@@ -254,7 +254,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuil
     };
   }
 
-  const id = '__label_filter';
+  const id = LokiOperationId.LabelFilter;
   if (node.firstChild!.name === 'UnitFilter') {
     const filter = node.firstChild!.firstChild;
     const label = filter!.firstChild;
@@ -280,7 +280,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuil
   if (params.join('') === `__error__=`) {
     return {
       operation: {
-        id: '__label_filter_no_errors',
+        id: LokiOperationId.LabelFilterNoErrors,
         params: [],
       },
     };
@@ -295,7 +295,7 @@ function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuil
 }
 
 function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  const id = 'line_format';
+  const id = LokiOperationId.LineFormat;
   const string = handleQuotes(getString(expr, node.getChild('String')));
 
   return {
@@ -305,7 +305,7 @@ function getLineFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
 }
 
 function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
-  const id = 'label_format';
+  const id = LokiOperationId.LabelFormat;
   const renameTo = node.getChild('Identifier');
   const op = renameTo!.nextSibling;
   const originalLabel = op!.nextSibling;
@@ -339,7 +339,7 @@ function handleUnwrapExpr(
       const identifier = convOp.nextSibling;
       return {
         operation: {
-          id: 'unwrap',
+          id: LokiOperationId.Unwrap,
           params: [getString(expr, identifier), getString(expr, convOp)],
         },
       };
@@ -347,7 +347,7 @@ function handleUnwrapExpr(
 
     return {
       operation: {
-        id: 'unwrap',
+        id: LokiOperationId.Unwrap,
         params: [getString(expr, unwrapChild?.nextSibling), ''],
       },
     };

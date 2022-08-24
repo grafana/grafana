@@ -61,4 +61,13 @@ export interface InfluxQuery extends DataQuery {
   rawQuery?: boolean;
   query?: string;
   alias?: string;
+  // for migrated InfluxQL annotations
+  queryType?: string;
+  fromAnnotations?: boolean;
+  tagsColumn?: string;
+  textColumn?: string;
+  timeEndColumn?: string;
+  titleColumn?: string;
+  name?: string;
+  textEditor?: boolean;
 }

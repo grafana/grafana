@@ -55,7 +55,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     history.push({ query: { filterByType: value } });
   };
 
-  const onSearch = (q: any) => {
+  const onSearch = (q: string) => {
     history.push({ query: { filterBy: 'all', filterByType: 'all', q } });
   };
 

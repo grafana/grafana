@@ -1,3 +1,4 @@
+import { t } from '@lingui/macro';
 import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
@@ -218,7 +219,7 @@ export class FolderPicker extends PureComponent<Props, State> {
         <AsyncSelect
           inputId={inputId}
           aria-label={selectors.components.FolderPicker.input}
-          loadingMessage="Loading folders..."
+          loadingMessage={t({ id: 'folder-picker.loading', message: 'Loading folders...' })}
           defaultOptions
           defaultValue={folder}
           value={folder}

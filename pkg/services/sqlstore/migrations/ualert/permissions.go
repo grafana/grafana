@@ -19,13 +19,13 @@ import (
 type roleType string
 
 const (
-	ROLE_VIEWER roleType = "Viewer"
-	ROLE_EDITOR roleType = "Editor"
-	ROLE_ADMIN  roleType = "Admin"
+	RoleViewer roleType = "Viewer"
+	RoleEditor roleType = "Editor"
+	RoleAdmin  roleType = "Admin"
 )
 
 func (r roleType) IsValid() bool {
-	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR
+	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
 }
 
 type permissionType int
@@ -44,6 +44,8 @@ type dashboardACL struct {
 	Created time.Time
 	Updated time.Time
 }
+
+func (p dashboardACL) TableName() string { return "dashboard_acl" }
 
 type folderHelper struct {
 	sess *xorm.Session

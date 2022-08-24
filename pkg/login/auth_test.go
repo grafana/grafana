@@ -118,7 +118,7 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.True(t, sc.grafanaLoginWasCalled)
 		assert.True(t, sc.ldapLoginWasCalled)
 		assert.True(t, sc.saveInvalidLoginAttemptWasCalled)
-		assert.Equal(t, "ldap", sc.loginUserQuery.AuthModule)
+		assert.Equal(t, login.LDAPAuthModule, sc.loginUserQuery.AuthModule)
 	})
 
 	authScenario(t, "When a non-existing grafana user authenticate and valid ldap credentials", func(sc *authScenarioContext) {
@@ -135,7 +135,7 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.True(t, sc.grafanaLoginWasCalled)
 		assert.True(t, sc.ldapLoginWasCalled)
 		assert.False(t, sc.saveInvalidLoginAttemptWasCalled)
-		assert.Equal(t, "ldap", sc.loginUserQuery.AuthModule)
+		assert.Equal(t, login.LDAPAuthModule, sc.loginUserQuery.AuthModule)
 	})
 
 	authScenario(t, "When a non-existing grafana user authenticate and ldap returns unexpected error", func(sc *authScenarioContext) {
@@ -153,7 +153,7 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.True(t, sc.grafanaLoginWasCalled)
 		assert.True(t, sc.ldapLoginWasCalled)
 		assert.False(t, sc.saveInvalidLoginAttemptWasCalled)
-		assert.Equal(t, "ldap", sc.loginUserQuery.AuthModule)
+		assert.Equal(t, login.LDAPAuthModule, sc.loginUserQuery.AuthModule)
 	})
 
 	authScenario(t, "When grafana user authenticate with invalid credentials and invalid ldap credentials", func(sc *authScenarioContext) {
@@ -184,7 +184,7 @@ type authScenarioContext struct {
 type authScenarioFunc func(sc *authScenarioContext)
 
 func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
-	loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, _ sqlstore.Store) error {
+	loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, _ user.Service) error {
 		sc.grafanaLoginWasCalled = true
 		return err
 	}

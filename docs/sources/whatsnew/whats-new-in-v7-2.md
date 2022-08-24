@@ -84,8 +84,8 @@ You can now add override rules that use a regex matcher to choose which fields t
 
 Grafana 7.2 includes the following transformation enhancements:
 
-- A new [Group By]({{< relref "../panels/transform-data/transformation-functions/#group-by" >}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
-- The [Labels to fields]({{< relref "../panels/transform-data/transformation-functions/#labels-to-fields" >}}) transformation now allows you to pick one label and use that as the name of the value field.
+- A new [Group By]({{< relref "../panels/transform-data/#group-by" >}}) transformation that allows you to group by multiple fields and add any number of aggregations for other fields.
+- The [Labels to fields]({{< relref "../panels/transform-data/#labels-to-fields" >}}) transformation now allows you to pick one label and use that as the name of the value field.
 - You can drag transformations to reorder them. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
 
 {{< figure src="/static/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}

@@ -64,7 +64,7 @@ export const NavBar = React.memo(() => {
     {
       id: 'home',
       text: 'Home',
-      url: config.appSubUrl || '/',
+      url: config.bootData.user.isSignedIn ? config.appSubUrl || '/' : '/login',
       icon: 'grafana',
     },
     menuOpen

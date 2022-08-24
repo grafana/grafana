@@ -15,6 +15,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
 import { Tokenize } from '../Tokenize';
 
+import { RuleConfigStatus } from './RuleConfigStatus';
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
 import { RuleState } from './RuleState';
@@ -149,10 +150,16 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         size: '100px',
       },
       {
+        id: 'warnings',
+        label: '',
+        renderCell: ({ data: combinedRule }) => <RuleConfigStatus rule={combinedRule} />,
+        size: '45px',
+      },
+      {
         id: 'health',
         label: 'Health',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: { promRule } }) => (promRule ? <RuleHealth rule={promRule} /> : null),
+        renderCell: ({ data: { promRule, group } }) => (promRule ? <RuleHealth rule={promRule} /> : null),
         size: '75px',
       },
     ];

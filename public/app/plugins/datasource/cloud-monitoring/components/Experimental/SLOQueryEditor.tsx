@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRow, EditorFieldGroup, EditorField, Stack } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/ui';
 
-import { ALIGNMENT_PERIODS } from '../../constants';
+import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
+import { alignmentPeriodLabel } from '../../functions';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
 
 import { AliasBy } from './AliasBy';
-import { AlignmentPeriodLabel } from './AlignmentPeriodLabel';
+import { LookbackPeriodSelect } from './LookbackPeriodSelect';
 import { PeriodSelect } from './PeriodSelect';
 import { Project } from './Project';
 import { SLO } from './SLO';
@@ -35,6 +36,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
   serviceName: '',
   sloId: '',
   sloName: '',
+  lookbackPeriod: '',
 });
 
 export function SLOQueryEditor({
@@ -45,40 +47,49 @@ export function SLOQueryEditor({
   variableOptionGroup,
   customMetaData,
 }: React.PropsWithChildren<Props>) {
+  const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
     <>
-      <Project
-        refId={refId}
-        templateVariableOptions={variableOptionGroup.options}
-        projectName={query.projectName}
-        datasource={datasource}
-        onChange={(projectName) => onChange({ ...query, projectName })}
-      />
-      <Service
-        refId={refId}
-        datasource={datasource}
-        templateVariableOptions={variableOptionGroup.options}
-        query={query}
-        onChange={onChange}
-      />
-      <SLO
-        refId={refId}
-        datasource={datasource}
-        templateVariableOptions={variableOptionGroup.options}
-        query={query}
-        onChange={onChange}
-      />
-      <Selector
-        refId={refId}
-        datasource={datasource}
-        templateVariableOptions={variableOptionGroup.options}
-        query={query}
-        onChange={onChange}
-      />
-
       <EditorRow>
+        <Project
+          refId={refId}
+          templateVariableOptions={variableOptionGroup.options}
+          projectName={query.projectName}
+          datasource={datasource}
+          onChange={(projectName) => onChange({ ...query, projectName })}
+        />
+        <Service
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
+        />
+        <SLO
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
+        />
+        <Selector
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
+        />
+        {query.selectorName === SLO_BURN_RATE_SELECTOR_NAME && (
+          <LookbackPeriodSelect
+            refId={refId}
+            onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
+            current={query.lookbackPeriod}
+            templateVariableOptions={variableOptionGroup.options}
+          />
+        )}
+
         <EditorFieldGroup>
-          <EditorField label="Alignment period">
+          <EditorField label="Alignment period" tooltip={alignmentLabel}>
             <PeriodSelect
               inputId={`${refId}-alignment-period`}
               templateVariableOptions={variableOptionGroup.options}
@@ -87,13 +98,10 @@ export function SLOQueryEditor({
               aligmentPeriods={ALIGNMENT_PERIODS}
             />
           </EditorField>
-          <Stack alignItems="flex-end">
-            <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
-          </Stack>
         </EditorFieldGroup>
-      </EditorRow>
 
-      <AliasBy refId={refId} value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />
+        <AliasBy refId={refId} value={query.aliasBy} onChange={(aliasBy) => onChange({ ...query, aliasBy })} />
+      </EditorRow>
     </>
   );
 }

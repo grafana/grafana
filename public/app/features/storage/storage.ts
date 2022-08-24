@@ -1,10 +1,9 @@
 import { DataFrame, dataFrameFromJSON, DataFrameJSON, getDisplayProcessor } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DashboardDTO } from 'app/types';
 
-import { UploadReponse } from './types';
+import { UploadReponse, StorageInfo, ItemOptions, WriteValueRequest, WriteValueResponse } from './types';
 
 // Likely should be built into the search interface!
 export interface GrafanaStorage {
@@ -14,12 +13,20 @@ export interface GrafanaStorage {
   createFolder: (path: string) => Promise<{ error?: string }>;
   delete: (path: { isFolder: boolean; path: string }) => Promise<{ error?: string }>;
 
+  /** Admin only */
+  getConfig: () => Promise<StorageInfo[]>;
+
+  /** Called before save */
+  getOptions: (path: string) => Promise<ItemOptions>;
+
   /**
    * Temporary shim that will return a DashboardDTO shape for files in storage
    * Longer term, this will call an "Entity API" that is eventually backed by storage
    */
   getDashboard: (path: string) => Promise<DashboardDTO>;
-  saveDashboard: (options: SaveDashboardCommand) => Promise<any>;
+
+  /** Saves dashbaords */
+  write: (path: string, options: WriteValueRequest) => Promise<WriteValueResponse>;
 }
 
 class SimpleStorage implements GrafanaStorage {
@@ -140,40 +147,16 @@ class SimpleStorage implements GrafanaStorage {
     };
   }
 
-  async saveDashboard(options: SaveDashboardCommand): Promise<any> {
-    if (!config.featureToggles.dashboardsFromStorage) {
-      return Promise.reject('Dashboards from storage is not enabled');
-    }
+  async write(path: string, options: WriteValueRequest): Promise<WriteValueResponse> {
+    return backendSrv.post<WriteValueResponse>(`/api/storage/write/${path}`, options);
+  }
 
-    const blob = new Blob([JSON.stringify(options.dashboard)], {
-      type: 'application/json',
-    });
+  async getConfig() {
+    return getBackendSrv().get<StorageInfo[]>('/api/storage/config');
+  }
 
-    const uid = options.dashboard.uid;
-    const formData = new FormData();
-    if (options.message) {
-      formData.append('message', options.message);
-    }
-    formData.append('overwriteExistingFile', options.overwrite === false ? 'false' : 'true');
-    formData.append('file.path', uid);
-    formData.append('file', blob);
-    const res = await fetch('/api/storage/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    let body = (await res.json()) as UploadReponse;
-    if (res.status !== 200 && !body?.err) {
-      console.log('SAVE', options, body);
-      return Promise.reject({ message: body?.message ?? res.statusText });
-    }
-
-    return {
-      uid,
-      url: `/g/${uid}`,
-      slug: uid,
-      status: 'success',
-    };
+  async getOptions(path: string) {
+    return getBackendSrv().get<ItemOptions>(`/api/storage/options/${path}`);
   }
 }
 

@@ -1,4 +1,4 @@
-import { VariableModel, ScopedVars, TimeRange } from '@grafana/data';
+import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
 
 /**
  * Via the TemplateSrv consumers get access to all the available template variables
@@ -11,7 +11,7 @@ export interface TemplateSrv {
   /**
    * List the dashboard variables
    */
-  getVariables(): VariableModel[];
+  getVariables(): TypedVariableModel[];
 
   /**
    * Replace the values within the target string.  See also {@link InterpolateFunction}

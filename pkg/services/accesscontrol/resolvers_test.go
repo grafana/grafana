@@ -6,15 +6,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestResolveKeywordScope(t *testing.T) {
 	tests := []struct {
 		name       string
-		user       *models.SignedInUser
+		user       *user.SignedInUser
 		permission accesscontrol.Permission
 		want       accesscontrol.Permission
 		wantErr    bool
@@ -50,11 +51,11 @@ func TestResolveKeywordScope(t *testing.T) {
 	}
 }
 
-var testUser = &models.SignedInUser{
-	UserId:  2,
-	OrgId:   3,
+var testUser = &user.SignedInUser{
+	UserID:  2,
+	OrgID:   3,
 	OrgName: "TestOrg",
-	OrgRole: models.ROLE_VIEWER,
+	OrgRole: org.RoleViewer,
 	Login:   "testUser",
 	Name:    "Test User",
 	Email:   "testuser@example.org",

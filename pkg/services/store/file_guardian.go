@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -25,7 +25,7 @@ func isValidAction(action string) bool {
 }
 
 type storageAuthService interface {
-	newGuardian(ctx context.Context, user *models.SignedInUser, prefix string) fileGuardian
+	newGuardian(ctx context.Context, user *user.SignedInUser, prefix string) fileGuardian
 }
 
 type fileGuardian interface {
@@ -39,7 +39,7 @@ type fileGuardian interface {
 
 type pathFilterFileGuardian struct {
 	ctx                context.Context
-	user               *models.SignedInUser
+	user               *user.SignedInUser
 	prefix             string
 	pathFilterByAction map[string]filestorage.PathFilter
 	log                log.Logger

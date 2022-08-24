@@ -5,20 +5,20 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
-	cmd := &models.GetPlaylistsQuery{
+	cmd := &playlist.GetPlaylistsQuery{
 		OrgId: helper.orgID,
 		Limit: 500000,
 	}
-	err := job.sql.SearchPlaylists(helper.ctx, cmd)
+	res, err := job.playlistService.Search(helper.ctx, cmd)
 	if err != nil {
 		return err
 	}
 
-	if len(cmd.Result) < 1 {
+	if len(res) < 1 {
 		return nil // nothing
 	}
 
@@ -27,7 +27,7 @@ func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 		comment: "Export playlists",
 	}
 
-	for _, playlist := range cmd.Result {
+	for _, playlist := range res {
 		// TODO: fix the playlist API so it returns the json we need :)
 
 		gitcmd.body = append(gitcmd.body, commitBody{

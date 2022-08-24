@@ -7,6 +7,7 @@ load(
     'lint_frontend_step',
     'betterer_frontend_step',
     'test_frontend_step',
+    'compile_build_cmd',
 )
 
 load(
@@ -20,6 +21,7 @@ def test_frontend(trigger, ver_mode):
         download_grabpl_step(),
         gen_version_step(ver_mode),
         yarn_install_step(),
+        compile_build_cmd(),
     ]
     test_steps = [
         lint_frontend_step(),

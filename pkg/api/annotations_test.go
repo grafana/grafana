@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 )
@@ -49,7 +50,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		}
 
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+			role := org.RoleViewer
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
 					cmd, store, nil, func(sc *scenarioContext) {
@@ -82,7 +83,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Org Editor", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+			role := org.RoleEditor
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
 					cmd, store, nil, func(sc *scenarioContext) {
@@ -154,7 +155,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		}
 
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
-			role := models.ROLE_VIEWER
+			role := org.RoleViewer
 			t.Run("Should not be allowed to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
 					setUpACL()
@@ -187,7 +188,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Org Editor", func(t *testing.T) {
-			role := models.ROLE_EDITOR
+			role := org.RoleEditor
 			t.Run("Should be able to save an annotation", func(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, nil, func(sc *scenarioContext) {
 					setUpACL()
@@ -220,7 +221,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When user is an Admin", func(t *testing.T) {
-			role := models.ROLE_ADMIN
+			role := org.RoleAdmin
 
 			mockStore := mockstore.NewSQLStoreMock()
 
@@ -338,7 +339,7 @@ func (repo *fakeAnnotationsRepo) LoadItems() {
 
 var fakeAnnoRepo *fakeAnnotationsRepo
 
-func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
+func postAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
 	cmd dtos.PostAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
@@ -350,8 +351,8 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.PostAnnotation(c)
@@ -366,7 +367,7 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 	})
 }
 
-func putAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
+func putAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
 	cmd dtos.UpdateAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
@@ -379,8 +380,8 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.UpdateAnnotation(c)
@@ -395,7 +396,7 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 	})
 }
 
-func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
+func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType, cmd dtos.PatchAnnotationsCmd, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		store := sqlstore.InitTestDB(t)
@@ -407,8 +408,8 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.PatchAnnotation(c)
@@ -423,7 +424,7 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 	})
 }
 
-func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
+func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
 	cmd dtos.MassDeleteAnnotationsCmd, store sqlstore.Store, dashSvc dashboards.DashboardService, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
@@ -435,8 +436,8 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.UserId = testUserID
-			sc.context.OrgId = testOrgID
+			sc.context.UserID = testUserID
+			sc.context.OrgID = testOrgID
 			sc.context.OrgRole = role
 
 			return hs.MassDeleteAnnotations(c)
@@ -452,7 +453,7 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 }
 
 func TestAPI_Annotations_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInEditor(sc.initCtx)
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -788,7 +789,7 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			setUpRBACGuardian(t)
 			sc.acmock.
 				RegisterScopeAttributeResolver(AnnotationTypeScopeResolver())
-			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgID)
 
 			r := callAPI(sc.server, tt.args.method, tt.args.url, tt.args.body, t)
 			assert.Equalf(t, tt.want, r.Code, "Annotations API(%v)", tt.args.url)
@@ -859,7 +860,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 }
 
 func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true, true)
+	sc := setupHTTPServer(t, true)
 	setInitCtxSignedInEditor(sc.initCtx)
 	_, err := sc.db.CreateOrgWithMember("TestOrg", testUserID)
 	require.NoError(t, err)
@@ -981,7 +982,7 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setUpRBACGuardian(t)
-			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgId)
+			setAccessControlPermissions(sc.acmock, tt.args.permissions, sc.initCtx.OrgID)
 			dashboardAnnotation := &annotations.Item{Id: 1, DashboardId: 1}
 			organizationAnnotation := &annotations.Item{Id: 2, DashboardId: 0}
 
@@ -998,8 +999,8 @@ func TestAPI_MassDeleteAnnotations_AccessControl(t *testing.T) {
 }
 
 func setUpACL() {
-	viewerRole := models.ROLE_VIEWER
-	editorRole := models.ROLE_EDITOR
+	viewerRole := org.RoleViewer
+	editorRole := org.RoleEditor
 	store := mockstore.NewSQLStoreMock()
 	store.ExpectedTeamsByUser = []*models.TeamDTO{}
 	dashSvc := &dashboards.FakeDashboardService{}

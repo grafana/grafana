@@ -29,7 +29,7 @@ import { OnPropChangeArguments } from './types';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
   editor: getVariablesState(ownProps.identifier.rootStateKey, state).editor,
-  variable: getVariable(ownProps.identifier, state, false), // we could be renaming a variable and we don't want this to throw
+  variable: getVariable(ownProps.identifier, state),
 });
 
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
