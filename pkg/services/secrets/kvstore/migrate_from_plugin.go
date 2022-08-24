@@ -2,6 +2,7 @@ package kvstore
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -55,7 +56,8 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 		s.logger.Error("Failed to retrieve all secrets from plugin")
 		return err
 	}
-	s.logger.Debug("retrieved all secrets from plugin", "num secrets", len(res.Items))
+	totalSecrets := len(res.Items)
+	s.logger.Debug("retrieved all secrets from plugin", "num secrets", totalSecrets)
 	// create a secret sql store manually
 	secretsSql := &secretsKVStoreSQL{
 		sqlStore:       s.sqlStore,
@@ -65,7 +67,8 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 			cache: make(map[int64]cachedDecrypted),
 		},
 	}
-	for _, item := range res.Items {
+	for i, item := range res.Items {
+		s.logger.Debug(fmt.Sprintf("Migrating secret %d of %d", i+1, totalSecrets), "current", i+1, "secretCount", totalSecrets)
 		// Add to sql store
 		err = secretsSql.Set(ctx, item.Key.OrgId, item.Key.Namespace, item.Key.Type, item.Value)
 		if err != nil {
@@ -75,7 +78,8 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 		}
 	}
 
-	for _, item := range res.Items {
+	for i, item := range res.Items {
+		s.logger.Debug(fmt.Sprintf("Cleaning secret %d of %d", i+1, totalSecrets), "current", i+1, "secretCount", totalSecrets)
 		// Delete from the plugin
 		_, err := plugin.DeleteSecret(ctx, &secretsmanagerplugin.DeleteSecretRequest{
 			KeyDescriptor: &secretsmanagerplugin.Key{
@@ -89,15 +93,17 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 			continue
 		}
 	}
+	s.logger.Debug("Completed migration of secrets from plugin")
 
 	// The plugin is no longer needed at the moment
 	err = setPluginStartupErrorFatal(ctx, GetNamespacedKVStore(s.kvstore), false)
 	if err != nil {
 		s.logger.Error("Failed to remove plugin error fatal flag", "error", err.Error())
 	}
-	// Create a new fatal flag setter in case another secret is created
+	// Reset the fatal flag setter in case another secret is created on the plugin
 	fatalFlagOnce = sync.Once{}
 
+	s.logger.Debug("Shutting down secrets plugin now that migration is complete")
 	// if `use_plugin` wasn't set, stop the plugin after migration
 	if !s.cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool(false) {
 		err := s.manager.SecretsManager().Stop(ctx)
