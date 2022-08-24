@@ -127,27 +127,28 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		d.logger.Debug("alertmanagers found in the configuration", "alertmanagers", cfg.Alertmanagers)
+		amHash := cfg.AsSHA256()
+		d.logger.Debug("alertmanagers found in the configuration", "alertmanagers", amHash)
 
 		// We have a running sender, check if we need to apply a new config.
 		if ok {
-			if d.externalAlertmanagersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
-				d.logger.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+			if d.externalAlertmanagersCfgHash[cfg.OrgID] == amHash {
+				d.logger.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", amHash)
 				continue
 			}
 
-			d.logger.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+			d.logger.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", amHash)
 			err := existing.ApplyConfig(cfg)
 			if err != nil {
 				d.logger.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
 				continue
 			}
-			d.externalAlertmanagersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+			d.externalAlertmanagersCfgHash[cfg.OrgID] = amHash
 			continue
 		}
 
 		// No sender and have Alertmanager(s) to send to - start a new one.
-		d.logger.Info("creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+		d.logger.Info("creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", amHash)
 		s, err := NewExternalAlertmanagerSender()
 		if err != nil {
 			d.logger.Error("unable to start the sender", "err", err, "org", cfg.OrgID)
@@ -163,7 +164,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		d.externalAlertmanagersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+		d.externalAlertmanagersCfgHash[cfg.OrgID] = amHash
 	}
 
 	sendersToStop := map[int64]*ExternalAlertmanager{}
