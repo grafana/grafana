@@ -45,6 +45,8 @@ You can now easily embed Grafana in other applications by adding a JWT token dir
 When the JWT token is passed through the request URL to Grafana, Grafana validates and authenticates the token linked to a specific user, allowing access to dashboards which that user can view.
 To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
 
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+
 {{< figure src="/static/img/docs/dashboards/jwt-url-embedding-9-1.png" max-width="750px" caption="A JWT token used to embed Grafana" >}}
 
 #### Organization role mapping for GitHub OAuth2 authentication
@@ -52,6 +54,8 @@ To see JWT URL embedding in action, see the [sample project](https://github.com/
 You can now use GitHub OAuth2 to map users or teams to specific [Grafana organization roles]({{< relref "../administration/roles-and-permissions/#organization-roles" >}}) by using `role_attribute_path` configuration option.
 Grafana will use [JMESPath](https://jmespath.org/examples.html) for path lookup and role mapping.
 For more information, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/github/#map-roles" >}}).
+
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 {{< figure src="/static/img/docs/permissions/org-role-mapping-github-9-1.png" max-width="750px" caption="Configuring GitHub OAuth2 authentication with role mapping" >}}
 
