@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
@@ -133,6 +134,7 @@ func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) o
 	}
 
 	roleOrder := []org.RoleType{
+		accesscontrol.RoleGrafanaAdmin,
 		org.RoleAdmin,
 		org.RoleEditor,
 		org.RoleViewer,
@@ -157,6 +159,7 @@ func hasRole(roles []string, role org.RoleType) bool {
 			return true
 		}
 	}
+
 	return false
 }
 

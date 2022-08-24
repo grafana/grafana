@@ -226,13 +226,14 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 }
 
 type BasicUserInfo struct {
-	Id      string
-	Name    string
-	Email   string
-	Login   string
-	Company string
-	Role    string
-	Groups  []string
+	Id           string
+	Name         string
+	Email        string
+	Login        string
+	Company      string
+	Role         string
+	GrafanaAdmin bool
+	Groups       []string
 }
 
 func (b *BasicUserInfo) String() string {
