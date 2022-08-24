@@ -38,8 +38,6 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
           entries.forEach((entry) => {
             if (entry.target instanceof HTMLElement && entry.target.parentNode) {
               const index = Array.prototype.indexOf.call(entry.target.parentNode.children, entry.target);
-              entry.target.style.visibility = entry.isIntersecting ? 'visible' : 'hidden';
-              entry.target.style.order = index.toString();
               setChildVisibility((prev) => {
                 const newVisibility = [...prev];
                 newVisibility[index] = entry.isIntersecting;
@@ -63,7 +61,14 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={containerRef} className={cx(styles.container, className)} {...rest}>
-        {children}
+        {React.Children.map(children, (child, index) => (
+          <div
+            style={{ order: index, visibility: childVisibility[index] ? 'visible' : 'hidden' }}
+            className={styles.childWrapper}
+          >
+            {child}
+          </div>
+        ))}
         {childVisibility.includes(false) && (
           <>
             <ToolbarButton
@@ -119,5 +124,9 @@ const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment:
     justify-content: ${alignment === 'left' ? 'flex-start' : 'flex-end'};
     min-width: 0;
     position: relative;
+  `,
+  childWrapper: css`
+    align-items: center;
+    display: flex;
   `,
 });
