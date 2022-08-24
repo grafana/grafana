@@ -1,11 +1,13 @@
 package manager
 
 import (
+	"archive/zip"
 	"context"
 	"sync"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/plugins/storage"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
@@ -17,195 +19,219 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
-)
-
-const (
-	testPluginID = "test-plugin"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 )
 
 func TestPluginInstaller(t *testing.T) {
-	t.Run("Adding a plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, plugins.External, true, true)
-
-		loader := &fakeLoader{
-			mockedLoadedPlugins: []*plugins.Plugin{p},
+	t.Run("Can add a plugin from source", func(t *testing.T) {
+		src := []plugins.PluginSource{
+			{
+				Class: plugins.Core,
+				Paths: []string{"../../../../public/app/plugins/datasource/prometheus"},
+			},
 		}
 
-		repo := &fakePluginRepo{}
-
-		reg := newFakePluginRegistry()
-
-		pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, loader, repo)
-
-		err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
+		pm := New(&plugins.Cfg{}, newFakePluginRegistry(), src, &fakeLoader{}, &fakePluginRepo{}, &fakePluginStorage{}, &fakeProcessManager{})
+		err := pm.Run(context.Background())
 		require.NoError(t, err)
 
-		//assert.Equal(t, 1, i.installCount)
-		//assert.Equal(t, 0, i.uninstallCount)
+		p, exists := pm.plugin(context.Background(), "prometheus")
+		require.True(t, exists)
+		require.NotNil(t, p)
+	})
+
+	t.Run("Adding a new plugin", func(t *testing.T) {
+		const (
+			pluginID, v1 = "test-panel", "1.0.0"
+			zipNameV1    = "test-panel-1.0.0.zip"
+		)
+
+		// mock a plugin to be returned automatically by the plugin loader
+		pluginV1, _ := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+			plugin.Info.Version = v1
+		})
+		mockZipV1 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+			FileHeader: zip.FileHeader{Name: zipNameV1},
+		}}}}
+
+		loader := &fakeLoader{
+			loadFunc: func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
+				require.Equal(t, []string{zipNameV1}, paths)
+				return []*plugins.Plugin{pluginV1}, nil
+			},
+		}
+
+		pluginRepo := &fakePluginRepo{
+			getPluginArchiveFunc: func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				require.Equal(t, pluginV1.ID, pluginID)
+				require.Equal(t, v1, version)
+				return &repo.PluginArchive{
+					File: mockZipV1,
+				}, nil
+			},
+		}
+
+		fs := &fakePluginStorage{
+			addFunc: func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+				require.Equal(t, pluginV1.ID, pluginID)
+				require.Equal(t, mockZipV1, z)
+				return &storage.ExtractedPluginArchive{
+					Path: zipNameV1,
+				}, nil
+			},
+			added:   make(map[string]string),
+			removed: make(map[string]int),
+		}
+		proc := &fakeProcessManager{
+			started: make(map[string]int),
+			stopped: make(map[string]int),
+		}
+
+		pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []plugins.PluginSource{}, loader, pluginRepo, fs, proc)
+		err := pm.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
+		require.NoError(t, err)
 
 		verifyNoPluginErrors(t, pm.pluginRegistry)
 
-		assert.Equal(t, 1, pc.startCount)
-		assert.Equal(t, 0, pc.stopCount)
-		assert.False(t, pc.exited)
-		assert.False(t, pc.decommissioned)
+		require.Equal(t, zipNameV1, fs.added[pluginID])
+		require.Equal(t, 0, fs.removed[pluginID])
+		require.Equal(t, 1, proc.started[pluginID])
+		require.Equal(t, 0, proc.stopped[pluginID])
 
-		testPlugin, exists := reg.Plugin(context.Background(), testPluginID)
-		assert.True(t, exists)
-		assert.Equal(t, p.ToDTO(), testPlugin)
-		assert.Len(t, reg.Plugins(context.Background()), 1)
+		regPlugin, exists := pm.pluginRegistry.Plugin(context.Background(), pluginID)
+		require.True(t, exists)
+		require.Equal(t, pluginV1, regPlugin)
+		require.Len(t, pm.pluginRegistry.Plugins(context.Background()), 1)
 
-		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
+		t.Run("Won't add if already exists", func(t *testing.T) {
+			err = pm.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 			require.Equal(t, plugins.DuplicateError{
-				PluginID:          p.ID,
-				ExistingPluginDir: p.PluginDir,
+				PluginID:          pluginV1.ID,
+				ExistingPluginDir: pluginV1.PluginDir,
 			}, err)
 		})
 
-		t.Run("Update", func(t *testing.T) {
-			p, pc := createPlugin(t, testPluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
-				plugin.Info.Version = "1.2.0"
+		t.Run("Update plugin to different version", func(t *testing.T) {
+			const (
+				v2        = "2.0.0"
+				zipNameV2 = "test-panel-2.0.0.zip"
+			)
+			// mock a plugin to be returned automatically by the plugin loader
+			pluginV2, _ := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+				plugin.Info.Version = v2
 			})
 
-			l := &fakeLoader{
-				mockedLoadedPlugins: []*plugins.Plugin{p},
+			mockZipV2 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+				FileHeader: zip.FileHeader{Name: zipNameV2},
+			}}}}
+			loader.loadFunc = func(_ context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+				require.Equal(t, plugins.External, class)
+				require.Empty(t, ignore)
+				require.Equal(t, []string{zipNameV2}, paths)
+				return []*plugins.Plugin{pluginV2}, nil
 			}
-			pm.pluginLoader = l
+			pluginRepo.getPluginDownloadOptionsFunc = func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+				return &repo.PluginDownloadOptions{
+					PluginZipURL: "https://grafanaplugins.com",
+				}, nil
+			}
+			pluginRepo.getPluginArchiveByURLFunc = func(_ context.Context, pluginZipURL string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				require.Equal(t, "https://grafanaplugins.com", pluginZipURL)
+				return &repo.PluginArchive{
+					File: mockZipV2,
+				}, nil
+			}
+			fs.addFunc = func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+				require.Equal(t, pluginV1.ID, pluginID)
+				require.Equal(t, mockZipV2, z)
+				return &storage.ExtractedPluginArchive{
+					Path: zipNameV2,
+				}, nil
+			}
 
-			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.CompatOpts{})
-			assert.NoError(t, err)
-
-			//assert.Equal(t, 2, i.installCount)
-			//assert.Equal(t, 1, i.uninstallCount)
-
-			assert.Equal(t, 1, pc.startCount)
-			assert.Equal(t, 0, pc.stopCount)
-			assert.False(t, pc.exited)
-			assert.False(t, pc.decommissioned)
-
-			testPlugin, exists := reg.Plugin(context.Background(), testPluginID)
-			assert.True(t, exists)
-			assert.Equal(t, p.ToDTO(), testPlugin)
-			assert.Len(t, reg.Plugins(context.Background()), 1)
-		})
-
-		t.Run("Removing a plugin", func(t *testing.T) {
-			err = pm.Remove(context.Background(), p.ID)
+			err = pm.Add(context.Background(), pluginID, v2, plugins.CompatOpts{})
 			require.NoError(t, err)
 
-			//assert.Equal(t, 2, i.installCount)
-			//assert.Equal(t, 2, i.uninstallCount)
+			verifyNoPluginErrors(t, pm.pluginRegistry)
 
-			p, exists := reg.Plugin(context.Background(), p.ID)
-			assert.False(t, exists)
-			assert.Equal(t, plugins.PluginDTO{}, p)
+			require.Equal(t, zipNameV2, fs.added[pluginID])
+			require.Equal(t, 1, fs.removed[pluginID])
+			require.Equal(t, 2, proc.started[pluginID])
+			require.Equal(t, 1, proc.stopped[pluginID])
 
-			t.Run("Won't remove if not installed", func(t *testing.T) {
-				err := pm.Remove(context.Background(), p.ID)
+			regPlugin, exists = pm.pluginRegistry.Plugin(context.Background(), pluginID)
+			require.True(t, exists)
+			require.Equal(t, pluginV2, regPlugin)
+			require.Len(t, pm.pluginRegistry.Plugins(context.Background()), 1)
+		})
+
+		t.Run("Removing an existing plugin", func(t *testing.T) {
+			err = pm.Remove(context.Background(), pluginID)
+			require.NoError(t, err)
+
+			require.Equal(t, 2, proc.stopped[pluginID])
+			require.Equal(t, 2, fs.removed[pluginID])
+
+			p, exists := pm.pluginRegistry.Plugin(context.Background(), pluginID)
+			require.False(t, exists)
+			require.Nil(t, p)
+
+			t.Run("Won't remove if not exists", func(t *testing.T) {
+				err := pm.Remove(context.Background(), pluginID)
 				require.Equal(t, plugins.ErrPluginNotInstalled, err)
 			})
 		})
 	})
 
-	//t.Run("Can't update core plugin", func(t *testing.T) {
-	//	p, pc := createPlugin(t, testPluginID, "", plugins.Core, true, true)
-	//
-	//	loader := &fakeLoader{
-	//		mockedLoadedPlugins: []*plugins.Plugin{p},
-	//	}
-	//
-	//	pm, ps := createInstaller(t, func(pm *PluginInstaller) {
-	//		pm.pluginLoader = loader
-	//	})
-	//	err := pm.loadPlugins(context.Background(), plugins.Core, "test/path")
-	//	require.NoError(t, err)
-	//
-	//	assert.Equal(t, 0, pc.startCount)
-	//	assert.Equal(t, 0, pc.stopCount)
-	//	assert.False(t, pc.exited)
-	//	assert.False(t, pc.decommissioned)
-	//
-	//	testPlugin, exists := ps.Plugin(context.Background(), testPluginID)
-	//	assert.True(t, exists)
-	//	assert.Equal(t, p.ToDTO(), testPlugin)
-	//	assert.Len(t, ps.Plugins(context.Background()), 1)
-	//
-	//	verifyNoPluginErrors(t, pm.pluginRegistry)
-	//
-	//	err = pm.Add(context.Background(), testPluginID, "")
-	//	assert.Equal(t, plugins.ErrInstallCorePlugin, err)
-	//
-	//	t.Run("Can't uninstall core plugin", func(t *testing.T) {
-	//		err := pm.Remove(context.Background(), p.ID)
-	//		require.Equal(t, plugins.ErrUninstallCorePlugin, err)
-	//	})
-	//})
+	t.Run("Can't update core or bundled plugin", func(t *testing.T) {
+		tcs := []struct {
+			class plugins.Class
+		}{
+			{class: plugins.Core},
+			{class: plugins.Bundled},
+		}
 
-	//t.Run("Can't update bundled plugin", func(t *testing.T) {
-	//	p, pc := createPlugin(t, testPluginID, "", plugins.Bundled, true, true)
-	//
-	//	loader := &fakeLoader{
-	//		mockedLoadedPlugins: []*plugins.Plugin{p},
-	//	}
-	//
-	//	pm, ps := createInstaller(t, func(pm *PluginInstaller) {
-	//		pm.pluginLoader = loader
-	//	})
-	//	err := pm.loadPlugins(context.Background(),  "test/path")
-	//	require.NoError(t, err)
-	//
-	//	assert.Equal(t, 1, pc.startCount)
-	//	assert.Equal(t, 0, pc.stopCount)
-	//	assert.False(t, pc.exited)
-	//	assert.False(t, pc.decommissioned)
-	//
-	//	testPlugin, exists := ps.Plugin(context.Background(), testPluginID)
-	//	assert.True(t, exists)
-	//	assert.Equal(t, p.ToDTO(), testPlugin)
-	//	assert.Len(t, ps.Plugins(context.Background()), 1)
-	//
-	//	verifyNoPluginErrors(t, pm.pluginRegistry)
-	//
-	//	err = pm.Add(context.Background(), testPluginID, "")
-	//	assert.Equal(t, plugins.ErrInstallCorePlugin, err)
-	//
-	//	t.Run("Can't uninstall bundled plugin", func(t *testing.T) {
-	//		err := pm.Remove(context.Background(), p.ID)
-	//		require.Equal(t, plugins.ErrUninstallCorePlugin, err)
-	//	})
-	//})
+		for _, tc := range tcs {
+			p, _ := createPlugin(t, testPluginID, tc.class, true, true, func(plugin *plugins.Plugin) {
+				plugin.Info.Version = "1.0.0"
+			})
+
+			reg := &fakePluginRegistry{map[string]*plugins.Plugin{
+				testPluginID: p,
+			}}
+
+			proc := &fakeProcessManager{}
+			pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, &fakeLoader{}, &fakePluginRepo{}, &fakePluginStorage{}, proc)
+			err := pm.Add(context.Background(), p.ID, "3.2.0", plugins.CompatOpts{})
+			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
+
+			require.Equal(t, 0, proc.started[p.ID])
+			require.Equal(t, 0, proc.stopped[p.ID])
+
+			regPlugin, exists := pm.pluginRegistry.Plugin(context.Background(), testPluginID)
+			require.True(t, exists)
+			require.Equal(t, p, regPlugin)
+			require.Len(t, pm.pluginRegistry.Plugins(context.Background()), 1)
+			verifyNoPluginErrors(t, pm.pluginRegistry)
+
+			err = pm.Add(context.Background(), testPluginID, "", plugins.CompatOpts{})
+			require.Equal(t, plugins.ErrInstallCorePlugin, err)
+
+			t.Run("Can't uninstall core plugin", func(t *testing.T) {
+				err := pm.Remove(context.Background(), p.ID)
+				require.Equal(t, plugins.ErrUninstallCorePlugin, err)
+			})
+		}
+	})
 }
 
 // TODO move to store_test.go?
-//func TestPluginManager_registeredPlugins(t *testing.T) {
-//	t.Run("Decommissioned plugins are included in registeredPlugins", func(t *testing.T) {
-//		decommissionedPlugin, _ := createPlugin(t, testPluginID, "", plugins.Core, false, true,
-//			func(plugin *plugins.Plugin) {
-//				err := plugin.Decommission()
-//				require.NoError(t, err)
-//			},
-//		)
-//		require.True(t, decommissionedPlugin.IsDecommissioned())
-//
-//		pm := New(&plugins.Cfg{}, &fakePluginRegistry{
-//			store: map[string]*plugins.Plugin{
-//				testPluginID: decommissionedPlugin,
-//				"test-app":   {},
-//			},
-//		}, []plugins.PluginSource{}, &fakeLoader{}, &fakePluginInstaller{}, &fakePluginProcessManager{})
-//
-//		rps := pm.registeredPlugins(context.Background())
-//		require.Equal(t, 2, len(rps))
-//		require.NotNil(t, rps[testPluginID])
-//		require.NotNil(t, rps["test-app"])
-//	})
-//}
 
 func createManager(t *testing.T, cbs ...func(*PluginManager)) (*PluginManager, plugins.Store) {
 	t.Helper()
 
-	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []plugins.PluginSource{}, &fakeLoader{}, &fakePluginRepo{})
+	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []plugins.PluginSource{}, &fakeLoader{}, &fakePluginRepo{},
+		&fakePluginStorage{}, &fakeProcessManager{})
 
 	for _, cb := range cbs {
 		cb(pm)
@@ -267,79 +293,39 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 	}
 
 	pluginRegistry := registry.NewInMemory()
-	manager := New(cfg, pluginRegistry, []plugins.PluginSource{}, &fakeLoader{}, &fakePluginRepo{})
 	processManager := process.NewManager(pluginRegistry)
+	manager := New(cfg, pluginRegistry, []plugins.PluginSource{}, &fakeLoader{}, &fakePluginRepo{}, &fakePluginStorage{}, processManager)
 	ctx := &managerScenarioCtx{
 		manager:        manager,
 		processManager: processManager,
 	}
 
-	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, plugins.External, managed, true)
+	ctx.plugin, ctx.pluginClient = createPlugin(t, "test-datasource", plugins.External, managed, true)
 
 	fn(t, ctx)
 }
 
 func verifyNoPluginErrors(t *testing.T, pr registry.Service) {
 	for _, plugin := range pr.Plugins(context.Background()) {
-		assert.Nil(t, plugin.SignatureError)
+		require.Nil(t, plugin.SignatureError)
 	}
 }
 
-//type fakePluginProcessManager struct {
-//	started map[string]int
-//	stopped map[string]int
-//}
-//
-//func newFakePluginProcessManager() *fakePluginProcessManager {
-//	return &fakePluginProcessManager{
-//		started: make(map[string]int),
-//		stopped: make(map[string]int),
-//	}
-//}
-//
-//func (f *fakePluginProcessManager) Start(_ context.Context, pluginID string) error {
-//	f.started[pluginID] += 1
-//	return nil
-//}
-//
-//func (f *fakePluginProcessManager) Stop(_ context.Context, pluginID string) error {
-//	f.stopped[pluginID] += 1
-//	return nil
-//}
-//
-//func (f *fakePluginProcessManager) Shutdown(_ context.Context) {
-//
-//}
-
-type fakePluginManager struct {
-	installCount   int
-	uninstallCount int
-}
-
-func (f *fakePluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	f.installCount++
-	return nil
-}
-
-func (f *fakePluginManager) Remove(ctx context.Context, pluginID string) error {
-	f.uninstallCount++
-	return nil
-}
-
-func (f *fakePluginManager) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
-	return nil
-}
-
 type fakeLoader struct {
-	mockedLoadedPlugins []*plugins.Plugin
+	//TODO tidy up
+	loadFunc func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error)
 
 	loadedPaths []string
 }
 
-func (l *fakeLoader) Load(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *fakeLoader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+	if l.loadFunc != nil {
+		return l.loadFunc(ctx, class, paths, ignore)
+	}
+
 	l.loadedPaths = append(l.loadedPaths, paths...)
 
-	return l.mockedLoadedPlugins, nil
+	return nil, nil
 }
 
 type fakePluginClient struct {

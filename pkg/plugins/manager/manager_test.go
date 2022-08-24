@@ -3,7 +3,6 @@ package manager
 import (
 	"archive/zip"
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -12,10 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
+
+const testPluginID = "test-plugin"
 
 func TestPluginManager_Run(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
@@ -37,7 +37,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		p, pc := createPlugin(t, testPluginID, plugins.External, true, true)
 
 		loader := &fakeLoader{
-			mockedLoadedPlugins: []*plugins.Plugin{p},
+			loadFunc: func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
+				return []*plugins.Plugin{p}, nil
+			},
 		}
 
 		pm, ps := createManager(t, func(pm *PluginManager) {
@@ -63,7 +65,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		p, pc := createPlugin(t, testPluginID, plugins.External, false, true)
 
 		loader := &fakeLoader{
-			mockedLoadedPlugins: []*plugins.Plugin{p},
+			loadFunc: func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
+				return []*plugins.Plugin{p}, nil
+			},
 		}
 
 		pm, ps := createManager(t, func(pm *PluginManager) {
@@ -89,7 +93,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		p, pc := createPlugin(t, testPluginID, plugins.External, false, true)
 
 		loader := &fakeLoader{
-			mockedLoadedPlugins: []*plugins.Plugin{p},
+			loadFunc: func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
+				return []*plugins.Plugin{p}, nil
+			},
 		}
 
 		pm, ps := createManager(t, func(pm *PluginManager) {
@@ -115,7 +121,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 		p, pc := createPlugin(t, testPluginID, plugins.External, false, false)
 
 		loader := &fakeLoader{
-			mockedLoadedPlugins: []*plugins.Plugin{p},
+			loadFunc: func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
+				return []*plugins.Plugin{p}, nil
+			},
 		}
 
 		pm, ps := createManager(t, func(pm *PluginManager) {
@@ -274,84 +282,79 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 }
 
 type fakePluginRepo struct {
-	store map[string]fakePluginEntry
-
-	repo.Service
-}
-
-type fakePluginEntry struct {
-	z        *zip.ReadCloser
-	zipURL   string
-	version  string
-	checksum string
+	getPluginArchiveFunc         func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	getPluginArchiveByURLFunc    func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	getPluginDownloadOptionsFunc func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
-func (r *fakePluginRepo) GetPluginArchive(_ context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
-	key := fmt.Sprintf("%s-%s-%s", pluginID, version, opts.String())
-	v, exists := r.store[key]
-	if !exists {
-		return nil, fmt.Errorf("plugin archive not found")
+func (r *fakePluginRepo) GetPluginArchive(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
+	if r.getPluginArchiveFunc != nil {
+		return r.getPluginArchiveFunc(ctx, pluginID, version, opts)
 	}
 
-	return &repo.PluginArchive{
-		File: v.z,
-	}, nil
+	return &repo.PluginArchive{}, nil
 }
 
 // GetPluginArchiveByURL fetches the requested plugin from the specified URL.
-func (r *fakePluginRepo) GetPluginArchiveByURL(_ context.Context, archiveURL string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
-	key := fmt.Sprintf("%s-%s", archiveURL, opts.String())
-	v, exists := r.store[key]
-	if !exists {
-		return nil, fmt.Errorf("plugin archive not found")
+func (r *fakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL string, opts repo.CompatOpts) (*repo.PluginArchive, error) {
+	if r.getPluginArchiveByURLFunc != nil {
+		return r.getPluginArchiveByURLFunc(ctx, archiveURL, opts)
 	}
 
-	return &repo.PluginArchive{
-		File: v.z,
-	}, nil
+	return &repo.PluginArchive{}, nil
 }
 
 // GetPluginDownloadOptions fetches information for downloading the requested plugin.
-func (r *fakePluginRepo) GetPluginDownloadOptions(_ context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
-	key := fmt.Sprintf("%s-%s-%s", pluginID, version, opts.String())
-	v, exists := r.store[key]
-	if !exists {
-		return nil, fmt.Errorf("plugin archive not found")
+func (r *fakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+	if r.getPluginDownloadOptionsFunc != nil {
+		return r.getPluginDownloadOptionsFunc(ctx, pluginID, version, opts)
 	}
-
-	return &repo.PluginDownloadOptions{
-		PluginZipURL: v.zipURL,
-		Version:      v.version,
-		Checksum:     v.checksum,
-	}, nil
+	return &repo.PluginDownloadOptions{}, nil
 }
 
 type fakePluginStorage struct {
-	storage.Manager
-
-	added   int
-	removed int
+	addFunc    func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
+	removeFunc func(_ context.Context, pluginID string) error
+	added      map[string]string
+	removed    map[string]int
 }
 
-func (s *fakePluginStorage) Add(_ context.Context, _ string, _ *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
-	s.added++
+func (s *fakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	s.added[pluginID] = z.File[0].Name
+	if s.addFunc != nil {
+		return s.addFunc(ctx, pluginID, z)
+	}
 	return &storage.ExtractedPluginArchive{}, nil
 }
 
-func (s *fakePluginStorage) Remove(_ context.Context, _ string) error {
-	s.removed++
+func (s *fakePluginStorage) Remove(ctx context.Context, pluginID string) error {
+	s.removed[pluginID]++
+	if s.removeFunc != nil {
+		return s.removeFunc(ctx, pluginID)
+	}
 	return nil
 }
 
 type fakeProcessManager struct {
-	process.Service
+	startFunc func(_ context.Context, pluginID string) error
+	stopFunc  func(_ context.Context, pluginID string) error
+	started   map[string]int
+	stopped   map[string]int
 }
 
 func (m *fakeProcessManager) Start(ctx context.Context, pluginID string) error {
+	m.started[pluginID]++
+	if m.startFunc != nil {
+		return m.startFunc(ctx, pluginID)
+	}
 	return nil
 }
 
 func (m *fakeProcessManager) Stop(ctx context.Context, pluginID string) error {
+	m.stopped[pluginID]++
+	if m.stopFunc != nil {
+		return m.stopFunc(ctx, pluginID)
+	}
 	return nil
 }

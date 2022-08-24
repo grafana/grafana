@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
@@ -43,7 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
-func TestPluginManager_int_init(t *testing.T) {
+func TestIntegrationPluginManager_Run(t *testing.T) {
 	t.Helper()
 
 	staticRootPath, err := filepath.Abs("../../../public/")
@@ -94,10 +93,9 @@ func TestPluginManager_int_init(t *testing.T) {
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
 	reg := registry.ProvideService()
-	inst := ProvideService(cfg, reg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+	pm := ProvideService(cfg, reg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
 		provider.ProvideService(coreRegistry)), nil)
 
-	pm := ProvideService(cfg, inst)
 	require.NoError(t, err)
 	ps := store.ProvideService(reg)
 
@@ -109,6 +107,7 @@ func TestPluginManager_int_init(t *testing.T) {
 	verifyCorePluginCatalogue(t, ctx, ps)
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
+	verifyBackendProcesses(t, pm.pluginRegistry.Plugins(ctx))
 }
 
 func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Service) {
@@ -178,36 +177,33 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 	}
 
 	panels := ps.Plugins(ctx, plugins.Panel)
-	assert.Equal(t, len(expPanels), len(panels))
+	require.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
 		p, exists := ps.Plugin(ctx, p.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
-		assert.True(t, exists)
-		assert.Contains(t, expPanels, p.ID)
-		//assert.Contains(t, ps.registeredPlugins(ctx), p.ID)
+		require.True(t, exists)
+		require.Contains(t, expPanels, p.ID)
 	}
 
 	dataSources := ps.Plugins(ctx, plugins.DataSource)
-	assert.Equal(t, len(expDataSources), len(dataSources))
+	require.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
 		p, exists := ps.Plugin(ctx, ds.ID)
 		require.NotEqual(t, plugins.PluginDTO{}, p)
-		assert.True(t, exists)
-		assert.Contains(t, expDataSources, ds.ID)
-		//assert.Contains(t, ps.registeredPlugins(ctx), ds.ID)
+		require.True(t, exists)
+		require.Contains(t, expDataSources, ds.ID)
 	}
 
 	apps := ps.Plugins(ctx, plugins.App)
-	assert.Equal(t, len(expApps), len(apps))
+	require.Equal(t, len(expApps), len(apps))
 	for _, app := range apps {
 		p, exists := ps.Plugin(ctx, app.ID)
-		require.NotEqual(t, plugins.PluginDTO{}, p)
-		assert.True(t, exists)
-		assert.Contains(t, expApps, app.ID)
-		//assert.Contains(t, ps.registeredPlugins(ctx), app.ID)
+		require.True(t, exists)
+		require.NotNil(t, p)
+		require.Contains(t, expApps, app.ID)
 	}
 
-	assert.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
+	require.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
 }
 
 func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) {
@@ -218,19 +214,19 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 		dsPlugins[p.ID] = struct{}{}
 	}
 
+	inputPlugin, exists := ps.Plugin(ctx, "input")
+	require.True(t, exists)
+	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
+	require.NotNil(t, dsPlugins["input"])
+
 	pluginRoutes := make(map[string]*plugins.StaticRoute)
 	for _, r := range ps.Routes() {
 		pluginRoutes[r.PluginID] = r
 	}
 
-	inputPlugin, exists := ps.Plugin(ctx, "input")
-	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
-	assert.True(t, exists)
-	assert.NotNil(t, dsPlugins["input"])
-
 	for _, pluginID := range []string{"input"} {
-		assert.Contains(t, pluginRoutes, pluginID)
-		assert.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, inputPlugin.PluginDir))
+		require.Contains(t, pluginRoutes, pluginID)
+		require.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, inputPlugin.PluginDir))
 	}
 }
 
@@ -240,15 +236,25 @@ func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, ps *store.Servi
 		routes[route.PluginID] = route
 	}
 
-	assert.Len(t, routes, 2)
+	require.Len(t, routes, 2)
 
 	inputPlugin, _ := ps.Plugin(ctx, "input")
-	assert.NotNil(t, routes["input"])
-	assert.Equal(t, routes["input"].Directory, inputPlugin.PluginDir)
+	require.NotNil(t, routes["input"])
+	require.Equal(t, routes["input"].Directory, inputPlugin.PluginDir)
 
 	testAppPlugin, _ := ps.Plugin(ctx, "test-app")
-	assert.Contains(t, routes, "test-app")
-	assert.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
+	require.Contains(t, routes, "test-app")
+	require.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
+}
+
+func verifyBackendProcesses(t *testing.T, ps []*plugins.Plugin) {
+	for _, p := range ps {
+		if p.Backend {
+			pc, exists := p.Client()
+			require.True(t, exists)
+			require.NotNil(t, pc)
+		}
+	}
 }
 
 type fakeTracer struct {
