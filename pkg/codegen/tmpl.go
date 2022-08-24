@@ -32,9 +32,6 @@ type (
 		Header     tvars_autogen_header
 		Coremodels []tplVars
 	}
-	tvars_addenda struct {
-		tplVars
-	}
 	tvars_coremodel_imports struct {
 		PackageName string
 	}
