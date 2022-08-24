@@ -14,23 +14,28 @@ jobs:
       - name: "Determine which team to notify"
         run: |
           # Default to null values.
+          BOARD="null"
           CHANNEL="null"
 
           echo "${{ github.event.label.name }} label added"
           export CURRENT_LABEL="${{ github.event.label.name }}" # Enable the use of the label in yq evaluations
           # yq is installed by default in ubuntu-latest
           if [[ $(yq e 'keys | .[] | select(. == env(CURRENT_LABEL))' teams.yml ) ]]; then
+            # Check if we have a board set to use.
+            if [[ $(yq '.[env(CURRENT_LABEL)] | has("github-board")' teams.yml ) == true ]]; then
+              BOARD=$(yq '.[env(CURRENT_LABEL)].github-board' teams.yml)
+              echo "Ready to add issue to Grafana board ${BOARD}"
+            fi
             # Check if we have a channel set to notify on comments.
             if [[ $(yq '.[env(CURRENT_LABEL)] | has("channel-label")' teams.yml ) == true ]]; then
               CHANNEL=$(yq '.[env(CURRENT_LABEL)].channel-label' teams.yml)
+              echo "Ready to send issue to channel ID ${CHANNEL}"
             fi
           fi
 
           # set environment for next step
+          echo "BOARD=${BOARD}" >> $GITHUB_ENV
           echo "CHANNEL=${CHANNEL}" >> $GITHUB_ENV
-
-          # Debug logging
-          echo "Ready to send issue to channel ID ${CHANNEL}"
 
       - name: "Prepare payload"
         uses: frabert/replace-string-action@v2.0
@@ -42,7 +47,17 @@ jobs:
           replace-with: "'"
           flags: 'g'
 
+      - name: "Add to GitHub board"
+        if: ${{ env.BOARD != 'null' }}
+        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        with:
+          project_id: ${{ env.BOARD }}
+          organization: grafana
+          resource_node_id: ${{ github.event.issue.node_id }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: "Send Slack notification"
+        if: ${{ env.CHANNEL != 'null' }}
         uses: slackapi/slack-github-action@v1.14.0
         with:
           payload: >
