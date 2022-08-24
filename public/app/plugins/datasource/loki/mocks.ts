@@ -70,8 +70,12 @@ const defaultTimeSrvMock = {
   }),
 };
 
-export function createLokiDatasource(templateSrvMock: TemplateSrv, timeSrvStub = defaultTimeSrvMock): LokiDatasource {
-  const instanceSettings: DataSourceInstanceSettings = {
+export function createLokiDatasource(
+  templateSrvMock: TemplateSrv,
+  settings: Partial<DataSourceInstanceSettings<LokiOptions>> = {},
+  timeSrvStub = defaultTimeSrvMock
+): LokiDatasource {
+  const customSettings: DataSourceInstanceSettings<LokiOptions> = {
     url: 'myloggingurl',
     id: 0,
     uid: '',
@@ -98,12 +102,12 @@ export function createLokiDatasource(templateSrvMock: TemplateSrv, timeSrvStub =
         version: '',
       },
     },
-    jsonData: {},
+    jsonData: {
+      maxLines: '20',
+    },
     access: 'direct',
+    ...settings,
   };
-
-  const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
-  const customSettings: DataSourceInstanceSettings = { ...instanceSettings, jsonData: customData };
 
   // @ts-expect-error
   return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub);
