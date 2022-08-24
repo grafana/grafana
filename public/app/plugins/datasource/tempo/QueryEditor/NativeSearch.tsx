@@ -204,7 +204,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in the logfmt format.">
+          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
             <QueryField
               additionalPlugins={plugins}
               query={query.search}

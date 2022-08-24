@@ -146,7 +146,7 @@ export function SearchForm({ datasource, query, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in the logfmt format.">
+        <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
           <Input
             id="tags"
             value={transformToLogfmt(query.tags)}
