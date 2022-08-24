@@ -3,7 +3,7 @@ import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
-import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
+import { changeVariableEditorExtended } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
@@ -441,7 +441,6 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(toKeyedAction(key, setIdInEditor({ id: variable.id })))
         .whenActionIsDispatched(initAdHocVariableEditor(key))
         .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
 
@@ -483,7 +482,6 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(toKeyedAction(key, setIdInEditor({ id: variable.id })))
         .whenActionIsDispatched(initAdHocVariableEditor(key))
         .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
 
