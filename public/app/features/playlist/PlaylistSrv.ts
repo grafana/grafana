@@ -6,6 +6,10 @@ import { pickBy } from 'lodash';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 
+import { getGrafanaSearcher, SearchQuery } from '../search/service';
+
+import { Playlist } from './types';
+
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
   autofitpanels: true,
@@ -13,8 +17,8 @@ export const queryParamsToPreserve: { [key: string]: boolean } = {
 };
 
 export class PlaylistSrv {
-  private nextTimeoutId: any;
-  private declare dashboards: Array<{ url: string }>;
+  private nextTimeoutId: ReturnType<typeof setTimeout> | undefined;
+  private urls: string[] = []; // the URLs we need to load
   private index = 0;
   private declare interval: number;
   private declare startUrl: string;
@@ -31,7 +35,7 @@ export class PlaylistSrv {
   next() {
     clearTimeout(this.nextTimeoutId);
 
-    const playedAllDashboards = this.index > this.dashboards.length - 1;
+    const playedAllDashboards = this.index > this.urls.length - 1;
     if (playedAllDashboards) {
       this.numberOfLoops++;
 
@@ -44,10 +48,10 @@ export class PlaylistSrv {
       this.index = 0;
     }
 
-    const dash = this.dashboards[this.index];
+    const url = this.urls[this.index];
     const queryParams = locationService.getSearchObject();
-    const filteredParams = pickBy(queryParams, (value: any, key: string) => queryParamsToPreserve[key]);
-    const nextDashboardUrl = locationUtil.stripBaseFromUrl(dash.url);
+    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
+    const nextDashboardUrl = locationUtil.stripBaseFromUrl(url);
 
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
@@ -68,7 +72,7 @@ export class PlaylistSrv {
     }
   }
 
-  start(playlistUid: string) {
+  async start(playlistUid: string) {
     this.stop();
 
     this.startUrl = window.location.href;
@@ -78,17 +82,44 @@ export class PlaylistSrv {
     // setup location tracking
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
-    return getBackendSrv()
-      .get(`/api/playlists/${playlistUid}`)
-      .then((playlist: any) => {
-        return getBackendSrv()
-          .get(`/api/playlists/${playlistUid}/dashboards`)
-          .then((dashboards: any) => {
-            this.dashboards = dashboards;
-            this.interval = rangeUtil.intervalToMs(playlist.interval);
-            this.next();
-          });
-      });
+    const searcher = getGrafanaSearcher();
+    let urls: string[] = [];
+    const playlist = await getBackendSrv().get<Playlist>(`/api/playlists/${playlistUid}`);
+    if (!playlist.items?.length) {
+      // alert
+      return;
+    }
+    this.interval = rangeUtil.intervalToMs(playlist.interval);
+    for (const item of playlist.items) {
+      if (!item.value) {
+        continue; // invalid item
+      }
+      const query: SearchQuery = {
+        kind: ['dashboard'],
+      };
+      if (item.type === 'dashboard_by_tag') {
+        query.tags = item.value.split(' ');
+      } else {
+        query.uid = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${item.value}`);
+        if (!query.uid?.length) {
+          continue; // internal ID not found
+        }
+      }
+
+      const rsp = await searcher.search(query);
+      if (rsp.totalRows) {
+        const found = rsp.view.fields.url.values.toArray();
+        urls = urls.concat(found);
+      }
+    }
+    if (!urls.length) {
+      // alert... not found, etc
+      return;
+    }
+    this.urls = urls;
+    this.isPlaying = true;
+    this.next();
+    return;
   }
 
   stop() {

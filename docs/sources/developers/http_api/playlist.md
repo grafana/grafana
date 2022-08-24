@@ -32,7 +32,7 @@ Querystring Parameters:
 
 These parameters are used as querystring parameters.
 
-- **query** - Limit response to playlist having a name like this value.
+- **query** - Limit response to playlist having a name like this value. /!\ deprecated
 - **limit** - Limit response to _X_ number of playlist.
 
 **Example Response**:
@@ -132,6 +132,8 @@ Content-Type: application/json
 ## Get Playlist dashboards
 
 `GET /api/playlists/:uid/dashboards`
+
+/!\ Deprecated: this endpoint will be removed /!\
 
 **Example Request**:
 
