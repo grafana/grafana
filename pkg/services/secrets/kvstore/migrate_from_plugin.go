@@ -2,7 +2,9 @@ package kvstore
 
 import (
 	"context"
+	"sync"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
@@ -18,6 +20,7 @@ type MigrateFromPluginService struct {
 	sqlStore       sqlstore.Store
 	secretsService secrets.Service
 	manager        plugins.SecretsPluginManager
+	kvstore        kvstore.KVStore
 }
 
 func ProvideMigrateFromPluginService(
@@ -25,6 +28,8 @@ func ProvideMigrateFromPluginService(
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
 	manager plugins.SecretsPluginManager,
+	kvstore kvstore.KVStore,
+
 ) *MigrateFromPluginService {
 	return &MigrateFromPluginService{
 		cfg:            cfg,
@@ -32,6 +37,7 @@ func ProvideMigrateFromPluginService(
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		manager:        manager,
+		kvstore:        kvstore,
 	}
 }
 
@@ -83,6 +89,14 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 			continue
 		}
 	}
+
+	// The plugin is no longer needed at the moment
+	err = setPluginStartupErrorFatal(ctx, GetNamespacedKVStore(s.kvstore), false)
+	if err != nil {
+		s.logger.Error("Failed to remove plugin error fatal flag", "error", err.Error())
+	}
+	// Create a new fatal flag setter in case another secret is created
+	fatalFlagOnce = sync.Once{}
 
 	// if `use_plugin` wasn't set, stop the plugin after migration
 	if !s.cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool(false) {

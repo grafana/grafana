@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -50,6 +51,7 @@ func setupTestMigrateFromPluginService(t *testing.T) (*MigrateFromPluginService,
 		sqlStore,
 		secretsService,
 		manager,
+		kvstore.ProvideService(sqlStore),
 	)
 
 	secretsSql := &secretsKVStoreSQL{
