@@ -26,11 +26,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
-const (
-	headerName  = "httpHeaderName"
-	headerValue = "httpHeaderValue"
-)
-
 func ProvideService(
 	cfg *setting.Cfg,
 	dataSourceCache datasources.CacheService,
