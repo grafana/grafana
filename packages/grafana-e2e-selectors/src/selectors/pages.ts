@@ -72,7 +72,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Tab Settings',
+        title: 'Tab General',
       },
       Annotations: {
         List: {
