@@ -48,7 +48,6 @@ var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *D
 
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
-	GetVersion() *semver.Version
 	GetTimeField() string
 	GetMinInterval(queryInterval string) (time.Duration, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
@@ -74,7 +73,6 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		ctx:                ctx,
 		httpClientProvider: httpClientProvider,
 		ds:                 ds,
-		version:            ds.ESVersion,
 		timeField:          ds.TimeField,
 		indices:            indices,
 		timeRange:          timeRange,
@@ -85,15 +83,10 @@ type baseClientImpl struct {
 	ctx                context.Context
 	httpClientProvider httpclient.Provider
 	ds                 *DatasourceInfo
-	version            *semver.Version
 	timeField          string
 	indices            []string
 	timeRange          backend.TimeRange
 	debugEnabled       bool
-}
-
-func (c *baseClientImpl) GetVersion() *semver.Version {
-	return c.version
 }
 
 func (c *baseClientImpl) GetTimeField() string {
@@ -281,20 +274,6 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			interval: searchReq.Interval,
 		}
 
-		if c.version.Major() < 5 {
-			mr.header["search_type"] = "count"
-		} else {
-			allowedVersionRange, _ := semver.NewConstraint(">=5.6.0, <7.0.0")
-
-			if allowedVersionRange.Check(c.version) {
-				maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
-				if maxConcurrentShardRequests == 0 {
-					maxConcurrentShardRequests = 256
-				}
-				mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
-			}
-		}
-
 		multiRequests = append(multiRequests, &mr)
 	}
 
@@ -304,17 +283,13 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 	var qs []string
 
-	if c.version.Major() >= 7 {
-		maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
-		if maxConcurrentShardRequests == 0 {
-			maxConcurrentShardRequests = 5
-		}
-		qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
+	maxConcurrentShardRequests := c.ds.MaxConcurrentShardRequests
+	if maxConcurrentShardRequests == 0 {
+		maxConcurrentShardRequests = 5
 	}
+	qs = append(qs, fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests))
 
-	allowedFrozenIndicesVersionRange, _ := semver.NewConstraint(">=6.6.0")
-
-	if (allowedFrozenIndicesVersionRange.Check(c.version)) && c.ds.IncludeFrozen && c.ds.XPack {
+	if c.ds.IncludeFrozen && c.ds.XPack {
 		qs = append(qs, "ignore_throttled=false")
 	}
 
@@ -322,7 +297,7 @@ func (c *baseClientImpl) getMultiSearchQueryParameters() string {
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {
-	return NewMultiSearchRequestBuilder(c.GetVersion())
+	return NewMultiSearchRequestBuilder()
 }
 
 func (c *baseClientImpl) EnableDebug() {

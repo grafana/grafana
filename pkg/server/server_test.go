@@ -55,7 +55,7 @@ func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	secretMigrationService := &migrations.SecretMigrationServiceImpl{
 		ServerLockService: serverLockService,
 	}
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &ossaccesscontrol.OSSAccessControlService{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), secretMigrationService, usertest.NewUserServiceFake())
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &ossaccesscontrol.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), secretMigrationService, usertest.NewUserServiceFake())
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.

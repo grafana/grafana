@@ -102,9 +102,9 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
 
-   - [Format data using value mapping]({{< relref "../../panels/format-data/about-value-mapping/" >}})
+   - [Configure value mappings]({{< relref "../../panels/configure-value-mappings" >}})
    - [Visualization-specific options]({{< relref "../../visualizations/" >}})
-   - [Override field values]({{< relref "../../panels/override-field-values/about-field-overrides/" >}})
+   - [Override field values]({{< relref "../../panels/configure-overrides/" >}})
    - [Configure thresholds]({{< relref "../../panels/configure-thresholds/" >}})
    - [Configure standard options]({{< relref "../../panels/configure-standard-options/" >}})
 

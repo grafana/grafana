@@ -151,7 +151,7 @@ _Stacking_ allows Grafana to display series on top of each other. Be cautious wh
 
 #### Stack series in groups
 
-The stacking group option is only available as an override. For more information about creating an override, refer to [About field overrides]({{< relref "../../panels/override-field-values/about-field-overrides/" >}}).
+The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides]({{< relref "../../panels/configure-overrides" >}}).
 
 1. Edit the panel and click **Overrides**.
 1. Create a field override for the **Stack series** option.
@@ -186,7 +186,7 @@ Select the placement of the Y-axis.
 - **Right:** Display all Y-axes on the right side.
 - **Hidden:** Hide all axes.
 
-To selectively hide axes, [add an override]({{< relref "../../panels/override-field-values/add-a-field-override/" >}}) that targets specific fields.
+To selectively hide axes, [Add a field override]({{< relref "../../panels/configure-overrides#add-a-field-override" >}}) that targets specific fields.
 
 ### Label
 

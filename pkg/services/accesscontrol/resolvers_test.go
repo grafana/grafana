@@ -4,64 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestResolveKeywordScope(t *testing.T) {
-	tests := []struct {
-		name       string
-		user       *user.SignedInUser
-		permission accesscontrol.Permission
-		want       accesscontrol.Permission
-		wantErr    bool
-	}{
-		{
-			name:       "no scope",
-			user:       testUser,
-			permission: accesscontrol.Permission{Action: "users:read"},
-			want:       accesscontrol.Permission{Action: "users:read"},
-			wantErr:    false,
-		},
-		{
-			name:       "user if resolution",
-			user:       testUser,
-			permission: accesscontrol.Permission{Action: "users:read", Scope: "users:self"},
-			want:       accesscontrol.Permission{Action: "users:read", Scope: "users:id:2"},
-			wantErr:    false,
-		},
-	}
-	for _, tt := range tests {
-		var err error
-		t.Run(tt.name, func(t *testing.T) {
-			resolvers := accesscontrol.NewScopeResolvers()
-			scopeModifier := resolvers.GetScopeKeywordMutator(tt.user)
-			tt.permission.Scope, err = scopeModifier(context.TODO(), tt.permission.Scope)
-			if tt.wantErr {
-				assert.Error(t, err, "expected an error during the resolution of the scope")
-				return
-			}
-			assert.NoError(t, err)
-			assert.EqualValues(t, tt.want, tt.permission, "permission did not match expected resolution")
-		})
-	}
-}
-
-var testUser = &user.SignedInUser{
-	UserID:  2,
-	OrgID:   3,
-	OrgName: "TestOrg",
-	OrgRole: org.RoleViewer,
-	Login:   "testUser",
-	Name:    "Test User",
-	Email:   "testuser@example.org",
-}
-
-func TestResolveAttributeScope(t *testing.T) {
+func TestResolvers_AttributeScope(t *testing.T) {
 	// Calls allow us to see how many times the fakeDataSourceResolution has been called
 	calls := 0
 	fakeDataSourceResolver := accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, initialScope string) ([]string, error) {
@@ -142,7 +91,7 @@ func TestResolveAttributeScope(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		resolvers := accesscontrol.NewScopeResolvers()
+		resolvers := accesscontrol.NewResolvers(log.NewNopLogger())
 
 		// Reset calls counter
 		calls = 0
