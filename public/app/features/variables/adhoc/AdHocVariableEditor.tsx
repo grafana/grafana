@@ -14,7 +14,7 @@ import { getVariablesState } from '../state/selectors';
 import { AdHocVariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
-import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
+import { changeVariableDatasource } from './actions';
 
 const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
   const { rootStateKey } = ownProps.variable;
@@ -34,7 +34,6 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
 };
 
 const mapDispatchToProps = {
-  initAdHocVariableEditor,
   changeVariableDatasource,
 };
 
@@ -51,8 +50,6 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
       console.error('AdHocVariableEditor: variable has no rootStateKey');
       return;
     }
-
-    this.props.initAdHocVariableEditor(rootStateKey);
   }
 
   onDatasourceChanged = (ds: DataSourceInstanceSettings) => {
