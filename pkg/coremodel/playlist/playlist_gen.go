@@ -29,19 +29,19 @@ const (
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Model struct {
-	// Interval
-	// TODO: Figure out the type of this, and validate that it's how long between shifts between items in the playlist.
-	Interval *string `json:"interval,omitempty"`
+	// Interval sets the time between switching views in a playlist.
+	// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
+	Interval string `json:"interval"`
 
-	// Playlist item
+	// The ordered list of items that the playlist will iterate over.
 	Items *[]Items `json:"items,omitempty"`
 
-	// Name of the playist.
-	Name *string `json:"name,omitempty"`
+	// Name of the playlist.
+	Name string `json:"name"`
 
 	// Unique playlist identifier. Generated on creation, either by the
 	// creator of the playlist of by the application.
-	Uid *string `json:"uid,omitempty"`
+	Uid string `json:"uid"`
 }
 
 // PlaylistItems defines model for playlist.Items.
@@ -49,14 +49,18 @@ type Model struct {
 // THIS TYPE IS INTENDED FOR INTERNAL USE BY THE GRAFANA BACKEND, AND IS SUBJECT TO BREAKING CHANGES.
 // Equivalent Go types at stable import paths are provided in https://github.com/grafana/grok.
 type Items struct {
-	// Title of the playlist item.
-	Title *string `json:"title,omitempty"`
-
 	// Type of the item.
-	Type *ItemsType `json:"type,omitempty"`
+	Type ItemsType `json:"type"`
 
-	// TODO: What is this? Is this what's used for dashboard_by_tag?
-	Value *string `json:"value,omitempty"`
+	// Value depends on type and describes the playlist item.
+	//
+	//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
+	//  is not portable as the numerical identifier is non-deterministic between different instances.
+	//  Deprecated.
+	//  - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
+	//  dashboards behind the tag will be added to the playlist.
+	//  - dashboard_by_uid: The value is the UID identifier of a dashboard.
+	Value string `json:"value"`
 }
 
 // Type of the item.

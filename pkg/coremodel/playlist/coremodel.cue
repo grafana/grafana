@@ -12,13 +12,13 @@ seqs: [
 			{//0.0
 				// Unique playlist identifier. Generated on creation, either by the
 				// creator of the playlist of by the application.
-				uid?: string @reviewme()
-				// Name of the playist.
-				name?: string @reviewme()
-				// Interval
-				// TODO: Figure out the type of this, and validate that it's how long between shifts between items in the playlist.
-				interval?: string @reviewme()
-				// Playlist item
+				uid: string
+				// Name of the playlist.
+				name: string
+				// Interval sets the time between switching views in a playlist.
+				// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
+				interval: string | *"5m"
+				// The ordered list of items that the playlist will iterate over.
 				items?: [...#Items]
 
 				///////////////////////////////////////
@@ -26,11 +26,16 @@ seqs: [
 
 				#Items: {
 					// Type of the item.
-					type?: "dashboard_by_id" | "dashboard_by_tag" | "dashboard_by_uid"
-					// Title of the playlist item.
-					title?: string
-					// TODO: What is this? Is this what's used for dashboard_by_tag?
-					value?: string
+					type: "dashboard_by_id" | "dashboard_by_tag" | "dashboard_by_uid"
+					// Value depends on type and describes the playlist item.
+					//
+					//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
+					//  is not portable as the numerical identifier is non-deterministic between different instances.
+					//  Deprecated.
+					//  - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
+					//  dashboards behind the tag will be added to the playlist.
+					//  - dashboard_by_uid: The value is the UID identifier of a dashboard.
+					value: string
 				}
 			}
 		]

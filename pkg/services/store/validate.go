@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/framework/coremodel"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	issvg "github.com/grafana/grafana/pkg/services/store/go-is-svg"
@@ -104,13 +103,7 @@ func (s *standardStorageService) validateUploadRequest(ctx context.Context, user
 		return s.validateImage(ctx, user, req)
 	default:
 		if t, exists := types[et]; exists {
-			val, err := cuectx.JSONtoCUE("", req.Contents)
-			if err != nil {
-				// TODO: Use Go errors
-				return fail(err.Error())
-			}
-
-			_, err = t.CurrentSchema().Validate(val)
+			_, _, err := coremodel.Mux(t).Converge(req.Contents)
 			if err != nil {
 				// TODO: Use Go errors
 				return fail(err.Error())

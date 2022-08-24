@@ -9,16 +9,16 @@
 // not exported to exclude it from grafana-schema's public API surface.
 
 interface Playlist {
-  interval?: string;
+  interval: string;
   items?: {
-    type?: ('dashboard_by_id' | 'dashboard_by_tag' | 'dashboard_by_uid');
-    title?: string;
-    value?: string;
+    type: ('dashboard_by_id' | 'dashboard_by_tag' | 'dashboard_by_uid');
+    value: string;
   }[];
-  name?: string;
-  uid?: string;
+  name: string;
+  uid: string;
 }
 
 const defaultPlaylist: Partial<Playlist> = {
+  interval: '5m',
   items: [],
 };

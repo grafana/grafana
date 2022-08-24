@@ -5,6 +5,8 @@ import (
 	"path"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/framework/coremodel"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -23,14 +25,14 @@ func TestPlaylist_parseValid(t *testing.T) {
 			bs, err := fs.ReadFile(path.Join(dirName, f.Name()))
 			require.NoError(t, err, "reading test file")
 
-			data, err := cuectx.JSONtoCUE(f.Name(), bs)
-			require.NoError(t, err)
-
 			cm, err := New(cuectx.ProvideThemaLibrary())
 			require.NoError(t, err)
 
-			_, err = cm.CurrentSchema().Validate(data)
+			val, _, err := coremodel.Mux(cm).Converge(bs)
 			require.NoError(t, err)
+
+			_, ok := val.(*Model)
+			require.True(t, ok)
 		})
 	}
 }
@@ -45,13 +47,10 @@ func TestPlaylist_parseInvalid(t *testing.T) {
 			bs, err := fs.ReadFile(path.Join(dirName, f.Name()))
 			require.NoError(t, err, "reading test file")
 
-			data, err := cuectx.JSONtoCUE(f.Name(), bs)
-			require.NoError(t, err)
-
 			cm, err := New(cuectx.ProvideThemaLibrary())
 			require.NoError(t, err)
 
-			_, err = cm.CurrentSchema().Validate(data)
+			_, _, err = coremodel.Mux(cm).Converge(bs)
 			require.Error(t, err)
 		})
 	}
