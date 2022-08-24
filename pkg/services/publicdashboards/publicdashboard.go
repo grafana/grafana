@@ -29,7 +29,7 @@ type Store interface {
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
-	SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) (*PublicDashboard, error)
+	SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
 	UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
 	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
