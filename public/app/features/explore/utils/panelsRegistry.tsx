@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ExplorePanelProps } from '@grafana/data';
+import { ExplorePanelProps, FieldConfigSource, PanelProps, ScopedVars } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Collapse } from '@grafana/ui';
 // // TODO: probably needs to be exported from ui directly
@@ -57,6 +57,57 @@ export async function getPanelForVisType(visType: string): Promise<React.Compone
       return TablePanel;
     }
   }
+}
+
+/**
+ * Wrap panel adding a transform so we can use dashboard panels Explore without modification.
+ * @param Panel
+ */
+function makePanelExploreCompatible(Panel: React.ComponentType<PanelProps>): React.ComponentType<ExplorePanelProps> {
+  return function CompatibilityWrapper(props: ExplorePanelProps) {
+    // This transform may not be 100% perfect so we may need to use some sensible zero/empty/noop values. We will have
+    // to see how much impact that will have but I would think even if that makes some panels loose some functionality
+    // it may be still ok. If there are bugs we will have to fix them somehow.
+    const dashboardProps = transformToDashboardProps(props);
+    return <Panel {...dashboardProps} />;
+  };
+}
+
+function transformToDashboardProps(props: ExplorePanelProps): PanelProps {
+  return {
+    data: {
+      series: props.data,
+      annotations: props.annotations,
+      state: props.loadingState,
+      timeRange: props.range,
+    },
+    eventBus: props.eventBus,
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    height: 0,
+    id: 0,
+    onChangeTimeRange: props.onUpdateTimeRange,
+    onFieldConfigChange(config: FieldConfigSource): void {
+      return;
+    },
+    onOptionsChange<TOptions>(options: TOptions): void {
+      return;
+    },
+    // importPanelPlugin returns PanelPlugin which is basically PanelPlugin<any> so we don't know what should be
+    // here but there are no options to pass in Explore
+    options: undefined,
+    renderCounter: 0,
+    replaceVariables(value: string, scopedVars: ScopedVars | undefined, format: string | Function | undefined): string {
+      return value;
+    },
+    timeRange: props.range,
+    timeZone: props.timeZone,
+    title: 'explore-panel',
+    transparent: false,
+    width: props.width,
+  };
 }
 
 function GraphPanel(props: ExplorePanelProps) {

@@ -144,6 +144,7 @@ export interface ExplorePanelProps {
   withTraceView?: boolean;
   scrollElement?: Element;
   topOfViewRef: RefObject<HTMLDivElement>;
+  eventBus: EventBus;
 }
 
 export interface PanelEditorProps<T = any> {

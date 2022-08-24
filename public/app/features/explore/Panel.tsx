@@ -6,11 +6,14 @@ import { ExplorePanelProps } from '@grafana/data';
 import { getPanelForVisType } from './utils/panelsRegistry';
 
 type Props = ExplorePanelProps & {
-  visType: string;
+  preferredVisualizationType: string;
 };
 
 export function Panel(props: Props) {
-  const panelLoadState = useAsync(() => getPanelForVisType(props.visType), [props.visType]);
+  const panelLoadState = useAsync(
+    () => getPanelForVisType(props.preferredVisualizationType),
+    [props.preferredVisualizationType]
+  );
   if (panelLoadState.loading) {
     return null;
   }

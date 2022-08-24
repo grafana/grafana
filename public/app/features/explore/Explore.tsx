@@ -272,7 +272,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             withTraceView={Boolean(frames['trace']?.length)}
             scrollElement={this.scrollElement}
             topOfViewRef={this.topOfViewRef}
-            visType={key}
+            preferredVisualizationType={key}
+            eventBus={this.props.eventBridge}
           />
         </ErrorBoundaryAlert>
       );
@@ -369,6 +370,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     graphStyle,
     frames,
     range,
+    eventBridge,
   } = item;
 
   return {
@@ -385,6 +387,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     graphStyle,
     frames,
     range,
+    eventBridge,
   };
 }
 

@@ -20,8 +20,25 @@ export enum LoadingState {
   Error = 'Error',
 }
 
+/**
+ * List of known visualization types that are part of Grafana core.
+ */
+export enum KnownVisualizationType {
+  graph = 'graph',
+  table = 'table',
+  logs = 'graph',
+  trace = 'trace',
+  nodeGraph = 'nodeGraph',
+}
+
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
+/**
+ * @deprecated Use KnownVisualisationType enum
+ */
 export const preferredVisualizationTypes = ['graph', 'table', 'logs', 'trace', 'nodeGraph'] as const;
+/**
+ * @deprecated Use KnownVisualisationType enum
+ */
 export type PreferredVisualisationType = typeof preferredVisualizationTypes[number];
 
 /**
