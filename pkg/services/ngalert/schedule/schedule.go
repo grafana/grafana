@@ -226,25 +226,39 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
+		// Avoid logging sensitive data
+		var redactedAMs []string
+		for _, am := range cfg.Alertmanagers {
+			parsedAM, err := url.Parse(am)
+			if err != nil {
+				sch.log.Error("failed to parse alertmanager string",
+					"org", cfg.OrgID,
+					"err", err)
+				continue
+			}
+			redactedAMs = append(redactedAMs, parsedAM.Redacted())
+		}
+
 		// We have a running sender, check if we need to apply a new config.
+		amHash := cfg.AsSHA256()
 		if ok {
-			if sch.sendersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
-				sch.log.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+			if sch.sendersCfgHash[cfg.OrgID] == amHash {
+				sch.log.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 				continue
 			}
 
-			sch.log.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+			sch.log.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 			err := existing.ApplyConfig(cfg)
 			if err != nil {
 				sch.log.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
 				continue
 			}
-			sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+			sch.sendersCfgHash[cfg.OrgID] = amHash
 			continue
 		}
 
 		// No sender and have Alertmanager(s) to send to - start a new one.
-		sch.log.Info("creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+		sch.log.Info("creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 		s, err := sender.New(sch.metrics)
 		if err != nil {
 			sch.log.Error("unable to start the sender", "err", err, "org", cfg.OrgID)
@@ -260,7 +274,7 @@ func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+		sch.sendersCfgHash[cfg.OrgID] = amHash
 	}
 
 	sendersToStop := map[int64]*sender.Sender{}
