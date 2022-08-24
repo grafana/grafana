@@ -18,8 +18,41 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2/extract"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/blugelabs/bluge"
+)
+
+var (
+	applyingChangesFromEventsDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_index_applying_changes_duration_seconds",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
+	fullReindexingDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_index_reindexing_duration_seconds",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
+	orgReindexingDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_index_org_reindexing_duration_seconds",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
+	initialIndexing = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_index_reindexing_duration_seconds",
+			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
 )
 
 type dashboardLoader interface {
@@ -205,6 +238,7 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 				started := time.Now()
 				i.logger.Info("Start re-indexing")
 				i.reIndexFromScratch(ctx)
+				fullReindexingDuration.Observe(time.Since(started).Seconds())
 				i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
 				reIndexDoneCh <- lastIndexedEventID
 			}()
@@ -234,6 +268,7 @@ func (i *searchIndex) buildInitialIndexes(ctx context.Context, orgIDs []int64) e
 			return fmt.Errorf("can't build initial dashboard search index for org %d: %w", orgID, err)
 		}
 	}
+	initialIndexing.Observe(time.Since(started).Seconds())
 	i.logger.Info("Finish building in-memory indexes", "elapsed", time.Since(started))
 	return nil
 }
@@ -250,6 +285,8 @@ func (i *searchIndex) buildInitialIndex(ctx context.Context, orgID int64) error 
 		debugCtxCancel()
 		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
+
+	orgReindexingDuration.Observe(time.Since(started).Seconds())
 	i.logger.Info("Indexing for org finished", "orgIndexElapsed", time.Since(started), "orgId", orgID, "numDashboards", numDashboards)
 	debugCtxCancel()
 
@@ -501,6 +538,8 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 		}
 		lastEventID = e.Id
 	}
+
+	applyingChangesFromEventsDuration.Observe(time.Since(started).Seconds())
 	i.logger.Info("Index updates applied", "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))
 	return lastEventID
 }
