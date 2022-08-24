@@ -14,8 +14,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/blugelabs/bluge"
 )
@@ -28,8 +28,8 @@ type buildSignal struct {
 }
 
 type fileStore interface {
-	Read(ctx context.Context, user *models.SignedInUser, path string) (*filestorage.File, error)
-	Upload(ctx context.Context, user *models.SignedInUser, req *store.UploadRequest) error
+	Read(ctx context.Context, user *user.SignedInUser, path string) (*filestorage.File, error)
+	Upload(ctx context.Context, user *user.SignedInUser, req *store.UploadRequest) error
 }
 
 type eventStore interface {
