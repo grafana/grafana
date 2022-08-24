@@ -14,11 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-const (
-	headerName  = "httpHeaderName"
-	headerValue = "httpHeaderValue"
-)
-
 var oAuthIsOAuthPassThruEnabledFunc = func(oAuthTokenService oauthtoken.OAuthTokenService, ds *datasources.DataSource) bool {
 	return oAuthTokenService.IsOAuthPassThruEnabled(ds)
 }
