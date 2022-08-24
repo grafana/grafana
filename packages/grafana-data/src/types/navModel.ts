@@ -31,6 +31,7 @@ export interface NavModelItem extends NavLinkDTO {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   showIconInNavbar?: boolean;
+  hideFromBreadcrumbs?: boolean;
 }
 
 export enum NavSection {
