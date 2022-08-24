@@ -35,21 +35,21 @@ var (
 	fullReindexingDuration = promauto.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:      "dashboard_index_reindexing_duration_seconds",
-			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100, 150, 300},
 			Namespace: namespace,
 			Subsystem: subsystem,
 		})
 	orgReindexingDuration = promauto.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:      "dashboard_index_org_reindexing_duration_seconds",
-			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100, 150, 300},
 			Namespace: namespace,
 			Subsystem: subsystem,
 		})
 	initialIndexing = promauto.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:      "dashboard_index_reindexing_duration_seconds",
-			Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100, 150, 300},
 			Namespace: namespace,
 			Subsystem: subsystem,
 		})
