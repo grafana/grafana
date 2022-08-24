@@ -29,4 +29,31 @@ export class DruidDataSource extends DataSourceWithBackend<DruidQuery, DruidSett
       return response;
     });
   }
+
+  async getTagKeys(options?: any) {
+    const columnNamesSql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS"
+    const tagKeysQuery = {
+      "builder": {
+        "queryType": "sql",
+        "query": columnNamesSql,
+      },
+      "settings": {},
+      "expr": "{\"builder\":{\"queryType\":\"sql\",\"query\":\""+columnNamesSql+"\",\"intervals\":{\"type\":\"intervals\",\"intervals\":[\"${__from:date:iso}/${__to:date:iso}\"]}},\"settings\":{}}"
+    }
+
+    return this.postResource('query-variable', this.applyTemplateVariables(tagKeysQuery as any));
+  }
+
+  async getTagValues(options: { key?: string } = {}) {
+    const columnValuesSql = `SELECT ${options.key} FROM \"telemetry-dcde9fb7-6cec-4a4a-b015-114795a65ed0\" GROUP BY 1`;
+    const tagValuesQuery = {
+      "builder": {
+        "queryType": "sql",
+        "query": columnValuesSql,
+      },
+      "settings": {},
+      "expr": "{\"builder\":{\"queryType\":\"sql\",\"query\":\""+columnValuesSql+"\",\"intervals\":{\"type\":\"intervals\",\"intervals\":[\"${__from:date:iso}/${__to:date:iso}\"]}},\"settings\":{}}"
+    }
+    return this.postResource('query-variable', this.applyTemplateVariables(tagValuesQuery as any));
+  }
 }
