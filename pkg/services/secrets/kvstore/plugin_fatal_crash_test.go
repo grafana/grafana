@@ -114,19 +114,6 @@ func setupTestMigratorServiceWithDeletionError(
 	startupOnce = sync.Once{}
 	cfg := setupTestConfig(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	getAllFuncOverride := func(ctx context.Context) ([]Item, error) {
-		items := make([]Item, 0)
-		var orgId int64 = 1
-		str := "random string"
-		items = append(items, Item{
-			Id:        1,
-			OrgId:     &orgId,
-			Type:      &str,
-			Namespace: &str,
-			Value:     "bogus",
-		})
-		return items, nil
-	}
 	manager := NewFakeSecretsPluginManager(t, false)
 	migratorService := ProvidePluginSecretMigrationService(
 		secretskv,
@@ -136,8 +123,17 @@ func setupTestMigratorServiceWithDeletionError(
 		kvstore,
 		manager,
 	)
-	// TODO refactor Migrator to allow us to override the entire sqlstore with a mock instead
-	migratorService.overrideGetAllFunc(getAllFuncOverride)
+	fallback := NewFakeSecretsKVStore()
+	var orgId int64 = 1
+	str := "random string"
+	fallback.store[Key{
+		OrgId:     orgId,
+		Type:      str,
+		Namespace: str,
+	}] = "bogus"
+	fallback.delError = true
+	err := secretskv.SetFallback(fallback)
+	require.NoError(t, err)
 	return migratorService
 }
 

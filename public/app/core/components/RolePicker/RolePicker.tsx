@@ -8,44 +8,46 @@ import { RolePickerMenu } from './RolePickerMenu';
 import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
-  builtInRole?: OrgRole;
+  basicRole?: OrgRole;
   appliedRoles: Role[];
   roleOptions: Role[];
-  builtInRoles?: Record<string, Role[]>;
   isLoading?: boolean;
   disabled?: boolean;
-  builtinRolesDisabled?: boolean;
-  showBuiltInRole?: boolean;
+  basicRoleDisabled?: boolean;
+  showBasicRole?: boolean;
   onRolesChange: (newRoles: Role[]) => void;
-  onBuiltinRoleChange?: (newRole: OrgRole) => void;
+  onBasicRoleChange?: (newRole: OrgRole) => void;
   canUpdateRoles?: boolean;
+  /**
+   * Set {@link RolePickerMenu}'s button to display either `Apply` (apply=true) or `Update` (apply=false)
+   */
   apply?: boolean;
 }
 
 export const RolePicker = ({
-  builtInRole,
+  basicRole,
   appliedRoles,
   roleOptions,
   disabled,
   isLoading,
-  builtinRolesDisabled,
-  showBuiltInRole,
+  basicRoleDisabled,
+  showBasicRole,
   onRolesChange,
-  onBuiltinRoleChange,
+  onBasicRoleChange,
   canUpdateRoles = true,
   apply = false,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
-  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(builtInRole);
+  const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
   const [query, setQuery] = useState('');
   const [offset, setOffset] = useState({ vertical: 0, horizontal: 0 });
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setSelectedBuiltInRole(builtInRole);
+    setSelectedBuiltInRole(basicRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles, builtInRole]);
+  }, [appliedRoles, basicRole]);
 
   useEffect(() => {
     const dimensions = ref?.current?.getBoundingClientRect();
@@ -85,8 +87,8 @@ export const RolePicker = ({
     setOpen(false);
     setQuery('');
     setSelectedRoles(appliedRoles);
-    setSelectedBuiltInRole(builtInRole);
-  }, [appliedRoles, builtInRole]);
+    setSelectedBuiltInRole(basicRole);
+  }, [appliedRoles, basicRole]);
 
   // Only call onClose if menu is open. Prevent unnecessary calls for multiple pickers on the page.
   const onClickOutside = () => isOpen && onClose();
@@ -103,13 +105,13 @@ export const RolePicker = ({
     setSelectedRoles(roles);
   };
 
-  const onBuiltInRoleSelect = (role: OrgRole) => {
+  const onBasicRoleSelect = (role: OrgRole) => {
     setSelectedBuiltInRole(role);
   };
 
   const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    if (onBuiltinRoleChange && newBuiltInRole && newBuiltInRole !== builtInRole) {
-      onBuiltinRoleChange(newBuiltInRole);
+    if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
+      onBasicRoleChange(newBuiltInRole);
     }
     if (canUpdateRoles) {
       onRolesChange(newRoles);
@@ -141,7 +143,7 @@ export const RolePicker = ({
     <div data-testid="role-picker" style={{ position: 'relative', width: ROLE_PICKER_WIDTH }} ref={ref}>
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
-          builtInRole={selectedBuiltInRole}
+          basicRole={selectedBuiltInRole}
           appliedRoles={selectedRoles}
           query={query}
           onQueryChange={onInputChange}
@@ -149,20 +151,20 @@ export const RolePicker = ({
           onClose={onClose}
           isFocused={isOpen}
           disabled={disabled}
-          showBuiltInRole={showBuiltInRole}
+          showBasicRole={showBasicRole}
         />
         {isOpen && (
           <RolePickerMenu
             options={getOptions()}
-            builtInRole={selectedBuiltInRole}
+            basicRole={selectedBuiltInRole}
             appliedRoles={appliedRoles}
-            onBuiltInRoleSelect={onBuiltInRoleSelect}
+            onBasicRoleSelect={onBasicRoleSelect}
             onSelect={onSelect}
             onUpdate={onUpdate}
             showGroups={query.length === 0 || query.trim() === ''}
-            builtinRolesDisabled={builtinRolesDisabled}
-            showBuiltInRole={showBuiltInRole}
-            updateDisabled={builtinRolesDisabled && !canUpdateRoles}
+            basicRoleDisabled={basicRoleDisabled}
+            showBasicRole={showBasicRole}
+            updateDisabled={basicRoleDisabled && !canUpdateRoles}
             apply={apply}
             offset={offset}
           />
