@@ -34,7 +34,7 @@ var (
 		})
 	fullReindexingDuration = promauto.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:      "dashboard_index_reindexing_duration_seconds",
+			Name:      "dashboard_index_full_reindexing_duration_seconds",
 			Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100, 150, 300},
 			Namespace: namespace,
 			Subsystem: subsystem,
@@ -46,9 +46,16 @@ var (
 			Namespace: namespace,
 			Subsystem: subsystem,
 		})
+	orgReindexLoadingDuration = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:      "dashboard_index_org_reindexing_loading_phase_duration_seconds",
+			Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100, 150, 300},
+			Namespace: namespace,
+			Subsystem: subsystem,
+		})
 	initialIndexing = promauto.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:      "dashboard_index_reindexing_duration_seconds",
+			Name:      "dashboard_index_initial_reindexing_duration_seconds",
 			Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100, 150, 300},
 			Namespace: namespace,
 			Subsystem: subsystem,
@@ -238,8 +245,10 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 				started := time.Now()
 				i.logger.Info("Start re-indexing")
 				i.reIndexFromScratch(ctx)
-				fullReindexingDuration.Observe(time.Since(started).Seconds())
-				i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", time.Since(started))
+
+				elapsed := time.Since(started)
+				fullReindexingDuration.Observe(elapsed.Seconds())
+				i.logger.Info("Full re-indexing finished", "fullReIndexElapsed", elapsed)
 				reIndexDoneCh <- lastIndexedEventID
 			}()
 		case lastIndexedEventID := <-reIndexDoneCh:
@@ -268,8 +277,10 @@ func (i *searchIndex) buildInitialIndexes(ctx context.Context, orgIDs []int64) e
 			return fmt.Errorf("can't build initial dashboard search index for org %d: %w", orgID, err)
 		}
 	}
-	initialIndexing.Observe(time.Since(started).Seconds())
-	i.logger.Info("Finish building in-memory indexes", "elapsed", time.Since(started))
+
+	elapsed := time.Since(started)
+	initialIndexing.Observe(elapsed.Seconds())
+	i.logger.Info("Finish building in-memory indexes", "elapsed", elapsed)
 	return nil
 }
 
@@ -286,8 +297,9 @@ func (i *searchIndex) buildInitialIndex(ctx context.Context, orgID int64) error 
 		return fmt.Errorf("can't build dashboard search index for org ID 1: %w", err)
 	}
 
-	orgReindexingDuration.Observe(time.Since(started).Seconds())
-	i.logger.Info("Indexing for org finished", "orgIndexElapsed", time.Since(started), "orgId", orgID, "numDashboards", numDashboards)
+	elapsed := time.Since(started)
+	orgReindexingDuration.Observe(elapsed.Seconds())
+	i.logger.Info("Indexing for org finished", "orgIndexElapsed", elapsed, "orgId", orgID, "numDashboards", numDashboards)
 	debugCtxCancel()
 
 	if os.Getenv("GF_SEARCH_DEBUG") != "" {
@@ -432,6 +444,7 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 		return 0, fmt.Errorf("error loading dashboards: %w", err)
 	}
 	orgSearchIndexLoadTime := time.Since(started)
+	orgReindexLoadingDuration.Observe(orgSearchIndexLoadTime.Seconds())
 	i.logger.Info("Finish loading org dashboards", "elapsed", orgSearchIndexLoadTime, "orgId", orgID)
 
 	dashboardExtender := i.extender.GetDashboardExtender(orgID)
@@ -539,8 +552,9 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 		lastEventID = e.Id
 	}
 
-	applyingChangesFromEventsDuration.Observe(time.Since(started).Seconds())
-	i.logger.Info("Index updates applied", "indexEventsAppliedElapsed", time.Since(started), "numEvents", len(events))
+	elapsed := time.Since(started)
+	applyingChangesFromEventsDuration.Observe(elapsed.Seconds())
+	i.logger.Info("Index updates applied", "indexEventsAppliedElapsed", elapsed, "numEvents", len(events))
 	return lastEventID
 }
 
