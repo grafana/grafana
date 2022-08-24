@@ -22,8 +22,8 @@ func makeTreeOrPanic(path string, pkgname string, lib thema.Library) *pfs.Tree {
   return tree
 }
 
-func coreTreeList(lib thema.Library) TreeList{
-  return TreeList{
+func coreTreeList(lib thema.Library) pfs.TreeList{
+  return pfs.TreeList{
     {{- range .Plugins }}
     makeTreeOrPanic("{{ .Path }}", "{{ .PkgName }}", lib),
     {{- end }}

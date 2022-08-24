@@ -110,7 +110,7 @@ func main() {
 		wd.Merge(wdm)
 	}
 
-	wdm, err = codegen.GenPluginTreeList(ptrees, "github.com/grafana/grafana/public/app/plugins", filepath.Join(groot, "pkg", "plugins", "pfs", "registry", "loadlist_gen.go"), false)
+	wdm, err = codegen.GenPluginTreeList(ptrees, "github.com/grafana/grafana/public/app/plugins", filepath.Join(groot, "pkg", "plugins", "pfs", "corelist", "loadlist_gen.go"), false)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "generating plugin loader registry failed: %s\n", err)
 		os.Exit(1)

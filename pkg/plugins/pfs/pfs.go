@@ -137,6 +137,26 @@ func (t *Tree) SubPlugins() map[string]PluginInfo {
 	return nil
 }
 
+// TreeList is a slice of validated plugin fs Trees with helper methods
+// for filtering to particular subsets of its members.
+type TreeList []*Tree
+
+// LineagesForSlot returns the set of plugin-defined lineages that implement a
+// particular named Grafana slot (See ["github.com/grafana/grafana/pkg/framework/coremodel".Slot]).
+func (tl TreeList) LineagesForSlot(slotname string) map[string]thema.Lineage {
+	m := make(map[string]thema.Lineage)
+	for _, tree := range tl {
+		rootp := tree.RootPlugin()
+		rid := rootp.Meta().Id
+
+		if lin, has := rootp.SlotImplementations()[slotname]; has {
+			m[rid] = lin
+		}
+	}
+
+	return m
+}
+
 // PluginInfo represents everything knowable about a single plugin from static
 // analysis of its filesystem tree contents.
 type PluginInfo struct {

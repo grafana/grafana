@@ -39,8 +39,8 @@ func makeTreeOrPanic(path string, pkgname string, lib thema.Library) *pfs.Tree {
 	return tree
 }
 
-func coreTreeList(lib thema.Library) TreeList {
-	return TreeList{
+func coreTreeList(lib thema.Library) pfs.TreeList {
+	return pfs.TreeList{
 		makeTreeOrPanic("public/app/plugins/datasource/alertmanager", "alertmanager", lib),
 		makeTreeOrPanic("public/app/plugins/datasource/cloud-monitoring", "stackdriver", lib),
 		makeTreeOrPanic("public/app/plugins/datasource/cloudwatch", "cloudwatch", lib),
