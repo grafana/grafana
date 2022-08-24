@@ -40,6 +40,14 @@ angular.module('grafana.directives', []);
 angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
 
+// Mock IntersectionObserver
+const mockIntersectionObserver = jest.fn().mockReturnValue({
+  observe: jest.fn(),
+  unobserve: jest.fn(),
+  disconnect: jest.fn(),
+});
+global.IntersectionObserver = mockIntersectionObserver;
+
 jest.mock('../app/core/core', () => ({
   ...jest.requireActual('../app/core/core'),
   appEvents: testAppEvents,
