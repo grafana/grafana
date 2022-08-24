@@ -14,7 +14,7 @@ type Props = {
   onEdit: (idx: number) => void;
 };
 
-export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEdit }) => {
+export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
   const [annotations, updateAnnotations] = useState(dashboard.annotations.list);
 
   const onMove = (idx: number, direction: number) => {
