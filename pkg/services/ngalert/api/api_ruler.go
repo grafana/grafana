@@ -99,11 +99,11 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *models.ReqContext, namespaceTitle s
 		for groupKey, rules := range deletionCandidates {
 			if !authorizeAccessToRuleGroup(rules, hasAccess) {
 				unauthz = true
-				break
+				continue
 			}
 			if containsProvisionedAlerts(provenances, rules) {
 				provisioned = true
-				break
+				continue
 			}
 			uid := make([]string, 0, len(rules))
 			keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
