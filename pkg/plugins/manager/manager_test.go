@@ -1,8 +1,11 @@
 package manager
 
 import (
+	"archive/zip"
 	"context"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -16,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
 const (
@@ -29,7 +34,7 @@ func TestPluginManager_Init(t *testing.T) {
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
-		}, loader)
+		}, loader, &fakePluginRepo{}, &fakeFsManager{})
 
 		err := pm.Init()
 		require.NoError(t, err)
@@ -39,7 +44,9 @@ func TestPluginManager_Init(t *testing.T) {
 
 func TestPluginManager_loadPlugins(t *testing.T) {
 	t.Run("Managed backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, true, true)
+		p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -65,7 +72,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, true)
+		p, pc := createPlugin(t, testPluginID, plugins.External, false, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -91,7 +100,9 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Managed non-backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, true)
+		p, pc := createPlugin(t, testPluginID, plugins.External, false, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -117,7 +128,7 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 	})
 
 	t.Run("Unmanaged non-backend plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.External, false, false)
+		p, pc := createPlugin(t, testPluginID, plugins.External, false)
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -144,30 +155,46 @@ func TestPluginManager_loadPlugins(t *testing.T) {
 }
 
 func TestPluginManager_Installer(t *testing.T) {
-	t.Run("Install", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "1.0.0", plugins.External, true, true)
+	t.Run("Add new plugin", func(t *testing.T) {
+		testDir, err := os.CreateTemp(os.TempDir(), "plugin-manager-test-*")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := os.RemoveAll(testDir.Name())
+			assert.NoError(t, err)
+		})
+
+		p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
+			p.PluginDir = filepath.Join(testDir.Name(), p.ID)
+			p.Backend = true
+		})
 
 		l := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
 		}
+		fsm := &fakeFsManager{}
 
-		i := &fakePluginInstaller{}
+		repository := &fakePluginRepo{}
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.pluginInstaller = i
+			pm.cfg.PluginsPath = testDir.Name()
 			pm.pluginLoader = l
+			pm.pluginStorage = fsm
+			pm.pluginRepo = repository
 		})
 
-		err := pm.Add(context.Background(), testPluginID, "1.0.0")
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, i.installCount)
-		assert.Equal(t, 0, i.uninstallCount)
+		assert.Equal(t, 1, repository.downloadCount)
 
 		verifyNoPluginErrors(t, pm)
 
 		assert.Len(t, pm.Routes(), 1)
 		assert.Equal(t, p.ID, pm.Routes()[0].PluginID)
 		assert.Equal(t, p.PluginDir, pm.Routes()[0].Directory)
+
+		assert.Equal(t, 1, repository.downloadCount)
+		assert.Equal(t, 0, fsm.removed)
+		assert.Equal(t, 1, fsm.added)
 
 		assert.Equal(t, 1, pc.startCount)
 		assert.Equal(t, 0, pc.stopCount)
@@ -180,27 +207,63 @@ func TestPluginManager_Installer(t *testing.T) {
 		assert.Len(t, pm.Plugins(context.Background()), 1)
 
 		t.Run("Won't install if already installed", func(t *testing.T) {
-			err := pm.Add(context.Background(), testPluginID, "1.0.0")
-			require.Equal(t, plugins.DuplicateError{
+			err := pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
+			assert.Equal(t, plugins.DuplicateError{
 				PluginID:          p.ID,
 				ExistingPluginDir: p.PluginDir,
 			}, err)
 		})
 
-		t.Run("Update", func(t *testing.T) {
-			p, pc := createPlugin(t, testPluginID, "1.2.0", plugins.External, true, true)
+		t.Run("Update option is the same as installed version", func(t *testing.T) {
+			repository.downloadOptionsHandler = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+				return &repo.PluginDownloadOptions{
+					Version: p.Info.Version,
+				}, nil
+			}
+
+			err = pm.Add(context.Background(), p.ID, "", plugins.CompatOpts{})
+			require.ErrorIs(t, err, plugins.DuplicateError{
+				PluginID:          p.ID,
+				ExistingPluginDir: p.PluginDir,
+			})
+
+			assert.Equal(t, 1, repository.downloadCount)
+			assert.Equal(t, 0, fsm.removed)
+			assert.Equal(t, 1, fsm.added)
+			assert.Equal(t, 1, pc.startCount)
+			assert.Equal(t, 0, pc.stopCount)
+			assert.False(t, pc.exited)
+			assert.False(t, pc.decommissioned)
+
+			testPlugin, exists = pm.Plugin(context.Background(), p.ID)
+			assert.True(t, exists)
+			assert.Equal(t, p.ToDTO(), testPlugin)
+			assert.Len(t, pm.Plugins(context.Background()), 1)
+		})
+
+		t.Run("Update existing plugin", func(t *testing.T) {
+			p, pc := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
+				p.Backend = true
+				p.PluginDir = filepath.Join(testDir.Name(), p.ID)
+			})
 
 			l := &fakeLoader{
 				mockedLoadedPlugins: []*plugins.Plugin{p},
 			}
 			pm.pluginLoader = l
 
-			err = pm.Add(context.Background(), testPluginID, "1.2.0")
+			repository.downloadOptionsHandler = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+				return &repo.PluginDownloadOptions{
+					Version: "1.2.0",
+				}, nil
+			}
+
+			err = pm.Add(context.Background(), testPluginID, "1.2.0", plugins.CompatOpts{})
 			assert.NoError(t, err)
 
-			assert.Equal(t, 2, i.installCount)
-			assert.Equal(t, 1, i.uninstallCount)
-
+			assert.Equal(t, 2, repository.downloadCount)
+			assert.Equal(t, 1, fsm.removed)
+			assert.Equal(t, 2, fsm.added)
 			assert.Equal(t, 1, pc.startCount)
 			assert.Equal(t, 0, pc.stopCount)
 			assert.False(t, pc.exited)
@@ -212,12 +275,11 @@ func TestPluginManager_Installer(t *testing.T) {
 			assert.Len(t, pm.Plugins(context.Background()), 1)
 		})
 
-		t.Run("Uninstall", func(t *testing.T) {
+		t.Run("Uninstall existing plugin", func(t *testing.T) {
 			err := pm.Remove(context.Background(), p.ID)
 			require.NoError(t, err)
 
-			assert.Equal(t, 2, i.installCount)
-			assert.Equal(t, 2, i.uninstallCount)
+			assert.Equal(t, 2, repository.downloadCount)
 
 			p, exists := pm.Plugin(context.Background(), p.ID)
 			assert.False(t, exists)
@@ -232,7 +294,9 @@ func TestPluginManager_Installer(t *testing.T) {
 	})
 
 	t.Run("Can't update core plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.Core, true, true)
+		p, pc := createPlugin(t, testPluginID, plugins.Core, true, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -256,7 +320,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "")
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall core plugin", func(t *testing.T) {
@@ -266,7 +330,9 @@ func TestPluginManager_Installer(t *testing.T) {
 	})
 
 	t.Run("Can't update bundled plugin", func(t *testing.T) {
-		p, pc := createPlugin(t, testPluginID, "", plugins.Bundled, true, true)
+		p, pc := createPlugin(t, testPluginID, plugins.Bundled, true, func(p *plugins.Plugin) {
+			p.Backend = true
+		})
 
 		loader := &fakeLoader{
 			mockedLoadedPlugins: []*plugins.Plugin{p},
@@ -290,7 +356,7 @@ func TestPluginManager_Installer(t *testing.T) {
 
 		verifyNoPluginErrors(t, pm)
 
-		err = pm.Add(context.Background(), testPluginID, "")
+		err = pm.Add(context.Background(), testPluginID, "1.0.0", plugins.CompatOpts{})
 		assert.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 		t.Run("Can't uninstall bundled plugin", func(t *testing.T) {
@@ -302,20 +368,20 @@ func TestPluginManager_Installer(t *testing.T) {
 
 func TestPluginManager_registeredPlugins(t *testing.T) {
 	t.Run("Decommissioned plugins are included in registeredPlugins", func(t *testing.T) {
-		decommissionedPlugin, _ := createPlugin(t, testPluginID, "", plugins.Core, false, true,
-			func(plugin *plugins.Plugin) {
-				err := plugin.Decommission()
-				require.NoError(t, err)
-			},
-		)
-		require.True(t, decommissionedPlugin.IsDecommissioned())
+		decommissionedPlugin, _ := createPlugin(t, testPluginID, plugins.External, true, func(p *plugins.Plugin) {
+			p.Backend = true
+			err := p.Decommission()
+			require.NoError(t, err)
+		})
 
 		pm := New(&plugins.Cfg{}, &fakePluginRegistry{
 			store: map[string]*plugins.Plugin{
 				testPluginID: decommissionedPlugin,
 				"test-app":   {},
 			},
-		}, []PluginSource{}, &fakeLoader{})
+		}, []PluginSource{}, &fakeLoader{}, &fakePluginRepo{}, &fakeFsManager{})
+
+		require.True(t, decommissionedPlugin.IsDecommissioned())
 
 		rps := pm.registeredPlugins(context.Background())
 		require.Equal(t, 2, len(rps))
@@ -520,29 +586,17 @@ func TestPluginManager_lifecycle_unmanaged(t *testing.T) {
 	})
 }
 
-func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
-	t.Helper()
-
-	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), nil, &fakeLoader{})
-
-	for _, cb := range cbs {
-		cb(pm)
-	}
-
-	return pm
-}
-
-func createPlugin(t *testing.T, pluginID, version string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) (*plugins.Plugin, *fakePluginClient) {
+func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed bool,
+	cbs ...func(*plugins.Plugin)) (*plugins.Plugin, *fakePluginClient) {
 	t.Helper()
 
 	p := &plugins.Plugin{
 		Class: class,
 		JSONData: plugins.JSONData{
-			ID:      pluginID,
-			Type:    plugins.DataSource,
-			Backend: backend,
+			ID:   pluginID,
+			Type: plugins.DataSource,
 			Info: plugins.Info{
-				Version: version,
+				Version: "1.0.0",
 			},
 		},
 	}
@@ -566,6 +620,22 @@ func createPlugin(t *testing.T, pluginID, version string, class plugins.Class, m
 	return p, pc
 }
 
+func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
+	t.Helper()
+
+	cfg := &plugins.Cfg{
+		DevMode: false,
+	}
+
+	pm := New(cfg, newFakePluginRegistry(), nil, &fakeLoader{}, &fakePluginRepo{}, &fakeFsManager{})
+
+	for _, cb := range cbs {
+		cb(pm)
+	}
+
+	return pm
+}
+
 type managerScenarioCtx struct {
 	manager      *PluginManager
 	plugin       *plugins.Plugin
@@ -583,12 +653,16 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 		ManagedIdentityClientId: "client-id",
 	}
 
-	manager := New(cfg, registry.NewInMemory(), nil, &fakeLoader{})
+	loader := &fakeLoader{}
+	manager := New(cfg, registry.NewInMemory(), nil, loader, &fakePluginRepo{}, &fakeFsManager{})
+	manager.pluginLoader = loader
 	ctx := &managerScenarioCtx{
 		manager: manager,
 	}
 
-	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, "", plugins.External, managed, true)
+	ctx.plugin, ctx.pluginClient = createPlugin(t, testPluginID, plugins.External, managed, func(p *plugins.Plugin) {
+		p.Backend = true
+	})
 
 	fn(t, ctx)
 }
@@ -599,23 +673,33 @@ func verifyNoPluginErrors(t *testing.T, pm *PluginManager) {
 	}
 }
 
-type fakePluginInstaller struct {
-	installCount   int
-	uninstallCount int
+type fakePluginRepo struct {
+	repo.Service
+
+	downloadOptionsHandler func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
+
+	downloadOptionsCount int
+	downloadCount        int
 }
 
-func (f *fakePluginInstaller) Install(_ context.Context, _, _, _, _, _ string) error {
-	f.installCount++
-	return nil
+func (pr *fakePluginRepo) GetPluginArchive(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+	pr.downloadCount++
+	return &repo.PluginArchive{}, nil
 }
 
-func (f *fakePluginInstaller) Uninstall(_ context.Context, _ string) error {
-	f.uninstallCount++
-	return nil
+// DownloadWithURL downloads the requested plugin from the specified URL.
+func (pr *fakePluginRepo) GetPluginArchiveByURL(_ context.Context, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+	pr.downloadCount++
+	return &repo.PluginArchive{}, nil
 }
 
-func (f *fakePluginInstaller) GetUpdateInfo(_ context.Context, _, _, _ string) (plugins.UpdateInfo, error) {
-	return plugins.UpdateInfo{}, nil
+// GetDownloadOptions provides information for downloading the requested plugin.
+func (pr *fakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+	pr.downloadOptionsCount++
+	if pr.downloadOptionsHandler != nil {
+		return pr.downloadOptionsHandler(ctx, pluginID, version, opts)
+	}
+	return &repo.PluginDownloadOptions{}, nil
 }
 
 type fakeLoader struct {
@@ -788,5 +872,22 @@ func (f *fakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
 
 func (f *fakePluginRegistry) Remove(_ context.Context, id string) error {
 	delete(f.store, id)
+	return nil
+}
+
+type fakeFsManager struct {
+	storage.Manager
+
+	added   int
+	removed int
+}
+
+func (fsm *fakeFsManager) Add(_ context.Context, _ string, _ *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	fsm.added++
+	return &storage.ExtractedPluginArchive{}, nil
+}
+
+func (fsm *fakeFsManager) Remove(_ context.Context, _ string) error {
+	fsm.removed++
 	return nil
 }
