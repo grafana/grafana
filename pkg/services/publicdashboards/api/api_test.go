@@ -23,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/datasourceimpl"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
@@ -508,7 +508,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 
-	cacheService := datasourceimpl.ProvideCacheService(localcache.ProvideService(), db)
+	cacheService := service.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, cacheService, nil, db)
 
 	_ = db.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{

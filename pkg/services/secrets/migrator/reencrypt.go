@@ -17,10 +17,8 @@ func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secrets
 		Id     int
 		Secret []byte
 	}
-	session := sqlStore.NewSession(ctx)
-	defer session.Close()
 
-	if err := session.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
@@ -73,10 +71,8 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 		Id     int
 		Secret string
 	}
-	session := sqlStore.NewSession(ctx)
-	defer session.Close()
 
-	if err := session.Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Select(fmt.Sprintf("id, %s as secret", s.columnName)).Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
@@ -144,10 +140,7 @@ func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 		SecureJsonData map[string][]byte
 	}
 
-	session := sqlStore.NewSession(ctx)
-	defer session.Close()
-
-	if err := session.Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
+	if err := sqlStore.NewSession(ctx).Table(s.tableName).Cols("id", "secure_json_data").Find(&rows); err != nil {
 		logger.Warn("Could not find any secret to re-encrypt", "table", s.tableName)
 		return false
 	}
@@ -206,11 +199,7 @@ func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secre
 	}
 
 	selectSQL := "SELECT id, alertmanager_configuration FROM alert_configuration"
-
-	session := sqlStore.NewSession(ctx)
-	defer session.Close()
-
-	if err := session.SQL(selectSQL).Find(&results); err != nil {
+	if err := sqlStore.NewSession(ctx).SQL(selectSQL).Find(&results); err != nil {
 		logger.Warn("Could not find any alert_configuration secret to re-encrypt")
 		return false
 	}

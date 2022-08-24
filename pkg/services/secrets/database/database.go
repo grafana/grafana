@@ -126,9 +126,7 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 	currProvider secrets.ProviderID,
 ) error {
 	keys := make([]*secrets.DataKey, 0)
-	session := ss.sqlStore.NewSession(ctx)
-	defer session.Close()
-	if err := session.Table(dataKeysTable).Find(&keys); err != nil {
+	if err := ss.sqlStore.NewSession(ctx).Table(dataKeysTable).Find(&keys); err != nil {
 		return err
 	}
 

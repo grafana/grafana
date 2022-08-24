@@ -26,8 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 
-	datasourceService "github.com/grafana/grafana/pkg/services/datasources/datasourceimpl"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
