@@ -92,7 +92,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:2659566901": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:3570129984": [
+    "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:3764084053": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2402631398": [
@@ -7160,12 +7160,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/configuration/DebugSection.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
