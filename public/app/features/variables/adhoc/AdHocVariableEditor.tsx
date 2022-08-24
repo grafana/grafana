@@ -69,7 +69,7 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
         <VerticalGroup spacing="sm">
           <InlineFieldRow>
             <InlineField label="Data source" labelWidth={20} htmlFor="data-source-picker">
-              <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} />
+              <DataSourcePicker current={variable.datasource} onChange={this.onDatasourceChanged} noDefault />
             </InlineField>
           </InlineFieldRow>
 

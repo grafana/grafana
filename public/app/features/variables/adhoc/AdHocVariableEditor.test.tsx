@@ -70,7 +70,7 @@ describe('AdHocVariableEditor', () => {
 
     expect(props.changeVariableDatasource).toBeCalledWith(
       { type: 'adhoc', id: 'adhoc', rootStateKey: 'key' },
-      { type: 'loki', uid: 'mock-ds-2' }
+      { type: 'loki', uid: 'mock-ds-3' }
     );
   });
 
