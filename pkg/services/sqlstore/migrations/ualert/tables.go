@@ -402,5 +402,5 @@ func AddAlertImageMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("support longer URLs in alert_image table", migrator.NewRawSQLMigration("").
 		Postgres("ALTER TABLE alert_image ALTER COLUMN url TYPE VARCHAR(2048);").
-		Mysql("ALTER TABLE alert_image MODIFY url VARCHAR(2048);"))
+		Mysql("ALTER TABLE alert_image MODIFY url VARCHAR(2048) NOT NULL;"))
 }
