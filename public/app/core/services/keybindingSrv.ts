@@ -117,7 +117,7 @@ export class KeybindingSrv {
     const search = locationService.getSearchObject();
 
     if (search.editview) {
-      locationService.partial({ editview: null });
+      locationService.partial({ editview: null, editIndex: null });
       return;
     }
 
