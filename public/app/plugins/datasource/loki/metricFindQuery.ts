@@ -11,9 +11,9 @@ export class LokiMetricFindQuery {
 
     // If we have query expr, use /series endpoint
     if (query.stream) {
-      return await this.datasource.labelValuesSeriesQuery(query.stream, query.label);
+      return this.datasource.labelValuesSeriesQuery(query.stream, query.label);
     }
 
-    return await this.datasource.labelValuesQuery(query.label);
+    return query.label ? this.datasource.labelValuesQuery(query.label) : [];
   }
 }
