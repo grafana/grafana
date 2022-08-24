@@ -160,7 +160,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 
 func Test_containsProvisionedAlerts(t *testing.T) {
 	t.Run("should return true if at least one rule is provisioned", func(t *testing.T) {
-		_, rules := models2.GenerateUniqueAlertRules(rand.Intn(5)+1, models2.AlertRuleGen())
+		_, rules := models2.GenerateUniqueAlertRules(rand.Intn(4)+2, models2.AlertRuleGen())
 		provenance := map[string]models2.Provenance{
 			rules[rand.Intn(len(rules)-1)].UID: []models2.Provenance{models2.ProvenanceAPI, models2.ProvenanceFile}[rand.Intn(2)],
 		}
