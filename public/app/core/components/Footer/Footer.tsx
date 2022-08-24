@@ -34,6 +34,16 @@ export let getFooterLinks = (): FooterLink[] => {
   ];
 };
 
+export function getVersionMeta(version: string) {
+  const containsHyphen = version.includes('-');
+  const isBeta = version.includes('-beta');
+
+  return {
+    hasReleaseNotes: !containsHyphen || isBeta,
+    isBeta,
+  };
+}
+
 export let getVersionLinks = (): FooterLink[] => {
   const { buildInfo, licenseInfo } = config;
   const links: FooterLink[] = [];
@@ -45,11 +55,14 @@ export let getVersionLinks = (): FooterLink[] => {
     return links;
   }
 
-  const isPrerelease = buildInfo.version?.includes('-');
+  const { hasReleaseNotes, isBeta } = getVersionMeta(buildInfo.version);
+  const versionSlug = buildInfo.version.replace(/\./g, '-'); // replace all periods with hyphens
+  const docsVersion = isBeta ? 'next' : 'latest';
+
   links.push({
     text: `v${buildInfo.version} (${buildInfo.commit})`,
-    url: isPrerelease
-      ? `https://grafana.com/docs/grafana/latest/release-notes/release-notes-${buildInfo.version.replace('.', '-')}/`
+    url: hasReleaseNotes
+      ? `https://grafana.com/docs/grafana/${docsVersion}/release-notes/release-notes-${versionSlug}/`
       : undefined,
   });
 
@@ -83,9 +96,7 @@ export const Footer: FC = React.memo(() => {
         <ul>
           {links.map((link) => (
             <li key={link.text}>
-              <a href={link.url} target={link.target} rel="noopener" id={link.id}>
-                {link.icon && <Icon name={link.icon} />} {link.text}
-              </a>
+              <FooterItem item={link} />
             </li>
           ))}
         </ul>
@@ -95,3 +106,19 @@ export const Footer: FC = React.memo(() => {
 });
 
 Footer.displayName = 'Footer';
+
+function FooterItem({ item }: { item: FooterLink }) {
+  const content = item.url ? (
+    <a href={item.url} target={item.target} rel="noopener" id={item.id}>
+      {item.text}
+    </a>
+  ) : (
+    item.text
+  );
+
+  return (
+    <>
+      {item.icon && <Icon name={item.icon} />} {content}
+    </>
+  );
+}
