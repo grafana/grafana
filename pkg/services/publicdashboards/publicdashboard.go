@@ -17,7 +17,7 @@ type Service interface {
 	GetPublicDashboard(ctx context.Context, accessToken string) (*models.Dashboard, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
+	SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
 	BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64) (dtos.MetricRequest, error)
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
 	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)

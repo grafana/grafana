@@ -90,7 +90,7 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardConfig(ctx context.Conte
 
 // SavePublicDashboardConfig is a helper method to persist the sharing config
 // to the database. It handles validations for sharing config and persistence
-func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
 	dashboard, err := pd.GetDashboard(ctx, dto.DashboardUid)
 	if err != nil {
 		return nil, err
@@ -106,13 +106,15 @@ func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Cont
 	}
 
 	if dto.PublicDashboard.Uid == "" {
-		return pd.savePublicDashboardConfig(ctx, dto)
+		return pd.savePublicDashboardConfig(ctx, u, dto)
 	}
 
-	return pd.updatePublicDashboardConfig(ctx, dto)
+	return pd.updatePublicDashboardConfig(ctx, u, dto)
 }
 
-func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+// Called by SavePublicDashboardConfig this handles business logic for
+// to generate token and calls create at the database layer
+func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
 	uid, err := pd.store.GenerateNewPublicDashboardUid(ctx)
 	if err != nil {
 		return nil, err
@@ -138,10 +140,23 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 		},
 	}
 
-	return pd.store.SavePublicDashboardConfig(ctx, cmd)
+	pubdash, err := pd.store.SavePublicDashboardConfig(ctx, cmd)
+	if err == nil {
+		// log public dashboard status change
+		pd.log.Info(fmt.Sprintf("Public dashboard created. isEnabled: %v, dashboardUid: %v, user: %v-%v",
+			cmd.PublicDashboard.IsEnabled,
+			cmd.PublicDashboard.DashboardUid,
+			u.UserID,
+			u.Login,
+		))
+	}
+
+	return pubdash, err
 }
 
-func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
+// Called by SavePublicDashboard this handles business logic for updating a
+// dashboard and calls update at the database layer
+func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error) {
 	cmd := SavePublicDashboardConfigCommand{
 		PublicDashboard: PublicDashboard{
 			Uid:          dto.PublicDashboard.Uid,
@@ -156,6 +171,14 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
+
+	// log public dashboard status change
+	pd.log.Info(fmt.Sprintf("Public dashboard updated. isEnabled: %v, dashboardUid: %v, user: %v-%v",
+		cmd.PublicDashboard.IsEnabled,
+		cmd.PublicDashboard.DashboardUid,
+		u.UserID,
+		u.Login,
+	))
 
 	publicDashboard, err := pd.store.GetPublicDashboardConfig(ctx, dto.OrgId, dto.DashboardUid)
 	if err != nil {
