@@ -253,11 +253,9 @@ func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO *Pu
 	}
 	safeInterval := pd.intervalCalculator.CalculateSafeInterval(tr, safeResolution)
 
-	adjustedInterval := safeInterval.Value
 	if interval > safeInterval.Value {
-		adjustedInterval = interval
 		return reqDTO.IntervalMs, reqDTO.MaxDataPoints
 	}
 
-	return adjustedInterval.Milliseconds(), safeResolution
+	return safeInterval.Value.Milliseconds(), safeResolution
 }

@@ -2,8 +2,6 @@ package service
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"testing"
 	"time"
 
@@ -22,6 +20,7 @@ import (
 	database "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12h", "to": "now"}`))
@@ -558,19 +557,12 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 }
 
 func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T) {
-	type fields struct {
-		log                log.Logger
-		cfg                *setting.Cfg
-		store              Store
-		intervalCalculator intervalv2.Calculator
-	}
 	type args struct {
 		reqDTO *PublicDashboardQueryDTO
 		ts     *TimeSettings
 	}
 	tests := []struct {
 		name                  string
-		fields                fields
 		args                  args
 		wantSafeInterval      int64
 		wantSafeMaxDataPoints int64
