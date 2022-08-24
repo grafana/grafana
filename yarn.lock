@@ -3964,16 +3964,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/eslint@npm:5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/eslint@npm:5.3.7"
+"@betterer/eslint@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@betterer/eslint@npm:5.4.0"
   dependencies:
-    "@betterer/betterer": ^5.3.7
+    "@betterer/betterer": ^5.4.0
     "@betterer/errors": ^5.3.0
     tslib: ^2.3.1
   peerDependencies:
     eslint: ">=7.0.0"
-  checksum: 0faebc4fa7c29d6265c42521a2270a76149bc9c83c7a05df7fe0374a98d12217fafb1bac5a9776b1a3a25e858a9f9b052d13ff26b70a18d647971769ae87d3eb
+  checksum: 98677a9f2071d7ae2e209a5d075b795764d7685eaa48673101416fa28e40b5ad0becfb15e06d29e295f08ccb2b6d8c206d64fecc8cd7ee84cedb9b64189959dc
   languageName: node
   linkType: hard
 
@@ -21703,7 +21703,7 @@ __metadata:
     "@babel/runtime": 7.18.9
     "@betterer/betterer": 5.4.0
     "@betterer/cli": 5.4.0
-    "@betterer/eslint": 5.3.7
+    "@betterer/eslint": 5.4.0
     "@betterer/regexp": 5.3.7
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
