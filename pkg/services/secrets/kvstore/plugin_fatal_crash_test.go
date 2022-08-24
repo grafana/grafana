@@ -3,6 +3,7 @@ package kvstore
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"testing"
 
@@ -21,7 +22,8 @@ import (
 // Set fatal flag to true, then simulate a plugin start failure
 // Should result in an error from the secret store provider
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagSet(t *testing.T) {
-	svc, _, _, _, err := setupFatalCrashTest(t, true, true, false)
+	svc, mgr, _, _, err := setupFatalCrashTest(t, true, true, false)
+	_ = fmt.Sprint(mgr) // this is here to satisfy the linter
 	require.Error(t, err)
 	require.Nil(t, svc)
 }
@@ -29,7 +31,8 @@ func TestFatalPluginErr_PluginFailsToStartWithFatalFlagSet(t *testing.T) {
 // Set fatal flag to false, then simulate a plugin start failure
 // Should result in the secret store provider returning the sql impl
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagNotSet(t *testing.T) {
-	svc, _, _, _, err := setupFatalCrashTest(t, true, false, false)
+	svc, mgr, _, _, err := setupFatalCrashTest(t, true, false, false)
+	_ = fmt.Sprint(mgr) // this is here to satisfy the linter
 	require.NoError(t, err)
 	require.IsType(t, &CachedKVStore{}, svc)
 	cachedKv, _ := svc.(*CachedKVStore)
@@ -56,7 +59,7 @@ func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.
 	require.NoError(t, err)
 	require.NotNil(t, svc)
 	// setup - store secret and manually bypassing the remote plugin impl
-	mgr.SecretsManager().SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
+	_, err = mgr.SecretsManager().SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
 		KeyDescriptor: &secretsmanagerplugin.Key{
 			OrgId:     0,
 			Namespace: "postgres",
@@ -64,6 +67,7 @@ func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.
 		},
 		Value: "bogus",
 	})
+	require.NoError(t, err)
 	// retrieve the secret and check values
 	val, exists, err := svc.Get(context.Background(), 0, "postgres", "datasource")
 	require.NoError(t, err)
