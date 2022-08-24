@@ -199,6 +199,12 @@ export const Components = {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
+    SpatialOperations: {
+      actionLabel: 'root Action field property editor',
+      locationLabel: 'root Location field property editor',
+      geohashFieldLabel: 'root Geohash field field property editor',
+      geohashLocationOption: 'Geohash location option',
+    },
     searchInput: 'search transformations',
   },
   PageToolbar: {
