@@ -98,8 +98,9 @@ func main() {
 
 		relp, _ := filepath.Rel(groot, ptp.Path)
 		wdm, err = ptp.Tree.GenerateGo(ptp.Path, codegen.GoGenConfig{
-			Types:         isDatasource(ptp.Tree),
-			ThemaBindings: true,
+			Types: isDatasource(ptp.Tree),
+			// TODO false until we decide on a consistent codegen format for core and external plugins
+			ThemaBindings: false,
 			DocPathPrefix: relp,
 		})
 		if err != nil {
