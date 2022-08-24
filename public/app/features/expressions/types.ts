@@ -10,10 +10,28 @@ export enum ExpressionQueryType {
 }
 
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
-  { value: ExpressionQueryType.math, label: 'Math' },
-  { value: ExpressionQueryType.reduce, label: 'Reduce' },
-  { value: ExpressionQueryType.resample, label: 'Resample' },
-  { value: ExpressionQueryType.classic, label: 'Classic condition' },
+  {
+    value: ExpressionQueryType.math,
+    label: 'Math',
+    description: 'Free-form math formulas on time series or number data.',
+  },
+  {
+    value: ExpressionQueryType.reduce,
+    label: 'Reduce',
+    description:
+      'Takes one or more time series returned from a query or an expression and turns each series into a single number.',
+  },
+  {
+    value: ExpressionQueryType.resample,
+    label: 'Resample',
+    description: 'Changes the time stamps in each time series to have a consistent time interval.',
+  },
+  {
+    value: ExpressionQueryType.classic,
+    label: 'Classic condition',
+    description:
+      'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition.',
+  },
 ];
 
 export const reducerTypes: Array<SelectableValue<string>> = [

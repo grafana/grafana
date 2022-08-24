@@ -7,14 +7,20 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { QueryEditor } from '../QueryEditor';
 
-export const Query: FC = () => {
+interface Props {
+  editingExistingRule?: boolean;
+}
+
+export const Query: FC<Props> = ({ editingExistingRule = false }) => {
   const {
     control,
     watch,
     formState: { errors },
+    setValue,
   } = useFormContext<RuleFormValues>();
 
   const type = watch('type');
+  const condition = watch('condition');
   const dataSourceName = watch('dataSourceName');
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
@@ -22,6 +28,10 @@ export const Query: FC = () => {
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
 
   const showCloudExpressionEditor = (isRecordingRuleType || isCloudAlertRuleType) && dataSourceName;
+
+  const handleSetCondition = (refId: string) => {
+    setValue('condition', refId);
+  };
 
   return (
     <div>
@@ -49,7 +59,14 @@ export const Query: FC = () => {
         >
           <InputControl
             name="queries"
-            render={({ field: { ref, ...field } }) => <QueryEditor {...field} />}
+            render={({ field: { ref, ...field } }) => (
+              <QueryEditor
+                {...field}
+                condition={condition}
+                onSetCondition={handleSetCondition}
+                editingExistingRule={editingExistingRule ?? false}
+              />
+            )}
             control={control}
             rules={{
               validate: (queries) => Array.isArray(queries) && !!queries.length,
