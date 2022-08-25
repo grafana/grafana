@@ -17,7 +17,7 @@ const GRAPHITE_QUERY_VARIABLE_TYPE_OPTIONS = [
   { label: 'Metric Name Query', value: GraphiteQueryType.MetricName },
 ];
 
-export const GraphiteVariableEditor: React.FC<Props> = (props) => {
+export const GraphiteVariableEditor = (props: Props) => {
   const { query, onChange } = props;
   const [value, setValue] = useState(convertToGraphiteQueryObject(query));
 

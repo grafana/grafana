@@ -59,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
@@ -75,6 +76,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	spm "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -177,9 +179,12 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
+	secretsPluginMigrator        *spm.SecretMigrationServiceImpl
 	userService                  user.Service
 	tempUserService              tempUser.Service
 	loginAttemptService          loginAttempt.Service
+	orgService                   org.Service
+	accesscontrolService         accesscontrol.Service
 }
 
 type ServerOptions struct {
@@ -214,8 +219,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
-	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager,
-	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service) (*HTTPServer, error) {
+	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsPluginMigrator *spm.SecretMigrationServiceImpl,
+	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
+	accesscontrolService accesscontrol.Service,
+) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
 
@@ -302,9 +310,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
 		secretsMigrator:              secretsMigrator,
+		secretsPluginMigrator:        secretsPluginMigrator,
 		userService:                  userService,
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
+		orgService:                   orgService,
+		accesscontrolService:         accesscontrolService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -513,8 +524,6 @@ func (hs *HTTPServer) applyRoutes() {
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
 	hs.RouteRegister.Register(hs.web, hs.namedMiddlewares...)
-	// then custom app proxy routes
-	hs.initAppPluginRoutes(hs.web)
 	// lastly not found route
 	hs.web.NotFound(middleware.ReqSignedIn, hs.NotFoundHandler)
 }
@@ -559,7 +568,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))
-	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.AccessControl))
+	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {

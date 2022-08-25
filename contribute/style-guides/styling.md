@@ -104,7 +104,7 @@ interface Props {
   className?: string;
 }
 
-const ComponentA: React.FC<Props> = ({ className }) => {
+function ComponentA({ className }: Props) {
   const finalClassName = cx(
     className,
     css`
@@ -113,5 +113,5 @@ const ComponentA: React.FC<Props> = ({ className }) => {
   );
 
   return <div className={finalClassName}>As red as you can ge</div>;
-};
+}
 ```
