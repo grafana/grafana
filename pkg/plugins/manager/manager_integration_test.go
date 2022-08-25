@@ -2,20 +2,25 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
+	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -108,6 +113,32 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
 	verifyBackendProcesses(t, pm.pluginRegistry.Plugins(ctx))
+	verifyPluginQuery(t, ctx, client.ProvideService(reg))
+}
+
+func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
+	now := time.Unix(1661420870, 0)
+	req := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			PluginID: "testdata",
+		},
+		Queries: []backend.DataQuery{
+			{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: now.Add(-5 * time.Minute),
+					To:   now,
+				},
+				JSON: json.RawMessage(`{"scenarioId":"csv_metric_values","stringInput":"1,20,90,30,5,0"}`),
+			},
+		},
+	}
+
+	resp, err := c.QueryData(ctx, req)
+	require.NoError(t, err)
+	payload, err := resp.MarshalJSON()
+	require.NoError(t, err)
+	require.JSONEq(t, `{"results":{"A":{"frames":[{"schema":{"refId":"A","fields":[{"name":"time","type":"time","typeInfo":{"frame":"time.Time"}},{"name":"A-series","type":"number","typeInfo":{"frame":"int64","nullable":true}}]},"data":{"values":[[1661420570000,1661420630000,1661420690000,1661420750000,1661420810000,1661420870000],[1,20,90,30,5,0]]}}]}}}`, string(payload))
 }
 
 func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Service) {
