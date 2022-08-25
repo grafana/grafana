@@ -32,7 +32,7 @@ async function getTestContext({ name, interval, items, uid }: Partial<Playlist> 
   getMock.mockResolvedValue({
     name: 'Test Playlist',
     interval: '5s',
-    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+    items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
     uid: 'foo',
   });
   const { rerender } = render(
@@ -69,7 +69,7 @@ describe('PlaylistEditPage', () => {
       expect(putMock).toHaveBeenCalledWith('/api/playlists/foo', {
         name: 'A Name',
         interval: '10s',
-        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+        items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
       });
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });
