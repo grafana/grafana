@@ -4,7 +4,7 @@ import { reportInteraction, getAppEvents } from '@grafana/runtime';
 import { ConfigEditor } from './components/ConfigEditor';
 import AzureMonitorQueryEditor from './components/QueryEditor';
 import Datasource from './datasource';
-import { id } from './plugin.json';
+import pluginJson from './plugin.json';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureDataSourceJsonData>(Datasource)
@@ -15,7 +15,7 @@ export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureD
 getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
   DashboardLoadedEvent,
   ({ payload: { dashboardId, orgId, userId, grafanaVersion, queries } }) => {
-    const azureQueries = queries[id];
+    const azureQueries = queries[pluginJson.id];
     if (azureQueries && azureQueries.length > 0) {
       reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
         grafana_version: grafanaVersion,
