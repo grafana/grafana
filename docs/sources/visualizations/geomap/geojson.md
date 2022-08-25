@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: GeoJSON layer
-weight: 400
+weight: 3
 ---
 
 # GeoJSON layer

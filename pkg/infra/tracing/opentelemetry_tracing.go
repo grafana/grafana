@@ -270,10 +270,10 @@ func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) 
 
 func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 	for i, v := range values {
-		if v.Num != 0 {
+		if v.Str != "" {
 			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).String(v.Str)))
 		}
-		if v.Str != "" {
+		if v.Num != 0 {
 			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).Int64(v.Num)))
 		}
 	}

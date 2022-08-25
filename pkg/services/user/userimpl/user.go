@@ -32,7 +32,7 @@ type Service struct {
 	teamMemberService  teamguardian.TeamGuardian
 	userAuthService    userauth.Service
 	quotaService       quota.Service
-	accessControlStore accesscontrol.AccessControl
+	accessControlStore accesscontrol.Service
 	// TODO remove sqlstore
 	sqlStore *sqlstore.SQLStore
 
@@ -48,7 +48,7 @@ func ProvideService(
 	teamMemberService teamguardian.TeamGuardian,
 	userAuthService userauth.Service,
 	quotaService quota.Service,
-	accessControlStore accesscontrol.AccessControl,
+	accessControlStore accesscontrol.Service,
 	cfg *setting.Cfg,
 	ss *sqlstore.SQLStore,
 ) user.Service {
@@ -223,7 +223,7 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 		return nil
 	})
 	g.Go(func() error {
-		if err := s.accessControlStore.DeleteUserPermissions(ctx, cmd.UserID); err != nil {
+		if err := s.accessControlStore.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
 			return err
 		}
 		return nil

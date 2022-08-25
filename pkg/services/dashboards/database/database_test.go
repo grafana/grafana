@@ -33,7 +33,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
-		starService = starimpl.ProvideService(sqlStore)
+		starService = starimpl.ProvideService(sqlStore, sqlStore.Cfg)
 		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")

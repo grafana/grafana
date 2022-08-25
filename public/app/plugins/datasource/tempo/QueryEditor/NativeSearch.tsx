@@ -142,6 +142,20 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     }
   };
 
+  const onSpanNameChange = (v: SelectableValue<string>) => {
+    // If the 'x' icon is clicked to clear the selected span name, remove spanName from the query object.
+    if (!v) {
+      delete query.spanName;
+      return;
+    }
+    if (spanOptions?.find((obj) => obj.value === v.value)) {
+      onChange({
+        ...query,
+        spanName: v.value,
+      });
+    }
+  };
+
   const templateSrv: TemplateSrv = getTemplateSrv();
 
   return (
@@ -180,13 +194,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
                 loadOptions('spanName');
               }}
               isLoading={isLoading.spanName}
-              value={spanOptions?.find((v) => v?.value === query.spanName) || undefined}
-              onChange={(v) => {
-                onChange({
-                  ...query,
-                  spanName: v?.value || undefined,
-                });
-              }}
+              onChange={onSpanNameChange}
               placeholder="Select a span"
               isClearable
               onKeyDown={onKeyDown}
@@ -196,7 +204,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in the logfmt format.">
+          <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
             <QueryField
               additionalPlugins={plugins}
               query={query.search}

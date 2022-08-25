@@ -11,6 +11,7 @@ import (
 type Session interface {
 	Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error)
 }
 
 type SessionDB struct {
@@ -33,6 +34,10 @@ func (gs *SessionDB) Exec(ctx context.Context, query string, args ...interface{}
 	return gs.sqlxdb.ExecContext(ctx, gs.sqlxdb.Rebind(query), args...)
 }
 
+func (gs *SessionDB) NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
+	return gs.sqlxdb.NamedExecContext(ctx, gs.sqlxdb.Rebind(query), arg)
+}
+
 func (gs *SessionDB) driverName() string {
 	return gs.sqlxdb.DriverName()
 }
@@ -43,6 +48,8 @@ func (gs *SessionDB) Beginx() (*SessionTx, error) {
 }
 
 func (gs *SessionDB) WithTransaction(ctx context.Context, callback func(*SessionTx) error) error {
+	// Instead of begin a transaction, we need to check the transaction in context, if it exists,
+	// we can reuse it.
 	tx, err := gs.Beginx()
 	if err != nil {
 		return err
