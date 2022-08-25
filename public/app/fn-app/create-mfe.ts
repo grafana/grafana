@@ -52,10 +52,7 @@ class createMfe {
     for (let i = 0; i < bodyLinks.length; i++) {
       const link = bodyLinks[i];
       if (link.href && link.href.indexOf(`build/grafana.${other}`) > 0) {
-        // Remove existing link after a 500ms to allow new css to load to avoid flickering
-        // If we add new css at the same time we remove current one the page will be rendered without css
-        // As the new css file is loading
-        setTimeout(() => link.remove(), 500);
+        link.remove();
       }
     }
   }
