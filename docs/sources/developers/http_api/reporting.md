@@ -13,7 +13,7 @@ title: Reporting API
 
 # Reporting API
 
-This API allows you to interact programmatically with the [Reporting]({{< relref "../../enterprise/reporting/" >}}) feature.
+This API allows you to interact programmatically with the [Reporting]({{< relref "../../panels/create-reports/" >}}) feature.
 
 > Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../enterprise/" >}}).
 
