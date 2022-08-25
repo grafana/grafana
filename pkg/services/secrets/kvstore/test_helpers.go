@@ -47,7 +47,7 @@ func (f *FakeSecretsKVStore) Set(ctx context.Context, orgId int64, namespace str
 
 func (f *FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
 	if f.delError {
-		return errors.New("bogus")
+		return errors.New("mocked del error")
 	}
 	delete(f.store, buildKey(orgId, namespace, typ))
 	return nil
@@ -227,7 +227,7 @@ type fakePluginClient struct {
 
 func (pc *fakePluginClient) Start(_ context.Context) error {
 	if pc.shouldFailOnStart {
-		return errors.New("failed to start")
+		return errors.New("mocked failed to start")
 	}
 	return nil
 }
@@ -241,7 +241,7 @@ func SetupFatalCrashTest(
 	shouldFailOnStart bool,
 	isPluginErrorFatal bool,
 	isBackwardsCompatDisabled bool,
-) (SecretsKVStore, plugins.SecretsPluginManager, kvstore.KVStore, *sqlstore.SQLStore, error) {
+) (fatalCrashTestFields, error) {
 	t.Helper()
 	fatalFlagOnce = sync.Once{}
 	startupOnce = sync.Once{}
@@ -258,7 +258,19 @@ func SetupFatalCrashTest(
 	t.Cleanup(func() {
 		fatalFlagOnce = sync.Once{}
 	})
-	return svc, manager, kvstore, sqlStore, err
+	return fatalCrashTestFields{
+		SecretsKVStore: svc,
+		PluginManager:  manager,
+		KVStore:        kvstore,
+		SqlStore:       sqlStore,
+	}, err
+}
+
+type fatalCrashTestFields struct {
+	SecretsKVStore SecretsKVStore
+	PluginManager  plugins.SecretsPluginManager
+	KVStore        kvstore.KVStore
+	SqlStore       *sqlstore.SQLStore
 }
 
 func SetupTestConfig(t *testing.T) *setting.Cfg {

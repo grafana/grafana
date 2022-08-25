@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
@@ -49,17 +50,19 @@ func TestPluginSecretMigrationService_MigrateToPlugin(t *testing.T) {
 // With fatal flag unset, do a migration with backwards compatibility disabled. When unified secrets are deleted, return an error on the first deletion
 // Should result in the fatal flag remaining unset
 func TestFatalPluginErr_MigrationTestWithErrorDeletingUnifiedSecrets(t *testing.T) {
-	svc, _, kvstore, _, err := secretskvs.SetupFatalCrashTest(t, false, false, true)
-	require.NoError(t, err)
+	p, err := secretskvs.SetupFatalCrashTest(t, false, false, true)
+	assert.NoError(t, err)
 
-	migration := setupTestMigratorServiceWithDeletionError(t, svc, &mockstore.SQLStoreMock{
+	migration := setupTestMigratorServiceWithDeletionError(t, p.SecretsKVStore, &mockstore.SQLStoreMock{
 		ExpectedError: errors.New("random error"),
-	}, kvstore)
+	}, p.KVStore)
 	err = migration.Migrate(context.Background())
-	require.Error(t, err)
-	isFatal, err := secretskvs.IsPluginStartupErrorFatal(context.Background(), secretskvs.GetNamespacedKVStore(kvstore))
-	require.NoError(t, err)
-	require.False(t, isFatal)
+	assert.Error(t, err)
+	assert.Equal(t, "mocked del error", err.Error())
+
+	isFatal, err := secretskvs.IsPluginStartupErrorFatal(context.Background(), secretskvs.GetNamespacedKVStore(p.KVStore))
+	assert.NoError(t, err)
+	assert.False(t, isFatal)
 }
 
 func addSecretToSqlStore(t *testing.T, sqlSecretStore *secretskvs.SecretsKVStoreSQL, ctx context.Context, orgId int64, namespace1 string, typ string, value string) {
