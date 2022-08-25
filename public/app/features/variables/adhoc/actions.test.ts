@@ -4,7 +4,7 @@ import { VariableModel } from 'app/features/variables/types';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
-import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
+import { changeVariableEditorExtended } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
