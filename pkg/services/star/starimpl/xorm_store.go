@@ -36,6 +36,11 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) e
 		}
 
 		_, err := sess.Insert(&entity)
+		if err != nil {
+			return err
+		}
+		// To make the transaction fail
+		_, err = sess.Query("SELECT 1 from xxx where user_id=? and dashboard_id=?")
 		return err
 	})
 }
