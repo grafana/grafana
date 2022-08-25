@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func SetupTestMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, secretsStore secretskvs.SecretsKVStore, compatibility bool) *DataSourceSecretMigrationService {
+func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, secretsStore secretskvs.SecretsKVStore, compatibility bool) *DataSourceSecretMigrationService {
 	t.Helper()
 	cfg := &setting.Cfg{}
 	features := featuremgmt.WithFeatures()
@@ -37,7 +37,7 @@ func TestMigrate(t *testing.T) {
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, false)
+		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, false)
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
@@ -103,7 +103,7 @@ func TestMigrate(t *testing.T) {
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, true)
+		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, true)
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
@@ -169,7 +169,7 @@ func TestMigrate(t *testing.T) {
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, false)
+		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, false)
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
@@ -230,7 +230,7 @@ func TestMigrate(t *testing.T) {
 		assert.True(t, exist)
 
 		// Run the migration with compatibility
-		migService = SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, true)
+		migService = SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, true)
 		err = migService.Migrate(context.Background())
 		assert.NoError(t, err)
 
@@ -259,7 +259,7 @@ func TestMigrate(t *testing.T) {
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
-		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, true)
+		migService := SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, true)
 
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
@@ -320,7 +320,7 @@ func TestMigrate(t *testing.T) {
 		assert.True(t, exist)
 
 		// Run the migration without compatibility
-		migService = SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, false)
+		migService = SetupTestDataSourceSecretMigrationService(t, sqlStore, kvStore, secretsStore, false)
 		err = migService.Migrate(context.Background())
 		assert.NoError(t, err)
 
