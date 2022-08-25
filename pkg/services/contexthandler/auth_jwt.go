@@ -2,15 +2,21 @@ package contexthandler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/jmespath/go-jmespath"
 )
 
-const InvalidJWT = "Invalid JWT"
-const UserNotFound = "User not found"
+const (
+	InvalidJWT   = "Invalid JWT"
+	InvalidRole  = "Invalid Role"
+	UserNotFound = "User not found"
+)
 
 func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
 	if !h.Cfg.JWTAuthEnabled || h.Cfg.JWTAuthHeaderName == "" {
@@ -45,6 +51,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "jwt",
 		AuthId:     sub,
+		OrgRoles:   map[int64]org.RoleType{},
 	}
 
 	if key := h.Cfg.JWTAuthUsernameClaim; key != "" {
@@ -58,6 +65,17 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 
 	if name, _ := claims["name"].(string); name != "" {
 		extUser.Name = name
+	}
+
+	role, grafanaAdmin := h.extractJWTRoleAndAdmin(claims)
+	if h.Cfg.JWTAuthRoleAttributeStrict && !role.IsValid() {
+		ctx.Logger.Debug("Extracted Role is invalid")
+		ctx.JsonApiErr(http.StatusForbidden, InvalidRole, nil)
+		return true
+	}
+	extUser.OrgRoles[orgId] = role
+	if h.Cfg.JWTAuthAllowAssignGrafanaAdmin {
+		extUser.IsGrafanaAdmin = &grafanaAdmin
 	}
 
 	if query.Login == "" && query.Email == "" {
@@ -104,4 +122,53 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	ctx.IsSignedIn = true
 
 	return true
+}
+
+const roleGrafanaAdmin = "GrafanaAdmin"
+
+func (h *ContextHandler) extractJWTRoleAndAdmin(claims map[string]interface{}) (org.RoleType, bool) {
+	if h.Cfg.JWTAuthRoleAttributePath == "" {
+		return "", false
+	}
+
+	role, err := searchClaimsForStringAttr(h.Cfg.JWTAuthRoleAttributePath, claims)
+	if err != nil || role == "" {
+		return "", false
+	}
+
+	if role == roleGrafanaAdmin {
+		return org.RoleAdmin, true
+	}
+	return org.RoleType(role), false
+}
+
+func searchClaimsForAttr(attributePath string, claims map[string]interface{}) (interface{}, error) {
+	if attributePath == "" {
+		return "", errors.New("no attribute path specified")
+	}
+
+	if len(claims) == 0 {
+		return "", errors.New("empty claims provided")
+	}
+
+	val, err := jmespath.Search(attributePath, claims)
+	if err != nil {
+		return "", fmt.Errorf("failed to search claims with provided path: %q: %w", attributePath, err)
+	}
+
+	return val, nil
+}
+
+func searchClaimsForStringAttr(attributePath string, claims map[string]interface{}) (string, error) {
+	val, err := searchClaimsForAttr(attributePath, claims)
+	if err != nil {
+		return "", err
+	}
+
+	strVal, ok := val.(string)
+	if ok {
+		return strVal, nil
+	}
+
+	return "", nil
 }

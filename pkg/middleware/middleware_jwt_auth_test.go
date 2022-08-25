@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -32,6 +33,19 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	configureAutoSignUp := func(cfg *setting.Cfg) {
 		cfg.JWTAuthAutoSignUp = true
+	}
+
+	configureRole := func(cfg *setting.Cfg) {
+		cfg.JWTAuthEmailClaim = "sub"
+		cfg.JWTAuthRoleAttributePath = "role"
+	}
+
+	configureRoleStrict := func(cfg *setting.Cfg) {
+		cfg.JWTAuthRoleAttributeStrict = true
+	}
+
+	configureRoleAllowAdmin := func(cfg *setting.Cfg) {
+		cfg.JWTAuthAllowAssignGrafanaAdmin = true
 	}
 
 	token := "some-token"
@@ -150,6 +164,102 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		assert.Equal(t, 401, sc.resp.Code)
 		assert.Equal(t, contexthandler.InvalidJWT, sc.respJson["message"])
 	}, configure, configureEmailClaim)
+
+	middlewareScenario(t, "Valid token with role", func(t *testing.T, sc *scenarioContext) {
+		myEmail := "vladimir@example.com"
+		var verifiedToken string
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+			verifiedToken = token
+			return models.JWTClaims{
+				"sub":  myEmail,
+				"role": "Editor",
+			}, nil
+		}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Email: myEmail, OrgRole: org.RoleEditor}
+
+		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
+		assert.Equal(t, verifiedToken, token)
+		assert.Equal(t, 200, sc.resp.Code)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
+	}, configure, configureAutoSignUp, configureRole)
+
+	middlewareScenario(t, "Valid token with invalid role", func(t *testing.T, sc *scenarioContext) {
+		myEmail := "vladimir@example.com"
+		var verifiedToken string
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+			verifiedToken = token
+			return models.JWTClaims{
+				"sub":  myEmail,
+				"role": "test",
+			}, nil
+		}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Email: myEmail, OrgRole: org.RoleViewer}
+
+		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
+		assert.Equal(t, verifiedToken, token)
+		assert.Equal(t, 200, sc.resp.Code)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, org.RoleViewer, sc.context.OrgRole)
+	}, configure, configureAutoSignUp, configureRole)
+
+	middlewareScenario(t, "Valid token with invalid role in strict mode", func(t *testing.T, sc *scenarioContext) {
+		myEmail := "vladimir@example.com"
+		var verifiedToken string
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+			verifiedToken = token
+			return models.JWTClaims{
+				"sub":  myEmail,
+				"role": "test",
+			}, nil
+		}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Email: myEmail, OrgRole: org.RoleViewer}
+
+		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
+		assert.Equal(t, verifiedToken, token)
+		assert.Equal(t, 403, sc.resp.Code)
+		assert.Equal(t, contexthandler.InvalidRole, sc.respJson["message"])
+	}, configure, configureAutoSignUp, configureRole, configureRoleStrict)
+
+	middlewareScenario(t, "Valid token with grafana admin role not allowed", func(t *testing.T, sc *scenarioContext) {
+		myEmail := "vladimir@example.com"
+		var verifiedToken string
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+			verifiedToken = token
+			return models.JWTClaims{
+				"sub":  myEmail,
+				"role": "GrafanaAdmin",
+			}, nil
+		}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Email: myEmail, OrgRole: org.RoleAdmin}
+
+		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
+		assert.Equal(t, verifiedToken, token)
+		assert.Equal(t, 200, sc.resp.Code)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, org.RoleAdmin, sc.context.OrgRole)
+		assert.False(t, sc.context.IsGrafanaAdmin)
+	}, configure, configureAutoSignUp, configureRole)
+
+	middlewareScenario(t, "Valid token with grafana admin role allowed", func(t *testing.T, sc *scenarioContext) {
+		myEmail := "vladimir@example.com"
+		var verifiedToken string
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+			verifiedToken = token
+			return models.JWTClaims{
+				"sub":  myEmail,
+				"role": "GrafanaAdmin",
+			}, nil
+		}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Email: myEmail, OrgRole: org.RoleAdmin, IsGrafanaAdmin: true}
+
+		sc.fakeReq("GET", "/").withJWTAuthHeader(token).exec()
+		assert.Equal(t, verifiedToken, token)
+		assert.Equal(t, 200, sc.resp.Code)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, org.RoleAdmin, sc.context.OrgRole)
+		assert.True(t, sc.context.IsGrafanaAdmin)
+	}, configure, configureAutoSignUp, configureRole, configureRoleAllowAdmin)
 
 	middlewareScenario(t, "Invalid token", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
