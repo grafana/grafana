@@ -311,22 +311,36 @@ func (st *Manager) flushState(ctx context.Context) {
 	st.log.Info("flushing the state")
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
+
 	totalStates, errorsCnt := 0, 0
-	var stateSlice []*State
-	for _, orgStates := range st.cache.states {
-		for _, ruleStates := range orgStates {
-			stateSlice = stateSlice[:0]
-			for _, state := range ruleStates {
-				stateSlice = append(stateSlice, state)
-			}
+	stateBatchSize := 512 // 4KiB, 8 bytes per pointer
+	var stateSlice []*State = make([]*State, 0, stateBatchSize)
+
+	writeBatch := func() {
+		if len(stateSlice) > 0 {
 			savedCount, failedCount := st.saveAlertStates(ctx, stateSlice...)
-			if failedCount != 0 {
-				st.log.Error("failed to save alert states.", "count", failedCount)
-			}
 			errorsCnt += failedCount
 			totalStates += savedCount
+			stateSlice = stateSlice[:0]
 		}
 	}
+
+	for _, orgStates := range st.cache.states {
+		for _, ruleStates := range orgStates {
+			// Flush the state batch if we would go over the batch size when adding the next loop.
+			if len(ruleStates)+len(stateSlice) > stateBatchSize {
+				writeBatch()
+			}
+
+			for _, state := range ruleStates {
+				// Take everything for a single rule, even if it exceeds the batch
+				// size. We'd like to flush everything for one rule as a unit.
+				stateSlice = append(stateSlice, state)
+			}
+		}
+	}
+
+	writeBatch()
 
 	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
 }
