@@ -308,7 +308,7 @@ describe('LokiDatasource', () => {
   });
 
   describe('when calling annotationQuery', () => {
-    const getTestContext = (frame: DataFrame, options: any = []) => {
+    const getTestContext = (frame: DataFrame, options = {}) => {
       const query = makeAnnotationQueryRequest(options);
 
       const ds = createLokiDatasource(templateSrvStub);
@@ -830,7 +830,7 @@ function assertAdHocFilters(query: string, expectedResults: string, ds: LokiData
   expect(result).toEqual(expectedResults);
 }
 
-function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQuery> {
+function makeAnnotationQueryRequest(options = {}): AnnotationQueryRequest<LokiQuery> {
   const timeRange = {
     from: dateTime(),
     to: dateTime(),
@@ -839,7 +839,9 @@ function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQu
     annotation: {
       expr: '{test=test}',
       refId: '',
-      datasource: 'loki',
+      datasource: {
+        type: 'loki',
+      },
       enable: true,
       name: 'test-annotation',
       iconColor: 'red',
@@ -847,7 +849,7 @@ function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQu
     },
     dashboard: {
       id: 1,
-    } as any,
+    },
     range: {
       ...timeRange,
       raw: timeRange,
