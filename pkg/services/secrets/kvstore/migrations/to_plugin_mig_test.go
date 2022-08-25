@@ -143,9 +143,10 @@ func setupTestMigratorServiceWithDeletionError(
 	fallback := secretskvs.NewFakeSecretsKVStore()
 	var orgId int64 = 1
 	str := "random string"
-	fallback.Set(context.Background(), orgId, str, str, "bogus")
+	err := fallback.Set(context.Background(), orgId, str, str, "bogus")
+	require.NoError(t, err)
 	fallback.DeletionError(true)
-	err := secretskv.SetFallback(fallback)
+	err = secretskv.SetFallback(fallback)
 	require.NoError(t, err)
 	return migratorService
 }
