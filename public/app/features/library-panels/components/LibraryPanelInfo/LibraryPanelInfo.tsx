@@ -11,7 +11,7 @@ interface Props {
   formatDate?: (dateString: DateTimeInput, format?: string) => string;
 }
 
-export const LibraryPanelInformation: React.FC<Props> = ({ panel, formatDate }) => {
+export const LibraryPanelInformation = ({ panel, formatDate }: Props) => {
   const styles = useStyles(getStyles);
 
   const meta = panel.libraryPanel?.meta as LibraryElementDTOMeta;
