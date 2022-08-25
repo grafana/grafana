@@ -160,19 +160,15 @@ describe('LokiDatasource', () => {
   describe('When using adhoc filters', () => {
     const DEFAULT_EXPR = 'rate({bar="baz", job="foo"} |= "bar" [5m])';
     const query: LokiQuery = { expr: DEFAULT_EXPR, refId: 'A' };
-    const originalAdhocFiltersMock = templateSrvStub.getAdhocFilters();
+    const mockedGetAdhocFilters = templateSrvStub.getAdhocFilters as jest.Mock;
     const ds = createLokiDatasource(templateSrvStub);
-
-    afterAll(() => {
-      templateSrvStub.getAdhocFilters.mockReturnValue(originalAdhocFiltersMock);
-    });
 
     it('should not modify expression with no filters', async () => {
       expect(ds.applyTemplateVariables(query, {}).expr).toBe(DEFAULT_EXPR);
     });
 
     it('should add filters to expression', async () => {
-      templateSrvStub.getAdhocFilters.mockReturnValue([
+      mockedGetAdhocFilters.mockReturnValue([
         {
           key: 'k1',
           operator: '=',
@@ -191,7 +187,7 @@ describe('LokiDatasource', () => {
     });
 
     it('should add escaping if needed to regex filter expressions', async () => {
-      templateSrvStub.getAdhocFilters.mockReturnValue([
+      mockedGetAdhocFilters.mockReturnValue([
         {
           key: 'k1',
           operator: '=~',
@@ -629,7 +625,7 @@ describe('LokiDatasource', () => {
         const templateSrvMock = {
           getAdhocFilters: (): AdHocFilter[] => adHocFilters,
           replace: (a: string) => a,
-        };
+        } as unknown as TemplateSrv;
         ds = createLokiDatasource(templateSrvMock);
       });
       describe('and query has no parser', () => {
@@ -664,7 +660,7 @@ describe('LokiDatasource', () => {
         const templateSrvMock = {
           getAdhocFilters: (): AdHocFilter[] => adHocFilters,
           replace: (a: string) => a,
-        };
+        } as unknown as TemplateSrv;
         ds = createLokiDatasource(templateSrvMock);
       });
       describe('and query has no parser', () => {
