@@ -60,6 +60,17 @@ func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 	return result
 }
 
+func HasExpressionQuery(queries []*simplejson.Json) bool {
+	for _, query := range queries {
+		uid := GetDataSourceUidFromJson(query)
+		if uid == "__expr__" {
+			return true
+		}
+	}
+
+	return false
+}
+
 func GroupQueriesByDataSource(queries []*simplejson.Json) (result [][]*simplejson.Json) {
 	byDataSource := make(map[string][]*simplejson.Json)
 
