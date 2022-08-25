@@ -245,8 +245,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			},
 		},
 		{
-			name:   "Editor roles in claim and GrafanaAdminAssignment enabled",
-			fields: fields{SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
+			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
+			fields: fields{
+				SocialBase: newSocialBase("azuread",
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
