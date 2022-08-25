@@ -55,7 +55,7 @@ interface OwnProps {}
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-const UserListAdminPageUnConnected: React.FC<Props> = ({
+const UserListAdminPageUnConnected = ({
   fetchUsers,
   query,
   changeQuery,
@@ -67,7 +67,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = ({
   changeFilter,
   filters,
   isLoading,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {

@@ -18,7 +18,7 @@ export type Props = {
   clearDetectedFields: () => void;
 };
 
-export const LogsMetaRow: React.FC<Props> = React.memo(
+export const LogsMetaRow = React.memo(
   ({
     meta,
     dedupStrategy,
@@ -29,7 +29,7 @@ export const LogsMetaRow: React.FC<Props> = React.memo(
     forceEscape,
     onEscapeNewlines,
     logRows,
-  }) => {
+  }: Props) => {
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
     // Add deduplication info
