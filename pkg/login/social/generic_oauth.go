@@ -151,6 +151,10 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 			if err != nil {
 				s.log.Warn("Failed to extract role", "error", err)
 			} else if role != "" {
+				if s.roleAttributeStrict && !role.IsValid() {
+					return nil, errors.New("invalid role")
+				}
+
 				s.log.Debug("Setting user info role from extracted role")
 				userInfo.Role = string(role)
 			}
@@ -183,10 +187,6 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	if userInfo.Login == "" {
 		s.log.Debug("Defaulting to using email for user info login", "email", userInfo.Email)
 		userInfo.Login = userInfo.Email
-	}
-
-	if s.roleAttributeStrict && !org.RoleType(userInfo.Role).IsValid() {
-		return nil, errors.New("invalid role")
 	}
 
 	if !s.IsTeamMember(client) {
