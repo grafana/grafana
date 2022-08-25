@@ -1,4 +1,4 @@
-import { chain, map as _map, uniq } from 'lodash';
+import { chain, map as _map } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -71,44 +71,26 @@ export default class PrometheusMetricFindQuery {
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
 
-    let url: string;
+    const url = `/api/v1/label/${label}/values`;
 
-    if (!metric) {
-      const params = {
-        start: start.toString(),
-        end: end.toString(),
-      };
-      // return label values globally
-      url = `/api/v1/label/${label}/values`;
+    const params = metric
+      ? {
+          'match[]': metric,
+          start: start.toString(),
+          end: end.toString(),
+        }
+      : {
+          start: start.toString(),
+          end: end.toString(),
+        };
 
-      return this.datasource.metadataRequest(url, params).then((result: any) => {
-        return _map(result.data.data, (value) => {
-          return { text: value };
-        });
+    return this.datasource.metadataRequest(url, params).then((result: any) => {
+      return _map(result.data.data, (value) => {
+        return { text: value };
+      }).filter((v) => {
+        return v.text !== '';
       });
-    } else {
-      const params = {
-        'match[]': metric,
-        start: start.toString(),
-        end: end.toString(),
-      };
-      url = `/api/v1/series`;
-
-      return this.datasource.metadataRequest(url, params).then((result: any) => {
-        const _labels = _map(result.data.data, (metric) => {
-          return metric[label] || '';
-        }).filter((label) => {
-          return label !== '';
-        });
-
-        return uniq(_labels).map((metric) => {
-          return {
-            text: metric,
-            expandable: true,
-          };
-        });
-      });
-    }
+    });
   }
 
   metricNameQuery(metricFilterPattern: string) {
