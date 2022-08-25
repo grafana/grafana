@@ -28,9 +28,8 @@ func falseBoolPtr() *bool {
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase          *SocialBase
-		allowedGroups       []string
-		roleAttributeStrict bool
+		SocialBase    *SocialBase
+		allowedGroups []string
 	}
 	type args struct {
 		client *http.Client
@@ -247,7 +246,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name:   "Editor roles in claim and GrafanaAdminAssignment enabled",
-			fields: fields{SocialBase: &SocialBase{allowAssignGrafanaAdmin: true}},
+			fields: fields{SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -355,7 +354,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
-				roleAttributeStrict: true,
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -371,7 +370,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no role claims returned",
 			fields: fields{
-				roleAttributeStrict: true,
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -389,9 +388,8 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:          tt.fields.SocialBase,
-				allowedGroups:       tt.fields.allowedGroups,
-				roleAttributeStrict: tt.fields.roleAttributeStrict,
+				SocialBase:    tt.fields.SocialBase,
+				allowedGroups: tt.fields.allowedGroups,
 			}
 
 			if tt.fields.SocialBase == nil {
