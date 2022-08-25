@@ -152,7 +152,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 				s.log.Warn("Failed to extract role", "error", err)
 			} else if role != "" {
 				if s.roleAttributeStrict && !role.IsValid() {
-					return nil, errors.New("invalid role")
+					return nil, ErrInvalidBasicRole
 				}
 
 				s.log.Debug("Setting user info role from extracted role")

@@ -83,7 +83,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 		s.log.Error("Failed to extract role", "error", err)
 	}
 	if s.roleAttributeStrict && !org.RoleType(role).IsValid() {
-		return nil, errors.New("invalid role")
+		return nil, ErrInvalidBasicRole
 	}
 
 	groups := s.GetGroups(&data)
