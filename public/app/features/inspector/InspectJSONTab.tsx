@@ -6,9 +6,6 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   AppEvents,
-  DataFrameJSON,
-  dataFrameToJSON,
-  DataTopic,
   PanelData,
   SelectableValue,
   LoadingState,
@@ -20,12 +17,11 @@ import { Button, CodeEditor, Field, Select, HorizontalGroup, InlineSwitch } from
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
+import { Randomize } from '../dashboard/components/PanelTroubleshooter/randomizer';
+import { getPanelDataFrames, getTroubleshootingDashboard } from '../dashboard/components/PanelTroubleshooter/troubleshooting';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getPanelInspectorStyles } from '../inspector/styles';
 import { pendingImportDashboard } from '../manage-dashboards/DashboardImportPage';
-
-import { Randomize } from './randomizer';
-import { getTroubleshootingDashboard } from './troubleshooting';
 
 enum ShowContent {
   PanelJSON = 'panel',
@@ -60,8 +56,8 @@ const options: Array<SelectableValue<ShowContent>> = [
     value: ShowContent.DataFrames,
   },
   {
-    label: 'Troubleshooting dashboard',
-    description: 'Create a dashboard to show help reproduce issues',
+    label: 'Troubleshooting snapshot',
+    description: 'Create a snapshot to show help reproduce issues',
     value: ShowContent.TroubleshootingDashboard,
   },
 ];
@@ -284,26 +280,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       </div>
     );
   }
-}
-
-export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
-  const frames: DataFrameJSON[] = [];
-  if (data?.series) {
-    for (const f of data.series) {
-      frames.push(dataFrameToJSON(f));
-    }
-  }
-  if (data?.annotations) {
-    for (const f of data.annotations) {
-      const json = dataFrameToJSON(f);
-      if (!json.schema?.meta) {
-        json.schema!.meta = {};
-      }
-      json.schema!.meta.dataTopic = DataTopic.Annotations;
-      frames.push(json);
-    }
-  }
-  return frames;
 }
 
 function getPrettyJSON(obj: any): string {

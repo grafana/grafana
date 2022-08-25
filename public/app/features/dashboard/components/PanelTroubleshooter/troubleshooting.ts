@@ -11,13 +11,34 @@ import {
   formattedValueToString,
   DataFrameJSON,
   LoadingState,
+  dataFrameToJSON,
+  DataTopic,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { PanelModel } from '../dashboard/state';
+import { PanelModel } from '../../state';
 
-import { getPanelDataFrames } from './InspectJSONTab';
 import { Randomize, randomizeData } from './randomizer';
+
+export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
+  const frames: DataFrameJSON[] = [];
+  if (data?.series) {
+    for (const f of data.series) {
+      frames.push(dataFrameToJSON(f));
+    }
+  }
+  if (data?.annotations) {
+    for (const f of data.annotations) {
+      const json = dataFrameToJSON(f);
+      if (!json.schema?.meta) {
+        json.schema!.meta = {};
+      }
+      json.schema!.meta.dataTopic = DataTopic.Annotations;
+      frames.push(json);
+    }
+  }
+  return frames;
+}
 
 export async function getTroubleshootingDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
   const saveModel = panel.getSaveModel();
@@ -110,7 +131,9 @@ export async function getTroubleshootingDashboard(panel: PanelModel, rand: Rando
   }
 
   dashboard.panels[1].options.content = html;
-  dashboard.panels[2].options.content = `<pre>${JSON.stringify(saveModel, null, 2)}</pre>`;
+  dashboard.panels[2].options.content = JSON.stringify(saveModel, null, 2);
+console.log('XXX',  dashboard.panels[2].options);
+
   dashboard.title = `Troubleshooting: ${saveModel.title} // ${dateTimeFormat(new Date())}`;
   dashboard.tags = ['troubleshoot', `troubleshoot-${info.panelType}`];
   dashboard.time = {
@@ -184,26 +207,31 @@ const embeddedDataTemplate: any = {
       },
       id: 5,
       options: {
-        content: 'enter HTLM here',
+        content: '...',
         mode: 'html',
       },
       title: 'Troubleshooting info',
       type: 'text',
     },
     {
+      id: 6,
+      title: 'Original Panel JSON',
+      type: 'text',
       gridPos: {
         h: 13,
         w: 9,
         x: 15,
         y: 7,
       },
-      id: 6,
       options: {
-        content: 'enter HTLM here',
-        mode: 'html',
+        content: '...',
+        mode: 'code',
+        code: {
+          language: 'json',
+          showLineNumbers: true,
+          showMiniMap: true,
+        },
       },
-      title: 'Original Panel JSON',
-      type: 'text',
     },
     {
       id: 3,

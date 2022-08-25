@@ -12,9 +12,6 @@ import { StoreState } from 'app/types';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 
-import { InspectContent } from './InspectContent';
-import { useDatasourceMetadata, useInspectTabs } from './hooks';
-
 interface OwnProps {
   dashboard: DashboardModel;
   panel: PanelModel;
@@ -26,7 +23,7 @@ export interface ConnectedProps {
 
 export type Props = OwnProps & ConnectedProps;
 
-const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }) => {
+const PanelTroubleshooterUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }) => {
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
@@ -34,8 +31,8 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
 
   const location = useLocation();
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions, true);
-  const metaDs = useDatasourceMetadata(data);
-  const tabs = useInspectTabs(panel, dashboard, plugin, error, metaDs);
+  // const metaDs = useDatasourceMetadata(data);
+  // const tabs = useInspectTabs(panel, dashboard, plugin, error, metaDs);
   const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
 
   const onClose = () => {
@@ -50,19 +47,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
   }
 
   return (
-    <InspectContent
-      dashboard={dashboard}
-      panel={panel}
-      plugin={plugin}
-      defaultTab={defaultTab}
-      tabs={tabs}
-      data={data}
-      isDataLoading={isLoading}
-      dataOptions={dataOptions}
-      onDataOptionsChange={setDataOptions}
-      metadataDatasource={metaDs}
-      onClose={onClose}
-    />
+    <div>HELLO!</div>
   );
 };
 
@@ -77,4 +62,4 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-export const PanelInspector = connect(mapStateToProps)(PanelInspectorUnconnected);
+export const PanelTroubleshooter = connect(mapStateToProps)(PanelTroubleshooterUnconnected);
