@@ -86,7 +86,7 @@ export const ServiceAccountPageUnconnected = ({
     text: serviceAccount.name,
     img: serviceAccount.avatarUrl,
     breadcrumbs: [{ title: 'Service accounts', url: 'org/serviceaccounts' }],
-    subTitle: 'Manage settings for individual user accounts.',
+    subTitle: 'Manage settings for an individual service account.',
   };
 
   useEffect(() => {
