@@ -45,6 +45,16 @@ func ProvideService(
 	}
 }
 
+func (pd *PublicDashboardServiceImpl) GetPublicDashboards(ctx context.Context, orgId int64) (*models.Dashboard, error) {
+	publicDashboards, err := pd.store.GetPublicDashboards(ctx, orgId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return publicDashboards, err
+}
+
 func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard, err := pd.store.GetDashboard(ctx, dashboardUid)
 

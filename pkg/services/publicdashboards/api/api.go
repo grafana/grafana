@@ -68,6 +68,9 @@ func (api *Api) RegisterAPIEndpoints() {
 	// Create/Update Public Dashboard
 	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.GetPublicDashboardConfig))
 	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.SavePublicDashboardConfig))
+
+	// List Public Dashboards
+	api.RouteRegister.Get("/api/dashboards/public", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.GetPublicDashboards))
 }
 
 // gets public dashboard
@@ -104,6 +107,14 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	dto := dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}
 
 	return response.JSON(http.StatusOK, dto)
+}
+
+func (api *Api) GetPublicDashboards(c *models.ReqContext) response.Response {
+	publicDashboards, err := api.PublicDashboardService.GetPublicDashboards(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return handleDashboardErr(http.StatusInternalServerError, "Failed to get public dashboards", err)
+	}
+	return response.JSON(http.StatusOK, publicDashboards)
 }
 
 // gets public dashboard configuration for dashboard

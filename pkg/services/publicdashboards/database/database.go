@@ -36,6 +36,33 @@ func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 	}
 }
 
+func (d *PublicDashboardStoreImpl) GetPublicDashboards(ctx context.Context, orgId int64) (*models.Dashboard, error) {
+
+	// START HERE
+	// look up xorm retrieve slice. take brief look at selecting only specific
+	// fields
+	//
+	// create route on frontend
+	// create page container
+	// link route to page
+	// create frontend method to hit the api
+	// populate the table
+
+	pd := &[]PublicDashboard{OrgId: orgId}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Get(dashboard)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return ErrPublicDashboardNotFound
+		}
+		return nil
+	})
+
+	return dashboard, err
+}
+
 func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard := &models.Dashboard{Uid: dashboardUid}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
