@@ -15,6 +15,10 @@ jobs:
       with: 
         path: './pr'
 
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16.16.0
+
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
       run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
@@ -55,6 +59,10 @@ jobs:
       with: 
         path: './base'
         ref: ${{ github.event.pull_request.base.ref }}
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16.16.0
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
