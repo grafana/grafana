@@ -8,7 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	goplugin "github.com/hashicorp/go-plugin"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"google.golang.org/grpc"
 )
 
 // Handshake is the HandshakeConfig used to configure clients and servers.
@@ -36,6 +39,16 @@ func newClientConfig(executablePath string, env []string, logger log.Logger,
 		VersionedPlugins: versionedPlugins,
 		Logger:           logWrapper{Logger: logger},
 		AllowedProtocols: []goplugin.Protocol{goplugin.ProtocolGRPC},
+		GRPCDialOptions: []grpc.DialOption{
+			grpc.WithChainUnaryInterceptor(
+				otelgrpc.UnaryClientInterceptor(),
+				grpc_opentracing.UnaryClientInterceptor(),
+			),
+			grpc.WithChainStreamInterceptor(
+				otelgrpc.StreamClientInterceptor(),
+				grpc_opentracing.StreamClientInterceptor(),
+			),
+		},
 	}
 }
 

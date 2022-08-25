@@ -34,7 +34,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	db.PutRule(context.Background(), rules...)
 
 	scheduler := &schedule.FakeScheduleService{}
-	scheduler.EXPECT().UpdateAlertRule(mock.Anything, mock.Anything).Return()
+	scheduler.On("UpdateAlertRule", mock.Anything, mock.Anything).Return()
 
 	subscribeToFolderChanges(log.New("test"), bus, db, scheduler)
 

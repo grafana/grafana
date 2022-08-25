@@ -14,6 +14,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
+import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
@@ -224,8 +225,14 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     if (query.queryType && query.queryType === QueryType.SLO && query.sloQuery) {
-      const { selectorName, serviceId, sloId, projectName } = query.sloQuery;
-      return !!selectorName && !!serviceId && !!sloId && !!projectName;
+      const { selectorName, serviceId, sloId, projectName, lookbackPeriod } = query.sloQuery;
+      return (
+        !!selectorName &&
+        !!serviceId &&
+        !!sloId &&
+        !!projectName &&
+        (selectorName !== SLO_BURN_RATE_SELECTOR_NAME || !!lookbackPeriod)
+      );
     }
 
     if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {

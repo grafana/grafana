@@ -60,7 +60,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-export const TypeaheadItem: React.FC<Props> = (props: Props) => {
+export const TypeaheadItem = (props: Props) => {
   const styles = useStyles(getStyles);
 
   const { isSelected, item, prefix, style, onMouseEnter, onMouseLeave, onClickItem } = props;

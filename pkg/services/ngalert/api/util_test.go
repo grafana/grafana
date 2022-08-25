@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -154,5 +155,23 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 				require.Equalf(t, roleCtx.SignedInUser, newCtx.SignedInUser, "user should not be altered if access control is disabled and role is %s", roleType)
 			}
 		})
+	})
+}
+
+func Test_containsProvisionedAlerts(t *testing.T) {
+	t.Run("should return true if at least one rule is provisioned", func(t *testing.T) {
+		_, rules := models2.GenerateUniqueAlertRules(rand.Intn(4)+2, models2.AlertRuleGen())
+		provenance := map[string]models2.Provenance{
+			rules[rand.Intn(len(rules)-1)].UID: []models2.Provenance{models2.ProvenanceAPI, models2.ProvenanceFile}[rand.Intn(2)],
+		}
+		require.Truef(t, containsProvisionedAlerts(provenance, rules), "the group of rules is expected to be considered as provisioned but it isn't. Provenances: %v", provenance)
+	})
+	t.Run("should return false if map does not contain or has ProvenanceNone", func(t *testing.T) {
+		_, rules := models2.GenerateUniqueAlertRules(rand.Intn(5)+1, models2.AlertRuleGen())
+		provenance := make(map[string]models2.Provenance)
+		for i := 0; i < rand.Intn(len(rules)); i++ {
+			provenance[rules[i].UID] = models2.ProvenanceNone
+		}
+		require.Falsef(t, containsProvisionedAlerts(provenance, rules), "the group of rules is not expected to be provisioned but it is. Provenances: %v", provenance)
 	})
 }

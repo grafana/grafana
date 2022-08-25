@@ -113,7 +113,5 @@ type SavePublicDashboardConfigDTO struct {
 //
 
 type SavePublicDashboardConfigCommand struct {
-	DashboardUid    string
-	OrgId           int64
 	PublicDashboard PublicDashboard
 }

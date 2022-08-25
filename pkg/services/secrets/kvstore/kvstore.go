@@ -56,12 +56,16 @@ func ProvideService(
 				return nil, err
 			}
 		} else {
+			// as the plugin is installed, secretsKVStoreSQL is now replaced with
+			// an instance of secretsKVStorePlugin with the sql store as a fallback
+			// (used for migration and in case a secret is not found).
 			store = &secretsKVStorePlugin{
 				secretsPlugin:                  secretsPlugin,
 				secretsService:                 secretsService,
 				log:                            logger,
 				kvstore:                        namespacedKVStore,
 				backwardsCompatibilityDisabled: features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility),
+				fallback:                       store,
 			}
 		}
 	}
@@ -80,6 +84,9 @@ type SecretsKVStore interface {
 	Del(ctx context.Context, orgId int64, namespace string, typ string) error
 	Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error)
 	Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error
+	GetAll(ctx context.Context) ([]Item, error)
+	Fallback() SecretsKVStore
+	SetFallback(store SecretsKVStore) error
 }
 
 // WithType returns a kvstore wrapper with fixed orgId and type.

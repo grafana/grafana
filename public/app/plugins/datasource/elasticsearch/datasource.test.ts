@@ -39,6 +39,16 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+const TIMESRV_START = [2022, 8, 21, 6, 10, 10];
+const TIMESRV_END = [2022, 8, 24, 6, 10, 21];
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  ...(jest.requireActual('app/features/dashboard/services/TimeSrv') as unknown as object),
+  getTimeSrv: () => ({
+    timeRange: () => createTimeRange(toUtc(TIMESRV_START), toUtc(TIMESRV_END)),
+  }),
+}));
+
 const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
   from,
   to,
@@ -114,6 +124,48 @@ function getTestContext({
 }
 
 describe('ElasticDatasource', function (this: any) {
+  describe('When calling getTagValues', () => {
+    it('should respect the currently selected time range', () => {
+      const data = {
+        responses: [
+          {
+            aggregations: {
+              '1': {
+                buckets: [
+                  {
+                    doc_count: 10,
+                    key: 'val1',
+                  },
+                  {
+                    doc_count: 20,
+                    key: 'val2',
+                  },
+                  {
+                    doc_count: 30,
+                    key: 'val3',
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+      const { ds, fetchMock } = getTestContext({
+        data,
+        jsonData: { interval: 'Daily', esVersion: '7.10.0', timeField: '@timestamp' },
+      });
+
+      ds.getTagValues({ key: 'test' });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const obj = JSON.parse(fetchMock.mock.calls[0][0].data.split('\n')[1]);
+      const { lte, gte } = obj.query.bool.filter[0].range['@timestamp'];
+
+      expect(gte).toBe('1663740610000'); // 2022-09-21T06:10:10Z
+      expect(lte).toBe('1663999821000'); // 2022-09-24T06:10:21Z
+    });
+  });
+
   describe('When testing datasource with index pattern', () => {
     it('should translate index pattern to current day', () => {
       const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0' } });

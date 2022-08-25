@@ -60,7 +60,7 @@ Grafana 8.1 includes some significant enhancements to transformations, including
 
 #### Config from query (Beta)
 
-This transformation enables panel config (Threshold, Min, Max, etc.) to be derived from query results. For more information, refer to [Config from query results]({{< relref "../panels/transform-data/transformation-functions/#config-from-query-results" >}}).
+This transformation enables panel config (Threshold, Min, Max, etc.) to be derived from query results. For more information, refer to [Config from query results]({{< relref "../panels/transform-data/#config-from-query-results" >}}).
 
 #### Rows to fields (Beta)
 
@@ -82,7 +82,7 @@ Output:
 
 As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
-For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels/transform-data/transformation-functions/#rows-to-fields" >}}).
+For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels/transform-data/#rows-to-fields" >}}).
 
 #### Contextual & Inline Help
 
