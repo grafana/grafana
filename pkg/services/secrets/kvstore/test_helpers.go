@@ -3,37 +3,21 @@ package kvstore
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/secrets/database"
-	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"gopkg.in/ini.v1"
 )
-
-func SetupTestService(t *testing.T) SecretsKVStore {
-	t.Helper()
-
-	sqlStore := sqlstore.InitTestDB(t)
-	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-	secretsService := manager.SetupTestService(t, store)
-
-	kv := &secretsKVStoreSQL{
-		sqlStore:       sqlStore,
-		log:            log.New("secrets.kvstore"),
-		secretsService: secretsService,
-		decryptionCache: decryptionCache{
-			cache: make(map[int64]cachedDecrypted),
-		},
-	}
-
-	return kv
-}
 
 // In memory kv store used for testing
 type FakeSecretsKVStore struct {
@@ -44,6 +28,10 @@ type FakeSecretsKVStore struct {
 
 func NewFakeSecretsKVStore() *FakeSecretsKVStore {
 	return &FakeSecretsKVStore{store: make(map[Key]string)}
+}
+
+func (f *FakeSecretsKVStore) DeletionError(shouldErr bool) {
+	f.delError = shouldErr
 }
 
 func (f *FakeSecretsKVStore) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
@@ -246,4 +234,57 @@ func (pc *fakePluginClient) Start(_ context.Context) error {
 
 func (pc *fakePluginClient) Stop(_ context.Context) error {
 	return nil
+}
+
+func SetupFatalCrashTest(
+	t *testing.T,
+	shouldFailOnStart bool,
+	isPluginErrorFatal bool,
+	isBackwardsCompatDisabled bool,
+) (fatalCrashTestFields, error) {
+	t.Helper()
+	fatalFlagOnce = sync.Once{}
+	startupOnce = sync.Once{}
+	cfg := SetupTestConfig(t)
+	sqlStore := sqlstore.InitTestDB(t)
+	secretService := fakes.FakeSecretsService{}
+	kvstore := kvstore.ProvideService(sqlStore)
+	if isPluginErrorFatal {
+		_ = SetPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(kvstore), true)
+	}
+	features := NewFakeFeatureToggles(t, isBackwardsCompatDisabled)
+	manager := NewFakeSecretsPluginManager(t, shouldFailOnStart)
+	svc, err := ProvideService(sqlStore, secretService, manager, kvstore, features, cfg)
+	t.Cleanup(func() {
+		fatalFlagOnce = sync.Once{}
+	})
+	return fatalCrashTestFields{
+		SecretsKVStore: svc,
+		PluginManager:  manager,
+		KVStore:        kvstore,
+		SqlStore:       sqlStore,
+	}, err
+}
+
+type fatalCrashTestFields struct {
+	SecretsKVStore SecretsKVStore
+	PluginManager  plugins.SecretsPluginManager
+	KVStore        kvstore.KVStore
+	SqlStore       *sqlstore.SQLStore
+}
+
+func SetupTestConfig(t *testing.T) *setting.Cfg {
+	t.Helper()
+	rawCfg := `
+		[secrets]
+		use_plugin = true
+		`
+	raw, err := ini.Load([]byte(rawCfg))
+	require.NoError(t, err)
+	return &setting.Cfg{Raw: raw}
+}
+
+func ResetPlugin() {
+	fatalFlagOnce = sync.Once{}
+	startupOnce = sync.Once{}
 }
