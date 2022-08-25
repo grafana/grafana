@@ -84,7 +84,6 @@ const DEFAULT_DASHBOARD_HOME: DefaultDashboardSearchItem = {
   uid: undefined,
   uri: '',
   url: '',
-  folderId: 0,
   folderTitle: '',
   folderUid: '',
   folderUrl: '',

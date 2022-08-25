@@ -56,7 +56,11 @@ export interface DashboardSectionItem {
  */
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
-export interface DashboardSearchItem extends Omit<DashboardSearchHit, 'id' | 'uid'> {
+export interface DashboardSearchItem
+  extends Omit<
+    DashboardSearchHit,
+    'id' | 'uid' | 'expanded' | 'selected' | 'checked' | 'folderId' | 'icon' | 'sortMeta' | 'sortMetaName'
+  > {
   uid: string;
 }
 
