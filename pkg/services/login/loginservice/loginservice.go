@@ -22,7 +22,7 @@ func ProvideService(
 	userService user.Service,
 	quotaService quota.Service,
 	authInfoService login.AuthInfoService,
-	accessControl accesscontrol.AccessControl,
+	accessControl accesscontrol.Service,
 ) *Implementation {
 	s := &Implementation{
 		SQLStore:        sqlStore,
@@ -40,7 +40,7 @@ type Implementation struct {
 	AuthInfoService login.AuthInfoService
 	QuotaService    quota.Service
 	TeamSync        login.TeamSyncFunc
-	accessControl   accesscontrol.AccessControl
+	accessControl   accesscontrol.Service
 }
 
 // CreateUser creates inserts a new one.

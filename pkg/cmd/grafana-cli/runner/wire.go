@@ -323,6 +323,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
+	ossaccesscontrol.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {
