@@ -28,27 +28,18 @@ interface Props {
 
   // Query editing
   onQueriesChange: (queries: AlertQuery[]) => void;
-  onDuplicateQuery: (query: AlertQuery) => void;
-  onRunQueries: () => void;
+  condition: string | null;
+  onSetCondition: (refId: string) => void;
 }
 
-interface State {
-  dataPerQuery: Record<string, PanelData>;
-}
-
-export class QueryRows extends PureComponent<Props, State> {
+export class QueryRows extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
-
-    this.state = { dataPerQuery: {} };
   }
 
   onRemoveQuery = (query: DataQuery) => {
-    this.props.onQueriesChange(
-      this.props.queries.filter((item) => {
-        return item.model.refId !== query.refId;
-      })
-    );
+    const { queries, onQueriesChange } = this.props;
+    onQueriesChange(queries.filter((q) => q.refId !== query.refId));
   };
 
   onChangeTimeRange = (timeRange: RelativeTimeRange, index: number) => {
@@ -162,11 +153,8 @@ export class QueryRows extends PureComponent<Props, State> {
     onQueriesChange(update);
   };
 
-  onDuplicateQuery = (query: DataQuery, source: AlertQuery): void => {
-    this.props.onDuplicateQuery({
-      ...source,
-      model: query,
-    });
+  onDuplicateQuery = (query: DataQuery): void => {
+    throw new Error('not yet implemented');
   };
 
   getDataSourceSettings = (query: AlertQuery): DataSourceInstanceSettings | undefined => {
@@ -218,7 +206,7 @@ export class QueryRows extends PureComponent<Props, State> {
   };
 
   render() {
-    const { onDuplicateQuery, onRunQueries, queries } = this.props;
+    const { queries } = this.props;
     const thresholdByRefId = this.getThresholdsForQueries(queries);
 
     return (
@@ -264,11 +252,13 @@ export class QueryRows extends PureComponent<Props, State> {
                       onRemoveQuery={this.onRemoveQuery}
                       queries={queries}
                       onChangeDataSource={this.onChangeDataSource}
-                      onDuplicateQuery={onDuplicateQuery}
-                      onRunQueries={onRunQueries}
+                      onDuplicateQuery={this.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}
                       thresholds={thresholdByRefId[query.refId]}
                       onChangeThreshold={this.onChangeThreshold}
+                      onRunQueries={() => {}}
+                      condition={this.props.condition}
+                      onSetCondition={this.props.onSetCondition}
                     />
                   );
                 })}

@@ -1,26 +1,30 @@
 import React, { FC } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { PanelData } from '@grafana/data';
 import { Field, InputControl } from '@grafana/ui';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { QueryEditor } from '../QueryEditor';
 
 interface Props {
-  editingExistingRule?: boolean;
+  panelData: Record<string, PanelData>;
+  queries: AlertQuery[];
+  condition: string | null;
+  onSetCondition: (refId: string) => void;
+  onChangeQueries: (queries: AlertQuery[]) => void;
 }
 
-export const Query: FC<Props> = ({ editingExistingRule = false }) => {
+export const Query: FC<Props> = ({ queries, panelData, onChangeQueries, condition, onSetCondition }) => {
   const {
     control,
     watch,
     formState: { errors },
-    setValue,
   } = useFormContext<RuleFormValues>();
 
   const type = watch('type');
-  const condition = watch('condition');
   const dataSourceName = watch('dataSourceName');
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
@@ -28,10 +32,6 @@ export const Query: FC<Props> = ({ editingExistingRule = false }) => {
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
 
   const showCloudExpressionEditor = (isRecordingRuleType || isCloudAlertRuleType) && dataSourceName;
-
-  const handleSetCondition = (refId: string) => {
-    setValue('condition', refId);
-  };
 
   return (
     <div>
@@ -53,26 +53,13 @@ export const Query: FC<Props> = ({ editingExistingRule = false }) => {
 
       {/* This is the editor for Grafana managed rules */}
       {isGrafanaManagedType && (
-        <Field
-          invalid={!!errors.queries}
-          error={(!!errors.queries && 'Must provide at least one valid query.') || undefined}
-        >
-          <InputControl
-            name="queries"
-            render={({ field: { ref, ...field } }) => (
-              <QueryEditor
-                {...field}
-                condition={condition}
-                onSetCondition={handleSetCondition}
-                editingExistingRule={editingExistingRule ?? false}
-              />
-            )}
-            control={control}
-            rules={{
-              validate: (queries) => Array.isArray(queries) && !!queries.length,
-            }}
-          />
-        </Field>
+        <QueryEditor
+          queries={queries}
+          onChangeQueries={onChangeQueries}
+          panelData={panelData}
+          condition={condition}
+          onSetCondition={onSetCondition}
+        />
       )}
     </div>
   );

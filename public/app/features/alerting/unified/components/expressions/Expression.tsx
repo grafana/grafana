@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { capitalize, uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
-import { DataFrame, GrafanaTheme2, PanelData } from '@grafana/data';
-import { AutoSizeInput, Badge, Icon, IconButton, Select, Stack, useStyles2 } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { AutoSizeInput, Icon, IconButton, Select, Stack, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -13,6 +13,7 @@ import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dt
 
 import { AlertStateTag } from '../rules/AlertStateTag';
 
+import { AlertCondition } from './AlertCondition';
 import { getSeriesName, getSeriesValue } from './util';
 
 interface ExpressionProps {
@@ -42,7 +43,8 @@ export const Expression: FC<ExpressionProps> = ({
 
   const queryType = query?.type;
 
-  const hasResults = Array.isArray(data?.series);
+  const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
+  const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
   const emptyResults = hasResults && series.length === 0;
 
@@ -160,7 +162,10 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
                 setEditMode(false);
               }}
               onFocus={(event) => event.target.select()}
-              onBlur={() => setEditMode(false)}
+              onBlur={(event) => {
+                onUpdateRefId(event.currentTarget.value);
+                setEditMode(false);
+              }}
             />
           )}
           {!editingExpression && (
@@ -218,23 +223,6 @@ const FrameRow: FC<FrameProps> = ({ frame, isAlertCondition }) => {
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
         {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
       </Stack>
-    </div>
-  );
-};
-
-interface AlertConditionProps {
-  enabled?: boolean;
-  onSetCondition: () => void;
-}
-
-const AlertCondition: FC<AlertConditionProps> = ({ enabled = false, onSetCondition }) => {
-  const styles = useStyles2(getStyles);
-
-  return enabled ? (
-    <Badge color="green" icon="check" text="Alert condition" />
-  ) : (
-    <div className={styles.actionLink} onClick={() => onSetCondition()}>
-      Make this the alert condition
     </div>
   );
 };
@@ -312,14 +300,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(1)};
     border-top: solid 1px ${theme.colors.border.medium};
-  `,
-  actionLink: css`
-    color: ${theme.colors.text.link};
-    cursor: pointer;
-
-    &:hover {
-      text-decoration: underline;
-    }
   `,
   draggableIcon: css`
     cursor: grab;

@@ -13,13 +13,14 @@ import {
   RelativeTimeRange,
   ThresholdsConfig,
 } from '@grafana/data';
-import { RelativeTimeRangePicker, useStyles2, Tooltip, Icon } from '@grafana/ui';
+import { RelativeTimeRangePicker, useStyles2, Tooltip, Icon, Stack } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TABLE, TIMESERIES } from '../../utils/constants';
 import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
+import { AlertCondition } from '../expressions/AlertCondition';
 
 import { VizWrapper } from './VizWrapper';
 
@@ -37,6 +38,8 @@ interface Props {
   index: number;
   thresholds: ThresholdsConfig;
   onChangeThreshold: (thresholds: ThresholdsConfig, index: number) => void;
+  condition: string | null;
+  onSetCondition: (refId: string) => void;
 }
 
 export const QueryWrapper: FC<Props> = ({
@@ -53,6 +56,8 @@ export const QueryWrapper: FC<Props> = ({
   queries,
   thresholds,
   onChangeThreshold,
+  condition,
+  onSetCondition,
 }) => {
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
@@ -89,7 +94,7 @@ export const QueryWrapper: FC<Props> = ({
       return null;
     } else {
       return (
-        <>
+        <Stack direction="row" alignItems="center" gap={1}>
           <SelectingDataSourceTooltip />
           {onChangeTimeRange && (
             <RelativeTimeRangePicker
@@ -97,7 +102,8 @@ export const QueryWrapper: FC<Props> = ({
               onChange={(range) => onChangeTimeRange(range, index)}
             />
           )}
-        </>
+          <AlertCondition onSetCondition={() => onSetCondition(query.refId)} enabled={condition === query.refId} />
+        </Stack>
       );
     }
   }
@@ -152,7 +158,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   dsTooltip: css`
     display: flex;
     align-items: center;
-    margin-right: ${theme.spacing(2)};
     &:hover {
       opacity: 0.85;
       cursor: pointer;
