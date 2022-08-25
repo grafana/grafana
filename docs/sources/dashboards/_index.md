@@ -26,4 +26,3 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Dashboard version history]({{< relref "dashboard-history/" >}})
 - [Dashboard export and import]({{< relref "export-import/" >}})
 - [Dashboard JSON model]({{< relref "json-model/" >}})
-- [Scripted dashboards]({{< relref "./manage-dashboards/#scripted-dashboards" >}})

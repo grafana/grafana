@@ -9,9 +9,8 @@ aliases:
   - /docs/grafana/latest/troubleshooting/troubleshoot-dashboards/
   - /docs/grafana/latest/dashboards/time-range-controls/
   - /docs/grafana/latest/reference/timerange/
-  - /docs/grafana/latest/dashboards/scripted-dashboards/
-  - /docs/grafana/latest/reference/scripting/
   - /docs/grafana/latest/panels/working-with-panels/organize-dashboard/
+  - /docs/grafana/latest/dashboards/manage-dashboards/
 title: Manage dashboards
 menuTitle: Manage dashboards
 weight: 8
@@ -41,16 +40,6 @@ This topic includes techniques you can use to manage your Grafana dashboards, in
 - [Configuring dashboard time range controls](#configure-dashboard-time-range-controls)
 - [Organizing dashboards](#organize-a-dashboard)
 - [Troubleshooting dashboards](#troubleshoot-dashboards)
-
-When managing dashboads, you can use:
-
-- Select a time period for a dashboard using the [Time range controls](#configure-dashboard-time-range-controls) in the upper right of the dashboard.
-- Tag dashboards.
-- Use [templating]({{< relref "../../variables/" >}}) to make them more dynamic and interactive.
-- Use [annotations]({{< relref "annotations/" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
-- Use the dashboard picker for quick, searchable access to all dashboards in a particular organization.
-
-You can also [share dashboards]({{< relref "../../share-dashboard-panels" >}}) in a variety of ways.
 
 ## Create a dashboard folder
 
@@ -139,68 +128,6 @@ The import process enables you to change the name of the dashboard, pick the dat
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
 {{< figure src="/static/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
-
-### Import and sharing with Grafana 2.x or 3.0
-
-Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
-to update each panel so that they are using a data source of your choice. If you are running a
-Grafana version older than 3.1 then you might need to do some manual steps either
-before or after import in order for the dashboard to work properly.
-
-Dashboards exported from Grafana 3.1+ have a new json section `__inputs`
-that define what data sources and metric prefixes the dashboard uses.
-
-Example:
-
-```json
-{
-  "__inputs": [
-    {
-      "name": "DS_GRAPHITE",
-      "label": "graphite",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "graphite",
-      "pluginName": "Graphite"
-    },
-    {
-      "name": "VAR_PREFIX",
-      "type": "constant",
-      "label": "prefix",
-      "value": "collectd",
-      "description": ""
-    }
-  ]
-}
-```
-
-These are then referenced in the dashboard panels like this:
-
-```json
-{
-  "rows": [
-    {
-      "panels": [
-        {
-          "type": "graph",
-          "datasource": "${DS_GRAPHITE}"
-        }
-      ]
-    }
-  ]
-}
-```
-
-These inputs and their usage in data source properties are automatically added during export in Grafana 3.1.
-If you run an older version of Grafana and want to share a dashboard on Grafana.com you need to manually
-add the inputs and templatize the data source properties as described above.
-
-If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
-it as usual and then update the data source option in the metrics tab so that the panel is using the correct
-data source. Another alternative is to open the JSON file in a text editor and update the data source properties
-to a value that matches a name of your data source.
-
-> **Note:** In Grafana v5.3.4+ the export modal has a new checkbox for sharing for external use in other Grafana instances. If the checkbox is not checked then the `__inputs` section will not be included in the exported JSON file.
 
 ## Configure dashboard time range controls
 
@@ -379,58 +306,13 @@ Some applications publish data intermittently; for example, they only post a met
 In the picture below we have enabled:
 
 - Points and 3-point radius to highlight where data points are actually present.
-- **Connect null values* is set to **Always**.
+- **Connect null values\* is set to **Always\*\*.
 
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_connected.png" max-width="1200px" >}}
 
 In this graph, we set graph to show bars instead of lines and set the **No value** under **Standard options** to **0**. There is a very big difference in the visuals.
 
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" >}}
-
-## Scripted dashboards
-
-> **Warning:** This feature is deprecated and will be removed in a future release.
-
-If you have lots of metric names that change (new servers etc) in a defined pattern it is irritating to constantly have to create new dashboards.
-
-With scripted dashboards you can dynamically create your dashboards using javascript. In the Grafana install folder
-under `public/dashboards/` there is a file named `scripted.js`. This file contains an example of a scripted dashboard. You can access it by using the URL:
-`http://grafana_url/dashboard/script/scripted.js?rows=3&name=myName`
-
-If you open scripted.js you can see how it reads URL parameters from ARGS variable and then adds rows and panels.
-
-### Example
-
-```javascript
-var seriesName = 'argName';
-
-if (!_.isUndefined(ARGS.name)) {
-  seriesName = ARGS.name;
-}
-
-dashboard.panels.push({
-  title: 'Events',
-  type: 'graph',
-  fill: 1,
-  linewidth: 2,
-  gridPos: {
-    h: 10,
-    w: 24,
-    x: 0,
-    y: 10,
-  },
-  targets: [
-    {
-      target: "randomWalk('" + seriesName + "')",
-    },
-    {
-      target: "randomWalk('random walk2')",
-    },
-  ],
-});
-
-return dashboard;
-```
 
 ### More examples
 
