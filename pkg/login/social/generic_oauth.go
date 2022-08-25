@@ -147,12 +147,16 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 
 		if userInfo.Role == "" {
-			role, err := s.extractRole(data)
+			role, grafanaAdmin, err := s.extractRoleAndAdmin(data)
 			if err != nil {
 				s.log.Warn("Failed to extract role", "error", err)
 			} else if role != "" {
 				s.log.Debug("Setting user info role from extracted role")
-				userInfo.Role = role
+				userInfo.Role = string(role)
+			}
+
+			if s.allowAssignGrafanaAdmin {
+				userInfo.IsGrafanaAdmin = &grafanaAdmin
 			}
 		}
 
@@ -355,17 +359,22 @@ func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 	return ""
 }
 
-func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
+// Extracts user role and server admin setting
+func (s *SocialGenericOAuth) extractRoleAndAdmin(data *UserInfoJson) (org.RoleType, bool, error) {
 	if s.roleAttributePath == "" {
-		return "", nil
+		return "", false, nil
 	}
 
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, data.rawJSON)
-
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
-	return role, nil
+
+	if role == RoleGrafanaAdmin {
+		return org.RoleAdmin, true, nil
+	}
+
+	return org.RoleType(role), false, nil
 }
 
 func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error) {
