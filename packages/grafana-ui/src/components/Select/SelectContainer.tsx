@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
-import { CommonProps, components, ContainerProps as BaseContainerProps, GroupBase} from 'react-select';
+import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -10,16 +10,11 @@ import { focusCss } from '../../themes/mixins';
 import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
 
-interface CustomSelectProps<Option, IsMulti extends boolean, Group extends GroupBase<Option>> extends CommonProps<Option, IsMulti, Group>['selectProps'] {
-  invalid: boolean;
-  backspaceRemovesValue: boolean;
-}
-// isFocus prop is actually available, but its not in the types for the version we have.
-export interface SelectContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>>
-  extends BaseContainerProps<Option, isMulti, Group> {
-  isFocused: boolean;
-  selectProps: CustomSelectProps<Option, isMulti, Group>;
-}
+import { CustomComponentProps } from './types';
+
+// prettier-ignore
+export type SelectContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>> =
+  BaseContainerProps<Option, isMulti, Group> & CustomComponentProps<Option, isMulti, Group>;
 
 export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
   props: SelectContainerProps<Option, isMulti, Group>
