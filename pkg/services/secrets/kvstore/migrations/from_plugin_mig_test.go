@@ -1,4 +1,4 @@
-package kvstore
+package migrations
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,13 +40,13 @@ func TestPluginSecretMigrationService_MigrateFromPlugin(t *testing.T) {
 }
 
 // Set up services used in migration
-func setupTestMigrateFromPluginService(t *testing.T) (*MigrateFromPluginService, secretsmanagerplugin.SecretsManagerPlugin, *secretsKVStoreSQL) {
+func setupTestMigrateFromPluginService(t *testing.T) (*MigrateFromPluginService, secretsmanagerplugin.SecretsManagerPlugin, *secretskvs.SecretsKVStoreSQL) {
 	t.Helper()
 
 	// this is to init the sql secret store inside the migration
 	sqlStore := sqlstore.InitTestDB(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	manager := NewFakeSecretsPluginManager(t, false)
+	manager := secretskvs.NewFakeSecretsPluginManager(t, false)
 	migratorService := ProvideMigrateFromPluginService(
 		setting.NewCfg(),
 		sqlStore,
@@ -54,14 +55,7 @@ func setupTestMigrateFromPluginService(t *testing.T) (*MigrateFromPluginService,
 		kvstore.ProvideService(sqlStore),
 	)
 
-	secretsSql := &secretsKVStoreSQL{
-		sqlStore:       sqlStore,
-		secretsService: secretsService,
-		log:            log.New("test.logger"),
-		decryptionCache: decryptionCache{
-			cache: make(map[int64]cachedDecrypted),
-		},
-	}
+	secretsSql := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
 	return migratorService, manager.SecretsManager().SecretsManager, secretsSql
 }
@@ -88,7 +82,7 @@ func validatePluginSecretsWereDeleted(t *testing.T, plugin secretsmanagerplugin.
 }
 
 // validates that secrets are in sql
-func validateSecretWasStoredInSql(t *testing.T, sqlStore *secretsKVStoreSQL, ctx context.Context, orgId int64, namespace string, typ string, expectedValue string) {
+func validateSecretWasStoredInSql(t *testing.T, sqlStore *secretskvs.SecretsKVStoreSQL, ctx context.Context, orgId int64, namespace string, typ string, expectedValue string) {
 	t.Helper()
 	res, exists, err := sqlStore.Get(ctx, orgId, namespace, typ)
 	require.NoError(t, err)
