@@ -17,7 +17,6 @@ import {
   applyFilterFromTable,
   changeFilter,
   changeVariableDatasource,
-  initAdHocVariableEditor,
   removeFilter,
   setFiltersFromUrl,
 } from './actions';
@@ -44,14 +43,6 @@ const datasources = [
   createDatasource('influx'),
   createDatasource('google-sheets', false),
   createDatasource('elasticsearch-v7'),
-];
-
-const expectedDatasources = [
-  { text: '', value: {} },
-  { text: 'default (default)', value: { uid: 'default', type: 'default' } },
-  { text: 'elasticsearch-v1', value: { uid: 'elasticsearch-v1', type: 'elasticsearch-v1' } },
-  { text: 'influx', value: { uid: 'influx', type: 'influx' } },
-  { text: 'elasticsearch-v7', value: { uid: 'elasticsearch-v7', type: 'elasticsearch-v7' } },
 ];
 
 describe('adhoc actions', () => {
@@ -406,23 +397,6 @@ describe('adhoc actions', () => {
     });
   });
 
-  describe('when initAdHocVariableEditor is dispatched', () => {
-    it('then correct actions are dispatched', async () => {
-      const key = 'key';
-
-      getList.mockRestore();
-      getList.mockReturnValue(datasources);
-
-      const tester = reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(initAdHocVariableEditor(key));
-
-      tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction(key, changeVariableEditorExtended({ dataSources: expectedDatasources }))
-      );
-    });
-  });
-
   describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
     it('then correct actions are dispatched', async () => {
       const key = 'key';
@@ -442,8 +416,6 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(toKeyedAction(key, setIdInEditor({ id: variable.id })))
-        .whenActionIsDispatched(initAdHocVariableEditor(key))
         .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
@@ -455,7 +427,6 @@ describe('adhoc actions', () => {
           key,
           changeVariableEditorExtended({
             infoText: 'This data source does not support ad hoc filters yet.',
-            dataSources: expectedDatasources,
           })
         )
       );
@@ -484,8 +455,6 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(toKeyedAction(key, setIdInEditor({ id: variable.id })))
-        .whenActionIsDispatched(initAdHocVariableEditor(key))
         .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
@@ -493,7 +462,7 @@ describe('adhoc actions', () => {
           key,
           changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
         ),
-        toKeyedAction(key, changeVariableEditorExtended({ infoText: loadingText, dataSources: expectedDatasources }))
+        toKeyedAction(key, changeVariableEditorExtended({ infoText: loadingText }))
       );
     });
   });
