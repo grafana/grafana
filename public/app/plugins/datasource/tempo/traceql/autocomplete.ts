@@ -24,6 +24,10 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
   private tags: { [tag: string]: Set<string> } = {};
+  private intrinsics: string[] = ['name', 'status', 'duration'];
+  // private scopes: string[] = ['span', 'resource'];
+  private operators: string[] = ['=', '-', '+', '<', '>', '>=', '<='];
+  private logicalOps: string[] = ['&&', '||'];
 
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
@@ -82,23 +86,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return [];
       }
       case 'EMPTY': {
-        return Object.keys(this.tags).map((key) => {
-          return {
-            label: key,
-            insertText: `{${key}="`,
-            type: 'TAG_NAME',
-          };
-        });
+        return this.getKeywordsAndTagsCompletions();
       }
-      case 'IN_TAG_NAME':
-        return Object.keys(this.tags).map((key) => {
-          return {
-            label: key,
-            insertText: key,
-            type: 'TAG_NAME',
-          };
-        });
-      case 'IN_TAG_VALUE':
+      case 'SPANSET_IN_NAME':
+        return this.getKeywordsAndTagsCompletions();
+      case 'SPANSET_AFTER_NAME':
+        return this.operators.map((key) => ({
+          label: key,
+          insertText: key,
+          type: 'OPERATOR' as CompletionType,
+        }));
+      case 'SPANSET_IN_VALUE':
         return await this.languageProvider.getOptions(situation.tagName).then((res) => {
           const items: Completion[] = [];
           res.forEach((val) => {
@@ -112,9 +110,34 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           });
           return items;
         });
+      case 'SPANSET_AFTER_VALUE':
+        return this.logicalOps.concat('}').map((key) => ({
+          label: key,
+          insertText: key,
+          type: 'OPERATOR' as CompletionType,
+        }));
       default:
         throw new Error(`Unexpected situation ${situation}`);
     }
+  }
+
+  private getKeywordsAndTagsCompletions(): Completion[] {
+    const result: Completion[] = [];
+    result.push(
+      ...this.intrinsics.map((key) => ({
+        label: key,
+        insertText: key,
+        type: 'KEYWORD' as CompletionType,
+      }))
+    );
+    result.push(
+      ...Object.keys(this.tags).map((key) => ({
+        label: key,
+        insertText: key,
+        type: 'TAG_NAME' as CompletionType,
+      }))
+    );
+    return result;
   }
 }
 
@@ -127,6 +150,10 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   switch (type) {
     case 'TAG_NAME':
       return monaco.languages.CompletionItemKind.Enum;
+    case 'KEYWORD':
+      return monaco.languages.CompletionItemKind.Keyword;
+    case 'OPERATOR':
+      return monaco.languages.CompletionItemKind.Operator;
     case 'TAG_VALUE':
       return monaco.languages.CompletionItemKind.EnumMember;
     default:
@@ -134,7 +161,7 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   }
 }
 
-export type CompletionType = 'TAG_NAME' | 'TAG_VALUE';
+export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR';
 type Completion = {
   type: CompletionType;
   label: string;
@@ -154,14 +181,18 @@ export type Situation =
       type: 'EMPTY';
     }
   | {
-      type: 'IN_TAG_NAME';
-      otherTags: Tag[];
+      type: 'SPANSET_AFTER_NAME';
     }
   | {
-      type: 'IN_TAG_VALUE';
+      type: 'SPANSET_IN_NAME';
+    }
+  | {
+      type: 'SPANSET_IN_VALUE';
       tagName: string;
       betweenQuotes: boolean;
-      otherTags: Tag[];
+    }
+  | {
+      type: 'SPANSET_AFTER_VALUE';
     };
 
 /**
@@ -172,43 +203,66 @@ export type Situation =
  * @param offset
  */
 function getSituation(text: string, offset: number): Situation {
-  if (text === '') {
+  if (text === '' || offset === 0) {
     return {
       type: 'EMPTY',
     };
   }
 
-  // Get all the tags so far in the query so we can do some more filtering.
-  const matches = text.matchAll(/(\w+)="(\w+)"/g);
-  const existingTags = Array.from(matches).reduce((acc, match) => {
-    const [_, name, value] = match[1];
-    acc.push({ name, value });
-    return acc;
-  }, [] as Tag[]);
+  const textUntilCaret = text.substring(0, offset);
 
-  // Check if we are editing a tag value right now. If so also get name of the tag
-  const matchTagValue = text.substring(0, offset).match(/([\w.]+)=("?)[^"]*$/);
-  if (matchTagValue) {
-    return {
-      type: 'IN_TAG_VALUE',
-      tagName: matchTagValue[1],
-      betweenQuotes: !!matchTagValue[2],
-      otherTags: existingTags,
-    };
-  }
-
-  // Check if we are editing a tag name
-  const matchTagName = text.substring(0, offset).match(/[{,]\s*[^"]*$/);
-  if (matchTagName) {
-    return {
-      type: 'IN_TAG_NAME',
-      otherTags: existingTags,
-    };
+  // Check if we're inside a span set
+  let isInSpanSet = textUntilCaret.lastIndexOf('{') > textUntilCaret.lastIndexOf('}');
+  if (isInSpanSet) {
+    return getSituationInSpanSet(textUntilCaret);
   }
 
   // Will happen only if user writes something that isn't really a tag selector
   return {
     type: 'UNKNOWN',
+  };
+}
+
+function getSituationInSpanSet(textUntilCaret: string): Situation {
+  const matched = textUntilCaret.match(
+    /([\s{])((?<name>[\w./]+)(?<space1>\s*)((?<op>[!=+\-<>]+)(?<space2>\s*)(?<value>(?<open_bracket>")?[\w.]+(?<close_bracket>")?)?)?)(?<space3>\s*)$/
+  );
+
+  if (matched) {
+    const name = matched.groups?.name;
+    const op = matched.groups?.op;
+    const value = matched.groups?.value;
+
+    console.log({ name, op, value, matched });
+
+    if (!name) {
+      return {
+        type: 'EMPTY',
+      };
+    }
+
+    if (!op) {
+      return {
+        type: matched.groups?.space1 ? 'SPANSET_AFTER_NAME' : 'SPANSET_IN_NAME',
+      };
+    }
+
+    if (matched.groups?.space3) {
+      return {
+        type: 'SPANSET_AFTER_VALUE',
+      };
+    }
+    return {
+      type: 'SPANSET_IN_VALUE',
+      tagName: name,
+      betweenQuotes: !!matched.groups?.open_bracket,
+    };
+  } else {
+    console.log('matched is null');
+  }
+
+  return {
+    type: 'EMPTY',
   };
 }
 
