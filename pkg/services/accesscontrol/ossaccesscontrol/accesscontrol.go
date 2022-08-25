@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -52,8 +53,12 @@ func (a *AccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, e
 
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, a.resolvers.GetScopeAttributeMutator(user.OrgID))
 	if err != nil {
+		if errors.Is(err, accesscontrol.ErrResolverNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
+
 	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgID]), nil
 }
 
