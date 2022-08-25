@@ -20,9 +20,6 @@ import { ExploreGraphLabel } from '../ExploreGraphLabel';
 import LogsContainer from '../LogsContainer';
 import { NodeGraphContainer } from '../NodeGraphContainer';
 import TableContainer from '../TableContainer';
-import { TraceViewContainer } from '../TraceView/TraceViewContainer';
-
-import { useScrollElements } from './panelHooks';
 
 export async function getPanelForVisType(visType: string): Promise<React.ComponentType<ExplorePanelProps>> {
   // TODO this is not much dynamic at the moment but it's a start of creating a common interface
@@ -43,9 +40,6 @@ export async function getPanelForVisType(visType: string): Promise<React.Compone
       return LogsPanel;
     }
 
-    case 'trace': {
-      return TraceViewPanel;
-    }
     default: {
       const panels = getAllPanelPluginMeta();
       for (const panel of panels) {
@@ -221,23 +215,6 @@ function NodeGraphPanel(props: ExplorePanelProps) {
       range={range}
       withTraceView={renderedVisualizations.includes(KnownVisualizationType.trace)}
       datasourceType={datasourceType}
-    />
-  );
-}
-
-function TraceViewPanel(props: ExplorePanelProps) {
-  const { splitOpen, exploreId, data } = props;
-
-  // This is used only in explore context so this should be defined
-  const { scrollElement, topOfViewRef } = useScrollElements()!;
-
-  return (
-    <TraceViewContainer
-      exploreId={exploreId}
-      dataFrames={data}
-      splitOpenFn={splitOpen}
-      scrollElement={scrollElement}
-      topOfViewRef={topOfViewRef}
     />
   );
 }

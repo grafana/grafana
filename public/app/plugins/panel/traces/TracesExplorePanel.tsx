@@ -1,26 +1,23 @@
 import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
 import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
-import React, { RefObject, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { ExploreId, DataFrame, SplitOpen } from '@grafana/data';
+import { ExplorePanelProps } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
+import { TraceView } from 'app/features/explore/TraceView/TraceView';
+import { useSearch } from 'app/features/explore/TraceView/useSearch';
+import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
+import { useScrollElements } from 'app/features/explore/utils/panelHooks';
 import { StoreState } from 'app/types';
 
-import { TraceView } from './TraceView';
-import { useSearch } from './useSearch';
-import { transformDataFrames } from './utils/transform';
-interface Props {
-  dataFrames: DataFrame[];
-  splitOpenFn: SplitOpen;
-  exploreId: ExploreId;
-  scrollElement?: Element;
-  topOfViewRef: RefObject<HTMLDivElement>;
-}
-export function TraceViewContainer(props: Props) {
+export function TraceViewExplorePanel(props: ExplorePanelProps) {
+  // This is used only in explore context so this should be defined
+  const { scrollElement, topOfViewRef } = useScrollElements()!;
+
   // At this point we only show single trace
-  const frame = props.dataFrames[0];
-  const { dataFrames, splitOpenFn, exploreId, scrollElement, topOfViewRef } = props;
+  const { splitOpen, exploreId, data } = props;
+  const frame = data[0];
   const traceProp = useMemo(() => transformDataFrames(frame), [frame]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
@@ -49,8 +46,8 @@ export function TraceViewContainer(props: Props) {
       <Collapse label="Trace View" isOpen>
         <TraceView
           exploreId={exploreId}
-          dataFrames={dataFrames}
-          splitOpenFn={splitOpenFn}
+          dataFrames={data}
+          splitOpenFn={splitOpen}
           scrollElement={scrollElement}
           traceProp={traceProp}
           spanFindMatches={spanFindMatches}
