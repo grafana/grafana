@@ -238,7 +238,10 @@ export class UPlotConfigBuilder {
     );
 
     config.tzDate = this.tzDate;
-    config.padding = this.padding;
+
+    if (Array.isArray(this.padding)) {
+      config.padding = this.padding;
+    }
 
     if (this.stackingGroups.length) {
       this.stackingGroups.forEach((group) => {
