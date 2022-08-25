@@ -18,28 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 )
 
 func TestPluginInstaller(t *testing.T) {
-	t.Run("Can add a plugin from source", func(t *testing.T) {
-		src := []plugins.PluginSource{
-			{
-				Class: plugins.Core,
-				Paths: []string{"../../../../public/app/plugins/datasource/prometheus"},
-			},
-		}
-
-		pm := New(&plugins.Cfg{}, newFakePluginRegistry(), src, &fakeLoader{}, &fakePluginRepo{}, &fakePluginStorage{}, &fakeProcessManager{})
-		err := pm.Run(context.Background())
-		require.NoError(t, err)
-
-		p, exists := pm.plugin(context.Background(), "prometheus")
-		require.True(t, exists)
-		require.NotNil(t, p)
-	})
-
 	t.Run("Adding a new plugin", func(t *testing.T) {
 		const (
 			pluginID, v1 = "test-panel", "1.0.0"
@@ -47,7 +29,7 @@ func TestPluginInstaller(t *testing.T) {
 		)
 
 		// mock a plugin to be returned automatically by the plugin loader
-		pluginV1, _ := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+		pluginV1 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
 			plugin.Info.Version = v1
 		})
 		mockZipV1 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
@@ -117,7 +99,7 @@ func TestPluginInstaller(t *testing.T) {
 				zipNameV2 = "test-panel-2.0.0.zip"
 			)
 			// mock a plugin to be returned automatically by the plugin loader
-			pluginV2, _ := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+			pluginV2 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
 				plugin.Info.Version = v2
 			})
 
@@ -192,7 +174,7 @@ func TestPluginInstaller(t *testing.T) {
 		}
 
 		for _, tc := range tcs {
-			p, _ := createPlugin(t, testPluginID, tc.class, true, true, func(plugin *plugins.Plugin) {
+			p := createPlugin(t, testPluginID, tc.class, true, true, func(plugin *plugins.Plugin) {
 				plugin.Info.Version = "1.0.0"
 			})
 
@@ -225,22 +207,7 @@ func TestPluginInstaller(t *testing.T) {
 	})
 }
 
-// TODO move to store_test.go?
-
-func createManager(t *testing.T, cbs ...func(*PluginManager)) (*PluginManager, plugins.Store) {
-	t.Helper()
-
-	pm := New(&plugins.Cfg{}, newFakePluginRegistry(), []plugins.PluginSource{}, &fakeLoader{}, &fakePluginRepo{},
-		&fakePluginStorage{}, &fakeProcessManager{})
-
-	for _, cb := range cbs {
-		cb(pm)
-	}
-
-	return pm, store.ProvideService(pm.pluginRegistry)
-}
-
-func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) (*plugins.Plugin, *fakePluginClient) {
+func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) *plugins.Plugin {
 	t.Helper()
 
 	p := &plugins.Plugin{
@@ -271,7 +238,7 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 		cb(p)
 	}
 
-	return p, pc
+	return p
 }
 
 type managerScenarioCtx struct {
@@ -300,7 +267,7 @@ func newScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerS
 		processManager: processManager,
 	}
 
-	ctx.plugin, ctx.pluginClient = createPlugin(t, "test-datasource", plugins.External, managed, true)
+	ctx.plugin = createPlugin(t, "test-datasource", plugins.External, managed, true)
 
 	fn(t, ctx)
 }
@@ -392,12 +359,6 @@ func (pc *fakePluginClient) IsDecommissioned() bool {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 	return pc.decommissioned
-}
-
-func (pc *fakePluginClient) kill() {
-	pc.mutex.Lock()
-	defer pc.mutex.Unlock()
-	pc.exited = true
 }
 
 func (pc *fakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {

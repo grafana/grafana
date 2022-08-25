@@ -34,7 +34,7 @@ func NewManager(pluginRegistry registry.Service) *Manager {
 
 func (m *Manager) Run(ctx context.Context) error {
 	<-ctx.Done()
-	m.Shutdown(ctx)
+	m.shutdown(ctx)
 	return ctx.Err()
 }
 
@@ -83,8 +83,8 @@ func (m *Manager) Stop(ctx context.Context, pluginID string) error {
 	return nil
 }
 
-// Shutdown stops all backend plugin processes
-func (m *Manager) Shutdown(ctx context.Context) {
+// shutdown stops all backend plugin processes
+func (m *Manager) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
 	for _, p := range m.pluginRegistry.Plugins(ctx) { // skip decommissioned?
 		wg.Add(1)
