@@ -174,7 +174,6 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
 	searchReadinessCheckResp := s.search.IsReady(ctx, req.PluginContext.OrgID)
 	if !searchReadinessCheckResp.IsReady {
-		fmt.Println("not ready!!")
 		dashboardSearchNotServedRequestsCounter.With(prometheus.Labels{
 			"reason": searchReadinessCheckResp.Reason,
 		}).Inc()
