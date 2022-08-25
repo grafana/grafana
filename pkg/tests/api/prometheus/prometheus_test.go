@@ -105,7 +105,6 @@ func TestIntegrationPrometheusBuffered(t *testing.T) {
 
 func TestIntegrationPrometheusClient(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableAnonymous:     true,
 		EnableFeatureToggles: []string{"prometheusStreamingJSONParser"},
 	})
 
@@ -180,6 +179,28 @@ func TestIntegrationPrometheusClient(t *testing.T) {
 		require.NotNil(t, outgoingRequest)
 		require.Equal(t, "/api/v1/query_range", outgoingRequest.URL.Path)
 		require.Contains(t, outgoingRequest.URL.String(), "&q1=1&q2=2")
+		require.Equal(t, "custom-header-value", outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
+		username, pwd, ok := outgoingRequest.BasicAuth()
+		require.True(t, ok)
+		require.Equal(t, "basicAuthUser", username)
+		require.Equal(t, "basicAuthPassword", pwd)
+	})
+
+	t.Run("When calling /api/datasources/uid/{uid}/resources/api/v1/labels should set expected headers on outgoing HTTP request", func(t *testing.T) {
+		u := fmt.Sprintf("http://%s/api/datasources/uid/%s/resources/api/v1/labels", grafanaListeningAddr, uid)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", nil)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		_, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		require.NotNil(t, outgoingRequest)
+		require.Equal(t, "/api/v1/labels?q1=1&q2=2", outgoingRequest.URL.String())
 		require.Equal(t, "custom-header-value", outgoingRequest.Header.Get("X-CUSTOM-HEADER"))
 		username, pwd, ok := outgoingRequest.BasicAuth()
 		require.True(t, ok)
