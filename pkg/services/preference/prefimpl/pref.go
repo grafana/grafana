@@ -17,6 +17,7 @@ type Service struct {
 	cfg      *setting.Cfg
 	features *featuremgmt.FeatureManager
 	star     star.Service
+	db       db.DB
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager, star star.Service) pref.Service {
@@ -34,6 +35,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureMan
 			db: db,
 		}
 	}
+	service.db = db
 	return service
 }
 
@@ -98,62 +100,65 @@ func (s *Service) Get(ctx context.Context, query *pref.GetPreferenceQuery) (*pre
 }
 
 func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) error {
-	preference, err := s.store.Get(ctx, &pref.Preference{
-		OrgID:  cmd.OrgID,
-		UserID: cmd.UserID,
-		TeamID: cmd.TeamID,
-	})
-	if err != nil {
-		if errors.Is(err, pref.ErrPrefNotFound) {
-			preference := &pref.Preference{
-				UserID:          cmd.UserID,
-				OrgID:           cmd.OrgID,
-				TeamID:          cmd.TeamID,
-				HomeDashboardID: cmd.HomeDashboardID,
-				Timezone:        cmd.Timezone,
-				WeekStart:       cmd.WeekStart,
-				Theme:           cmd.Theme,
-				Created:         time.Now(),
-				Updated:         time.Now(),
-				JSONData: &pref.PreferenceJSONData{
-					Locale: cmd.Locale,
-				},
+	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
+		preference, err := s.store.Get(ctx, &pref.Preference{
+			OrgID:  cmd.OrgID,
+			UserID: cmd.UserID,
+			TeamID: cmd.TeamID,
+		})
+		if err != nil {
+			if errors.Is(err, pref.ErrPrefNotFound) {
+				preference := &pref.Preference{
+					UserID:          cmd.UserID,
+					OrgID:           cmd.OrgID,
+					TeamID:          cmd.TeamID,
+					HomeDashboardID: cmd.HomeDashboardID,
+					Timezone:        cmd.Timezone,
+					WeekStart:       cmd.WeekStart,
+					Theme:           cmd.Theme,
+					Created:         time.Now(),
+					Updated:         time.Now(),
+					JSONData: &pref.PreferenceJSONData{
+						Locale: cmd.Locale,
+					},
+				}
+				_, err = s.store.Insert(ctx, preference)
+				if err != nil {
+					return err
+				}
 			}
-			_, err = s.store.Insert(ctx, preference)
-			if err != nil {
-				return err
-			}
+			err = s.star.Add(ctx, &star.StarDashboardCommand{UserID: cmd.UserID, DashboardID: cmd.HomeDashboardID})
+			return err
+		}
+
+		preference.Timezone = cmd.Timezone
+		preference.WeekStart = cmd.WeekStart
+		preference.Theme = cmd.Theme
+		preference.Updated = time.Now()
+		preference.Version += 1
+		preference.HomeDashboardID = cmd.HomeDashboardID
+		preference.JSONData = &pref.PreferenceJSONData{
+			Locale: cmd.Locale,
+		}
+
+		if cmd.Navbar != nil {
+			preference.JSONData.Navbar = *cmd.Navbar
+		}
+		if cmd.QueryHistory != nil {
+			preference.JSONData.QueryHistory = *cmd.QueryHistory
+		}
+
+		err = s.store.Update(ctx, preference)
+		if err != nil {
+			return err
 		}
 		err = s.star.Add(ctx, &star.StarDashboardCommand{UserID: cmd.UserID, DashboardID: cmd.HomeDashboardID})
-		return err
-	}
-
-	preference.Timezone = cmd.Timezone
-	preference.WeekStart = cmd.WeekStart
-	preference.Theme = cmd.Theme
-	preference.Updated = time.Now()
-	preference.Version += 1
-	preference.HomeDashboardID = cmd.HomeDashboardID
-	preference.JSONData = &pref.PreferenceJSONData{
-		Locale: cmd.Locale,
-	}
-
-	if cmd.Navbar != nil {
-		preference.JSONData.Navbar = *cmd.Navbar
-	}
-	if cmd.QueryHistory != nil {
-		preference.JSONData.QueryHistory = *cmd.QueryHistory
-	}
-
-	err = s.store.Update(ctx, preference)
-	if err != nil {
-		return err
-	}
-	err = s.star.Add(ctx, &star.StarDashboardCommand{UserID: cmd.UserID, DashboardID: cmd.HomeDashboardID})
-	if err != nil {
-		return errors.New("here is because of insert failed, normal")
-	}
-	return nil
+		if err != nil {
+			return errors.New("here is because of insert failed, normal")
+		}
+		return nil
+	})
+	return err
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
