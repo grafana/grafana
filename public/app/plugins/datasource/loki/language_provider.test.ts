@@ -259,7 +259,7 @@ describe('Request URL', () => {
   it('should contain range params', async () => {
     const datasourceWithLabels = setup({ other: [] });
     const rangeParams = datasourceWithLabels.getTimeRangeParams();
-    const datasourceSpy = jest.spyOn(datasourceWithLabels as any, 'metadataRequest');
+    const datasourceSpy = jest.spyOn(datasourceWithLabels, 'metadataRequest');
 
     const instance = new LanguageProvider(datasourceWithLabels);
     instance.fetchLabels();
