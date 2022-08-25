@@ -24,7 +24,7 @@ export const getAllFields = memoizeOne(
     const fieldsMap = [...dataframeFields, ...logMessageFields].reduce((acc, field) => {
       // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
       // value is in the dataFrame it will be without the quotes. We treat them here as the same value.
-      // we need to handle this scenario:
+      // We need to handle this scenario:
       // - we use derived-fields in Loki
       // - we name the derived field the same as the parsed-field-name
       // - the same field will appear twice
