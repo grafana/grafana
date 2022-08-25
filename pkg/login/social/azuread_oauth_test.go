@@ -16,6 +16,16 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
+func trueBoolPtr() *bool {
+	b := true
+	return &b
+}
+
+func falseBoolPtr() *bool {
+	b := false
+	return &b
+}
+
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
 		SocialBase          *SocialBase
@@ -216,6 +226,69 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			},
 		},
 		{
+			name:   "Grafana Admin but setting is disabled",
+			fields: fields{SocialBase: &SocialBase{allowAssignGrafanaAdmin: false}},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"GrafanaAdmin"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:             "1234",
+				Name:           "My Name",
+				Email:          "me@example.com",
+				Login:          "me@example.com",
+				Company:        "",
+				Role:           "Admin",
+				Groups:         []string{},
+				IsGrafanaAdmin: nil,
+			},
+		},
+		{
+			name:   "Editor roles in claim and GrafanaAdminAssignment enabled",
+			fields: fields{SocialBase: &SocialBase{allowAssignGrafanaAdmin: true}},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"Editor"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:             "1234",
+				Name:           "My Name",
+				Email:          "me@example.com",
+				Login:          "me@example.com",
+				Company:        "",
+				Role:           "Editor",
+				Groups:         []string{},
+				IsGrafanaAdmin: falseBoolPtr(),
+			},
+		},
+		{
+			name:   "Grafana Admin and Editor roles in claim",
+			fields: fields{SocialBase: &SocialBase{allowAssignGrafanaAdmin: true}},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{"GrafanaAdmin", "Editor"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:             "1234",
+				Name:           "My Name",
+				Email:          "me@example.com",
+				Login:          "me@example.com",
+				Company:        "",
+				Role:           "Admin",
+				Groups:         []string{},
+				IsGrafanaAdmin: trueBoolPtr(),
+			},
+		},
+		{
 			name: "Error if user is not a member of allowed_groups",
 			fields: fields{
 				allowedGroups: []string{"dead-beef"},
@@ -313,6 +386,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
@@ -320,6 +394,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				allowedGroups:       tt.fields.allowedGroups,
 				autoAssignOrgRole:   tt.fields.autoAssignOrgRole,
 				roleAttributeStrict: tt.fields.roleAttributeStrict,
+			}
+
+			if tt.fields.SocialBase == nil {
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "")
 			}
 
 			key := []byte("secret")
@@ -357,14 +435,10 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 					}
 				}
 				raw, err = jwt.Signed(sig).Claims(cl).Claims(tt.claims).CompactSerialize()
-				if err != nil {
-					t.Error(err)
-				}
+				require.NoError(t, err)
 			} else {
 				raw, err = jwt.Signed(sig).Claims(cl).CompactSerialize()
-				if err != nil {
-					t.Error(err)
-				}
+				require.NoError(t, err)
 			}
 
 			token := &oauth2.Token{

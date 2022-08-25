@@ -86,6 +86,8 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, errMissingGroupMembership
 	}
 
+	// optional setting to avoid removing all of the grafana Admins added manually in
+	// previous versions of grafana. Remove after Grafana 10.
 	var isGrafanaAdmin *bool = nil
 	if s.allowAssignGrafanaAdmin {
 		isGrafanaAdmin = &grafanaAdmin
@@ -129,6 +131,7 @@ func (claims *azureClaims) extractEmail() string {
 	return claims.Email
 }
 
+// extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
 func (claims *azureClaims) extractRoleAndAdmin(autoAssignRole string, strictMode bool) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
 		if strictMode {
