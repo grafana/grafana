@@ -71,6 +71,11 @@ type UserOrgDTO struct {
 	Role  RoleType `json:"role"`
 }
 
+type UpdateOrgCommand struct {
+	Name  string
+	OrgId int64
+}
+
 func (r RoleType) IsValid() bool {
 	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
 }

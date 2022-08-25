@@ -128,7 +128,7 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	// so we send a separate timestamp-as-string field too. it is provided by the
 	// loki-json-parser-code
 
-	idField, err := makeIdField(stringTimeField, lineField, labelsField, frame.RefID)
+	idField, err := makeIdField(stringTimeField, lineField, labelsField, query.RefID)
 	if err != nil {
 		return err
 	}

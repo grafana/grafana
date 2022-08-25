@@ -10,16 +10,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const (
-	grafanaComURL = "https://grafana.com/api/plugins"
-)
-
+var _ plugins.Manager = (*PluginManager)(nil)
 var _ plugins.Client = (*PluginManager)(nil)
 var _ plugins.Store = (*PluginManager)(nil)
 var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
@@ -27,13 +26,14 @@ var _ plugins.RendererManager = (*PluginManager)(nil)
 var _ plugins.SecretsPluginManager = (*PluginManager)(nil)
 
 type PluginManager struct {
-	cfg             *plugins.Cfg
-	pluginRegistry  registry.Service
-	pluginInstaller installer.Service
-	pluginLoader    loader.Service
-	pluginsMu       sync.RWMutex
-	pluginSources   []PluginSource
-	log             log.Logger
+	cfg            *plugins.Cfg
+	pluginRegistry registry.Service
+	pluginLoader   loader.Service
+	pluginRepo     repo.Service
+	pluginSources  []PluginSource
+	pluginStorage  storage.Manager
+	pluginsMu      sync.RWMutex
+	log            log.Logger
 }
 
 type PluginSource struct {
@@ -41,26 +41,29 @@ type PluginSource struct {
 	Paths []string
 }
 
-func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginManager, error) {
+func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+	pluginRepo repo.Service) (*PluginManager, error) {
 	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
 		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader)
+	}, pluginLoader, pluginRepo, storage.FileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath))
 	if err := pm.Init(); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service,
+	pluginRepo repo.Service, pluginFs storage.Manager) *PluginManager {
 	return &PluginManager{
-		cfg:             cfg,
-		pluginLoader:    pluginLoader,
-		pluginSources:   pluginSources,
-		pluginRegistry:  pluginRegistry,
-		log:             log.New("plugin.manager"),
-		pluginInstaller: installer.New(false, cfg.BuildVersion, newInstallerLogger("plugin.installer", true)),
+		cfg:            cfg,
+		pluginLoader:   pluginLoader,
+		pluginSources:  pluginSources,
+		pluginRegistry: pluginRegistry,
+		pluginRepo:     pluginRepo,
+		pluginStorage:  pluginFs,
+		log:            log.New("plugin.manager"),
 	}
 }
 
