@@ -379,11 +379,11 @@ Some applications publish data intermittently; for example, they only post a met
 In the picture below we have enabled:
 
 - Points and 3-point radius to highlight where data points are actually present.
-- **Null value** is set to **connected**.
+- **Connect null values* is set to **Always**.
 
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_connected.png" max-width="1200px" >}}
 
-In this graph, we set graph to show bars instead of lines and set the **Null value** to graph **null as zero**. There is a very big difference in the visuals.
+In this graph, we set graph to show bars instead of lines and set the **No value** under **Standard options** to **0**. There is a very big difference in the visuals.
 
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" >}}
 
