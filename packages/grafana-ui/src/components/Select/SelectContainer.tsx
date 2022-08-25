@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
-import { components, ContainerProps as BaseContainerProps, GroupBase } from 'react-select';
+import { CommonProps, components, ContainerProps as BaseContainerProps, GroupBase} from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -10,10 +10,15 @@ import { focusCss } from '../../themes/mixins';
 import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
 
+interface CustomSelectProps<Option, IsMulti extends boolean, Group extends GroupBase<Option>> extends CommonProps<Option, IsMulti, Group>['selectProps'] {
+  invalid: boolean;
+  backspaceRemovesValue: boolean;
+}
 // isFocus prop is actually available, but its not in the types for the version we have.
 export interface SelectContainerProps<Option, isMulti extends boolean, Group extends GroupBase<Option>>
   extends BaseContainerProps<Option, isMulti, Group> {
   isFocused: boolean;
+  selectProps: CustomSelectProps<Option, isMulti, Group>;
 }
 
 export const SelectContainer = <Option, isMulti extends boolean, Group extends GroupBase<Option>>(
@@ -23,7 +28,6 @@ export const SelectContainer = <Option, isMulti extends boolean, Group extends G
     isDisabled,
     isFocused,
     children,
-    // @ts-expect-error i'm not able to get this type right without causing a bunch of other issues
     selectProps: { invalid = false },
   } = props;
 
