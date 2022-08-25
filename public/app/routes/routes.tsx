@@ -1,6 +1,7 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 
+import { NavSectionLandingPage } from 'app/core/components/AppChrome/NavSectionLandingPage';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
@@ -267,7 +268,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin',
       // eslint-disable-next-line react/display-name
-      component: () => <Redirect to="/admin/users" />,
+      // component: () => <Redirect to="/admin/users" />,
+      component: () => <NavSectionLandingPage navId="cfg" />,
     },
     {
       path: '/admin/settings',

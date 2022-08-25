@@ -3,6 +3,7 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 
 import { OrgRole } from '@grafana/data';
+import { NavSectionLandingPage } from 'app/core/components/AppChrome/NavSectionLandingPage';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
@@ -14,7 +15,8 @@ const commonRoutes: RouteDescriptor[] = [
   {
     path: '/alerting',
     // eslint-disable-next-line react/display-name
-    component: () => <Redirect to="/alerting/list" />,
+    // component: () => <Redirect to="/alerting/list" />,
+    component: () => <NavSectionLandingPage navId="alerting" />
   },
 ];
 
