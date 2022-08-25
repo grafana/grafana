@@ -6,7 +6,15 @@ import { useLocation } from 'react-router-dom';
 import { locationUtil, textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar, useForceUpdate, Tag } from '@grafana/ui';
+import {
+  ButtonGroup,
+  ModalsController,
+  ToolbarButton,
+  PageToolbar,
+  useForceUpdate,
+  Tag,
+  ToolbarButtonRow,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
 import config from 'app/core/config';
@@ -322,7 +330,7 @@ export const DashNav = React.memo<Props>((props) => {
           <>
             {renderLeftActions()}
             <NavToolbarSeparator leftActionsSeparator />
-            {renderRightActions()}
+            <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
           </>
         }
       />

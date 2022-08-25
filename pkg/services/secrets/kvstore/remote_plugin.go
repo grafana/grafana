@@ -29,6 +29,7 @@ type secretsKVStorePlugin struct {
 	secretsService                 secrets.Service
 	kvstore                        *kvstore.NamespacedKVStore
 	backwardsCompatibilityDisabled bool
+	fallback                       SecretsKVStore
 }
 
 // Get an item from the store
@@ -136,6 +137,28 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 	return err
 }
 
+func (kv *secretsKVStorePlugin) GetAll(ctx context.Context) ([]Item, error) {
+	req := &smp.GetAllSecretsRequest{}
+
+	res, err := kv.secretsPlugin.GetAllSecrets(ctx, req)
+	if err != nil {
+		return nil, err
+	} else if res.UserFriendlyError != "" {
+		err = wrapUserFriendlySecretError(res.UserFriendlyError)
+	}
+
+	return parseItems(res.Items), err
+}
+
+func (kv *secretsKVStorePlugin) Fallback() SecretsKVStore {
+	return kv.fallback
+}
+
+func (kv *secretsKVStorePlugin) SetFallback(store SecretsKVStore) error {
+	kv.fallback = store
+	return nil
+}
+
 func parseKeys(keys []*smp.Key) []Key {
 	var newKeys []Key
 
@@ -147,6 +170,17 @@ func parseKeys(keys []*smp.Key) []Key {
 	return newKeys
 }
 
+func parseItems(items []*smp.Item) []Item {
+	var newItems []Item
+
+	for _, i := range items {
+		newItem := Item{OrgId: &i.Key.OrgId, Namespace: &i.Key.Namespace, Type: &i.Key.Type, Value: i.Value}
+		newItems = append(newItems, newItem)
+	}
+
+	return newItems
+}
+
 func updateFatalFlag(ctx context.Context, skv secretsKVStorePlugin) {
 	// This function makes the most sense in here because it handles all possible scenarios:
 	//   - User changed backwards compatibility flag, so we have to migrate secrets either to or from the plugin (get or set)
@@ -155,6 +189,7 @@ func updateFatalFlag(ctx context.Context, skv secretsKVStorePlugin) {
 	// Rather than updating the flag in several places, it is cleaner to just do this check once
 	// Very early on. Once backwards compatibility to legacy secrets is gone in Grafana 10, this can go away as well
 	fatalFlagOnce.Do(func() {
+		skv.log.Debug("Updating plugin startup error fatal flag")
 		var err error
 		if isFatal, _ := isPluginStartupErrorFatal(ctx, skv.kvstore); !isFatal && skv.backwardsCompatibilityDisabled {
 			err = setPluginStartupErrorFatal(ctx, skv.kvstore, true)

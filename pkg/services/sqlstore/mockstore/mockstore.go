@@ -100,10 +100,6 @@ func (m *SQLStoreMock) CreateOrg(ctx context.Context, cmd *models.CreateOrgComma
 	return m.ExpectedError
 }
 
-func (m *SQLStoreMock) UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error {
-	return m.ExpectedError
-}
-
 func (m *SQLStoreMock) UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error {
 	return m.ExpectedError
 }

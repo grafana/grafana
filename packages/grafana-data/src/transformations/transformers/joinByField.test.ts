@@ -5,11 +5,11 @@ import { ArrayVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
-import { JoinMode, SeriesToColumnsOptions, seriesToColumnsTransformer } from './seriesToColumns';
+import { JoinMode, JoinByFieldOptions, joinByFieldTransformer } from './joinByField';
 
-describe('SeriesToColumns Transformer', () => {
+describe('JOIN Transformer', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([seriesToColumnsTransformer]);
+    mockTransformationsRegistry([joinByFieldTransformer]);
   });
 
   describe('outer join', () => {
@@ -32,7 +32,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('joins by time field', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
@@ -134,7 +134,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('joins by temperature field', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'temperature',
@@ -250,7 +250,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('joins by time field in reverse order', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
@@ -375,7 +375,7 @@ describe('SeriesToColumns Transformer', () => {
       });
 
       it('when dataframe and field share the same name then use the field name', async () => {
-        const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        const cfg: DataTransformerConfig<JoinByFieldOptions> = {
           id: DataTransformerID.seriesToColumns,
           options: {
             byField: 'time',
@@ -438,7 +438,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('joins if fields are missing', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
@@ -516,7 +516,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('handles duplicate field name', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
@@ -597,7 +597,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('inner joins by time field', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
@@ -678,7 +678,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('inner joins by temperature field', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'temperature',
@@ -763,7 +763,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('inner joins by time field in reverse order', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
@@ -867,7 +867,7 @@ describe('SeriesToColumns Transformer', () => {
       });
 
       it('when dataframe and field share the same name then use the field name', async () => {
-        const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+        const cfg: DataTransformerConfig<JoinByFieldOptions> = {
           id: DataTransformerID.seriesToColumns,
           options: {
             byField: 'time',
@@ -931,7 +931,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('joins if fields are missing', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
@@ -1010,7 +1010,7 @@ describe('SeriesToColumns Transformer', () => {
     });
 
     it('handles duplicate field name', async () => {
-      const cfg: DataTransformerConfig<SeriesToColumnsOptions> = {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
