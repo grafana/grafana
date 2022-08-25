@@ -330,13 +330,13 @@ Typically plugins should be developed using the `@grafana/toolkit` installed fro
 
 ### Using `NODE_OPTIONS` to load the yarn pnp file:
 
-You can run grafana toolkit directly from the grafana repository with this command. 
+You can run grafana toolkit directly from the grafana repository with this command.
 
 `NODE_OPTIONS="--require $GRAFANA_REPO/.pnp.cjs" $GRAFANA_REPO/packages/grafana-toolkit/dist/bin/grafana-toolkit.js [command]`
 
 You can replace `$GRAFANA_REPO` with the path to your grafana clone or set it in your environment. e.g.: `export GRAFANA_REPO=/home/dev/your_grafana_clone`
 
->Note: This will run grafana toolkit from your local clone but it won't change the dependencies of what you are trying to build.
+> Note: This will run grafana toolkit from your local clone but it won't change the dependencies of what you are trying to build.
 
 ### Using yarn berry linking.
 
