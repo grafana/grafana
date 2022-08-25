@@ -79,17 +79,19 @@ export class PlaylistSrv {
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
     const urls: string[] = [];
-    const playlist = await getPlaylist(playlistUid);
+    let playlist = await getPlaylist(playlistUid);
     if (!playlist.items?.length) {
       // alert
       return;
     }
     this.interval = rangeUtil.intervalToMs(playlist.interval);
 
-    const info = await loadDashboards(playlist.items);
-    for (const item of info) {
-      for (const dash of item.dashboards) {
-        urls.push(dash.url);
+    const items = await loadDashboards(playlist.items);
+    for (const item of items) {
+      if (item.dashboards) {
+        for (const dash of item.dashboards) {
+          urls.push(dash.url);
+        }
       }
     }
 

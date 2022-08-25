@@ -23,7 +23,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: PlaylistFormProps) => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
-  const { items, addById, addByTag, deleteItem, moveDown, moveUp } = usePlaylistItems(propItems);
+  const { items, addById, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
 
   return (
     <div>
@@ -51,7 +51,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: PlaylistFormProps) => {
                 />
               </Field>
 
-              <PlaylistTable items={items} onMoveUp={moveUp} onMoveDown={moveDown} onDelete={deleteItem} />
+              <PlaylistTable items={items} deleteItem={deleteItem} moveItem={moveItem} />
 
               <div className="gf-form-group">
                 <h3 className="page-headering">Add dashboards</h3>

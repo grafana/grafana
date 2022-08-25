@@ -19,9 +19,7 @@ export interface Playlist {
 export interface PlaylistItem {
   type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id'; // _by_id is deprecated
   value: string; // tag or uid
-  title: string;
-}
 
-export interface PlaylistItemsWithDashboards extends PlaylistItem {
-  dashboards: DashboardQueryResult[];
+  // Loaded in the frontend
+  dashboards?: DashboardQueryResult[];
 }

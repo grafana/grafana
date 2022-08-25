@@ -1,11 +1,23 @@
 import { useCallback, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
 
+import { loadDashboards } from './api';
 import { PlaylistItem } from './types';
 
 export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
   const [items, setItems] = useState<PlaylistItem[]>(playlistItems ?? []);
+
+  // Load dashboards if missing
+  useAsync(async () => {
+    for (const item of items) {
+      if (!item.dashboards) {
+        setItems(await loadDashboards(items));
+        return;
+      }
+    }
+  }, [items]);
 
   const addById = useCallback(
     (dashboard?: DashboardPickerDTO) => {
@@ -16,7 +28,6 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
       setItems([
         ...items,
         {
-          title: dashboard.title,
           type: 'dashboard_by_uid',
           value: dashboard.uid,
         },
@@ -33,7 +44,6 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
       }
 
       const newItem: PlaylistItem = {
-        title: tag,
         type: 'dashboard_by_tag',
         value: tag,
       };
@@ -42,41 +52,27 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
     [items]
   );
 
-  const movePlaylistItem = useCallback(
-    (item: PlaylistItem, offset: number) => {
-      const newItems = [...items];
-      const currentPosition = newItems.indexOf(item);
-      const newPosition = currentPosition + offset;
-
-      if (newPosition >= 0 && newPosition < newItems.length) {
-        newItems.splice(currentPosition, 1);
-        newItems.splice(newPosition, 0, item);
+  const moveItem = useCallback(
+    (src: number, dst: number) => {
+      if (src === dst || !items[src]) {
+        return; // nothing to do
       }
-      setItems(newItems);
+      const update = Array.from(items);
+      const [removed] = update.splice(src, 1);
+      update.splice(dst, 0, removed);
+      setItems(update);
     },
     [items]
-  );
-
-  const moveUp = useCallback(
-    (item: PlaylistItem) => {
-      movePlaylistItem(item, -1);
-    },
-    [movePlaylistItem]
-  );
-
-  const moveDown = useCallback(
-    (item: PlaylistItem) => {
-      movePlaylistItem(item, 1);
-    },
-    [movePlaylistItem]
   );
 
   const deleteItem = useCallback(
-    (item: PlaylistItem) => {
-      setItems(items.filter((i) => i !== item));
+    (index: number) => {
+      const copy = items.slice();
+      copy.splice(index, 1);
+      setItems(copy);
     },
     [items]
   );
 
-  return { items, addById, addByTag, deleteItem, moveDown, moveUp };
+  return { items, addById, addByTag, deleteItem, moveItem };
 }

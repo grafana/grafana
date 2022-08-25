@@ -1,25 +1,38 @@
 import React from 'react';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { PlaylistTableRows } from './PlaylistTableRows';
 import { PlaylistItem } from './types';
 
 interface PlaylistTableProps {
   items: PlaylistItem[];
-  onMoveUp: (item: PlaylistItem) => void;
-  onMoveDown: (item: PlaylistItem) => void;
-  onDelete: (item: PlaylistItem) => void;
+  deleteItem: (idx: number) => void;
+  moveItem: (src: number, dst: number) => void;
 }
 
-export const PlaylistTable = ({ items, onMoveUp, onMoveDown, onDelete }: PlaylistTableProps) => {
+export const PlaylistTable = ({ items, deleteItem, moveItem }: PlaylistTableProps) => {
+  const onDragEnd = (d: DropResult) => {
+    if (d.destination) {
+      moveItem(d.source.index, d.destination?.index);
+    }
+  };
+
   return (
     <div className="gf-form-group">
       <h3 className="page-headering">Dashboards</h3>
 
-      <table className="filter-table">
-        <tbody>
-          <PlaylistTableRows items={items} onMoveUp={onMoveUp} onMoveDown={onMoveDown} onDelete={onDelete} />
-        </tbody>
-      </table>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="playlist-list" direction="vertical">
+          {(provided) => {
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                <PlaylistTableRows items={items} onDelete={deleteItem} />
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 };

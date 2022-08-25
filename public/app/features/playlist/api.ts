@@ -10,7 +10,7 @@ import { createErrorNotification, createSuccessNotification } from '../../core/c
 import { dispatch } from '../../store/store';
 import { DashboardQueryResult, SearchQuery } from '../search/service';
 
-import { Playlist, PlaylistItem, PlaylistItemsWithDashboards } from './types';
+import { Playlist, PlaylistItem } from './types';
 
 export async function createPlaylist(playlist: Playlist) {
   await withErrorHandling(() => getBackendSrv().post('/api/playlists', playlist));
@@ -56,9 +56,13 @@ async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playli
   }
 }
 
-/** Returns an augmented playlist where each item contains its body */
-export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistItemsWithDashboards[]> {
+/** Returns a copy with the dashboards loaded */
+export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistItem[]> {
   let idx = 0;
+  if (!items?.length) {
+    return [];
+  }
+
   const targets: GrafanaQuery[] = [];
   for (const item of items) {
     const query: SearchQuery = {
