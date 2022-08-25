@@ -233,6 +233,7 @@ trigger:
     - go.sum
     - go.mod
     - public/app/plugins/**/plugin.json
+    - devenv/**
 type: docker
 volumes:
 - host:
@@ -5174,6 +5175,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 4922e4495148755ec45cf230190acbd7f7b564c831d98e10697381dda5cb75ef
+hmac: 011db54ea09dbe5c8e9add487b5b1d46b1bbcefa480efc55c52c4cb2bcf084a2
 
 ...
