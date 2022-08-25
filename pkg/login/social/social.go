@@ -314,28 +314,36 @@ type groupStruct struct {
 	Groups []string `json:"groups"`
 }
 
-func (s *SocialBase) extractRole(rawJSON []byte, groups []string) (org.RoleType, error) {
+func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool) {
 	if s.roleAttributePath == "" {
 		if s.autoAssignOrgRole != "" {
-			return org.RoleType(s.autoAssignOrgRole), nil
+			return org.RoleType(s.autoAssignOrgRole), false
 		}
 
-		return "", nil
+		return "", false
 	}
 
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
 	if err == nil && role != "" {
-		return org.RoleType(role), nil
+		if role == RoleGrafanaAdmin {
+			return org.RoleAdmin, true
+		}
+
+		return org.RoleType(role), false
 	}
 
 	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
 		if role, err := s.searchJSONForStringAttr(
 			s.roleAttributePath, groupBytes); err == nil && role != "" {
-			return org.RoleType(role), nil
+			if role == RoleGrafanaAdmin {
+				return org.RoleAdmin, true
+			}
+
+			return org.RoleType(role), false
 		}
 	}
 
-	return "", nil
+	return "", false
 }
 
 // GetOAuthProviders returns available oauth providers and if they're enabled or not
