@@ -24,6 +24,7 @@ import (
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagSet(t *testing.T) {
 	p, err := setupFatalCrashTest(t, true, true, false)
 	assert.Error(t, err)
+	assert.Equal(t, "mocked failed to start", err.Error())
 	assert.Nil(t, p.secretsKVStore)
 }
 
@@ -93,6 +94,7 @@ func TestFatalPluginErr_MigrationTestWithErrorDeletingUnifiedSecrets(t *testing.
 	}, p.kvstore)
 	err = migration.Migrate(context.Background())
 	assert.Error(t, err)
+	assert.Equal(t, "mocked del error", err.Error())
 
 	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(p.kvstore))
 	assert.NoError(t, err)
