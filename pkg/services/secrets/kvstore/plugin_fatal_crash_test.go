@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 )
@@ -22,39 +23,43 @@ import (
 // Should result in an error from the secret store provider
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagSet(t *testing.T) {
 	p, err := setupFatalCrashTest(t, true, true, false)
-	require.Error(t, err)
-	require.Nil(t, p.secretsKVStore)
+	assert.Error(t, err)
+	assert.Nil(t, p.secretsKVStore)
 }
 
 // Set fatal flag to false, then simulate a plugin start failure
 // Should result in the secret store provider returning the sql impl
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagNotSet(t *testing.T) {
 	p, err := setupFatalCrashTest(t, true, false, false)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	require.IsType(t, &CachedKVStore{}, p.secretsKVStore)
+
 	cachedKv, _ := p.secretsKVStore.(*CachedKVStore)
-	require.IsType(t, &secretsKVStoreSQL{}, cachedKv.GetUnwrappedStore())
+	assert.IsType(t, &secretsKVStoreSQL{}, cachedKv.GetUnwrappedStore())
 }
 
 // With fatal flag not set, store a secret in the plugin while backwards compatibility is disabled
 // Should result in the fatal flag going from unset -> set to true
 func TestFatalPluginErr_FatalFlagGetsSetWithBackwardsCompatDisabled(t *testing.T) {
 	p, err := setupFatalCrashTest(t, false, false, true)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	require.NotNil(t, p.secretsKVStore)
+
 	err = p.secretsKVStore.Set(context.Background(), 0, "datasource", "postgres", "my secret")
-	require.NoError(t, err)
+	assert.NoError(t, err)
+
 	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(p.kvstore))
-	require.NoError(t, err)
-	require.True(t, isFatal)
+	assert.NoError(t, err)
+	assert.True(t, isFatal)
 }
 
 // With fatal flag set, retrieve a secret from the plugin while backwards compatibility is enabled
 // Should result in the fatal flag going from set to true -> unset
 func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.T) {
 	p, err := setupFatalCrashTest(t, false, true, false)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	require.NotNil(t, p.secretsKVStore)
+
 	// setup - store secret and manually bypassing the remote plugin impl
 	_, err = p.pluginManager.SecretsManager().SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
 		KeyDescriptor: &secretsmanagerplugin.Key{
@@ -64,31 +69,34 @@ func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.
 		},
 		Value: "bogus",
 	})
-	require.NoError(t, err)
+	assert.NoError(t, err)
+
 	// retrieve the secret and check values
 	val, exists, err := p.secretsKVStore.Get(context.Background(), 0, "postgres", "datasource")
-	require.NoError(t, err)
-	require.NotNil(t, val)
-	require.True(t, exists)
+	assert.NoError(t, err)
+	assert.NotNil(t, val)
+	assert.True(t, exists)
+
 	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(p.kvstore))
-	require.NoError(t, err)
-	require.False(t, isFatal)
+	assert.NoError(t, err)
+	assert.False(t, isFatal)
 }
 
 // With fatal flag unset, do a migration with backwards compatibility disabled. When unified secrets are deleted, return an error on the first deletion
 // Should result in the fatal flag remaining unset
 func TestFatalPluginErr_MigrationTestWithErrorDeletingUnifiedSecrets(t *testing.T) {
 	p, err := setupFatalCrashTest(t, false, false, true)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	migration := setupTestMigratorServiceWithDeletionError(t, p.secretsKVStore, &mockstore.SQLStoreMock{
 		ExpectedError: errors.New("random error"),
 	}, p.kvstore)
 	err = migration.Migrate(context.Background())
-	require.Error(t, err)
+	assert.Error(t, err)
+
 	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(p.kvstore))
-	require.NoError(t, err)
-	require.False(t, isFatal)
+	assert.NoError(t, err)
+	assert.False(t, isFatal)
 }
 
 func setupFatalCrashTest(
