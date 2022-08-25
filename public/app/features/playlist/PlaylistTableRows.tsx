@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
+import pluralize from 'pluralize';
 import React from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, IconButton, useStyles, Spinner, HorizontalGroup } from '@grafana/ui';
+import { Icon, IconButton, useStyles2, Spinner } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { PlaylistItem } from './types';
@@ -15,7 +16,7 @@ interface Props {
 }
 
 export const PlaylistTableRows = ({ items, onDelete }: Props) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   if (!items?.length) {
     return (
       <div>
@@ -36,24 +37,34 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
               {...provided.draggableProps}
               {...provided.dragHandleProps}
             >
-              <div>
-                <HorizontalGroup>
-                  {item.type === 'dashboard_by_tag' ? (
-                    <>
-                      <Icon name="tag-alt" aria-label={selectors.pages.PlaylistForm.itemTagType} />
-                      <TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />
-                      {item.dashboards ? <span>{item.dashboards.length}</span> : <Spinner />}
-                    </>
-                  ) : (
-                    // dashboard_by_id | dashboard_by_uid
-                    <>
-                      <Icon name="apps" aria-label={selectors.pages.PlaylistForm.itemIdType} />
-                      {item.dashboards ? <span>{item.dashboards[0]?.name}</span> : <Spinner />}
-                    </>
-                  )}
-                </HorizontalGroup>
+              <div className={styles.actions}>
+                {item.type === 'dashboard_by_tag' ? (
+                  <>
+                    <Icon
+                      name="tag-alt"
+                      aria-label={selectors.pages.PlaylistForm.itemTagType}
+                      className={styles.rightMargin}
+                    />
+                    <TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />
+                    {item.dashboards ? (
+                      <span>&nbsp; {pluralize('dashboard', item.dashboards.length, true)}</span>
+                    ) : (
+                      <Spinner />
+                    )}
+                  </>
+                ) : (
+                  // dashboard_by_id | dashboard_by_uid
+                  <>
+                    <Icon
+                      name="apps"
+                      aria-label={selectors.pages.PlaylistForm.itemIdType}
+                      className={styles.rightMargin}
+                    />
+                    {item.dashboards ? <span>{item.dashboards[0]?.name}</span> : <Spinner />}
+                  </>
+                )}
               </div>
-              <div>
+              <div className={styles.actions}>
                 <IconButton
                   name="times"
                   size="md"
@@ -61,7 +72,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                   aria-label={selectors.pages.PlaylistForm.itemDelete}
                   type="button"
                 />
-                <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+                <Icon title="Drag and drop to reorder" name="draggabledots" size="md" />
               </div>
             </div>
           )}
@@ -71,26 +82,28 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
   );
 };
 
-function getStyles(theme: GrafanaTheme) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     row: css`
-      padding: ${theme.spacing.xs} ${theme.spacing.sm};
-      border-radius: ${theme.border.radius.sm};
-      background: ${theme.colors.bg2};
-      min-height: ${theme.spacing.formInputHeight}px;
+      padding: 6px;
+      background: ${theme.colors.background.secondary};
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 3px;
-      cursor: pointer;
 
-      border: 1px solid ${theme.colors.formInputBorder};
+      border: 1px solid ${theme.colors.border.medium};
       &:hover {
-        border: 1px solid ${theme.colors.formInputBorderHover};
+        border: 1px solid ${theme.colors.border.strong};
       }
     `,
-    dragIcon: css`
-      cursor: drag;
+    rightMargin: css`
+      margin-right: 5px;
+    `,
+    actions: css`
+      align-items: center;
+      justify-content: center;
+      display: flex;
     `,
     settings: css`
       label: settings;

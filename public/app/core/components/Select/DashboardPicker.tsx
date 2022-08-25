@@ -17,7 +17,7 @@ export type DashboardPickerDTO = Pick<DashboardDTO['dashboard'], 'uid' | 'title'
 
 const formatLabel = (folderTitle = 'General', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
 
-const getDashboards = debounce((query = ''): Promise<Array<SelectableValue<DashboardPickerDTO>>> => {
+async function findDashboards(query = '') {
   return backendSrv.search({ type: 'dash-db', query, limit: 100 }).then((result: DashboardSearchHit[]) => {
     return result.map((item: DashboardSearchHit) => ({
       value: {
@@ -30,7 +30,9 @@ const getDashboards = debounce((query = ''): Promise<Array<SelectableValue<Dashb
       label: formatLabel(item?.folderTitle, item.title),
     }));
   });
-}, 300);
+}
+
+const getDashboards = debounce(findDashboards, 250, { leading: true });
 
 // TODO: this component should provide a way to apply different filters to the search APIs
 export const DashboardPicker = ({
@@ -82,6 +84,7 @@ export const DashboardPicker = ({
       placeholder={placeholder}
       noOptionsMessage={noOptionsMessage}
       value={current}
+      defaultOptions={true}
       {...props}
     />
   );

@@ -57,12 +57,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                 <h3 className="page-headering">Add dashboards</h3>
 
                 <Field label="Add by title">
-                  <DashboardPicker
-                    key={items.length}
-                    onChange={addById}
-                    id="dashboard-picker"
-                    placeholder="search for dashboard"
-                  />
+                  <DashboardPicker id="dashboard-picker" onChange={addById} key={items.length} />
                 </Field>
 
                 <Field label="Add by tag">
@@ -72,7 +67,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                     hideValues
                     tagOptions={tagOptions}
                     onChange={addByTag}
-                    placeholder={''}
+                    placeholder="Select a tag"
                   />
                 </Field>
               </div>
