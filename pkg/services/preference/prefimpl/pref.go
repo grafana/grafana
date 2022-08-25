@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -15,12 +16,14 @@ type Service struct {
 	store    store
 	cfg      *setting.Cfg
 	features *featuremgmt.FeatureManager
+	star     star.Service
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager, star star.Service) pref.Service {
 	service := &Service{
 		cfg:      cfg,
 		features: features,
+		star:     star,
 	}
 	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
 		service.store = &sqlxStore{
@@ -121,6 +124,7 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				return err
 			}
 		}
+		err = s.star.Add(ctx, &star.StarDashboardCommand{UserID: cmd.UserID, DashboardID: cmd.HomeDashboardID})
 		return err
 	}
 
@@ -140,7 +144,16 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	if cmd.QueryHistory != nil {
 		preference.JSONData.QueryHistory = *cmd.QueryHistory
 	}
-	return s.store.Update(ctx, preference)
+
+	err = s.store.Update(ctx, preference)
+	if err != nil {
+		return err
+	}
+	err = s.star.Add(ctx, &star.StarDashboardCommand{UserID: cmd.UserID, DashboardID: cmd.HomeDashboardID})
+	if err != nil {
+		return errors.New("here is because of insert failed, normal")
+	}
+	return nil
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
