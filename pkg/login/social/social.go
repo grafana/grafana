@@ -166,7 +166,6 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			ss.socialMap["azuread"] = &SocialAzureAD{
 				SocialBase:          newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
 				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
-				autoAssignOrgRole:   cfg.AutoAssignOrgRole,
 				roleAttributeStrict: info.RoleAttributeStrict,
 			}
 		}

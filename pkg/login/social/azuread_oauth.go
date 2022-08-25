@@ -18,7 +18,6 @@ import (
 type SocialAzureAD struct {
 	*SocialBase
 	allowedGroups       []string
-	autoAssignOrgRole   string
 	roleAttributeStrict bool
 }
 
