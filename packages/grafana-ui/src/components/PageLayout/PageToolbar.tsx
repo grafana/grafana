@@ -188,7 +188,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     h1Styles: css`
       margin: 0;
       line-height: inherit;
-      max-width: 300px;
       flex-grow: 1;
       min-width: 0;
     `,
