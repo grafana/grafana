@@ -3,7 +3,6 @@ package kvstore
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"testing"
 
@@ -22,32 +21,30 @@ import (
 // Set fatal flag to true, then simulate a plugin start failure
 // Should result in an error from the secret store provider
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagSet(t *testing.T) {
-	svc, mgr, _, _, err := setupFatalCrashTest(t, true, true, false)
-	_ = fmt.Sprint(mgr) // this is here to satisfy the linter
+	p, err := setupFatalCrashTest(t, true, true, false)
 	require.Error(t, err)
-	require.Nil(t, svc)
+	require.Nil(t, p.secretsKVStore)
 }
 
 // Set fatal flag to false, then simulate a plugin start failure
 // Should result in the secret store provider returning the sql impl
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagNotSet(t *testing.T) {
-	svc, mgr, _, _, err := setupFatalCrashTest(t, true, false, false)
-	_ = fmt.Sprint(mgr) // this is here to satisfy the linter
+	p, err := setupFatalCrashTest(t, true, false, false)
 	require.NoError(t, err)
-	require.IsType(t, &CachedKVStore{}, svc)
-	cachedKv, _ := svc.(*CachedKVStore)
+	require.IsType(t, &CachedKVStore{}, p.secretsKVStore)
+	cachedKv, _ := p.secretsKVStore.(*CachedKVStore)
 	require.IsType(t, &secretsKVStoreSQL{}, cachedKv.GetUnwrappedStore())
 }
 
 // With fatal flag not set, store a secret in the plugin while backwards compatibility is disabled
 // Should result in the fatal flag going from unset -> set to true
 func TestFatalPluginErr_FatalFlagGetsSetWithBackwardsCompatDisabled(t *testing.T) {
-	svc, _, kvstore, _, err := setupFatalCrashTest(t, false, false, true)
+	p, err := setupFatalCrashTest(t, false, false, true)
 	require.NoError(t, err)
-	require.NotNil(t, svc)
-	err = svc.Set(context.Background(), 0, "datasource", "postgres", "my secret")
+	require.NotNil(t, p.secretsKVStore)
+	err = p.secretsKVStore.Set(context.Background(), 0, "datasource", "postgres", "my secret")
 	require.NoError(t, err)
-	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(kvstore))
+	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(p.kvstore))
 	require.NoError(t, err)
 	require.True(t, isFatal)
 }
@@ -55,11 +52,11 @@ func TestFatalPluginErr_FatalFlagGetsSetWithBackwardsCompatDisabled(t *testing.T
 // With fatal flag set, retrieve a secret from the plugin while backwards compatibility is enabled
 // Should result in the fatal flag going from set to true -> unset
 func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.T) {
-	svc, mgr, kvstore, _, err := setupFatalCrashTest(t, false, true, false)
+	p, err := setupFatalCrashTest(t, false, true, false)
 	require.NoError(t, err)
-	require.NotNil(t, svc)
+	require.NotNil(t, p.secretsKVStore)
 	// setup - store secret and manually bypassing the remote plugin impl
-	_, err = mgr.SecretsManager().SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
+	_, err = p.pluginManager.SecretsManager().SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
 		KeyDescriptor: &secretsmanagerplugin.Key{
 			OrgId:     0,
 			Namespace: "postgres",
@@ -69,11 +66,11 @@ func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.
 	})
 	require.NoError(t, err)
 	// retrieve the secret and check values
-	val, exists, err := svc.Get(context.Background(), 0, "postgres", "datasource")
+	val, exists, err := p.secretsKVStore.Get(context.Background(), 0, "postgres", "datasource")
 	require.NoError(t, err)
 	require.NotNil(t, val)
 	require.True(t, exists)
-	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(kvstore))
+	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(p.kvstore))
 	require.NoError(t, err)
 	require.False(t, isFatal)
 }
@@ -81,15 +78,15 @@ func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.
 // With fatal flag unset, do a migration with backwards compatibility disabled. When unified secrets are deleted, return an error on the first deletion
 // Should result in the fatal flag remaining unset
 func TestFatalPluginErr_MigrationTestWithErrorDeletingUnifiedSecrets(t *testing.T) {
-	svc, _, kvstore, _, err := setupFatalCrashTest(t, false, false, true)
+	p, err := setupFatalCrashTest(t, false, false, true)
 	require.NoError(t, err)
 
-	migration := setupTestMigratorServiceWithDeletionError(t, svc, &mockstore.SQLStoreMock{
+	migration := setupTestMigratorServiceWithDeletionError(t, p.secretsKVStore, &mockstore.SQLStoreMock{
 		ExpectedError: errors.New("random error"),
-	}, kvstore)
+	}, p.kvstore)
 	err = migration.Migrate(context.Background())
 	require.Error(t, err)
-	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(kvstore))
+	isFatal, err := isPluginStartupErrorFatal(context.Background(), GetNamespacedKVStore(p.kvstore))
 	require.NoError(t, err)
 	require.False(t, isFatal)
 }
@@ -99,7 +96,7 @@ func setupFatalCrashTest(
 	shouldFailOnStart bool,
 	isPluginErrorFatal bool,
 	isBackwardsCompatDisabled bool,
-) (SecretsKVStore, plugins.SecretsPluginManager, kvstore.KVStore, *sqlstore.SQLStore, error) {
+) (fatalCrashTestFields, error) {
 	t.Helper()
 	fatalFlagOnce = sync.Once{}
 	startupOnce = sync.Once{}
@@ -116,7 +113,19 @@ func setupFatalCrashTest(
 	t.Cleanup(func() {
 		fatalFlagOnce = sync.Once{}
 	})
-	return svc, manager, kvstore, sqlStore, err
+	return fatalCrashTestFields{
+		secretsKVStore: svc,
+		pluginManager:  manager,
+		kvstore:        kvstore,
+		sqlStore:       sqlStore,
+	}, err
+}
+
+type fatalCrashTestFields struct {
+	secretsKVStore SecretsKVStore
+	pluginManager  plugins.SecretsPluginManager
+	kvstore        kvstore.KVStore
+	sqlStore       *sqlstore.SQLStore
 }
 
 func setupTestMigratorServiceWithDeletionError(
