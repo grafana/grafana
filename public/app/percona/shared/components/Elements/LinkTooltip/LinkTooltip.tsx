@@ -27,8 +27,9 @@ export const LinkTooltip: FC<LinkTooltipProps> = ({
 
   return (
     <Tooltip
+      interactive
       content={
-        <div className={styles.contentWrapper}>
+        <div className={styles.contentWrapper} data-testid={dataTestId || 'info-tooltip'}>
           {typeof tooltipContent === 'string' ? <span>{tooltipContent}</span> : tooltipContent}
           {link && linkText && (
             <a className={styles.link} href={link} target={target}>
@@ -37,7 +38,6 @@ export const LinkTooltip: FC<LinkTooltipProps> = ({
           )}
         </div>
       }
-      data-testid={dataTestId}
     >
       <div>
         <Icon name={icon} />

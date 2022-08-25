@@ -371,7 +371,7 @@ const TelemetryTooltip: FC<TelemetryTooltipProps> = ({
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.telemetryTooltip}>
+    <div className={styles.telemetryTooltip} data-testid="info-tooltip">
       <p>{telemetryTooltip}</p>
       <p>{telemetrySummaryTitle}</p>
       <ul className={styles.telemetryListTooltip}>
