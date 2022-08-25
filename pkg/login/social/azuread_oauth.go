@@ -3,7 +3,6 @@ package social
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -54,7 +53,7 @@ func (s *SocialAzureAD) Type() int {
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
-		return nil, fmt.Errorf("no id_token found")
+		return nil, ErrIDTokenNotFound
 	}
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
@@ -69,12 +68,12 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 
 	email := claims.extractEmail()
 	if email == "" {
-		return nil, errors.New("error getting user info: no email found in access token")
+		return nil, ErrEmailNotFound
 	}
 
 	role := claims.extractRole(s.autoAssignOrgRole, s.roleAttributeStrict)
 	if role == "" {
-		return nil, errors.New("user does not have a valid role")
+		return nil, ErrInvalidRole
 	}
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
