@@ -24,6 +24,11 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		cfg.JWTAuthHeaderName = "x-jwt-assertion"
 	}
 
+	configureAuthHeader := func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "Authorization"
+	}
+
 	configureUsernameClaim := func(cfg *setting.Cfg) {
 		cfg.JWTAuthUsernameClaim = "foo-username"
 	}
@@ -71,6 +76,28 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		assert.Equal(t, id, sc.context.UserID)
 		assert.Equal(t, myUsername, sc.context.Login)
 	}, configure, configureUsernameClaim)
+
+	middlewareScenario(t, "Valid token with bearer in authorization header", func(t *testing.T, sc *scenarioContext) {
+		myUsername := "vladimir"
+		jwtToken := "some.jwt.token"
+		var verifiedToken string
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+			verifiedToken = jwtToken
+			return models.JWTClaims{
+				"sub":          myUsername,
+				"foo-username": myUsername,
+			}, nil
+		}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Login: myUsername}
+
+		sc.fakeReq("GET", "/").withJWTAuthHeader("Bearer " + jwtToken).exec()
+		assert.Equal(t, verifiedToken, jwtToken)
+		assert.Equal(t, 200, sc.resp.Code)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, id, sc.context.UserID)
+		assert.Equal(t, myUsername, sc.context.Login)
+	}, configureAuthHeader, configureUsernameClaim)
 
 	middlewareScenario(t, "Valid token with valid email claim", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string

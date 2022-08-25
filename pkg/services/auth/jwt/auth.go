@@ -62,7 +62,10 @@ func sanitizeJWT(jwtToken string) string {
 	// JWT can be compact, JSON flatened or JSON general
 	// In every cases, parts are base64 strings without padding
 	// The padding char (=) should never interfer with data
-	return strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
+	jwtToken = strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
+
+	// Strip `Bearer` prefix if it exists
+	return strings.TrimPrefix(jwtToken, "Bearer ")
 }
 
 func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTClaims, error) {

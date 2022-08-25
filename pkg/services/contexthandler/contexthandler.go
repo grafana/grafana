@@ -269,6 +269,11 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	}
 
 	if errKey != nil {
+		// If JWT is enabled and the token looks like a JWT allow the JWT handler to try it.
+		if h.Cfg.JWTAuthEnabled && h.Cfg.JWTAuthHeaderName == "Authorization" && looksLikeJWT(keyString) {
+			return false
+		}
+
 		status := http.StatusInternalServerError
 		if errors.Is(errKey, apikeygen.ErrInvalidApiKey) {
 			status = http.StatusUnauthorized
@@ -335,6 +340,12 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	reqContext.SignedInUser = querySignedInUserResult
 
 	return true
+}
+
+func looksLikeJWT(token string) bool {
+	// A JWT must have 3 parts seperated by `.`.
+	parts := strings.Split(token, ".")
+	return len(parts) == 3
 }
 
 func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext, orgID int64) bool {
