@@ -24,4 +24,7 @@ func addQueryHistoryStarMigrations(mg *Migrator) {
 	mg.AddMigration("add column org_id in query_history_star", NewAddColumnMigration(queryHistoryStarV1, &Column{
 		Name: "org_id", Type: DB_BigInt, Nullable: false, Default: "1",
 	}))
+	
+	mg.AddMigration("alter column user_id type to bigint", NewRawSQLMigration("ALTER TABLE query_history_star ALTER COLUMN user_id TYPE BIGINT;"))
+		
 }
