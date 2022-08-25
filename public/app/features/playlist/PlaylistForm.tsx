@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
@@ -17,7 +17,7 @@ interface PlaylistFormProps {
   playlist: Playlist;
 }
 
-export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
+export const PlaylistForm = ({ onSubmit, playlist }: PlaylistFormProps) => {
   const { name, interval, items: propItems } = playlist;
   const tagOptions = useMemo(() => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
@@ -57,7 +57,12 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
                 <h3 className="page-headering">Add dashboards</h3>
 
                 <Field label="Add by title">
-                  <DashboardPicker onChange={addById} id="dashboard-picker" isClearable />
+                  <DashboardPicker
+                    key={items.length}
+                    onChange={addById}
+                    id="dashboard-picker"
+                    placeholder="search for dashboard"
+                  />
                 </Field>
 
                 <Field label="Add by tag">

@@ -10,7 +10,7 @@ import { createErrorNotification, createSuccessNotification } from '../../core/c
 import { dispatch } from '../../store/store';
 import { DashboardQueryResult, SearchQuery } from '../search/service';
 
-import { Playlist, PlaylistItem, PlaylistDTO, PlaylistItemsWithDashboards } from './types';
+import { Playlist, PlaylistItem, PlaylistItemsWithDashboards } from './types';
 
 export async function createPlaylist(playlist: Playlist) {
   await withErrorHandling(() => getBackendSrv().post('/api/playlists', playlist));
@@ -41,8 +41,8 @@ export async function getPlaylist(uid: string): Promise<Playlist> {
   return playlist;
 }
 
-export async function getAllPlaylist(query: string): Promise<PlaylistDTO[]> {
-  return getBackendSrv().get<PlaylistDTO[]>('/api/playlists/', { query });
+export async function getAllPlaylist(): Promise<Playlist[]> {
+  return getBackendSrv().get<Playlist[]>('/api/playlists/');
 }
 
 async function withErrorHandling(apiCall: () => Promise<void>, message = 'Playlist saved') {
@@ -96,4 +96,12 @@ export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistIte
     const view = new DataFrameView<DashboardQueryResult>(rsp.data[idx]);
     return { ...item, dashboards: view.map((v) => ({ ...v })) };
   });
+}
+
+export function searchPlaylists(playlists: Playlist[], query?: string): Playlist[] {
+  if (!query?.length) {
+    return playlists;
+  }
+  query = query.toLowerCase();
+  return playlists.filter((v) => v.name.toLowerCase().includes(query!));
 }

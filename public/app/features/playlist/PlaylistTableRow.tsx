@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, MouseEvent } from 'react';
+import React, { MouseEvent } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, IconButton, useStyles } from '@grafana/ui';
-
-import { TagBadge } from '../../core/components/TagFilter/TagBadge';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { PlaylistItem } from './types';
 
@@ -18,7 +17,7 @@ interface PlaylistTableRowProps {
   onDelete: (item: PlaylistItem) => void;
 }
 
-export const PlaylistTableRow: FC<PlaylistTableRowProps> = ({ item, onDelete, onMoveDown, onMoveUp, first, last }) => {
+export const PlaylistTableRow = ({ item, onDelete, onMoveDown, onMoveUp, first, last }: PlaylistTableRowProps) => {
   const styles = useStyles(getStyles);
   const onDeleteClick = (event: MouseEvent) => {
     event.preventDefault();

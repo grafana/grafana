@@ -8,19 +8,19 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 
 import { ShareModal } from './ShareModal';
-import { PlaylistDTO } from './types';
+import { Playlist } from './types';
 
 interface Props {
-  setStartPlaylist: (playlistItem: PlaylistDTO) => void;
-  setPlaylistToDelete: (playlistItem: PlaylistDTO) => void;
-  playlists: PlaylistDTO[] | undefined;
+  setStartPlaylist: (playlistItem: Playlist) => void;
+  setPlaylistToDelete: (playlistItem: Playlist) => void;
+  playlists: Playlist[] | undefined;
 }
 
 export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDelete }: Props) => {
   const styles = useStyles2(getStyles);
   return (
     <ul className={styles.list}>
-      {playlists!.map((playlist: PlaylistDTO) => (
+      {playlists!.map((playlist: Playlist) => (
         <li className={styles.listItem} key={playlist.uid}>
           <Card>
             <Card.Heading>
@@ -52,7 +52,7 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
                   </LinkButton>
                   <Button
                     disabled={false}
-                    onClick={() => setPlaylistToDelete({ id: playlist.id, uid: playlist.uid, name: playlist.name })}
+                    onClick={() => setPlaylistToDelete(playlist)}
                     icon="trash-alt"
                     variant="destructive"
                   >

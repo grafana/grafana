@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { PlaylistTableRows } from './PlaylistTableRows';
 import { PlaylistItem } from './types';
@@ -10,7 +10,7 @@ interface PlaylistTableProps {
   onDelete: (item: PlaylistItem) => void;
 }
 
-export const PlaylistTable: FC<PlaylistTableProps> = ({ items, onMoveUp, onMoveDown, onDelete }) => {
+export const PlaylistTable = ({ items, onMoveUp, onMoveDown, onDelete }: PlaylistTableProps) => {
   return (
     <div className="gf-form-group">
       <h3 className="page-headering">Dashboards</h3>

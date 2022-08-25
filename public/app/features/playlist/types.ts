@@ -1,11 +1,4 @@
-import { DashboardQueryResult } from "../search/service";
-
-export interface PlaylistDTO {
-  id: number;
-  name: string;
-  startUrl?: string;
-  uid: string;
-}
+import { DashboardQueryResult } from '../search/service';
 
 export type PlaylistMode = boolean | 'tv';
 
@@ -33,5 +26,5 @@ export interface PlaylistItem {
 }
 
 export interface PlaylistItemsWithDashboards extends PlaylistItem {
-  dashboards: DashboardQueryResult[],
+  dashboards: DashboardQueryResult[];
 }

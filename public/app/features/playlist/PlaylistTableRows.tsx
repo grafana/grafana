@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { PlaylistTableRow } from './PlaylistTableRow';
 import { PlaylistItem } from './types';
@@ -10,7 +10,7 @@ interface PlaylistTableRowsProps {
   onDelete: (item: PlaylistItem) => void;
 }
 
-export const PlaylistTableRows: FC<PlaylistTableRowsProps> = ({ items, onMoveUp, onMoveDown, onDelete }) => {
+export const PlaylistTableRows = ({ items, onMoveUp, onMoveDown, onDelete }: PlaylistTableRowsProps) => {
   if (items.length === 0) {
     return (
       <tr>
