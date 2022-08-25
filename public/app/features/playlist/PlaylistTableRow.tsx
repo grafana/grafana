@@ -35,18 +35,18 @@ export const PlaylistTableRow: FC<PlaylistTableRowProps> = ({ item, onDelete, on
 
   return (
     <tr aria-label={selectors.pages.PlaylistForm.itemRow} key={item.title}>
-      {item.type === 'dashboard_by_id' ? (
-        <td className={cx(styles.td, styles.item)}>
-          <Icon name="apps" aria-label={selectors.pages.PlaylistForm.itemIdType} />
-          <span>{item.title}</span>
-        </td>
-      ) : null}
       {item.type === 'dashboard_by_tag' ? (
         <td className={cx(styles.td, styles.item)}>
           <Icon name="tag-alt" aria-label={selectors.pages.PlaylistForm.itemTagType} />
           <TagBadge key={item.id} label={item.title} removeIcon={false} count={0} />
         </td>
-      ) : null}
+      ) : (
+        // dashboard_by_id | dashboard_by_uid
+        <td className={cx(styles.td, styles.item)}>
+          <Icon name="apps" aria-label={selectors.pages.PlaylistForm.itemIdType} />
+          <span>{item.title}</span>
+        </td>
+      )}
       <td className={cx(styles.td, styles.settings)}>
         {!first ? (
           <IconButton

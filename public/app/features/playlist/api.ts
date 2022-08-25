@@ -87,6 +87,7 @@ export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistIte
   }
 
   const ds = await getGrafanaDatasource();
+  // eslint-disable-next-line
   const rsp = await lastValueFrom(ds.query({ targets } as unknown as DataQueryRequest<GrafanaQuery>));
   if (rsp.data.length !== items.length) {
     throw new Error('unexpected result size');
