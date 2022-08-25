@@ -89,24 +89,34 @@ func TestResolvers_AttributeScope(t *testing.T) {
 			wantEvaluator: accesscontrol.EvalPermission("datasources:read", accesscontrol.Scope("datasources", "id", "5")),
 			wantCalls:     1,
 		},
+		{
+			name:          "should return error if no resolver is found for scope",
+			orgID:         1,
+			evaluator:     accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1"),
+			wantEvaluator: nil,
+			wantCalls:     0,
+			wantErr:       accesscontrol.ErrResolverNotFound,
+		},
 	}
 	for _, tt := range tests {
-		resolvers := accesscontrol.NewResolvers(log.NewNopLogger())
+		t.Run(tt.name, func(t *testing.T) {
+			resolvers := accesscontrol.NewResolvers(log.NewNopLogger())
 
-		// Reset calls counter
-		calls = 0
-		// Register a resolution method
-		resolvers.AddScopeAttributeResolver("datasources:name:", fakeDataSourceResolver)
+			// Reset calls counter
+			calls = 0
+			// Register a resolution method
+			resolvers.AddScopeAttributeResolver("datasources:name:", fakeDataSourceResolver)
 
-		// Test
-		mutate := resolvers.GetScopeAttributeMutator(tt.orgID)
-		resolvedEvaluator, err := tt.evaluator.MutateScopes(context.Background(), mutate)
-		if tt.wantErr != nil {
-			assert.ErrorAs(t, err, &tt.wantErr, "expected an error during the resolution of the scope")
-			return
-		}
-		assert.NoError(t, err)
-		assert.EqualValues(t, tt.wantEvaluator, resolvedEvaluator, "permission did not match expected resolution")
-		assert.Equal(t, tt.wantCalls, calls, "cache has not been used")
+			// Test
+			mutate := resolvers.GetScopeAttributeMutator(tt.orgID)
+			resolvedEvaluator, err := tt.evaluator.MutateScopes(context.Background(), mutate)
+			if tt.wantErr != nil {
+				assert.ErrorAs(t, err, &tt.wantErr, "expected an error during the resolution of the scope")
+				return
+			}
+			assert.NoError(t, err)
+			assert.EqualValues(t, tt.wantEvaluator, resolvedEvaluator, "permission did not match expected resolution")
+			assert.Equal(t, tt.wantCalls, calls, "cache has not been used")
+		})
 	}
 }
