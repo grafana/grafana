@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
@@ -71,7 +70,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, ErrEmailNotFound
 	}
 
-	role := claims.extractRole(s.autoAssignOrgRole, s.roleAttributeStrict)
+	role, grafanaAdmin := claims.extractRoleAndAdmin(s.autoAssignOrgRole, s.roleAttributeStrict)
 	if role == "" {
 		return nil, ErrInvalidRole
 	}
@@ -87,13 +86,20 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, errMissingGroupMembership
 	}
 
+	var isGrafanaAdmin *bool = nil
+	if s.allowAssignGrafanaAdmin {
+		isGrafanaAdmin = &grafanaAdmin
+	}
+
 	return &BasicUserInfo{
-		Id:     claims.ID,
-		Name:   claims.Name,
-		Email:  email,
-		Login:  email,
-		Role:   string(role),
-		Groups: groups,
+		Id:             claims.ID,
+		Name:           claims.Name,
+		Email:          email,
+		Login:          email,
+		Company:        "",
+		Role:           string(role),
+		IsGrafanaAdmin: isGrafanaAdmin,
+		Groups:         groups,
 	}, nil
 }
 
@@ -123,17 +129,17 @@ func (claims *azureClaims) extractEmail() string {
 	return claims.Email
 }
 
-func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) org.RoleType {
+func (claims *azureClaims) extractRoleAndAdmin(autoAssignRole string, strictMode bool) (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
 		if strictMode {
-			return org.RoleType("")
+			return org.RoleType(""), false
 		}
 
-		return org.RoleType(autoAssignRole)
+		return org.RoleType(autoAssignRole), false
 	}
 
 	roleOrder := []org.RoleType{
-		accesscontrol.RoleGrafanaAdmin,
+		RoleGrafanaAdmin,
 		org.RoleAdmin,
 		org.RoleEditor,
 		org.RoleViewer,
@@ -141,15 +147,19 @@ func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) o
 
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
-			return role
+			if role == RoleGrafanaAdmin {
+				return org.RoleAdmin, true
+			}
+
+			return role, false
 		}
 	}
 
 	if strictMode {
-		return org.RoleType("")
+		return org.RoleType(""), false
 	}
 
-	return org.RoleViewer
+	return org.RoleViewer, false
 }
 
 func hasRole(roles []string, role org.RoleType) bool {

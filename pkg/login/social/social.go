@@ -31,28 +31,29 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ClientId, ClientSecret string
-	Scopes                 []string
-	AuthUrl, TokenUrl      string
-	Enabled                bool
-	EmailAttributeName     string
-	EmailAttributePath     string
-	RoleAttributePath      string
-	RoleAttributeStrict    bool
-	GroupsAttributePath    string
-	TeamIdsAttributePath   string
-	AllowedDomains         []string
-	HostedDomain           string
-	ApiUrl                 string
-	TeamsUrl               string
-	AllowSignup            bool
-	Name                   string
-	Icon                   string
-	TlsClientCert          string
-	TlsClientKey           string
-	TlsClientCa            string
-	TlsSkipVerify          bool
-	UsePKCE                bool
+	ClientId, ClientSecret  string
+	Scopes                  []string
+	AuthUrl, TokenUrl       string
+	Enabled                 bool
+	EmailAttributeName      string
+	EmailAttributePath      string
+	RoleAttributePath       string
+	RoleAttributeStrict     bool
+	GroupsAttributePath     string
+	TeamIdsAttributePath    string
+	AllowedDomains          []string
+	AllowAssignGrafanaAdmin bool
+	HostedDomain            string
+	ApiUrl                  string
+	TeamsUrl                string
+	AllowSignup             bool
+	Name                    string
+	Icon                    string
+	TlsClientCert           string
+	TlsClientKey            string
+	TlsClientCa             string
+	TlsSkipVerify           bool
+	UsePKCE                 bool
 }
 
 func ProvideService(cfg *setting.Cfg) *SocialService {
@@ -226,14 +227,14 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 }
 
 type BasicUserInfo struct {
-	Id           string
-	Name         string
-	Email        string
-	Login        string
-	Company      string
-	Role         string
-	GrafanaAdmin bool
-	Groups       []string
+	Id             string
+	Name           string
+	Email          string
+	Login          string
+	Company        string
+	Role           string
+	IsGrafanaAdmin *bool // nil will avoid overriding user's set server admin setting
+	Groups         []string
 }
 
 func (b *BasicUserInfo) String() string {
@@ -255,9 +256,10 @@ type SocialConnector interface {
 
 type SocialBase struct {
 	*oauth2.Config
-	log            log.Logger
-	allowSignup    bool
-	allowedDomains []string
+	log                     log.Logger
+	allowSignup             bool
+	allowAssignGrafanaAdmin bool
+	allowedDomains          []string
 
 	roleAttributePath   string
 	roleAttributeStrict bool
@@ -273,7 +275,8 @@ func (e Error) Error() string {
 }
 
 const (
-	grafanaCom = "grafana_com"
+	grafanaCom       = "grafana_com"
+	RoleGrafanaAdmin = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
 )
 
 var (
@@ -298,13 +301,14 @@ func newSocialBase(name string,
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:              config,
-		log:                 logger,
-		allowSignup:         info.AllowSignup,
-		allowedDomains:      info.AllowedDomains,
-		autoAssignOrgRole:   autoAssignOrgRole,
-		roleAttributePath:   info.RoleAttributePath,
-		roleAttributeStrict: info.RoleAttributeStrict,
+		Config:                  config,
+		log:                     logger,
+		allowSignup:             info.AllowSignup,
+		allowAssignGrafanaAdmin: info.AllowAssignGrafanaAdmin,
+		allowedDomains:          info.AllowedDomains,
+		autoAssignOrgRole:       autoAssignOrgRole,
+		roleAttributePath:       info.RoleAttributePath,
+		roleAttributeStrict:     info.RoleAttributeStrict,
 	}
 }
 
