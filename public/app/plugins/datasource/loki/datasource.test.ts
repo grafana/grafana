@@ -22,7 +22,7 @@ import { initialCustomVariableModelState } from '../../../features/variables/cus
 import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource } from './datasource';
-import { makeMockLokiDatasource, createLokiDatasource } from './mocks';
+import { createMetadataRequest, createLokiDatasource } from './mocks';
 import { LokiOptions, LokiQuery, LokiQueryType } from './types';
 
 const templateSrvStub = {
@@ -449,20 +449,22 @@ describe('LokiDatasource', () => {
   });
 
   describe('metricFindQuery', () => {
-    const getTestContext = (mock: LokiDatasource) => {
+    const getTestContext = () => {
       const ds = createLokiDatasource(templateSrvStub);
-      ds.metadataRequest = mock.metadataRequest;
+      jest
+        .spyOn(ds, 'metadataRequest')
+        .mockImplementation(
+          createMetadataRequest(
+            { label1: ['value1', 'value2'], label2: ['value3', 'value4'] },
+            { '{label1="value1", label2="value2"}': [{ label5: 'value5' }] }
+          )
+        );
 
       return { ds };
     };
 
-    const mock = makeMockLokiDatasource(
-      { label1: ['value1', 'value2'], label2: ['value3', 'value4'] },
-      { '{label1="value1", label2="value2"}': [{ label5: 'value5' }] }
-    );
-
     it(`should return label names for Loki`, async () => {
-      const { ds } = getTestContext(mock);
+      const { ds } = getTestContext();
 
       const res = await ds.metricFindQuery('label_names()');
 
@@ -470,7 +472,7 @@ describe('LokiDatasource', () => {
     });
 
     it(`should return label values for Loki when no matcher`, async () => {
-      const { ds } = getTestContext(mock);
+      const { ds } = getTestContext();
 
       const res = await ds.metricFindQuery('label_values(label1)');
 
@@ -478,7 +480,7 @@ describe('LokiDatasource', () => {
     });
 
     it(`should return label values for Loki with matcher`, async () => {
-      const { ds } = getTestContext(mock);
+      const { ds } = getTestContext();
 
       const res = await ds.metricFindQuery('label_values({label1="value1", label2="value2"},label5)');
 
@@ -486,7 +488,7 @@ describe('LokiDatasource', () => {
     });
 
     it(`should return empty array when incorrect query for Loki`, async () => {
-      const { ds } = getTestContext(mock);
+      const { ds } = getTestContext();
 
       const res = await ds.metricFindQuery('incorrect_query');
 
