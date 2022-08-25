@@ -28,7 +28,7 @@ import { LokiOptions, LokiQuery, LokiQueryType } from './types';
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
   replace: jest.fn((a: string, ...rest: unknown[]) => a),
-};
+} as unknown as TemplateSrv;
 
 const testFrame: DataFrame = {
   refId: 'A',
@@ -125,7 +125,7 @@ describe('LokiDatasource', () => {
         },
       } as DataSourceInstanceSettings<LokiOptions>;
 
-      const ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv, settings);
+      const ds = createLokiDatasource(templateSrvStub, settings);
 
       // we need to check the final query before it is sent out,
       // and applyTemplateVariables is a convenient place to do that.
@@ -161,7 +161,7 @@ describe('LokiDatasource', () => {
     const DEFAULT_EXPR = 'rate({bar="baz", job="foo"} |= "bar" [5m])';
     const query: LokiQuery = { expr: DEFAULT_EXPR, refId: 'A' };
     const originalAdhocFiltersMock = templateSrvStub.getAdhocFilters();
-    const ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+    const ds = createLokiDatasource(templateSrvStub);
 
     afterAll(() => {
       templateSrvStub.getAdhocFilters.mockReturnValue(originalAdhocFiltersMock);
@@ -214,7 +214,7 @@ describe('LokiDatasource', () => {
     let variable: CustomVariableModel;
 
     beforeEach(() => {
-      ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+      ds = createLokiDatasource(templateSrvStub);
       variable = { ...initialCustomVariableModelState };
     });
 
@@ -258,7 +258,7 @@ describe('LokiDatasource', () => {
   describe('when performing testDataSource', () => {
     let ds: LokiDatasource;
     beforeEach(() => {
-      ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+      ds = createLokiDatasource(templateSrvStub);
     });
 
     it('should return successfully when call succeeds with labels', async () => {
@@ -315,7 +315,7 @@ describe('LokiDatasource', () => {
     const getTestContext = (frame: DataFrame, options: any = []) => {
       const query = makeAnnotationQueryRequest(options);
 
-      const ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+      const ds = createLokiDatasource(templateSrvStub);
       const response: DataQueryResponse = {
         data: [frame],
       };
@@ -454,7 +454,7 @@ describe('LokiDatasource', () => {
 
   describe('metricFindQuery', () => {
     const getTestContext = (mock: LokiDatasource) => {
-      const ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+      const ds = createLokiDatasource(templateSrvStub);
       ds.metadataRequest = mock.metadataRequest;
 
       return { ds };
@@ -502,7 +502,7 @@ describe('LokiDatasource', () => {
     describe('when called with ADD_FILTER', () => {
       let ds: LokiDatasource;
       beforeEach(() => {
-        ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+        ds = createLokiDatasource(templateSrvStub);
       });
 
       describe('and query has no parser', () => {
@@ -557,7 +557,7 @@ describe('LokiDatasource', () => {
       describe('and query has no parser', () => {
         let ds: LokiDatasource;
         beforeEach(() => {
-          ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+          ds = createLokiDatasource(templateSrvStub);
         });
 
         it('then the correct label should be added for logs query', () => {
@@ -589,7 +589,7 @@ describe('LokiDatasource', () => {
         describe('and query has parser', () => {
           let ds: LokiDatasource;
           beforeEach(() => {
-            ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+            ds = createLokiDatasource(templateSrvStub);
           });
 
           it('then the correct label should be added for logs query', () => {
@@ -629,7 +629,7 @@ describe('LokiDatasource', () => {
         const templateSrvMock = {
           getAdhocFilters: (): AdHocFilter[] => adHocFilters,
           replace: (a: string) => a,
-        } as unknown as TemplateSrv;
+        };
         ds = createLokiDatasource(templateSrvMock);
       });
       describe('and query has no parser', () => {
@@ -664,7 +664,7 @@ describe('LokiDatasource', () => {
         const templateSrvMock = {
           getAdhocFilters: (): AdHocFilter[] => adHocFilters,
           replace: (a: string) => a,
-        } as unknown as TemplateSrv;
+        };
         ds = createLokiDatasource(templateSrvMock);
       });
       describe('and query has no parser', () => {
@@ -688,7 +688,7 @@ describe('LokiDatasource', () => {
   });
 
   describe('prepareLogRowContextQueryTarget', () => {
-    const ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+    const ds = createLokiDatasource(templateSrvStub);
     it('creates query with only labels from /labels API', async () => {
       const row: LogRowModel = {
         rowIndex: 0,
@@ -741,7 +741,7 @@ describe('LokiDatasource', () => {
   describe('logs volume data provider', () => {
     let ds: LokiDatasource;
     beforeEach(() => {
-      ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+      ds = createLokiDatasource(templateSrvStub);
     });
 
     it('creates provider for logs query', () => {
@@ -783,7 +783,7 @@ describe('LokiDatasource', () => {
   describe('importing queries', () => {
     let ds: LokiDatasource;
     beforeEach(() => {
-      ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+      ds = createLokiDatasource(templateSrvStub);
     });
 
     it('keeps all labels when no labels are loaded', async () => {
@@ -818,7 +818,7 @@ describe('LokiDatasource', () => {
 
 describe('applyTemplateVariables', () => {
   it('should add the adhoc filter to the query', () => {
-    const ds = createLokiDatasource(templateSrvStub as unknown as TemplateSrv);
+    const ds = createLokiDatasource(templateSrvStub);
     const spy = jest.spyOn(ds, 'addAdHocFilters');
     ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
     expect(spy).toHaveBeenCalledWith('{test}');
