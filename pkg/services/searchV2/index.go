@@ -109,13 +109,48 @@ func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender Doc
 	}
 }
 
-func (i *searchIndex) isInitialized(_ context.Context, orgId int64) bool {
+func (i *searchIndex) isInitialized(_ context.Context, orgId int64) IsSearchReadyResponse {
 	i.initializationMutex.RLock()
 	orgInitialized := i.initializedOrgs[orgId]
 	initialInitComplete := i.initialIndexingComplete
 	i.initializationMutex.RUnlock()
 
-	return orgInitialized && initialInitComplete
+	if orgInitialized && initialInitComplete {
+		return IsSearchReadyResponse{IsReady: true}
+	}
+
+	if !initialInitComplete {
+		return IsSearchReadyResponse{IsReady: false, Reason: "initial-indexing-ongoing"}
+	}
+
+	i.triggerBuildingOrgIndex(orgId)
+	return IsSearchReadyResponse{IsReady: false, Reason: "org-indexing-ongoing"}
+}
+
+func (i *searchIndex) triggerBuildingOrgIndex(orgId int64) {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		doneIndexing := make(chan error, 1)
+		signal := buildSignal{orgID: orgId, done: doneIndexing}
+		select {
+		case i.buildSignals <- signal:
+		case <-ctx.Done():
+			i.logger.Warn("Failed to send a build signal to initialize org index", "orgId", orgId)
+			return
+		}
+		select {
+		case err := <-doneIndexing:
+			if err != nil {
+				i.logger.Error("Failed to build org index", "orgId", orgId, "error", err)
+			} else {
+				i.logger.Debug("Successfully built org index", "orgId", orgId)
+			}
+		case <-ctx.Done():
+			i.logger.Warn("Building org index timeout", "orgId", orgId)
+		}
+	}()
 }
 
 func (i *searchIndex) sync(ctx context.Context) error {
@@ -438,6 +473,7 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	i.perOrgIndex[orgID] = index
 	i.mu.Unlock()
 
+	time.Sleep(20 * time.Second)
 	i.initializationMutex.Lock()
 	i.initializedOrgs[orgID] = true
 	i.initializationMutex.Unlock()

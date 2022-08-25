@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -18,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
@@ -36,9 +36,19 @@ const DatasourceUID = "grafana"
 // This is important to do since otherwise we will only get a
 // not implemented error response from plugin at runtime.
 var (
-	_ backend.QueryDataHandler   = (*Service)(nil)
-	_ backend.CheckHealthHandler = (*Service)(nil)
-	_ backend.StreamHandler      = (*Service)(nil)
+	_                                       backend.QueryDataHandler   = (*Service)(nil)
+	_                                       backend.CheckHealthHandler = (*Service)(nil)
+	namespace                                                          = "grafana"
+	subsystem                                                          = "grafanads"
+	dashboardSearchNotServedRequestsCounter                            = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: subsystem,
+			Name:      "dashboard_search_requests_not_served_total",
+			Help:      "A counter for dashboard search requests that could not be served due to an ongoing search engine indexing",
+		},
+		[]string{"reason"},
+	)
 )
 
 func ProvideService(cfg *setting.Cfg, search searchV2.SearchService, store store.StorageService) *Service {
@@ -87,8 +97,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			response.Responses[q.RefID] = s.doReadQuery(ctx, q)
 		case queryTypeSearch:
 			response.Responses[q.RefID] = s.doSearchQuery(ctx, req, q)
-		case queryTypeSearchReadiness:
-			response.Responses[q.RefID] = s.checkSearchReadiness(ctx, req)
 		default:
 			response.Responses[q.RefID] = backend.DataResponse{
 				Error: fmt.Errorf("unknown query type"),
@@ -164,6 +172,22 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 }
 
 func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataRequest, query backend.DataQuery) backend.DataResponse {
+	searchReadinessCheckResp := s.search.IsReady(ctx, req.PluginContext.OrgID)
+	if !searchReadinessCheckResp.IsReady {
+		fmt.Println("not ready!!")
+		dashboardSearchNotServedRequestsCounter.With(prometheus.Labels{
+			"reason": searchReadinessCheckResp.Reason,
+		}).Inc()
+
+		return backend.DataResponse{
+			Frames: data.Frames{
+				&data.Frame{
+					Name: "Loading",
+				},
+			},
+		}
+	}
+
 	m := requestModel{}
 	err := json.Unmarshal(query.JSON, &m)
 	if err != nil {
@@ -172,82 +196,6 @@ func (s *Service) doSearchQuery(ctx context.Context, req *backend.QueryDataReque
 		}
 	}
 	return *s.search.DoDashboardQuery(ctx, req.PluginContext.User, req.PluginContext.OrgID, m.Search)
-}
-
-func (s *Service) checkSearchReadiness(ctx context.Context, req *backend.QueryDataRequest) backend.DataResponse {
-	return *s.search.IsReady(ctx, req.PluginContext.OrgID)
-}
-
-const searchReadinessChannelName = "search-readiness"
-
-func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	if req.Path != searchReadinessChannelName {
-		return &backend.SubscribeStreamResponse{Status: backend.SubscribeStreamStatusNotFound}, nil
-	}
-
-	initialData := s.search.IsReady(ctx, req.PluginContext.OrgID)
-	frame := initialData.Frames[0]
-
-	initialFrame, _ := backend.NewInitialFrame(frame, data.IncludeAll)
-	return &backend.SubscribeStreamResponse{
-		Status:      backend.SubscribeStreamStatusOK,
-		InitialData: initialFrame,
-	}, nil
-}
-
-func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return &backend.PublishStreamResponse{
-		Status: backend.PublishStreamStatusPermissionDenied,
-	}, nil
-}
-
-func isSearchReady(resp *backend.DataResponse) (bool, error) {
-	if resp.Error != nil {
-		return false, resp.Error
-	}
-
-	if len(resp.Frames) < 1 {
-		return false, nil
-	}
-
-	frame := resp.Frames[0]
-
-	if frame.Rows() < 1 {
-		return false, nil
-	}
-
-	for _, f := range frame.Fields {
-		if f.Name == "is_ready" {
-			val, ok := f.At(0).(bool)
-			return ok && val, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	if req.Path != searchReadinessChannelName {
-		return errors.New("unknown streaming path: " + req.Path)
-	}
-
-	// check readiness status every second until the search is ready
-	ticker := time.NewTicker(time.Second * 1)
-
-	ready := false
-	for !ready {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
-			resp := s.search.IsReady(ctx, req.PluginContext.OrgID)
-			ready, _ = isSearchReady(resp)
-			if err := sender.SendFrame(resp.Frames[0], data.IncludeDataOnly); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 type requestModel struct {

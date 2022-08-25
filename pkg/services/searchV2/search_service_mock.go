@@ -46,16 +46,14 @@ func (_m *MockSearchService) IsDisabled() bool {
 }
 
 // IsReady provides a mock function with given fields: ctx, orgId
-func (_m *MockSearchService) IsReady(ctx context.Context, orgId int64) *backend.DataResponse {
+func (_m *MockSearchService) IsReady(ctx context.Context, orgId int64) IsSearchReadyResponse {
 	ret := _m.Called(ctx, orgId)
 
-	var r0 *backend.DataResponse
-	if rf, ok := ret.Get(0).(func(context.Context, int64) *backend.DataResponse); ok {
+	var r0 IsSearchReadyResponse
+	if rf, ok := ret.Get(0).(func(context.Context, int64) IsSearchReadyResponse); ok {
 		r0 = rf(ctx, orgId)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*backend.DataResponse)
-		}
+		r0 = ret.Get(0).(IsSearchReadyResponse)
 	}
 
 	return r0

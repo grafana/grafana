@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -65,29 +64,8 @@ type StandardSearchService struct {
 	reIndexCh      chan struct{}
 }
 
-func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) *backend.DataResponse {
-	fOrgId := data.NewFieldFromFieldType(data.FieldTypeInt64, 1)
-	fOrgId.Name = "org_id"
-	fIsReady := data.NewFieldFromFieldType(data.FieldTypeBool, 1)
-	fIsReady.Name = "is_ready"
-	fMessage := data.NewFieldFromFieldType(data.FieldTypeString, 1)
-	fMessage.Name = "message"
-
-	fOrgId.Set(0, orgId)
-	isReady := s.dashboardIndex.isInitialized(ctx, orgId)
-	fIsReady.Set(0, isReady)
-
-	message := "Search is ready"
-	if !isReady {
-		message = "Search index is initializing"
-	}
-	fMessage.Set(0, message)
-
-	frame := data.NewFrame("Search readiness", fIsReady, fMessage, fOrgId)
-
-	return &backend.DataResponse{
-		Frames: []*data.Frame{frame},
-	}
+func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSearchReadyResponse {
+	return s.dashboardIndex.isInitialized(ctx, orgId)
 }
 
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
