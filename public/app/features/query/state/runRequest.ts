@@ -176,7 +176,7 @@ export function callQueryMethod(
 ) {
   // If any query has an expression, use the expression endpoint
   for (const target of request.targets) {
-    if (isExpressionReference(target.datasource)) {
+    if (isExpressionReference(target.datasource) && request.publicDashboardAccessToken === '') {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
     }
   }
