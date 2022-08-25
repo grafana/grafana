@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v3
     - run: git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.GH_BOT_ACCESS_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync
     - name: generate-packages-docs
-      uses: actions/setup-node@v3.4.0
+      uses: actions/setup-node@v3.4.1
       id: generate-docs
       with:
         node-version: '16'
