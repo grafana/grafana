@@ -8,7 +8,6 @@ export interface FooterLink {
   id?: string;
   icon?: IconName;
   url?: string;
-  target?: string;
 }
 
 export let getFooterLinks = (): FooterLink[] => {
@@ -17,19 +16,16 @@ export let getFooterLinks = (): FooterLink[] => {
       text: 'Documentation',
       icon: 'document-info',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
-      target: '_blank',
     },
     {
       text: 'Support',
       icon: 'question-circle',
       url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
-      target: '_blank',
     },
     {
       text: 'Community',
       icon: 'comments-alt',
       url: 'https://community.grafana.com/?utm_source=grafana_footer',
-      target: '_blank',
     },
   ];
 };
@@ -72,7 +68,6 @@ export let getVersionLinks = (): FooterLink[] => {
       text: `New version available!`,
       icon: 'download-alt',
       url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
-      target: '_blank',
     });
   }
 
@@ -109,7 +104,7 @@ Footer.displayName = 'Footer';
 
 function FooterItem({ item }: { item: FooterLink }) {
   const content = item.url ? (
-    <a href={item.url} target={item.target} rel="noopener" id={item.id}>
+    <a href={item.url} target="_blank" rel="noopener noreferrer" id={item.id}>
       {item.text}
     </a>
   ) : (
