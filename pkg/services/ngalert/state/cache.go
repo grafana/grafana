@@ -180,11 +180,20 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	return ruleStates
 }
 
-// removeByRuleUID deletes all entries in the state cache that match the given UID.
-func (c *cache) removeByRuleUID(orgID int64, uid string) {
+// removeByRuleUID deletes all entries in the state cache that match the given UID. Returns removed states
+func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+	statesMap := c.states[orgID][uid]
 	delete(c.states[orgID], uid)
+	if statesMap == nil {
+		return nil
+	}
+	states := make([]*State, 0, len(statesMap))
+	for _, state := range statesMap {
+		states = append(states, state)
+	}
+	return states
 }
 
 func (c *cache) reset() {

@@ -7,8 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	datasources "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -24,16 +22,16 @@ type SecretMigrationService interface {
 type SecretMigrationServiceImpl struct {
 	services                 []SecretMigrationService
 	ServerLockService        *serverlock.ServerLockService
-	migrateToPluginService   *kvstore.MigrateToPluginService
-	migrateFromPluginService *kvstore.MigrateFromPluginService
+	migrateToPluginService   *MigrateToPluginService
+	migrateFromPluginService *MigrateFromPluginService
 }
 
 func ProvideSecretMigrationService(
 	cfg *setting.Cfg,
 	serverLockService *serverlock.ServerLockService,
-	dataSourceSecretMigrationService *datasources.DataSourceSecretMigrationService,
-	migrateToPluginService *kvstore.MigrateToPluginService,
-	migrateFromPluginService *kvstore.MigrateFromPluginService,
+	dataSourceSecretMigrationService *DataSourceSecretMigrationService,
+	migrateToPluginService *MigrateToPluginService,
+	migrateFromPluginService *MigrateFromPluginService,
 ) *SecretMigrationServiceImpl {
 	services := make([]SecretMigrationService, 0)
 	services = append(services, dataSourceSecretMigrationService)

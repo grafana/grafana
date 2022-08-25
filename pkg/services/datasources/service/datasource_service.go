@@ -78,8 +78,6 @@ type DataSourceRetriever interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
 }
 
-const secretType = "datasource"
-
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
 // translate a scope prefixed with "datasources:name:" into an uid based scope.
 func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttributeResolver) {
@@ -165,7 +163,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 				return err
 			}
 
-			return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+			return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, kvstore.DataSourceSecretType, string(secret))
 		}
 
 		if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
@@ -197,7 +195,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		cmd.UpdateSecretFn = func() error {
-			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, secretType)
+			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
 
 		return s.SQLStore.DeleteDataSource(ctx, cmd)
@@ -230,13 +228,13 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				}
 
 				if query.Result.Name != cmd.Name {
-					err := s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, secretType, cmd.Name)
+					err := s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, kvstore.DataSourceSecretType, cmd.Name)
 					if err != nil {
 						return err
 					}
 				}
 
-				return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, secretType, string(secret))
+				return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, kvstore.DataSourceSecretType, string(secret))
 			}
 		}
 
@@ -299,7 +297,7 @@ func (s *Service) GetTLSConfig(ctx context.Context, ds *datasources.DataSource, 
 
 func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	decryptedValues := make(map[string]string)
-	secret, exist, err := s.SecretsStore.Get(ctx, ds.OrgId, ds.Name, secretType)
+	secret, exist, err := s.SecretsStore.Get(ctx, ds.OrgId, ds.Name, kvstore.DataSourceSecretType)
 	if err != nil {
 		return nil, err
 	}
