@@ -22,19 +22,17 @@ import {
 } from '@grafana/ui';
 import { ENGLISH_US, FRENCH_FRANCE, SPANISH_SPAIN } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
 
 import { UserPreferencesDTO } from '../../../types';
+import { DashboardPicker } from '../Select/DashboardPicker';
 
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
 }
 
-export type State = UserPreferencesDTO & {
-  dashboards: DashboardSearchItem[];
-};
+export type State = UserPreferencesDTO;
 
 const themes: SelectableValue[] = [
   { value: '', label: t({ id: 'shared-preferences.theme.default-label', message: 'Default' }) },
@@ -104,22 +102,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: '',
       weekStart: '',
       locale: '',
-      dashboards: [],
       queryHistory: { homeTab: '' },
     };
   }
 
   async componentDidMount() {
     const prefs = await this.service.load();
-    const dashboards = await backendSrv.search({ starred: true });
-
-    if (prefs.homeDashboardUID && !dashboards.find((d) => d.uid === prefs.homeDashboardUID)) {
-      const missingDash = await backendSrv.search({ dashboardUIDs: prefs.homeDashboardUID });
-
-      if (missingDash.length > 0) {
-        dashboards.push(missingDash[0]);
-      }
-    }
 
     this.setState({
       homeDashboardUID: prefs.homeDashboardUID,
@@ -127,7 +115,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
       timezone: prefs.timezone,
       weekStart: prefs.weekStart,
       locale: prefs.locale,
-      dashboards: [DEFAULT_DASHBOARD_HOME, ...dashboards],
       queryHistory: prefs.queryHistory,
     });
   }
@@ -161,15 +148,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ locale });
   };
 
-  getFullDashName = (dashboard: SelectableValue<DashboardSearchItem>) => {
-    if (typeof dashboard.folderTitle === 'undefined' || dashboard.folderTitle === '') {
-      return dashboard.title;
-    }
-    return dashboard.folderTitle + ' / ' + dashboard.title;
-  };
-
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, locale, dashboards } = this.state;
+    const { theme, timezone, weekStart, homeDashboardUID, locale } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
 
@@ -210,14 +190,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 }
                 data-testid="User preferences home dashboard drop down"
               >
-                <Select
-                  value={dashboards.find((dashboard) => dashboard.uid === homeDashboardUID)}
-                  getOptionValue={(i) => i.uid}
-                  getOptionLabel={this.getFullDashName}
-                  onChange={(dashboard: SelectableValue<DashboardSearchItem>) =>
-                    this.onHomeDashboardChanged(dashboard.uid)
-                  }
-                  options={dashboards}
+                <DashboardPicker
+                  value={homeDashboardUID}
+                  onChange={(v) => this.onHomeDashboardChanged(v?.uid ?? '')}
+                  defaultOptions={true}
+                  isClearable={true}
                   placeholder={t({
                     id: 'shared-preferences.fields.home-dashboard-placeholder',
                     message: 'Choose default dashboard',
