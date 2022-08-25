@@ -1,4 +1,4 @@
-package service
+package migrations
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 )
 
 const (
@@ -33,7 +34,7 @@ func ProvideDataSourceMigrationService(
 ) *DataSourceSecretMigrationService {
 	return &DataSourceSecretMigrationService{
 		dataSourcesService: dataSourcesService,
-		kvStore:            kvstore.WithNamespace(kvStore, 0, secretType),
+		kvStore:            kvstore.WithNamespace(kvStore, 0, secretskvs.DataSourceSecretType),
 		features:           features,
 		log:                log.New("secrets.migration"),
 	}

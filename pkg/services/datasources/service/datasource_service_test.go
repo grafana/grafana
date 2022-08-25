@@ -296,7 +296,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(secureJsonData))
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, kvstore.DataSourceSecretType, string(secureJsonData))
 		require.NoError(t, err)
 
 		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -340,7 +340,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(secureJsonData))
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, kvstore.DataSourceSecretType, string(secureJsonData))
 		require.NoError(t, err)
 
 		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -414,7 +414,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(secureJsonData))
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, kvstore.DataSourceSecretType, string(secureJsonData))
 		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
@@ -587,7 +587,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		jsonString, err := json.Marshal(jsonData)
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(jsonString))
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, kvstore.DataSourceSecretType, string(jsonString))
 		require.NoError(t, err)
 
 		values, err := dsService.DecryptedValues(context.Background(), ds)

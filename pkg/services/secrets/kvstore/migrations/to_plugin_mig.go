@@ -1,4 +1,4 @@
-package kvstore
+package migrations
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -16,7 +17,7 @@ import (
 // MigrateToPluginService This migrator will handle migration of datasource secrets (aka Unified secrets)
 // into the plugin secrets configured
 type MigrateToPluginService struct {
-	secretsStore   SecretsKVStore
+	secretsStore   secretskvs.SecretsKVStore
 	cfg            *setting.Cfg
 	logger         log.Logger
 	sqlStore       sqlstore.Store
@@ -26,7 +27,7 @@ type MigrateToPluginService struct {
 }
 
 func ProvideMigrateToPluginService(
-	secretsStore SecretsKVStore,
+	secretsStore secretskvs.SecretsKVStore,
 	cfg *setting.Cfg,
 	sqlStore sqlstore.Store,
 	secretsService secrets.Service,
@@ -45,7 +46,7 @@ func ProvideMigrateToPluginService(
 }
 
 func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
-	if err := EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
+	if err := secretskvs.EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		s.logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to get the fallback store since in this scenario the secrets store would be the plugin.
 		fallbackStore := s.secretsStore.Fallback()
@@ -54,8 +55,8 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 		}
 
 		// before we start migrating, check see if plugin startup failures were already fatal
-		namespacedKVStore := GetNamespacedKVStore(s.kvstore)
-		wasFatal, err := isPluginStartupErrorFatal(ctx, namespacedKVStore)
+		namespacedKVStore := secretskvs.GetNamespacedKVStore(s.kvstore)
+		wasFatal, err := secretskvs.IsPluginStartupErrorFatal(ctx, namespacedKVStore)
 		if err != nil {
 			s.logger.Warn("unable to determine whether plugin startup failures are fatal - continuing migration anyway.")
 		}
@@ -84,7 +85,7 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 				s.logger.Error("plugin migrator encountered error while deleting unified secrets")
 				if index == 0 && !wasFatal {
 					// old unified secrets still exists, so plugin startup errors are still not fatal, unless they were before we started
-					err := setPluginStartupErrorFatal(ctx, namespacedKVStore, false)
+					err := secretskvs.SetPluginStartupErrorFatal(ctx, namespacedKVStore, false)
 					if err != nil {
 						s.logger.Error("error reverting plugin failure fatal status", "error", err.Error())
 					} else {

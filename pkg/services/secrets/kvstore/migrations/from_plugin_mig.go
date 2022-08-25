@@ -1,15 +1,15 @@
-package kvstore
+package migrations
 
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -45,7 +45,7 @@ func ProvideMigrateFromPluginService(
 func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	s.logger.Debug("starting migration of plugin secrets to unified secrets")
 	// access the plugin directly
-	plugin, err := startAndReturnPlugin(s.manager, context.Background())
+	plugin, err := secretskvs.StartAndReturnPlugin(s.manager, context.Background())
 	if err != nil {
 		s.logger.Error("Error retrieiving plugin", "error", err.Error())
 		return err
@@ -59,14 +59,7 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	totalSecrets := len(res.Items)
 	s.logger.Debug("retrieved all secrets from plugin", "num secrets", totalSecrets)
 	// create a secret sql store manually
-	secretsSql := &secretsKVStoreSQL{
-		sqlStore:       s.sqlStore,
-		secretsService: s.secretsService,
-		log:            s.logger,
-		decryptionCache: decryptionCache{
-			cache: make(map[int64]cachedDecrypted),
-		},
-	}
+	secretsSql := secretskvs.NewSQLSecretsKVStore(s.sqlStore, s.secretsService, s.logger)
 	for i, item := range res.Items {
 		s.logger.Debug(fmt.Sprintf("Migrating secret %d of %d", i+1, totalSecrets), "current", i+1, "secretCount", totalSecrets)
 		// Add to sql store
@@ -96,12 +89,12 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	s.logger.Debug("Completed migration of secrets from plugin")
 
 	// The plugin is no longer needed at the moment
-	err = setPluginStartupErrorFatal(ctx, GetNamespacedKVStore(s.kvstore), false)
+	err = secretskvs.SetPluginStartupErrorFatal(ctx, secretskvs.GetNamespacedKVStore(s.kvstore), false)
 	if err != nil {
 		s.logger.Error("Failed to remove plugin error fatal flag", "error", err.Error())
 	}
 	// Reset the fatal flag setter in case another secret is created on the plugin
-	fatalFlagOnce = sync.Once{}
+	secretskvs.ResetPlugin()
 
 	s.logger.Debug("Shutting down secrets plugin now that migration is complete")
 	// if `use_plugin` wasn't set, stop the plugin after migration
