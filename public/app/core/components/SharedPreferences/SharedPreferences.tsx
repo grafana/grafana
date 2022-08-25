@@ -20,12 +20,10 @@ import {
   WeekStartPicker,
   FeatureBadge,
 } from '@grafana/ui';
+import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { ENGLISH_US, FRENCH_FRANCE, SPANISH_SPAIN } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
-import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
-
-import { UserPreferencesDTO } from '../../../types';
-import { DashboardPicker } from '../Select/DashboardPicker';
+import { UserPreferencesDTO } from 'app/types';
 
 export interface Props {
   resourceUri: string;
@@ -73,22 +71,6 @@ const languages: Array<SelectableValue<string>> = [
 
 const i18nFlag = Boolean(config.featureToggles.internationalization);
 
-const DEFAULT_DASHBOARD_HOME: DashboardSearchItem = {
-  title: 'Default',
-  tags: [],
-  type: '' as DashboardSearchItemType,
-  uid: undefined,
-  uri: '',
-  url: '',
-  folderId: 0,
-  folderTitle: '',
-  folderUid: '',
-  folderUrl: '',
-  isStarred: false,
-  slug: '',
-  items: [],
-};
-
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
 
@@ -97,7 +79,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
     this.service = new PreferencesService(props.resourceUri);
     this.state = {
-      homeDashboardUID: DEFAULT_DASHBOARD_HOME.uid,
       theme: '',
       timezone: '',
       weekStart: '',
