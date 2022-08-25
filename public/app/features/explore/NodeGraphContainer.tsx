@@ -3,13 +3,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
-import { applyFieldOverrides, DataFrame, GrafanaTheme2, ExploreId } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { NodeGraph } from '../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../plugins/panel/nodeGraph/useCategorizeFrames';
-import { StoreState } from '../../types';
 
 import { splitOpen } from './state/main';
 import { useLinks } from './utils/links';
@@ -25,10 +24,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface OwnProps {
   // Edges and Nodes are separate frames
   dataFrames: DataFrame[];
-  exploreId: ExploreId;
   // When showing the node graph together with trace view we do some changes so it works better.
   withTraceView?: boolean;
   datasourceType: string;
+  range: TimeRange;
 }
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -110,15 +109,9 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   );
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: OwnProps) {
-  return {
-    range: state.explore[exploreId]!.range,
-  };
-}
-
 const mapDispatchToProps = {
   splitOpen,
 };
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(undefined, mapDispatchToProps);
 export const NodeGraphContainer = connector(UnconnectedNodeGraphContainer);

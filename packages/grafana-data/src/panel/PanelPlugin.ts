@@ -111,9 +111,7 @@ export class PanelPlugin<
   private suggestionsSupplier?: VisualizationSuggestionsSupplier;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
-  // TODO: this creates type error in configureStore.ts not sure why
-  // explorePanel?: ComponentType<ExplorePanelProps> | null;
-  explorePanel?: any;
+  explorePanel?: ComponentType<ExplorePanelProps> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
@@ -386,6 +384,8 @@ export class PanelPlugin<
 
   /**
    * Use more specific component in explore to take advantage of some Explore specific features and props.
+   *
+   * This is an experimental API that is likely to change.
    * @param panel
    * @alpha
    */

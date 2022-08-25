@@ -1,10 +1,17 @@
 import React from 'react';
 
-import { ExplorePanelProps, FieldConfigSource, PanelProps, ScopedVars } from '@grafana/data';
+import {
+  ExplorePanelProps,
+  FieldConfigSource,
+  KnownVisualizationType,
+  LoadingState,
+  PanelProps,
+  ScopedVars,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Collapse } from '@grafana/ui';
+import { Collapse, useTheme2 } from '@grafana/ui';
 // // TODO: probably needs to be exported from ui directly
-import { FilterItem, FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
@@ -14,6 +21,8 @@ import LogsContainer from '../LogsContainer';
 import { NodeGraphContainer } from '../NodeGraphContainer';
 import TableContainer from '../TableContainer';
 import { TraceViewContainer } from '../TraceView/TraceViewContainer';
+
+import { useScrollElements } from './panelHooks';
 
 export async function getPanelForVisType(visType: string): Promise<React.ComponentType<ExplorePanelProps>> {
   // TODO this is not much dynamic at the moment but it's a start of creating a common interface
@@ -48,7 +57,8 @@ export async function getPanelForVisType(visType: string): Promise<React.Compone
           } else if (panelPlugin.panel) {
             return makePanelExploreCompatible(panelPlugin.panel!);
           } else {
-            // TODO: not sure if this can reasonably happen
+            // Not sure if this can reasonably happen. If this error out we probably catch this at a panel boundary.
+            throw new Error(`Panel plugin does not define any panel component. panel.id=${panel.id}`);
           }
         }
       }
@@ -89,9 +99,13 @@ function transformToDashboardProps(props: ExplorePanelProps): PanelProps {
     height: 0,
     id: 0,
     onChangeTimeRange: props.onUpdateTimeRange,
+
+    // We don't use a field config currently in Explore
     onFieldConfigChange(config: FieldConfigSource): void {
       return;
     },
+
+    // We don't use any options currently in Explore
     onOptionsChange<TOptions>(options: TOptions): void {
       return;
     },
@@ -99,9 +113,13 @@ function transformToDashboardProps(props: ExplorePanelProps): PanelProps {
     // here but there are no options to pass in Explore
     options: undefined,
     renderCounter: 0,
+
+    // We don't have much in sense of variables in Explore so seems like returning the string unchanged makes sense
+    // there.
     replaceVariables(value: string, scopedVars: ScopedVars | undefined, format: string | Function | undefined): string {
       return value;
     },
+
     timeRange: props.range,
     timeZone: props.timeZone,
     title: 'explore-panel',
@@ -116,8 +134,6 @@ function GraphPanel(props: ExplorePanelProps) {
     absoluteRange,
     timeZone,
     splitOpen,
-    loading,
-    theme,
     graphStyle,
     onChangeGraphStyle,
     annotations,
@@ -125,10 +141,16 @@ function GraphPanel(props: ExplorePanelProps) {
     onUpdateTimeRange,
     width,
   } = props;
+
+  const theme = useTheme2();
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const label = <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onChangeGraphStyle} />;
   return (
-    <Collapse label={label} loading={loading} isOpen>
+    <Collapse
+      label={label}
+      loading={loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming}
+      isOpen
+    >
       <ExploreGraph
         graphStyle={graphStyle}
         data={data}
@@ -146,7 +168,7 @@ function GraphPanel(props: ExplorePanelProps) {
 }
 
 function TablePanel(props: ExplorePanelProps) {
-  const { timeZone, width, splitOpen, loading, onClickFilterLabel, onClickFilterOutLabel, data, range } = props;
+  const { timeZone, width, splitOpen, loadingState, onClickFilterLabel, onClickFilterOutLabel, data, range } = props;
   function onCellFilterAdded(filter: FilterItem) {
     const { value, key, operator } = filter;
     if (operator === FILTER_FOR_OPERATOR) {
@@ -164,7 +186,7 @@ function TablePanel(props: ExplorePanelProps) {
       width={width}
       splitOpen={splitOpen}
       timeZone={timeZone}
-      loading={!!loading}
+      loading={loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming}
       onCellFilterAdded={onCellFilterAdded}
       range={range}
     />
@@ -172,23 +194,14 @@ function TablePanel(props: ExplorePanelProps) {
 }
 
 function LogsPanel(props: ExplorePanelProps) {
-  const {
-    exploreId,
-    syncedTimes,
-    theme,
-    loadingState,
-    width,
-    onClickFilterLabel,
-    onClickFilterOutLabel,
-    onStartScanning,
-    onStopScanning,
-  } = props;
+  const { exploreId, loadingState, width, onClickFilterLabel, onClickFilterOutLabel, onStartScanning, onStopScanning } =
+    props;
+  const theme = useTheme2();
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   return (
     <LogsContainer
       exploreId={exploreId}
       loadingState={loadingState}
-      syncedTimes={syncedTimes}
       width={width - spacing}
       onClickFilterLabel={onClickFilterLabel}
       onClickFilterOutLabel={onClickFilterOutLabel}
@@ -199,21 +212,24 @@ function LogsPanel(props: ExplorePanelProps) {
 }
 
 function NodeGraphPanel(props: ExplorePanelProps) {
-  const { exploreId, withTraceView, datasourceInstance, data } = props;
+  const { range, renderedVisualizations, datasourceInstance, data } = props;
   const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
 
   return (
     <NodeGraphContainer
       dataFrames={data}
-      exploreId={exploreId}
-      withTraceView={withTraceView}
+      range={range}
+      withTraceView={renderedVisualizations.includes(KnownVisualizationType.trace)}
       datasourceType={datasourceType}
     />
   );
 }
 
 function TraceViewPanel(props: ExplorePanelProps) {
-  const { splitOpen, exploreId, data, scrollElement, topOfViewRef } = props;
+  const { splitOpen, exploreId, data } = props;
+
+  // This is used only in explore context so this should be defined
+  const { scrollElement, topOfViewRef } = useScrollElements()!;
 
   return (
     <TraceViewContainer

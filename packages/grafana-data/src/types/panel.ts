@@ -1,9 +1,7 @@
 import { defaultsDeep } from 'lodash';
-import { RefObject } from 'react';
 
 import { EventBus } from '../events';
 import { StandardEditorProps } from '../field';
-import { GrafanaTheme2 } from '../themes';
 import { Registry } from '../utils';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
@@ -118,32 +116,42 @@ export interface PanelProps<T = any> {
 }
 
 export interface ExplorePanelProps {
+  // We could probably put his into state.panelState
   graphStyle: ExploreGraphStyle;
   onChangeGraphStyle: (style: ExploreGraphStyle) => void;
+
   data: DataFrame[];
+  annotations?: DataFrame[];
+
   absoluteRange: AbsoluteTimeRange;
   range: TimeRange;
   timeZone: TimeZone;
-  splitOpen: SplitOpen;
-  annotations?: DataFrame[];
+  datasourceInstance?: DataSourceApi | null;
+
   loadingState: LoadingState;
-  loading?: boolean;
-  theme: GrafanaTheme2;
-  onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
   width: number;
-  // TODO cannot import FilterItem from grafana/ui
-  // onCellFilterAdded: (filter: FilterItem) => void;
-  onCellFilterAdded: (filter: any) => void;
+
+  splitOpen: SplitOpen;
+  onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
+
+  // TODO: this may be removed if we decide not to give access to whole redux state to panel components.
+  //  We can probably do with giving access to state.panelState though some getter/setter
   exploreId: ExploreId;
-  syncedTimes: boolean;
+
+  // List of all the panels being shown in explore for customization of some panel combinations
+  // TODO: only used in node graph right now to make it smaller when shown with trace, maybe we don't really need this.
+  renderedVisualizations: string[];
+
+  // Used in table and logs panel
   onClickFilterLabel: (key: string, value: string) => void;
   onClickFilterOutLabel: (key: string, value: string) => void;
+
+  // Used for logs histograms
+  // We could probably put his into state.panelState
   onStartScanning: () => void;
   onStopScanning: () => void;
-  datasourceInstance?: DataSourceApi | null;
-  withTraceView?: boolean;
-  scrollElement?: Element;
-  topOfViewRef: RefObject<HTMLDivElement>;
+
+  // // Used for dashboard panel compat
   eventBus: EventBus;
 }
 

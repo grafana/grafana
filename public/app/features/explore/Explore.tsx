@@ -17,7 +17,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { StoreState } from 'app/types';
@@ -39,6 +38,7 @@ import { changeSize, changeGraphStyle } from './state/explorePane';
 import { splitOpen } from './state/main';
 import { addQueryRow, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
 import { makeAbsoluteTime, updateTimeRange } from './state/time';
+import { ScrollElementsContext } from './utils/panelHooks';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -133,22 +133,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   onChangeTime = (rawRange: RawTimeRange) => {
     const { updateTimeRange, exploreId } = this.props;
     updateTimeRange({ exploreId, rawRange });
-  };
-
-  // Use this in help pages to set page to a single query
-  onClickExample = (query: DataQuery) => {
-    this.props.setQueries(this.props.exploreId, [query]);
-  };
-
-  onCellFilterAdded = (filter: FilterItem) => {
-    const { value, key, operator } = filter;
-    if (operator === FILTER_FOR_OPERATOR) {
-      this.onClickFilterLabel(key, value);
-    }
-
-    if (operator === FILTER_OUT_OPERATOR) {
-      this.onClickFilterOutLabel(key, value);
-    }
   };
 
   onClickFilterLabel = (key: string, value: string) => {
@@ -247,34 +231,35 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     for (const key of Object.keys(frames)) {
       panels.push(
         <ErrorBoundaryAlert key={key}>
-          <Panel
-            onChangeGraphStyle={this.onChangeGraphStyle}
-            data={frames[key]}
-            absoluteRange={this.props.absoluteRange}
-            range={this.props.range}
-            timeZone={this.props.timeZone}
-            splitOpen={this.props.splitOpen}
-            annotations={this.props.queryResponse.annotations}
-            loadingState={this.props.queryResponse.state}
-            loading={this.props.loading}
-            theme={this.props.theme}
-            graphStyle={this.props.graphStyle}
-            onUpdateTimeRange={this.onUpdateTimeRange}
-            width={width}
-            onCellFilterAdded={this.onCellFilterAdded}
-            exploreId={this.props.exploreId}
-            syncedTimes={this.props.syncedTimes}
-            onClickFilterLabel={this.onClickFilterLabel}
-            onClickFilterOutLabel={this.onClickFilterOutLabel}
-            onStartScanning={this.onStartScanning}
-            onStopScanning={this.onStopScanning}
-            datasourceInstance={this.props.datasourceInstance}
-            withTraceView={Boolean(frames['trace']?.length)}
-            scrollElement={this.scrollElement}
-            topOfViewRef={this.topOfViewRef}
-            preferredVisualizationType={key}
-            eventBus={this.props.eventBridge}
-          />
+          <ScrollElementsContext.Provider
+            value={{
+              scrollElement: this.scrollElement,
+              topOfViewRef: this.topOfViewRef,
+            }}
+          >
+            <Panel
+              onChangeGraphStyle={this.onChangeGraphStyle}
+              data={frames[key]}
+              absoluteRange={this.props.absoluteRange}
+              range={this.props.range}
+              timeZone={this.props.timeZone}
+              splitOpen={this.props.splitOpen}
+              annotations={this.props.queryResponse.annotations}
+              loadingState={this.props.queryResponse.state}
+              graphStyle={this.props.graphStyle}
+              onUpdateTimeRange={this.onUpdateTimeRange}
+              width={width}
+              exploreId={this.props.exploreId}
+              onClickFilterLabel={this.onClickFilterLabel}
+              onClickFilterOutLabel={this.onClickFilterOutLabel}
+              onStartScanning={this.onStartScanning}
+              onStopScanning={this.onStopScanning}
+              datasourceInstance={this.props.datasourceInstance}
+              preferredVisualizationType={key}
+              eventBus={this.props.eventBridge}
+              renderedVisualizations={Object.keys(frames)}
+            />
+          </ScrollElementsContext.Provider>
         </ErrorBoundaryAlert>
       );
     }
@@ -366,7 +351,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     logsResult,
     absoluteRange,
     queryResponse,
-    loading,
     graphStyle,
     frames,
     range,
@@ -383,7 +367,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryResponse,
     syncedTimes,
     timeZone,
-    loading,
     graphStyle,
     frames,
     range,

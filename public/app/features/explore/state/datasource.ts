@@ -93,7 +93,6 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       logsVolumeDataProvider: undefined,
       logsVolumeData: undefined,
       queryResponse: createEmptyQueryResponse(),
-      loading: false,
       queryKeys: [],
       history,
       datasourceMissing: false,

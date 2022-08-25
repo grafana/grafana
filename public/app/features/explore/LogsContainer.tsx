@@ -30,7 +30,6 @@ interface LogsContainerProps extends PropsFromRedux {
   width: number;
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
-  syncedTimes: boolean;
   loadingState: LoadingState;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;

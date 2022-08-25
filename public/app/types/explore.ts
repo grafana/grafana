@@ -115,8 +115,6 @@ export interface ExploreItemState {
    */
   scanRange?: RawTimeRange;
 
-  loading: boolean;
-
   /**
    * React keys for rendering of QueryRows
    */

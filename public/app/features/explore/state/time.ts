@@ -188,7 +188,6 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
       },
       isLive: live,
       isPaused: live ? false : state.isPaused,
-      loading: live,
       logsResult,
     };
   }

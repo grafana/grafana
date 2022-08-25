@@ -658,7 +658,10 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
-      loading: false,
+      queryResponse: {
+        ...state.queryResponse,
+        state: LoadingState.Done,
+      },
     };
   }
 
@@ -773,7 +776,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
         ...state.queryResponse,
         state: loadingState,
       },
-      loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     };
   }
 
@@ -831,14 +833,13 @@ export const processQueryResponse = (
   action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, error, frames, logsResult } = response;
+  const { request, series, error, frames, logsResult } = response;
 
   if (error) {
     if (error.type === DataQueryErrorType.Timeout) {
       return {
         ...state,
         queryResponse: response,
-        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
       };
     } else if (error.type === DataQueryErrorType.Cancelled) {
       return state;
@@ -867,6 +868,5 @@ export const processQueryResponse = (
     queryResponse: response,
     frames,
     logsResult,
-    loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
   };
 };
