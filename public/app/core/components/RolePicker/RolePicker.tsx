@@ -67,6 +67,13 @@ export const RolePicker = ({
       vertical = offsetVertical;
     }
 
+    /*
+     * This expression calculates whether there is enough place
+     * on the right of the RolePicker input to show/fit the role picker menu and its sub menu AND
+     * whether there is enough place under the RolePicker input to show/fit
+     * both (the role picker menu and its sub menu) aligned to the left edge of the input.
+     * Otherwise, it aligns the role picker menu to the right.
+     */
     if (
       window.innerWidth - right < currentRolePickerWidth &&
       currentRolePickerWidth < 2 * ROLE_PICKER_SUBMENU_MIN_WIDTH
