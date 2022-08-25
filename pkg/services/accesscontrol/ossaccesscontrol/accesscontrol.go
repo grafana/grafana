@@ -45,6 +45,11 @@ func (a *AccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, e
 		user.Permissions[user.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
+	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
+	if evaluator.Evaluate(user.Permissions[user.OrgID]) {
+		return true, nil
+	}
+
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, a.resolvers.GetScopeAttributeMutator(user.OrgID))
 	if err != nil {
 		return false, err
