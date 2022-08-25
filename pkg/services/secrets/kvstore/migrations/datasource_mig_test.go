@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -36,8 +35,7 @@ func TestMigrate(t *testing.T) {
 	t.Run("should migrate from legacy to unified without compatibility", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsmng.SetupTestService(t, store)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, false)
 
@@ -103,8 +101,7 @@ func TestMigrate(t *testing.T) {
 	t.Run("should migrate from legacy to unified with compatibility", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsmng.SetupTestService(t, store)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, true)
 
@@ -170,8 +167,7 @@ func TestMigrate(t *testing.T) {
 	t.Run("should replicate from unified to legacy for compatibility", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsmng.SetupTestService(t, store)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, false)
 
@@ -261,8 +257,7 @@ func TestMigrate(t *testing.T) {
 	t.Run("should delete from legacy to remove compatibility", func(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
-		store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
-		secretsService := secretsmng.SetupTestService(t, store)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		migService := SetupTestMigrationService(t, sqlStore, kvStore, secretsStore, true)
 
