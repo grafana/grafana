@@ -189,6 +189,7 @@ func updateFatalFlag(ctx context.Context, skv secretsKVStorePlugin) {
 	// Rather than updating the flag in several places, it is cleaner to just do this check once
 	// Very early on. Once backwards compatibility to legacy secrets is gone in Grafana 10, this can go away as well
 	fatalFlagOnce.Do(func() {
+		skv.log.Debug("Updating plugin startup error fatal flag")
 		var err error
 		if isFatal, _ := isPluginStartupErrorFatal(ctx, skv.kvstore); !isFatal && skv.backwardsCompatibilityDisabled {
 			err = setPluginStartupErrorFatal(ctx, skv.kvstore, true)

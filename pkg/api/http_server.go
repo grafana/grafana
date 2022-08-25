@@ -76,6 +76,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	spm "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -178,6 +179,7 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	secretsMigrator              secrets.Migrator
+	secretsPluginMigrator        *spm.SecretMigrationServiceImpl
 	userService                  user.Service
 	tempUserService              tempUser.Service
 	loginAttemptService          loginAttempt.Service
@@ -217,7 +219,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
-	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore, secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager,
+	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
+	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsPluginMigrator *spm.SecretMigrationServiceImpl,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
 	accesscontrolService accesscontrol.Service,
 ) (*HTTPServer, error) {
@@ -307,6 +310,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
 		secretsMigrator:              secretsMigrator,
+		secretsPluginMigrator:        secretsPluginMigrator,
 		userService:                  userService,
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
