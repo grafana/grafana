@@ -175,7 +175,7 @@ Reporting is better in a few specific ways in Grafana version 9.1:
   For example, you can share last month's numbers as compared to the numbers for this month.
   The dashboard uses the same template variables if you attach the dashboard to a report twice.
 
-To learn more about reporting, see the [documentation]({{< relref "../enterprise/reporting/" >}}).
+To learn more about reporting, see the [documentation]({{< relref "../share-dashboards-panels/#reporting" >}}).
 
 {{< figure src="/static/img/docs/enterprise/reporting-draft-9-1.png" max-width="750px" caption="Saving a report as a draft" >}}
 
