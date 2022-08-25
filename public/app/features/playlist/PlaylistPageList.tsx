@@ -4,8 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, LinkButton, ModalsController, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-
-import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
+import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 import { ShareModal } from './ShareModal';
 import { Playlist } from './types';

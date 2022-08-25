@@ -2,11 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { ConfirmModal } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { contextSrv } from 'app/core/services/context_srv';
-
-import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
 import { PlaylistPageList } from './PlaylistPageList';

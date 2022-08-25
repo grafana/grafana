@@ -9,12 +9,12 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { PlaylistItem } from './types';
 
-interface PlaylistTableRowsProps {
+interface Props {
   items: PlaylistItem[];
   onDelete: (idx: number) => void;
 }
 
-export const PlaylistTableRows = ({ items, onDelete }: PlaylistTableRowsProps) => {
+export const PlaylistTableRows = ({ items, onDelete }: Props) => {
   const styles = useStyles(getStyles);
   if (!items?.length) {
     return (

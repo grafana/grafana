@@ -6,12 +6,12 @@ import { Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup } from '@gra
 
 import { Playlist, PlaylistMode } from './types';
 
-export interface StartModalProps {
+export interface Props {
   playlist: Playlist;
   onDismiss: () => void;
 }
 
-export const StartModal = ({ playlist, onDismiss }: StartModalProps) => {
+export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [mode, setMode] = useState<PlaylistMode>(false);
   const [autoFit, setAutofit] = useState(false);
 

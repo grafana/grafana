@@ -4,20 +4,20 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 
-import { TagFilter } from '../../core/components/TagFilter/TagFilter';
 import { getGrafanaSearcher } from '../search/service';
 
 import { PlaylistTable } from './PlaylistTable';
 import { Playlist } from './types';
 import { usePlaylistItems } from './usePlaylistItems';
 
-interface PlaylistFormProps {
+interface Props {
   onSubmit: (playlist: Playlist) => void;
   playlist: Playlist;
 }
 
-export const PlaylistForm = ({ onSubmit, playlist }: PlaylistFormProps) => {
+export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
   const { name, interval, items: propItems } = playlist;
   const tagOptions = useMemo(() => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });

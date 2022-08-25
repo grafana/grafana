@@ -102,6 +102,10 @@ export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistIte
   });
 }
 
+export function getDefaultPlaylist(): Playlist {
+  return { items: [], interval: '5m', name: '', uid: '' };
+}
+
 export function searchPlaylists(playlists: Playlist[], query?: string): Playlist[] {
   if (!query?.length) {
     return playlists;

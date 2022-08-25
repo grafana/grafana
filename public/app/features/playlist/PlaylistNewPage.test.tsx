@@ -3,16 +3,18 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { locationService } from '@grafana/runtime';
-
-import { backendSrv } from '../../core/services/backend_srv';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { PlaylistNewPage } from './PlaylistNewPage';
 import { Playlist } from './types';
 
-jest.mock('./usePlaylist', () => ({
+jest.mock('./api', () => ({
   // so we don't need to add dashboard items in test
-  usePlaylist: jest.fn().mockReturnValue({
-    playlist: { items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }], loading: false },
+  getDefaultPlaylist: jest.fn().mockReturnValue({
+    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+    interval: '5m',
+    name: '',
+    uid: '',
   }),
 }));
 

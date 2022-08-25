@@ -4,8 +4,7 @@ import { useAsync } from 'react-use';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-
-import { GrafanaRouteComponentProps } from '../../core/navigation/types';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { PlaylistForm } from './PlaylistForm';
 import { getPlaylist, updatePlaylist } from './api';
