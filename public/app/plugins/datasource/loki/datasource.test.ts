@@ -114,7 +114,11 @@ describe('LokiDatasource', () => {
   });
 
   describe('when doing logs queries with limits', () => {
-    const runTest = async (queryMaxLines: number | undefined, dsMaxLines: string, expectedMaxLines: number) => {
+    const runTest = async (
+      queryMaxLines: number | undefined,
+      dsMaxLines: string | undefined,
+      expectedMaxLines: number
+    ) => {
       const settings = {
         jsonData: {
           maxLines: dsMaxLines,
@@ -145,7 +149,7 @@ describe('LokiDatasource', () => {
     });
 
     it('should use query max lines, if exists', async () => {
-      await runTest(80, '20', 80);
+      await runTest(80, undefined, 80);
     });
 
     it('should use query max lines, if both exist, even if it is higher than ds max lines', async () => {
