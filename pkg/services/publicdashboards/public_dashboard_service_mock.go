@@ -178,26 +178,17 @@ func (_m *FakePublicDashboardService) PublicDashboardEnabled(ctx context.Context
 }
 
 // SavePublicDashboardConfig provides a mock function with given fields: ctx, u, dto
-func (_m *FakePublicDashboardService) SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *publicdashboardsmodels.SavePublicDashboardConfigDTO) (*publicdashboardsmodels.PublicDashboard, error) {
+func (_m *FakePublicDashboardService) SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *publicdashboardsmodels.SavePublicDashboardConfigDTO) error {
 	ret := _m.Called(ctx, u, dto)
 
-	var r0 *publicdashboardsmodels.PublicDashboard
-	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, *publicdashboardsmodels.SavePublicDashboardConfigDTO) *publicdashboardsmodels.PublicDashboard); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, *publicdashboardsmodels.SavePublicDashboardConfigDTO) error); ok {
 		r0 = rf(ctx, u, dto)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*publicdashboardsmodels.PublicDashboard)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, *publicdashboardsmodels.SavePublicDashboardConfigDTO) error); ok {
-		r1 = rf(ctx, u, dto)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // NewFakePublicDashboardService creates a new instance of FakePublicDashboardService. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.

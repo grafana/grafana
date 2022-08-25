@@ -147,7 +147,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -190,7 +190,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -221,7 +221,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
 }
@@ -248,7 +248,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -274,7 +274,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// Since the dto.PublicDashboard has a uid, this will call
 		// service.updatePublicDashboardConfig
-		_, err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -317,7 +317,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// Since the dto.PublicDashboard has a uid, this will call
 		// service.updatePublicDashboardConfig
-		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -340,7 +340,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -398,7 +398,10 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	publicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+	err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+	require.NoError(t, err)
+
+	publicDashboardPD, err := service.GetPublicDashboardConfig(context.Background(), dto.OrgId, dto.DashboardUid)
 	require.NoError(t, err)
 
 	nonPublicDto := &SavePublicDashboardConfigDTO{
@@ -412,7 +415,10 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	nonPublicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, nonPublicDto)
+	err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, nonPublicDto)
+	require.NoError(t, err)
+
+	nonPublicDashboardPD, err := service.GetPublicDashboardConfig(context.Background(), nonPublicDto.OrgId, nonPublicDto.DashboardUid)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
