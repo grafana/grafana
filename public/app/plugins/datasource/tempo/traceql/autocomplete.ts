@@ -17,7 +17,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.languageProvider = props.languageProvider;
   }
 
-  triggerCharacters = ['{', ',', '[', '(', '=', '~', ' ', '"'];
+  triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
 
   // We set these directly and ae required for the provider to function.
   monaco: Monaco | undefined;
@@ -25,7 +25,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   private tags: { [tag: string]: Set<string> } = {};
   private intrinsics: string[] = ['name', 'status', 'duration'];
-  // private scopes: string[] = ['span', 'resource'];
+  private scopes: string[] = ['span', 'resource'];
   private operators: string[] = ['=', '-', '+', '<', '>', '>=', '<='];
   private logicalOps: string[] = ['&&', '||'];
 
@@ -45,7 +45,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
-    const situation = getSituation(model.getValue(), offset);
+    const situation = this.getSituation(model.getValue(), offset);
     const completionItems = this.getCompletions(situation);
 
     return completionItems.then((items) => {
@@ -86,10 +86,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return [];
       }
       case 'EMPTY': {
-        return this.getKeywordsAndTagsCompletions();
+        return this.getTagsCompletions('{ .')
+          .concat(this.getIntrinsicsCompletions('{ '))
+          .concat(this.getScopesCompletions('{ '));
+      }
+      case 'SPANSET_EMPTY': {
+        return this.getTagsCompletions('.').concat(this.getIntrinsicsCompletions()).concat(this.getScopesCompletions());
       }
       case 'SPANSET_IN_NAME':
-        return this.getKeywordsAndTagsCompletions();
+        return this.getTagsCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getScopesCompletions());
+      case 'SPANSET_IN_NAME_SCOPE':
+        return this.getTagsCompletions().concat(this.getIntrinsicsCompletions());
       case 'SPANSET_AFTER_NAME':
         return this.operators.map((key) => ({
           label: key,
@@ -121,23 +128,103 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
   }
 
-  private getKeywordsAndTagsCompletions(): Completion[] {
-    const result: Completion[] = [];
-    result.push(
-      ...this.intrinsics.map((key) => ({
-        label: key,
-        insertText: key,
-        type: 'KEYWORD' as CompletionType,
-      }))
+  private getTagsCompletions(prepend?: string): Completion[] {
+    return Object.keys(this.tags).map((key) => ({
+      label: key,
+      insertText: (prepend || '') + key,
+      type: 'TAG_NAME' as CompletionType,
+    }));
+  }
+
+  private getIntrinsicsCompletions(prepend?: string): Completion[] {
+    return this.intrinsics.map((key) => ({
+      label: key,
+      insertText: (prepend || '') + key,
+      type: 'KEYWORD' as CompletionType,
+    }));
+  }
+
+  private getScopesCompletions(prepend?: string): Completion[] {
+    return this.scopes.map((key) => ({
+      label: key,
+      insertText: (prepend || '') + key,
+      type: 'SCOPE' as CompletionType,
+    }));
+  }
+
+  private getSituationInSpanSet(textUntilCaret: string): Situation {
+    const matched = textUntilCaret.match(
+      /([\s{])((?<name>[\w./]+)?(?<space1>\s*)((?<op>[!=+\-<>]+)(?<space2>\s*)(?<value>(?<open_quote>")?[^"\n&|]+(?<close_quote>")?)?)?)(?<space3>\s*)$/
     );
-    result.push(
-      ...Object.keys(this.tags).map((key) => ({
-        label: key,
-        insertText: key,
-        type: 'TAG_NAME' as CompletionType,
-      }))
-    );
-    return result;
+
+    if (matched) {
+      const nameFull = matched.groups?.name;
+      const op = matched.groups?.op;
+
+      if (!nameFull) {
+        return {
+          type: 'SPANSET_EMPTY',
+        };
+      }
+
+      const nameMatched = nameFull.match(/^(?<pre_dot>\.)?(?<word>[\w/.]+)(?<post_dot>\.)?$/);
+
+      if (!op) {
+        if (this.scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
+          return {
+            type: 'SPANSET_IN_NAME_SCOPE',
+          };
+        }
+        return {
+          type: matched.groups?.space1 ? 'SPANSET_AFTER_NAME' : 'SPANSET_IN_NAME',
+        };
+      }
+
+      if (matched.groups?.space3) {
+        return {
+          type: 'SPANSET_AFTER_VALUE',
+        };
+      }
+      return {
+        type: 'SPANSET_IN_VALUE',
+        tagName: nameMatched?.groups?.word || '',
+        betweenQuotes: !!matched.groups?.open_quote,
+      };
+    } else {
+      console.log('matched is null');
+    }
+
+    return {
+      type: 'EMPTY',
+    };
+  }
+
+  /**
+   * Figure out where is the cursor and what kind of suggestions are appropriate.
+   * As currently TraceQL handles just a simple {foo="bar", baz="zyx"} kind of values we can do with simple regex to figure
+   * out where we are with the cursor.
+   * @param text
+   * @param offset
+   */
+  private getSituation(text: string, offset: number): Situation {
+    if (text === '' || offset === 0) {
+      return {
+        type: 'EMPTY',
+      };
+    }
+
+    const textUntilCaret = text.substring(0, offset);
+
+    // Check if we're inside a span set
+    let isInSpanSet = textUntilCaret.lastIndexOf('{') > textUntilCaret.lastIndexOf('}');
+    if (isInSpanSet) {
+      return this.getSituationInSpanSet(textUntilCaret);
+    }
+
+    // Will happen only if user writes something that isn't really a tag selector
+    return {
+      type: 'UNKNOWN',
+    };
   }
 }
 
@@ -156,12 +243,14 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
       return monaco.languages.CompletionItemKind.Operator;
     case 'TAG_VALUE':
       return monaco.languages.CompletionItemKind.EnumMember;
+    case 'SCOPE':
+      return monaco.languages.CompletionItemKind.Class;
     default:
       throw new Error(`Unexpected CompletionType: ${type}`);
   }
 }
 
-export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR';
+export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE';
 type Completion = {
   type: CompletionType;
   label: string;
@@ -181,10 +270,16 @@ export type Situation =
       type: 'EMPTY';
     }
   | {
+      type: 'SPANSET_EMPTY';
+    }
+  | {
       type: 'SPANSET_AFTER_NAME';
     }
   | {
       type: 'SPANSET_IN_NAME';
+    }
+  | {
+      type: 'SPANSET_IN_NAME_SCOPE';
     }
   | {
       type: 'SPANSET_IN_VALUE';
@@ -194,77 +289,6 @@ export type Situation =
   | {
       type: 'SPANSET_AFTER_VALUE';
     };
-
-/**
- * Figure out where is the cursor and what kind of suggestions are appropriate.
- * As currently TraceQL handles just a simple {foo="bar", baz="zyx"} kind of values we can do with simple regex to figure
- * out where we are with the cursor.
- * @param text
- * @param offset
- */
-function getSituation(text: string, offset: number): Situation {
-  if (text === '' || offset === 0) {
-    return {
-      type: 'EMPTY',
-    };
-  }
-
-  const textUntilCaret = text.substring(0, offset);
-
-  // Check if we're inside a span set
-  let isInSpanSet = textUntilCaret.lastIndexOf('{') > textUntilCaret.lastIndexOf('}');
-  if (isInSpanSet) {
-    return getSituationInSpanSet(textUntilCaret);
-  }
-
-  // Will happen only if user writes something that isn't really a tag selector
-  return {
-    type: 'UNKNOWN',
-  };
-}
-
-function getSituationInSpanSet(textUntilCaret: string): Situation {
-  const matched = textUntilCaret.match(
-    /([\s{])((?<name>[\w./]+)(?<space1>\s*)((?<op>[!=+\-<>]+)(?<space2>\s*)(?<value>(?<open_bracket>")?[\w.]+(?<close_bracket>")?)?)?)(?<space3>\s*)$/
-  );
-
-  if (matched) {
-    const name = matched.groups?.name;
-    const op = matched.groups?.op;
-    const value = matched.groups?.value;
-
-    console.log({ name, op, value, matched });
-
-    if (!name) {
-      return {
-        type: 'EMPTY',
-      };
-    }
-
-    if (!op) {
-      return {
-        type: matched.groups?.space1 ? 'SPANSET_AFTER_NAME' : 'SPANSET_IN_NAME',
-      };
-    }
-
-    if (matched.groups?.space3) {
-      return {
-        type: 'SPANSET_AFTER_VALUE',
-      };
-    }
-    return {
-      type: 'SPANSET_IN_VALUE',
-      tagName: name,
-      betweenQuotes: !!matched.groups?.open_bracket,
-    };
-  } else {
-    console.log('matched is null');
-  }
-
-  return {
-    type: 'EMPTY',
-  };
-}
 
 function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel, position: monacoTypes.Position) {
   const word = model.getWordAtPosition(position);
