@@ -370,7 +370,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
+	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
 		GrafanaVersion: hs.Cfg.BuildVersion,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
@@ -405,7 +405,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID)
+	err := hs.pluginManager.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)

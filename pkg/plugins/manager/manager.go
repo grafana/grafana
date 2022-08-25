@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ plugins.Installer = (*PluginManager)(nil)
+var _ plugins.Manager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg            *plugins.Cfg
