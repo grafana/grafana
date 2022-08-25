@@ -21,7 +21,6 @@ import {
   getDataSourceSrv,
   getGrafanaLiveSrv,
   getTemplateSrv,
-  StreamingFrameAction,
   StreamingFrameOptions,
 } from '@grafana/runtime';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
@@ -83,18 +82,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       if (target.hide) {
         continue;
       }
-
-      if (target.queryType === GrafanaQueryType.SearchReadiness && target.searchReadiness?.stream) {
-        results.push(
-          getGrafanaLiveSrv().getDataStream({
-            key: `${request.requestId}.${counter++}`,
-            addr: parseLiveChannelAddress('plugin/grafana/search-readiness')!,
-            buffer: {
-              action: StreamingFrameAction.Replace,
-            },
-          })
-        );
-      } else if (target.queryType === GrafanaQueryType.LiveMeasurements) {
+      if (target.queryType === GrafanaQueryType.LiveMeasurements) {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
         const { filter } = target;
 
