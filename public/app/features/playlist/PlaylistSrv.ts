@@ -1,14 +1,10 @@
-// Libraries
 import { Location } from 'history';
 import { pickBy } from 'lodash';
 
-// Utils
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
-import { getGrafanaSearcher, SearchQuery } from '../search/service';
-
-import { Playlist } from './types';
+import { getPlaylist, loadDashboards } from './api';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -82,42 +78,21 @@ export class PlaylistSrv {
     // setup location tracking
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
-    const searcher = getGrafanaSearcher();
-    let urls: string[] = [];
-    const playlist = await getBackendSrv().get<Playlist>(`/api/playlists/${playlistUid}`);
+    const urls: string[] = [];
+    const playlist = await getPlaylist(playlistUid);
     if (!playlist.items?.length) {
       // alert
       return;
     }
     this.interval = rangeUtil.intervalToMs(playlist.interval);
-    for (const item of playlist.items) {
-      if (!item.value) {
-        continue; // invalid item
-      }
-      const query: SearchQuery = { kind: ['dashboard'] };
-      switch (item.type) {
-        case 'dashboard_by_uid':
-          query.uid = [item.value];
-          break;
 
-        case 'dashboard_by_id':
-          query.uid = await getBackendSrv().get<string[]>(`/api/dashboards/ids/${item.value}`);
-          if (!query.uid.length) {
-            continue;
-          }
-          break;
-
-        case 'dashboard_by_tag':
-          query.tags = [item.value];
-          break;
-      }
-
-      const rsp = await searcher.search(query);
-      if (rsp.totalRows) {
-        const found = rsp.view.fields.url.values.toArray();
-        urls = urls.concat(found);
+    const info = await loadDashboards(playlist.items);
+    for (const item of info) {
+      for (const dash of item.dashboards) {
+        urls.push(dash.url);
       }
     }
+
     if (!urls.length) {
       // alert... not found, etc
       return;

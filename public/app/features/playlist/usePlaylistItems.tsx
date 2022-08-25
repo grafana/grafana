@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { DashboardPickerItem } from 'app/core/components/OptionsUI/DashboardPickerByID';
+import { DashboardPickerDTO } from 'app/core/components/Select/DashboardPicker';
 
 import { PlaylistItem } from './types';
 
@@ -8,19 +8,17 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
   const [items, setItems] = useState<PlaylistItem[]>(playlistItems ?? []);
 
   const addById = useCallback(
-    (dashboard?: DashboardPickerItem) => {
-      if (!dashboard || items.find((item) => item.id === dashboard.id)) {
+    (dashboard?: DashboardPickerDTO) => {
+      if (!dashboard) {
         return;
       }
 
-      const newItem: PlaylistItem = {
-        id: dashboard.id,
-        title: dashboard.label as string,
-        type: 'dashboard_by_id',
-        value: dashboard.id.toString(10),
+      setItems([...items, {
+        title: dashboard.title,
+        type: 'dashboard_by_uid',
+        value: dashboard.uid,
         order: items.length + 1,
-      };
-      setItems([...items, newItem]);
+      }]);
     },
     [items]
   );

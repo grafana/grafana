@@ -1,3 +1,5 @@
+import { DashboardQueryResult } from "../search/service";
+
 export interface PlaylistDTO {
   id: number;
   name: string;
@@ -23,9 +25,13 @@ export interface Playlist {
 
 export interface PlaylistItem {
   id?: number;
-  value: string; //tag or id.toString()
-  type: 'dashboard_by_id' | 'dashboard_by_tag' | 'dashboard_by_uid';
+  value: string; // tag or uid
+  type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id'; // _by_id is deprecated
   order: number;
   title: string;
   playlistId?: number;
+}
+
+export interface PlaylistItemsWithDashboards extends PlaylistItem {
+  dashboards: DashboardQueryResult[],
 }

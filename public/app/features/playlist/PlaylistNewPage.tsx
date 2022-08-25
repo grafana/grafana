@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -8,11 +8,11 @@ import { PlaylistForm } from './PlaylistForm';
 import { createPlaylist } from './api';
 import { getPlaylistStyles } from './styles';
 import { Playlist } from './types';
-import { usePlaylist } from './usePlaylist';
 
 export const PlaylistNewPage = () => {
   const styles = useStyles2(getPlaylistStyles);
-  const { playlist, loading } = usePlaylist();
+  const [playlist] = useState<Playlist>({ items: [], interval: '5m', name: '', uid: '' });
+
   const onSubmit = async (playlist: Playlist) => {
     await createPlaylist(playlist);
     locationService.push('/playlists');
@@ -20,7 +20,7 @@ export const PlaylistNewPage = () => {
 
   return (
     <Page navId="dashboards/playlists">
-      <Page.Contents isLoading={loading}>
+      <Page.Contents>
         <h3 className={styles.subHeading}>New Playlist</h3>
 
         <p className={styles.description}>
