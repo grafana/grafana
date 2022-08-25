@@ -417,7 +417,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	nonPublicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), nonPublicDto)
+	_, err = service.SavePublicDashboardConfig(context.Background(), nonPublicDto)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
@@ -479,17 +479,6 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		)
 
 		require.ErrorContains(t, err, "Panel not found")
-	})
-
-	t.Run("returns an error when dashboard not public", func(t *testing.T) {
-		_, err := service.BuildPublicDashboardMetricRequest(
-			context.Background(),
-			nonPublicDashboard,
-			nonPublicDashboardPD,
-			2,
-			publicDashboardQueryDTO,
-		)
-		require.ErrorContains(t, err, "Public dashboard not found")
 	})
 }
 

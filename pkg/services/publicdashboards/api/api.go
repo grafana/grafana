@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -155,7 +155,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if err = validateRequest(reqDTO); err != nil {
+	if err = validation.ValidateQueryPublicDashboardRequest(reqDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
@@ -169,7 +169,11 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "could not fetch public dashboard", err)
 	}
 
-	builtReqDTO, err := api.PublicDashboardService.BuildPublicDashboardMetricRequest(
+	if !publicDashboard.IsEnabled {
+		return handlePublicDashboardErr(ErrPublicDashboardNotFound)
+	}
+
+	metricReqDTO, err := api.PublicDashboardService.BuildPublicDashboardMetricRequest(
 		c.Req.Context(),
 		dashboard,
 		publicDashboard,
@@ -186,7 +190,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusInternalServerError, "could not create anonymous user", err)
 	}
 
-	resp, err := api.QueryDataService.QueryDataMultipleSources(c.Req.Context(), anonymousUser, c.SkipCache, builtReqDTO, true)
+	resp, err := api.QueryDataService.QueryDataMultipleSources(c.Req.Context(), anonymousUser, c.SkipCache, metricReqDTO, true)
 
 	if err != nil {
 		return handleQueryMetricsError(err)
@@ -212,6 +216,10 @@ func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.
 	}
 
 	return response.Error(defaultCode, defaultMsg, err)
+}
+
+func handlePublicDashboardErr(err error) response.Response {
+	return handleDashboardErr(http.StatusInternalServerError, "Unexpected Error", err)
 }
 
 // Copied from pkg/api/metrics.go
@@ -249,16 +257,4 @@ func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.
 	}
 
 	return response.JSONStreaming(statusCode, qdr)
-}
-
-func validateRequest(req *PublicDashboardQueryDTO) error {
-	if req.IntervalMs < 0 {
-		return fmt.Errorf("intervalMS should be greater than 0")
-	}
-
-	if req.MaxDataPoints < 0 {
-		return fmt.Errorf("maxDataPoints should be greater than 0")
-	}
-
-	return nil
 }

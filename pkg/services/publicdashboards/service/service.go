@@ -173,12 +173,8 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 // BuildPublicDashboardMetricRequest merges public dashboard parameters with
 // dashboard and returns a metrics request to be sent to query backend
 func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO *PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
-	if !publicDashboard.IsEnabled {
-		return dtos.MetricRequest{}, ErrPublicDashboardNotFound
-	}
-
+	// group queries by panel
 	queriesByPanel := models.GroupQueriesByPanelId(dashboard.Data)
-
 	queries, ok := queriesByPanel[panelId]
 	if !ok {
 		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
@@ -186,8 +182,8 @@ func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx cont
 
 	ts := publicDashboard.BuildTimeSettings(dashboard)
 
+	// determine safe resolution to query data at
 	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
-
 	for i := range queries {
 		queries[i].Set("intervalMs", safeInterval)
 		queries[i].Set("maxDataPoints", safeResolution)
@@ -238,8 +234,15 @@ func GenerateAccessToken() (string, error) {
 	return fmt.Sprintf("%x", token[:]), nil
 }
 
+// intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
+// we are doing the same for public dashboards but because this access would be public, we need a way to keep this
+// values inside reasonable bounds to avoid an attack that could hit data sources with a small interval and a big
+// time range and perform big calculations
+// this is an additional validation, all data sources implements QueryData interface and should have proper validations
+// of these limits
+// for the maxDataPoints we took a hard limit from prometheus which is 11000
 func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO *PublicDashboardQueryDTO, ts *TimeSettings) (int64, int64) {
-	// arbitrary max value for all datasources, it is actually a hard limit defined in prometheus
+	// arbitrary max value for all data sources, it is actually a hard limit defined in prometheus
 	safeResolution := int64(11000)
 
 	// interval calculated on the frontend
