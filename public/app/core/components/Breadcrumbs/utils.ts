@@ -10,7 +10,9 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
       addCrumbs(node.parentItem);
     }
 
-    crumbs.push({ text: node.text, href: node.url ?? '' });
+    if (!node.hideFromBreadcrumbs) {
+      crumbs.push({ text: node.text, href: node.url ?? '' });
+    }
   }
 
   addCrumbs(sectionNav);
