@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var errRuleDeleted = errors.New("rule deleted")
+
 type alertRuleInfoRegistry struct {
 	mu            sync.Mutex
 	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
@@ -87,8 +89,6 @@ func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 	ctx, stop := util.WithCancelCause(parent)
 	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleVersion), ctx: ctx, stop: stop}
 }
-
-var errRuleDeleted = errors.New("rule deleted")
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.
 // Before sending a message into the channel, it does non-blocking read to make sure that there is no concurrent send operation.
