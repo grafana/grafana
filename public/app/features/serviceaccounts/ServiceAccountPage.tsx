@@ -85,6 +85,7 @@ export const ServiceAccountPageUnconnected = ({
   const pageNav: NavModelItem = {
     text: serviceAccount.name,
     img: serviceAccount.avatarUrl,
+    breadcrumbs: [{ title: 'Service accounts', url: 'org/serviceaccounts' }],
     subTitle: 'Manage settings for individual user accounts.',
   };
 
