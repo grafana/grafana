@@ -89,6 +89,14 @@ func TestResolvers_AttributeScope(t *testing.T) {
 			wantEvaluator: accesscontrol.EvalPermission("datasources:read", accesscontrol.Scope("datasources", "id", "5")),
 			wantCalls:     1,
 		},
+		{
+			name:          "should return error if no resolver is found for scope",
+			orgID:         1,
+			evaluator:     accesscontrol.EvalPermission("dashboards:read", "dashboards:id:1"),
+			wantEvaluator: nil,
+			wantCalls:     0,
+			wantErr:       accesscontrol.ErrResolverNotFound,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
