@@ -12,23 +12,25 @@ export enum JoinMode {
   inner = 'inner',
 }
 
-export interface SeriesToColumnsOptions {
+export interface JoinByFieldOptions {
   byField?: string; // empty will pick the field automatically
   mode?: JoinMode;
 }
 
-export const seriesToColumnsTransformer: SynchronousDataTransformerInfo<SeriesToColumnsOptions> = {
-  id: DataTransformerID.seriesToColumns,
-  name: 'Series as columns', // Called 'Outer join' in the UI!
-  description: 'Groups series by field and returns values as columns',
+export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldOptions> = {
+  id: DataTransformerID.joinByField,
+  aliasIds: [DataTransformerID.seriesToColumns],
+  name: 'Join by field',
+  description:
+    'Combine rows from two or more tables, based on a related field between them.  This can be used to outer join multiple time series on the _time_ field to show many time series in one table.',
   defaultOptions: {
     byField: undefined, // DEFAULT_KEY_FIELD,
     mode: JoinMode.outer,
   },
 
-  operator: (options) => (source) => source.pipe(map((data) => seriesToColumnsTransformer.transformer(options)(data))),
+  operator: (options) => (source) => source.pipe(map((data) => joinByFieldTransformer.transformer(options)(data))),
 
-  transformer: (options: SeriesToColumnsOptions) => {
+  transformer: (options: JoinByFieldOptions) => {
     let joinBy: FieldMatcher | undefined = undefined;
     return (data: DataFrame[]) => {
       if (data.length > 1) {

@@ -12,7 +12,7 @@ export interface Props {
   current?: string;
 }
 
-export const LookbackPeriodSelect: React.FC<Props> = ({ refId, current, templateVariableOptions, onChange }) => {
+export const LookbackPeriodSelect = ({ refId, current, templateVariableOptions, onChange }: Props) => {
   const options = LOOKBACK_PERIODS.map((lp) => ({
     ...lp,
     label: lp.text,
