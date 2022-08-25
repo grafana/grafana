@@ -26,7 +26,7 @@ export interface ConnectedProps {
 
 export type Props = OwnProps & ConnectedProps;
 
-const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }) => {
+const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
