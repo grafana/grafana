@@ -94,8 +94,12 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 		user.Permissions[user.OrgId] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
-	attributeMutator := ac.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
-	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
+	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
+	if evaluator.Evaluate(user.Permissions[user.OrgId]) {
+		return true, nil
+	}
+
+	resolvedEvaluator, err := evaluator.MutateScopes(ctx, ac.scopeResolvers.GetScopeAttributeMutator(user.OrgId))
 	if err != nil {
 		return false, err
 	}

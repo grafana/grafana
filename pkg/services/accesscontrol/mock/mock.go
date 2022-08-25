@@ -2,6 +2,7 @@ package mock
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -104,11 +105,18 @@ func (m *Mock) Evaluate(ctx context.Context, user *models.SignedInUser, evaluato
 		permissions = accesscontrol.GroupScopesByAction(userPermissions)
 	}
 
-	attributeMutator := m.scopeResolvers.GetScopeAttributeMutator(user.OrgId)
-	resolvedEvaluator, err := evaluator.MutateScopes(ctx, attributeMutator)
+	if evaluator.Evaluate(permissions) {
+		return true, nil
+	}
+
+	resolvedEvaluator, err := evaluator.MutateScopes(ctx, m.scopeResolvers.GetScopeAttributeMutator(user.OrgId))
 	if err != nil {
+		if errors.Is(err, accesscontrol.ErrResolverNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
+
 	return resolvedEvaluator.Evaluate(permissions), nil
 }
 
