@@ -241,11 +241,13 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.4.0
 	github.com/Azure/go-autorest/autorest/adal v0.9.17
 	github.com/armon/go-radix v1.0.0
+	github.com/bitly/go-simplejson v0.5.0
 	github.com/blugelabs/bluge v0.1.9
 	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
+	github.com/grafadruid/go-druid v0.0.5
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/grafana/thema v0.0.0-20220726124731-b8017e278cc1
 	go.etcd.io/etcd/api/v3 v3.5.4
@@ -258,12 +260,10 @@ require (
 require (
 	cloud.google.com/go v0.100.2 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
-	github.com/bitly/go-simplejson v0.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
-	github.com/grafadruid/go-druid v0.0.5 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.6.7 // indirect
@@ -361,3 +361,7 @@ replace github.com/microcosm-cc/bluemonday => github.com/microcosm-cc/bluemonday
 // happen, for example, during a read when the sqlite db is under heavy write load.
 // This patch cherry picks compatible fixes from upstream xorm PR#1998 and can be reverted on upgrade to xorm v1.2.0+.
 replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6
+
+// This is for sending custom HTTP headers in druid client.
+// Change in upstream: https://github.com/grafadruid/go-druid/pull/71
+replace github.com/grafadruid/go-druid => github.com/fluxninja/go-druid v0.0.0-20220825112309-14a37dd3317d
