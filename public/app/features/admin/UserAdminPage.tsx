@@ -105,12 +105,16 @@ export class UserAdminPage extends PureComponent<Props> {
     const isLDAPUser = user && user.isExternal && user.authLabels && user.authLabels.includes('LDAP');
     const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
+
     const pageNav: NavModelItem = {
       text: user?.login ?? '',
+      icon: 'shield',
+      breadcrumbs: [{ title: 'Users', url: 'admin/users' }],
+      subTitle: 'Manage settings for an individual user.',
     };
 
     return (
-      <Page navId="global-users" pageNav={pageNav} subTitle="Manage settings for an individual user.">
+      <Page navId="global-users" pageNav={pageNav}>
         <Page.Contents isLoading={isLoading}>
           {user && (
             <>
