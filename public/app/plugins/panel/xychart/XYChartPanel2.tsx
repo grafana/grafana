@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import {
   LegendDisplayMode,
   Portal,
+  TooltipDisplayMode,
   UPlotChart,
   UPlotConfigBuilder,
   VizLayout,
@@ -63,6 +64,7 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
       info.facets = prepData(info, data.series);
       info.error = undefined;
     }
+    console.log(info);
     this.setState(info);
   };
 
@@ -93,7 +95,7 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
   };
 
   render() {
-    const { width, height, timeRange, data } = this.props;
+    const { width, height, timeRange, data, options } = this.props;
     const { error, facets, builder, hover, series } = this.state;
     if (error || !builder) {
       return (
@@ -116,9 +118,15 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
           )}
         </VizLayout>
         <Portal>
-          {hover && (
+          {hover && options.tooltip.mode !== TooltipDisplayMode.None && (
             <VizTooltipContainer position={{ x: hover.pageX, y: hover.pageY }} offset={{ x: 10, y: 10 }}>
-              <TooltipView series={series[hover.scatterIndex]} rowIndex={hover.xIndex} data={data.series} />
+              <TooltipView
+                options={options.tooltip}
+                allSeries={series}
+                rowIndex={hover.xIndex}
+                hoveredPointIndex={hover.scatterIndex}
+                data={data.series}
+              />
             </VizTooltipContainer>
           )}
         </Portal>

@@ -136,7 +136,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChar
           </div>
         ))}
       </div>
-      <br /> <br />
+      <br />
     </div>
   );
 };

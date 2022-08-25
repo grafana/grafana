@@ -50,10 +50,15 @@ export function prepScatter(
     series = prepSeries(options, getData());
     builder = prepConfig(getData, series, theme, ttip);
   } catch (e) {
-    console.log('prepScatter ERROR', e);
-    const errorMessage = e instanceof Error ? e.message : 'Unknown error in prepScatter';
+    let errorMsg = 'Unknown error in prepScatter';
+    if (typeof e === 'string') {
+      errorMsg = e;
+    } else if (e instanceof Error) {
+      errorMsg = e.message;
+    }
+
     return {
-      error: errorMessage,
+      error: errorMsg,
       series: [],
     };
   }
@@ -117,6 +122,7 @@ function getScatterSeries(
     }
   }
 
+  //TODO make pointSize general and working for both xy and explicit scenarios
   // Size configs
   //----------------
   let pointSizeHints = dims.pointSizeConfig;
@@ -189,7 +195,7 @@ function getScatterSeries(
 function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries[] {
   let seriesIndex = 0;
   if (!frames.length) {
-    throw 'missing data';
+    throw 'Missing data';
   }
 
   if (options.mode === 'explicit') {
@@ -218,7 +224,7 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
             const dims: Dims = {
               pointColorFixed: series.pointColor?.fixed,
               pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
-              pointSizeConfig: series.pointSize,
+              pointSizeConfig: series.pointSize, //TODO: this should be general PointSize not part of series
               pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
             };
             return [getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims)];
@@ -232,7 +238,7 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
   const dims = options.dims ?? {};
   const frameIndex = dims.frame ?? 0;
   const frame = frames[frameIndex];
-  const numericIndicies: number[] = [];
+  const numericIndices: number[] = [];
 
   let xIndex = findFieldIndex(frame, dims.x);
   for (let i = 0; i < frame.fields.length; i++) {
@@ -245,7 +251,7 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
         continue; // skip
       }
 
-      numericIndicies.push(i);
+      numericIndices.push(i);
     }
   }
 
@@ -253,10 +259,10 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
     throw 'Missing X dimension';
   }
 
-  if (!numericIndicies.length) {
+  if (!numericIndices.length) {
     throw 'No Y values';
   }
-  return numericIndicies.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex, {}));
+  return numericIndices.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex, {}));
 }
 
 interface DrawBubblesOpts {

@@ -1,6 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors';
 
 import { XYChartPanel2 } from './XYChartPanel2';
 import { XYDimsEditor } from './XYDimsEditor';
@@ -46,22 +46,6 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
-        showIf: (cfg) => cfg.mode === 'explicit',
-      })
-      .addCustomEditor({
-        id: 'seriesZerox.pointSize',
-        path: 'series[0].pointSize',
-        name: 'Point size',
-        editor: ScaleDimensionEditor,
-        settings: {
-          min: 1,
-          max: 50,
-        },
-        defaultValue: {
-          fixed: 5,
-          min: 1,
-          max: 50,
-        },
         showIf: (cfg) => cfg.mode === 'explicit',
       });
 
