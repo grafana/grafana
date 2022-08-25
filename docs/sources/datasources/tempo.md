@@ -182,7 +182,7 @@ A service graph is a visual representation of the relationships between services
 
 To display the service graph:
 
-- [Configure Grafana Agent](https://grafana.com/docs/tempo/latest/grafana-agent/service-graphs/#quickstart) or [Tempo/GET](https://grafana.com/docs/tempo/latest/server_side_metrics/service_graphs/#tempo) to generate service graph data
+- [Configure Grafana Agent](https://grafana.com/docs/tempo/latest/grafana-agent/service-graphs/#quickstart), or [Tempo or GET](https://grafana.com/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate service graph data
 - Link a Prometheus data source in the Tempo data source settings.
 - Navigate to [Explore]({{< relref "../explore/" >}}).
 - Select the Tempo data source.
