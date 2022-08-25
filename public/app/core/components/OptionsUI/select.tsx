@@ -61,7 +61,6 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
         value,
       };
     }
-
     return (
       <Select<T>
         isLoading={isLoading}
