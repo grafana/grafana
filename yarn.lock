@@ -3898,33 +3898,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/betterer@npm:^5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/betterer@npm:5.3.7"
-  dependencies:
-    "@betterer/constraints": ^5.3.0
-    "@betterer/errors": ^5.3.0
-    "@betterer/logger": ^5.3.4
-    "@betterer/reporter": ^5.3.7
-    "@phenomnomnominal/debug": ^0.2.5
-    "@phenomnomnominal/worker-require": ^0.0.34
-    chokidar: ^3.3.1
-    djb2a: ^1.2.0
-    fast-memoize: ^2.5.2
-    lines-and-columns: ^2.0.3
-    minimatch: ^5.0.1
-    prettier: ^2.3.2
-    simple-git: ^3.6.0
-    ts-node: ^10.2.1
-    tslib: ^2.3.1
-    typescript: ">=2.7"
-  dependenciesMeta:
-    typescript:
-      optional: true
-  checksum: e2aca3b22c1c69fc1378cb280f2080bae2223de48eba4b9d80a65e8dc5c7f5825bef0f10877137d66c0b31af73d64001ffd69036c3e6772a7a4f99b56b72db2d
-  languageName: node
-  linkType: hard
-
 "@betterer/cli@npm:5.4.0":
   version: 5.4.0
   resolution: "@betterer/cli@npm:5.4.0"
@@ -3989,14 +3962,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@betterer/regexp@npm:5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/regexp@npm:5.3.7"
+"@betterer/regexp@npm:5.4.0":
+  version: 5.4.0
+  resolution: "@betterer/regexp@npm:5.4.0"
   dependencies:
-    "@betterer/betterer": ^5.3.7
+    "@betterer/betterer": ^5.4.0
     "@betterer/errors": ^5.3.0
     tslib: ^2.3.1
-  checksum: 76dd9104fa5249aff90e75b76d8e12612e66afa02387e16b7c02bc20fcb391a331e1a5b1fa06c641524c12fb29bd09ba93dad40c3e1c999cd1e577e17f72ad7e
+  checksum: eaa16b3ec83f587ea12f67ac76e92e40ebdc839a264baa600ea82282fff45f27351a863289e4425b753066242bd6ef017cdbef8e06d9229cf40ccbaeb8ad6b71
   languageName: node
   linkType: hard
 
@@ -4004,20 +3977,6 @@ __metadata:
   version: 5.3.4
   resolution: "@betterer/render@npm:5.3.4"
   checksum: cd39bb092f100eb90189de39a703fabec85ce78793da30d10891026b399c617651d6eee8b1bbf8a8b46b8dc7037d1240865fbd0f742b86f283b33236aeab2a7d
-  languageName: node
-  linkType: hard
-
-"@betterer/reporter@npm:^5.3.7":
-  version: 5.3.7
-  resolution: "@betterer/reporter@npm:5.3.7"
-  dependencies:
-    "@betterer/betterer": ^5.3.7
-    "@betterer/errors": ^5.3.0
-    "@betterer/logger": ^5.3.4
-    "@betterer/render": ^5.3.4
-    "@betterer/tasks": ^5.3.6
-    tslib: ^2.3.1
-  checksum: 5ee6fe9bf564b4243a93c3f4a0ccaa35b01a03b2abec0ae7db68b13e31c6203dffedbae0d81948c470d548bee67dda02410f4ff487c0bcaabc58dc0c18cb1029
   languageName: node
   linkType: hard
 
@@ -21704,7 +21663,7 @@ __metadata:
     "@betterer/betterer": 5.4.0
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
-    "@betterer/regexp": 5.3.7
+    "@betterer/regexp": 5.4.0
     "@emotion/css": 11.9.0
     "@emotion/eslint-plugin": 11.7.0
     "@emotion/react": 11.9.3
