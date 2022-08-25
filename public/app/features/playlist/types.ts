@@ -10,19 +10,16 @@ export interface PlayListItemDTO {
 }
 
 export interface Playlist {
+  uid: string;
   name: string;
   interval: string;
   items?: PlaylistItem[];
-  uid: string;
 }
 
 export interface PlaylistItem {
-  id?: number;
-  value: string; // tag or uid
   type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id'; // _by_id is deprecated
-  order: number;
+  value: string; // tag or uid
   title: string;
-  playlistId?: number;
 }
 
 export interface PlaylistItemsWithDashboards extends PlaylistItem {

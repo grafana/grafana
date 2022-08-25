@@ -13,12 +13,14 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
         return;
       }
 
-      setItems([...items, {
-        title: dashboard.title,
-        type: 'dashboard_by_uid',
-        value: dashboard.uid,
-        order: items.length + 1,
-      }]);
+      setItems([
+        ...items,
+        {
+          title: dashboard.title,
+          type: 'dashboard_by_uid',
+          value: dashboard.uid,
+        },
+      ]);
     },
     [items]
   );
@@ -34,7 +36,6 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
         title: tag,
         type: 'dashboard_by_tag',
         value: tag,
-        order: items.length + 1,
       };
       setItems([...items, newItem]);
     },

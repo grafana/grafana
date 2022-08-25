@@ -24,9 +24,9 @@ const playlist: Playlist = {
   name: 'A test playlist',
   interval: '10m',
   items: [
-    { title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' },
-    { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
-    { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
+    { title: 'First item', type: 'dashboard_by_id', value: '1' },
+    { title: 'Middle item', type: 'dashboard_by_id', value: '2' },
+    { title: 'Last item', type: 'dashboard_by_tag', value: 'Last item' },
   ],
   uid: 'foo',
 };

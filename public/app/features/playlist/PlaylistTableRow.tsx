@@ -37,7 +37,7 @@ export const PlaylistTableRow = ({ item, onDelete, onMoveDown, onMoveUp, first, 
       {item.type === 'dashboard_by_tag' ? (
         <td className={cx(styles.td, styles.item)}>
           <Icon name="tag-alt" aria-label={selectors.pages.PlaylistForm.itemTagType} />
-          <TagBadge key={item.id} label={item.title} removeIcon={false} count={0} />
+          <TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />
         </td>
       ) : (
         // dashboard_by_id | dashboard_by_uid
