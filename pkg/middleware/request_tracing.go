@@ -27,9 +27,18 @@ var routeOperationNameKey = contextKey{}
 // Implements routing.RegisterNamedMiddleware.
 func ProvideRouteOperationName(name string) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-		ctx := context.WithValue(c.Req.Context(), routeOperationNameKey, name)
-		c.Req = c.Req.WithContext(ctx)
+		c.Req = addRouteNameToContext(c.Req, name)
 	}
+}
+
+func addRouteNameToContext(req *http.Request, operationName string) *http.Request {
+	// don't set route name if it's set
+	if _, exists := routeOperationName(req); exists {
+		return req
+	}
+
+	ctx := context.WithValue(req.Context(), routeOperationNameKey, operationName)
+	return req.WithContext(ctx)
 }
 
 var unnamedHandlers = []struct {

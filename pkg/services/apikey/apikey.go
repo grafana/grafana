@@ -6,7 +6,7 @@ import (
 
 type Service interface {
 	GetAPIKeys(ctx context.Context, query *GetApiKeysQuery) error
-	GetAllAPIKeys(ctx context.Context, orgID int64) []*APIKey
+	GetAllAPIKeys(ctx context.Context, orgID int64) ([]*APIKey, error)
 	DeleteApiKey(ctx context.Context, cmd *DeleteCommand) error
 	AddAPIKey(ctx context.Context, cmd *AddCommand) error
 	GetApiKeyById(ctx context.Context, query *GetByIDQuery) error

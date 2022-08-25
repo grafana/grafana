@@ -68,6 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingLeft: theme.spacing(1),
       flexGrow: 1,
       gap: theme.spacing(0.5),
+      minWidth: 0,
     }),
   };
 };

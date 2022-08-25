@@ -15,7 +15,7 @@ import { TimeZoneTitle } from './TimeZoneTitle';
 interface Props {
   isFocused: boolean;
   isSelected: boolean;
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
   data: SelectableZone;
 }
 

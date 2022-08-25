@@ -99,7 +99,7 @@ const ui = {
 
 describe('RuleEditor', () => {
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
   });
