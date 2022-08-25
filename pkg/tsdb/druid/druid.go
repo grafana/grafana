@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -169,10 +170,10 @@ func (ds *Service) QueryVariableData(ctx context.Context, req *backend.CallResou
 	if err != nil {
 		return []grafanaMetricFindValue{}, err
 	}
-	return ds.queryVariable(req.Body, s)
+	return ds.queryVariable(req.Body, s, req.Headers)
 }
 
-func (ds *Service) queryVariable(qry []byte, s *druidInstanceSettings) ([]grafanaMetricFindValue, error) {
+func (ds *Service) queryVariable(qry []byte, s *druidInstanceSettings, headers http.Header) ([]grafanaMetricFindValue, error) {
 	log.DefaultLogger.Info("DRUID EXECUTE QUERY VARIABLE", "_________________________GRAFANA QUERY___________________________", string(qry))
 	// feature: probably implement a short (1s ? 500ms ? configurable in datasource ? beware memory: constrain size ?) life cache (druidInstanceSettings.cache ?) and early return then
 	response := []grafanaMetricFindValue{}
@@ -181,7 +182,7 @@ func (ds *Service) queryVariable(qry []byte, s *druidInstanceSettings) ([]grafan
 		return response, err
 	}
 	log.DefaultLogger.Info("DRUID EXECUTE QUERY VARIABLE", "_________________________DRUID QUERY___________________________", q)
-	r, err := ds.executeQuery("variable", q, s, stg)
+	r, err := ds.executeQuery("variable", q, s, stg, headers)
 	if err != nil {
 		return response, err
 	}
@@ -278,17 +279,24 @@ func (ds *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 
 func (ds *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
-
 	s, err := ds.settings(req.PluginContext)
 	if err != nil {
 		return response, err
 	}
 
 	for _, q := range req.Queries {
-		response.Responses[q.RefID] = ds.query(q, s)
+		response.Responses[q.RefID] = ds.query(q, s, toHTTPHeaders(req.Headers))
 	}
 
 	return response, nil
+}
+
+func toHTTPHeaders(original map[string]string) http.Header {
+	headers := http.Header{}
+	for k, v := range original {
+		headers.Set(k, v)
+	}
+	return headers
 }
 
 func (ds *Service) settings(ctx backend.PluginContext) (*druidInstanceSettings, error) {
@@ -299,7 +307,7 @@ func (ds *Service) settings(ctx backend.PluginContext) (*druidInstanceSettings, 
 	return s.(*druidInstanceSettings), nil
 }
 
-func (ds *Service) query(qry backend.DataQuery, s *druidInstanceSettings) backend.DataResponse {
+func (ds *Service) query(qry backend.DataQuery, s *druidInstanceSettings, headers http.Header) backend.DataResponse {
 	log.DefaultLogger.Info("DRUID EXECUTE QUERY", "_________________________GRAFANA QUERY___________________________", qry)
 	// feature: probably implement a short (1s ? 500ms ? configurable in datasource ? beware memory: constrain size ?) life cache (druidInstanceSettings.cache ?) and early return then
 	response := backend.DataResponse{}
@@ -309,7 +317,7 @@ func (ds *Service) query(qry backend.DataQuery, s *druidInstanceSettings) backen
 		return response
 	}
 	log.DefaultLogger.Info("DRUID EXECUTE QUERY", "_________________________DRUID QUERY___________________________", q)
-	r, err := ds.executeQuery(qry.RefID, q, s, stg)
+	r, err := ds.executeQuery(qry.RefID, q, s, stg, headers)
 	if err != nil {
 		response.Error = err
 		return response
@@ -360,7 +368,7 @@ func (ds *Service) prepareQueryContext(parameters []interface{}) map[string]inte
 	return ctx
 }
 
-func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *druidInstanceSettings, settings map[string]interface{}) (*druidResponse, error) {
+func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *druidInstanceSettings, settings map[string]interface{}, headers http.Header) (*druidResponse, error) {
 	// refactor: probably need to extract per-query preprocessor and postprocessor into a per-query file. load those "plugins" (ak. QueryProcessor ?) into a register and then do something like plugins[q.Type()].preprocess(q) and plugins[q.Type()].postprocess(r)
 	r := &druidResponse{Reference: queryRef}
 	qtyp := q.Type()
@@ -371,7 +379,7 @@ func (ds *Service) executeQuery(queryRef string, q druidquerybuilder.Query, s *d
 		q.(*druidquery.Scan).SetResultFormat("compactedList")
 	}
 	var result json.RawMessage
-	_, err := s.client.Query().Execute(q, &result)
+	_, err := s.client.Query().Execute(q, &result, headers)
 	if err != nil {
 		return r, err
 	}
