@@ -59,7 +59,7 @@ func (f *FakeSecretsKVStore) Set(ctx context.Context, orgId int64, namespace str
 
 func (f *FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
 	if f.delError {
-		return errors.New("bogus")
+		return errors.New("mocked del error")
 	}
 	delete(f.store, buildKey(orgId, namespace, typ))
 	return nil
@@ -239,7 +239,7 @@ type fakePluginClient struct {
 
 func (pc *fakePluginClient) Start(_ context.Context) error {
 	if pc.shouldFailOnStart {
-		return errors.New("failed to start")
+		return errors.New("mocked failed to start")
 	}
 	return nil
 }
