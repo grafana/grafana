@@ -195,7 +195,7 @@ const (
 	// Replaces whitelabeling with the new custom branding feature
 	FlagCustomBranding = "customBranding"
 
-	// FlagFullstoryUserTracking
-	// Enables Fullstory cliend SDK to do user analytics
-	FlagFullstoryUserTracking = "fullstoryUserTracking"
+	// FlagTraceqlEditor
+	// Show the TraceQL editor in the explore page
+	FlagTraceqlEditor = "traceqlEditor"
 )

@@ -138,6 +138,7 @@ type Calls struct {
 
 type ServiceAccountsStoreMock struct {
 	serviceaccounts.Store
+	Stats *serviceaccounts.Stats
 	Calls Calls
 }
 
@@ -183,8 +184,8 @@ func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, saId int64,
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*apikey.APIKey, error) {
-	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
+func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
+	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, query.OrgID, query.ServiceAccountID})
 	return nil, nil
 }
 
@@ -223,6 +224,10 @@ func (s *ServiceAccountsStoreMock) AddServiceAccountToken(ctx context.Context, s
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) GetUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+func (s *ServiceAccountsStoreMock) GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error) {
+	if s.Stats == nil {
+		return &serviceaccounts.Stats{}, nil
+	}
+
+	return s.Stats, nil
 }

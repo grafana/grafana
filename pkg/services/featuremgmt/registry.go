@@ -263,8 +263,9 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "fullstoryUserTracking",
-			Description: "Enables Fullstory cliend SDK to do user analytics",
+			Name:        "traceqlEditor",
+			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

@@ -37,42 +37,75 @@ func SetupTestService(t *testing.T) SecretsKVStore {
 
 // In memory kv store used for testing
 type FakeSecretsKVStore struct {
-	store map[Key]string
+	store    map[Key]string
+	delError bool
+	fallback SecretsKVStore
 }
 
-func NewFakeSecretsKVStore() FakeSecretsKVStore {
-	return FakeSecretsKVStore{store: make(map[Key]string)}
+func NewFakeSecretsKVStore() *FakeSecretsKVStore {
+	return &FakeSecretsKVStore{store: make(map[Key]string)}
 }
 
-func (f FakeSecretsKVStore) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
+func (f *FakeSecretsKVStore) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	value := f.store[buildKey(orgId, namespace, typ)]
 	found := value != ""
 	return value, found, nil
 }
 
-func (f FakeSecretsKVStore) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
+func (f *FakeSecretsKVStore) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
 	f.store[buildKey(orgId, namespace, typ)] = value
 	return nil
 }
 
-func (f FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
+func (f *FakeSecretsKVStore) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
+	if f.delError {
+		return errors.New("bogus")
+	}
 	delete(f.store, buildKey(orgId, namespace, typ))
 	return nil
 }
 
-func (f FakeSecretsKVStore) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
+// List all keys with an optional filter. If default values are provided, filter is not applied.
+func (f *FakeSecretsKVStore) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
 	res := make([]Key, 0)
 	for k := range f.store {
-		if k.OrgId == orgId && k.Namespace == namespace && k.Type == typ {
+		if orgId == AllOrganizations && namespace == "" && typ == "" {
+			res = append(res, k)
+		} else if k.OrgId == orgId && k.Namespace == namespace && k.Type == typ {
 			res = append(res, k)
 		}
 	}
 	return res, nil
 }
 
-func (f FakeSecretsKVStore) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
+func (f *FakeSecretsKVStore) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
 	f.store[buildKey(orgId, newNamespace, typ)] = f.store[buildKey(orgId, namespace, typ)]
 	delete(f.store, buildKey(orgId, namespace, typ))
+	return nil
+}
+
+func (f *FakeSecretsKVStore) GetAll(ctx context.Context) ([]Item, error) {
+	items := make([]Item, 0)
+	for k := range f.store {
+		orgId := k.OrgId
+		namespace := k.Namespace
+		typ := k.Type
+		items = append(items, Item{
+			OrgId:     &orgId,
+			Namespace: &namespace,
+			Type:      &typ,
+			Value:     f.store[k],
+		})
+	}
+	return items, nil
+}
+
+func (f *FakeSecretsKVStore) Fallback() SecretsKVStore {
+	return f.fallback
+}
+
+func (f *FakeSecretsKVStore) SetFallback(store SecretsKVStore) error {
+	f.fallback = store
 	return nil
 }
 
@@ -81,6 +114,14 @@ func buildKey(orgId int64, namespace string, typ string) Key {
 		OrgId:     orgId,
 		Namespace: namespace,
 		Type:      typ,
+	}
+}
+
+func internalToProtoKey(k Key) *secretsmanagerplugin.Key {
+	return &secretsmanagerplugin.Key{
+		OrgId:     k.OrgId,
+		Namespace: k.Namespace,
+		Type:      k.Type,
 	}
 }
 
@@ -101,48 +142,85 @@ func (f fakeFeatureToggles) IsEnabled(feature string) bool {
 }
 
 // Fake grpc secrets plugin impl
-type fakeGRPCSecretsPlugin struct{}
+type fakeGRPCSecretsPlugin struct {
+	kv map[Key]string
+}
 
 func (c *fakeGRPCSecretsPlugin) GetSecret(ctx context.Context, in *secretsmanagerplugin.GetSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.GetSecretResponse, error) {
+	val, ok := c.kv[buildKey(in.KeyDescriptor.OrgId, in.KeyDescriptor.Namespace, in.KeyDescriptor.Type)]
 	return &secretsmanagerplugin.GetSecretResponse{
-		DecryptedValue: "bogus",
-		Exists:         true,
+		DecryptedValue: val,
+		Exists:         ok,
 	}, nil
 }
 
 func (c *fakeGRPCSecretsPlugin) SetSecret(ctx context.Context, in *secretsmanagerplugin.SetSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.SetSecretResponse, error) {
+	c.kv[buildKey(in.KeyDescriptor.OrgId, in.KeyDescriptor.Namespace, in.KeyDescriptor.Type)] = in.Value
 	return &secretsmanagerplugin.SetSecretResponse{}, nil
 }
 
 func (c *fakeGRPCSecretsPlugin) DeleteSecret(ctx context.Context, in *secretsmanagerplugin.DeleteSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.DeleteSecretResponse, error) {
+	delete(c.kv, buildKey(in.KeyDescriptor.OrgId, in.KeyDescriptor.Namespace, in.KeyDescriptor.Type))
 	return &secretsmanagerplugin.DeleteSecretResponse{}, nil
 }
 
 func (c *fakeGRPCSecretsPlugin) ListSecrets(ctx context.Context, in *secretsmanagerplugin.ListSecretsRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.ListSecretsResponse, error) {
+	res := make([]*secretsmanagerplugin.Key, 0)
+	for k := range c.kv {
+		if in.KeyDescriptor.OrgId == AllOrganizations && in.KeyDescriptor.Namespace == "" && in.KeyDescriptor.Type == "" {
+			res = append(res, internalToProtoKey(k))
+		} else if k.OrgId == in.KeyDescriptor.OrgId && k.Namespace == in.KeyDescriptor.Namespace && k.Type == in.KeyDescriptor.Type {
+			res = append(res, internalToProtoKey(k))
+		}
+	}
 	return &secretsmanagerplugin.ListSecretsResponse{
-		Keys: make([]*secretsmanagerplugin.Key, 0),
+		Keys: res,
 	}, nil
 }
 
 func (c *fakeGRPCSecretsPlugin) RenameSecret(ctx context.Context, in *secretsmanagerplugin.RenameSecretRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.RenameSecretResponse, error) {
+	oldKey := buildKey(in.KeyDescriptor.OrgId, in.KeyDescriptor.Namespace, in.KeyDescriptor.Type)
+	val := c.kv[oldKey]
+	delete(c.kv, oldKey)
+	c.kv[buildKey(in.KeyDescriptor.OrgId, in.NewNamespace, in.KeyDescriptor.Type)] = val
 	return &secretsmanagerplugin.RenameSecretResponse{}, nil
 }
 
-var _ SecretsKVStore = FakeSecretsKVStore{}
+func (c *fakeGRPCSecretsPlugin) GetAllSecrets(ctx context.Context, in *secretsmanagerplugin.GetAllSecretsRequest, opts ...grpc.CallOption) (*secretsmanagerplugin.GetAllSecretsResponse, error) {
+	items := make([]*secretsmanagerplugin.Item, 0)
+	for k, v := range c.kv {
+		items = append(items, &secretsmanagerplugin.Item{
+			Key:   internalToProtoKey(k),
+			Value: v,
+		})
+	}
+	return &secretsmanagerplugin.GetAllSecretsResponse{
+		Items: items,
+	}, nil
+}
+
+var _ SecretsKVStore = &FakeSecretsKVStore{}
 var _ secretsmanagerplugin.SecretsManagerPlugin = &fakeGRPCSecretsPlugin{}
 
 // Fake plugin manager
 type fakePluginManager struct {
 	shouldFailOnStart bool
+	plugin            *plugins.Plugin
 }
 
 func (mg *fakePluginManager) SecretsManager() *plugins.Plugin {
+	if mg.plugin != nil {
+		return mg.plugin
+	}
 	p := &plugins.Plugin{
-		SecretsManager: &fakeGRPCSecretsPlugin{},
+		SecretsManager: &fakeGRPCSecretsPlugin{
+			kv: make(map[Key]string),
+		},
 	}
 	p.RegisterClient(&fakePluginClient{
 		shouldFailOnStart: mg.shouldFailOnStart,
 	})
+	mg.plugin = p
 	return p
 }
 
@@ -163,5 +241,9 @@ func (pc *fakePluginClient) Start(_ context.Context) error {
 	if pc.shouldFailOnStart {
 		return errors.New("failed to start")
 	}
+	return nil
+}
+
+func (pc *fakePluginClient) Stop(_ context.Context) error {
 	return nil
 }

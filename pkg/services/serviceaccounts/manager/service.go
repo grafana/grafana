@@ -2,6 +2,8 @@ package manager
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -9,13 +11,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/api"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	metricsCollectionInterval = time.Minute * 30
+)
+
 type ServiceAccountsService struct {
-	store serviceaccounts.Store
-	log   log.Logger
+	store         serviceaccounts.Store
+	log           log.Logger
+	backgroundLog log.Logger
 }
 
 func ProvideServiceAccountsService(
@@ -26,17 +32,17 @@ func ProvideServiceAccountsService(
 	serviceAccountsStore serviceaccounts.Store,
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 ) (*ServiceAccountsService, error) {
-	database.InitMetrics()
 	s := &ServiceAccountsService{
-		store: serviceAccountsStore,
-		log:   log.New("serviceaccounts"),
+		store:         serviceAccountsStore,
+		log:           log.New("serviceaccounts"),
+		backgroundLog: log.New("serviceaccounts.background"),
 	}
 
 	if err := RegisterRoles(ac); err != nil {
 		s.log.Error("Failed to register roles", "error", err)
 	}
 
-	usageStats.RegisterMetricsFunc(s.store.GetUsageMetrics)
+	usageStats.RegisterMetricsFunc(s.getUsageMetrics)
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, routeRegister, s.store, permissionService)
 	serviceaccountsAPI.RegisterAPIEndpoints()
@@ -45,8 +51,33 @@ func ProvideServiceAccountsService(
 }
 
 func (sa *ServiceAccountsService) Run(ctx context.Context) error {
-	sa.log.Debug("Started Service Account Metrics collection service")
-	return sa.store.RunMetricsCollection(ctx)
+	sa.backgroundLog.Debug("service initialized")
+
+	if _, err := sa.getUsageMetrics(ctx); err != nil {
+		sa.log.Warn("Failed to get usage metrics", "error", err.Error())
+	}
+
+	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
+	defer updateStatsTicker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err := ctx.Err(); err != nil {
+				return fmt.Errorf("context error in service account background service: %w", ctx.Err())
+			}
+
+			sa.backgroundLog.Debug("stopped service account background service")
+
+			return nil
+		case <-updateStatsTicker.C:
+			sa.backgroundLog.Debug("updating usage metrics")
+
+			if _, err := sa.getUsageMetrics(ctx); err != nil {
+				sa.backgroundLog.Warn("Failed to get usage metrics", "error", err.Error())
+			}
+		}
+	}
 }
 
 func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {

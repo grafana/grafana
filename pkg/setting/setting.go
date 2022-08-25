@@ -137,7 +137,6 @@ var (
 	// analytics
 	GoogleAnalyticsId       string
 	GoogleTagManagerId      string
-	FullstoryOrgId          string
 	RudderstackDataPlaneUrl string
 	RudderstackWriteKey     string
 	RudderstackSdkUrl       string
@@ -452,9 +451,6 @@ type Cfg struct {
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
-	// Undocumented option as a backup in case removing builtin-role assignment
-	// fails
-	RBACBuiltInRoleAssignmentEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -954,7 +950,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
-	FullstoryOrgId = analytics.Key("fullstory_org_id").String()
 	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
@@ -1358,7 +1353,6 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
 	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
-	cfg.RBACBuiltInRoleAssignmentEnabled = rbac.Key("builtin_role_assignment_enabled").MustBool(false)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
