@@ -62,7 +62,7 @@ export const PageToolbar: FC<Props> = React.memo(
 
     const titleEl = (
       <>
-        <span className={styles.noLinkTitle}>{title}</span>
+        <span className={styles.truncateText}>{title}</span>
         {section && <span className={styles.pre}> / {section}</span>}
       </>
     );
@@ -92,7 +92,7 @@ export const PageToolbar: FC<Props> = React.memo(
               <>
                 <Link
                   aria-label={`Search dashboard in the ${parent} folder`}
-                  className={cx(styles.titleText, styles.parentLink, styles.titleLink, styles.noLinkTitle)}
+                  className={cx(styles.titleText, styles.parentLink, styles.titleLink, styles.truncateText)}
                   href={parentHref}
                 >
                   {parent} <span className={styles.parentIcon}></span>
@@ -170,7 +170,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         align-items: center;
       }
     `,
-    noLinkTitle: css`
+    truncateText: css`
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
