@@ -95,7 +95,7 @@ func (s *Service) GetByUser(ctx context.Context, cmd *star.GetUserStarsQuery) (*
 		if dashboard == nil {
 			continue
 		}
-		if dashboard.OrgId != cmd.OrgID {
+		if cmd.OrgID != 0 && dashboard.OrgId != cmd.OrgID {
 			delete(stars.UserStars, dashboard.Id)
 			continue
 		}
