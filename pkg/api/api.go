@@ -203,6 +203,8 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/stars", routing.Wrap(hs.GetStars))
 			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.StarDashboard))
 			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.UnstarDashboard))
+			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.StarDashboardUID))
+			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.UnstarDashboardUID))
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))

@@ -10,9 +10,21 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// swagger:route GET /user/stars signed_in_user starDashboard
+//
+// List dashboard stars.
+//
+// Returns a list of dashboards starred by the user.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 	query := star.GetUserStarsQuery{
 		UserID: c.SignedInUser.UserID,
+		OrgID:  c.OrgID,
 	}
 
 	iuserstars, err := hs.starService.GetByUser(c.Req.Context(), &query)
@@ -20,23 +32,10 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get user stars", err)
 	}
 
-	uids := []string{}
-	for dashboardId := range iuserstars.UserStars {
-		query := &models.GetDashboardQuery{
-			Id:    dashboardId,
-			OrgId: c.OrgID,
-		}
-		err := hs.DashboardService.GetDashboard(c.Req.Context(), query)
-
-		// Grafana admin users may have starred dashboards in multiple orgs.  This will avoid returning errors when the dashboard is in another org
-		if err == nil {
-			uids = append(uids, query.Result.Uid)
-		}
-	}
-	return response.JSON(200, uids)
+	return response.JSON(200, iuserstars.UserStarsUID)
 }
 
-// swagger:route POST /user/stars/dashboard/{dashboard_id} signed_in_user starDashboard
+// swagger:route POST /user/stars/dashboard/{dashboard_id} signed_in_user listStarredDashboards
 //
 // Star a dashboard.
 //
@@ -59,6 +58,32 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
+	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
+		return response.Error(500, "Failed to star dashboard", err)
+	}
+
+	return response.Success("Dashboard starred!")
+}
+
+// swagger:route POST /user/stars/dashboard/uid/{dashboard_id} signed_in_user starDashboardUID
+//
+// Star a dashboard.
+//
+// Stars the given Dashboard for the actual user.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) StarDashboardUID(c *models.ReqContext) response.Response {
+	uid, exists := web.Params(c.Req)[":uid"]
+	if !exists {
+		return response.Error(400, "Missing dashboard id", nil)
+	}
+
+	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardUID: uid}
 	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to star dashboard", err)
 	}
@@ -96,6 +121,32 @@ func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
 	return response.Success("Dashboard unstarred")
 }
 
+// swagger:route DELETE /user/stars/dashboard/uid/{dashboard_id} signed_in_user unstarDashboardUID
+//
+// Unstar a dashboard.
+//
+// Deletes the starring of the given Dashboard for the actual user.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) UnstarDashboardUID(c *models.ReqContext) response.Response {
+	uid, ok := web.Params(c.Req)[":uid"]
+	if !ok {
+		return response.Error(400, "Missing dashboard id", nil)
+	}
+
+	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardUID: uid}
+	if err := hs.starService.Delete(c.Req.Context(), &cmd); err != nil {
+		return response.Error(500, "Failed to unstar dashboard", err)
+	}
+
+	return response.Success("Dashboard unstarred")
+}
+
 // swagger:parameters starDashboard
 type StarDashboardParams struct {
 	// in:path
@@ -108,4 +159,18 @@ type UnstarDashboardParams struct {
 	// in:path
 	// required:true
 	DashboardID string `json:"dashboard_id"`
+}
+
+// swagger:parameters starDashboardUID
+type StarDashboardUIDParams struct {
+	// in:path
+	// required:true
+	DashboardUID string `json:"dashboard_uid"`
+}
+
+// swagger:parameters unstarDashboardUID
+type UnstarDashboardUIDParams struct {
+	// in:path
+	// required:true
+	DashboardUID string `json:"dashboard_uid"`
 }
