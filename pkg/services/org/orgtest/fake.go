@@ -35,3 +35,7 @@ func (f *FakeOrgService) DeleteUserFromAll(ctx context.Context, userID int64) er
 func (f *FakeOrgService) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
 	return f.ExpectedUserOrgDTO, f.ExpectedError
 }
+
+func (f *FakeOrgService) UpdateOrg(ctx context.Context, cmd *org.UpdateOrgCommand) error {
+	return f.ExpectedError
+}

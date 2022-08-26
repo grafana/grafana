@@ -276,3 +276,16 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 func accessForbiddenResp() response.Response {
 	return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
 }
+
+func containsProvisionedAlerts(provenances map[string]ngmodels.Provenance, rules []*ngmodels.AlertRule) bool {
+	if len(provenances) == 0 {
+		return false
+	}
+	for _, rule := range rules {
+		provenance, ok := provenances[rule.UID]
+		if ok && provenance != ngmodels.ProvenanceNone {
+			return true
+		}
+	}
+	return false
+}

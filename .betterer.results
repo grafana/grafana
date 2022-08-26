@@ -77,13 +77,10 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:4057721851": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:4128034878": [
-      [0, 26, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:57753101": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:1488067923": [
+    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:2984948507": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:146069464": [
@@ -92,7 +89,7 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:2659566901": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:3570129984": [
+    "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:3764084053": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2402631398": [
@@ -1615,11 +1612,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
     ],
     "packages/grafana-ui/src/components/Select/SelectMenu.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1821,9 +1814,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-ui/src/components/Tooltip/Tooltip.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3877,9 +3868,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/DashboardSettings/DashboardSettings.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/dashboard/components/DashboardSettings/DashboardSettings.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/DashboardSettings/GeneralSettings.test.tsx:5381": [
@@ -6346,9 +6334,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/plugins/datasource/elasticsearch/components/AddRemove.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/elasticsearch/components/AddRemove.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -7132,11 +7117,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/jaeger/util.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
     "public/app/plugins/datasource/loki/components/LokiLabelBrowser.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -7159,12 +7139,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/plugins/datasource/loki/configuration/DerivedField.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -7174,15 +7148,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
-    ],
-    "public/app/plugins/datasource/loki/datasource.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
     "public/app/plugins/datasource/loki/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7196,11 +7161,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/getDerivedFields.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/loki/language_provider.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/datasource/loki/language_provider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7221,10 +7181,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/loki/live_streams_result_transformer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/loki/mocks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/loki/querybuilder/binaryScalarOperations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -7979,8 +7935,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"]
     ],
     "public/app/plugins/datasource/tempo/language_provider.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/tempo/resultTransformer.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -8004,6 +7959,28 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+    ],
+    "public/app/plugins/datasource/tempo/traceql/TraceQLEditor.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/plugins/datasource/tempo/traceql/autocomplete.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+    ],
+    "public/app/plugins/datasource/tempo/traceql/autocomplete.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/testdata/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

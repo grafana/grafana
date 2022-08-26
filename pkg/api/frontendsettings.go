@@ -237,6 +237,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			URL:       url,
 			IsDefault: ds.IsDefault,
 			Access:    string(ds.Access),
+			ReadOnly:  ds.ReadOnly,
 		}
 
 		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)

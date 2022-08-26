@@ -1,7 +1,7 @@
 import { useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { DataSourcePluginMeta, DataSourceSettings, urlUtil } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, NavModelItem, urlUtil } from '@grafana/data';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -127,10 +127,10 @@ export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | 
   const dataSource = useDataSource(dataSourceId);
   const { plugin, loadError, loading } = useDataSourceSettings();
   const navIndex = useSelector((state: StoreState) => state.navIndex);
-  const navIndexId = pageId ? `datasource-page-${pageId}` : `datasource-settings-${dataSourceId}`;
+  const navIndexId = pageId ? `datasource-${pageId}-${dataSourceId}` : `datasource-settings-${dataSourceId}`;
 
   if (loadError) {
-    const node = {
+    const node: NavModelItem = {
       text: loadError,
       subTitle: 'Data Source Error',
       icon: 'exclamation-triangle',

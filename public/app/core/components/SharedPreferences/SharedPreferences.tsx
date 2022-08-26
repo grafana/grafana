@@ -32,8 +32,10 @@ export interface Props {
   disabled?: boolean;
 }
 
+type DefaultDashboardSearchItem = Omit<DashboardSearchItem, 'uid'> & { uid?: string };
+
 export type State = UserPreferencesDTO & {
-  dashboards: DashboardSearchItem[];
+  dashboards: DashboardSearchItem[] | DefaultDashboardSearchItem[];
 };
 
 const themes: SelectableValue[] = [
@@ -75,14 +77,13 @@ const languages: Array<SelectableValue<string>> = [
 
 const i18nFlag = Boolean(config.featureToggles.internationalization);
 
-const DEFAULT_DASHBOARD_HOME: DashboardSearchItem = {
+const DEFAULT_DASHBOARD_HOME: DefaultDashboardSearchItem = {
   title: 'Default',
   tags: [],
   type: '' as DashboardSearchItemType,
   uid: undefined,
   uri: '',
   url: '',
-  folderId: 0,
   folderTitle: '',
   folderUid: '',
   folderUrl: '',
