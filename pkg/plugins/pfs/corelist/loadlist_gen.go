@@ -16,7 +16,7 @@
 //
 // Run `make gen-cue` from repository root to regenerate.
 
-package registry
+package corelist
 
 import (
 	"fmt"
