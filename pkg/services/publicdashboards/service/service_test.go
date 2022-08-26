@@ -523,3 +523,21 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 	dash.Data.Set("uid", dash.Uid)
 	return dash
 }
+
+func TestDashboardEnabledChanged(t *testing.T) {
+	t.Run("created isEnabled: false", func(t *testing.T) {
+		assert.False(t, publicDashboardIsEnabledChanged(nil, &PublicDashboard{IsEnabled: false}))
+	})
+
+	t.Run("created isEnabled: true", func(t *testing.T) {
+		assert.True(t, publicDashboardIsEnabledChanged(nil, &PublicDashboard{IsEnabled: true}))
+	})
+
+	t.Run("updated isEnabled same", func(t *testing.T) {
+		assert.False(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: true}, &PublicDashboard{IsEnabled: true}))
+	})
+
+	t.Run("updated isEnabled changed", func(t *testing.T) {
+		assert.True(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: false}, &PublicDashboard{IsEnabled: true}))
+	})
+}

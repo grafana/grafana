@@ -129,7 +129,7 @@ func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Cont
 		return nil, err
 	}
 
-	pd.logStatusChange(existingPubdash, newPubdash, u)
+	pd.logIsEnabledChanged(existingPubdash, newPubdash, u)
 
 	return newPubdash, err
 }
@@ -246,21 +246,22 @@ func GenerateAccessToken() (string, error) {
 	return fmt.Sprintf("%x", token[:]), nil
 }
 
-// Output audit log when public dashboard created and enabled or updated and
-// isEnabled changes
-func (pd *PublicDashboardServiceImpl) logStatusChange(existingPubdash *PublicDashboard, newPubdash *PublicDashboard, u *user.SignedInUser) {
-
-	verb := "disabled"
-	if newPubdash.IsEnabled {
-		verb = "enabled"
+// Log when PublicDashboard.IsEnabled changed
+func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard, u *user.SignedInUser) {
+	if publicDashboardIsEnabledChanged(existingPubdash, newPubdash) {
+		verb := "disabled"
+		if newPubdash.IsEnabled {
+			verb = "enabled"
+		}
+		pd.log.Info(fmt.Sprintf("Public dashboard %v: dashboardUid: %v, user:%v", verb, newPubdash.Uid, u.Login))
 	}
+}
 
+// Checks to see if PublicDashboard.Isenabled is true on create or changed on update
+func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdash *PublicDashboard) bool {
 	// creating dashboard, enabled true
 	newDashCreated := existingPubdash == nil && newPubdash.IsEnabled
 	// updating dashboard, enabled changed
 	isEnabledChanged := existingPubdash != nil && newPubdash.IsEnabled != existingPubdash.IsEnabled
-
-	if newDashCreated || isEnabledChanged {
-		pd.log.Info(fmt.Sprintf("Public dashboard %v, dashboardUid: %v, user: %v-%v", verb, newPubdash.Uid, u.UserID, u.Login))
-	}
+	return newDashCreated || isEnabledChanged
 }
