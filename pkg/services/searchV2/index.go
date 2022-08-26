@@ -473,7 +473,6 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	i.perOrgIndex[orgID] = index
 	i.mu.Unlock()
 
-	time.Sleep(20 * time.Second)
 	i.initializationMutex.Lock()
 	i.initializedOrgs[orgID] = true
 	i.initializationMutex.Unlock()
