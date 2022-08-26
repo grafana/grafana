@@ -111,7 +111,10 @@ export class PanelPlugin<
   private suggestionsSupplier?: VisualizationSuggestionsSupplier;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
+
+  // Component to be used in Explore if specified.
   explorePanel?: ComponentType<ExplorePanelProps> | null;
+
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;

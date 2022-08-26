@@ -21,10 +21,15 @@ import LogsContainer from '../LogsContainer';
 import { NodeGraphContainer } from '../NodeGraphContainer';
 import TableContainer from '../TableContainer';
 
-export async function getPanelForVisType(visType: string): Promise<React.ComponentType<ExplorePanelProps>> {
-  // TODO this is not much dynamic at the moment but it's a start of creating a common interface
-
-  switch (visType) {
+/**
+ * Based on the visualizationType try to find a specific panel instance. There are bunch of hardcoded ones but in the
+ * end this will search all the installed panel and check their visualizationType to match. At this moment there
+ * isn't any defined override behaviour so it's not possible to override for example table panel with custom ones
+ * but this allows selecting 3rd party panels.
+ * @param visualizationType
+ */
+export async function getPanelForVisType(visualizationType: string): Promise<React.ComponentType<ExplorePanelProps>> {
+  switch (visualizationType) {
     case 'graph': {
       return GraphPanel;
     }
@@ -43,8 +48,8 @@ export async function getPanelForVisType(visType: string): Promise<React.Compone
     default: {
       const panels = getAllPanelPluginMeta();
       for (const panel of panels) {
-        const panelPlugin = await importPanelPlugin(panel.id);
-        if (panelPlugin.meta.visualizationType?.includes(visType)) {
+        if (panel.visualizationType?.includes(visualizationType)) {
+          const panelPlugin = await importPanelPlugin(panel.id);
           // If there is explorePanel component use that.
           if (panelPlugin.explorePanel) {
             return panelPlugin.explorePanel;
@@ -64,7 +69,7 @@ export async function getPanelForVisType(visType: string): Promise<React.Compone
 }
 
 /**
- * Wrap panel adding a transform so we can use dashboard panels Explore without modification.
+ * Wrap panel adding a transform so we can use existing dashboard panels in Explore without modification.
  * @param Panel
  */
 function makePanelExploreCompatible(Panel: React.ComponentType<PanelProps>): React.ComponentType<ExplorePanelProps> {
@@ -121,6 +126,8 @@ function transformToDashboardProps(props: ExplorePanelProps): PanelProps {
     width: props.width,
   };
 }
+
+// TODO: these simple wrappers can be moved to panel code and used with `setExplorePanel()` api.
 
 function GraphPanel(props: ExplorePanelProps) {
   const {

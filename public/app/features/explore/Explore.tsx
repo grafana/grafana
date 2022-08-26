@@ -213,24 +213,28 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return <NoData />;
   }
 
+  /**
+   * Render panels based on the frames in the framesMap and their preferredVisualizationType.
+   * @param width
+   */
   renderPanels(width: number) {
-    const { queryResponse, frames } = this.props;
+    const { queryResponse, framesMap } = this.props;
 
     const showNoData =
-      queryResponse.state === LoadingState.Done && Object.values(frames).every((frame) => frame.length === 0);
+      queryResponse.state === LoadingState.Done && Object.values(framesMap).every((frame) => frame.length === 0);
 
     if (showNoData) {
       return <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>;
     }
 
     const panels: React.ReactNode[] = [];
-    if (!frames) {
+    if (!framesMap) {
       return panels;
     }
 
-    for (const key of Object.keys(frames)) {
+    for (const preferredVisualizationType of Object.keys(framesMap)) {
       panels.push(
-        <ErrorBoundaryAlert key={key}>
+        <ErrorBoundaryAlert key={preferredVisualizationType}>
           <ScrollElementsContext.Provider
             value={{
               scrollElement: this.scrollElement,
@@ -239,7 +243,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           >
             <Panel
               onChangeGraphStyle={this.onChangeGraphStyle}
-              data={frames[key]}
+              data={framesMap[preferredVisualizationType]}
               absoluteRange={this.props.absoluteRange}
               range={this.props.range}
               timeZone={this.props.timeZone}
@@ -255,7 +259,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               onStartScanning={this.onStartScanning}
               onStopScanning={this.onStopScanning}
               datasourceInstance={this.props.datasourceInstance}
-              preferredVisualizationType={key}
+              preferredVisualizationType={preferredVisualizationType}
               eventBus={this.props.eventBridge}
               renderedVisualizations={Object.keys(frames)}
             />
@@ -352,7 +356,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     absoluteRange,
     queryResponse,
     graphStyle,
-    frames,
+    framesMap,
     range,
     eventBridge,
   } = item;
@@ -368,7 +372,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     syncedTimes,
     timeZone,
     graphStyle,
-    frames,
+    framesMap,
     range,
     eventBridge,
   };

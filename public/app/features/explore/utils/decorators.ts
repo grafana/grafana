@@ -27,33 +27,33 @@ import { preProcessPanelData } from '../../query/state/runRequest';
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
  */
 export const groupFramesByVisType = (data: PanelData): ExplorePanelData => {
-  const frames: { [key: string]: DataFrame[] } = {};
+  const framesMap: { [key: string]: DataFrame[] } = {};
 
   for (const frame of data.series) {
     const visType = frame.meta?.preferredVisualisationType;
     if (visType) {
-      frames[visType] = frames[visType] || [];
-      frames[visType].push(frame);
+      framesMap[visType] = framesMap[visType] || [];
+      framesMap[visType].push(frame);
     } else {
       if (isTimeSeries(frame)) {
-        frames['graph'] = frames['graph'] || [];
-        frames['graph'].push(frame);
-        frames['table'] = frames['table'] || [];
-        frames['table'].push(frame);
+        framesMap['graph'] = framesMap['graph'] || [];
+        framesMap['graph'].push(frame);
+        framesMap['table'] = framesMap['table'] || [];
+        framesMap['table'].push(frame);
       } else if (isNodeGraphFrame(frame)) {
-        frames['nodeGraph'] = frames['nodeGraph'] || [];
-        frames['nodeGraph'].push(frame);
+        framesMap['nodeGraph'] = framesMap['nodeGraph'] || [];
+        framesMap['nodeGraph'].push(frame);
       } else {
         // We fallback to table if we do not have any better meta info about the dataframe.
-        frames['table'] = frames['table'] || [];
-        frames['table'].push(frame);
+        framesMap['table'] = framesMap['table'] || [];
+        framesMap['table'].push(frame);
       }
     }
   }
 
   return {
     ...data,
-    frames,
+    framesMap,
   };
 };
 
@@ -63,7 +63,7 @@ export const groupFramesByVisType = (data: PanelData): ExplorePanelData => {
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
 export const mergeTableFrames = (data: ExplorePanelData): Observable<ExplorePanelData> => {
-  let tableFrames = data.frames['table'];
+  let tableFrames = data.framesMap['table'];
   if (!tableFrames?.length) {
     return of({ ...data, tableResult: null });
   }
@@ -121,12 +121,12 @@ export const processLogs =
     } = {}
   ) =>
   (data: ExplorePanelData): ExplorePanelData => {
-    if (!data.frames['logs']?.length) {
+    if (!data.framesMap['logs']?.length) {
       return { ...data, logsResult: undefined };
     }
 
     const intervalMs = data.request?.intervalMs;
-    const newResults = dataFrameToLogsModel(data.frames['logs'], intervalMs, options.absoluteRange, options.queries);
+    const newResults = dataFrameToLogsModel(data.framesMap['logs'], intervalMs, options.absoluteRange, options.queries);
     const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;

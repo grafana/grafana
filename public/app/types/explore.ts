@@ -98,7 +98,11 @@ export interface ExploreItemState {
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult?: LogsModel | null;
-  frames: { [key: string]: DataFrame[] };
+
+  /**
+   * Frames grouped by their preferredVisualizationType
+   */
+  framesMap: { [preferredVisualizationType: string]: DataFrame[] };
 
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
@@ -199,6 +203,6 @@ export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
 };
 
 export interface ExplorePanelData extends PanelData {
-  frames: { [key: string]: DataFrame[] };
+  framesMap: { [preferredVisualizationType: string]: DataFrame[] };
   logsResult?: LogsModel | null;
 }

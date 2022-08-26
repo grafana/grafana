@@ -271,7 +271,10 @@ type Model struct {
 
 	// type indicates which type of Grafana plugin this is, of the defined
 	// set of Grafana plugin types.
-	Type              Type    `json:"type"`
+	Type Type `json:"type"`
+
+	// Abstract visualization type for panels that allows it to match dataFrame.meta.preferredVisualizationType
+	// and be shown in Explore.
 	VisualizationType *string `json:"visualizationType,omitempty"`
 }
 

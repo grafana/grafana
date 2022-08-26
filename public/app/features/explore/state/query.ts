@@ -833,7 +833,7 @@ export const processQueryResponse = (
   action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, series, error, frames, logsResult } = response;
+  const { request, series, error, framesMap, logsResult } = response;
 
   if (error) {
     if (error.type === DataQueryErrorType.Timeout) {
@@ -866,7 +866,7 @@ export const processQueryResponse = (
   return {
     ...state,
     queryResponse: response,
-    frames,
+    framesMap,
     logsResult,
   };
 };

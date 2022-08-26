@@ -115,7 +115,12 @@ export interface PanelProps<T = any> {
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
+/**
+ * Props that are passed to a panel when rendered in Explore. This is experimental and the shaep is likely to change
+ * in the future.
+ */
 export interface ExplorePanelProps {
+  // Used to style Graph component
   // We could probably put his into state.panelState
   graphStyle: ExploreGraphStyle;
   onChangeGraphStyle: (style: ExploreGraphStyle) => void;
@@ -128,9 +133,11 @@ export interface ExplorePanelProps {
   timeZone: TimeZone;
   datasourceInstance?: DataSourceApi | null;
 
+  // Loading state of the current response
   loadingState: LoadingState;
   width: number;
 
+  // Function that will open a Explore split pane to show a second query.
   splitOpen: SplitOpen;
   onUpdateTimeRange: (timeRange: AbsoluteTimeRange) => void;
 
@@ -151,7 +158,7 @@ export interface ExplorePanelProps {
   onStartScanning: () => void;
   onStopScanning: () => void;
 
-  // // Used for dashboard panel compat
+  // Used for dashboard panel compatibility
   eventBus: EventBus;
 }
 
