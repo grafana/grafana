@@ -158,24 +158,24 @@ describe('SearchSrv', () => {
               {
                 title: 'folder1',
                 type: 'dash-folder',
-                id: 1,
+                uid: 'folder-1',
               },
               {
                 title: 'dash with no folder',
                 type: 'dash-db',
-                id: 2,
+                uid: '2',
               },
               {
                 title: 'dash in folder1 1',
                 type: 'dash-db',
-                id: 3,
-                folderId: 1,
+                uid: '3',
+                folderUid: 'folder-1',
               },
               {
                 title: 'dash in folder1 2',
                 type: 'dash-db',
-                id: 4,
-                folderId: 1,
+                uid: '4',
+                folderUid: 'folder-1',
               },
             ])
           )
@@ -202,15 +202,13 @@ describe('SearchSrv', () => {
       searchMock.mockImplementation(
         jest.fn().mockResolvedValue([
           {
-            id: 2,
+            folderUid: 'dash-with-no-folder-uid',
             title: 'dash with no folder',
             type: 'dash-db',
           },
           {
-            id: 3,
             title: 'dash in folder1 1',
             type: 'dash-db',
-            folderId: 1,
             folderUid: 'uid',
             folderTitle: 'folder1',
             folderUrl: '/dashboards/f/uid/folder1',
@@ -229,8 +227,7 @@ describe('SearchSrv', () => {
 
     it('should group results by folder', () => {
       expect(results).toHaveLength(2);
-      expect(results[0].id).toEqual(0);
-      expect(results[1].id).toEqual(1);
+      expect(results[0].uid).toEqual('dash-with-no-folder-uid');
       expect(results[1].uid).toEqual('uid');
       expect(results[1].title).toEqual('folder1');
       expect(results[1].url).toEqual('/dashboards/f/uid/folder1');
