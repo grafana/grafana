@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -253,11 +252,8 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 		// retrieve from db
 		pubdash, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), savedDashboard.OrgId, savedDashboard.Uid)
 		require.NoError(t, err)
-		fmt.Printf("%#v\n", cmd.PublicDashboard)
-		fmt.Printf("%#v\n", pubdash)
 
-		assert.True(t, assert.ObjectsAreEqualValues(cmd.PublicDashboard, pubdash))
-		assert.True(t, assert.ObjectsAreEqual(cmd.PublicDashboard, pubdash))
+		assert.True(t, assert.ObjectsAreEqualValues(&cmd.PublicDashboard, pubdash))
 	})
 }
 

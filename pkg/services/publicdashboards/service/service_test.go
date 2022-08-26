@@ -147,7 +147,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -190,7 +190,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -221,7 +221,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
+		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
 }
@@ -248,10 +248,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
-		require.NoError(t, err)
-
-		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		savedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -274,10 +271,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// Since the dto.PublicDashboard has a uid, this will call
 		// service.updatePublicDashboardConfig
-		err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
-		require.NoError(t, err)
-
-		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// don't get updated
@@ -317,10 +311,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// Since the dto.PublicDashboard has a uid, this will call
 		// service.updatePublicDashboardConfig
-		err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
-		require.NoError(t, err)
-
-		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		savedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -340,10 +331,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
-		require.NoError(t, err)
-
-		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		timeSettings, err := simplejson.NewJson([]byte("{}"))
@@ -398,10 +386,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
-	require.NoError(t, err)
-
-	publicDashboardPD, err := service.GetPublicDashboardConfig(context.Background(), dto.OrgId, dto.DashboardUid)
+	publicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
 	nonPublicDto := &SavePublicDashboardConfigDTO{
@@ -415,10 +400,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	err = service.SavePublicDashboardConfig(context.Background(), SignedInUser, nonPublicDto)
-	require.NoError(t, err)
-
-	nonPublicDashboardPD, err := service.GetPublicDashboardConfig(context.Background(), nonPublicDto.OrgId, nonPublicDto.DashboardUid)
+	nonPublicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, nonPublicDto)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
