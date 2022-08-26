@@ -101,7 +101,7 @@
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@lingui/cli": "3.14.0",
     "@lingui/macro": "3.14.0",
-    "@microsoft/api-extractor": "7.28.6",
+    "@microsoft/api-extractor": "7.29.5",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.7",
     "@react-types/button": "3.5.1",
     "@react-types/menu": "3.6.1",
