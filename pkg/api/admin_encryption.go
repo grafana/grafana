@@ -82,9 +82,9 @@ func (hs *HTTPServer) AdminMigrateSecretsFromPlugin(c *models.ReqContext) respon
 }
 
 func (hs *HTTPServer) AdminDeleteAllSecretsManagerPluginSecrets(c *models.ReqContext) response.Response {
-	if skv.EvaluateRemoteSecretsPlugin(hs.secretsPluginManager, hs.Cfg) != nil {
-		hs.log.Warn("Received secrets plugin deletion request while plugin is not available")
-		return response.Respond(http.StatusBadRequest, "Secrets plugin is not available")
+	if hs.secretsPluginManager.SecretsManager() == nil {
+		hs.log.Warn("Received secrets plugin deletion request while plugin is not installed")
+		return response.Respond(http.StatusBadRequest, "Secrets plugin is not installed")
 	}
 	items, err := hs.secretsStore.GetAll(c.Req.Context())
 	if err != nil {
