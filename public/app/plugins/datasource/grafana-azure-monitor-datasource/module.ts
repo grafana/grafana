@@ -28,6 +28,7 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
     if (azureQueries && azureQueries.length > 0) {
       reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
         grafana_version: grafanaVersion,
+        ds_version: pluginJson.info.version,
         dashboard_id: dashboardId,
         org_id: orgId,
         ...stats,
