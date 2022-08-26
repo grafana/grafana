@@ -466,7 +466,6 @@ export class GeomapPanel extends Component<Props, State> {
       } else if (this.byName.has(newOptions.name)) {
         return false;
       }
-      console.log('Layer name changed', uid, '>>>', newOptions.name);
       this.byName.delete(uid);
 
       uid = newOptions.name;
@@ -607,7 +606,7 @@ export class GeomapPanel extends Component<Props, State> {
             });
           }
         } else {
-          console.log('TODO, view requires special handling', v);
+          // TODO: view requires special handling
         }
       } else {
         coord = [v.lon ?? 0, v.lat ?? 0];

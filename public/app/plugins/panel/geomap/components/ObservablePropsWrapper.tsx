@@ -24,15 +24,10 @@ export class ObservablePropsWrapper<T> extends Component<Props<T>, State<T>> {
   componentDidMount() {
     this.sub = this.props.watch.subscribe({
       next: (subProps: T) => {
-        //console.log('ObservablePropsWrapper:NEXT', subProps);
         this.setState({ subProps });
       },
-      complete: () => {
-        //console.log('ObservablePropsWrapper:complete');
-      },
-      error: (err) => {
-        //console.log('ObservablePropsWrapper:error', err);
-      },
+      complete: () => {},
+      error: (err) => {},
     });
   }
 

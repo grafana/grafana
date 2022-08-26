@@ -33,7 +33,6 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         if (path === 'type' && value) {
           const layer = geomapLayerRegistry.getIfExists(value);
           if (layer) {
-            console.log('Change layer type:', value, state);
             const opts = {
               ...options, // keep current shared options
               type: layer.id,
@@ -55,7 +54,6 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
     }),
     build: (builder, context) => {
       if (!opts.state) {
-        console.log('MISSING LAYER!!!', opts);
         return;
       }
 
