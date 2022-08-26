@@ -306,7 +306,6 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 			},
 		})
 		assert.Error(t, err, dashboards.ErrDashboardIdentifierNotSet)
-
 	})
 }
 
