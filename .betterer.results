@@ -77,9 +77,6 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:4057721851": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/elasticsearch/configuration/ConfigEditor.test.tsx:4128034878": [
-      [0, 26, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/plugins/datasource/influxdb/components/ConfigEditor.test.tsx:57753101": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
