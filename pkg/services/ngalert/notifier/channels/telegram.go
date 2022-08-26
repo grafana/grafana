@@ -11,6 +11,7 @@ import (
 
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/alertmanager/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -158,8 +159,15 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	}()
 
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+	// Telegram supports 4096 chars max
+	messageText, truncated := notify.Truncate(tmpl(tn.Message), 4096)
+	if truncated {
+		tn.log.Warn("Telegram message too long, truncate message", "original_message", tn.Message)
+	}
+	
+	
 	m := make(map[string]string)
-	m["text"] = tmpl(tn.Message)
+	m["text"] = 
 	m["parse_mode"] = "html"
 	return m, nil
 }
