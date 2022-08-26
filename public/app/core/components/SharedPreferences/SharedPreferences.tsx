@@ -10,13 +10,11 @@ import {
   Field,
   FieldSet,
   Form,
-  Icon,
   Label,
   RadioButtonGroup,
   Select,
   stylesFactory,
   TimeZonePicker,
-  Tooltip,
   WeekStartPicker,
   FeatureBadge,
 } from '@grafana/ui';
