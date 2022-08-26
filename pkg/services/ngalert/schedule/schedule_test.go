@@ -112,7 +112,7 @@ func TestWarmStateCache(t *testing.T) {
 		InstanceStore: dbstore,
 		Metrics:       testMetrics.GetSchedulerMetrics(),
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, &state.AlertsSenderMock{}, clock.NewMock())
 	st.Warm(ctx)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
@@ -164,14 +164,13 @@ func TestAlertingTicker(t *testing.T) {
 		InstanceStore: dbstore,
 		Logger:        log.New("ngalert schedule test"),
 		Metrics:       testMetrics.GetSchedulerMetrics(),
-		AlertSender:   notifier,
 	}
-	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.NewMock())
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := schedule.NewScheduler(schedCfg, appUrl, st)
+	st := state.NewManager(schedCfg.Logger, testMetrics.GetStateMetrics(), appUrl, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, notifier, clock.NewMock())
+	sched := schedule.NewScheduler(schedCfg, st)
 
 	go func() {
 		err := sched.Run(ctx)

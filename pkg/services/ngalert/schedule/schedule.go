@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -22,6 +22,13 @@ import (
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
 )
+
+//go:generate mockery --name StateManager --structname StateManagerMock --inpackage --filename state_manager_mock.go --with-expecter
+type StateManager interface {
+	Close(ctx context.Context)
+	ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngmodels.AlertRule, results eval.Results, extraLabels data.Labels)
+	ResetStateByRuleUID(ctx context.Context, ruleKey ngmodels.AlertRuleKey)
+}
 
 // ScheduleService is an interface for a service that schedules the evaluation
 // of alert rules.
@@ -69,7 +76,7 @@ type schedule struct {
 
 	ruleStore store.RuleStore
 
-	stateManager *state.Manager
+	stateManager StateManager
 
 	disableGrafanaFolder bool
 
@@ -98,7 +105,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, stateManager StateManager) *schedule {
 	ticker := alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
