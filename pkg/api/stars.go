@@ -51,7 +51,9 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	var id int64
+	var err error
+	id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
@@ -83,7 +85,6 @@ func (hs *HTTPServer) StarDashboardByUID(c *models.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
 	}
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, uid)
-
 	if rsp != nil {
 		return rsp
 	}
@@ -112,19 +113,13 @@ func (hs *HTTPServer) StarDashboardByUID(c *models.ReqContext) response.Response
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
-	var id int64
-	var err error
 
-	id, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, id, "")
-	if rsp != nil {
-		return rsp
-	}
 
-	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id, DashboardUID: dash.Uid}
+	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: id}
 
 	if err := hs.starService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)
