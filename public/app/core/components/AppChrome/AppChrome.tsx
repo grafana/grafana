@@ -20,7 +20,7 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
 
   if (state.chromeless || !config.featureToggles.topnav) {
-    return <main className="main-view">{children} </main>;
+    return <main className="main-view">{children}</main>;
   }
 
   return (
@@ -37,7 +37,7 @@ export function AppChrome({ children }: Props) {
         />
       </div>
       <div className={cx(styles.content, state.searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
-      {state.megaMenuOpen && <MegaMenu searchBarHidden={state.searchBarHidden} onClose={chrome.toggleMegaMenu} />}
+      <MegaMenu searchBarHidden={state.searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
     </main>
   );
 }

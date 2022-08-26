@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -20,8 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestQueryData(t *testing.T) {
@@ -106,8 +108,10 @@ func setup(t *testing.T) *testContext {
 	tc := &fakeOAuthTokenService{}
 	rv := &fakePluginRequestValidator{}
 
-	ss := kvstore.SetupTestService(t)
-	ssvc := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	ss := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	ssvc := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	ds := dsSvc.ProvideService(nil, ssvc, ss, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 
 	return &testContext{
@@ -122,7 +126,7 @@ func setup(t *testing.T) *testContext {
 
 type testContext struct {
 	pluginContext          *fakePluginClient
-	secretStore            kvstore.SecretsKVStore
+	secretStore            secretskvs.SecretsKVStore
 	dataSourceCache        *fakeDataSourceCache
 	oauthTokenService      *fakeOAuthTokenService
 	pluginRequestValidator *fakePluginRequestValidator
@@ -152,7 +156,7 @@ type fakeOAuthTokenService struct {
 	token           *oauth2.Token
 }
 
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token {
+func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
 	return ts.token
 }
 
@@ -164,11 +168,11 @@ type fakeDataSourceCache struct {
 	ds *datasources.DataSource
 }
 
-func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
+func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	return c.ds, nil
 }
 
-func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
+func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	return c.ds, nil
 }
 

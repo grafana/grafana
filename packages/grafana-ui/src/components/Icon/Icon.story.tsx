@@ -4,7 +4,7 @@ import React, { ChangeEvent, useState } from 'react';
 
 import { Input, Field, Icon } from '@grafana/ui';
 
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
@@ -25,8 +25,8 @@ const meta: ComponentMeta<typeof Icon> = {
 };
 
 const IconWrapper = ({ name }: { name: IconName }) => {
-  const theme = useTheme();
-  const borderColor = theme.colors.border2;
+  const theme = useTheme2();
+  const borderColor = theme.colors.border.medium;
 
   return (
     <div
@@ -46,7 +46,7 @@ const IconWrapper = ({ name }: { name: IconName }) => {
         className={css`
           padding-top: 16px;
           word-break: break-all;
-          font-family: ${theme.typography.fontFamily.monospace};
+          font-family: ${theme.typography.fontFamilyMonospace};
           font-size: ${theme.typography.size.xs};
         `}
       >

@@ -127,6 +127,20 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		}
 	}()
 
+	defer func() {
+		// If we've managed to initialize them, this is the last place
+		// where we're able to log anything that'll end up in Grafana's
+		// log files.
+		// Since operators are not always looking at stderr, we'll try
+		// to log any and all panics that are about to crash Grafana to
+		// our regular log locations before exiting.
+		if r := recover(); r != nil {
+			reason := fmt.Sprintf("%v", r)
+			clilog.Error("Critical error", "reason", reason, "stackTrace", string(debug.Stack()))
+			panic(r)
+		}
+	}()
+
 	if traceDiagnostics.enabled {
 		fmt.Println("diagnostics: tracing enabled", "file", traceDiagnostics.file)
 		f, err := os.Create(traceDiagnostics.file)

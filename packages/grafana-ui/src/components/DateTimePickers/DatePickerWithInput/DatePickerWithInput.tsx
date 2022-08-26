@@ -3,7 +3,7 @@ import React, { ChangeEvent } from 'react';
 
 import { dateTime } from '@grafana/data';
 
-import { useStyles } from '../../../themes';
+import { useStyles2 } from '../../../themes';
 import { Props as InputProps, Input } from '../../Input/Input';
 import { DatePicker } from '../DatePicker/DatePicker';
 
@@ -29,7 +29,7 @@ export const DatePickerWithInput = ({
   ...rest
 }: DatePickerWithInputProps) => {
   const [open, setOpen] = React.useState(false);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>

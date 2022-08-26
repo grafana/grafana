@@ -13,11 +13,11 @@ import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
-import { BarChartFieldConfig, PanelOptions, defaultBarChartFieldConfig, defaultPanelOptions } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 
-export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChartPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -31,7 +31,7 @@ export const plugin = new PanelPlugin<PanelOptions, BarChartFieldConfig>(BarChar
       },
     },
     useCustomConfig: (builder) => {
-      const cfg = defaultBarChartFieldConfig;
+      const cfg = defaultPanelFieldConfig;
 
       builder
         .addSliderInput({

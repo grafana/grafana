@@ -52,8 +52,8 @@ Grafana Enterprise adds the following features:
 - [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "../administration/data-source-management#data-source-permissions" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "../enterprise/query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
-- [Reporting]({{< relref "../enterprise/reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
-- [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}})
+- [Reporting]({{< relref "../share-dashboards-panels#reporting" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whomever you choose.
+- [Export dashboard as PDF]({{< relref "../share-dashboards-panels/#export-dashboard-as-pdf" >}})
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "../enterprise/usage-insights/" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/encrypt-secrets-using-hashicorp-key-vault/" >}}) to manage your configuration or provisioning secrets with Vault.

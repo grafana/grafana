@@ -26,6 +26,9 @@ export interface ControlsOptions {
 
   // Show debug
   showDebug?: boolean;
+
+  // Show measure
+  showMeasure?: boolean;
 }
 
 export enum TooltipMode {

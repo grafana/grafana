@@ -62,6 +62,10 @@ export class AppChromeService {
     this.update({ megaMenuOpen: !this.state.getValue().megaMenuOpen });
   };
 
+  setMegaMenu = (megaMenuOpen: boolean) => {
+    this.update({ megaMenuOpen });
+  };
+
   toggleSearchBar = () => {
     const searchBarHidden = !this.state.getValue().searchBarHidden;
     store.set(this.searchBarStorageKey, searchBarHidden);

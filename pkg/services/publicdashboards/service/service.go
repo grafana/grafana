@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -123,8 +124,6 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 	}
 
 	cmd := SavePublicDashboardConfigCommand{
-		DashboardUid: dto.DashboardUid,
-		OrgId:        dto.OrgId,
 		PublicDashboard: PublicDashboard{
 			Uid:          uid,
 			DashboardUid: dto.DashboardUid,
@@ -187,11 +186,11 @@ func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx cont
 }
 
 // BuildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
-func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*models.SignedInUser, error) {
+func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
 	datasourceUids := models.GetUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a temp user with read-only datasource permissions
-	anonymousUser := &models.SignedInUser{OrgId: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
+	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
 	permissions := make(map[string][]string)
 	queryScopes := make([]string, 0)
 	readScopes := make([]string, 0)
@@ -208,6 +207,10 @@ func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, da
 
 func (pd *PublicDashboardServiceImpl) PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error) {
 	return pd.store.PublicDashboardEnabled(ctx, dashboardUid)
+}
+
+func (pd *PublicDashboardServiceImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+	return pd.store.AccessTokenExists(ctx, accessToken)
 }
 
 // generates a uuid formatted without dashes to use as access token

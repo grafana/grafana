@@ -89,7 +89,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
         }
         return of({ data });
       } catch (error) {
-        return of({ error: { message: 'JSON is not valid Jaeger format' }, data: [] });
+        return of({ error: { message: 'The JSON file uploaded is not in a valid Jaeger format' }, data: [] });
       }
     }
 

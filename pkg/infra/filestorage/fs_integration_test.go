@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -87,7 +86,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	setupLocalFs := func() {
 		commonSetup()
-		tmpDir, err := ioutil.TempDir("", "")
+		tmpDir, err := os.MkdirTemp("", "")
 		tempDir = tmpDir
 		if err != nil {
 			t.Fatal(err)
@@ -102,7 +101,7 @@ func runTests(createCases func() []fsTestCase, t *testing.T) {
 
 	setupLocalFsNestedPath := func() {
 		commonSetup()
-		tmpDir, err := ioutil.TempDir("", "")
+		tmpDir, err := os.MkdirTemp("", "")
 		if err != nil {
 			t.Fatal(err)
 		}

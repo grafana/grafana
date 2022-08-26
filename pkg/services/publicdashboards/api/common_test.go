@@ -21,8 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -60,8 +62,9 @@ func setupTestServer(
 	}
 
 	var err error
-	ac, err := ossaccesscontrol.ProvideService(features, cfg, database.ProvideService(db), rr)
+	acService, err := ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), rr)
 	require.NoError(t, err)
+	ac := ossaccesscontrol.ProvideAccessControl(cfg, acService)
 
 	// build mux
 	m := web.New()
@@ -75,7 +78,7 @@ func setupTestServer(
 			Logger:     log.New("publicdashboards-test"),
 
 			// Set signed in user. We might not actually need to do this.
-			SignedInUser: &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_ADMIN, Login: "testUser"},
+			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testUser"},
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), ctx))
 	})
@@ -137,7 +140,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	)
 }
 
-//copied from pkg/api/metrics_test.go
+// copied from pkg/api/metrics_test.go
 type fakePluginRequestValidator struct {
 	err error
 }
@@ -151,7 +154,7 @@ type fakeOAuthTokenService struct {
 	token           *oauth2.Token
 }
 
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token {
+func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
 	return ts.token
 }
 

@@ -1,3 +1,4 @@
+import { t } from '@lingui/macro';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
@@ -28,10 +29,23 @@ export const usePanelSave = () => {
 
   useEffect(() => {
     if (state.error) {
-      dispatch(notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${state.error.message}"`)));
+      const errorMsg = state.error.message;
+      dispatch(
+        notifyApp(
+          createPanelLibraryErrorNotification(
+            t({ id: 'library-panels.save.error', message: `Error saving library panel: "${errorMsg}"` })
+          )
+        )
+      );
     }
     if (state.value) {
-      dispatch(notifyApp(createPanelLibrarySuccessNotification('Library panel saved')));
+      dispatch(
+        notifyApp(
+          createPanelLibrarySuccessNotification(
+            t({ id: 'library-panels.save.success', message: 'Library panel saved' })
+          )
+        )
+      );
     }
   }, [dispatch, state]);
 

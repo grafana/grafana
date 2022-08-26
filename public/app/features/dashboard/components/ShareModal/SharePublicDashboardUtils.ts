@@ -22,8 +22,7 @@ export const getPublicDashboardConfig = async (
   dashboardUid: string,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
-  const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  const pdResp: PublicDashboard = await getBackendSrv().get(url);
+  const pdResp: PublicDashboard = await getBackendSrv().get(getPublicDashboardConfigUrl(dashboardUid));
   setPublicDashboard(pdResp);
 };
 
@@ -32,8 +31,10 @@ export const savePublicDashboardConfig = async (
   publicDashboardConfig: PublicDashboard,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
 ) => {
-  const url = `/api/dashboards/uid/${dashboardUid}/public-config`;
-  const pdResp: PublicDashboard = await getBackendSrv().post(url, publicDashboardConfig);
+  const pdResp: PublicDashboard = await getBackendSrv().post(
+    savePublicDashboardConfigUrl(dashboardUid),
+    publicDashboardConfig
+  );
 
   // Never allow a user to send the orgId
   // @ts-ignore
@@ -41,6 +42,14 @@ export const savePublicDashboardConfig = async (
 
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
   setPublicDashboard(pdResp);
+};
+
+export const getPublicDashboardConfigUrl = (dashboardUid: string) => {
+  return `/api/dashboards/uid/${dashboardUid}/public-config`;
+};
+
+export const savePublicDashboardConfigUrl = (dashboardUid: string) => {
+  return `/api/dashboards/uid/${dashboardUid}/public-config`;
 };
 
 // Instance methods

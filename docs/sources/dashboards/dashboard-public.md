@@ -27,6 +27,11 @@ dashboard to the world.
 
 Add the `publicDashboards` feature toggle to your `custom.ini` file.
 
+```
+[feature_toggles]
+publicDashboards = true
+```
+
 > **Note:** For Grafana Cloud, you will need to contact support to have the feature enabled.
 
 #### Make a dashboard public

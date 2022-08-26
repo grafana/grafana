@@ -51,10 +51,6 @@ const (
 	// Show APM table
 	FlagTempoApmTable = "tempoApmTable"
 
-	// FlagPrometheusAzureAuth
-	// Experimental. Azure authentication for Prometheus datasource
-	FlagPrometheusAzureAuth = "prometheus_azure_auth"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
@@ -198,4 +194,8 @@ const (
 	// FlagCustomBranding
 	// Replaces whitelabeling with the new custom branding feature
 	FlagCustomBranding = "customBranding"
+
+	// FlagTraceqlEditor
+	// Show the TraceQL editor in the explore page
+	FlagTraceqlEditor = "traceqlEditor"
 )

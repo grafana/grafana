@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -22,14 +24,14 @@ type TestUser struct {
 
 type TestApiKey struct {
 	Name      string
-	Role      models.RoleType
+	Role      org.RoleType
 	OrgId     int64
 	Key       string
 	IsExpired bool
 }
 
 func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser TestUser) *user.User {
-	role := string(models.ROLE_VIEWER)
+	role := string(org.RoleViewer)
 	if testUser.Role != "" {
 		role = testUser.Role
 	}
@@ -44,13 +46,13 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 	return u1
 }
 
-func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *models.ApiKey {
-	role := models.ROLE_VIEWER
+func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) *apikey.APIKey {
+	role := org.RoleViewer
 	if testKey.Role != "" {
 		role = testKey.Role
 	}
 
-	addKeyCmd := &models.AddApiKeyCommand{
+	addKeyCmd := &apikey.AddCommand{
 		Name:  testKey.Name,
 		Role:  role,
 		OrgId: testKey.OrgId,
@@ -61,14 +63,16 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	} else {
 		addKeyCmd.Key = "secret"
 	}
-	err := sqlStore.AddAPIKey(context.Background(), addKeyCmd)
+
+	apiKeyService := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	err := apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
 
 	if testKey.IsExpired {
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
-			key := models.ApiKey{Expires: &expires}
+			key := apikey.APIKey{Expires: &expires}
 			rowsAffected, err := sess.ID(addKeyCmd.Result.Id).Update(&key)
 			require.Equal(t, int64(1), rowsAffected)
 			return err
@@ -99,7 +103,7 @@ func (s *ServiceAccountMock) Migrated(ctx context.Context, orgID int64) bool {
 }
 
 func SetupMockAccesscontrol(t *testing.T,
-	userpermissionsfunc func(c context.Context, siu *models.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
+	userpermissionsfunc func(c context.Context, siu *user.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
 	disableAccessControl bool) *accesscontrolmock.Mock {
 	t.Helper()
 	acmock := accesscontrolmock.New()
@@ -134,6 +138,7 @@ type Calls struct {
 
 type ServiceAccountsStoreMock struct {
 	serviceaccounts.Store
+	Stats *serviceaccounts.Stats
 	Calls Calls
 }
 
@@ -179,8 +184,8 @@ func (s *ServiceAccountsStoreMock) RevertApiKey(ctx context.Context, saId int64,
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, orgID int64, serviceAccount int64) ([]*models.ApiKey, error) {
-	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, orgID, serviceAccount})
+func (s *ServiceAccountsStoreMock) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
+	s.Calls.ListTokens = append(s.Calls.ListTokens, []interface{}{ctx, query.OrgID, query.ServiceAccountID})
 	return nil, nil
 }
 
@@ -204,7 +209,7 @@ func (s *ServiceAccountsStoreMock) SearchOrgServiceAccounts(
 	filter serviceaccounts.ServiceAccountFilter,
 	page int,
 	limit int,
-	user *models.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error) {
+	user *user.SignedInUser) (*serviceaccounts.SearchServiceAccountsResult, error) {
 	s.Calls.SearchOrgServiceAccounts = append(s.Calls.SearchOrgServiceAccounts, []interface{}{ctx, orgID, query, page, limit, user})
 	return nil, nil
 }
@@ -219,6 +224,10 @@ func (s *ServiceAccountsStoreMock) AddServiceAccountToken(ctx context.Context, s
 	return nil
 }
 
-func (s *ServiceAccountsStoreMock) GetUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
-	return map[string]interface{}{}, nil
+func (s *ServiceAccountsStoreMock) GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error) {
+	if s.Stats == nil {
+		return &serviceaccounts.Stats{}, nil
+	}
+
+	return s.Stats, nil
 }

@@ -74,6 +74,7 @@ public/css/*.min.css
 # devenv
 /devenv/docker-compose.yaml
 /devenv/.env
+/devenv/docker/blocks/tempo/tempo-data/
 
 conf/custom.ini
 /conf/provisioning/**/custom.yaml
@@ -124,6 +125,9 @@ pkg/cmd/grafana-server/__debug_bin
 /packages/**/compiled
 /packages/**/.rpt2_cache
 /packages/**/tsdoc-metadata.json
+/packages/**/package.tgz
+## CI places the packages in a different location
+/npm-artifacts/*.tgz
 
 # Ignore go local build dependencies
 /scripts/go/bin/**

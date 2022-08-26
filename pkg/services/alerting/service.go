@@ -7,21 +7,21 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type AlertNotificationService struct {
-	SQLStore            *sqlstore.SQLStore
+	SQLStore            AlertNotificationStore
 	EncryptionService   encryption.Internal
 	NotificationService *notifications.NotificationService
 }
 
-func ProvideService(store *sqlstore.SQLStore, encryptionService encryption.Internal,
+func ProvideService(store db.DB, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService) *AlertNotificationService {
 	s := &AlertNotificationService{
-		SQLStore:            store,
+		SQLStore:            &sqlStore{db: store},
 		EncryptionService:   encryptionService,
 		NotificationService: notificationService,
 	}

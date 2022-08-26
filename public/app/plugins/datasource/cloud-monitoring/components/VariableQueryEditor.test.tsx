@@ -34,6 +34,7 @@ const props: Props = {
     getMetricTypes: async (projectName: string) => Promise.resolve([]),
     getSLOServices: async (projectName: string) => Promise.resolve([]),
     getServiceLevelObjectives: (projectName: string, serviceId: string) => Promise.resolve([]),
+    ensureGCEDefaultProject: async () => Promise.resolve(''),
   } as unknown as CloudMonitoringDatasource,
   onRunQuery: () => {},
 };

@@ -9,7 +9,7 @@ import { PanelOptions } from './models.gen';
 
 type Props = PanelProps<PanelOptions>;
 
-export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
+export const HistogramPanel = ({ data, options, width, height }: Props) => {
   const theme = useTheme2();
 
   const histogram = useMemo(() => {
@@ -45,6 +45,7 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
       options={options}
       theme={theme}
       legend={options.legend}
+      rawSeries={data.series}
       structureRev={data.structureRev}
       width={width}
       height={height}
