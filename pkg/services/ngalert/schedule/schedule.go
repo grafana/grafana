@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"time"
 
 	prometheusModel "github.com/prometheus/common/model"
@@ -72,7 +71,6 @@ type schedule struct {
 
 	stateManager *state.Manager
 
-	appURL               *url.URL
 	disableGrafanaFolder bool
 
 	metrics *metrics.Scheduler
@@ -100,7 +98,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	ticker := alerting.NewTicker(cfg.C, cfg.Cfg.BaseInterval, cfg.Metrics.Ticker)
 
 	sch := schedule{
@@ -115,7 +113,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		evaluator:             cfg.Evaluator,
 		ruleStore:             cfg.RuleStore,
 		metrics:               cfg.Metrics,
-		appURL:                appURL,
 		disableGrafanaFolder:  cfg.Cfg.ReservedLabels.IsReservedLabelDisabled(ngmodels.FolderTitleLabel),
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.Cfg.MinInterval,
@@ -285,14 +282,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
-	clearState := func() {
-		states := sch.stateManager.ResetStateByRuleUID(grafanaCtx, key)
-		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
-		if len(expiredAlerts.PostableAlerts) > 0 {
-			sch.stateManager.AlertsSender.Send(key, expiredAlerts)
-		}
-	}
-
 	evaluate := func(ctx context.Context, extraLabels map[string]string, attempt int64, e *evaluation) {
 		logger := logger.New("version", e.rule.Version, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
@@ -311,11 +300,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("skip updating the state because the context has been cancelled")
 			return
 		}
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, extraLabels)
-		alerts := state.FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
-		if len(alerts.PostableAlerts) > 0 {
-			sch.stateManager.AlertsSender.Send(key, alerts)
-		}
+		sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, extraLabels)
 	}
 
 	retryIfError := func(f func(attempt int64) error) error {
@@ -348,7 +333,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			}
 			logger.Info("clearing the state of the rule because version has changed", "version", currentRuleVersion, "new_version", lastVersion)
 			// clear the state. So the next evaluation will start from the scratch.
-			clearState()
+			sch.stateManager.ResetStateByRuleUID(grafanaCtx, key)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
@@ -372,7 +357,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					if currentRuleVersion != newVersion {
 						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
 							logger.Debug("got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "new_version", newVersion)
-							clearState()
+							sch.stateManager.ResetStateByRuleUID(grafanaCtx, key)
 						}
 						newLabels, err := sch.getRuleExtraLabels(grafanaCtx, ctx.rule)
 						if err != nil {
@@ -391,7 +376,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		case <-grafanaCtx.Done():
 			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
 			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
-				clearState()
+				sch.stateManager.ResetStateByRuleUID(grafanaCtx, key)
 			}
 			logger.Debug("stopping alert rule routine")
 			return nil

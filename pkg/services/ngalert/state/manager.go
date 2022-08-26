@@ -53,6 +53,8 @@ type Manager struct {
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
 	AlertsSender     AlertsSender
+
+	appURL *url.URL
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
@@ -70,6 +72,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		imageService:     imageService,
 		clock:            clock,
 		AlertsSender:     alertsSender,
+		appURL:           externalURL,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -175,12 +178,17 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 		}
 	}
 	logger.Info("rules state was reset", "deleted_states", len(states))
+
+	expiredAlerts := FromAlertsStateToStoppedAlert(states, st.appURL, st.clock)
+	if len(expiredAlerts.PostableAlerts) > 0 {
+		st.AlertsSender.Send(ruleKey, expiredAlerts)
+	}
 	return states
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
-func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
+func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) {
 	logger := st.log.New(alertRule.GetKey().LogContext()...)
 	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
@@ -199,7 +207,10 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			}
 		}
 	}
-	return states
+	alerts := FromAlertStateToPostableAlerts(states, st, st.appURL)
+	if len(alerts.PostableAlerts) > 0 {
+		st.AlertsSender.Send(alertRule.GetKey(), alerts)
+	}
 }
 
 // Maybe take a screenshot. Do it if:
