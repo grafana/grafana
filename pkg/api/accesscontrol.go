@@ -43,7 +43,7 @@ var (
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
 	// Declare plugins roles
-	if err := plugins.DeclareRBACRoles(hs.AccessControl); err != nil {
+	if err := plugins.DeclareRBACRoles(hs.accesscontrolService); err != nil {
 		return err
 	}
 
@@ -419,7 +419,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
-	return hs.AccessControl.DeclareFixedRoles(
+	return hs.accesscontrolService.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, datasourcesExplorerRole,

@@ -148,8 +148,6 @@ func (pd *PublicDashboardServiceImpl) savePublicDashboardConfig(ctx context.Cont
 	}
 
 	cmd := SavePublicDashboardConfigCommand{
-		DashboardUid: dto.DashboardUid,
-		OrgId:        dto.OrgId,
 		PublicDashboard: PublicDashboard{
 			Uid:          uid,
 			DashboardUid: dto.DashboardUid,

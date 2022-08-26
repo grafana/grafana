@@ -1,7 +1,7 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { SearchSrv } from 'app/core/services/search_srv';
-import { DashboardSearchHit } from 'app/features/search/types';
+import { DashboardSearchItem } from 'app/features/search/types';
 
 import { backendSrv } from '../services/backend_srv';
 
@@ -40,7 +40,7 @@ describe('SearchSrv', () => {
           return Promise.resolve([
             { uid: 'DSNdW0gVk', title: 'second but first' },
             { uid: 'srx16xR4z', title: 'first but second' },
-          ] as DashboardSearchHit[]);
+          ] as DashboardSearchItem[]);
         }
         return Promise.resolve([]);
       });
@@ -70,7 +70,7 @@ describe('SearchSrv', () => {
             return Promise.resolve([
               { uid: 'DSNdW0gVk', title: 'two' },
               { uid: 'srx16xR4z', title: 'one' },
-            ] as DashboardSearchHit[]);
+            ] as DashboardSearchItem[]);
           }
           return Promise.resolve([]);
         });
@@ -98,7 +98,7 @@ describe('SearchSrv', () => {
     beforeEach(() => {
       searchMock.mockImplementation((options) => {
         if (options.starred) {
-          return Promise.resolve([{ id: 1, title: 'starred' }] as DashboardSearchHit[]);
+          return Promise.resolve([{ uid: '1', title: 'starred' }] as DashboardSearchItem[]);
         }
         return Promise.resolve([]);
       });
@@ -123,9 +123,9 @@ describe('SearchSrv', () => {
           return Promise.resolve([
             { uid: 'srx16xR4z', title: 'starred and recent', isStarred: true },
             { uid: 'DSNdW0gVk', title: 'recent' },
-          ] as DashboardSearchHit[]);
+          ] as DashboardSearchItem[]);
         }
-        return Promise.resolve([{ uid: 'srx16xR4z', title: 'starred and recent' }] as DashboardSearchHit[]);
+        return Promise.resolve([{ uid: 'srx16xR4z', title: 'starred and recent' }] as DashboardSearchItem[]);
       });
 
       impressionSrv.getDashboardOpened = jest.fn().mockResolvedValue(['srx16xR4z', 'DSNdW0gVk']);

@@ -68,8 +68,6 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		setup()
 
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
@@ -101,8 +99,6 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		setup()
 
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc123",
@@ -125,8 +121,6 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 		setup()
 
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    false,
 				Uid:          "abc123",
@@ -185,8 +179,6 @@ func TestIntegrationGetPublicDashboard(t *testing.T) {
 	t.Run("returns ErrDashboardNotFound when Dashboard not found", func(t *testing.T) {
 		setup()
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "abc1234",
@@ -232,8 +224,6 @@ func TestIntegrationGetPublicDashboardConfig(t *testing.T) {
 	t.Run("returns along with public dashboard when exists", func(t *testing.T) {
 		setup()
 		cmd := SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "pubdash-uid",
@@ -276,8 +266,6 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	t.Run("saves new public dashboard", func(t *testing.T) {
 		setup()
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "pubdash-uid",
@@ -306,8 +294,6 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 	t.Run("gaurds from saving without dashboardUid", func(t *testing.T) {
 		setup()
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				IsEnabled:    true,
 				Uid:          "pubdash-uid",
@@ -344,8 +330,6 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 
 		pdUid := "asdf1234"
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid: savedDashboard.Uid,
-			OrgId:        savedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				Uid:          pdUid,
 				DashboardUid: savedDashboard.Uid,
@@ -361,8 +345,6 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		// inserting two different public dashboards to test update works and only affect the desired pd by uid
 		anotherPdUid := "anotherUid"
 		err = publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid: anotherSavedDashboard.Uid,
-			OrgId:        anotherSavedDashboard.OrgId,
 			PublicDashboard: PublicDashboard{
 				Uid:          anotherPdUid,
 				DashboardUid: anotherSavedDashboard.Uid,
@@ -386,8 +368,6 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		}
 		// update initial record
 		err = publicdashboardStore.UpdatePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
-			DashboardUid:    savedDashboard.Uid,
-			OrgId:           savedDashboard.OrgId,
 			PublicDashboard: updatedPublicDashboard,
 		})
 		require.NoError(t, err)

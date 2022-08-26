@@ -29,6 +29,7 @@ import {
 import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { queryLogsVolume } from 'app/core/logsModel';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
@@ -90,6 +91,7 @@ export class ElasticDatasource
   languageProvider: LanguageProvider;
   includeFrozen: boolean;
   isProxyAccess: boolean;
+  timeSrv: TimeSrv;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -129,6 +131,7 @@ export class ElasticDatasource
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
+    this.timeSrv = getTimeSrv();
   }
 
   private request(
@@ -867,7 +870,8 @@ export class ElasticDatasource
   }
 
   getTagValues(options: any) {
-    return lastValueFrom(this.getTerms({ field: options.key }));
+    const range = this.timeSrv.timeRange();
+    return lastValueFrom(this.getTerms({ field: options.key }, range));
   }
 
   targetContainsTemplate(target: any) {
