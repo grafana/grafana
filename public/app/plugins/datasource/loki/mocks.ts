@@ -57,6 +57,7 @@ export function createLokiDatasource(
         version: '',
       },
     },
+    readOnly: false,
     jsonData: {
       maxLines: '20',
     },

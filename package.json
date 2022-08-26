@@ -404,7 +404,7 @@
   "resolutions": {
     "underscore": "1.13.4",
     "@types/slate": "0.47.2",
-    "@microsoft/api-extractor-model": "7.22.1",
+    "@microsoft/api-extractor-model": "7.23.3",
     "@rushstack/node-core-library": "3.49.0",
     "@rushstack/rig-package": "0.3.13",
     "@rushstack/ts-command-line": "4.12.1",
