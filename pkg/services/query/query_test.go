@@ -2,7 +2,6 @@ package query_test
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"testing"
 
@@ -27,22 +26,6 @@ import (
 )
 
 func TestQueryData(t *testing.T) {
-	t.Run("it attaches custom headers to the request", func(t *testing.T) {
-		tc := setup(t)
-		tc.dataSourceCache.ds.JsonData = simplejson.NewFromAny(map[string]interface{}{"httpHeaderName1": "foo", "httpHeaderName2": "bar"})
-
-		secureJsonData, err := json.Marshal(map[string]string{"httpHeaderValue1": "test-header", "httpHeaderValue2": "test-header2"})
-		require.NoError(t, err)
-
-		err = tc.secretStore.Set(context.Background(), tc.dataSourceCache.ds.OrgId, tc.dataSourceCache.ds.Name, "datasource", string(secureJsonData))
-		require.NoError(t, err)
-
-		_, err = tc.queryService.QueryData(context.Background(), nil, true, metricRequest(), false)
-		require.Nil(t, err)
-
-		require.Equal(t, map[string]string{"foo": "test-header", "bar": "test-header2"}, tc.pluginContext.req.Headers)
-	})
-
 	t.Run("it auth custom headers to the request", func(t *testing.T) {
 		token := &oauth2.Token{
 			TokenType:   "bearer",
