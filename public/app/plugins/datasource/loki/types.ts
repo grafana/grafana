@@ -150,6 +150,6 @@ export enum LokiVariableQueryType {
 
 export interface LokiVariableQuery extends DataQuery {
   type: LokiVariableQueryType;
-  label: string;
-  stream: string;
+  label?: string;
+  stream?: string;
 }
