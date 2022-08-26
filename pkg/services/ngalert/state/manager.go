@@ -66,9 +66,9 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	return manager
 }
 
-func (st *Manager) Close(ctx context.Context) {
+func (st *Manager) Close() {
 	st.quit <- struct{}{}
-	st.flushState(ctx)
+	st.flushState(context.Background()) // TODO should we have a timeout for this operation?
 }
 
 func (st *Manager) Warm(ctx context.Context) {
