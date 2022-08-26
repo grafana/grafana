@@ -19,14 +19,16 @@ export const GeomapTooltip = ({ ttip, onClose, isOpen }: Props) => {
   const { dialogProps } = useDialog({}, ref);
 
   return (
-    <Portal>
+    <>
       {ttip && ttip.layers && (
-        <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }} allowPointerEvents>
-          <section ref={ref} {...overlayProps} {...dialogProps}>
-            <ComplexDataHoverView layers={ttip.layers} isOpen={isOpen} onClose={onClose} />
-          </section>
-        </VizTooltipContainer>
+        <Portal>
+          <VizTooltipContainer position={{ x: ttip.pageX, y: ttip.pageY }} offset={{ x: 10, y: 10 }} allowPointerEvents>
+            <section ref={ref} {...overlayProps} {...dialogProps}>
+              <ComplexDataHoverView layers={ttip.layers} isOpen={isOpen} onClose={onClose} />
+            </section>
+          </VizTooltipContainer>
+        </Portal>
       )}
-    </Portal>
+    </>
   );
 };
