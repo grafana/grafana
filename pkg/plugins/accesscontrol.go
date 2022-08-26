@@ -13,7 +13,7 @@ var (
 	ScopeProvider = ac.NewScopeProvider("plugins")
 )
 
-func DeclareRBACRoles(acService ac.AccessControl) error {
+func DeclareRBACRoles(service ac.Service) error {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -26,5 +26,5 @@ func DeclareRBACRoles(acService ac.AccessControl) error {
 		},
 		Grants: []string{string(org.RoleViewer)},
 	}
-	return acService.DeclareFixedRoles(AppPluginsReader)
+	return service.DeclareFixedRoles(AppPluginsReader)
 }

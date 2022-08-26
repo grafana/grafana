@@ -139,6 +139,7 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
     module: '',
     baseUrl: '',
   },
+  readOnly: false,
   jsonData: {
     nodeGraph: {
       enabled: true,

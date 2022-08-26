@@ -64,6 +64,10 @@ type StandardSearchService struct {
 	reIndexCh      chan struct{}
 }
 
+func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSearchReadyResponse {
+	return s.dashboardIndex.isInitialized(ctx, orgId)
+}
+
 func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.Service) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{

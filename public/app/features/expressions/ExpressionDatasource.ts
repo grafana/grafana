@@ -94,6 +94,7 @@ export const instanceSettings: DataSourceInstanceSettings = {
     },
   },
   jsonData: {},
+  readOnly: true,
 };
 
 export const dataSource = new ExpressionDatasourceApi(instanceSettings);
