@@ -273,5 +273,15 @@ var (
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "redshiftLongRunningQueries",
+			Description: "Enable long running queries for Redshift",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "athenaLongRunningQueries",
+			Description: "Enable long running queries for Athena",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

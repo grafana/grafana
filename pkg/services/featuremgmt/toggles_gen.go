@@ -202,4 +202,12 @@ const (
 	// FlagTraceqlEditor
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
+
+	// FlagRedshiftLongRunningQueries
+	// Enable long running queries for Redshift
+	FlagRedshiftLongRunningQueries = "redshiftLongRunningQueries"
+
+	// FlagAthenaLongRunningQueries
+	// Enable long running queries for Athena
+	FlagAthenaLongRunningQueries = "athenaLongRunningQueries"
 )
