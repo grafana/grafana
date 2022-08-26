@@ -71,6 +71,10 @@ seqs: [
 				// Marks a plugin as a pre-release.
 				state?: #ReleaseState
 
+        // Abstract visualization type for panels that allows it to match dataFrame.meta.preferredVisualizationType
+        // and be shown in Explore.
+				visualizationType?: string
+
 				// ReleaseState indicates release maturity state of a plugin.
 				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
 

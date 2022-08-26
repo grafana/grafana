@@ -271,7 +271,8 @@ type Model struct {
 
 	// type indicates which type of Grafana plugin this is, of the defined
 	// set of Grafana plugin types.
-	Type Type `json:"type"`
+	Type              Type    `json:"type"`
+	VisualizationType *string `json:"visualizationType,omitempty"`
 }
 
 // Plugin category used on the Add data source page.
