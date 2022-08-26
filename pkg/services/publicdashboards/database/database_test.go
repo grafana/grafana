@@ -291,7 +291,7 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 		assert.False(t, pubdash2.IsEnabled)
 	})
 
-	t.Run("gaurds from saving without dashboardUid", func(t *testing.T) {
+	t.Run("guards from saving without dashboardUid", func(t *testing.T) {
 		setup()
 		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
 			PublicDashboard: PublicDashboard{
