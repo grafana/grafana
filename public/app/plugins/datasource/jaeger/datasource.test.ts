@@ -334,6 +334,7 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
       enabled: true,
     },
   },
+  readOnly: false,
 };
 
 const defaultQuery: DataQueryRequest<JaegerQuery> = {

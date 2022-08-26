@@ -104,3 +104,7 @@ func (s *Service) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQ
 	}
 	return result, nil
 }
+
+func (s *Service) UpdateOrg(ctx context.Context, cmd *org.UpdateOrgCommand) error {
+	return s.store.Update(ctx, cmd)
+}
