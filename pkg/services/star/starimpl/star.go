@@ -9,21 +9,22 @@ import (
 )
 
 type Service struct {
-	store store
+	cstore compositeStore
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg) star.Service {
+	cstore := compositeStore{stores: make(map[storageType]store)}
 	if cfg.IsFeatureToggleEnabled("newDBLibrary") {
-		return &Service{
-			store: &sqlxStore{
-				sess: db.GetSqlxSession(),
-			},
+		cstore.stores[sqlTable] = &sqlxStore{
+			sess: db.GetSqlxSession(),
+		}
+	} else {
+		cstore.stores[sqlTable] = &sqlStore{
+			db: db,
 		}
 	}
 	return &Service{
-		store: &sqlStore{
-			db: db,
-		},
+		cstore: cstore,
 	}
 }
 
@@ -31,24 +32,24 @@ func (s *Service) Add(ctx context.Context, cmd *star.StarDashboardCommand) error
 	if err := cmd.Validate(); err != nil {
 		return err
 	}
-	return s.store.Insert(ctx, cmd)
+	return s.cstore.Insert(ctx, cmd)
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) error {
 	if err := cmd.Validate(); err != nil {
 		return err
 	}
-	return s.store.Delete(ctx, cmd)
+	return s.cstore.Delete(ctx, cmd)
 }
 
 func (s *Service) IsStarredByUser(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
-	return s.store.Get(ctx, query)
+	return s.cstore.Get(ctx, query)
 }
 
 func (s *Service) GetByUser(ctx context.Context, cmd *star.GetUserStarsQuery) (*star.GetUserStarsResult, error) {
-	return s.store.List(ctx, cmd)
+	return s.cstore.List(ctx, cmd)
 }
 
 func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
-	return s.store.DeleteByUser(ctx, userID)
+	return s.cstore.DeleteByUser(ctx, userID)
 }
