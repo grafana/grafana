@@ -88,11 +88,13 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
 	byDataSource := models.GroupQueriesByDataSource(reqDTO.Queries)
 
-	if len(byDataSource) == 1 {
+	// The expression service will handle mixed datasources, so we don't need to group them when an expression is present.
+	if models.HasExpressionQuery(reqDTO.Queries) || len(byDataSource) == 1 {
 		return s.QueryData(ctx, user, skipCache, reqDTO, handleExpressions)
 	} else {
 		resp := backend.NewQueryDataResponse()
 
+		// create new reqDTO with only the queries for that datasource
 		for _, queries := range byDataSource {
 			subDTO := reqDTO.CloneWithQueries(queries)
 
