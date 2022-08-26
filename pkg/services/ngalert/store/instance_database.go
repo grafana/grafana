@@ -15,6 +15,7 @@ type InstanceStore interface {
 	SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
+	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
 }
 
 // GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
@@ -175,4 +176,11 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 	})
 
 	return err
+}
+
+func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
+		return err
+	})
 }

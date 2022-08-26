@@ -45,7 +45,7 @@ export const InspectDataOptions: FC<Props> = ({
   const showFieldConfigsOption = panel && !panel.plugin?.fieldConfigRegistry.isEmpty();
 
   let dataSelect = dataFrames;
-  if (selectedDataFrame === DataTransformerID.seriesToColumns) {
+  if (selectedDataFrame === DataTransformerID.joinByField) {
     dataSelect = data!;
   }
 
@@ -67,7 +67,7 @@ export const InspectDataOptions: FC<Props> = ({
 
     const parts: string[] = [];
 
-    if (selectedDataFrame === DataTransformerID.seriesToColumns) {
+    if (selectedDataFrame === DataTransformerID.joinByField) {
       parts.push(t({ id: 'dashboard.inspect-data.series-to-columns', message: 'Series joined by time' }));
     } else if (data.length > 1) {
       parts.push(getFrameDisplayName(data[selectedDataFrame as number]));

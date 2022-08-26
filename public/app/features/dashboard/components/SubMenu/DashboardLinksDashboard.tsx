@@ -18,7 +18,7 @@ interface Props {
   dashboardId: number;
 }
 
-export const DashboardLinksDashboard: React.FC<Props> = (props) => {
+export const DashboardLinksDashboard = (props: Props) => {
   const { link, linkInfo } = props;
   const listRef = useRef<HTMLUListElement>(null);
   const [dropdownCssClass, setDropdownCssClass] = useState('invisible');

@@ -544,6 +544,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     const clone = new PanelModel(sourceModel);
     clone.isEditing = true;
+    clone.plugin = this.plugin;
 
     const sourceQueryRunner = this.getQueryRunner();
 
