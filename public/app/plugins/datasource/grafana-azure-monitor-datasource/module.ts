@@ -1,10 +1,11 @@
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
-import { reportInteraction, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor';
 import AzureMonitorQueryEditor from './components/QueryEditor';
 import Datasource from './datasource';
 import pluginJson from './plugin.json';
+import { TrackAzureMonitorDashboardLoaded } from './tracking';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureDataSourceJsonData>(Datasource)
@@ -19,14 +20,12 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
     let stats: { [key: string]: number } = {};
     azureQueries.forEach((query) => {
       const statName =
-        (query.queryType?.toLowerCase().replaceAll(' ', '_') ?? 'unknown') +
-        '_queries_' +
-        (query.hide ? 'hidden' : 'executed');
+        (query.queryType ?? '').toLowerCase().replace(/ /gi, '_') + '_queries_' + (query.hide ? 'hidden' : 'executed');
       stats[statName] = ~~stats[statName] + 1;
     });
 
     if (azureQueries && azureQueries.length > 0) {
-      reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
+      TrackAzureMonitorDashboardLoaded({
         grafana_version: grafanaVersion,
         ds_version: pluginJson.info.version,
         dashboard_id: dashboardId,
