@@ -15,6 +15,8 @@ import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasou
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
 
+const LABELS_API_MINIMUM_PROMETHEUS_VERSION = '2.24.0';
+
 /**
  * Attempt to fetch buildinfo from our component
  */
@@ -102,6 +104,10 @@ export async function discoverDataSourceFeatures(dsSettings: {
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
+        labelApiEnabled: prometheusClientVersionGreaterOrEqualTo(
+          metric?.version,
+          LABELS_API_MINIMUM_PROMETHEUS_VERSION
+        ),
       },
     };
   }
@@ -114,6 +120,10 @@ export async function discoverDataSourceFeatures(dsSettings: {
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
+        labelApiEnabled: prometheusClientVersionGreaterOrEqualTo(
+          buildInfoResponse.data.version,
+          LABELS_API_MINIMUM_PROMETHEUS_VERSION
+        ),
       },
     };
   }
@@ -126,6 +136,16 @@ export async function discoverDataSourceFeatures(dsSettings: {
     },
   };
 }
+
+const prometheusClientVersionGreaterOrEqualTo = (clientVersion: string | undefined, targetVersion: string) => {
+  if (!targetVersion) {
+    throw new Error('Target version must be defined!');
+  }
+  if (!clientVersion) {
+    return false;
+  }
+  return clientVersion >= targetVersion;
+};
 
 export async function discoverAlertmanagerFeatures(amSourceName: string): Promise<AlertmanagerApiFeatures> {
   if (amSourceName === GRAFANA_RULES_SOURCE_NAME) {

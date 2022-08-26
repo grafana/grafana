@@ -94,6 +94,7 @@ export interface PromApiFeatures {
   application?: PromApplication;
   features: {
     rulerApiEnabled: boolean;
+    labelApiEnabled?: boolean;
   };
 }
 
