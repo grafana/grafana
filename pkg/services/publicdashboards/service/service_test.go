@@ -26,7 +26,6 @@ import (
 var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
 var defaultPubdashTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
 var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})
-var mergedDashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-12", "to": "now"}})
 var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
 
 func TestLogPrefix(t *testing.T) {
