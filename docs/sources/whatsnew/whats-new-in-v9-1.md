@@ -45,6 +45,8 @@ You can now easily embed Grafana in other applications by adding a JWT token dir
 When the JWT token is passed through the request URL to Grafana, Grafana validates and authenticates the token linked to a specific user, allowing access to dashboards which that user can view.
 To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
 
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+
 {{< figure src="/static/img/docs/dashboards/jwt-url-embedding-9-1.png" max-width="750px" caption="A JWT token used to embed Grafana" >}}
 
 #### Organization role mapping for GitHub OAuth2 authentication
@@ -52,6 +54,8 @@ To see JWT URL embedding in action, see the [sample project](https://github.com/
 You can now use GitHub OAuth2 to map users or teams to specific [Grafana organization roles]({{< relref "../administration/roles-and-permissions/#organization-roles" >}}) by using `role_attribute_path` configuration option.
 Grafana will use [JMESPath](https://jmespath.org/examples.html) for path lookup and role mapping.
 For more information, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/github/#map-roles" >}}).
+
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 {{< figure src="/static/img/docs/permissions/org-role-mapping-github-9-1.png" max-width="750px" caption="Configuring GitHub OAuth2 authentication with role mapping" >}}
 
@@ -97,6 +101,7 @@ To learn more about the Geomap panel, see the [documentation]({{< relref "../vis
 
 You can now link metrics queries to your traces.
 This feature can be accessed by enabling the `traceToMetrics` feature toggle.
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 In your tracing datasource configuration, select a metrics datasource, add tags, and write your queries.
 Each query appears as a link on each span.
@@ -115,6 +120,8 @@ The data is shown in a table in the Tempo datasource under the Service Graph tab
 To access the feature, enable the `tempoApmTable` feature toggle.
 To receive the data for the APM table, you must also enable the metrics generator.
 
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+
 The APM table displays rate, errors, and duration (RED) metrics.
 To view your top five RED span metrics, use the table summary view.
 The span metrics are created using the Tempo [metrics generator](https://grafana.com/blog/2022/05/02/new-in-grafana-tempo-1.4-introducing-the-metrics-generator/).
@@ -132,6 +139,7 @@ To learn more about the APM table, see the [documentation]({{< relref "../dataso
 #### (Alpha) Public dashboards
 
 Public dashboards are available as an alpha feature that can be enabled with the `publicDashboards` feature toggle.
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 You can generate a link for dashboards that you'd like to share publicly.
 Anyone with the link will be able to access that dashboard, and nothing else.

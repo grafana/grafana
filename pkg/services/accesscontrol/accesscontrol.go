@@ -18,10 +18,6 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
-	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
-	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-	// FIXME: Remove from access control interface and inject service where this is needed
-	DeclareFixedRoles(registrations ...RoleRegistration) error
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 }
