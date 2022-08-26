@@ -1,6 +1,7 @@
 // Libraries
-import React, { Component } from 'react';
-import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react-reverse-portal';
+import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import React, { useEffect, useReducer } from 'react';
+import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
 
 import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -20,9 +21,98 @@ interface Props extends GrafanaRouteComponentProps<RouteParams> {}
 
 interface State {
   loading: boolean;
-  portalNode: HtmlPortalNode;
   plugin?: AppPlugin | null;
   nav?: NavModel;
+}
+
+export function AppRootPage({ match, queryParams, location }: Props) {
+  const [state, dispatch] = useReducer(stateSlice.reducer, { loading: true });
+  const portalNode = React.useMemo(() => createHtmlPortalNode(), []);
+  const { plugin, loading, nav } = state;
+
+  // Only rebuild visual query if expr changes from outside
+  useEffect(() => {
+    loadAppPlugin(match.params.pluginId, dispatch);
+  }, [match.params.pluginId]);
+
+  if (!plugin) {
+    return <Page navId="apps">{loading && <PageLoader />}</Page>;
+  }
+
+  if (!plugin.root) {
+    <Page navId="apps">
+      <div>No root App</div>;
+    </Page>;
+  }
+
+  const pluginRoot = (
+    <plugin.root
+      meta={plugin.meta}
+      basename={match.url}
+      onNavChanged={(newNav: NavModel) => dispatch(stateSlice.actions.changeNav(newNav))}
+      query={queryParams as KeyValue}
+      path={location.pathname}
+    />
+  );
+
+  if (config.featureToggles.topnav && !nav) {
+    return pluginRoot;
+  }
+
+  return (
+    <>
+      <InPortal node={portalNode}>{pluginRoot}</InPortal>
+      {nav ? (
+        <Page navModel={nav}>
+          <Page.Contents isLoading={loading}>
+            <OutPortal node={portalNode} />
+          </Page.Contents>
+        </Page>
+      ) : (
+        <Page>
+          <OutPortal node={portalNode} />
+        </Page>
+      )}
+    </>
+  );
+}
+
+const initialState: State = { loading: true };
+
+const stateSlice = createSlice({
+  name: 'prom-builder-container',
+  initialState: initialState,
+  reducers: {
+    setState: (state, action: PayloadAction<Partial<State>>) => {
+      Object.assign(state, action.payload);
+    },
+    changeNav: (state, action: PayloadAction<NavModel>) => {
+      state.nav = action.payload;
+    },
+  },
+});
+
+async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
+  try {
+    const app = await getPluginSettings(pluginId).then((info) => {
+      const error = getAppPluginPageError(info);
+      if (error) {
+        appEvents.emit(AppEvents.alertError, [error]);
+        dispatch(stateSlice.actions.setState({ nav: getWarningNav(error) }));
+        return null;
+      }
+      return importAppPlugin(info);
+    });
+    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, nav: undefined }));
+  } catch (err) {
+    dispatch(
+      stateSlice.actions.setState({
+        plugin: null,
+        loading: false,
+        nav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
+      })
+    );
+  }
 }
 
 export function getAppPluginPageError(meta: AppPluginMeta) {
@@ -36,104 +126,6 @@ export function getAppPluginPageError(meta: AppPluginMeta) {
     return 'Application Not Enabled';
   }
   return null;
-}
-
-class AppRootPage extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      loading: true,
-      portalNode: createHtmlPortalNode(),
-    };
-  }
-
-  shouldComponentUpdate(nextProps: Props) {
-    return nextProps.location.pathname.startsWith('/a/');
-  }
-
-  async loadPluginSettings() {
-    const { params } = this.props.match;
-    try {
-      const app = await getPluginSettings(params.pluginId).then((info) => {
-        const error = getAppPluginPageError(info);
-        if (error) {
-          appEvents.emit(AppEvents.alertError, [error]);
-          this.setState({ nav: getWarningNav(error) });
-          return null;
-        }
-        return importAppPlugin(info);
-      });
-      this.setState({ plugin: app, loading: false, nav: undefined });
-    } catch (err) {
-      this.setState({
-        plugin: null,
-        loading: false,
-        nav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
-      });
-    }
-  }
-
-  componentDidMount() {
-    this.loadPluginSettings();
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    const { params } = this.props.match;
-
-    if (prevProps.match.params.pluginId !== params.pluginId) {
-      this.setState({ loading: true, plugin: null });
-      this.loadPluginSettings();
-    }
-  }
-
-  onNavChanged = (nav: NavModel) => {
-    this.setState({ nav });
-  };
-
-  render() {
-    const { loading, plugin, nav, portalNode } = this.state;
-
-    if (!plugin) {
-      return <Page navId="apps">{loading && <PageLoader />}</Page>;
-    }
-
-    if (!plugin.root) {
-      <Page navId="apps">
-        <div>No root App</div>;
-      </Page>;
-    }
-
-    const pluginRoot = (
-      <plugin.root
-        meta={plugin.meta}
-        basename={this.props.match.url}
-        onNavChanged={this.onNavChanged}
-        query={this.props.queryParams as KeyValue}
-        path={this.props.location.pathname}
-      />
-    );
-
-    if (config.featureToggles.topnav && !nav) {
-      return pluginRoot;
-    }
-
-    return (
-      <>
-        <InPortal node={portalNode}>{pluginRoot}</InPortal>
-        {nav ? (
-          <Page navModel={nav}>
-            <Page.Contents isLoading={loading}>
-              <OutPortal node={portalNode} />
-            </Page.Contents>
-          </Page>
-        ) : (
-          <Page>
-            <OutPortal node={portalNode} />
-          </Page>
-        )}
-      </>
-    );
-  }
 }
 
 export default AppRootPage;
