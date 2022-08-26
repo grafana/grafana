@@ -38,7 +38,7 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../variables/variable-types/global-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../variables/variable-types/global-variables/#__interval_ms" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../variables/add-template-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../variables/add-template-variables/#__interval_ms" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -341,7 +341,7 @@ Grafana automatically creates a quoted, comma-separated string for multi-value v
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../variables/variable-types/#advanced-formatting-options" >}}) documentation.
+Read more about variable formatting options in the [Variables]({{< relref "../variables/advanced-variable-format-options" >}}) documentation.
 
 ## Annotations
 

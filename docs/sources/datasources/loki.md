@@ -227,7 +227,7 @@ Loki supports the special ad hoc filters variable type. It allows you to specify
 
 ### Using interval and range variables
 
-You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}).
+You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/add-template-variables/#global-variables/" >}}).
 
 ## Annotations
 
