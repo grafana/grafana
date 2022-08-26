@@ -56,10 +56,12 @@ func doLoadFrameworkCUE(ctx *cue.Context) (v cue.Value, err error) {
 
 	over := make(map[string]load.Source)
 
-	var absolutePath string
-	absolutePath, err = filepath.Abs(prefix)
-	if err != nil {
-		return
+	absolutePath := prefix
+	if !filepath.IsAbs(absolutePath) {
+		absolutePath, err = filepath.Abs(absolutePath)
+		if err != nil {
+			return
+		}
 	}
 
 	err = tload.ToOverlay(absolutePath, m, over)
