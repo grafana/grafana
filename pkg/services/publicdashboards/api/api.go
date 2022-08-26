@@ -120,23 +120,28 @@ func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response
 // Sets public dashboard configuration for dashboard
 // POST /api/dashboards/uid/:uid/public-config
 func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
+	// exit if we don't have a valid dashboardUid
+	dashboardUid := web.Params(c.Req)[":uid"]
+	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
+		handleDashboardErr(http.StatusBadRequest, "no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+	}
+
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	// Always set the org id to the current auth session orgId
+	// Always set the orgID and userID from the session
 	pubdash.OrgId = c.OrgID
-
 	dto := SavePublicDashboardConfigDTO{
-		OrgId:           c.OrgID,
-		DashboardUid:    web.Params(c.Req)[":uid"],
 		UserId:          c.UserID,
+		OrgId:           c.OrgID,
+		DashboardUid:    dashboardUid,
 		PublicDashboard: pubdash,
 	}
 
 	// Save the public dashboard
-	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
+	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)
 	}

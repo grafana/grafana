@@ -17,7 +17,7 @@ type Service interface {
 	GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	SavePublicDashboardConfig(ctx context.Context, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
+	SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardConfigDTO) (*PublicDashboard, error)
 	BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64) (dtos.MetricRequest, error)
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
 	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)
@@ -28,8 +28,9 @@ type Store interface {
 	GetPublicDashboard(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error)
 	GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error)
 	GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
+	GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error)
 	GenerateNewPublicDashboardUid(ctx context.Context) (string, error)
-	SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) (*PublicDashboard, error)
+	SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
 	UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error
 	PublicDashboardEnabled(ctx context.Context, dashboardUid string) (bool, error)
 	AccessTokenExists(ctx context.Context, accessToken string) (bool, error)

@@ -186,13 +186,13 @@ func (_m *FakePublicDashboardService) PublicDashboardEnabled(ctx context.Context
 	return r0, r1
 }
 
-// SavePublicDashboardConfig provides a mock function with given fields: ctx, dto
-func (_m *FakePublicDashboardService) SavePublicDashboardConfig(ctx context.Context, dto *publicdashboardsmodels.SavePublicDashboardConfigDTO) (*publicdashboardsmodels.PublicDashboard, error) {
-	ret := _m.Called(ctx, dto)
+// SavePublicDashboardConfig provides a mock function with given fields: ctx, u, dto
+func (_m *FakePublicDashboardService) SavePublicDashboardConfig(ctx context.Context, u *user.SignedInUser, dto *publicdashboardsmodels.SavePublicDashboardConfigDTO) (*publicdashboardsmodels.PublicDashboard, error) {
+	ret := _m.Called(ctx, u, dto)
 
 	var r0 *publicdashboardsmodels.PublicDashboard
-	if rf, ok := ret.Get(0).(func(context.Context, *publicdashboardsmodels.SavePublicDashboardConfigDTO) *publicdashboardsmodels.PublicDashboard); ok {
-		r0 = rf(ctx, dto)
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, *publicdashboardsmodels.SavePublicDashboardConfigDTO) *publicdashboardsmodels.PublicDashboard); ok {
+		r0 = rf(ctx, u, dto)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*publicdashboardsmodels.PublicDashboard)
@@ -200,8 +200,8 @@ func (_m *FakePublicDashboardService) SavePublicDashboardConfig(ctx context.Cont
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *publicdashboardsmodels.SavePublicDashboardConfigDTO) error); ok {
-		r1 = rf(ctx, dto)
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, *publicdashboardsmodels.SavePublicDashboardConfigDTO) error); ok {
+		r1 = rf(ctx, u, dto)
 	} else {
 		r1 = ret.Error(1)
 	}
