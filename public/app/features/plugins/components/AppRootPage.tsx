@@ -1,7 +1,8 @@
 // Libraries
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import React, { useEffect, useReducer } from 'react';
+import React, { useCallback, useEffect, useReducer } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
+import { createSelector } from 'reselect';
 
 import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -10,9 +11,12 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { appEvents } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState, useSelector } from 'app/types';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
+
 interface RouteParams {
   pluginId: string;
 }
@@ -22,48 +26,59 @@ interface Props extends GrafanaRouteComponentProps<RouteParams> {}
 interface State {
   loading: boolean;
   plugin?: AppPlugin | null;
-  nav?: NavModel;
+  pluginNav: NavModel | null;
 }
 
-export function AppRootPage({ match, queryParams, location }: Props) {
-  const [state, dispatch] = useReducer(stateSlice.reducer, { loading: true });
-  const portalNode = React.useMemo(() => createHtmlPortalNode(), []);
-  const { plugin, loading, nav } = state;
+const initialState: State = { loading: true, pluginNav: null, plugin: null };
 
-  // Only rebuild visual query if expr changes from outside
+export function AppRootPage({ match, queryParams, location }: Props) {
+  const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
+  const portalNode = React.useMemo(() => createHtmlPortalNode(), []);
+  const { plugin, loading, pluginNav } = state;
+  const sectionNav = useSelector(createSelector(getNavIndex, (navIndex) => getNavModel(navIndex, 'apps')));
+
   useEffect(() => {
     loadAppPlugin(match.params.pluginId, dispatch);
   }, [match.params.pluginId]);
 
-  if (!plugin) {
+  const onNavChanged = useCallback(
+    (newPluginNav: NavModel) => dispatch(stateSlice.actions.changeNav(newPluginNav)),
+    []
+  );
+
+  if (!plugin || match.params.pluginId !== plugin.meta.id) {
     return <Page navId="apps">{loading && <PageLoader />}</Page>;
   }
 
   if (!plugin.root) {
-    <Page navId="apps">
-      <div>No root App</div>;
-    </Page>;
+    return (
+      <Page navId="apps">
+        <div>No root app page component found</div>;
+      </Page>
+    );
   }
 
-  const pluginRoot = (
+  const pluginRoot = plugin.root && (
     <plugin.root
       meta={plugin.meta}
       basename={match.url}
-      onNavChanged={(newNav: NavModel) => dispatch(stateSlice.actions.changeNav(newNav))}
+      onNavChanged={onNavChanged}
       query={queryParams as KeyValue}
       path={location.pathname}
     />
   );
 
-  if (config.featureToggles.topnav && !nav) {
+  if (config.featureToggles.topnav && !pluginNav) {
     return pluginRoot;
   }
+
+  const finalNav = addSectionNav(pluginNav, sectionNav);
 
   return (
     <>
       <InPortal node={portalNode}>{pluginRoot}</InPortal>
-      {nav ? (
-        <Page navModel={nav}>
+      {finalNav ? (
+        <Page navModel={finalNav}>
           <Page.Contents isLoading={loading}>
             <OutPortal node={portalNode} />
           </Page.Contents>
@@ -77,7 +92,18 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 }
 
-const initialState: State = { loading: true };
+function addSectionNav(pluginNav: NavModel | null, sectionNav: NavModel) {
+  // When topnav is disabled we only just show pluginNav like before
+  if (!config.featureToggles.topnav) {
+    return pluginNav;
+  }
+
+  if (!pluginNav) {
+    return sectionNav;
+  }
+
+  return sectionNav;
+}
 
 const stateSlice = createSlice({
   name: 'prom-builder-container',
@@ -87,7 +113,7 @@ const stateSlice = createSlice({
       Object.assign(state, action.payload);
     },
     changeNav: (state, action: PayloadAction<NavModel>) => {
-      state.nav = action.payload;
+      state.pluginNav = action.payload;
     },
   },
 });
@@ -98,21 +124,25 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       const error = getAppPluginPageError(info);
       if (error) {
         appEvents.emit(AppEvents.alertError, [error]);
-        dispatch(stateSlice.actions.setState({ nav: getWarningNav(error) }));
+        dispatch(stateSlice.actions.setState({ pluginNav: getWarningNav(error) }));
         return null;
       }
       return importAppPlugin(info);
     });
-    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, nav: undefined }));
+    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, pluginNav: null }));
   } catch (err) {
     dispatch(
       stateSlice.actions.setState({
         plugin: null,
         loading: false,
-        nav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
+        pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );
   }
+}
+
+function getNavIndex(store: StoreState) {
+  return store.navIndex;
 }
 
 export function getAppPluginPageError(meta: AppPluginMeta) {
