@@ -2900,9 +2900,6 @@ exports[`better eslint`] = {
     "public/app/core/components/Select/SortPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/core/components/SharedPreferences/SharedPreferences.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/core/components/TagFilter/TagBadge.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
