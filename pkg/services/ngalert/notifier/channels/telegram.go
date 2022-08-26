@@ -165,7 +165,6 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 		tn.log.Warn("Telegram message too long, truncate message", "original_message", tn.Message)
 	}
 	
-	
 	m := make(map[string]string)
 	m["text"] = messageText
 	m["parse_mode"] = "html"
