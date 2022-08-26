@@ -162,10 +162,9 @@ func (ng *AlertNG) init() error {
 		InstanceStore: store,
 		RuleStore:     store,
 		Metrics:       ng.Metrics.GetSchedulerMetrics(),
-		AlertSender:   alertsRouter,
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, alertsRouter, clk)
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title

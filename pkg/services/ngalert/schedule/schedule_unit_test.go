@@ -37,7 +37,7 @@ import (
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-		senderMock *AlertsSenderMock,
+		senderMock *state.AlertsSenderMock,
 	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, prometheus.Gatherer) {
 		ruleStore := store.NewFakeRuleStore(t)
 		instanceStore := &store.FakeInstanceStore{}
@@ -217,7 +217,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 		updateChan := make(chan ruleVersion)
 
-		sender := AlertsSenderMock{}
+		sender := state.AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
@@ -297,7 +297,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
 
-		sender := AlertsSenderMock{}
+		sender := state.AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, &sender)
@@ -355,7 +355,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
 			assert.Len(t, args.PostableAlerts, 1)
-			assert.Equal(t, ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
+			assert.Equal(t, state.ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
 		})
 	})
 
@@ -367,7 +367,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
 
-			sender := AlertsSenderMock{}
+			sender := state.AlertsSenderMock{}
 			sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
 			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
@@ -400,7 +400,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
 
-		sender := AlertsSenderMock{}
+		sender := state.AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
@@ -481,7 +481,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
+func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanceStore, registry *prometheus.Registry, senderMock *state.AlertsSenderMock, evalMock *eval.FakeEvaluator) *schedule {
 	t.Helper()
 
 	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
@@ -513,7 +513,7 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 	}
 
 	if senderMock == nil {
-		senderMock = &AlertsSenderMock{}
+		senderMock = &state.AlertsSenderMock{}
 		senderMock.EXPECT().Send(mock.Anything, mock.Anything).Return()
 	}
 
@@ -523,15 +523,14 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 	}
 
 	schedCfg := SchedulerCfg{
-		Cfg:         cfg,
-		C:           mockedClock,
-		Evaluator:   evaluator,
-		RuleStore:   rs,
-		Logger:      logger,
-		Metrics:     m.GetSchedulerMetrics(),
-		AlertSender: senderMock,
+		Cfg:       cfg,
+		C:         mockedClock,
+		Evaluator: evaluator,
+		RuleStore: rs,
+		Logger:    logger,
+		Metrics:   m.GetSchedulerMetrics(),
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, mockedClock)
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, senderMock, mockedClock)
 	return NewScheduler(schedCfg, appUrl, st)
 }
 

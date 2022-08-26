@@ -148,7 +148,7 @@ func TestAlertingTicker(t *testing.T) {
 		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
 	}
 
-	notifier := &schedule.AlertsSenderMock{}
+	notifier := &state.AlertsSenderMock{}
 	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
 
 	schedCfg := schedule.SchedulerCfg{

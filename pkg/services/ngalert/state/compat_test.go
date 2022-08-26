@@ -1,4 +1,4 @@
-package schedule
+package state
 
 import (
 	"fmt"
@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -214,7 +213,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 	}
 
 	evalStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.Error, eval.NoData}
-	states := make([]*state.State, 0, len(evalStates))
+	states := make([]*State, 0, len(evalStates))
 	for _, s := range evalStates {
 		states = append(states, randomState(s))
 	}
@@ -258,8 +257,8 @@ func randomTimeInPast() time.Time {
 	return time.Now().Add(-randomDuration())
 }
 
-func randomState(evalState eval.State) *state.State {
-	return &state.State{
+func randomState(evalState eval.State) *State {
+	return &State{
 		State:              evalState,
 		AlertRuleUID:       util.GenerateShortUID(),
 		StartsAt:           time.Now(),

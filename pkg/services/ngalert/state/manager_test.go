@@ -37,7 +37,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
-	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New())
+	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, &state.AlertsSenderMock{}, clock.New())
 
 	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 	annotations.SetRepository(fakeAnnoRepo)
@@ -1981,7 +1981,7 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clock.New())
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, &state.AlertsSenderMock{}, clock.New())
 		t.Run(tc.desc, func(t *testing.T) {
 			fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 			annotations.SetRepository(fakeAnnoRepo)
@@ -2014,7 +2014,7 @@ func TestProcessEvalResults(t *testing.T) {
 		annotations.SetRepository(fakeAnnoRepo)
 		instanceStore := &store.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, clk)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, &state.AlertsSenderMock{}, clk)
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
@@ -2131,7 +2131,7 @@ func TestStaleResultsHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		ctx := context.Background()
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clock.New())
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, &state.AlertsSenderMock{}, clock.New())
 		st.Warm(ctx)
 		existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 

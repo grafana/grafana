@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -40,12 +39,6 @@ type ScheduleService interface {
 	evalApplied(ngmodels.AlertRuleKey, time.Time)
 	stopApplied(ngmodels.AlertRuleKey)
 	overrideCfg(cfg SchedulerCfg)
-}
-
-//go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
-// AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
-type AlertsSender interface {
-	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
 
 type schedule struct {
@@ -84,7 +77,6 @@ type schedule struct {
 
 	metrics *metrics.Scheduler
 
-	alertsSender    AlertsSender
 	minRuleInterval time.Duration
 
 	// schedulableAlertRules contains the alert rules that are considered for
@@ -105,7 +97,6 @@ type SchedulerCfg struct {
 	RuleStore       store.RuleStore
 	InstanceStore   store.InstanceStore
 	Metrics         *metrics.Scheduler
-	AlertSender     AlertsSender
 }
 
 // NewScheduler returns a new schedule.
@@ -129,7 +120,6 @@ func NewScheduler(cfg SchedulerCfg, appURL *url.URL, stateManager *state.Manager
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.Cfg.MinInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
-		alertsSender:          cfg.AlertSender,
 	}
 
 	return &sch
@@ -297,9 +287,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 	clearState := func() {
 		states := sch.stateManager.ResetStateByRuleUID(grafanaCtx, key)
-		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
+		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
-			sch.alertsSender.Send(key, expiredAlerts)
+			sch.stateManager.AlertsSender.Send(key, expiredAlerts)
 		}
 	}
 
@@ -322,9 +312,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			return
 		}
 		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, extraLabels)
-		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		alerts := state.FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		if len(alerts.PostableAlerts) > 0 {
-			sch.alertsSender.Send(key, alerts)
+			sch.stateManager.AlertsSender.Send(key, alerts)
 		}
 	}
 

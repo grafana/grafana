@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -25,6 +26,12 @@ import (
 )
 
 var ResendDelay = 30 * time.Second
+
+//go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
+// AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
+type AlertsSender interface {
+	Send(key ngModels.AlertRuleKey, alerts definitions.PostableAlerts)
+}
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
@@ -45,11 +52,12 @@ type Manager struct {
 	instanceStore    store.InstanceStore
 	dashboardService dashboards.DashboardService
 	imageService     image.ImageService
+	AlertsSender     AlertsSender
 }
 
 func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 	ruleStore store.RuleStore, instanceStore store.InstanceStore,
-	dashboardService dashboards.DashboardService, imageService image.ImageService, clock clock.Clock) *Manager {
+	dashboardService dashboards.DashboardService, imageService image.ImageService, alertsSender AlertsSender, clock clock.Clock) *Manager {
 	manager := &Manager{
 		cache:            newCache(logger, metrics, externalURL),
 		quit:             make(chan struct{}),
@@ -61,6 +69,7 @@ func NewManager(logger log.Logger, metrics *metrics.State, externalURL *url.URL,
 		dashboardService: dashboardService,
 		imageService:     imageService,
 		clock:            clock,
+		AlertsSender:     alertsSender,
 	}
 	go manager.recordMetrics()
 	return manager
