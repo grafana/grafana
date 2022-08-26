@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -262,6 +263,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Description: "Add and configure data sources",
 			Id:          "datasources",
 			Url:         hs.Cfg.AppSubURL + "/datasources",
+		})
+	}
+
+	if hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Correlations",
+			Icon:        "gf-glue",
+			Description: "Add and configure correlations",
+			Id:          "correlations",
+			Url:         hs.Cfg.AppSubURL + "/datasources/correlations",
 		})
 	}
 
