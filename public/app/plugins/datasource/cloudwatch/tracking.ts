@@ -13,7 +13,7 @@ interface CloudWatchOnDashboardLoadedTrackingEvent {
   grafanaVersion?: string;
 
   /* The number of CloudWatch logs queries present in the dashboard*/
-  logs_queries_count?: number;
+  logs_queries_count: number;
 
   /* The number of CloudWatch metrics queries present in the dashboard*/
   metrics_queries_count: number;
