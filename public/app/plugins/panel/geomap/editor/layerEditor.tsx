@@ -27,7 +27,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         return { ...parent, options: opts.state.options, instanceState: opts.state };
       },
       getValue: (path: string) => lodashGet(opts.state.options, path),
-      onChange: (path: string, value: any) => {
+      onChange: (path: string, value: string) => {
         const { state } = opts;
         const { options } = state;
         if (path === 'type' && value) {

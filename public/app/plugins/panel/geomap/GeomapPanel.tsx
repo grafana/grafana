@@ -366,7 +366,7 @@ export class GeomapPanel extends Component<Props, State> {
     if (!this.map || this.state.ttipOpen) {
       return false;
     }
-    const mouse = evt.originalEvent as any;
+    const mouse = evt.originalEvent as MouseEvent;
     const pixel = this.map.getEventPixel(mouse);
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
@@ -531,7 +531,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     const UID = options.name;
-    const state: MapLayerState<any> = {
+    const state: MapLayerState<unknown> = {
       // UID, // unique name when added to the map (it may change and will need special handling)
       isBasemap,
       options,
@@ -555,7 +555,7 @@ export class GeomapPanel extends Component<Props, State> {
     return state;
   }
 
-  applyLayerFilter(handler: MapLayerHandler<any>, options: MapLayerOptions<any>): void {
+  applyLayerFilter(handler: MapLayerHandler<unknown>, options: MapLayerOptions<unknown>): void {
     if (handler.update) {
       let panelData = this.props.data;
       if (options.filterData) {
