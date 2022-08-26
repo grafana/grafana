@@ -1,26 +1,31 @@
-import { mount, shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DataSourceHttpSettings } from '@grafana/ui';
-
 import { ConfigEditor } from './ConfigEditor';
-import { ElasticDetails } from './ElasticDetails';
-import { LogsConfig } from './LogsConfig';
 import { createDefaultConfigOptions } from './mocks';
 
 describe('ConfigEditor', () => {
   it('should render without error', () => {
-    mount(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+    expect(() =>
+      render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />)
+    ).not.toThrow();
   });
 
   it('should render all parts of the config', () => {
-    const wrapper = shallow(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
-    expect(wrapper.find(DataSourceHttpSettings).length).toBe(1);
-    expect(wrapper.find(ElasticDetails).length).toBe(1);
-    expect(wrapper.find(LogsConfig).length).toBe(1);
+    render(<ConfigEditor onOptionsChange={() => {}} options={createDefaultConfigOptions()} />);
+
+    // Check DataSourceHttpSettings are rendered
+    expect(screen.getByRole('heading', { name: 'HTTP' })).toBeInTheDocument();
+
+    // Check ElasticDetails are rendered
+    expect(screen.getByText('Elasticsearch details')).toBeInTheDocument();
+
+    // Check LogsConfig are rendered
+    expect(screen.getByText('Logs')).toBeInTheDocument();
   });
 
   it('should set defaults', () => {
+    const mockOnOptionsChange = jest.fn();
     const options = createDefaultConfigOptions();
     // @ts-ignore
     delete options.jsonData.esVersion;
@@ -28,25 +33,24 @@ describe('ConfigEditor', () => {
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;
 
-    expect.assertions(3);
+    render(<ConfigEditor onOptionsChange={mockOnOptionsChange} options={options} />);
 
-    mount(
-      <ConfigEditor
-        onOptionsChange={(options) => {
-          expect(options.jsonData.esVersion).toBe('5.0.0');
-          expect(options.jsonData.timeField).toBe('@timestamp');
-          expect(options.jsonData.maxConcurrentShardRequests).toBe(5);
-        }}
-        options={options}
-      />
+    expect(mockOnOptionsChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jsonData: expect.objectContaining({
+          esVersion: '5.0.0',
+          timeField: '@timestamp',
+          maxConcurrentShardRequests: 5,
+        }),
+      })
     );
   });
 
   it('should not apply default if values are set', () => {
-    const onChange = jest.fn();
+    const mockOnOptionsChange = jest.fn();
 
-    mount(<ConfigEditor onOptionsChange={onChange} options={createDefaultConfigOptions()} />);
+    render(<ConfigEditor onOptionsChange={mockOnOptionsChange} options={createDefaultConfigOptions()} />);
 
-    expect(onChange).toHaveBeenCalledTimes(0);
+    expect(mockOnOptionsChange).toHaveBeenCalledTimes(0);
   });
 });
