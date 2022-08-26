@@ -317,28 +317,28 @@ export function SelectBase<T>({
               />
             );
           },
-          LoadingIndicator(props: any) {
-            return <Spinner inline={true} />;
+          LoadingIndicator() {
+            return <Spinner inline />;
           },
-          LoadingMessage(props: any) {
+          LoadingMessage() {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
           },
-          NoOptionsMessage(props: any) {
+          NoOptionsMessage() {
             return (
               <div className={styles.loadingMessage} aria-label="No options provided">
                 {noOptionsMessage}
               </div>
             );
           },
-          DropdownIndicator(props: any) {
+          DropdownIndicator(props) {
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
             return <SingleValue {...props} disabled={disabled} />;
           },
+          SelectContainer,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
-          SelectContainer,
           ...components,
         }}
         styles={selectStyles}
