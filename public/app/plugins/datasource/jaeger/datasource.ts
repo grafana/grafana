@@ -48,9 +48,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     return res.data.data;
   }
 
-  // Return false if the search form has not been filled in sufficiently. Currently, this only checks if a service
-  // has been selected, but this func can later be expanded if the search form becomes more complex.
-  isFormValid(query: JaegerQuery): boolean {
+  isSearchFormValid(query: JaegerQuery): boolean {
     return !!query.service;
   }
 
@@ -63,7 +61,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       return of({ data: [emptyTraceDataFrame] });
     }
 
-    if (target.queryType === 'search' && !this.isFormValid(target)) {
+    if (target.queryType === 'search' && !this.isSearchFormValid(target)) {
       return of({ error: { message: 'You must select a service.' }, data: [] });
     }
 
