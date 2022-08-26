@@ -101,7 +101,7 @@ export default class PrometheusMetricFindQuery {
         start: start.toString(),
         end: end.toString(),
       };
-      
+
       return this.datasource.getBuildInfo().then((buildInfo) => {
         console.log('is it working?');
         if (buildInfo?.features.labelApiEnabled) {
