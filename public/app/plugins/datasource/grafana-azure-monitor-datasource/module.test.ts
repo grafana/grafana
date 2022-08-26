@@ -17,8 +17,10 @@ jest.mock('@grafana/runtime', () => {
             grafanaVersion: 'v9.0.0',
             queries: {
               'grafana-azure-monitor-datasource': [
-                { queryType: 'Azure Monitor', hide: true },
-                { queryType: 'Azure Resource Graph', hide: false },
+                { queryType: 'Azure Monitor', hide: false },
+                { queryType: 'Azure Log Analytics', hide: false },
+                { queryType: 'Azure Resource Graph', hide: true },
+                { queryType: 'Azure Monitor', hide: false },
               ],
             },
           })
@@ -35,11 +37,9 @@ describe('queriesOnInitDashboard', () => {
       dashboard_id: 'dashboard123',
       grafana_version: 'v9.0.0',
       org_id: 1,
-      user_id: 2,
-      queries: [
-        { query_type: 'Azure Monitor', hidden: true },
-        { query_type: 'Azure Resource Graph', hidden: false },
-      ],
+      azure_monitor_queries_executed: 2,
+      azure_log_analytics_queries_executed: 1,
+      azure_resource_graph_queries_hidden: 1,
     });
   });
 });

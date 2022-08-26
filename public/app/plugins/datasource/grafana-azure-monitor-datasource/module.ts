@@ -16,16 +16,21 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
   DashboardLoadedEvent,
   ({ payload: { dashboardId, orgId, userId, grafanaVersion, queries } }) => {
     const azureQueries = queries[pluginJson.id];
+    let stats: { [key: string]: number } = {};
+    azureQueries.forEach((query) => {
+      const statName =
+        (query.queryType?.toLowerCase().replaceAll(' ', '_') ?? 'unknown') +
+        '_queries_' +
+        (query.hide ? 'hidden' : 'executed');
+      stats[statName] = ~~stats[statName] + 1;
+    });
+
     if (azureQueries && azureQueries.length > 0) {
       reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', {
         grafana_version: grafanaVersion,
         dashboard_id: dashboardId,
         org_id: orgId,
-        user_id: userId,
-        queries: azureQueries.map((query: AzureMonitorQuery) => ({
-          hidden: !!query.hide,
-          query_type: query.queryType,
-        })),
+        ...stats,
       });
     }
   }
