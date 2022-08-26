@@ -14,8 +14,9 @@ type Star struct {
 // COMMANDS
 
 type StarDashboardCommand struct {
-	UserID      int64 `xorm:"user_id"`
-	DashboardID int64 `xorm:"dashboard_id"`
+	UserID       int64  `xorm:"user_id"`
+	DashboardID  int64  `xorm:"dashboard_id"`
+	DashboardUID string `xorm:"-"`
 }
 
 func (cmd *StarDashboardCommand) Validate() error {
@@ -26,8 +27,9 @@ func (cmd *StarDashboardCommand) Validate() error {
 }
 
 type UnstarDashboardCommand struct {
-	UserID      int64 `xorm:"user_id"`
-	DashboardID int64 `xorm:"dashboard_id"`
+	UserID       int64  `xorm:"user_id"`
+	DashboardID  int64  `xorm:"dashboard_id"`
+	DashboardUID string `xorm:"-"`
 }
 
 func (cmd *UnstarDashboardCommand) Validate() error {
