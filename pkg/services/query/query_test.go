@@ -97,6 +97,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 				"type": "math"
 			}
 		`))
+		require.NoError(t, err)
 		queries := []*simplejson.Json{query1, query2, query3}
 		reqDTO := dtos.MetricRequest{
 			From:                       "2022-01-01",
