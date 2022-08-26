@@ -244,7 +244,14 @@ func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFro
 		a.Format = bucketAgg.Settings.Get("format").MustString(es.DateFormatEpochMS)
 
 		if a.FixedInterval == "auto" {
-			a.FixedInterval = "$__interval"
+			// note this is not really a valid grafana-variable-handling,
+			// because normally this would not match `$__interval_ms`,
+			// but because how we apply these in the go-code, this will work
+			// correctly, and becomes something like `500ms`.
+			// a nicer way would be to use `${__interval_ms}ms`, but
+			// that format is not recognized where we apply these variables
+			// in the elasticsearch datasource
+			a.FixedInterval = "$__interval_msms"
 		}
 
 		if offset, err := bucketAgg.Settings.Get("offset").String(); err == nil {

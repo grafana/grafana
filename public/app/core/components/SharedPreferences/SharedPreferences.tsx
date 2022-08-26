@@ -134,18 +134,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const { disabled } = this.props;
     const styles = getStyles();
 
-    const homeDashboardTooltip = (
-      <Tooltip
-        content={
-          <Trans id="shared-preferences.fields.home-dashboard-tooltip">
-            Not finding the dashboard you want? Star it first, then it should appear in this select box.
-          </Trans>
-        }
-      >
-        <Icon name="info-circle" />
-      </Tooltip>
-    );
-
     return (
       <Form onSubmit={this.onSubmitForm}>
         {() => {
@@ -165,8 +153,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     <span className={styles.labelText}>
                       <Trans id="shared-preferences.fields.home-dashboard-label">Home Dashboard</Trans>
                     </span>
-
-                    {homeDashboardTooltip}
                   </Label>
                 }
                 data-testid="User preferences home dashboard drop down"
@@ -178,7 +164,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                   isClearable={true}
                   placeholder={t({
                     id: 'shared-preferences.fields.home-dashboard-placeholder',
-                    message: 'Choose default dashboard',
+                    message: 'Default dashboard',
                   })}
                   inputId="home-dashboard-select"
                 />

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -25,11 +24,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-)
-
-const (
-	headerName  = "httpHeaderName"
-	headerValue = "httpHeaderValue"
 )
 
 func ProvideService(
@@ -185,10 +179,6 @@ func (s *Service) handleQueryData(ctx context.Context, user *user.SignedInUser, 
 		}
 	}
 
-	for k, v := range customHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
-		req.Headers[k] = v
-	}
-
 	if parsedReq.httpRequest != nil {
 		proxyutil.ClearCookieHeader(parsedReq.httpRequest, ds.AllowedCookies())
 		if cookieStr := parsedReq.httpRequest.Header.Get("Cookie"); cookieStr != "" {
@@ -214,26 +204,6 @@ type parsedRequest struct {
 	hasExpression bool
 	parsedQueries []parsedQuery
 	httpRequest   *http.Request
-}
-
-func customHeaders(jsonData *simplejson.Json, decryptedJsonData map[string]string) map[string]string {
-	if jsonData == nil {
-		return nil
-	}
-
-	data := jsonData.MustMap()
-
-	headers := map[string]string{}
-	for k := range data {
-		if strings.HasPrefix(k, headerName) {
-			if header, ok := data[k].(string); ok {
-				valueKey := strings.ReplaceAll(k, headerName, headerValue)
-				headers[header] = decryptedJsonData[valueKey]
-			}
-		}
-	}
-
-	return headers
 }
 
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
