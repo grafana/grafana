@@ -16,4 +16,4 @@ When managing dashboads, you can use:
 - Use [annotations]({{< relref "annotations/" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
 - Use the dashboard picker for quick, searchable access to all dashboards in a particular organization.
 
-You can also [share dashboards]({{< relref "../sharing/share-dashboard/" >}}) in a variety of ways.
+You can also [share dashboards]({{< relref "../share-dashboards-panels#share-a-dashboard" >}}) in a variety of ways.

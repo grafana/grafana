@@ -131,7 +131,7 @@ If you have created dashboards with template variables, then you can choose whic
 
 Enable this feature in configuration settings using the `templateVariables` flag.
 
-For more information, refer to [Reporting]({{< relref "../enterprise/reporting/#choose-template-variables" >}}).
+For more information, refer to [Reporting]({{< relref "../share-dashboards-panels/#choose-template-variables" >}}).
 
 ### Active user limits
 

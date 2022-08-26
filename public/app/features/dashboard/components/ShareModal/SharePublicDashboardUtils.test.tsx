@@ -5,6 +5,8 @@ import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   publicDashboardPersisted,
+  getPublicDashboardConfigUrl,
+  savePublicDashboardConfigUrl,
 } from './SharePublicDashboardUtils';
 
 describe('dashboardHasTemplateVariables', () => {
@@ -38,5 +40,17 @@ describe('publicDashboardPersisted', () => {
     expect(publicDashboardPersisted(pubdash)).toBe(false);
     pubdash = {} as PublicDashboard;
     expect(publicDashboardPersisted(pubdash)).toBe(false);
+  });
+});
+
+describe('getPublicDashboardConfigUrl', () => {
+  it('builds the correct url', () => {
+    expect(getPublicDashboardConfigUrl('abc1234')).toEqual('/api/dashboards/uid/abc1234/public-config');
+  });
+});
+
+describe('savePublicDashboardConfigUrl', () => {
+  it('builds the correct url', () => {
+    expect(savePublicDashboardConfigUrl('abc1234')).toEqual('/api/dashboards/uid/abc1234/public-config');
   });
 });

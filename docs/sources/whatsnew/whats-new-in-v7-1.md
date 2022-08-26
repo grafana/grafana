@@ -108,7 +108,7 @@ You can now use HashiCorp Vault to get secrets for configuration and provisionin
 
 ### Support for monthly schedules in reports
 
-With Grafana Enterprise 7.1, you can generate reports on a [monthly schedule]({{< relref "../enterprise/reporting/#scheduling" >}}).
+With Grafana Enterprise 7.1, you can generate reports on a [monthly schedule]({{< relref "../share-dashboards-panels/#scheduling" >}}).
 
 ## Upgrading
 

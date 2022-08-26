@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -23,7 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -368,21 +370,25 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version)
+	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
+		GrafanaVersion: hs.Cfg.BuildVersion,
+		OS:             runtime.GOOS,
+		Arch:           runtime.GOARCH,
+	})
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
-		var versionUnsupportedErr installer.ErrVersionUnsupported
+		var versionUnsupportedErr repo.ErrVersionUnsupported
 		if errors.As(err, &versionUnsupportedErr) {
 			return response.Error(http.StatusConflict, "Plugin version not supported", err)
 		}
-		var versionNotFoundErr installer.ErrVersionNotFound
+		var versionNotFoundErr repo.ErrVersionNotFound
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		var clientError installer.Response4xxError
+		var clientError repo.Response4xxError
 		if errors.As(err, &clientError) {
 			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
@@ -407,7 +413,7 @@ func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
 		}
-		if errors.Is(err, plugins.ErrUninstallOutsideOfPluginDir) {
+		if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
 		}
 
