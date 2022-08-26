@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 import React from 'react';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
@@ -70,7 +69,7 @@ describe('SearchForm', () => {
 });
 
 describe('SearchForm', () => {
-  let user: UserEvent;
+  let user: ReturnType<typeof userEvent.setup>;
   let query: JaegerQuery;
   let ds: JaegerDatasource;
 
