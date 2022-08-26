@@ -525,7 +525,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// then add view routes & api routes
 	hs.RouteRegister.Register(hs.web, hs.namedMiddlewares...)
 	// lastly not found route
-	hs.web.NotFound(middleware.ReqSignedIn, hs.NotFoundHandler)
+	hs.web.NotFound(middleware.ProvideRouteOperationName("notfound"), middleware.ReqSignedIn, hs.NotFoundHandler)
 }
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
@@ -534,7 +534,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.RequestTracing(hs.tracer))
 	m.Use(middleware.RequestMetrics(hs.Features))
 
-	m.Use(middleware.Logger(hs.Cfg))
+	m.UseMiddleware(middleware.Logger(hs.Cfg))
 
 	if hs.Cfg.EnableGzip {
 		m.UseMiddleware(middleware.Gziper())
@@ -566,7 +566,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.metricsEndpoint)
 	m.Use(hs.pluginMetricsEndpoint)
 
-	m.Use(hs.ContextHandler.Middleware)
+	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))
 	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 

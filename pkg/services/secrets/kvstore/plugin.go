@@ -191,10 +191,10 @@ func updateFatalFlag(ctx context.Context, skv secretsKVStorePlugin) {
 	fatalFlagOnce.Do(func() {
 		skv.log.Debug("Updating plugin startup error fatal flag")
 		var err error
-		if isFatal, _ := isPluginStartupErrorFatal(ctx, skv.kvstore); !isFatal && skv.backwardsCompatibilityDisabled {
-			err = setPluginStartupErrorFatal(ctx, skv.kvstore, true)
+		if isFatal, _ := IsPluginStartupErrorFatal(ctx, skv.kvstore); !isFatal && skv.backwardsCompatibilityDisabled {
+			err = SetPluginStartupErrorFatal(ctx, skv.kvstore, true)
 		} else if isFatal && !skv.backwardsCompatibilityDisabled {
-			err = setPluginStartupErrorFatal(ctx, skv.kvstore, false)
+			err = SetPluginStartupErrorFatal(ctx, skv.kvstore, false)
 		}
 		if err != nil {
 			skv.log.Error("failed to set plugin error fatal flag", err.Error())
@@ -210,7 +210,7 @@ func GetNamespacedKVStore(kv kvstore.KVStore) *kvstore.NamespacedKVStore {
 	return kvstore.WithNamespace(kv, kvstore.AllOrganizations, PluginNamespace)
 }
 
-func isPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
+func IsPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore) (bool, error) {
 	_, exists, err := kvstore.Get(ctx, QuitOnPluginStartupFailureKey)
 	if err != nil {
 		return false, errors.New(fmt.Sprint("error retrieving key ", QuitOnPluginStartupFailureKey, " from kvstore. error: ", err.Error()))
@@ -218,7 +218,7 @@ func isPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedK
 	return exists, nil
 }
 
-func setPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore, isFatal bool) error {
+func SetPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.NamespacedKVStore, isFatal bool) error {
 	if !isFatal {
 		return kvstore.Del(ctx, QuitOnPluginStartupFailureKey)
 	}
@@ -237,7 +237,7 @@ func EvaluateRemoteSecretsPlugin(mg plugins.SecretsPluginManager, cfg *setting.C
 	return nil
 }
 
-func startAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) (smp.SecretsManagerPlugin, error) {
+func StartAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) (smp.SecretsManagerPlugin, error) {
 	var err error
 	startupOnce.Do(func() {
 		err = mg.SecretsManager().Start(ctx)
