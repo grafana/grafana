@@ -534,7 +534,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.RequestTracing(hs.tracer))
 	m.Use(middleware.RequestMetrics(hs.Features))
 
-	m.Use(middleware.Logger(hs.Cfg))
+	m.UseMiddleware(middleware.Logger(hs.Cfg))
 
 	if hs.Cfg.EnableGzip {
 		m.UseMiddleware(middleware.Gziper())
@@ -566,7 +566,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.metricsEndpoint)
 	m.Use(hs.pluginMetricsEndpoint)
 
-	m.Use(hs.ContextHandler.Middleware)
+	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))
 	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 
