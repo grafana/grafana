@@ -302,6 +302,26 @@ func TestIntegrationSavePublicDashboardConfig(t *testing.T) {
 		require.NoError(t, err)
 		assert.False(t, pubdash2.IsEnabled)
 	})
+
+	t.Run("gaurds from saving without dashboardUid", func(t *testing.T) {
+		setup()
+		err := publicdashboardStore.SavePublicDashboardConfig(context.Background(), SavePublicDashboardConfigCommand{
+			DashboardUid: savedDashboard.Uid,
+			OrgId:        savedDashboard.OrgId,
+			PublicDashboard: PublicDashboard{
+				IsEnabled:    true,
+				Uid:          "pubdash-uid",
+				DashboardUid: "",
+				OrgId:        savedDashboard.OrgId,
+				TimeSettings: DefaultTimeSettings,
+				CreatedAt:    DefaultTime,
+				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
+			},
+		})
+		assert.Error(t, err, dashboards.ErrDashboardIdentifierNotSet)
+
+	})
 }
 
 func TestIntegrationUpdatePublicDashboard(t *testing.T) {
