@@ -29,9 +29,9 @@ jest.mock('@grafana/runtime', () => {
 });
 
 describe('queriesOnInitDashboard', () => {
-  it('should report a `grafana_ds_cloudwatch_dashboard_loaded` interaction ', () => {
+  it('should report a `grafana_ds_azuremonitor_dashboard_loaded` interaction ', () => {
     // subscribeDashboardLoadedEvent();
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_ds_cloudwatch_dashboard_loaded', {
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_ds_azuremonitor_dashboard_loaded', {
       dashboard_id: 'dashboard123',
       grafana_version: 'v9.0.0',
       org_id: 1,
