@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -171,6 +172,8 @@ var wireSet = wire.NewSet(
 	uss.ProvideService,
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	repo.ProvideService,
+	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
@@ -303,8 +306,8 @@ var wireSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
-	datasourceservice.ProvideDataSourceMigrationService,
-	secretsStore.ProvidePluginSecretMigrationService,
+	secretsMigrations.ProvideDataSourceMigrationService,
+	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
@@ -320,6 +323,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
+	ossaccesscontrol.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {
