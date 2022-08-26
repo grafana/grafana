@@ -15,7 +15,7 @@ interface CloudWatchOnDashboardLoadedTrackingEvent {
   /* The number of CloudWatch logs queries present in the dashboard*/
   logs_queries_count?: number;
 
-  /* The number of CloudWatch CW metrics queries present in the dashboard*/
+  /* The number of CloudWatch metrics queries present in the dashboard*/
   metrics_queries_count: number;
 
   /* The number of queries using the "Search" mode. Should be measured in relation to metrics_queries_count */
