@@ -10,22 +10,6 @@ import (
 )
 
 func TestValidateSavePublicDashboard(t *testing.T) {
-	t.Run("Returns validation error when dto has no dashboard uid", func(t *testing.T) {
-		dashboard := models.NewDashboard("dashboardTitle")
-		dto := &publicdashboardModels.SavePublicDashboardConfigDTO{DashboardUid: "", OrgId: 1, UserId: 1, PublicDashboard: nil}
-
-		err := ValidateSavePublicDashboard(dto, dashboard)
-		require.ErrorContains(t, err, "Unique identifier needed to be able to get a dashboard")
-	})
-
-	t.Run("Returns no validation error when dto has dashboard uid", func(t *testing.T) {
-		dashboard := models.NewDashboard("dashboardTitle")
-		dto := &publicdashboardModels.SavePublicDashboardConfigDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
-
-		err := ValidateSavePublicDashboard(dto, dashboard)
-		require.NoError(t, err)
-	})
-
 	t.Run("Returns validation error when dashboard has template variables", func(t *testing.T) {
 		templateVars := []byte(`{
 			"templating": {
