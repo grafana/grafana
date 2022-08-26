@@ -169,7 +169,7 @@ func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
 
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	navTree := []*dtos.NavLink{}
+	var navTree []*dtos.NavLink
 
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
 		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
@@ -254,92 +254,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		navTree = append(navTree, appLinks...)
 	}
 
-	configNodes := []*dtos.NavLink{}
-
-	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Data sources",
-			Icon:        "database",
-			Description: "Add and configure data sources",
-			Id:          "datasources",
-			Url:         hs.Cfg.AppSubURL + "/datasources",
-		})
-	}
-
-	if hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Correlations",
-			Icon:        "gf-glue",
-			Description: "Add and configure correlations",
-			Id:          "correlations",
-			Url:         hs.Cfg.AppSubURL + "/datasources/correlations",
-		})
-	}
-
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Users",
-			Id:          "users",
-			Description: "Manage org members",
-			Icon:        "user",
-			Url:         hs.Cfg.AppSubURL + "/org/users",
-		})
-	}
-
-	if hasAccess(hs.ReqCanAdminTeams, teamsAccessEvaluator) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Teams",
-			Id:          "teams",
-			Description: "Manage org groups",
-			Icon:        "users-alt",
-			Url:         hs.Cfg.AppSubURL + "/org/teams",
-		})
-	}
-
-	if c.OrgRole == org.RoleAdmin {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Plugins",
-			Id:          "plugins",
-			Description: "View and configure plugins",
-			Icon:        "plug",
-			Url:         hs.Cfg.AppSubURL + "/plugins",
-		})
-	}
-
-	if hasAccess(ac.ReqOrgAdmin, orgPreferencesAccessEvaluator) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Preferences",
-			Id:          "org-settings",
-			Description: "Organization preferences",
-			Icon:        "sliders-v-alt",
-			Url:         hs.Cfg.AppSubURL + "/org",
-		})
-	}
-
-	hideApiKeys, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgID, "serviceaccounts", "hideApiKeys")
-	apiKeys, err := hs.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgID)
+	configNodes, err := hs.setupConfigNodes(c)
 	if err != nil {
 		return navTree, err
-	}
-	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
-	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && !apiKeysHidden {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "API keys",
-			Id:          "apikeys",
-			Description: "Create & manage API keys",
-			Icon:        "key-skeleton-alt",
-			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
-		})
-	}
-
-	if enableServiceAccount(hs, c) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Service accounts",
-			Id:          "serviceaccounts",
-			Description: "Manage service accounts",
-			Icon:        "gf-service-account",
-			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
-		})
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
@@ -403,6 +320,99 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	navTree = hs.addHelpLinks(navTree, c)
 
 	return navTree, nil
+}
+
+func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	var configNodes []*dtos.NavLink
+
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Data sources",
+			Icon:        "database",
+			Description: "Add and configure data sources",
+			Id:          "datasources",
+			Url:         hs.Cfg.AppSubURL + "/datasources",
+		})
+	}
+
+	if hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Correlations",
+			Icon:        "gf-glue",
+			Description: "Add and configure correlations",
+			Id:          "correlations",
+			Url:         hs.Cfg.AppSubURL + "/datasources/correlations",
+		})
+	}
+
+	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Users",
+			Id:          "users",
+			Description: "Manage org members",
+			Icon:        "user",
+			Url:         hs.Cfg.AppSubURL + "/org/users",
+		})
+	}
+
+	if hasAccess(hs.ReqCanAdminTeams, teamsAccessEvaluator) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Teams",
+			Id:          "teams",
+			Description: "Manage org groups",
+			Icon:        "users-alt",
+			Url:         hs.Cfg.AppSubURL + "/org/teams",
+		})
+	}
+
+	if c.OrgRole == org.RoleAdmin {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Plugins",
+			Id:          "plugins",
+			Description: "View and configure plugins",
+			Icon:        "plug",
+			Url:         hs.Cfg.AppSubURL + "/plugins",
+		})
+	}
+
+	if hasAccess(ac.ReqOrgAdmin, orgPreferencesAccessEvaluator) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Preferences",
+			Id:          "org-settings",
+			Description: "Organization preferences",
+			Icon:        "sliders-v-alt",
+			Url:         hs.Cfg.AppSubURL + "/org",
+		})
+	}
+
+	hideApiKeys, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgID, "serviceaccounts", "hideApiKeys")
+	apiKeys, err := hs.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
+	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && !apiKeysHidden {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "API keys",
+			Id:          "apikeys",
+			Description: "Create & manage API keys",
+			Icon:        "key-skeleton-alt",
+			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
+		})
+	}
+
+	if enableServiceAccount(hs, c) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Service accounts",
+			Id:          "serviceaccounts",
+			Description: "Manage service accounts",
+			Icon:        "gf-service-account",
+			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
+		})
+	}
+
+	return configNodes, nil
 }
 
 func (hs *HTTPServer) addProfile(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
