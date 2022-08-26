@@ -66,11 +66,6 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
 }
 
-func (a *AccessControl) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	// FIXME: Remove wrapped call
-	return a.service.DeclareFixedRoles(registrations...)
-}
-
 func (a *AccessControl) IsDisabled() bool {
 	return accesscontrol.IsDisabled(a.cfg)
 }
