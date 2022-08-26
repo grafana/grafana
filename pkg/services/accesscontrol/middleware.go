@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const AccessControlTestHeader = "X-Grafana-RBAC-Test"
+
 func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 	return func(fallback web.Handler, evaluator Evaluator) web.Handler {
 		if ac.IsDisabled() {
@@ -39,6 +41,13 @@ func authorize(c *models.ReqContext, ac AccessControl, user *user.SignedInUser, 
 	}
 
 	hasAccess, err := ac.Evaluate(c.Req.Context(), user, injected)
+
+	// If the request contains the access control test header we short circuit successful checks and returns 200
+	if c.Req.Header.Get(AccessControlTestHeader) == "1" && hasAccess {
+		c.Resp.WriteHeader(http.StatusOK)
+		return
+	}
+
 	if !hasAccess || err != nil {
 		deny(c, injected, err)
 		return
