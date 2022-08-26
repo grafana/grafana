@@ -384,11 +384,11 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		// not updated dashboard shouldn't have changed
 		pdNotUpdatedRetrieved, err := publicdashboardStore.GetPublicDashboardConfig(context.Background(), anotherSavedDashboard.OrgId, anotherSavedDashboard.Uid)
 		require.NoError(t, err)
-
 		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.UpdatedAt)
 		assert.NotEqual(t, updatedPublicDashboard.IsEnabled, pdNotUpdatedRetrieved.IsEnabled)
 	})
 }
+
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
