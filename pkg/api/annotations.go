@@ -50,14 +50,15 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUid != "" {
-		if strings.Index(query.DashboardUid, "/") > 0 && hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
-			// The UID will not exist in the annotations table
-		} else {
-			dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgID}
-			err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
-			if err != nil {
-				return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
+		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgID}
+		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+		if err != nil {
+			if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
+				// OK... the storage UIDs do not (yet?) exist in the DashboardService
+			} else {
+				return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
 			}
+		} else {
 			query.DashboardId = dq.Result.Id
 		}
 	}
