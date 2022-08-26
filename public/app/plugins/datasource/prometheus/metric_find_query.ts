@@ -5,11 +5,14 @@ import { map } from 'rxjs/operators';
 import { MetricFindValue, TimeRange } from '@grafana/data';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
+import {PromApiFeatures} from "../../../types/unified-alerting-dto";
+
 import { PrometheusDatasource } from './datasource';
 import { PromQueryRequest } from './types';
 
 export default class PrometheusMetricFindQuery {
   range: TimeRange;
+  buildInfo?: PromApiFeatures;
 
   constructor(private datasource: PrometheusDatasource, private query: string) {
     this.datasource = datasource;
@@ -23,6 +26,7 @@ export default class PrometheusMetricFindQuery {
     const metricNamesRegex = /^metrics\((.+)\)\s*$/;
     const queryResultRegex = /^query_result\((.+)\)\s*$/;
     const labelNamesQuery = this.query.match(labelNamesRegex);
+
     if (labelNamesQuery) {
       return this.labelNamesQuery();
     }
@@ -68,6 +72,8 @@ export default class PrometheusMetricFindQuery {
   }
 
   labelValuesQuery(label: string, metric?: string) {
+    debugger;
+    console.log('labelValuesQuery', label, metric);
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
 
@@ -87,26 +93,46 @@ export default class PrometheusMetricFindQuery {
         });
       });
     } else {
+      // prometheus version supports matchers in label api (prometheus 2.14 and up)
+      this.datasource.getBuildInfo();
+
       const params = {
         'match[]': metric,
         start: start.toString(),
         end: end.toString(),
       };
-      url = `/api/v1/series`;
+      
+      return this.datasource.getBuildInfo().then((buildInfo) => {
+        console.log('is it working?');
+        if (buildInfo?.features.labelApiEnabled) {
+          console.log('New API supported!');
 
-      return this.datasource.metadataRequest(url, params).then((result: any) => {
-        const _labels = _map(result.data.data, (metric) => {
-          return metric[label] || '';
-        }).filter((label) => {
-          return label !== '';
-        });
+          // return label values globally
+          url = `/api/v1/label/${label}/values`;
 
-        return uniq(_labels).map((metric) => {
-          return {
-            text: metric,
-            expandable: true,
-          };
-        });
+          return this.datasource.metadataRequest(url, params).then((result: any) => {
+            return _map(result.data.data, (value) => {
+              return { text: value };
+            });
+          });
+        } else {
+          console.log('Old Endpoint fallback!');
+          url = `/api/v1/series`;
+          return this.datasource.metadataRequest(url, params).then((result: any) => {
+            const _labels = _map(result.data.data, (metric) => {
+              return metric[label] || '';
+            }).filter((label) => {
+              return label !== '';
+            });
+
+            return uniq(_labels).map((metric) => {
+              return {
+                text: metric,
+                expandable: true,
+              };
+            });
+          });
+        }
       });
     }
   }
