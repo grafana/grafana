@@ -65,7 +65,7 @@ func TestStarByUID(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.True(t, stars.UserStars[testDashboards[0].ID])
-	assert.Equal(t, testDashboards[0].UID, stars.UserStarsUID[0])
+	assert.Equal(t, testDashboards[0].UID, stars.DashboardUIDs[0])
 
 	// curl -XDELETE "http://admin:admin@localhost:3000/api/user/stars/dashboard/uid/blueberries"
 	// Remove the starred dashboard.
@@ -82,7 +82,7 @@ func TestStarByUID(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, stars.UserStars)
-	assert.Empty(t, stars.UserStarsUID)
+	assert.Empty(t, stars.DashboardUIDs)
 }
 
 func TestStarByID(t *testing.T) {
@@ -103,7 +103,7 @@ func TestStarByID(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.True(t, stars.UserStars[testDashboards[0].ID])
-	assert.Equal(t, testDashboards[0].UID, stars.UserStarsUID[0])
+	assert.Equal(t, testDashboards[0].UID, stars.DashboardUIDs[0])
 
 	// curl -XDELETE "http://admin:admin@localhost:3000/api/user/stars/dashboard/1"
 	// Remove the starred dashboard.
@@ -120,7 +120,7 @@ func TestStarByID(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, stars.UserStars)
-	assert.Empty(t, stars.UserStarsUID)
+	assert.Empty(t, stars.DashboardUIDs)
 }
 
 func TestStarOrgs(t *testing.T) {
@@ -141,7 +141,7 @@ func TestStarOrgs(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, stars.UserStars)
-	assert.Empty(t, stars.UserStarsUID)
+	assert.Empty(t, stars.DashboardUIDs)
 }
 
 func TestStarUsers(t *testing.T) {
@@ -162,7 +162,7 @@ func TestStarUsers(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.NotEmpty(t, stars.UserStars)
-	assert.NotEmpty(t, stars.UserStarsUID)
+	assert.NotEmpty(t, stars.DashboardUIDs)
 
 	// curl "http://otheruser:password@localhost:3000/api/user/stars"
 	// Empty response, the dashboard is starred by user 1.
@@ -172,7 +172,7 @@ func TestStarUsers(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, stars.UserStars)
-	assert.Empty(t, stars.UserStarsUID)
+	assert.Empty(t, stars.DashboardUIDs)
 
 	// Delete all stars from user 1.
 	require.NoError(t, svc.DeleteByUser(context.Background(), 1))
@@ -185,7 +185,7 @@ func TestStarUsers(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, stars.UserStars)
-	assert.Empty(t, stars.UserStarsUID)
+	assert.Empty(t, stars.DashboardUIDs)
 }
 
 func serviceForTest(t testing.TB, dashs []lightweightDashboard) *Service {

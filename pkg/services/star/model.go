@@ -54,6 +54,6 @@ type IsStarredByUserQuery struct {
 }
 
 type GetUserStarsResult struct {
-	UserStars    map[int64]bool
-	UserStarsUID []string `json:"userStarsUid"`
+	UserStars     map[int64]bool
+	DashboardUIDs []string
 }

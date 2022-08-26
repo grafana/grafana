@@ -102,7 +102,7 @@ func (s *Service) GetByUser(ctx context.Context, cmd *star.GetUserStarsQuery) (*
 
 		uids = append(uids, dashboard.Uid)
 	}
-	stars.UserStarsUID = uids
+	stars.DashboardUIDs = uids
 
 	return stars, err
 }

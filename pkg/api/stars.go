@@ -32,7 +32,7 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to get user stars", err)
 	}
 
-	return response.JSON(200, iuserstars.UserStarsUID)
+	return response.JSON(200, iuserstars.DashboardUIDs)
 }
 
 // swagger:route POST /user/stars/dashboard/{dashboard_id} signed_in_user listStarredDashboards
