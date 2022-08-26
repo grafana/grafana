@@ -65,9 +65,6 @@ export interface DashboardDataDTO {
     list: VariableModel[];
   };
   panels?: any[];
-
-  /** @deprecated -- components should key on uid rather than id */
-  id?: number;
 }
 
 export enum DashboardRoutes {

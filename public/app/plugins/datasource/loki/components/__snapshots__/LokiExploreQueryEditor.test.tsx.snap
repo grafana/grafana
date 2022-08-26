@@ -53,9 +53,48 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
   }
   data-testid="loki-editor-explore"
   datasource={
-    Object {
-      "getTimeRangeParams": [Function],
-      "interpolateString": [Function],
+    LokiDatasource {
+      "annotations": Object {
+        "QueryEditor": Object {
+          "$$typeof": Symbol(react.memo),
+          "compare": null,
+          "type": [Function],
+        },
+      },
+      "getLogRowContext": [Function],
+      "id": 0,
+      "instanceSettings": Object {
+        "access": "direct",
+        "id": 0,
+        "jsonData": Object {
+          "maxLines": "20",
+        },
+        "meta": Object {
+          "baseUrl": "",
+          "id": "id",
+          "info": Object {
+            "author": Object {
+              "name": "Test",
+            },
+            "description": "",
+            "links": Array [],
+            "logos": Object {
+              "large": "",
+              "small": "",
+            },
+            "screenshots": Array [],
+            "updated": "",
+            "version": "",
+          },
+          "module": "",
+          "name": "name",
+          "type": "datasource",
+        },
+        "name": "",
+        "type": "",
+        "uid": "",
+        "url": "myloggingurl",
+      },
       "languageProvider": LokiLanguageProvider {
         "cleanText": [Function],
         "datasource": [Circular],
@@ -245,7 +284,42 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         "start": [Function],
         "started": false,
       },
-      "metadataRequest": [Function],
+      "maxLines": 20,
+      "meta": Object {
+        "baseUrl": "",
+        "id": "id",
+        "info": Object {
+          "author": Object {
+            "name": "Test",
+          },
+          "description": "",
+          "links": Array [],
+          "logos": Object {
+            "large": "",
+            "small": "",
+          },
+          "screenshots": Array [],
+          "updated": "",
+          "version": "",
+        },
+        "module": "",
+        "name": "name",
+        "type": "datasource",
+      },
+      "metadataRequest": [MockFunction],
+      "name": "",
+      "prepareLogRowContextQueryTarget": [Function],
+      "runLiveQuery": [Function],
+      "streamOptionsProvider": [Function],
+      "streams": LiveStreams {
+        "streams": Object {},
+      },
+      "templateSrv": Object {},
+      "timeSrv": Object {
+        "timeRange": [Function],
+      },
+      "type": "",
+      "uid": "",
     }
   }
   history={Array []}

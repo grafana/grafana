@@ -106,7 +106,7 @@ export class ElasticQueryBuilder {
       esAgg.offset = settings.offset;
     }
 
-    const interval = settings.interval === 'auto' ? '$__interval' : settings.interval;
+    const interval = settings.interval === 'auto' ? '${__interval_ms}ms' : settings.interval;
 
     esAgg.fixed_interval = interval;
 

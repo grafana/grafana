@@ -69,7 +69,7 @@ func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator 
 			s.log.Debug("resolved scope", "scope", scope, "resolved_scopes", scopes)
 			return scopes, nil
 		}
-		return []string{scope}, nil
+		return nil, ErrResolverNotFound
 	}
 }
 

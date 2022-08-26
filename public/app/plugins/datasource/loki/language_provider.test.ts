@@ -2,10 +2,11 @@ import Plain from 'slate-plain-serializer';
 
 import { AbstractLabelOperator } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { LokiDatasource } from './datasource';
 import LanguageProvider, { LokiHistoryItem } from './language_provider';
-import { makeMockLokiDatasource } from './mocks';
+import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { LokiQueryType } from './types';
 
 jest.mock('app/store/store', () => ({
@@ -21,7 +22,7 @@ jest.mock('app/store/store', () => ({
 }));
 
 describe('Language completion provider', () => {
-  const datasource = makeMockLokiDatasource({});
+  const datasource = setup({});
 
   describe('query suggestions', () => {
     it('returns no suggestions on empty context', async () => {
@@ -90,7 +91,7 @@ describe('Language completion provider', () => {
 
   describe('fetchSeries', () => {
     it('should use match[] parameter', () => {
-      const datasource = makeMockLokiDatasource({}, { '{foo="bar"}': [{ label1: 'label_val1' }] });
+      const datasource = setup({}, { '{foo="bar"}': [{ label1: 'label_val1' }] });
       const languageProvider = new LanguageProvider(datasource);
       const fetchSeries = languageProvider.fetchSeries;
       const requestSpy = jest.spyOn(languageProvider, 'request');
@@ -105,11 +106,11 @@ describe('Language completion provider', () => {
 
   describe('fetchSeriesLabels', () => {
     it('should interpolate variable in series', () => {
-      const datasource: LokiDatasource = {
-        metadataRequest: () => ({ data: { data: [] as any[] } }),
-        getTimeRangeParams: () => ({ start: 0, end: 1 }),
-        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
-      } as any as LokiDatasource;
+      const datasource = setup({});
+      jest.spyOn(datasource, 'getTimeRangeParams').mockReturnValue({ start: 0, end: 1 });
+      jest
+        .spyOn(datasource, 'interpolateString')
+        .mockImplementation((string: string) => string.replace(/\$/, 'interpolated-'));
 
       const languageProvider = new LanguageProvider(datasource);
       const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
@@ -126,7 +127,7 @@ describe('Language completion provider', () => {
 
   describe('label key suggestions', () => {
     it('returns all label suggestions on empty selector', async () => {
-      const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
+      const datasource = setup({ label1: [], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{}', '', '', 1);
       const result = await provider.provideCompletionItems(input);
@@ -143,7 +144,7 @@ describe('Language completion provider', () => {
     });
 
     it('returns all label suggestions on selector when starting to type', async () => {
-      const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
+      const datasource = setup({ label1: [], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{l}', '', '', 2);
       const result = await provider.provideCompletionItems(input);
@@ -162,10 +163,7 @@ describe('Language completion provider', () => {
 
   describe('label suggestions facetted', () => {
     it('returns facetted label suggestions based on selector', async () => {
-      const datasource = makeMockLokiDatasource(
-        { label1: [], label2: [] },
-        { '{foo="bar"}': [{ label1: 'label_val1' }] }
-      );
+      const datasource = setup({ label1: [], label2: [] }, { '{foo="bar"}': [{ label1: 'label_val1' }] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{foo="bar",}', '', '', 11);
       const result = await provider.provideCompletionItems(input);
@@ -174,10 +172,7 @@ describe('Language completion provider', () => {
     });
 
     it('returns facetted label suggestions for multipule selectors', async () => {
-      const datasource = makeMockLokiDatasource(
-        { label1: [], label2: [] },
-        { '{baz="42",foo="bar"}': [{ label2: 'label_val2' }] }
-      );
+      const datasource = setup({ label1: [], label2: [] }, { '{baz="42",foo="bar"}': [{ label2: 'label_val2' }] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{baz="42",foo="bar",}', '', '', 20);
       const result = await provider.provideCompletionItems(input);
@@ -188,7 +183,7 @@ describe('Language completion provider', () => {
 
   describe('label suggestions', () => {
     it('returns label values suggestions from Loki', async () => {
-      const datasource = makeMockLokiDatasource({ label1: ['label1_val1', 'label1_val2'], label2: [] });
+      const datasource = setup({ label1: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{label1=}', '=', 'label1');
       let result = await provider.provideCompletionItems(input);
@@ -206,7 +201,7 @@ describe('Language completion provider', () => {
       ]);
     });
     it('returns label values suggestions from Loki when re-editing', async () => {
-      const datasource = makeMockLokiDatasource({ label1: ['label1_val1', 'label1_val2'], label2: [] });
+      const datasource = setup({ label1: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{label1="label1_v"}', 'label1_v', 'label1', 17, [
         'attr-value',
@@ -228,7 +223,7 @@ describe('Language completion provider', () => {
 
   describe('label values', () => {
     it('should fetch label values if not cached', async () => {
-      const datasource = makeMockLokiDatasource({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey');
@@ -237,7 +232,7 @@ describe('Language completion provider', () => {
     });
 
     it('should return cached values', async () => {
-      const datasource = makeMockLokiDatasource({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchLabelValues('testkey');
@@ -250,7 +245,7 @@ describe('Language completion provider', () => {
     });
 
     it('should encode special characters', async () => {
-      const datasource = makeMockLokiDatasource({ '`\\"testkey': ['label1_val1', 'label1_val2'], label2: [] });
+      const datasource = setup({ '`\\"testkey': ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const requestSpy = jest.spyOn(provider, 'request');
       await provider.fetchLabelValues('`\\"testkey');
@@ -262,9 +257,9 @@ describe('Language completion provider', () => {
 
 describe('Request URL', () => {
   it('should contain range params', async () => {
-    const datasourceWithLabels = makeMockLokiDatasource({ other: [] });
+    const datasourceWithLabels = setup({ other: [] });
     const rangeParams = datasourceWithLabels.getTimeRangeParams();
-    const datasourceSpy = jest.spyOn(datasourceWithLabels as any, 'metadataRequest');
+    const datasourceSpy = jest.spyOn(datasourceWithLabels, 'metadataRequest');
 
     const instance = new LanguageProvider(datasourceWithLabels);
     instance.fetchLabels();
@@ -274,7 +269,7 @@ describe('Request URL', () => {
 });
 
 describe('Query imports', () => {
-  const datasource = makeMockLokiDatasource({});
+  const datasource = setup({});
 
   it('returns empty queries', async () => {
     const instance = new LanguageProvider(datasource);
@@ -333,4 +328,22 @@ function createTypeaheadInput(
     value: valueWithSelection,
     labelKey,
   };
+}
+
+function setup(
+  labelsAndValues: Record<string, string[]>,
+  series?: Record<string, Array<Record<string, string>>>
+): LokiDatasource {
+  const datasource = createLokiDatasource({} as unknown as TemplateSrv);
+
+  const rangeMock = {
+    start: 1560153109000,
+    end: 1560163909000,
+  };
+
+  jest.spyOn(datasource, 'getTimeRangeParams').mockReturnValue(rangeMock);
+  jest.spyOn(datasource, 'metadataRequest').mockImplementation(createMetadataRequest(labelsAndValues, series));
+  jest.spyOn(datasource, 'interpolateString').mockImplementation((string: string) => string);
+
+  return datasource;
 }

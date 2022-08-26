@@ -45,7 +45,7 @@ export const CreateTeam = (): JSX.Element => {
           {({ register, errors }) => (
             <FieldSet label="New Team">
               <Field label="Name" required invalid={!!errors.name} error="Team name is required">
-                <Input {...register('name', { required: true })} id="team-name" width={60} />
+                <Input {...register('name', { required: true })} id="team-name" />
               </Field>
               {contextSrv.licensedAccessControlEnabled() && (
                 <Field label="Role">
@@ -56,6 +56,7 @@ export const CreateTeam = (): JSX.Element => {
                     apply={true}
                     onApplyRoles={setPendingRoles}
                     pendingRoles={pendingRoles}
+                    maxWidth="100%"
                   />
                 </Field>
               )}
@@ -63,7 +64,7 @@ export const CreateTeam = (): JSX.Element => {
                 label={'Email'}
                 description={'This is optional and is primarily used for allowing custom team avatars.'}
               >
-                <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" width={60} />
+                <Input {...register('email')} type="email" id="team-email" placeholder="email@test.com" />
               </Field>
               <div className="gf-form-button-row">
                 <Button type="submit" variant="primary">
