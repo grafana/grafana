@@ -78,8 +78,5 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
     .ol-attribution:not(.ol-collapsed) {
       background-color: ${theme.colors.background.secondary}; // rgba(255,255,255,0.8);
     }
-    .panel-content {
-      contain: none;
-    }
   `;
 }
