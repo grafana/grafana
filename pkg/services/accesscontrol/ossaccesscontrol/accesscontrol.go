@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -45,20 +46,24 @@ func (a *AccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, e
 		user.Permissions[user.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}
 
+	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
+	if evaluator.Evaluate(user.Permissions[user.OrgID]) {
+		return true, nil
+	}
+
 	resolvedEvaluator, err := evaluator.MutateScopes(ctx, a.resolvers.GetScopeAttributeMutator(user.OrgID))
 	if err != nil {
+		if errors.Is(err, accesscontrol.ErrResolverNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
+
 	return resolvedEvaluator.Evaluate(user.Permissions[user.OrgID]), nil
 }
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
-}
-
-func (a *AccessControl) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	// FIXME: Remove wrapped call
-	return a.service.DeclareFixedRoles(registrations...)
 }
 
 func (a *AccessControl) IsDisabled() bool {
