@@ -43,10 +43,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		qs := buildQueryDataService(t, nil, nil, nil)
 		service := publicdashboards.NewFakePublicDashboardService(t)
 		service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-			Return(&models.Dashboard{}, nil).Maybe()
-		service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-			Return(&PublicDashboard{}, nil).Maybe()
-
+			Return(&PublicDashboard{}, &models.Dashboard{}, nil).Maybe()
 		testServer := setupTestServer(t, cfg, qs, featuremgmt.WithFeatures(), service, nil)
 
 		response := callAPI(testServer, http.MethodGet, "/api/public/dashboards", nil, t)
@@ -67,29 +64,29 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	accessToken := fmt.Sprintf("%x", token)
 
 	testCases := []struct {
-		Name                  string
-		AccessToken           string
-		ExpectedHttpResponse  int
-		PublicDashboardResult *models.Dashboard
-		PublicDashboardErr    error
+		Name                 string
+		AccessToken          string
+		ExpectedHttpResponse int
+		DashboardResult      *models.Dashboard
+		Err                  error
 	}{
 		{
 			Name:                 "It gets a public dashboard",
 			AccessToken:          accessToken,
 			ExpectedHttpResponse: http.StatusOK,
-			PublicDashboardResult: &models.Dashboard{
+			DashboardResult: &models.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
 					"Uid": DashboardUid,
 				}),
 			},
-			PublicDashboardErr: nil,
+			Err: nil,
 		},
 		{
-			Name:                  "It should return 404 if no public dashboard",
-			AccessToken:           accessToken,
-			ExpectedHttpResponse:  http.StatusNotFound,
-			PublicDashboardResult: nil,
-			PublicDashboardErr:    ErrPublicDashboardNotFound,
+			Name:                 "It should return 404 if no public dashboard",
+			AccessToken:          accessToken,
+			ExpectedHttpResponse: http.StatusNotFound,
+			DashboardResult:      nil,
+			Err:                  ErrPublicDashboardNotFound,
 		},
 	}
 
@@ -97,9 +94,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-				Return(test.PublicDashboardResult, test.PublicDashboardErr).Maybe()
-			service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(&PublicDashboard{}, nil).Maybe()
+				Return(&PublicDashboard{}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = false
@@ -121,7 +116,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
-			if test.PublicDashboardErr == nil {
+			if test.Err == nil {
 				var dashResp dtos.DashboardFullWithMeta
 				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
 				require.NoError(t, err)
@@ -136,7 +131,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				}
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.PublicDashboardErr.Error(), errResp.Error)
+				assert.Equal(t, test.Err.Error(), errResp.Error)
 			}
 		})
 	}
@@ -349,8 +344,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	t.Run("Returns query data when feature toggle is enabled", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 
-		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
-		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{}, nil)
+		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&PublicDashboard{}, &models.Dashboard{}, nil)
 		fakeDashboardService.On("BuildAnonymousUser", mock.Anything, mock.Anything, mock.Anything).Return(&user.SignedInUser{}, nil)
 		fakeDashboardService.On("BuildPublicDashboardMetricRequest", mock.Anything, mock.Anything, mock.Anything, int64(2)).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
@@ -400,8 +394,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	t.Run("Status code is 500 when the query fails", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 
-		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
-		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{}, nil)
+		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&PublicDashboard{}, &models.Dashboard{}, nil)
 		fakeDashboardService.On("BuildAnonymousUser", mock.Anything, mock.Anything, mock.Anything).Return(&user.SignedInUser{}, nil)
 		fakeDashboardService.On("BuildPublicDashboardMetricRequest", mock.Anything, mock.Anything, mock.Anything, int64(2)).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{
@@ -430,8 +423,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	t.Run("Status code is 200 when a panel has queries from multiple datasources", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
 
-		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil)
-		fakeDashboardService.On("GetPublicDashboardConfig", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{}, nil)
+		fakeDashboardService.On("GetPublicDashboard", mock.Anything, mock.Anything).Return(&PublicDashboard{}, &models.Dashboard{}, nil)
 		fakeDashboardService.On("BuildAnonymousUser", mock.Anything, mock.Anything, mock.Anything).Return(&user.SignedInUser{}, nil)
 		fakeDashboardService.On("BuildPublicDashboardMetricRequest", mock.Anything, mock.Anything, mock.Anything, int64(2)).Return(dtos.MetricRequest{
 			Queries: []*simplejson.Json{

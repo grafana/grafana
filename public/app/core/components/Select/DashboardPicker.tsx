@@ -53,15 +53,17 @@ export const DashboardPicker = ({
       // value was manually changed from outside or we are rendering for the first time.
       // We need to fetch dashboard information.
       const res = await backendSrv.getDashboardByUid(value);
-      setCurrent({
-        value: {
-          uid: res.dashboard.uid,
-          title: res.dashboard.title,
-          folderTitle: res.meta.folderTitle,
-          folderUid: res.meta.folderUid,
-        },
-        label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
-      });
+      if (res.dashboard) {
+        setCurrent({
+          value: {
+            uid: res.dashboard.uid,
+            title: res.dashboard.title,
+            folderTitle: res.meta.folderTitle,
+            folderUid: res.meta.folderUid,
+          },
+          label: formatLabel(res.meta?.folderTitle, res.dashboard.title),
+        });
+      }
     })();
     // we don't need to rerun this effect every time `current` changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
