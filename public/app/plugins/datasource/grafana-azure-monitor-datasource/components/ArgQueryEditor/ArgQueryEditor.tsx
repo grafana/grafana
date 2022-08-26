@@ -35,7 +35,7 @@ const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
     }
 
     fetchedRef.current = true;
-    datasource.azureMonitorDatasource
+    datasource
       .getSubscriptions()
       .then((results) => {
         const fetchedSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
