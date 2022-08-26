@@ -1,7 +1,7 @@
 import React, { lazy, PureComponent, RefObject, Suspense } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange, ExploreId } from '@grafana/data';
+import { DataSourceInstanceSettings, RawTimeRange, ExploreId, LoadingState } from '@grafana/data';
 import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -60,9 +60,9 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   renderRefreshPicker = (showSmallTimePicker: boolean) => {
-    const { loading, refreshInterval, isLive } = this.props;
+    const { refreshInterval, isLive } = this.props;
 
-    let refreshPickerText: string | undefined = loading ? 'Cancel' : 'Run query';
+    let refreshPickerText: string | undefined = this.isLoading() ? 'Cancel' : 'Run query';
     let refreshPickerTooltip = undefined;
     let refreshPickerWidth = '108px';
     if (showSmallTimePicker) {
@@ -75,12 +75,12 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       <RefreshPicker
         onIntervalChanged={this.onChangeRefreshInterval}
         value={refreshInterval}
-        isLoading={loading}
+        isLoading={this.isLoading()}
         text={refreshPickerText}
         tooltip={refreshPickerTooltip}
         intervals={getTimeSrv().getValidIntervals(defaultIntervals)}
         isLive={isLive}
-        onRefresh={() => this.onRunQuery(loading)}
+        onRefresh={() => this.onRunQuery(this.isLoading())}
         noIntervalPicker={isLive}
         primary={true}
         width={refreshPickerWidth}
@@ -88,12 +88,15 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     );
   };
 
+  isLoading() {
+    return this.props.loadingState === LoadingState.Loading || this.props.loadingState === LoadingState.Streaming;
+  }
+
   render() {
     const {
       datasourceMissing,
       closeSplit,
       exploreId,
-      loading,
       range,
       timeZone,
       fiscalYearStartMonth,
@@ -180,7 +183,9 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
             {this.renderRefreshPicker(showSmallTimePicker)}
 
-            {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
+            {refreshInterval && (
+              <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={this.isLoading()} />
+            )}
 
             {hasLiveOption && (
               <LiveTailControls exploreId={exploreId}>
@@ -218,8 +223,16 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
   const { syncedTimes } = state.explore;
   const exploreItem = state.explore[exploreId]!;
-  const { datasourceInstance, datasourceMissing, range, refreshInterval, loading, isLive, isPaused, containerWidth } =
-    exploreItem;
+  const {
+    datasourceInstance,
+    datasourceMissing,
+    range,
+    refreshInterval,
+    isLive,
+    isPaused,
+    containerWidth,
+    queryResponse,
+  } = exploreItem;
 
   const hasLiveOption = !!datasourceInstance?.meta?.streaming;
 
@@ -227,7 +240,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     datasourceMissing,
     datasourceRef: datasourceInstance?.getRef(),
     datasourceType: datasourceInstance?.type,
-    loading,
     range,
     timeZone: getTimeZone(state.user),
     fiscalYearStartMonth: getFiscalYearStartMonth(state.user),
@@ -238,6 +250,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
     isPaused,
     syncedTimes,
     containerWidth,
+    loadingState: queryResponse.state,
   };
 };
 

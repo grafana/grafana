@@ -65,16 +65,16 @@ function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
   for (const { refId } of queries.filter(isVisible)) {
     // traceview is not supported in dashboards, skipping it for now.
     const hasQueryRefId = hasRefId(refId);
-    if (queryResponse.frames['graph']?.some(hasQueryRefId)) {
+    if (queryResponse.framesMap['graph']?.some(hasQueryRefId)) {
       return 'timeseries';
     }
-    if (queryResponse.frames['logs']?.some(hasQueryRefId)) {
+    if (queryResponse.framesMap['logs']?.some(hasQueryRefId)) {
       return 'logs';
     }
-    if (queryResponse.frames['nodeGraph']?.some(hasQueryRefId)) {
+    if (queryResponse.framesMap['nodeGraph']?.some(hasQueryRefId)) {
       return 'nodeGraph';
     }
-    if (queryResponse.frames['trace']?.some(hasQueryRefId)) {
+    if (queryResponse.framesMap['trace']?.some(hasQueryRefId)) {
       return 'traces';
     }
   }
