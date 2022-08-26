@@ -150,7 +150,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
     const toggleFieldButton =
-      !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
+      showDetectedFields && showDetectedFields.includes(parsedKey) ? (
         <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
       ) : (
         <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
@@ -174,7 +174,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           </>
         )}
 
-        {hasDetectedFieldsFunctionality && !isLabel && (
+        {hasDetectedFieldsFunctionality && (
           <td className={style.logsDetailsIcon} colSpan={2}>
             {toggleFieldButton}
           </td>

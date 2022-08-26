@@ -21,7 +21,8 @@ export const getAllFields = memoizeOne(
   (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>) => {
     const logMessageFields = parseMessage(row.entry);
     const dataframeFields = getDataframeFields(row, getFieldLinks);
-    const fieldsMap = [...dataframeFields, ...logMessageFields].reduce((acc, field) => {
+    const labelFields: FieldDef[] = Object.entries(row.labels).map(([key, value]) => ({ key, value }));
+    const fieldsMap = [...labelFields, ...dataframeFields, ...logMessageFields].reduce((acc, field) => {
       // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
       // value is in the dataFrame it will be without the quotes. We treat them here as the same value.
       // We need to handle this scenario:

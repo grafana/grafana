@@ -120,6 +120,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         getStats={() => calculateLogsLabelStats(getRows(), key)}
                         onClickFilterOutLabel={onClickFilterOutLabel}
                         onClickFilterLabel={onClickFilterLabel}
+                        onClickShowDetectedField={onClickShowDetectedField}
+                        onClickHideDetectedField={onClickHideDetectedField}
                       />
                     );
                   })}
