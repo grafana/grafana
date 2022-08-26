@@ -15,7 +15,7 @@ import {
   PanelProps,
   TimeRange,
 } from '@grafana/data';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTimeSrv, TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PanelQueryRunner } from '../../../query/state/PanelQueryRunner';
 import { DashboardModel, PanelModel } from '../../state';
@@ -26,15 +26,6 @@ jest.mock('../../utils/panel', () => ({
   applyPanelTimeOverrides: jest.fn((panel, timeRange) => ({
     ...timeRange,
   })),
-}));
-
-// Mock timeSrv singleton instance
-const timeSrvMock = new TimeSrvStub();
-jest.mock('../../services/TimeSrv', () => ({
-  ...jest.requireActual('../../services/TimeSrv'),
-  getTimeSrv: jest.fn(() => {
-    return timeSrvMock;
-  }),
 }));
 
 jest.mock('app/features/panel/components/PanelRenderer', () => ({
@@ -99,6 +90,11 @@ function setupTestContext(options: Partial<Props> = {}) {
 }
 
 describe('PanelEditorTableView', () => {
+  beforeAll(() => {
+    // Mock the timeSrv singleton
+    const timeSrvMock2 = new TimeSrvStub() as unknown as TimeSrv;
+    setTimeSrv(timeSrvMock2);
+  });
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -127,11 +123,6 @@ describe('PanelEditorTableView', () => {
     const timeRangeUpdated = {
       from: dateTime([2019, 1, 11, 12, 0]),
       to: dateTime([2019, 1, 11, 18, 0]),
-    } as unknown as TimeRange;
-
-    const timeRangeUpdated2 = {
-      from: dateTime([2018, 1, 11, 12, 0]),
-      to: dateTime([2018, 1, 11, 18, 0]),
     } as unknown as TimeRange;
 
     // only render the panel when loading is done
@@ -165,6 +156,12 @@ describe('PanelEditorTableView', () => {
     });
 
     // update global time  second time
+
+    const timeRangeUpdated2 = {
+      from: dateTime([2018, 1, 11, 12, 0]),
+      to: dateTime([2018, 1, 11, 18, 0]),
+    } as unknown as TimeRange;
+
     act(() => {
       timeSrv.setTime(timeRangeUpdated2);
       props.panel.refresh();
