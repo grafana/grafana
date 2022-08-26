@@ -159,7 +159,7 @@ const NarrowScreenForm = (props: FormProps) => {
           </div>
           {showHistory && (
             <TimeRangeList
-              title="Recently used absolute ranges"
+              title="Recently used absolute ra"
               options={historyOptions}
               onChange={onChangeTimeOption}
               placeholderEmpty={null}
@@ -197,7 +197,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList
-            title="Recently used absolute ranges"
+            title="ntly used absolute ranges"
             options={historyOptions || []}
             onChange={onChangeTimeOption}
             placeholderEmpty={<EmptyRecentList />}
