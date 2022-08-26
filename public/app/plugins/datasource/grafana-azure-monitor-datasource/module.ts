@@ -1,4 +1,4 @@
-import { DataSourcePlugin, DashboardLoadedEvent, DataQuery } from '@grafana/data';
+import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction, getAppEvents } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor';
