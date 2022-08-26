@@ -11,7 +11,7 @@ const variableOptions = [
   { label: 'Label values', value: QueryType.labelValues },
 ];
 
-type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, LokiVariableQuery>;
+export type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, LokiVariableQuery>;
 
 export const LokiVariableQueryEditor: FC<Props> = ({ onChange }) => {
   const [type, setType] = useState<number | undefined>(undefined);
@@ -47,15 +47,28 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange }) => {
   return (
     <InlineFieldRow>
       <InlineField label="Query type" labelWidth={20}>
-        <Select onChange={onQueryTypeChange} onBlur={handleBlur} value={type} options={variableOptions} width={16} />
+        <Select
+          aria-label="Query type"
+          onChange={onQueryTypeChange}
+          onBlur={handleBlur}
+          value={type}
+          options={variableOptions}
+          width={16}
+        />
       </InlineField>
       {type === QueryType.labelValues && (
         <>
           <InlineField label="Label" labelWidth={20}>
-            <Input type="text" value={label} onChange={onLabelChange} onBlur={handleBlur} />
+            <Input type="text" aria-label="Label" value={label} onChange={onLabelChange} onBlur={handleBlur} />
           </InlineField>
           <InlineField label="Stream selector" labelWidth={20}>
-            <Input type="text" value={stream} onChange={onStreamChange} onBlur={handleBlur} />
+            <Input
+              type="text"
+              aria-label="Stream selector"
+              value={stream}
+              onChange={onStreamChange}
+              onBlur={handleBlur}
+            />
           </InlineField>
         </>
       )}
