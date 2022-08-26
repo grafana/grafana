@@ -9,9 +9,9 @@ import (
 	"mime/multipart"
 	"os"
 
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/alertmanager/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
