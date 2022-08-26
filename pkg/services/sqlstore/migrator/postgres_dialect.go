@@ -245,9 +245,11 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 			separatorVar = ""
 		}
 
+		placeHolder := fmt.Sprintf("$%v%s", i+1, separatorVar)
+
 		columnsStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
-		colPlaceHoldersStr.WriteString(fmt.Sprintf("?%s", separatorVar))
-		setStr.WriteString(fmt.Sprintf("%s=excluded.%s%s", db.Quote(c), db.Quote(c), separatorVar))
+		colPlaceHoldersStr.WriteString(placeHolder)
+		setStr.WriteString(fmt.Sprintf("%s=EXCLUDED.%s%s", db.Quote(c), db.Quote(c), separatorVar))
 	}
 
 	separatorVar = separator
@@ -268,13 +270,14 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 		valuesStr.WriteString(fmt.Sprintf("(%s)%s", colPlaceHolders, separatorVar))
 	}
 
-	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON CONFLICT(%s) DO UPDATE SET %s`,
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON CONFLICT (%s) DO UPDATE SET %s;`,
 		tableName,
 		columnsStr.String(),
 		valuesStr.String(),
 		onConflictStr.String(),
 		setStr.String(),
 	)
+	fmt.Println(s)
 	return s, nil
 }
 
