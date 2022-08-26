@@ -14,7 +14,6 @@
 
 import memoizeOne from 'memoize-one';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { colors } from '@grafana/ui';
 
 // TS needs the precise return type
@@ -95,10 +94,10 @@ export function clear() {
   getGenerator([]);
 }
 
-export function getColorByKey(key: string, theme: GrafanaTheme2) {
+export function getColorByKey(key: string) {
   return getGenerator(colors).getColorByKey(key);
 }
 
-export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
+export function getRgbColorByKey(key: string): [number, number, number] {
   return getGenerator(colors).getRgbColorByKey(key);
 }
