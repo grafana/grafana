@@ -114,7 +114,7 @@
     "@testing-library/jest-dom": "5.16.4",
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "8.0.1",
-    "@testing-library/user-event": "14.3.0",
+    "@testing-library/user-event": "14.4.3",
     "@types/angular": "1.8.4",
     "@types/angular-route": "1.7.2",
     "@types/classnames": "2.3.0",
