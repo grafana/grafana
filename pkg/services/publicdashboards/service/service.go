@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -28,6 +29,7 @@ type PublicDashboardServiceImpl struct {
 	cfg                *setting.Cfg
 	store              publicdashboards.Store
 	intervalCalculator intervalv2.Calculator
+	QueryDataService   *query.Service
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -41,12 +43,14 @@ var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 func ProvideService(
 	cfg *setting.Cfg,
 	store publicdashboards.Store,
+	qds *query.Service,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
 		cfg:                cfg,
 		store:              store,
 		intervalCalculator: intervalv2.NewCalculator(),
+		QueryDataService:   qds,
 	}
 }
 
@@ -170,9 +174,52 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 	return publicDashboard, nil
 }
 
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO *PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+	if err := validation.ValidateQueryPublicDashboardRequest(reqDTO); err != nil {
+		return nil, ErrPublicDashboardBadRequest
+	}
+
+	dashboard, err := pd.GetPublicDashboard(ctx, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	publicDashboard, err := pd.GetPublicDashboardConfig(ctx, dashboard.OrgId, dashboard.Uid)
+	if err != nil {
+		return nil, err
+	}
+
+	if !publicDashboard.IsEnabled {
+		return nil, ErrPublicDashboardNotFound
+	}
+
+	metricReqDTO, err := pd.buildPublicDashboardMetricRequest(
+		ctx,
+		dashboard,
+		publicDashboard,
+		panelId,
+		reqDTO,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	anonymousUser, err := pd.BuildAnonymousUser(ctx, dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReqDTO, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 // BuildPublicDashboardMetricRequest merges public dashboard parameters with
 // dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO *PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO *PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
 	queriesByPanel := models.GroupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelId]

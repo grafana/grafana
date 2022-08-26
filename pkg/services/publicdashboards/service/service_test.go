@@ -421,7 +421,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
-		reqDTO, err := service.BuildPublicDashboardMetricRequest(
+		reqDTO, err := service.buildPublicDashboardMetricRequest(
 			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
@@ -470,7 +470,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	})
 
 	t.Run("returns an error when panel missing", func(t *testing.T) {
-		_, err := service.BuildPublicDashboardMetricRequest(
+		_, err := service.buildPublicDashboardMetricRequest(
 			context.Background(),
 			publicDashboard,
 			publicDashboardPD,

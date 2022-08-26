@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -28,7 +27,6 @@ type Api struct {
 	PublicDashboardService publicdashboards.Service
 	RouteRegister          routing.RouteRegister
 	AccessControl          accesscontrol.AccessControl
-	QueryDataService       *query.Service
 	Features               *featuremgmt.FeatureManager
 }
 
@@ -36,14 +34,12 @@ func ProvideApi(
 	pd publicdashboards.Service,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
-	qds *query.Service,
 	features *featuremgmt.FeatureManager,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
 		RouteRegister:          rr,
 		AccessControl:          ac,
-		QueryDataService:       qds,
 		Features:               features,
 	}
 
@@ -155,46 +151,11 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if err = validation.ValidateQueryPublicDashboardRequest(reqDTO); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	dashboard, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":accessToken"])
+	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, web.Params(c.Req)[":accessToken"])
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not fetch dashboard", err)
+		return handlePublicDashboardErr(err)
 	}
 
-	publicDashboard, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), dashboard.OrgId, dashboard.Uid)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not fetch public dashboard", err)
-	}
-
-	if !publicDashboard.IsEnabled {
-		return handlePublicDashboardErr(ErrPublicDashboardNotFound)
-	}
-
-	metricReqDTO, err := api.PublicDashboardService.BuildPublicDashboardMetricRequest(
-		c.Req.Context(),
-		dashboard,
-		publicDashboard,
-		panelId,
-		reqDTO,
-	)
-	if err != nil {
-		return handleDashboardErr(http.StatusInternalServerError, "Failed to get queries for public dashboard", err)
-	}
-
-	anonymousUser, err := api.PublicDashboardService.BuildAnonymousUser(c.Req.Context(), dashboard)
-
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not create anonymous user", err)
-	}
-
-	resp, err := api.QueryDataService.QueryDataMultipleSources(c.Req.Context(), anonymousUser, c.SkipCache, metricReqDTO, true)
-
-	if err != nil {
-		return handleQueryMetricsError(err)
-	}
 	return toJsonStreamingResponse(api.Features, resp)
 }
 

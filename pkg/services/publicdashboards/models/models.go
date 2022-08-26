@@ -49,6 +49,10 @@ var (
 		Reason:     "Public dashboard has template variables",
 		StatusCode: 422,
 	}
+	ErrPublicDashboardBadRequest = PublicDashboardErr{
+		Reason:     "Bad Request",
+		StatusCode: 400,
+	}
 )
 
 type PublicDashboard struct {
