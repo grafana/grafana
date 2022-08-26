@@ -135,6 +135,17 @@ describe('JaegerDatasource', () => {
     expect(response.data[0].fields[0].name).toBe('traceID');
   });
 
+  it('should show the correct error message if no service name is selected', async () => {
+    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const response = await lastValueFrom(
+      ds.query({
+        ...defaultQuery,
+        targets: [{ queryType: 'search', refId: 'a', service: undefined, operation: '/api/services' }],
+      })
+    );
+    expect(response.error?.message).toBe('You must select a service.');
+  });
+
   it('should remove operation from the query when all is selected', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
