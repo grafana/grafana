@@ -153,7 +153,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       tabs={
         <TabsBar>
           <Tab label={'Details'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
-          <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+          {data.hasChanges && (
+            <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+          )}
         </TabsBar>
       }
       expandable
