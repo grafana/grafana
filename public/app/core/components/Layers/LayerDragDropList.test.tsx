@@ -19,13 +19,7 @@ describe('LayerDragDropList', () => {
     renderScenario({ excludeBaseLayer: true });
 
     screen.getByText(layerTwoName);
-
-    // TODO: rewrite this.... expecting getByText to fail...
-    try {
-      screen.getByText(layerOneName);
-    } catch (error) {
-      expect(true);
-    }
+    expect(screen.queryByTestId(layerOneName)).not.toBeInTheDocument();
   });
 
   it('showActions', () => {
@@ -39,13 +33,7 @@ describe('LayerDragDropList', () => {
     renderScenario({ showActions: () => true, onDuplicate: undefined });
 
     expect(screen.getAllByLabelText('Remove button').length).toEqual(2);
-
-    // TODO: rewrite this.... expecting getByText to fail...
-    try {
-      screen.getAllByLabelText('Duplicate button');
-    } catch (error) {
-      expect(true);
-    }
+    expect(screen.queryAllByLabelText('Duplicate button').length).toEqual(0);
   });
 
   it('renders draggable icon', () => {
@@ -57,12 +45,7 @@ describe('LayerDragDropList', () => {
   it('does not render draggable icon', () => {
     renderScenario({ excludeBaseLayer: true });
 
-    // TODO: rewrite this.... expecting getByText to fail...
-    try {
-      screen.getAllByLabelText('Drag and drop icon');
-    } catch (error) {
-      expect(true);
-    }
+    expect(screen.queryAllByLabelText('Drag and drop icon').length).toEqual(0);
   });
 
   function renderScenario(overrides: Partial<LayerDragDropListProps<testLayer>>) {
