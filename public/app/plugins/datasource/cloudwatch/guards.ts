@@ -1,5 +1,6 @@
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, DataQuery } from '@grafana/data';
 
+import pluginJson from './plugin.json';
 import { CloudWatchAnnotationQuery, CloudWatchLogsQuery, CloudWatchMetricsQuery, CloudWatchQuery } from './types';
 
 export const isCloudWatchLogsQuery = (cloudwatchQuery: CloudWatchQuery): cloudwatchQuery is CloudWatchLogsQuery =>
@@ -14,3 +15,7 @@ export const isCloudWatchAnnotationQuery = (
 
 export const isCloudWatchAnnotation = (query: unknown): query is AnnotationQuery<CloudWatchAnnotationQuery> =>
   (query as AnnotationQuery<CloudWatchAnnotationQuery>).target?.queryMode === 'Annotations';
+
+export const isCloudWatchQuery = (query: DataQuery): query is CloudWatchQuery => {
+  return query.datasource?.type === pluginJson.id;
+};
