@@ -33,7 +33,6 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore *sqlstore.
 
 func TestMigrate(t *testing.T) {
 	t.Run("should migrate from legacy to unified without compatibility", func(t *testing.T) {
-
 		sqlStore := sqlstore.InitTestDB(t)
 		kvStore := kvstore.ProvideService(sqlStore)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
