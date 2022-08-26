@@ -11,32 +11,25 @@ type Metadata map[string]bool
 
 // GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
 func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, prefix string, resourceIDs map[string]bool) map[string]Metadata {
-	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
-	if !ok {
-		return map[string]Metadata{}
-	}
+	wildcards := WildcardsFromPrefix(prefix)
 
-	allScope := GetResourceAllScope(strings.TrimSuffix(rootPrefix, ":"))
-	allAttributeScope := Scope(strings.TrimSuffix(attributePrefix, ":"), "*")
-
-	// index of the attribute in the scope
-	attributeIndex := len(attributePrefix)
+	// index of the prefix in the scope
+	prefixIndex := len(prefix)
 
 	// Loop through permissions once
 	result := map[string]Metadata{}
 
 	for action, scopes := range permissions {
 		for _, scope := range scopes {
-			if scope == "*" || scope == allScope || scope == allAttributeScope {
-				// Add global action to all resources
+			if wildcards.Contains(scope) {
 				for id := range resourceIDs {
 					result = addActionToMetadata(result, action, id)
 				}
-			} else {
-				if len(scope) > attributeIndex && strings.HasPrefix(scope, attributePrefix) && resourceIDs[scope[attributeIndex:]] {
-					// Add action to a specific resource
-					result = addActionToMetadata(result, action, scope[attributeIndex:])
-				}
+				break
+			}
+			if len(scope) > prefixIndex && strings.HasPrefix(scope, prefix) && resourceIDs[scope[prefixIndex:]] {
+				// Add action to a specific resource
+				result = addActionToMetadata(result, action, scope[prefixIndex:])
 			}
 		}
 	}
@@ -67,14 +60,4 @@ func MergeMeta(prefix string, first Metadata, second Metadata) Metadata {
 		}
 	}
 	return first
-}
-
-func extractPrefixes(prefix string) (string, string, bool) {
-	parts := strings.Split(strings.TrimSuffix(prefix, ":"), ":")
-	if len(parts) != 2 {
-		return "", "", false
-	}
-	rootPrefix := parts[0] + ":"
-	attributePrefix := rootPrefix + parts[1] + ":"
-	return rootPrefix, attributePrefix, true
 }
