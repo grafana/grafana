@@ -75,7 +75,6 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
 
   render() {
     const {
-      loading,
       loadingState,
       logRows,
       logsMeta,
@@ -113,6 +112,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
         }
       }
     `;
+
+    const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
 
     return (
       <>
@@ -176,7 +177,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const item: ExploreItemState = explore[exploreId];
   const {
     logsResult,
-    loading,
     scanning,
     datasourceInstance,
     isLive,
@@ -189,7 +189,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const timeZone = getTimeZone(state.user);
 
   return {
-    loading,
     logRows: logsResult?.rows,
     logsMeta: logsResult?.meta,
     logsSeries: logsResult?.series,
