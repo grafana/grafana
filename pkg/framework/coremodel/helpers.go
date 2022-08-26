@@ -56,7 +56,8 @@ func doLoadFrameworkCUE(ctx *cue.Context) (v cue.Value, err error) {
 
 	over := make(map[string]load.Source)
 
-	absolutePath, err := filepath.Abs(prefix)
+	var absolutePath string
+	absolutePath, err = filepath.Abs(prefix)
 	if err != nil {
 		return
 	}
