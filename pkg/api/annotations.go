@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -49,12 +50,16 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUid != "" {
-		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgID}
-		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
+		if strings.Index(query.DashboardUid, "/") > 0 && hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
+			// The UID will not exist in the annotations table
+		} else {
+			dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgID}
+			err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+			if err != nil {
+				return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
+			}
+			query.DashboardId = dq.Result.Id
 		}
-		query.DashboardId = dq.Result.Id
 	}
 
 	repo := annotations.GetRepository()
