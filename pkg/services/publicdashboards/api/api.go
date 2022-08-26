@@ -122,7 +122,7 @@ func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response
 func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":uid"]
-	if dashboardUid == "" {
+	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
 		handleDashboardErr(http.StatusBadRequest, "no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
 	}
 
