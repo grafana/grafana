@@ -70,7 +70,7 @@ export const QueryRows = ({ exploreId }: Props) => {
   const onMixedDataSourceChange = async (ds: DataSourceInstanceSettings, query: DataQuery) => {
     const queryDatasource = await getDataSourceSrv().get(query.datasource);
     const targetDS = await getDataSourceSrv().get({ uid: ds.uid });
-    dispatch(importQueries(exploreId, queries, queryDatasource, targetDS));
+    dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, query.refId));
   };
 
   return (

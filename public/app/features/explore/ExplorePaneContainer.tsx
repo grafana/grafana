@@ -76,10 +76,14 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
     if (!initialized) {
       let queriesDatasourceOverride = undefined;
       let rootDatasourceOverride = undefined;
-      // if this is starting with no queries and an initial datasource exists, look up the ref to use it (initial datasource can be a UID or name here)
+      // if this is starting with no queries and an initial datasource exists (but is not mixed), look up the ref to use it (initial datasource can be a UID or name here)
       if ((!initialQueries || initialQueries.length === 0) && initialDatasource) {
-        const datasource = await getDatasourceSrv().get(initialDatasource);
-        queriesDatasourceOverride = datasource.getRef();
+        const isDSMixed =
+          initialDatasource === MIXED_DATASOURCE_NAME || initialDatasource.uid === MIXED_DATASOURCE_NAME;
+        if (!isDSMixed) {
+          const datasource = await getDatasourceSrv().get(initialDatasource);
+          queriesDatasourceOverride = datasource.getRef();
+        }
       }
 
       let queries = await ensureQueries(initialQueries, queriesDatasourceOverride); // this will return an empty array if there are no datasources

@@ -283,7 +283,8 @@ export const importQueries = (
   exploreId: ExploreId,
   queries: DataQuery[],
   sourceDataSource: DataSourceApi | undefined | null,
-  targetDataSource: DataSourceApi
+  targetDataSource: DataSourceApi,
+  singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
 ): ThunkResult<void> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
@@ -310,10 +311,28 @@ export const importQueries = (
       );
       importedQueries = flatten(groupedImportableQueries.filter((arr) => arr.length > 0));
     } else {
-      importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queries);
+      let queriesStartArr = queries;
+      if (singleQueryChangeRef !== undefined) {
+        const changedQuery = queries.find((query) => query.refId === singleQueryChangeRef);
+        if (changedQuery) {
+          queriesStartArr = [changedQuery];
+        }
+      }
+      importedQueries = await getImportableQueries(targetDataSource, sourceDataSource, queriesStartArr);
     }
 
-    const nextQueries = await ensureQueries(importedQueries, targetDataSource.getRef());
+    // this will be the entire imported set, or the single imported query in an array
+    let nextQueries = await ensureQueries(importedQueries, targetDataSource.getRef());
+
+    if (singleQueryChangeRef !== undefined) {
+      // capture the single imported query, and copy the original set
+      const changedQuery = { ...nextQueries[0] };
+      nextQueries = [...queries];
+      const updatedQueryIdx = queries.findIndex((query) => query.refId === singleQueryChangeRef);
+      // replace the changed query
+      nextQueries[updatedQueryIdx] = changedQuery;
+    }
+
     dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
   };
 };
