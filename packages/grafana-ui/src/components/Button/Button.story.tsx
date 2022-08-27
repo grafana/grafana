@@ -1,26 +1,47 @@
-import { ComponentStory, ComponentMeta } from '@storybook/react';
-import React from 'react';
+import { ComponentStory } from "@storybook/react";
+import React from "react";
 
-import { ComponentSize } from '../../types/size';
-import { Card } from '../Card/Card';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { ComponentSize } from "../../types/size";
+import { Card } from "../Card/Card";
+import { HorizontalGroup, VerticalGroup } from "../Layout/Layout";
 
-import { allButtonVariants, allButtonFills, Button } from './Button';
-import mdx from './Button.mdx';
-import { ButtonGroup } from './ButtonGroup';
+import {
+  allButtonVariants,
+  allButtonFills,
+  Button,
+  ButtonProps,
+} from "./Button";
+import mdx from "./Button.mdx";
+import { ButtonGroup } from "./ButtonGroup";
 
-const meta: ComponentMeta<typeof Button> = {
-  title: 'Buttons/Button',
+export default {
+  title: "Buttons/Button",
   component: Button,
   parameters: {
+    controls: { expanded: true },
     docs: {
       page: mdx,
     },
   },
+  argTypes: {
+    size: {
+      options: ["sm", "md", "lg"],
+    },
+    tooltip: {
+      table: {
+        disable: true,
+      },
+    },
+    tooltipPlacement: {
+      table: {
+        disable: true,
+      },
+    },
+  },
 };
 
-export const Variants: ComponentStory<typeof Button> = () => {
-  const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
+export const Examples: ComponentStory<typeof Button> = () => {
+  const sizes: ComponentSize[] = ["lg", "md", "sm"];
   return (
     <VerticalGroup>
       {allButtonFills.map((buttonFill) => (
@@ -29,7 +50,12 @@ export const Variants: ComponentStory<typeof Button> = () => {
             {allButtonVariants.map((variant) => (
               <VerticalGroup spacing="lg" key={`${buttonFill}-${variant}`}>
                 {sizes.map((size) => (
-                  <Button variant={variant} fill={buttonFill} size={size} key={size}>
+                  <Button
+                    variant={variant}
+                    fill={buttonFill}
+                    size={size}
+                    key={size}
+                  >
                     {variant} {size}
                   </Button>
                 ))}
@@ -39,7 +65,7 @@ export const Variants: ComponentStory<typeof Button> = () => {
               </VerticalGroup>
             ))}
           </HorizontalGroup>
-          <div style={{ padding: '20px 0', width: '100%' }} />
+          <div style={{ padding: "20px 0", width: "100%" }} />
         </VerticalGroup>
       ))}
       <HorizontalGroup spacing="lg">
@@ -88,4 +114,8 @@ export const Variants: ComponentStory<typeof Button> = () => {
   );
 };
 
-export default meta;
+export const Default = ({ ...args }: ButtonProps) => <Button {...args} />;
+
+Default.args = {
+  children: "Example button",
+};
