@@ -46,9 +46,9 @@ export const Examples: ComponentStory<typeof Button> = () => {
     <VerticalGroup>
       {allButtonFills.map((buttonFill) => (
         <VerticalGroup key={buttonFill}>
-          <HorizontalGroup spacing='lg'>
+          <HorizontalGroup spacing="lg">
             {allButtonVariants.map((variant) => (
-              <VerticalGroup spacing='lg' key={`${buttonFill}-${variant}`}>
+              <VerticalGroup spacing="lg" key={`${buttonFill}-${variant}`}>
                 {sizes.map((size) => (
                   <Button
                     variant={variant}
@@ -68,33 +68,33 @@ export const Examples: ComponentStory<typeof Button> = () => {
           <div style={{ padding: '20px 0', width: '100%' }} />
         </VerticalGroup>
       ))}
-      <HorizontalGroup spacing='lg'>
+      <HorizontalGroup spacing="lg">
         <div>With icon and text</div>
-        <Button icon='cloud' size='sm'>
+        <Button icon="cloud" size="sm">
           Configure
         </Button>
-        <Button icon='cloud'>Configure</Button>
-        <Button icon='cloud' size='lg'>
+        <Button icon="cloud">Configure</Button>
+        <Button icon="cloud" size="lg">
           Configure
         </Button>
       </HorizontalGroup>
       <div />
-      <HorizontalGroup spacing='lg'>
+      <HorizontalGroup spacing="lg">
         <div>With icon only</div>
-        <Button icon='cloud' size='sm' />
-        <Button icon='cloud' size='md' />
-        <Button icon='cloud' size='lg' />
+        <Button icon="cloud" size="sm" />
+        <Button icon="cloud" size="md" />
+        <Button icon="cloud" size="lg" />
       </HorizontalGroup>
       <div />
-      <Button icon='plus' fullWidth>
+      <Button icon="plus" fullWidth>
         Button with fullWidth
       </Button>
       <div />
-      <HorizontalGroup spacing='lg'>
+      <HorizontalGroup spacing="lg">
         <div>Inside ButtonGroup</div>
         <ButtonGroup>
-          <Button icon='sync'>Run query</Button>
-          <Button icon='angle-down' />
+          <Button icon="sync">Run query</Button>
+          <Button icon="angle-down" />
         </ButtonGroup>
       </HorizontalGroup>
       <Card>
@@ -105,7 +105,7 @@ export const Examples: ComponentStory<typeof Button> = () => {
               {variant}
             </Button>
           ))}
-          <Button variant='primary' disabled>
+          <Button variant="primary" disabled>
             Disabled
           </Button>
         </Card.Actions>
