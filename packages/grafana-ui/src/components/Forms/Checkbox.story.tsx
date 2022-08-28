@@ -71,17 +71,20 @@ export const StackedList = () => {
   );
 };
 
-export const InAField = () => {
+export const InAField: ComponentStory<typeof Checkbox> = (args) => {
   return (
     <div>
-      <Field
-        label="Hidden"
-        description="Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden."
-      >
+      <Field {...args}>
         <Checkbox name="hide" id="hide" defaultChecked={true} />
       </Field>
     </div>
   );
+};
+
+InAField.args = {
+  label: 'Hidden',
+  description:
+    'Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden.',
 };
 
 export default meta;
