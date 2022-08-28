@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ComponentMeta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { useTheme2 } from '../../themes';
@@ -7,7 +7,7 @@ import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VerticalGroup } from '../Layout/Layout';
 
-import { IconButton, IconButtonVariant } from './IconButton';
+import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
 
 const meta: ComponentMeta<typeof IconButton> = {
@@ -19,9 +19,35 @@ const meta: ComponentMeta<typeof IconButton> = {
       page: mdx,
     },
   },
+  args: {
+    name: 'apps',
+    size: 'xxxl',
+    iconType: 'default',
+    tooltip: 'sample tooltip message',
+    tooltipPlacement: 'top',
+    variant: 'primary',
+    ariaLabel: 'sample aria-label content',
+  },
+  argTypes: {
+    name: {
+      control: 'select',
+    },
+    size: {
+      control: 'select',
+    },
+    iconType: {
+      control: 'radio',
+    },
+    tooltipPlacement: {
+      control: 'select',
+    },
+    variant: {
+      control: 'radio',
+    },
+  },
 };
 
-export const Simple = () => {
+export const Examples = () => {
   return (
     <div>
       <RenderScenario background="canvas" />
@@ -29,6 +55,10 @@ export const Simple = () => {
       <RenderScenario background="secondary" />
     </div>
   );
+};
+
+export const Basic: ComponentStory<typeof IconButton> = (args: IconButtonProps) => {
+  return <IconButton {...args} />;
 };
 
 interface ScenarioProps {
