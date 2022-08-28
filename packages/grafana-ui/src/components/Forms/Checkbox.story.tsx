@@ -1,4 +1,4 @@
-import { ComponentMeta } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
 import { VerticalGroup } from '../Layout/Layout';
@@ -14,22 +14,25 @@ const meta: ComponentMeta<typeof Checkbox> = {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['value', 'htmlValue'],
+    },
   },
 };
 
-export const Controlled = () => {
+export const Controlled: ComponentStory<typeof Checkbox> = (args) => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
   return (
     <div>
-      <Checkbox
-        value={checked}
-        onChange={onChange}
-        label="Skip TLS cert validation"
-        description="Set to true if you want to skip TLS cert validation"
-      />
+      <Checkbox value={checked} onChange={onChange} {...args} />
     </div>
   );
+};
+
+Controlled.args = {
+  label: 'Skip TLS cert validation',
+  description: 'Set to true if you want to skip TLS cert validation',
 };
 
 export const uncontrolled = () => {
