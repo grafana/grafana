@@ -35,16 +35,17 @@ Controlled.args = {
   description: 'Set to true if you want to skip TLS cert validation',
 };
 
-export const uncontrolled = () => {
+export const uncontrolled: ComponentStory<typeof Checkbox> = (args) => {
   return (
     <div>
-      <Checkbox
-        defaultChecked={true}
-        label="Skip TLS cert validation"
-        description="Set to true if you want to skip TLS cert validation"
-      />
+      <Checkbox defaultChecked={true} {...args} />
     </div>
   );
+};
+
+uncontrolled.args = {
+  label: 'Skip TLS cert validation',
+  description: 'Set to true if you want to skip TLS cert validation',
 };
 
 export const StackedList = () => {
