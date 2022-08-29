@@ -274,14 +274,16 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "redshiftAsyncQueryDataSupport",
-			Description: "Enable async query data support for Redshift",
-			State:       FeatureStateAlpha,
+			Name:         "redshiftAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Redshift",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 		{
-			Name:        "athenaAsyncQueryDataSupport",
-			Description: "Enable async query data support for Athena",
-			State:       FeatureStateAlpha,
+			Name:         "athenaAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Athena",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )
