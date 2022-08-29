@@ -57,48 +57,60 @@ func TestAlertInstanceBulkWrite(t *testing.T) {
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
-	const mainOrgID int64 = 1
+	orgIDs := []int64{1, 2, 3, 4, 5}
+	count := 20_003
+	instances := make([]models.AlertInstance, 0, len(orgIDs)+count)
+	keys := make([]models.AlertInstanceKey, 0, len(orgIDs)+count)
 
-	alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
+	for _, id := range orgIDs {
+		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, id)
 
-	// Create some instances to write down and then delete.
-	count := 1_000_000
-	instances := make([]models.AlertInstance, 0, count)
-	keys := make([]models.AlertInstanceKey, 0, count)
-	for i := 0; i < count; i++ {
-		labels := models.InstanceLabels{"test": fmt.Sprint(i)}
-		_, labelsHash, _ := labels.StringAndHash()
-		instance := models.AlertInstance{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  alertRule.OrgID,
-				RuleUID:    alertRule.UID,
-				LabelsHash: labelsHash,
-			},
-			CurrentState:  models.InstanceStateFiring,
-			CurrentReason: string(models.InstanceStateError),
-			Labels:        labels,
+		// Create some instances to write down and then delete.
+		for i := 0; i < count; i++ {
+			labels := models.InstanceLabels{"test": fmt.Sprint(i)}
+			_, labelsHash, _ := labels.StringAndHash()
+			instance := models.AlertInstance{
+				AlertInstanceKey: models.AlertInstanceKey{
+					RuleOrgID:  alertRule.OrgID,
+					RuleUID:    alertRule.UID,
+					LabelsHash: labelsHash,
+				},
+				CurrentState:  models.InstanceStateFiring,
+				CurrentReason: string(models.InstanceStateError),
+				Labels:        labels,
+			}
+			instances = append(instances, instance)
+			keys = append(keys, instance.AlertInstanceKey)
 		}
-		instances = append(instances, instance)
-		keys = append(keys, instance.AlertInstanceKey)
 	}
 
 	err := dbstore.SaveAlertInstances(ctx, instances...)
 	require.NoError(t, err)
+	t.Log("Finished database write")
 
-	//// List our instances. Make sure we have 100k.
-	q := &models.ListAlertInstancesQuery{
-		RuleOrgID: alertRule.OrgID,
+	// List our instances. Make sure we have the right count.
+	for _, id := range orgIDs {
+		q := &models.ListAlertInstancesQuery{
+			RuleOrgID: id,
+		}
+		err = dbstore.ListAlertInstances(ctx, q)
+		require.NoError(t, err)
+		require.Equal(t, count, len(q.Result), "Org %v: Expected %v instances but got %v", id, count, len(q.Result))
 	}
-	err = dbstore.ListAlertInstances(ctx, q)
-	require.NoError(t, err)
-	require.Equal(t, count, len(q.Result), "Expected %v instances but got %v", count, len(q.Result))
+	t.Log("Finished database read")
 
 	err = dbstore.DeleteAlertInstances(ctx, keys...)
 	require.NoError(t, err)
+	t.Log("Finished database delete")
 
-	err = dbstore.ListAlertInstances(ctx, q)
-	require.NoError(t, err)
-	require.Zero(t, len(q.Result), "Deleted instances but still had %v", len(q.Result))
+	for _, id := range orgIDs {
+		q := &models.ListAlertInstancesQuery{
+			RuleOrgID: id,
+		}
+		err = dbstore.ListAlertInstances(ctx, q)
+		require.NoError(t, err)
+		require.Zero(t, len(q.Result), "Org %v: Deleted instances but still had %v", id, len(q.Result))
+	}
 }
 
 func TestIntegrationAlertInstanceOperations(t *testing.T) {

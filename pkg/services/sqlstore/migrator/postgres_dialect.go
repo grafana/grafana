@@ -235,7 +235,6 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 	}
 	columnsStr := strings.Builder{}
 	onConflictStr := strings.Builder{}
-	colPlaceHoldersStr := strings.Builder{}
 	setStr := strings.Builder{}
 
 	const separator = ", "
@@ -245,10 +244,7 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 			separatorVar = ""
 		}
 
-		placeHolder := fmt.Sprintf("$%v%s", i+1, separatorVar)
-
 		columnsStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
-		colPlaceHoldersStr.WriteString(placeHolder)
 		setStr.WriteString(fmt.Sprintf("%s=EXCLUDED.%s%s", db.Quote(c), db.Quote(c), separatorVar))
 	}
 
@@ -262,11 +258,25 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 
 	valuesStr := strings.Builder{}
 	separatorVar = separator
-	colPlaceHolders := colPlaceHoldersStr.String()
+	nextPlaceHolder := 1
+
 	for i := 0; i < count; i++ {
 		if i == count-1 {
 			separatorVar = ""
 		}
+
+		colPlaceHoldersStr := strings.Builder{}
+		placeHolderSep := separator
+		for j := 1; j <= len(updateCols); j++ {
+			if j == len(updateCols) {
+				placeHolderSep = ""
+			}
+			placeHolder := fmt.Sprintf("$%v%s", nextPlaceHolder, placeHolderSep)
+			nextPlaceHolder++
+			colPlaceHoldersStr.WriteString(placeHolder)
+		}
+		colPlaceHolders := colPlaceHoldersStr.String()
+
 		valuesStr.WriteString(fmt.Sprintf("(%s)%s", colPlaceHolders, separatorVar))
 	}
 
@@ -277,7 +287,7 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 		onConflictStr.String(),
 		setStr.String(),
 	)
-	fmt.Println(s)
+
 	return s, nil
 }
 
