@@ -255,7 +255,6 @@ datasources:
         label: "Zipkin traces"
         description: "Related traces stored in Zipkin"
     jsonData:
-      something: here
       manageAlerts: false
       derivedFields:
         - name: "traceID"
@@ -285,5 +284,5 @@ datasources:
     type: tempo
     uid: gdev-tempo
     access: proxy
-    url: http://localhost:3101
+    url: http://localhost:3200
     editable: false

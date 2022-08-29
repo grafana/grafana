@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
@@ -32,9 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
-	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/thumbs"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -49,14 +48,12 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	osskmsproviders.ProvideService,
 	wire.Bind(new(kmsproviders.Service), new(osskmsproviders.Service)),
-	// ossencryption.ProvideService,
-	// wire.Bind(new(encryption.Internal), new(*ossencryption.Service)),
 	auth.ProvideUserAuthTokenService,
 	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
 	wire.Bind(new(models.UserTokenBackgroundService), new(*auth.UserAuthTokenService)),
 	ossaccesscontrol.ProvideService,
-	wire.Bind(new(accesscontrol.RoleRegistry), new(*ossaccesscontrol.OSSAccessControlService)),
-	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.OSSAccessControlService)),
+	wire.Bind(new(accesscontrol.Service), new(*ossaccesscontrol.Service)),
+	wire.Bind(new(accesscontrol.RoleRegistry), new(*ossaccesscontrol.Service)),
 	thumbs.ProvideCrawlerAuthSetupService,
 	wire.Bind(new(thumbs.CrawlerAuthSetupService), new(*thumbs.OSSCrawlerAuthSetupService)),
 	validations.ProvideValidator,
@@ -70,7 +67,7 @@ var wireExtsSet = wire.NewSet(
 	authinfoservice.ProvideOSSUserProtectionService,
 	wire.Bind(new(login.UserProtectionService), new(*authinfoservice.OSSUserProtectionImpl)),
 	filters.ProvideOSSSearchUserFilter,
-	wire.Bind(new(models.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
+	wire.Bind(new(user.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	signature.ProvideOSSAuthorizer,
@@ -78,8 +75,7 @@ var wireExtsSet = wire.NewSet(
 	provider.ProvideService,
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	acdb.ProvideService,
-	wire.Bind(new(resourcepermissions.Store), new(*acdb.AccessControlStore)),
-	wire.Bind(new(accesscontrol.PermissionsStore), new(*acdb.AccessControlStore)),
+	wire.Bind(new(accesscontrol.Store), new(*acdb.AccessControlStore)),
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	permissions.ProvideDatasourcePermissionsService,
@@ -88,8 +84,6 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(registry.UsageStatsProvidersRegistry), new(*usagestatssvcs.UsageStatsProvidersRegistry)),
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
-	secretsStore.ProvideRemotePluginCheck,
-	wire.Bind(new(secretsStore.UseRemoteSecretsPluginCheck), new(*secretsStore.OSSRemoteSecretsPluginCheck)),
 	encryptionprovider.ProvideEncryptionProvider,
 	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 )

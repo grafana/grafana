@@ -7,8 +7,12 @@ import (
 )
 
 type FakeUserService struct {
-	ExpectedUser  *user.User
-	ExpectedError error
+	ExpectedUser             *user.User
+	ExpectedSignedInUser     *user.SignedInUser
+	ExpectedError            error
+	ExpectedSetUsingOrgError error
+	ExpectedSearchUsers      user.SearchUserQueryResult
+	ExpectedUSerProfileDTO   user.UserProfileDTO
 }
 
 func NewUserServiceFake() *FakeUserService {
@@ -45,4 +49,43 @@ func (f *FakeUserService) ChangePassword(ctx context.Context, cmd *user.ChangeUs
 
 func (f *FakeUserService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	return f.ExpectedError
+}
+
+func (f *FakeUserService) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
+	return f.ExpectedSetUsingOrgError
+}
+
+func (f *FakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	return f.GetSignedInUser(ctx, query)
+}
+
+func (f *FakeUserService) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	if f.ExpectedSignedInUser == nil {
+		return &user.SignedInUser{}, f.ExpectedError
+	}
+	return f.ExpectedSignedInUser, f.ExpectedError
+}
+
+func (f *FakeUserService) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return &f.ExpectedSearchUsers, f.ExpectedError
+}
+
+func (f *FakeUserService) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) UpdatePermissions(userID int64, isAdmin bool) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
+	return f.ExpectedError
+}
+
+func (f *FakeUserService) GetUserProfile(ctx context.Context, query *user.GetUserProfileQuery) (user.UserProfileDTO, error) {
+	return f.ExpectedUSerProfileDTO, f.ExpectedError
 }

@@ -12,6 +12,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -48,9 +49,9 @@ type RuleStore interface {
 	// GetRuleGroups returns the unique rule groups across all organizations.
 	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
-	GetUserVisibleNamespaces(context.Context, int64, *models.SignedInUser) (map[string]*models.Folder, error)
-	GetNamespaceByTitle(context.Context, string, int64, *models.SignedInUser, bool) (*models.Folder, error)
-	GetNamespaceByUID(context.Context, string, int64, *models.SignedInUser) (*models.Folder, error)
+	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*models.Folder, error)
+	GetNamespaceByTitle(context.Context, string, int64, *user.SignedInUser, bool) (*models.Folder, error)
+	GetNamespaceByUID(context.Context, string, int64, *user.SignedInUser) (*models.Folder, error)
 	// InsertAlertRules will insert all alert rules passed into the function
 	// and return the map of uuid to id.
 	InsertAlertRules(ctx context.Context, rule []ngmodels.AlertRule) (map[string]int64, error)
@@ -341,7 +342,7 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 }
 
 // GetUserVisibleNamespaces returns the folders that are visible to the user and have at least one alert in it
-func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *models.SignedInUser) (map[string]*models.Folder, error) {
+func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *user.SignedInUser) (map[string]*models.Folder, error) {
 	namespaceMap := make(map[string]*models.Folder)
 
 	searchQuery := models.FindPersistedDashboardsQuery{
@@ -385,7 +386,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
+func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *user.SignedInUser, withCanSave bool) (*models.Folder, error) {
 	folder, err := st.FolderService.GetFolderByTitle(ctx, user, orgID, namespace)
 	if err != nil {
 		return nil, err
@@ -396,7 +397,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 		g := guardian.New(ctx, folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
-				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "err", err)
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserID, "username", user.Login, "namespace", namespace, "orgId", orgID, "err", err)
 			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
@@ -406,7 +407,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *models.SignedInUser) (*models.Folder, error) {
+func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*models.Folder, error) {
 	folder, err := st.FolderService.GetFolderByUID(ctx, user, orgID, uid)
 	if err != nil {
 		return nil, err

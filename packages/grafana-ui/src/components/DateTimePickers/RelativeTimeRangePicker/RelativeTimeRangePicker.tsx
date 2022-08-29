@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
+import React, { FormEvent, useCallback, useState } from 'react';
 
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 
@@ -41,7 +41,7 @@ const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
 /**
  * @internal
  */
-export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): ReactElement | null {
+export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   const { timeRange, onChange } = props;
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);

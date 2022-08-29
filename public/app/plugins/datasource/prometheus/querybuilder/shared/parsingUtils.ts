@@ -32,7 +32,7 @@ const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\
 
 /**
  * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at
- * the same time we can get the variable and it's format back from it.
+ * the same time we can get the variable and its format back from it.
  * @param expr
  */
 export function replaceVariables(expr: string) {

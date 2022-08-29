@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -23,7 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/installer"
+	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -38,11 +40,11 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	// When using access control anyone that can create a data source should be able to list all data sources installed
 	// Fallback to only letting admins list non-core plugins
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(models.ROLE_ADMIN) {
+	if !hasAccess(accesscontrol.ReqOrgAdmin, accesscontrol.EvalPermission(datasources.ActionCreate)) && !c.HasRole(org.RoleAdmin) {
 		coreFilter = "1"
 	}
 
-	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgId)
+	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(500, "Failed to get list of plugins", err)
 	}
@@ -155,7 +157,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
 		PluginID: pluginID,
-		OrgID:    c.OrgId,
+		OrgID:    c.OrgID,
 	})
 	if err != nil {
 		if !errors.Is(err, models.ErrPluginSettingNotFound) {
@@ -187,7 +189,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 		return response.Error(404, "Plugin not installed", nil)
 	}
 
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	cmd.PluginId = pluginID
 	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &pluginsettings.UpdateArgs{
 		Enabled:                 cmd.Enabled,
@@ -368,21 +370,25 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version)
+	err := hs.pluginManager.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
+		GrafanaVersion: hs.Cfg.BuildVersion,
+		OS:             runtime.GOOS,
+		Arch:           runtime.GOARCH,
+	})
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
 			return response.Error(http.StatusConflict, "Plugin already installed", err)
 		}
-		var versionUnsupportedErr installer.ErrVersionUnsupported
+		var versionUnsupportedErr repo.ErrVersionUnsupported
 		if errors.As(err, &versionUnsupportedErr) {
 			return response.Error(http.StatusConflict, "Plugin version not supported", err)
 		}
-		var versionNotFoundErr installer.ErrVersionNotFound
+		var versionNotFoundErr repo.ErrVersionNotFound
 		if errors.As(err, &versionNotFoundErr) {
 			return response.Error(http.StatusNotFound, "Plugin version not found", err)
 		}
-		var clientError installer.Response4xxError
+		var clientError repo.Response4xxError
 		if errors.As(err, &clientError) {
 			return response.Error(clientError.StatusCode, clientError.Message, err)
 		}
@@ -407,7 +413,7 @@ func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
 		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
 		}
-		if errors.Is(err, plugins.ErrUninstallOutsideOfPluginDir) {
+		if errors.Is(err, storage.ErrUninstallOutsideOfPluginDir) {
 			return response.Error(http.StatusForbidden, "Cannot uninstall a plugin outside of the plugins directory", err)
 		}
 
@@ -465,7 +471,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginId string, name 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning since we have cleaned the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

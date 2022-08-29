@@ -12,9 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
@@ -77,7 +79,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 
 func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgId)
+	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -162,12 +164,12 @@ func enableServiceAccount(hs *HTTPServer, c *models.ReqContext) bool {
 }
 
 func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
-	return c.OrgRole == models.ROLE_ADMIN || (hs.Cfg.EditorsCanAdmin && c.OrgRole == models.ROLE_EDITOR)
+	return c.OrgRole == org.RoleAdmin || (hs.Cfg.EditorsCanAdmin && c.OrgRole == org.RoleEditor)
 }
 
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	navTree := []*dtos.NavLink{}
+	var navTree []*dtos.NavLink
 
 	if hasAccess(ac.ReqSignedIn, ac.EvalPermission(dashboards.ActionDashboardsRead)) {
 		starredItemsLinks, err := hs.buildStarredItemsNavLinks(c, prefs)
@@ -202,7 +204,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	canExplore := func(context *models.ReqContext) bool {
-		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
+		return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor || setting.ViewersCanEdit
 	}
 
 	if setting.ExploreEnabled && hasAccess(canExplore, ac.EvalPermission(ac.ActionDatasourcesExplore)) {
@@ -219,7 +221,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 	navTree = hs.addProfile(navTree, c)
 
-	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgId]
+	_, uaIsDisabledForOrg := hs.Cfg.UnifiedAlerting.DisabledOrgs[c.OrgID]
 	uaVisibleForOrg := hs.Cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
 	if setting.AlertingEnabled != nil && *setting.AlertingEnabled {
@@ -252,79 +254,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		navTree = append(navTree, appLinks...)
 	}
 
-	configNodes := []*dtos.NavLink{}
-
-	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Data sources",
-			Icon:        "database",
-			Description: "Add and configure data sources",
-			Id:          "datasources",
-			Url:         hs.Cfg.AppSubURL + "/datasources",
-		})
-	}
-
-	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Users",
-			Id:          "users",
-			Description: "Manage org members",
-			Icon:        "user",
-			Url:         hs.Cfg.AppSubURL + "/org/users",
-		})
-	}
-
-	if hasAccess(hs.ReqCanAdminTeams, teamsAccessEvaluator) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Teams",
-			Id:          "teams",
-			Description: "Manage org groups",
-			Icon:        "users-alt",
-			Url:         hs.Cfg.AppSubURL + "/org/teams",
-		})
-	}
-
-	if c.OrgRole == models.ROLE_ADMIN {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Plugins",
-			Id:          "plugins",
-			Description: "View and configure plugins",
-			Icon:        "plug",
-			Url:         hs.Cfg.AppSubURL + "/plugins",
-		})
-	}
-
-	if hasAccess(ac.ReqOrgAdmin, orgPreferencesAccessEvaluator) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Preferences",
-			Id:          "org-settings",
-			Description: "Organization preferences",
-			Icon:        "sliders-v-alt",
-			Url:         hs.Cfg.AppSubURL + "/org",
-		})
-	}
-
-	hideApiKeys, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgId, "serviceaccounts", "hideApiKeys")
-	apiKeys := hs.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgId)
-	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
-	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && !apiKeysHidden {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "API keys",
-			Id:          "apikeys",
-			Description: "Create & manage API keys",
-			Icon:        "key-skeleton-alt",
-			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
-		})
-	}
-
-	if enableServiceAccount(hs, c) {
-		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Service accounts",
-			Id:          "serviceaccounts",
-			Description: "Manage service accounts",
-			Icon:        "gf-service-account",
-			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
-		})
+	configNodes, err := hs.setupConfigNodes(c)
+	if err != nil {
+		return navTree, err
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagLivePipeline) {
@@ -390,6 +322,99 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	return navTree, nil
 }
 
+func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, error) {
+	var configNodes []*dtos.NavLink
+
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Data sources",
+			Icon:        "database",
+			Description: "Add and configure data sources",
+			Id:          "datasources",
+			Url:         hs.Cfg.AppSubURL + "/datasources",
+		})
+	}
+
+	if hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Correlations",
+			Icon:        "gf-glue",
+			Description: "Add and configure correlations",
+			Id:          "correlations",
+			Url:         hs.Cfg.AppSubURL + "/datasources/correlations",
+		})
+	}
+
+	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Users",
+			Id:          "users",
+			Description: "Manage org members",
+			Icon:        "user",
+			Url:         hs.Cfg.AppSubURL + "/org/users",
+		})
+	}
+
+	if hasAccess(hs.ReqCanAdminTeams, teamsAccessEvaluator) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Teams",
+			Id:          "teams",
+			Description: "Manage org groups",
+			Icon:        "users-alt",
+			Url:         hs.Cfg.AppSubURL + "/org/teams",
+		})
+	}
+
+	if c.OrgRole == org.RoleAdmin {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Plugins",
+			Id:          "plugins",
+			Description: "View and configure plugins",
+			Icon:        "plug",
+			Url:         hs.Cfg.AppSubURL + "/plugins",
+		})
+	}
+
+	if hasAccess(ac.ReqOrgAdmin, orgPreferencesAccessEvaluator) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Preferences",
+			Id:          "org-settings",
+			Description: "Organization preferences",
+			Icon:        "sliders-v-alt",
+			Url:         hs.Cfg.AppSubURL + "/org",
+		})
+	}
+
+	hideApiKeys, _, _ := hs.kvStore.Get(c.Req.Context(), c.OrgID, "serviceaccounts", "hideApiKeys")
+	apiKeys, err := hs.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
+	if hasAccess(ac.ReqOrgAdmin, apiKeyAccessEvaluator) && !apiKeysHidden {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "API keys",
+			Id:          "apikeys",
+			Description: "Create & manage API keys",
+			Icon:        "key-skeleton-alt",
+			Url:         hs.Cfg.AppSubURL + "/org/apikeys",
+		})
+	}
+
+	if enableServiceAccount(hs, c) {
+		configNodes = append(configNodes, &dtos.NavLink{
+			Text:        "Service accounts",
+			Id:          "serviceaccounts",
+			Description: "Manage service accounts",
+			Icon:        "gf-service-account",
+			Url:         hs.Cfg.AppSubURL + "/org/serviceaccounts",
+		})
+	}
+
+	return configNodes, nil
+}
+
 func (hs *HTTPServer) addProfile(navTree []*dtos.NavLink, c *models.ReqContext) []*dtos.NavLink {
 	if setting.ProfileEnabled && c.IsSignedIn {
 		navTree = append(navTree, hs.getProfileNode(c))
@@ -422,7 +447,7 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 	starredItemsChildNavs := []*dtos.NavLink{}
 
 	query := star.GetUserStarsQuery{
-		UserID: c.SignedInUser.UserId,
+		UserID: c.SignedInUser.UserID,
 	}
 
 	starredDashboardResult, err := hs.starService.GetByUser(c.Req.Context(), &query)
@@ -440,7 +465,7 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 		starredDashboardsCounter++
 		query := &models.GetDashboardQuery{
 			Id:    dashboardId,
-			OrgId: c.OrgId,
+			OrgId: c.OrgID,
 		}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
@@ -537,7 +562,7 @@ func (hs *HTTPServer) buildLegacyAlertNavLinks(c *models.ReqContext) []*dtos.Nav
 		Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 	})
 
-	if c.HasRole(models.ROLE_EDITOR) {
+	if c.HasRole(org.RoleEditor) {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
@@ -581,7 +606,7 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Alert groups", Id: "groups", Url: hs.Cfg.AppSubURL + "/alerting/groups", Icon: "layer-group"})
 	}
 
-	if c.OrgRole == models.ROLE_ADMIN {
+	if c.OrgRole == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "Admin", Id: "alerting-admin", Url: hs.Cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
@@ -727,7 +752,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	settings["dateFormats"] = hs.Cfg.DateFormats
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserId, OrgID: c.OrgId, Teams: c.Teams}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
@@ -767,14 +792,14 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
-			Id:                         c.UserId,
+			Id:                         c.UserID,
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
 			Email:                      c.Email,
-			ExternalUserId:             c.SignedInUser.ExternalAuthId,
+			ExternalUserId:             c.SignedInUser.ExternalAuthID,
 			Name:                       c.Name,
 			OrgCount:                   c.OrgCount,
-			OrgId:                      c.OrgId,
+			OrgId:                      c.OrgID,
 			OrgName:                    c.OrgName,
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
@@ -809,7 +834,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	if !hs.AccessControl.IsDisabled() {
-		userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
+		userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
 		if err != nil {
 			return nil, err
 		}

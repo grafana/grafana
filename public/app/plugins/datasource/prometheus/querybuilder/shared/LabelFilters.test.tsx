@@ -11,7 +11,8 @@ import { QueryBuilderLabelFilter } from './types';
 describe('LabelFilters', () => {
   it('renders empty input without labels', async () => {
     setup();
-    expect(screen.getAllByText(/Choose/)).toHaveLength(2);
+    expect(screen.getAllByText('Select label')).toHaveLength(1);
+    expect(screen.getAllByText('Select value')).toHaveLength(1);
     expect(screen.getByText(/=/)).toBeInTheDocument();
     expect(getAddButton()).toBeInTheDocument();
   });
@@ -49,7 +50,8 @@ describe('LabelFilters', () => {
   it('adds new label', async () => {
     const { onChange } = setup([{ label: 'foo', op: '=', value: 'bar' }]);
     await userEvent.click(getAddButton());
-    expect(screen.getAllByText(/Choose/)).toHaveLength(2);
+    expect(screen.getAllByText('Select label')).toHaveLength(1);
+    expect(screen.getAllByText('Select value')).toHaveLength(1);
     const { name, value } = getLabelSelects(1);
     await selectOptionInTest(name, 'baz');
     await selectOptionInTest(value, 'qux');
@@ -72,7 +74,8 @@ describe('LabelFilters', () => {
     rerender(
       <LabelFilters onChange={jest.fn()} onGetLabelNames={jest.fn()} onGetLabelValues={jest.fn()} labelsFilters={[]} />
     );
-    expect(screen.getAllByText(/Choose/)).toHaveLength(2);
+    expect(screen.getAllByText('Select label')).toHaveLength(1);
+    expect(screen.getAllByText('Select value')).toHaveLength(1);
     expect(screen.getByText(/=/)).toBeInTheDocument();
     expect(getAddButton()).toBeInTheDocument();
   });

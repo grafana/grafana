@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -39,7 +40,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 	getAuthQuery := models.GetAuthInfoQuery{UserId: usr.ID}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authModule := getAuthQuery.Result.AuthModule
-		if authModule == models.AuthModuleLDAP || authModule == models.AuthModuleProxy {
+		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
 			return response.Error(401, "Not allowed to reset password for LDAP or Auth Proxy user", nil)
 		}
 	}

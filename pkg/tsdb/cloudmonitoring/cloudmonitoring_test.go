@@ -589,6 +589,26 @@ func TestCloudMonitoring(t *testing.T) {
 
 			dl := qqueries[0].buildDeepLink()
 			assert.Empty(t, dl)
+
+			req.Queries[0].JSON = json.RawMessage(`{
+				"queryType": "slo",
+				 "sloQuery": {
+					"projectName":      "test-proj",
+					"alignmentPeriod":  "stackdriver-auto",
+					"perSeriesAligner": "ALIGN_NEXT_OLDER",
+					"aliasBy":          "",
+					"selectorName":     "select_slo_burn_rate",
+					"serviceId":        "test-service",
+					"sloId":            "test-slo",
+					"lookbackPeriod":   "1h"
+				},
+				"metricQuery": {}
+			}`)
+
+			qes, err = service.buildQueryExecutors(req)
+			require.NoError(t, err)
+			qqqueries := getCloudMonitoringQueriesFromInterface(t, qes)
+			assert.Equal(t, `aggregation.alignmentPeriod=%2B60s&aggregation.perSeriesAligner=ALIGN_NEXT_OLDER&filter=select_slo_burn_rate%28%22projects%2Ftest-proj%2Fservices%2Ftest-service%2FserviceLevelObjectives%2Ftest-slo%22%2C+%221h%22%29&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z`, qqqueries[0].Target)
 		})
 	})
 

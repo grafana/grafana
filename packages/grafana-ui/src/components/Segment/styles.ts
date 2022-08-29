@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 
-export const getSegmentStyles = (theme: GrafanaTheme2) => {
+export const getSegmentStyles = (theme: GrafanaTheme | GrafanaTheme2) => {
+  const palette = 'v1' in theme ? theme.v1.palette : theme.palette;
+
   return {
     segment: css`
       cursor: pointer;
@@ -10,7 +12,7 @@ export const getSegmentStyles = (theme: GrafanaTheme2) => {
     `,
 
     queryPlaceholder: css`
-      color: ${theme.v1.palette.gray2};
+      color: ${palette.gray2};
     `,
 
     disabled: css`

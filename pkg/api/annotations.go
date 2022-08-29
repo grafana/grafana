@@ -13,7 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -32,7 +35,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 	query := &annotations.ItemQuery{
 		From:         c.QueryInt64("from"),
 		To:           c.QueryInt64("to"),
-		OrgId:        c.OrgId,
+		OrgId:        c.OrgID,
 		UserId:       c.QueryInt64("userId"),
 		AlertId:      c.QueryInt64("alertId"),
 		DashboardId:  c.QueryInt64("dashboardId"),
@@ -47,12 +50,17 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUid != "" {
-		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgId}
+		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgID}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
-			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
+			if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
+				// OK... the storage UIDs do not (yet?) exist in the DashboardService
+			} else {
+				return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
+			}
+		} else {
+			query.DashboardId = dq.Result.Id
 		}
-		query.DashboardId = dq.Result.Id
 	}
 
 	repo := annotations.GetRepository()
@@ -73,7 +81,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 			if val, ok := dashboardCache[item.DashboardId]; ok {
 				item.DashboardUID = val
 			} else {
-				query := models.GetDashboardQuery{Id: item.DashboardId, OrgId: c.OrgId}
+				query := models.GetDashboardQuery{Id: item.DashboardId, OrgId: c.OrgID}
 				err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 				if err == nil && query.Result != nil {
 					item.DashboardUID = &query.Result.Uid
@@ -116,7 +124,7 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 
 	// overwrite dashboardId when dashboardUID is not empty
 	if cmd.DashboardUID != "" {
-		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
+		query := models.GetDashboardQuery{OrgId: c.OrgID, Uid: cmd.DashboardUID}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = query.Result.Id
@@ -135,8 +143,8 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	}
 
 	item := annotations.Item{
-		OrgId:       c.OrgId,
-		UserId:      c.UserId,
+		OrgId:       c.OrgID,
+		UserId:      c.UserID,
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
 		Epoch:       cmd.Time,
@@ -219,8 +227,8 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *models.ReqContext) response.Resp
 	}
 
 	item := annotations.Item{
-		OrgId:  c.OrgId,
-		UserId: c.UserId,
+		OrgId:  c.OrgID,
+		UserId: c.UserID,
 		Epoch:  cmd.When * 1000,
 		Text:   text,
 		Tags:   tagsArray,
@@ -271,8 +279,8 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 	}
 
 	item := annotations.Item{
-		OrgId:    c.OrgId,
-		UserId:   c.UserId,
+		OrgId:    c.OrgID,
+		UserId:   c.UserID,
 		Id:       annotationID,
 		Epoch:    cmd.Time,
 		EpochEnd: cmd.TimeEnd,
@@ -323,8 +331,8 @@ func (hs *HTTPServer) PatchAnnotation(c *models.ReqContext) response.Response {
 	}
 
 	existing := annotations.Item{
-		OrgId:    c.OrgId,
-		UserId:   c.UserId,
+		OrgId:    c.OrgID,
+		UserId:   c.UserID,
 		Id:       annotationID,
 		Epoch:    annotation.Time,
 		EpochEnd: annotation.TimeEnd,
@@ -371,7 +379,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 	}
 
 	if cmd.DashboardUID != "" {
-		query := models.GetDashboardQuery{OrgId: c.OrgId, Uid: cmd.DashboardUID}
+		query := models.GetDashboardQuery{OrgId: c.OrgID, Uid: cmd.DashboardUID}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
 			cmd.DashboardId = query.Result.Id
@@ -398,13 +406,13 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 			}
 			dashboardId = annotation.DashboardId
 			deleteParams = &annotations.DeleteParams{
-				OrgId: c.OrgId,
+				OrgId: c.OrgID,
 				Id:    cmd.AnnotationId,
 			}
 		} else {
 			dashboardId = cmd.DashboardId
 			deleteParams = &annotations.DeleteParams{
-				OrgId:       c.OrgId,
+				OrgId:       c.OrgID,
 				DashboardId: cmd.DashboardId,
 				PanelId:     cmd.PanelId,
 			}
@@ -416,7 +424,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 		}
 	} else { // legacy permissions
 		deleteParams = &annotations.DeleteParams{
-			OrgId:       c.OrgId,
+			OrgId:       c.OrgID,
 			Id:          cmd.AnnotationId,
 			DashboardId: cmd.DashboardId,
 			PanelId:     cmd.PanelId,
@@ -489,7 +497,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *models.ReqContext) response.Respon
 	}
 
 	err = repo.Delete(c.Req.Context(), &annotations.DeleteParams{
-		OrgId: c.OrgId,
+		OrgId: c.OrgID,
 		Id:    annotationID,
 	})
 	if err != nil {
@@ -504,14 +512,14 @@ func (hs *HTTPServer) canSaveAnnotation(c *models.ReqContext, annotation *annota
 		return canEditDashboard(c, annotation.DashboardId)
 	} else {
 		if hs.AccessControl.IsDisabled() {
-			return c.SignedInUser.HasRole(models.ROLE_EDITOR), nil
+			return c.SignedInUser.HasRole(org.RoleEditor), nil
 		}
 		return true, nil
 	}
 }
 
 func canEditDashboard(c *models.ReqContext, dashboardID int64) (bool, error) {
-	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgId, c.SignedInUser)
+	guard := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 	if canEdit, err := guard.CanEdit(); err != nil || !canEdit {
 		return false, err
 	}
@@ -519,10 +527,10 @@ func canEditDashboard(c *models.ReqContext, dashboardID int64) (bool, error) {
 	return true, nil
 }
 
-func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *models.SignedInUser) (*annotations.ItemDTO, response.Response) {
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *user.SignedInUser) (*annotations.ItemDTO, response.Response) {
 	query := &annotations.ItemQuery{
 		AnnotationId: annotationID,
-		OrgId:        user.OrgId,
+		OrgId:        user.OrgID,
 		SignedInUser: user,
 	}
 	items, err := repo.Find(ctx, query)
@@ -550,7 +558,7 @@ func findAnnotationByID(ctx context.Context, repo annotations.Repository, annota
 // 500: internalServerError
 func (hs *HTTPServer) GetAnnotationTags(c *models.ReqContext) response.Response {
 	query := &annotations.TagsQuery{
-		OrgID: c.OrgId,
+		OrgID: c.OrgID,
 		Tag:   c.Query("tag"),
 		Limit: c.QueryInt64("limit"),
 	}
@@ -583,8 +591,8 @@ func AnnotationTypeScopeResolver() (string, accesscontrol.ScopeAttributeResolver
 
 		// tempUser is used to resolve annotation type.
 		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
-		tempUser := &models.SignedInUser{
-			OrgId: orgID,
+		tempUser := &user.SignedInUser{
+			OrgID: orgID,
 			Permissions: map[int64]map[string][]string{
 				orgID: {
 					dashboards.ActionDashboardsRead:     {dashboards.ScopeDashboardsAll},
@@ -620,7 +628,7 @@ func (hs *HTTPServer) canCreateAnnotation(c *models.ReqContext, dashboardId int6
 			evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, accesscontrol.ScopeAnnotationsTypeOrganization)
 			return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 		} else {
-			return c.SignedInUser.HasRole(models.ROLE_EDITOR), nil
+			return c.SignedInUser.HasRole(org.RoleEditor), nil
 		}
 	}
 }

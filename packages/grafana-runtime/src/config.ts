@@ -55,13 +55,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   jwtHeaderName = '';
   jwtUrlLogin = false;
   sigV4AuthEnabled = false;
+  azureAuthEnabled = false;
   samlEnabled = false;
   samlName = '';
   autoAssignOrg = true;
   verifyEmailEnabled = false;
   oauth: OAuthSettings = {};
   rbacEnabled = true;
-  rbacBuiltInRoleAssignmentEnabled = false;
   disableUserSignUp = false;
   loginHint = '';
   passwordHint = '';
