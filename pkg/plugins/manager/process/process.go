@@ -86,7 +86,7 @@ func (m *Manager) Stop(ctx context.Context, pluginID string) error {
 // shutdown stops all backend plugin processes
 func (m *Manager) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range m.pluginRegistry.Plugins(ctx) { // skip decommissioned?
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
 		wg.Add(1)
 		go func(p backendplugin.Plugin, ctx context.Context) {
 			defer wg.Done()
