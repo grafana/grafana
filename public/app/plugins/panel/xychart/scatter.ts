@@ -122,11 +122,10 @@ function getScatterSeries(
     }
   }
 
-  //TODO make pointSize general and working for both xy and explicit scenarios
   // Size configs
   //----------------
   let pointSizeHints = dims.pointSizeConfig;
-  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSizeConfig?.fixed ?? 5;
+  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? 5;
   let pointSize: DimensionValues<number> = () => pointSizeFixed;
   if (dims.pointSizeIndex) {
     pointSize = (frame) => {
@@ -198,8 +197,10 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
     throw 'Missing data';
   }
 
-  if (options.mode === 'explicit') {
+  if (options.mode === 'manual') {
     if (options.series?.length) {
+      const scatterSeries: ScatterSeries[] = [];
+
       for (const series of options.series) {
         if (!series?.x) {
           throw 'Select X dimension';
@@ -224,13 +225,15 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
             const dims: Dims = {
               pointColorFixed: series.pointColor?.fixed,
               pointColorIndex: findFieldIndex(frame, series.pointColor?.field),
-              pointSizeConfig: series.pointSize, //TODO: this should be general PointSize not part of series
+              pointSizeConfig: series.pointSize,
               pointSizeIndex: findFieldIndex(frame, series.pointSize?.field),
             };
-            return [getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims)];
+            scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
           }
         }
       }
+
+      return scatterSeries;
     }
   }
 
@@ -508,7 +511,6 @@ const prepConfig = (
   });
 
   builder.addHook('setLegend', (u) => {
-    // console.log('TTIP???', u.cursor.idxs);
     if (u.cursor.idxs != null) {
       for (let i = 0; i < u.cursor.idxs.length; i++) {
         const sel = u.cursor.idxs[i];

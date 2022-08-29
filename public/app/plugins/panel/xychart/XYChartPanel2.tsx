@@ -64,7 +64,6 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
       info.facets = prepData(info, data.series);
       info.error = undefined;
     }
-    console.log(info);
     this.setState(info);
   };
 

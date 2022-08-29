@@ -19,7 +19,7 @@ interface XYInfo {
   yFields: Array<SelectableValue<boolean>>;
 }
 
-export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChartOptions>> = ({
+export const AutoEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChartOptions>> = ({
   value,
   onChange,
   context,
