@@ -33,28 +33,28 @@ func TestProcessManager_Start(t *testing.T) {
 		}))
 		err := m.Start(context.Background(), pluginID)
 		require.NoError(t, err)
-		require.Zero(t, bp.started)
+		require.Zero(t, bp.startCount)
 	})
 
 	t.Run("Plugin state determines process start", func(t *testing.T) {
 		tcs := []struct {
-			name           string
-			managed        bool
-			backend        bool
-			signatureError *plugins.SignatureError
-			expectedStart  int
+			name               string
+			managed            bool
+			backend            bool
+			signatureError     *plugins.SignatureError
+			expectedStartCount int
 		}{
 			{
-				name:          "Unmanaged backend plugin will not be started",
-				managed:       false,
-				backend:       true,
-				expectedStart: 0,
+				name:               "Unmanaged backend plugin will not be started",
+				managed:            false,
+				backend:            true,
+				expectedStartCount: 0,
 			},
 			{
-				name:          "Managed non-backend plugin will not be started",
-				managed:       false,
-				backend:       true,
-				expectedStart: 0,
+				name:               "Managed non-backend plugin will not be started",
+				managed:            false,
+				backend:            true,
+				expectedStartCount: 0,
 			},
 			{
 				name:    "Managed backend plugin with signature error will not be started",
@@ -63,13 +63,13 @@ func TestProcessManager_Start(t *testing.T) {
 				signatureError: &plugins.SignatureError{
 					SignatureStatus: plugins.SignatureUnsigned,
 				},
-				expectedStart: 0,
+				expectedStartCount: 0,
 			},
 			{
-				name:          "Managed backend plugin with no signature errors will be started",
-				managed:       true,
-				backend:       true,
-				expectedStart: 1,
+				name:               "Managed backend plugin with no signature errors will be started",
+				managed:            true,
+				backend:            true,
+				expectedStartCount: 1,
 			},
 		}
 		for _, tc := range tcs {
@@ -86,7 +86,7 @@ func TestProcessManager_Start(t *testing.T) {
 
 				err := m.Start(context.Background(), p.ID)
 				require.NoError(t, err)
-				require.Equal(t, tc.expectedStart, bp.started)
+				require.Equal(t, tc.expectedStartCount, bp.startCount)
 			})
 		}
 	})
@@ -108,7 +108,7 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 
 	err := m.Start(context.Background(), p.ID)
 	require.NoError(t, err)
-	require.Equal(t, 1, bp.started)
+	require.Equal(t, 1, bp.startCount)
 
 	t.Run("When plugin process is killed, the process is restarted", func(t *testing.T) {
 		pCtx := context.Background()
@@ -133,15 +133,15 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 			wgKill.Done()
 		}()
 		wgKill.Wait()
-		require.Equal(t, 2, bp.started)
-		require.Equal(t, 0, bp.stopped)
+		require.Equal(t, 2, bp.startCount)
+		require.Equal(t, 0, bp.stopCount)
 
 		t.Run("When context is cancelled the plugin is stopped", func(t *testing.T) {
 			cancel()
 			wgRun.Wait()
 			require.ErrorIs(t, runErr, context.Canceled)
-			require.Equal(t, 2, bp.started)
-			require.Equal(t, 1, bp.stopped)
+			require.Equal(t, 2, bp.startCount)
+			require.Equal(t, 1, bp.stopCount)
 		})
 	})
 }
@@ -183,8 +183,8 @@ func (f *fakePluginRegistry) Remove(_ context.Context, id string) error {
 type fakeBackendPlugin struct {
 	managed bool
 
-	started        int
-	stopped        int
+	startCount     int
+	stopCount      int
 	decommissioned bool
 	exited         bool
 
@@ -202,7 +202,7 @@ func (p *fakeBackendPlugin) Start(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.exited = false
-	p.started++
+	p.startCount++
 	return nil
 }
 
@@ -210,7 +210,7 @@ func (p *fakeBackendPlugin) Stop(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.exited = true
-	p.stopped++
+	p.stopCount++
 	return nil
 }
 
