@@ -11,14 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -189,26 +186,6 @@ func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.
 
 func handlePublicDashboardErr(err error) response.Response {
 	return handleDashboardErr(http.StatusInternalServerError, "Unexpected Error", err)
-}
-
-// Copied from pkg/api/metrics.go
-func handleQueryMetricsError(err error) *response.NormalResponse {
-	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
-		return response.Error(http.StatusForbidden, "Access denied to data source", err)
-	}
-	if errors.Is(err, datasources.ErrDataSourceNotFound) {
-		return response.Error(http.StatusNotFound, "Data source not found", err)
-	}
-	var badQuery *query.ErrBadQuery
-	if errors.As(err, &badQuery) {
-		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
-	}
-
-	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
-	}
-
-	return response.Error(http.StatusInternalServerError, "Query data error", err)
 }
 
 // Copied from pkg/api/metrics.go

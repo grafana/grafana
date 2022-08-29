@@ -378,7 +378,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 		require.JSONEq(
 			t,
-            expectedResponse,
+			expectedResponse,
 			resp.Body.String(),
 		)
 		require.Equal(t, http.StatusOK, resp.Code)
@@ -391,7 +391,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		resp := callAPI(server, http.MethodPost, "/api/public/dashboards/abc123/panels/2/query", strings.NewReader("{}"), t)
 		require.Equal(t, http.StatusInternalServerError, resp.Code)
 	})
-
 }
 
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
