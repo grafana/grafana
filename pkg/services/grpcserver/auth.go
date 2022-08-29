@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/entity"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -19,14 +19,16 @@ import (
 
 // Authenticator can authenticate GRPC requests.
 type Authenticator struct {
-	logger   log.Logger
-	SQLStore sqlstore.Store
+	logger        log.Logger
+	apiKeyService apikey.Service
+	userService   user.Service
 }
 
-func NewAuthenticator(sqlStore sqlstore.Store) *Authenticator {
+func NewAuthenticator(apiKeyService apikey.Service, userService user.Service) *Authenticator {
 	return &Authenticator{
-		logger:   log.New("grpc-server-authenticator"),
-		SQLStore: sqlStore,
+		logger:        log.New("grpc-server-authenticator"),
+		apiKeyService: apiKeyService,
+		userService:   userService,
 	}
 }
 
@@ -57,7 +59,7 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 	newCtx, err = a.validateToken(ctx, token)
 	if err != nil {
-		logger.Warn("request with invalid token", "error", err, "token", token)
+		a.logger.Warn("request with invalid token", "error", err, "token", token)
 		return ctx, status.Error(codes.Unauthenticated, "invalid token")
 	}
 	return newCtx, nil
@@ -75,26 +77,27 @@ func (a *Authenticator) validateToken(ctx context.Context, keyString string) (co
 		return nil, err
 	}
 
-	apikey, err := a.SQLStore.GetAPIKeyByHash(ctx, hash)
+	key, err := a.apiKeyService.GetAPIKeyByHash(ctx, hash)
 	if err != nil {
 		return nil, err
 	}
 
-	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := a.SQLStore.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser); err != nil {
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *key.ServiceAccountId, OrgID: key.OrgId}
+	res, err := a.userService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
+	if err != nil {
 		return nil, err
 	}
 
-	if !querySignedInUser.Result.HasRole(models.ROLE_ADMIN) {
+	if !res.HasRole(org.RoleAdmin) {
 		return nil, fmt.Errorf("api key does not have admin role")
 	}
 
 	// disabled service accounts are not allowed to access the API
-	if querySignedInUser.Result.IsDisabled {
+	if res.IsDisabled {
 		return nil, fmt.Errorf("service account is disabled")
 	}
 
-	newCtx := context.WithValue(ctx, entity.TempSignedInUserKey, querySignedInUser.Result)
+	newCtx := context.WithValue(ctx, entity.TempSignedInUserKey, res)
 
 	return newCtx, nil
 }

@@ -9,7 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/org"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -216,7 +217,7 @@ func ProvideService(
 			}
 		}
 
-		if !user.HasRole(models.ROLE_ADMIN) {
+		if !user.HasRole(org.RoleAdmin) {
 			return nil
 		}
 
