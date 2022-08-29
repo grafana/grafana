@@ -274,13 +274,13 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "redshiftLongRunningQueries",
-			Description: "Enable long running queries for Redshift",
+			Name:        "redshiftAsyncQueryDataSupport",
+			Description: "Enable async query data support for Redshift",
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "athenaLongRunningQueries",
-			Description: "Enable long running queries for Athena",
+			Name:        "athenaAsyncQueryDataSupport",
+			Description: "Enable async query data support for Athena",
 			State:       FeatureStateAlpha,
 		},
 	}

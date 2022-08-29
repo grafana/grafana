@@ -203,11 +203,11 @@ const (
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
 
-	// FlagRedshiftLongRunningQueries
-	// Enable long running queries for Redshift
-	FlagRedshiftLongRunningQueries = "redshiftLongRunningQueries"
+	// FlagRedshiftAsyncQueryDataSupport
+	// Enable async query data support for Redshift
+	FlagRedshiftAsyncQueryDataSupport = "redshiftAsyncQueryDataSupport"
 
-	// FlagAthenaLongRunningQueries
-	// Enable long running queries for Athena
-	FlagAthenaLongRunningQueries = "athenaLongRunningQueries"
+	// FlagAthenaAsyncQueryDataSupport
+	// Enable async query data support for Athena
+	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 )
