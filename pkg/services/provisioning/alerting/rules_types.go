@@ -151,7 +151,12 @@ func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
 	// in json.RawMessage. We do this as we cannot use
 	// json.RawMessage with a yaml files and have to use
 	// JSONValue that supports both, json and yaml.
-	encoded, err := json.Marshal(queryV1.Model.Value())
+	//
+	// We have to use the Raw field here, as Value would
+	// try to interpolate macros like `$__timeFilter`, resulting
+	// in missing macros in the SQL queries as they would be
+	// replaced by an empty string.
+	encoded, err := json.Marshal(queryV1.Model.Raw)
 	if err != nil {
 		return models.AlertQuery{}, err
 	}

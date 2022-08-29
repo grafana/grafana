@@ -16,7 +16,7 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
 }
 
-export const Selector: React.FC<Props> = ({ refId, query, templateVariableOptions, onChange, datasource }) => {
+export const Selector = ({ refId, query, templateVariableOptions, onChange, datasource }: Props) => {
   return (
     <QueryEditorRow label="Selector" htmlFor={`${refId}-slo-selector`}>
       <Select

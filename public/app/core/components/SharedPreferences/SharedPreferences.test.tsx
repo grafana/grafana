@@ -161,7 +161,6 @@ describe('SharedPreferences', () => {
     const darkThemeRadio = assertInstanceOf(screen.getByLabelText('Dark'), HTMLInputElement);
     await userEvent.click(darkThemeRadio);
 
-    await selectOptionInTest(screen.getByLabelText('Home Dashboard'), 'Another Dashboard');
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
     await selectOptionInTest(screen.getByLabelText('Week start'), 'Saturday');
     await selectOptionInTest(screen.getByLabelText(/language/i), 'French');
@@ -171,7 +170,7 @@ describe('SharedPreferences', () => {
       timezone: 'Australia/Sydney',
       weekStart: 'saturday',
       theme: 'dark',
-      homeDashboardUID: 'anotherDash',
+      homeDashboardUID: 'myDash',
       queryHistory: {
         homeTab: '',
       },
@@ -193,7 +192,7 @@ describe('SharedPreferences', () => {
       timezone: 'browser',
       weekStart: '',
       theme: '',
-      homeDashboardUID: undefined,
+      homeDashboardUID: 'myDash',
       queryHistory: {
         homeTab: '',
       },

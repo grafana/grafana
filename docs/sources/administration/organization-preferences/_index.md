@@ -147,7 +147,7 @@ Organization administrators can choose a default timezone for their organization
 
 1. Hover your cursor over the **Configuration** (gear) icon.
 1. Click **Preferences**.
-1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/time-range-controls/" >}}) for more information about Grafana time settings.
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}) for more information about Grafana time settings.
 1. Click **Save**.
 
 ### Set team timezone
@@ -157,7 +157,7 @@ Organization administrators and team administrators can choose a default timezon
 1. Hover your cursor over the **Configuration** (gear) icon in the side menu.
 1. Click **Teams**. Grafana displays the team list.
 1. Click on the team you that you want to change the timezone for and then navigate to the **Settings** tab.
-1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/time-range-controls/" >}}) for more information about Grafana time settings.
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [[Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}) for more information about Grafana time settings.
 1. Click **Save**.
 
 ### Set your personal timezone
@@ -165,7 +165,7 @@ Organization administrators and team administrators can choose a default timezon
 You can change the timezone for your user account. This setting overrides timezone settings at higher levels.
 
 1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
-1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/time-range-controls/" >}}) for more information about Grafana time settings.
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level. Refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}) for more information about Grafana time settings.
 1. Click **Save**.
 
 ## Change the default home dashboard

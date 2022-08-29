@@ -314,8 +314,8 @@ var wireSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
-	datasourceservice.ProvideDataSourceMigrationService,
-	secretsStore.ProvidePluginSecretMigrationService,
+	secretsMigrations.ProvideDataSourceMigrationService,
+	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
@@ -331,6 +331,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
+	ossaccesscontrol.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {

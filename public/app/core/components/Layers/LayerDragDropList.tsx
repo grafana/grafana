@@ -9,7 +9,9 @@ import { Icon, IconButton, stylesFactory } from '@grafana/ui';
 import { LayerName } from './LayerName';
 import { LayerElement } from './types';
 
-type LayerDragDropListProps<T extends LayerElement> = {
+export const DATA_TEST_ID = 'layer-drag-drop-list';
+
+export type LayerDragDropListProps<T extends LayerElement> = {
   layers: T[];
   getLayerInfo: (element: T) => string;
   onDragEnd: (result: DropResult) => void;
@@ -46,7 +48,7 @@ export const LayerDragDropList = <T extends LayerElement>({
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="droppable">
         {(provided, snapshot) => (
-          <div {...provided.droppableProps} ref={provided.innerRef}>
+          <div {...provided.droppableProps} ref={provided.innerRef} data-testid={DATA_TEST_ID}>
             {(() => {
               // reverse order
               const rows: JSX.Element[] = [];
@@ -80,6 +82,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                               <IconButton
                                 name="copy"
                                 title={'Duplicate'}
+                                ariaLabel={'Duplicate button'}
                                 className={style.actionIcon}
                                 onClick={() => onDuplicate(element)}
                               />
@@ -88,6 +91,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                             <IconButton
                               name="trash-alt"
                               title={'remove'}
+                              ariaLabel={'Remove button'}
                               className={cx(style.actionIcon, style.dragIcon)}
                               onClick={() => onDelete(element)}
                             />
@@ -95,6 +99,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                         )}
                         {layers.length > shouldRenderDragIconLengthThreshold && (
                           <Icon
+                            aria-label="Drag and drop icon"
                             title="Drag and drop to reorder"
                             name="draggabledots"
                             size="lg"

@@ -16,8 +16,8 @@ func (s *Service) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery)
 	query.Result = s.ExpectedAPIKeys
 	return s.ExpectedError
 }
-func (s *Service) GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.APIKey {
-	return s.ExpectedAPIKeys
+func (s *Service) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
+	return s.ExpectedAPIKeys, s.ExpectedError
 }
 func (s *Service) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error {
 	query.Result = s.ExpectedAPIKey
