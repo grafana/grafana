@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	queryModels "github.com/grafana/grafana/pkg/services/query/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -309,7 +308,7 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithDuplicateDatasources))
 		require.NoError(t, err)
 
-		uids := queryModels.GetUniqueDashboardDatasourceUids(json)
+		uids := GetUniqueDashboardDatasourceUids(json)
 		require.Len(t, uids, 2)
 		require.Equal(t, "abc123", uids[0])
 		require.Equal(t, "_yxMP8Ynk", uids[1])
@@ -319,7 +318,7 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithMixedDatasource))
 		require.NoError(t, err)
 
-		uids := queryModels.GetUniqueDashboardDatasourceUids(json)
+		uids := GetUniqueDashboardDatasourceUids(json)
 		require.Len(t, uids, 2)
 		require.Equal(t, "abc123", uids[0])
 		require.Equal(t, "_yxMP8Ynk", uids[1])
@@ -329,7 +328,7 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
 		require.NoError(t, err)
 
-		uids := queryModels.GetUniqueDashboardDatasourceUids(json)
+		uids := GetUniqueDashboardDatasourceUids(json)
 		require.Len(t, uids, 0)
 	})
 }
@@ -339,17 +338,17 @@ func TestHasExpressionQuery(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithQueriesAndExpression))
 		require.NoError(t, err)
 
-		queries := queryModels.GroupQueriesByPanelId(json)
+		queries := GroupQueriesByPanelId(json)
 		panelId := int64(2)
-		require.True(t, queryModels.HasExpressionQuery(queries[panelId]))
+		require.True(t, HasExpressionQuery(queries[panelId]))
 	})
 	t.Run("will return false when no expression query exists", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithMixedDatasource))
 		require.NoError(t, err)
 
-		queries := queryModels.GroupQueriesByPanelId(json)
+		queries := GroupQueriesByPanelId(json)
 		panelId := int64(2)
-		require.False(t, queryModels.HasExpressionQuery(queries[panelId]))
+		require.False(t, HasExpressionQuery(queries[panelId]))
 	})
 }
 
@@ -357,26 +356,26 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 	t.Run("can extract queries from dashboard with panel datasource string that has no datasource on panel targets", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(oldStyleDashboard))
 		require.NoError(t, err)
-		queries := queryModels.GroupQueriesByPanelId(json)
+		queries := GroupQueriesByPanelId(json)
 
 		panelId := int64(2)
-		queriesByDatasource := queryModels.GroupQueriesByDataSource(queries[panelId])
+		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
 		require.Len(t, queriesByDatasource[0], 1)
 	})
 	t.Run("can extract queries from dashboard with panel json datasource that has no datasource on panel targets", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithTargetsWithNoDatasources))
 		require.NoError(t, err)
-		queries := queryModels.GroupQueriesByPanelId(json)
+		queries := GroupQueriesByPanelId(json)
 
 		panelId := int64(2)
-		queriesByDatasource := queryModels.GroupQueriesByDataSource(queries[panelId])
+		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
 		require.Len(t, queriesByDatasource[0], 2)
 	})
 	t.Run("can extract no queries from empty dashboard", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
 		require.NoError(t, err)
 
-		queries := queryModels.GroupQueriesByPanelId(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 0)
 	})
 
@@ -384,7 +383,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithNoQueries))
 		require.NoError(t, err)
 
-		queries := queryModels.GroupQueriesByPanelId(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 0)
@@ -394,7 +393,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithQueries))
 		require.NoError(t, err)
 
-		queries := queryModels.GroupQueriesByPanelId(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 2)
@@ -430,7 +429,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(oldStyleDashboard))
 		require.NoError(t, err)
 
-		queries := queryModels.GroupQueriesByPanelId(json)
+		queries := GroupQueriesByPanelId(json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 1)
@@ -477,7 +476,7 @@ func TestGroupQueriesByDataSource(t *testing.T) {
 			}`)),
 		}
 
-		queriesByDatasource := queryModels.GroupQueriesByDataSource(queries)
+		queriesByDatasource := GroupQueriesByDataSource(queries)
 		require.Len(t, queriesByDatasource, 2)
 		require.Contains(t, queriesByDatasource, []*simplejson.Json{simplejson.MustJson([]byte(`{
             "datasource": {
