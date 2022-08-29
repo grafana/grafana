@@ -49,6 +49,7 @@ import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor'
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
+import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
   addLabelToQuery,
@@ -313,9 +314,6 @@ export class LokiDatasource
   }
 
   async processMetricFindQuery(query: string) {
-    const labelNamesRegex = /^label_names\(\)\s*$/;
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
-
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
       return await this.labelNamesQuery();
