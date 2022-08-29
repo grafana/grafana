@@ -33,6 +33,7 @@ func TestProcessManager_Start(t *testing.T) {
 		}))
 		err := m.Start(context.Background(), pluginID)
 		require.NoError(t, err)
+		require.True(t, p.Exited())
 		require.Zero(t, bp.startCount)
 	})
 
@@ -87,13 +88,44 @@ func TestProcessManager_Start(t *testing.T) {
 				err := m.Start(context.Background(), p.ID)
 				require.NoError(t, err)
 				require.Equal(t, tc.expectedStartCount, bp.startCount)
+
+				if tc.expectedStartCount > 0 {
+					require.True(t, !p.Exited())
+				} else {
+					require.True(t, p.Exited())
+				}
 			})
 		}
 	})
 }
 
 func TestProcessManager_Stop(t *testing.T) {
+	t.Run("Plugin not found in registry", func(t *testing.T) {
+		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{}))
+		err := m.Stop(context.Background(), "non-existing-datasource")
+		require.ErrorIs(t, err, backendplugin.ErrPluginNotRegistered)
+	})
 
+	t.Run("Can stop a running plugin", func(t *testing.T) {
+		pluginID := "test-datasource"
+
+		bp := newFakeBackendPlugin(true)
+		p := createPlugin(t, bp, func(plugin *plugins.Plugin) {
+			plugin.ID = pluginID
+			plugin.Backend = true
+		})
+
+		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{
+			pluginID: p,
+		}))
+		err := m.Stop(context.Background(), pluginID)
+		require.NoError(t, err)
+
+		require.True(t, p.IsDecommissioned())
+		require.True(t, bp.decommissioned)
+		require.True(t, p.Exited())
+		require.Equal(t, 1, bp.stopCount)
+	})
 }
 
 func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
@@ -133,6 +165,7 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 			wgKill.Done()
 		}()
 		wgKill.Wait()
+		require.True(t, !p.Exited())
 		require.Equal(t, 2, bp.startCount)
 		require.Equal(t, 0, bp.stopCount)
 
@@ -140,6 +173,7 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 			cancel()
 			wgRun.Wait()
 			require.ErrorIs(t, runErr, context.Canceled)
+			require.True(t, p.Exited())
 			require.Equal(t, 2, bp.startCount)
 			require.Equal(t, 1, bp.stopCount)
 		})
@@ -186,7 +220,7 @@ type fakeBackendPlugin struct {
 	startCount     int
 	stopCount      int
 	decommissioned bool
-	exited         bool
+	running        bool
 
 	mutex sync.RWMutex
 	backendplugin.Plugin
@@ -201,7 +235,7 @@ func newFakeBackendPlugin(managed bool) *fakeBackendPlugin {
 func (p *fakeBackendPlugin) Start(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	p.exited = false
+	p.running = true
 	p.startCount++
 	return nil
 }
@@ -209,8 +243,15 @@ func (p *fakeBackendPlugin) Start(_ context.Context) error {
 func (p *fakeBackendPlugin) Stop(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	p.exited = true
+	p.running = false
 	p.stopCount++
+	return nil
+}
+
+func (p *fakeBackendPlugin) Decommission() error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.decommissioned = true
 	return nil
 }
 
@@ -229,13 +270,13 @@ func (p *fakeBackendPlugin) IsManaged() bool {
 func (p *fakeBackendPlugin) Exited() bool {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
-	return p.exited
+	return !p.running
 }
 
 func (p *fakeBackendPlugin) kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	p.exited = true
+	p.running = false
 }
 
 func createPlugin(t *testing.T, bp backendplugin.Plugin, cbs ...func(p *plugins.Plugin)) *plugins.Plugin {

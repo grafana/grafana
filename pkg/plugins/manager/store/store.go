@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"sort"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -84,7 +85,7 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 	return p, true
 }
 
-// availablePlugins returns all non-decommissioned plugins from the registry
+// availablePlugins returns all non-decommissioned plugins from the registry sorted by alphabetic order on `plugin.ID`
 func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 	var res []*plugins.Plugin
 	for _, p := range s.pluginRegistry.Plugins(ctx) {
@@ -92,6 +93,9 @@ func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 			res = append(res, p)
 		}
 	}
+	sort.SliceStable(res, func(i, j int) bool {
+		return res[i].ID < res[j].ID
+	})
 	return res
 }
 
