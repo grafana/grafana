@@ -1,9 +1,9 @@
 import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery, isCloudWatchQuery } from './guards';
+import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import pluginJson from './plugin.json';
-import { CloudWatchMetricsQuery, MetricEditorMode, MetricQueryType } from './types';
+import { CloudWatchMetricsQuery, CloudWatchQuery, MetricEditorMode, MetricQueryType } from './types';
 
 interface CloudWatchOnDashboardLoadedTrackingEvent {
   grafana_version?: string;
@@ -39,48 +39,50 @@ interface CloudWatchOnDashboardLoadedTrackingEvent {
 }
 
 export const onDashboardLoadedHandler = ({
-  payload: { dashboardId, orgId, userId, grafanaVersion, queries },
-}: DashboardLoadedEvent) => {
+  payload: { dashboardId, orgId, grafanaVersion, queries },
+}: DashboardLoadedEvent<CloudWatchQuery>) => {
   try {
-    const dataQueries = queries[pluginJson.id];
-    const cloudWatchQueries = dataQueries && dataQueries.filter(isCloudWatchQuery);
-    if (cloudWatchQueries?.length) {
-      const logsQueries = cloudWatchQueries.filter(isCloudWatchLogsQuery);
-      const metricsQueries = cloudWatchQueries.filter(isCloudWatchMetricsQuery);
+    const cloudWatchQueries = queries[pluginJson.id];
 
-      const e: CloudWatchOnDashboardLoadedTrackingEvent = {
-        grafana_version: grafanaVersion,
-        dashboard_id: dashboardId,
-        org_id: orgId,
-        logs_queries_count: logsQueries?.length,
-        metrics_queries_count: metricsQueries?.length,
-        metrics_search_count: 0,
-        metrics_search_builder_count: 0,
-        metrics_search_code_count: 0,
-        metrics_search_match_exact_count: 0,
-        metrics_query_count: 0,
-        metrics_query_builder_count: 0,
-        metrics_query_code_count: 0,
-      };
-
-      for (const q of metricsQueries) {
-        e.metrics_search_count += +Boolean(q.metricQueryType === MetricQueryType.Search);
-        e.metrics_search_builder_count += +isMetricSearchBuilder(q);
-        e.metrics_search_code_count += +Boolean(
-          q.metricQueryType === MetricQueryType.Search && q.metricEditorMode === MetricEditorMode.Code
-        );
-        e.metrics_search_match_exact_count += +Boolean(isMetricSearchBuilder(q) && q.matchExact);
-        e.metrics_query_count += +Boolean(q.metricQueryType === MetricQueryType.Query);
-        e.metrics_query_builder_count += +Boolean(
-          q.metricQueryType === MetricQueryType.Query && q.metricEditorMode === MetricEditorMode.Builder
-        );
-        e.metrics_query_code_count += +Boolean(
-          q.metricQueryType === MetricQueryType.Query && q.metricEditorMode === MetricEditorMode.Code
-        );
-      }
-
-      reportInteraction('grafana_ds_cloudwatch_dashboard_loaded', e);
+    if (!cloudWatchQueries?.length) {
+      return;
     }
+
+    const logsQueries = cloudWatchQueries.filter(isCloudWatchLogsQuery);
+    const metricsQueries = cloudWatchQueries.filter(isCloudWatchMetricsQuery);
+
+    const e: CloudWatchOnDashboardLoadedTrackingEvent = {
+      grafana_version: grafanaVersion,
+      dashboard_id: dashboardId,
+      org_id: orgId,
+      logs_queries_count: logsQueries?.length,
+      metrics_queries_count: metricsQueries?.length,
+      metrics_search_count: 0,
+      metrics_search_builder_count: 0,
+      metrics_search_code_count: 0,
+      metrics_search_match_exact_count: 0,
+      metrics_query_count: 0,
+      metrics_query_builder_count: 0,
+      metrics_query_code_count: 0,
+    };
+
+    for (const q of metricsQueries) {
+      e.metrics_search_count += +Boolean(q.metricQueryType === MetricQueryType.Search);
+      e.metrics_search_builder_count += +isMetricSearchBuilder(q);
+      e.metrics_search_code_count += +Boolean(
+        q.metricQueryType === MetricQueryType.Search && q.metricEditorMode === MetricEditorMode.Code
+      );
+      e.metrics_search_match_exact_count += +Boolean(isMetricSearchBuilder(q) && q.matchExact);
+      e.metrics_query_count += +Boolean(q.metricQueryType === MetricQueryType.Query);
+      e.metrics_query_builder_count += +Boolean(
+        q.metricQueryType === MetricQueryType.Query && q.metricEditorMode === MetricEditorMode.Builder
+      );
+      e.metrics_query_code_count += +Boolean(
+        q.metricQueryType === MetricQueryType.Query && q.metricEditorMode === MetricEditorMode.Code
+      );
+    }
+
+    reportInteraction('grafana_ds_cloudwatch_dashboard_loaded', e);
   } catch (error) {
     console.error('error in cloudwatch tracking handler', error);
   }

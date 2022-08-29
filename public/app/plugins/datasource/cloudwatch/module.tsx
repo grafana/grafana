@@ -18,4 +18,4 @@ export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery
   .setMetadataInspector(MetaInspector);
 
 // Subscribe to on dashboard loaded event so that we can track plugin adoption
-getAppEvents().subscribe<DashboardLoadedEvent>(DashboardLoadedEvent, onDashboardLoadedHandler);
+getAppEvents().subscribe<DashboardLoadedEvent<CloudWatchQuery>>(DashboardLoadedEvent, onDashboardLoadedHandler);
