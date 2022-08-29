@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/benbjohnson/clock"
@@ -156,14 +157,16 @@ func TestIsItStale(t *testing.T) {
 func TestClose(t *testing.T) {
 	instanceStore := &store.FakeInstanceStore{}
 	clk := clock.New()
-	st := NewManager(log.New("test_state_manager"), metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, &AlertsSenderMock{}, clk)
+	senderMock := &AlertsSenderMock{}
+	senderMock.EXPECT().Send(mock.Anything, mock.Anything)
+	st := NewManager(log.New("test_state_manager"), metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, senderMock, clk)
 	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 	annotations.SetRepository(fakeAnnoRepo)
 
 	_, rules := ngmodels.GenerateUniqueAlertRules(10, ngmodels.AlertRuleGen())
 	for _, rule := range rules {
 		results := eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
-		_ = st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, ngmodels.GenerateAlertLabels(rand.Intn(4), "extra_"))
+		st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, ngmodels.GenerateAlertLabels(rand.Intn(4), "extra_"))
 	}
 	var states []*State
 	for _, org := range st.cache.states {

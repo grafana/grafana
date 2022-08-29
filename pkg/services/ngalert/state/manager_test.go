@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
@@ -37,7 +38,10 @@ func TestDashboardAnnotations(t *testing.T) {
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
-	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, &state.AlertsSenderMock{}, clock.New())
+	senderMock := &state.AlertsSenderMock{}
+	senderMock.EXPECT().Send(mock.Anything, mock.Anything)
+
+	st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, senderMock, clock.New())
 
 	fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 	annotations.SetRepository(fakeAnnoRepo)
@@ -50,7 +54,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	})
 
 	st.Warm(ctx)
-	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
+	st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
@@ -1987,7 +1991,7 @@ func TestProcessEvalResults(t *testing.T) {
 			annotations.SetRepository(fakeAnnoRepo)
 
 			for _, res := range tc.evalResults {
-				_ = st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
+				st.ProcessEvalResults(context.Background(), evaluationTime, tc.alertRule, res, data.Labels{
 					"alertname":                    tc.alertRule.Title,
 					"__alert_rule_namespace_uid__": tc.alertRule.NamespaceUID,
 					"__alert_rule_uid__":           tc.alertRule.UID,
@@ -2018,9 +2022,7 @@ func TestProcessEvalResults(t *testing.T) {
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
-		states := st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels))
-
-		require.NotEmpty(t, states)
+		st.ProcessEvalResults(context.Background(), clk.Now(), rule, results, make(data.Labels))
 
 		savedStates := make(map[string]models.SaveAlertInstanceCommand)
 		for _, op := range instanceStore.RecordedOps {
@@ -2031,10 +2033,7 @@ func TestProcessEvalResults(t *testing.T) {
 				savedStates[cacheId] = q
 			}
 		}
-		require.Len(t, savedStates, len(states))
-		for _, s := range states {
-			require.Contains(t, savedStates, s.CacheId)
-		}
+		require.Len(t, savedStates, len(results))
 	})
 }
 

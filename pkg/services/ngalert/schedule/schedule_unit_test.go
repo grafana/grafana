@@ -38,16 +38,17 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
 		senderMock *state.AlertsSenderMock,
-	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, prometheus.Gatherer) {
+	) (*schedule, *store.FakeRuleStore, *store.FakeInstanceStore, prometheus.Gatherer, *state.Manager) {
 		ruleStore := store.NewFakeRuleStore(t)
 		instanceStore := &store.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
 		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
+		man := sch.stateManager.(*state.Manager)
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
 		}
-		return sch, ruleStore, instanceStore, registry
+		return sch, ruleStore, instanceStore, registry, man
 	}
 
 	// normal states do not include NoData and Error because currently it is not possible to perform any sensible test
@@ -59,7 +60,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		t.Run(fmt.Sprintf("when rule evaluation happens (evaluation state %s)", evalState), func(t *testing.T) {
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
-			sch, ruleStore, instanceStore, reg := createSchedule(evalAppliedChan, nil)
+			sch, ruleStore, instanceStore, reg, stateManager := createSchedule(evalAppliedChan, nil)
 
 			rule := models.AlertRuleGen(withQueryForState(t, evalState))()
 			ruleStore.PutRule(context.Background(), rule)
@@ -81,7 +82,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			require.Equal(t, expectedTime, actualTime)
 
 			t.Run("it should add extra labels", func(t *testing.T) {
-				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				states := stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 				folder, _ := ruleStore.GetNamespaceByUID(context.Background(), rule.NamespaceUID, rule.OrgID, nil)
 				for _, s := range states {
 					assert.Equal(t, rule.UID, s.Labels[models.RuleUIDLabel])
@@ -93,7 +94,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			t.Run("it should process evaluation results via state manager", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
-				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				states := stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 				require.Len(t, states, 1)
 				s := states[0]
 				require.Equal(t, rule.UID, s.AlertRuleUID)
@@ -107,7 +108,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			})
 			t.Run("it should save alert instances to storage", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
-				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				states := stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 				require.Len(t, states, 1)
 				s := states[0]
 
@@ -170,11 +171,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	t.Run("should exit", func(t *testing.T) {
 		t.Run("and not clear the state if parent context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
-			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+			sch, _, _, _, stateManager := createSchedule(make(chan time.Time), nil)
 
 			rule := models.AlertRuleGen()()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil)
-			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil)
+			expectedStates := stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -186,15 +187,15 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			cancel()
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
-			require.Equal(t, len(expectedStates), len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)))
+			require.Equal(t, len(expectedStates), len(stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)))
 		})
 		t.Run("and clean up the state if delete is cancellation reason ", func(t *testing.T) {
 			stoppedChan := make(chan error)
-			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+			sch, _, _, _, stateManager := createSchedule(make(chan time.Time), nil)
 
 			rule := models.AlertRuleGen()()
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil)
-			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil)
+			require.NotEmpty(t, stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 
 			ctx, cancel := util.WithCancelCause(context.Background())
 			go func() {
@@ -206,7 +207,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
 
-			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			require.Empty(t, stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 		})
 	})
 
@@ -220,7 +221,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		sender := state.AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+		sch, ruleStore, _, _, stateManager := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
 
 		go func() {
@@ -252,9 +253,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				})
 			}
 		}
-		sch.stateManager.Put(states)
+		stateManager.Put(states)
 
-		states = sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		states = stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		expectedToBeSent := 0
 		for _, s := range states {
 			if s.State == eval.Normal || s.State == eval.Pending {
@@ -269,7 +270,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			updateChan <- ruleVersion(rule.Version)
 			updateChan <- ruleVersion(rule.Version) // second time just to make sure that previous messages were handled
 
-			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			actualStates := stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
 
 			sender.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
@@ -282,7 +283,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				return len(sender.Calls) > 0
 			}, 5*time.Second, 100*time.Millisecond)
 
-			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			require.Empty(t, stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 			sender.AssertNumberOfCalls(t, "Send", 1)
 			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
@@ -300,7 +301,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		sender := state.AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, &sender)
+		sch, ruleStore, _, reg, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
 
 		go func() {
@@ -370,7 +371,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			sender := state.AlertsSenderMock{}
 			sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
-			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+			sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan, &sender)
 			ruleStore.PutRule(context.Background(), rule)
 
 			go func() {
@@ -403,7 +404,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		sender := state.AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+		sch, ruleStore, _, _, stateManager := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
 
 		go func() {
@@ -421,7 +422,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		sender.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
 
-		require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+		require.NotEmpty(t, stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 	})
 }
 
@@ -530,8 +531,8 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 		Logger:    logger,
 		Metrics:   m.GetSchedulerMetrics(),
 	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, senderMock, mockedClock)
-	return NewScheduler(schedCfg, appUrl, st)
+	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), appUrl, rs, is, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, senderMock, mockedClock)
+	return NewScheduler(schedCfg, st)
 }
 
 func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMutator {
