@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -11,7 +11,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getTimeSrv } from '../../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../../state';
 
-import { newLetterRandomizer, Randomize, randomizeData } from './randomizer';
+import { Randomize } from './randomizer';
 import { getTroubleshootingDashboard } from './utils';
 
 interface Props {
