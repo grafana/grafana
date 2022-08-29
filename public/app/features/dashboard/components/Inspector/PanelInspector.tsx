@@ -36,7 +36,7 @@ const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
   const location = useLocation();
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions, true);
   const metaDs = useDatasourceMetadata(data);
-  let tabs = useInspectTabs(panel, dashboard, plugin, error, metaDs);
+  const tabs = useInspectTabs(panel, dashboard, plugin, error, metaDs);
   const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
 
   const onClose = () => {

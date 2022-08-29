@@ -3,26 +3,24 @@ import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { PanelData, PanelPlugin, GrafanaTheme2 } from '@grafana/data';
+import { PanelPlugin, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar, CodeEditor, useStyles2 } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { getTimeSrv } from '../../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../../state';
+import { PanelModel } from '../../state';
 
 import { Randomize } from './randomizer';
 import { getTroubleshootingDashboard } from './utils';
 
 interface Props {
-  dashboard: DashboardModel;
   panel: PanelModel;
   plugin?: PanelPlugin | null;
-  data?: PanelData;
   onClose: () => void;
 }
 
-export const Troubleshooter = ({ panel, plugin, dashboard, data, onClose }: Props) => {
+export const Troubleshooter = ({ panel, plugin, onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const [currentTab, setCurrentTab] = useState(InspectTab.Trouble);
   const [dashboardText, setDashboardText] = useState('???');
