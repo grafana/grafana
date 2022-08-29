@@ -206,7 +206,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			}
 		}
 	}
-	alerts := FromAlertStateToPostableAlerts(states, st, st.appURL)
+	alerts := FromAlertStateToPostableAlerts(states, st, st.appURL, st.clock)
 	if len(alerts.PostableAlerts) > 0 {
 		st.AlertsSender.Send(alertRule.GetKey(), alerts)
 	}

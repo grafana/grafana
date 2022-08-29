@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
@@ -112,10 +111,10 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 	}
 }
 
-func FromAlertStateToPostableAlerts(firingStates []*State, stateManager *Manager, appURL *url.URL) apimodels.PostableAlerts {
+func FromAlertStateToPostableAlerts(firingStates []*State, stateManager *Manager, appURL *url.URL, clk clock.Clock) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	var sentAlerts []*State
-	ts := time.Now()
+	ts := clk.Now()
 
 	for _, alertState := range firingStates {
 		if !alertState.NeedsSending(stateManager.ResendDelay) {

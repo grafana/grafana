@@ -84,6 +84,9 @@ func TestDashboardAnnotations(t *testing.T) {
 
 func TestProcessEvalResults(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
+	clk := clock.NewMock()
+	clk.Set(evaluationTime)
+	clk.Add(time.Duration(rand.Int63n(200)+10) * time.Millisecond) // advance the clock so it is past eval time
 	if err != nil {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
@@ -219,6 +222,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime,
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -342,6 +346,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -419,6 +424,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(80 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -508,6 +514,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(40 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -589,6 +596,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(30 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -782,6 +790,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -846,6 +855,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -929,6 +939,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1043,6 +1054,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1139,6 +1151,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1271,6 +1284,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1432,6 +1446,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(40 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1511,6 +1526,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test", "Error": "failed to execute query A: this is an error"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1756,6 +1772,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(50 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1842,6 +1859,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(70 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1929,6 +1947,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: evaluationTime.Add(50 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
+					LastSentAt:         clk.Now(),
 				},
 			},
 		},
@@ -1985,7 +2004,9 @@ func TestProcessEvalResults(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, &state.AlertsSenderMock{}, clock.New())
+		senderMock := &state.AlertsSenderMock{}
+		senderMock.EXPECT().Send(mock.Anything, mock.Anything)
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, &store.FakeInstanceStore{}, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, senderMock, clk)
 		t.Run(tc.desc, func(t *testing.T) {
 			fakeAnnoRepo := store.NewFakeAnnotationsRepo()
 			annotations.SetRepository(fakeAnnoRepo)
@@ -2018,7 +2039,11 @@ func TestProcessEvalResults(t *testing.T) {
 		annotations.SetRepository(fakeAnnoRepo)
 		instanceStore := &store.FakeInstanceStore{}
 		clk := clock.New()
-		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, &state.AlertsSenderMock{}, clk)
+
+		senderMock := &state.AlertsSenderMock{}
+		senderMock.EXPECT().Send(mock.Anything, mock.Anything)
+
+		st := state.NewManager(log.New("test_state_manager"), testMetrics.GetStateMetrics(), nil, nil, instanceStore, &dashboards.FakeDashboardService{}, &image.NotAvailableImageService{}, senderMock, clk)
 		rule := models.AlertRuleGen()()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(clk.Now())))
 
