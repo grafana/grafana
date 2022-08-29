@@ -23,7 +23,7 @@ export const PortalK8sFreeClusterPromotingMessage = () => {
         <a href={`${saasHost}/kubernetes`} rel="noreferrer noopener" target="_blank" className={styles.link}>
           read more
         </a>{' '}
-        information about this offer
+        information about this offer.
       </p>
     </Alert>
   );

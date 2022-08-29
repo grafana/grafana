@@ -7,8 +7,8 @@ export const PMMServerUrlWarning: FC = () => (
   <Alert title="PMM Public Address" severity="info" data-testid="pmm-server-url-warning">
     <p>
       This will also set &quot;Public Address&quot; as {window.location.host}.<br></br>
-      If you need to set if differently or edit later, use{' '}
-      <Link to="/settings/advanced-settings">Advanced Settings</Link>
+      If you need to set it differently or edit later, use{' '}
+      <Link to="/settings/advanced-settings">Advanced Settings</Link>.
     </p>
   </Alert>
 );
