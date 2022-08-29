@@ -158,7 +158,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 ##@ Services
 
 # create docker-compose file with provided sources and start them
-# example: make devenv sources=postgres,openldap
+# example: make devenv sources=postgres,auth/openldap
 ifeq ($(sources),)
 devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'

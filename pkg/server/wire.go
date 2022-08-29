@@ -318,11 +318,14 @@ var wireBasicSet = wire.NewSet(
 	orgimpl.ProvideService,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
-	datasourceservice.ProvideDataSourceMigrationService,
-	secretsStore.ProvidePluginSecretMigrationService,
+	secretsMigrations.ProvideDataSourceMigrationService,
+	secretsMigrations.ProvideMigrateToPluginService,
+	secretsMigrations.ProvideMigrateFromPluginService,
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
+	ossaccesscontrol.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
 )
 
 var wireSet = wire.NewSet(
