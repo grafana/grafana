@@ -5,12 +5,7 @@ import { ComponentSize } from '../../types/size';
 import { Card } from '../Card/Card';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import {
-  allButtonVariants,
-  allButtonFills,
-  Button,
-  ButtonProps,
-} from './Button';
+import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
 import mdx from './Button.mdx';
 import { ButtonGroup } from './ButtonGroup';
 
@@ -50,12 +45,7 @@ export const Examples: ComponentStory<typeof Button> = () => {
             {allButtonVariants.map((variant) => (
               <VerticalGroup spacing="lg" key={`${buttonFill}-${variant}`}>
                 {sizes.map((size) => (
-                  <Button
-                    variant={variant}
-                    fill={buttonFill}
-                    size={size}
-                    key={size}
-                  >
+                  <Button variant={variant} fill={buttonFill} size={size} key={size}>
                     {variant} {size}
                   </Button>
                 ))}
