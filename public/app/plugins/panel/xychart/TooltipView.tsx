@@ -66,16 +66,16 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
       .filter((v) => v != null);
   }
 
-  let activePointIndex = -1;
   if (options.sort !== SortOrder.None) {
     const sortFn = arrayUtils.sortValues(options.sort);
 
     yValues.sort((a, b) => {
       return sortFn(a!.val, b!.val);
     });
-
-    activePointIndex = yValues.findIndex((v) => v!.name === series.name);
   }
+
+  let activePointIndex = -1;
+  activePointIndex = yValues.findIndex((v) => v!.name === series.name);
 
   return (
     <>
