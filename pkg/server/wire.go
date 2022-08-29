@@ -185,6 +185,7 @@ var wireBasicSet = wire.NewSet(
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	processManager.ProvideService,
+	wire.Bind(new(processManager.Service), new(*processManager.Manager)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),

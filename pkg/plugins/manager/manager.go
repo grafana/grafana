@@ -201,7 +201,7 @@ func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pl
 
 	for _, p := range loadedPlugins {
 		if err = m.registerAndStart(context.Background(), p); err != nil {
-			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+			m.log.Error("Could not start plugin", "pluginID", p.ID, "err", err)
 		}
 	}
 
@@ -216,7 +216,7 @@ func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin)
 }
 
 func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
-	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	m.log.Debug("Stopping plugin process", "pluginID", p.ID)
 
 	if err := m.processManager.Stop(ctx, p.ID); err != nil {
 		return err
@@ -225,7 +225,7 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 	if err := m.pluginRegistry.Remove(ctx, p.ID); err != nil {
 		return err
 	}
-	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
+	m.log.Debug("Plugin unregistered", "pluginID", p.ID)
 	return nil
 }
 

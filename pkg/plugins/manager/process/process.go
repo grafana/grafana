@@ -52,7 +52,7 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 		return nil
 	}
 
-	m.log.Info("Plugin registered", "pluginId", p.ID)
+	m.log.Info("Plugin registered", "pluginID", p.ID)
 	m.mu.Lock()
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
@@ -68,7 +68,7 @@ func (m *Manager) Stop(ctx context.Context, pluginID string) error {
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
-	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	m.log.Debug("Stopping plugin process", "pluginID", p.ID)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
