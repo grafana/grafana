@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
+import { KubernetesService } from './Kubernetes.service';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { KubernetesInventory } from './KubernetesInventory';
 import { KubernetesOperatorStatus } from './OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
@@ -55,6 +56,11 @@ describe('KubernetesInventory::', () => {
   });
 
   it('shows portal k8s free cluster promoting message when user has no clusters', async () => {
+    jest.spyOn(KubernetesService, 'getKubernetes').mockImplementation(() =>
+      Promise.resolve({
+        kubernetes_clusters: [],
+      })
+    );
     render(
       <Provider
         store={configureStore({
@@ -73,6 +79,8 @@ describe('KubernetesInventory::', () => {
       </Provider>
     );
 
+    expect(screen.queryByTestId('pmm-server-promote-portal-k8s-cluster-message')).not.toBeInTheDocument();
+    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
     expect(screen.getByTestId('pmm-server-promote-portal-k8s-cluster-message')).toBeInTheDocument();
   });
 });

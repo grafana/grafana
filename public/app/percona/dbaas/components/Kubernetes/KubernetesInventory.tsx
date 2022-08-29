@@ -52,7 +52,7 @@ export const KubernetesInventory: FC = () => {
   const [operatorToUpdate, setOperatorToUpdate] = useState<OperatorToUpdate | null>(null);
   const [updateOperatorModalVisible, setUpdateOperatorModalVisible] = useState(false);
   const [generateToken] = useCancelToken();
-  const { result: kubernetes = [], loading: kubernetesLoading } = useSelector(getKubernetesSelector);
+  const { result: kubernetes, loading: kubernetesLoading } = useSelector(getKubernetesSelector);
   const { loading: deleteKubernetesLoading } = useSelector(getDeleteKubernetes);
   const { loading: addKubernetesLoading } = useSelector(getAddKubernetes);
   const loading = kubernetesLoading || deleteKubernetesLoading || addKubernetesLoading;
@@ -225,10 +225,15 @@ export const KubernetesInventory: FC = () => {
                 setOperatorToUpdate={setOperatorToUpdate}
               />
             )}
-            <Table columns={columns} data={kubernetes} loading={loading} noData={<AddNewClusterButton />} />
+            <Table
+              columns={columns}
+              data={kubernetes ? kubernetes : []}
+              loading={loading}
+              noData={<AddNewClusterButton />}
+            />
           </div>
         </FeatureLoader>
-        {kubernetes.length === 0 && <PortalK8sFreeClusterPromotingMessage />}
+        {kubernetes && kubernetes.length === 0 && <PortalK8sFreeClusterPromotingMessage />}
       </OldPage.Contents>
     </OldPage>
   );
