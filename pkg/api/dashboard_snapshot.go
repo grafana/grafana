@@ -335,7 +335,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 		if dashboardID != 0 {
 			guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 			canEdit, err := guardian.CanEdit()
-			// check for permissions only if the dahboard is found
+			// check for permissions only if the dashboard is found
 			if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
 			}
