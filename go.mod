@@ -13,6 +13,9 @@ replace k8s.io/client-go => k8s.io/client-go v0.22.1
 
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
+// Local SDK development
+replace github.com/grafana/grafana-plugin-sdk-go => /Users/ryan/workspace/grafana/more/grafana-plugin-sdk-go
+
 require (
 	cloud.google.com/go/storage v1.21.0
 	cuelang.org/go v0.4.3
@@ -89,7 +92,7 @@ require (
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
 	github.com/uber/jaeger-client-go v2.29.1+incompatible
-	github.com/unknwon/com v1.0.1
+	github.com/unknwon/com v1.0.1 // indirect
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae
 	github.com/weaveworks/common v0.0.0-20210913144402-035033b78a78 // indirect
@@ -167,7 +170,7 @@ require (
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/go-openapi/validate v0.21.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/status v1.1.0 // indirect
+	github.com/gogo/status v1.1.0
 	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
 	github.com/golang/glog v1.0.0 // indirect
@@ -251,6 +254,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/jmoiron/sqlx v1.3.5
 	go.etcd.io/etcd/api/v3 v3.5.4
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.31.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.6.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.6.3
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.6.3
@@ -269,7 +273,6 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.31.0 // indirect
 )
 
 require (
