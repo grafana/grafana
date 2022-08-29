@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
+	queryModels "github.com/grafana/grafana/pkg/services/query/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -166,7 +167,7 @@ func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx cont
 		return dtos.MetricRequest{}, ErrPublicDashboardNotFound
 	}
 
-	queriesByPanel := models.GroupQueriesByPanelId(dashboard.Data)
+	queriesByPanel := queryModels.GroupQueriesByPanelId(dashboard.Data)
 
 	if _, ok := queriesByPanel[panelId]; !ok {
 		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
@@ -183,7 +184,7 @@ func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx cont
 
 // BuildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
 func (pd *PublicDashboardServiceImpl) BuildAnonymousUser(ctx context.Context, dashboard *models.Dashboard) (*user.SignedInUser, error) {
-	datasourceUids := models.GetUniqueDashboardDatasourceUids(dashboard.Data)
+	datasourceUids := queryModels.GetUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a temp user with read-only datasource permissions
 	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}

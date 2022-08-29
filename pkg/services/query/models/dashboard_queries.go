@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 )
 
 func GetUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
@@ -63,7 +64,7 @@ func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 func HasExpressionQuery(queries []*simplejson.Json) bool {
 	for _, query := range queries {
 		uid := GetDataSourceUidFromJson(query)
-		if uid == "__expr__" {
+		if expr.IsDataSource(uid) {
 			return true
 		}
 	}
