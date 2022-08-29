@@ -39,7 +39,14 @@ import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
-import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
+import {
+  ControlsOptions,
+  GeomapPanelOptions,
+  MapLayerState,
+  MapViewConfig,
+  TooltipMode,
+  GeomapLayerActions,
+} from './types';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { centerPointRegistry, MapCenterID } from './view';
 
@@ -52,21 +59,6 @@ interface State extends OverlayProps {
   ttipOpen: boolean;
   legends: ReactNode[];
   measureMenuActive?: boolean;
-}
-
-export interface GeomapLayerActions {
-  selectLayer: (uid: string) => void;
-  deleteLayer: (uid: string) => void;
-  addlayer: (type: string) => void;
-  reorder: (src: number, dst: number) => void;
-  canRename: (v: string) => boolean;
-}
-
-export interface GeomapInstanceState {
-  map?: OpenLayersMap;
-  layers: MapLayerState[];
-  selected: number;
-  actions: GeomapLayerActions;
 }
 
 export class GeomapPanel extends Component<Props, State> {

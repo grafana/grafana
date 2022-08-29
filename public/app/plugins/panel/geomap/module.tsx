@@ -4,12 +4,12 @@ import { PanelPlugin } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { GeomapInstanceState, GeomapPanel } from './GeomapPanel';
+import { GeomapPanel } from './GeomapPanel';
 import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { mapPanelChangedHandler, mapMigrationHandler } from './migrations';
-import { defaultView, GeomapPanelOptions, TooltipMode } from './types';
+import { defaultView, GeomapPanelOptions, TooltipMode, GeomapInstanceState } from './types';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()

@@ -6,9 +6,8 @@ import { Container } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
-import { GeomapInstanceState } from '../GeomapPanel';
 import { getLayersOptions } from '../layers/registry';
-import { GeomapPanelOptions, MapLayerState } from '../types';
+import { GeomapPanelOptions, MapLayerState, GeomapInstanceState } from '../types';
 
 type LayersEditorProps = StandardEditorProps<unknown, unknown, GeomapPanelOptions, GeomapInstanceState>;
 
