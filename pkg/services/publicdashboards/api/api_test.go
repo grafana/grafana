@@ -32,6 +32,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -40,10 +41,9 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	t.Run("It should 404 if featureflag is not enabled", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
-		//qs := buildQueryDataService(t, nil, nil, nil)
 		service := publicdashboards.NewFakePublicDashboardService(t)
 		service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-			Return(&models.Dashboard{}, nil).Maybe()
+			Return(&PublicDashboard{}, &models.Dashboard{}, nil).Maybe()
 		service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 			Return(&PublicDashboard{}, nil).Maybe()
 
@@ -67,29 +67,29 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 	accessToken := fmt.Sprintf("%x", token)
 
 	testCases := []struct {
-		Name                  string
-		AccessToken           string
-		ExpectedHttpResponse  int
-		PublicDashboardResult *models.Dashboard
-		PublicDashboardErr    error
+		Name                 string
+		AccessToken          string
+		ExpectedHttpResponse int
+		DashboardResult      *models.Dashboard
+		Err                  error
 	}{
 		{
 			Name:                 "It gets a public dashboard",
 			AccessToken:          accessToken,
 			ExpectedHttpResponse: http.StatusOK,
-			PublicDashboardResult: &models.Dashboard{
+			DashboardResult: &models.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
 					"Uid": DashboardUid,
 				}),
 			},
-			PublicDashboardErr: nil,
+			Err: nil,
 		},
 		{
-			Name:                  "It should return 404 if no public dashboard",
-			AccessToken:           accessToken,
-			ExpectedHttpResponse:  http.StatusNotFound,
-			PublicDashboardResult: nil,
-			PublicDashboardErr:    ErrPublicDashboardNotFound,
+			Name:                 "It should return 404 if no public dashboard",
+			AccessToken:          accessToken,
+			ExpectedHttpResponse: http.StatusNotFound,
+			DashboardResult:      nil,
+			Err:                  ErrPublicDashboardNotFound,
 		},
 	}
 
@@ -97,9 +97,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			service.On("GetPublicDashboard", mock.Anything, mock.AnythingOfType("string")).
-				Return(test.PublicDashboardResult, test.PublicDashboardErr).Maybe()
-			service.On("GetPublicDashboardConfig", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(&PublicDashboard{}, nil).Maybe()
+				Return(&PublicDashboard{}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = false
@@ -120,7 +118,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
-			if test.PublicDashboardErr == nil {
+			if test.Err == nil {
 				var dashResp dtos.DashboardFullWithMeta
 				err := json.Unmarshal(response.Body.Bytes(), &dashResp)
 				require.NoError(t, err)
@@ -135,7 +133,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 				}
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.PublicDashboardErr.Error(), errResp.Error)
+				assert.Equal(t, test.Err.Error(), errResp.Error)
 			}
 		})
 	}
@@ -243,7 +241,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("SavePublicDashboardConfig", mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
+			service.On("SavePublicDashboardConfig", mock.Anything, mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
 				Return(&PublicDashboard{IsEnabled: true}, test.SaveDashboardErr)
 
 			cfg := setting.NewCfg()
@@ -380,7 +378,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 		require.JSONEq(
 			t,
-			expectedResponse,
+            expectedResponse,
 			resp.Body.String(),
 		)
 		require.Equal(t, http.StatusOK, resp.Code)
@@ -457,7 +455,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	service := publicdashboardsService.ProvideService(cfg, store, qds)
-	pubdash, err := service.SavePublicDashboardConfig(context.Background(), savePubDashboardCmd)
+	pubdash, err := service.SavePublicDashboardConfig(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
 	// setup test server

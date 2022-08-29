@@ -56,6 +56,7 @@ const defaultProps = {
       url: '',
       jsonData: {},
       meta: {} as any,
+      readOnly: false,
     },
     undefined,
     undefined,
