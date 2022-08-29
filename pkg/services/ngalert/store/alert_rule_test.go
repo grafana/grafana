@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -94,27 +97,58 @@ func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
 }
 
 func Test_getFilterByOrgsString(t *testing.T) {
-	t.Run("should return empty string if map is empty", func(t *testing.T) {
-		store := &DBstore{
-			Cfg: setting.UnifiedAlertingSettings{
-				DisabledOrgs: map[int64]struct{}{},
+	testCases := []struct {
+		testName string
+		orgs     map[int64]struct{}
+		assert   func(t *testing.T, result string)
+	}{
+		{
+			testName: "should return empty string if map is empty",
+			orgs:     map[int64]struct{}{},
+			assert: func(t *testing.T, result string) {
+				require.Empty(t, result)
 			},
-		}
-		require.Empty(t, store.getFilterByOrgsString())
-	})
-	t.Run("should return correct expression if map is not empty", func(t *testing.T) {
-		orgs := map[int64]struct{}{
-			1: {},
-			2: {},
-			3: {},
-		}
-		store := &DBstore{
-			Cfg: setting.UnifiedAlertingSettings{
-				DisabledOrgs: orgs,
+		},
+		{
+			testName: "should return empty string if map is nil",
+			orgs:     nil,
+			assert: func(t *testing.T, result string) {
+				require.Empty(t, result)
 			},
-		}
-
-		result := store.getFilterByOrgsString()
-		require.Equal(t, "NOT IN (1,2,3)", result)
-	})
+		},
+		{
+			testName: "should return correct filter if single element",
+			orgs: map[int64]struct{}{
+				1: {},
+			},
+			assert: func(t *testing.T, result string) {
+				require.Equal(t, "org_id NOT IN(1)", result)
+			},
+		},
+		{
+			testName: "should return correct filter if many elements",
+			orgs: map[int64]struct{}{
+				1: {},
+				2: {},
+				3: {},
+			},
+			assert: func(t *testing.T, result string) {
+				r := regexp.MustCompile(`^org_id\sNOT\sIN\(([^)]+)\)$`)
+				str := r.FindStringSubmatch(result)
+				numbers := strings.Split(str[1], ",")
+				sort.Strings(numbers)
+				require.Equal(t, []string{"1", "2", "3"}, numbers)
+			},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.testName, func(t *testing.T) {
+			store := &DBstore{
+				Cfg: setting.UnifiedAlertingSettings{
+					DisabledOrgs: testCase.orgs,
+				},
+			}
+			testCase.assert(t, store.getFilterByOrgsString())
+		})
+	}
 }

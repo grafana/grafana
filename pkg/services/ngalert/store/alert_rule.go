@@ -428,6 +428,7 @@ func (st DBstore) getFilterByOrgsString() string {
 		idx--
 		if idx == 0 {
 			builder.WriteString(")")
+			break
 		}
 		builder.WriteString(",")
 	}
