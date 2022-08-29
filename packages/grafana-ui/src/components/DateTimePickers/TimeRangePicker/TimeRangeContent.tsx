@@ -44,7 +44,7 @@ const ERROR_MESSAGES = {
   range: '"From" can\'t be after "To"',
 };
 
-export const TimeRangeForm = (props: Props) => {
+export const TimeRangeContent = (props: Props) => {
   const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed, fiscalYearStartMonth } = props;
   const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
   const style = useStyles2(getStyles);
@@ -68,20 +68,16 @@ export const TimeRangeForm = (props: Props) => {
     [setOpen]
   );
 
-  const onApply = useCallback(
-    (e: FormEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      if (to.invalid || from.invalid) {
-        return;
-      }
+  const onApply = useCallback(() => {
+    if (to.invalid || from.invalid) {
+      return;
+    }
 
-      const raw: RawTimeRange = { from: from.value, to: to.value };
-      const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth);
+    const raw: RawTimeRange = { from: from.value, to: to.value };
+    const timeRange = rangeUtil.convertRawToRange(raw, timeZone, fiscalYearStartMonth);
 
-      onApplyFromProps(timeRange);
-    },
-    [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value, fiscalYearStartMonth]
-  );
+    onApplyFromProps(timeRange);
+  }, [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value, fiscalYearStartMonth]);
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
@@ -91,6 +87,12 @@ export const TimeRangeForm = (props: Props) => {
     },
     [timeZone]
   );
+
+  const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      onApply();
+    }
+  };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
 
@@ -115,13 +117,14 @@ export const TimeRangeForm = (props: Props) => {
   );
 
   return (
-    <form>
+    <div>
       <div className={style.fieldContainer}>
         <Field label="From" invalid={from.invalid} error={from.errorMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
             addonAfter={icon}
+            onKeyDown={submitOnEnter}
             aria-label={selectors.components.TimePicker.fromField}
             value={from.value}
           />
@@ -134,13 +137,14 @@ export const TimeRangeForm = (props: Props) => {
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
             addonAfter={icon}
+            onKeyDown={submitOnEnter}
             aria-label={selectors.components.TimePicker.toField}
             value={to.value}
           />
         </Field>
         {fyTooltip}
       </div>
-      <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="submit" onClick={onApply}>
+      <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
         Apply time range
       </Button>
 
@@ -155,7 +159,7 @@ export const TimeRangeForm = (props: Props) => {
         timeZone={timeZone}
         isReversed={isReversed}
       />
-    </form>
+    </div>
   );
 };
 
