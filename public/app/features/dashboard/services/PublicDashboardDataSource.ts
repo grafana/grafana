@@ -58,30 +58,15 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<any>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, publicDashboardAccessToken, panelId } = request;
-    let targets = request.targets;
-
-    const queries = targets.map((q) => {
-      return {
-        ...q,
-        publicDashboardAccessToken,
-        intervalMs,
-        maxDataPoints,
-      };
-    });
+    const { intervalMs, maxDataPoints, requestId, publicDashboardAccessToken, panelId } = request;
+    let queries: DataQuery[];
 
     // Return early if no queries exist
-    if (!queries.length) {
+    if (!request.targets.length) {
       return of({ data: [] });
     }
 
-    const body: any = { queries, publicDashboardAccessToken, panelId };
-
-    if (range) {
-      body.range = range;
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
-    }
+    const body: any = { intervalMs, maxDataPoints };
 
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
@@ -92,7 +77,7 @@ export class PublicDashboardDataSource extends DataSourceApi<any> {
       })
       .pipe(
         switchMap((raw) => {
-          return of(toDataQueryResponse(raw, queries as DataQuery[]));
+          return of(toDataQueryResponse(raw, queries));
         }),
         catchError((err) => {
           return of(toDataQueryResponse(err));
