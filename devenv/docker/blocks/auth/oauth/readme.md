@@ -4,7 +4,7 @@
 
 To launch the block, use the oauth source. Ex:
 ```bash
-make devenv sources="oauth"
+make devenv sources="auth/oauth"
 ```
 
 Here is the conf you need to add to your configuration file (conf/custom.ini):
@@ -34,7 +34,7 @@ role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*
 To launch the block, use the oauth source. Ex:
 
 ```bash
-make devenv sources="oauth"
+make devenv sources="auth/oauth"
 ```
 
 Here is the conf you need to add to your configuration file (conf/custom.ini):

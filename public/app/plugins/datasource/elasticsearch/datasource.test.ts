@@ -116,6 +116,7 @@ function getTestContext({
     url: ELASTICSEARCH_MOCK_URL,
     database,
     jsonData,
+    readOnly: false,
   };
 
   const ds = new ElasticDatasource(instanceSettings, templateSrv);

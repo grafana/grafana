@@ -738,7 +738,7 @@ describe('ElasticQueryBuilder', () => {
             extended_bounds: { max: '$timeTo', min: '$timeFrom' },
             field: '@timestamp',
             format: 'epoch_millis',
-            fixed_interval: '$__interval',
+            fixed_interval: '${__interval_ms}ms',
             min_doc_count: 0,
           },
         },

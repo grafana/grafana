@@ -52,7 +52,8 @@ func (dc *CacheServiceImpl) GetDatasource(
 	dc.logger.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgID)
 
 	query := &datasources.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgID}
-	err := dc.SQLStore.GetDataSource(ctx, query)
+	ss := SqlStore{db: dc.SQLStore}
+	err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,8 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 
 	dc.logger.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgID)
 	query := &datasources.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgID}
-	err := dc.SQLStore.GetDataSource(ctx, query)
+	ss := SqlStore{db: dc.SQLStore}
+	err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
