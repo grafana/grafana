@@ -19,15 +19,16 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
 
+  static readonly intrinsics: string[] = ['name', 'status', 'duration'];
+  static readonly scopes: string[] = ['span', 'resource'];
+  static readonly operators: string[] = ['=', '-', '+', '<', '>', '>=', '<='];
+  static readonly logicalOps: string[] = ['&&', '||'];
+
   // We set these directly and ae required for the provider to function.
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
   private tags: { [tag: string]: Set<string> } = {};
-  private intrinsics: string[] = ['name', 'status', 'duration'];
-  private scopes: string[] = ['span', 'resource'];
-  private operators: string[] = ['=', '-', '+', '<', '>', '>=', '<='];
-  private logicalOps: string[] = ['&&', '||'];
 
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
@@ -98,7 +99,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_NAME_SCOPE':
         return this.getTagsCompletions().concat(this.getIntrinsicsCompletions());
       case 'SPANSET_AFTER_NAME':
-        return this.operators.map((key) => ({
+        return CompletionProvider.operators.map((key) => ({
           label: key,
           insertText: key,
           type: 'OPERATOR' as CompletionType,
@@ -118,7 +119,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           return items;
         });
       case 'SPANSET_AFTER_VALUE':
-        return this.logicalOps.concat('}').map((key) => ({
+        return CompletionProvider.logicalOps.concat('}').map((key) => ({
           label: key,
           insertText: key,
           type: 'OPERATOR' as CompletionType,
@@ -137,7 +138,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getIntrinsicsCompletions(prepend?: string): Completion[] {
-    return this.intrinsics.map((key) => ({
+    return CompletionProvider.intrinsics.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
       type: 'KEYWORD' as CompletionType,
@@ -145,7 +146,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getScopesCompletions(prepend?: string): Completion[] {
-    return this.scopes.map((key) => ({
+    return CompletionProvider.scopes.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
       type: 'SCOPE' as CompletionType,
@@ -154,7 +155,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   private getSituationInSpanSet(textUntilCaret: string): Situation {
     const matched = textUntilCaret.match(
-      /([\s{])((?<name>[\w./-]+)?(?<space1>\s*)((?<op>[!=+\-<>]+)(?<space2>\s*)(?<value>(?<open_quote>")?[^"\n&|]+(?<close_quote>")?)?)?)(?<space3>\s*)$/
+      /([\s{])((?<name>[\w./-]+)?(?<space1>\s*)((?<op>[!=+\-<>]+)(?<space2>\s*)(?<value>(?<open_quote>")?(\w[^"\n&|]*\w)?(?<close_quote>")?)?)?)(?<space3>\s*)$/
     );
 
     if (matched) {
@@ -167,19 +168,29 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         };
       }
 
-      const nameMatched = nameFull.match(/^(?<pre_dot>\.)?(?<word>[\w./-]+)(?<post_dot>\.)?$/);
+      const nameMatched = nameFull.match(/^(?<pre_dot>\.)?(?<word>\w[\w./-]*\w)(?<post_dot>\.)?$/);
 
+      // We already have a (potentially partial) tag name so let's check if there's an operator declared
+      // { .tag_name|
       if (!op) {
-        if (this.scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
+        // There's no operator so we check if the name is one of the known scopes
+        // { resource.|
+
+        if (CompletionProvider.scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
           return {
             type: 'SPANSET_IN_NAME_SCOPE',
           };
         }
+        // It's not one of the scopes, so we now check if we're after the name (there's a space after the word) or if we still have to autocomplete the rest of the name
+        // In case there's a space we start autocompleting the operators { .http.method |
+        // Otherwise we keep showing the tags/intrinsics/scopes list { .http.met|
         return {
           type: matched.groups?.space1 ? 'SPANSET_AFTER_NAME' : 'SPANSET_IN_NAME',
         };
       }
 
+      // In case there's a space after the full [name + operator + value] group we can start autocompleting logical operators or close the spanset
+      // { .http.method = "GET" |
       if (matched.groups?.space3) {
         return {
           type: 'SPANSET_AFTER_VALUE',
@@ -188,11 +199,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
       // remove the scopes from the word to get accurate autocompletes
       // Ex: 'span.host.name' won't resolve to any autocomplete values, but removing 'span.' results in 'host.name' which can have autocomplete values
-      const noScopeWord = this.scopes.reduce(
+      const noScopeWord = CompletionProvider.scopes.reduce(
         (result, word) => result.replace(`${word}.`, ''),
         nameMatched?.groups?.word || ''
       );
 
+      // We already have an operator and know that the set isn't complete so let's autocomplete the possible values for the tag name
+      // { .http.method = |
       return {
         type: 'SPANSET_IN_VALUE',
         tagName: noScopeWord,
