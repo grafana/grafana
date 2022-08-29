@@ -37,6 +37,18 @@ export const richHistorySearchFiltersUpdatedAction = createAction<{
   filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
 
+export const splitSizeUpdateAction = createAction<{
+  largerExploreId?: ExploreId;
+}>('explore/splitSizeUpdateAction');
+
+export const maximizePaneAction = createAction<{
+  exploreId?: ExploreId;
+}>('explore/maximizePaneAction');
+
+export const evenPaneResizeAction = createAction<{
+  evenResize?: boolean;
+}>('explore/evenPaneResizeAction');
+
 /**
  * Resets state for explore.
  */
@@ -133,6 +145,24 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
   };
 }
 
+export function changeLargerPane(largerExploreId?: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(splitSizeUpdateAction({ largerExploreId }));
+  };
+}
+
+export function maximizePane(exploreId?: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(maximizePaneAction({ exploreId }));
+  };
+}
+
+export function evenResizePane(evenResize?: boolean): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(evenPaneResizeAction({ evenResize }));
+  };
+}
+
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
   getTimeSrv: () => TimeSrv;
@@ -173,6 +203,9 @@ export const initialExploreState: ExploreState = {
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   richHistoryMigrationFailed: false,
+  largerExploreId: undefined,
+  maxedExploreId: undefined,
+  evenSplitPanes: undefined,
 };
 
 /**
@@ -189,6 +222,39 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       ...targetSplit,
+      largerExploreId: undefined,
+      maxedExploreId: undefined,
+      evenSplitPanes: undefined,
+    };
+  }
+
+  if (splitSizeUpdateAction.match(action)) {
+    const { largerExploreId } = action.payload;
+    return {
+      ...state,
+      largerExploreId,
+      maxedExploreId: undefined,
+      evenSplitPanes: undefined,
+    };
+  }
+
+  if (maximizePaneAction.match(action)) {
+    const { exploreId } = action.payload;
+    return {
+      ...state,
+      largerExploreId: exploreId,
+      maxedExploreId: exploreId,
+      evenSplitPanes: false,
+    };
+  }
+
+  if (evenPaneResizeAction.match(action)) {
+    const { evenResize } = action.payload;
+    return {
+      ...state,
+      largerExploreId: undefined,
+      maxedExploreId: undefined,
+      evenSplitPanes: evenResize,
     };
   }
 

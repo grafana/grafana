@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
+import { inRange } from 'lodash';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
+import { SplitView } from 'app/core/components/SplitPaneWrapper/SplitView';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
@@ -13,7 +15,14 @@ import { getNavModel } from '../../core/selectors/navModel';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
+import {
+  lastSavedUrl,
+  resetExploreAction,
+  richHistoryUpdatedAction,
+  cleanupPaneAction,
+  changeLargerPane,
+  evenResizePane,
+} from './state/main';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -40,13 +49,28 @@ const mapStateToProps = (state: StoreState) => {
 const mapDispatchToProps = {
   resetExploreAction,
   richHistoryUpdatedAction,
+  cleanupPaneAction,
+  changeLargerPane,
+  evenResizePane,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
 class WrapperUnconnected extends PureComponent<Props> {
+  minWidth = 200;
+
   componentWillUnmount() {
+    const { left, right } = this.props.queryParams;
+
+    if (Boolean(left)) {
+      cleanupPaneAction({ exploreId: ExploreId.left });
+    }
+
+    if (Boolean(right)) {
+      cleanupPaneAction({ exploreId: ExploreId.right });
+    }
+
     this.props.resetExploreAction({});
   }
 
@@ -79,21 +103,57 @@ class WrapperUnconnected extends PureComponent<Props> {
     document.title = documentTitle;
   }
 
+  updateSplitSize(rightSplitWidth: number) {
+    const evenSplitWidth = window.innerWidth / 2;
+    const areBothSimilar = inRange(rightSplitWidth, evenSplitWidth - 100, evenSplitWidth + 100);
+    if (areBothSimilar) {
+      this.props.changeLargerPane(undefined);
+    } else {
+      this.props.changeLargerPane(rightSplitWidth > evenSplitWidth ? ExploreId.right : ExploreId.left);
+    }
+  }
+
   render() {
     const { left, right } = this.props.queryParams;
+    const { maxedExploreId, evenSplitPanes } = this.props.exploreState;
     const hasSplit = Boolean(left) && Boolean(right);
+    let widthCalc = 0;
+
+    if (hasSplit) {
+      if (!evenSplitPanes && maxedExploreId) {
+        widthCalc = maxedExploreId === ExploreId.right ? window.innerWidth - this.minWidth : this.minWidth;
+      } else {
+        widthCalc = window.innerWidth / 2;
+      }
+    }
+
+    const splitSizeObj = { rightPaneSize: widthCalc };
+
+    const leftPane = (
+      <ErrorBoundaryAlert style="page">
+        <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
+      </ErrorBoundaryAlert>
+    );
 
     return (
       <div className={styles.pageScrollbarWrapper}>
         <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
         <div className={styles.exploreWrapper}>
-          <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
-          </ErrorBoundaryAlert>
-          {hasSplit && (
-            <ErrorBoundaryAlert style="page">
-              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
-            </ErrorBoundaryAlert>
+          {hasSplit ? (
+            <SplitView
+              uiState={splitSizeObj}
+              minSize={this.minWidth}
+              resizeCallback={(width: number) => {
+                this.updateSplitSize(width);
+              }}
+            >
+              {leftPane}
+              <ErrorBoundaryAlert style="page">
+                <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
+              </ErrorBoundaryAlert>
+            </SplitView>
+          ) : (
+            leftPane
           )}
         </div>
       </div>
