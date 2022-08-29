@@ -436,7 +436,7 @@ export class GeomapPanel extends Component<Props, State> {
       });
     }
 
-    const found = !!layers.length;
+    const found = Boolean(layers.length);
     this.mapDiv!.style.cursor = found ? 'pointer' : 'auto';
     return found;
   };
