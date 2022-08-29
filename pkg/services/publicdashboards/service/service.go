@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -14,16 +15,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // Define the Service Implementation. We're generating mock implementation
 // automatically
 type PublicDashboardServiceImpl struct {
-	log   log.Logger
-	cfg   *setting.Cfg
-	store publicdashboards.Store
+	log                log.Logger
+	cfg                *setting.Cfg
+	store              publicdashboards.Store
+	intervalCalculator intervalv2.Calculator
+	QueryDataService   *query.Service
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -37,11 +43,14 @@ var _ publicdashboards.Service = (*PublicDashboardServiceImpl)(nil)
 func ProvideService(
 	cfg *setting.Cfg,
 	store publicdashboards.Store,
+	qds *query.Service,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
-		log:   log.New(LogPrefix),
-		cfg:   cfg,
-		store: store,
+		log:                log.New(LogPrefix),
+		cfg:                cfg,
+		store:              store,
+		intervalCalculator: intervalv2.NewCalculator(),
+		QueryDataService:   qds,
 	}
 }
 
@@ -180,25 +189,58 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 	return dto.PublicDashboard.Uid, pd.store.UpdatePublicDashboardConfig(ctx, cmd)
 }
 
-// BuildPublicDashboardMetricRequest merges public dashboard parameters with
-// dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
-	if !publicDashboard.IsEnabled {
-		return dtos.MetricRequest{}, ErrPublicDashboardNotFound
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO *PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+	if err := validation.ValidateQueryPublicDashboardRequest(reqDTO); err != nil {
+		return nil, ErrPublicDashboardBadRequest
 	}
 
-	queriesByPanel := models.GroupQueriesByPanelId(dashboard.Data)
+	publicDashboard, dashboard, err := pd.GetPublicDashboard(ctx, accessToken)
+	if err != nil {
+		return nil, err
+	}
 
-	if _, ok := queriesByPanel[panelId]; !ok {
+	metricReqDTO, err := pd.buildPublicDashboardMetricRequest(
+		ctx,
+		dashboard,
+		publicDashboard,
+		panelId,
+		reqDTO,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	anonymousUser, err := pd.BuildAnonymousUser(ctx, dashboard)
+	if err != nil {
+		return nil, err
+	}
+
+	return pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReqDTO, true)
+}
+
+// BuildPublicDashboardMetricRequest merges public dashboard parameters with
+// dashboard and returns a metrics request to be sent to query backend
+func (pd *PublicDashboardServiceImpl) buildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO *PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+	// group queries by panel
+	queriesByPanel := models.GroupQueriesByPanelId(dashboard.Data)
+	queries, ok := queriesByPanel[panelId]
+	if !ok {
 		return dtos.MetricRequest{}, ErrPublicDashboardPanelNotFound
 	}
 
 	ts := publicDashboard.BuildTimeSettings(dashboard)
 
+	// determine safe resolution to query data at
+	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
+	for i := range queries {
+		queries[i].Set("intervalMs", safeInterval)
+		queries[i].Set("maxDataPoints", safeResolution)
+	}
+
 	return dtos.MetricRequest{
 		From:    ts.From,
 		To:      ts.To,
-		Queries: queriesByPanel[panelId],
+		Queries: queries,
 	}, nil
 }
 
@@ -238,6 +280,35 @@ func GenerateAccessToken() (string, error) {
 	}
 
 	return fmt.Sprintf("%x", token[:]), nil
+}
+
+// intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
+// we are doing the same for public dashboards but because this access would be public, we need a way to keep this
+// values inside reasonable bounds to avoid an attack that could hit data sources with a small interval and a big
+// time range and perform big calculations
+// this is an additional validation, all data sources implements QueryData interface and should have proper validations
+// of these limits
+// for the maxDataPoints we took a hard limit from prometheus which is 11000
+func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO *PublicDashboardQueryDTO, ts *TimeSettings) (int64, int64) {
+	// arbitrary max value for all data sources, it is actually a hard limit defined in prometheus
+	safeResolution := int64(11000)
+
+	// interval calculated on the frontend
+	interval := time.Duration(reqDTO.IntervalMs) * time.Millisecond
+
+	// calculate a safe interval with time range from dashboard and safeResolution
+	dataTimeRange := legacydata.NewDataTimeRange(ts.From, ts.To)
+	tr := backend.TimeRange{
+		From: dataTimeRange.GetFromAsTimeUTC(),
+		To:   dataTimeRange.GetToAsTimeUTC(),
+	}
+	safeInterval := pd.intervalCalculator.CalculateSafeInterval(tr, safeResolution)
+
+	if interval > safeInterval.Value {
+		return reqDTO.IntervalMs, reqDTO.MaxDataPoints
+	}
+
+	return safeInterval.Value.Milliseconds(), safeResolution
 }
 
 // Log when PublicDashboard.IsEnabled changed
