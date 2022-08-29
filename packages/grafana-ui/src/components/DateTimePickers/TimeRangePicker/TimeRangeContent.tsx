@@ -44,7 +44,7 @@ const ERROR_MESSAGES = {
   range: '"From" can\'t be after "To"',
 };
 
-export const TimeRangeForm = (props: Props) => {
+export const TimeRangeContent = (props: Props) => {
   const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed, fiscalYearStartMonth } = props;
   const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
   const style = useStyles2(getStyles);
