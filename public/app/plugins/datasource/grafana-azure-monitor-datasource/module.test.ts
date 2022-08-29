@@ -1,6 +1,8 @@
 import { DashboardLoadedEvent } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+
 import './module';
+import { AzureQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -37,8 +39,14 @@ describe('queriesOnInitDashboard', () => {
       org_id: 1,
       user_id: 2,
       queries: [
-        { query_type: 'Azure Monitor', hidden: true },
-        { query_type: 'Azure Resource Graph', hidden: false },
+        {
+          query_type: 'Azure Monitor',
+          hidden: true,
+          datasource: {
+            type: 'grafana-azure-monitor-datasource',
+          },
+        },
+        { query_type: AzureQueryType.AzureResourceGraph, hidden: false },
       ],
     });
   });
