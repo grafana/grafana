@@ -7,7 +7,6 @@ import {
   commonAnnotationsLoopSnippet,
   commonLabelsLoopSnippet,
   groupLabelsLoopSnippet,
-  keyValueLoopSnippet,
   labelsLoopSnippet,
 } from './snippets';
 import { SuggestionDefinition } from './suggestionDefinition';
