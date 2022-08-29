@@ -30,7 +30,7 @@ const comparators = [
   { label: '<=', value: ComparisonOperation.LTE },
 ];
 
-export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, any, StyleRuleEditorSettings>> = (
+export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, unknown, StyleRuleEditorSettings>> = (
   props
 ) => {
   const { value, onChange, item, context } = props;

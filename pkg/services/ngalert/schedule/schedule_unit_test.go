@@ -30,8 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -170,9 +168,14 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	}
 
 	t.Run("should exit", func(t *testing.T) {
-		t.Run("when context is cancelled", func(t *testing.T) {
+		t.Run("and not clear the state if parent context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
 			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+
+			rule := models.AlertRuleGen()()
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil)
+			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			require.NotEmpty(t, expectedStates)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
@@ -183,6 +186,27 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			cancel()
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
+			require.Equal(t, len(expectedStates), len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)))
+		})
+		t.Run("and clean up the state if delete is cancellation reason ", func(t *testing.T) {
+			stoppedChan := make(chan error)
+			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+
+			rule := models.AlertRuleGen()()
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen()), nil)
+			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+
+			ctx, cancel := util.WithCancelCause(context.Background())
+			go func() {
+				err := sch.ruleRoutine(ctx, rule.GetKey(), make(chan *evaluation), make(chan ruleVersion))
+				stoppedChan <- err
+			}()
+
+			cancel(errRuleDeleted)
+			err := waitForErrChannel(t, stoppedChan)
+			require.NoError(t, err)
+
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 		})
 	})
 
@@ -419,11 +443,11 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 				t.Fatal("No message was received on update channel")
 			}
 		})
-		t.Run("should exit if it is closed", func(t *testing.T) {
+		t.Run("should exit if rule is being stopped", func(t *testing.T) {
 			sch := setupScheduler(t, nil, nil, nil, nil, nil)
 			key := models.GenerateRuleKey(rand.Int63())
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
-			info.stop()
+			info.stop(nil)
 			sch.UpdateAlertRule(key, rand.Int63())
 		})
 	})
@@ -444,23 +468,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 			key := rule.GetKey()
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			sch.DeleteAlertRule(key)
-			require.False(t, info.update(ruleVersion(rand.Int63())))
-			success, dropped := info.eval(time.Now(), rule)
-			require.False(t, success)
-			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
-			require.False(t, sch.registry.exists(key))
-		})
-		t.Run("should remove controller from registry", func(t *testing.T) {
-			sch := setupScheduler(t, nil, nil, nil, nil, nil)
-			rule := models.AlertRuleGen()()
-			key := rule.GetKey()
-			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
-			info.stop()
-			sch.DeleteAlertRule(key)
-			require.False(t, info.update(ruleVersion(rand.Int63())))
-			success, dropped := info.eval(time.Now(), rule)
-			require.False(t, success)
-			require.Nilf(t, dropped, "expected no dropped evaluations but got one")
+			require.ErrorIs(t, info.ctx.Err(), errRuleDeleted)
 			require.False(t, sch.registry.exists(key))
 		})
 	})
@@ -491,8 +499,7 @@ func setupScheduler(t *testing.T, rs *store.FakeRuleStore, is *store.FakeInstanc
 
 	var evaluator eval.Evaluator = evalMock
 	if evalMock == nil {
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-		evaluator = eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, secretsService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+		evaluator = eval.NewEvaluator(&setting.Cfg{ExpressionsEnabled: true}, logger, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
 	}
 
 	if registry == nil {

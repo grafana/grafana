@@ -220,6 +220,7 @@ type DataSourceDTO struct {
 	Preload    bool                   `json:"preload"`
 	Module     string                 `json:"module,omitempty"`
 	JSONData   map[string]interface{} `json:"jsonData"`
+	ReadOnly   bool                   `json:"readOnly"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`

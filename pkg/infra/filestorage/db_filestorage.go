@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -45,7 +46,7 @@ type fileMeta struct {
 }
 
 type dbFileStorage struct {
-	db  *sqlstore.SQLStore
+	db  db.DB
 	log log.Logger
 }
 
@@ -63,7 +64,7 @@ func createContentsHash(contents []byte) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func NewDbStorage(log log.Logger, db *sqlstore.SQLStore, filter PathFilter, rootFolder string) FileStorage {
+func NewDbStorage(log log.Logger, db db.DB, filter PathFilter, rootFolder string) FileStorage {
 	return newWrapper(log, &dbFileStorage{
 		log: log,
 		db:  db,
@@ -224,7 +225,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		}
 
 		if len(cmd.Properties) != 0 {
-			if err = upsertProperties(s.db.Dialect, sess, now, cmd, pathHash); err != nil {
+			if err = upsertProperties(s.db.GetDialect(), sess, now, cmd, pathHash); err != nil {
 				if rollbackErr := sess.Rollback(); rollbackErr != nil {
 					s.log.Error("failed while rolling back upsert", "path", cmd.Path)
 				}

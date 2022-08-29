@@ -19,7 +19,7 @@ import { useDashboardSave } from './useDashboardSave';
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});
 
-  const isFromStorage = config.featureToggles.dashboardsFromStorage && dashboard.uid.indexOf('/') > 0;
+  const isFromStorage = config.featureToggles.dashboardsFromStorage && dashboard.uid?.indexOf('/') > 0;
   const isProvisioned = dashboard.meta.provisioned && !isFromStorage;
   const isNew = dashboard.version === 0 && !isFromStorage;
 
@@ -153,7 +153,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       tabs={
         <TabsBar>
           <Tab label={'Details'} active={!showDiff} onChangeTab={() => setShowDiff(false)} />
-          <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+          {data.hasChanges && (
+            <Tab label={'Changes'} active={showDiff} onChangeTab={() => setShowDiff(true)} counter={data.diffCount} />
+          )}
         </TabsBar>
       }
       expandable
