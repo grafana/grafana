@@ -60,7 +60,7 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) error {
 	if err := sch.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
 		return fmt.Errorf("failed to get alert rules: %w", err)
 	}
-	sch.log.Debug("alert rules fetched", "rules_count", len(q.Rules), "folders_count", len(q.FoldersTitles))
-	sch.schedulableAlertRules.set(q.Rules, q.FoldersTitles)
+	sch.log.Debug("alert rules fetched", "rules_count", len(q.ResultRules), "folders_count", len(q.ResultFoldersTitles))
+	sch.schedulableAlertRules.set(q.ResultRules, q.ResultFoldersTitles)
 	return nil
 }

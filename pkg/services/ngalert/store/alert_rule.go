@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -416,15 +415,17 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return folder, nil
 }
 
-func (st DBstore) getFilterByOrgsString() string {
+func (st DBstore) getFilterByOrgsString() (string, []interface{}) {
 	if len(st.Cfg.DisabledOrgs) == 0 {
-		return ""
+		return "", nil
 	}
 	builder := strings.Builder{}
 	builder.WriteString("org_id NOT IN(")
 	idx := len(st.Cfg.DisabledOrgs)
+	args := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
 	for orgId := range st.Cfg.DisabledOrgs {
-		builder.WriteString(strconv.FormatInt(orgId, 10))
+		args = append(args, orgId)
+		builder.WriteString("?")
 		idx--
 		if idx == 0 {
 			builder.WriteString(")")
@@ -432,19 +433,18 @@ func (st DBstore) getFilterByOrgsString() string {
 		}
 		builder.WriteString(",")
 	}
-
-	return builder.String()
+	return builder.String(), args
 }
 
 func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
 	var result []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alertRulesSql := "SELECT org_id, uid, version  FROM alert_rule"
-		filter := st.getFilterByOrgsString()
+		alertRulesSql := "SELECT org_id, uid, version FROM alert_rule"
+		filter, args := st.getFilterByOrgsString()
 		if filter != "" {
 			alertRulesSql += " WHERE " + filter
 		}
-		if err := sess.SQL(alertRulesSql).Find(&result); err != nil {
+		if err := sess.SQL(alertRulesSql, args...).Find(&result); err != nil {
 			return err
 		}
 		return nil
@@ -462,23 +462,23 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		foldersSql := "SELECT D.uid, D.title FROM dashboard AS D WHERE is_folder = 1 AND EXISTS (SELECT 1 FROM alert_rule AS A WHERE D.uid = A.namespace_uid)"
 		alertRulesSql := "SELECT * FROM alert_rule"
-		filter := st.getFilterByOrgsString()
+		filter, args := st.getFilterByOrgsString()
 		if filter != "" {
 			foldersSql += " AND " + filter
 			alertRulesSql += " WHERE " + filter
 		}
 
-		if err := sess.SQL(alertRulesSql).Find(&rules); err != nil {
+		if err := sess.SQL(alertRulesSql, args...).Find(&rules); err != nil {
 			return fmt.Errorf("failed to fetch alert rules: %w", err)
 		}
-		query.Rules = rules
+		query.ResultRules = rules
 		if query.PopulateFolders {
-			if err := sess.SQL(foldersSql).Find(&folders); err != nil {
+			if err := sess.SQL(foldersSql, args...).Find(&folders); err != nil {
 				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
 			}
-			query.FoldersTitles = make(map[string]string, len(folders))
+			query.ResultFoldersTitles = make(map[string]string, len(folders))
 			for _, folder := range folders {
-				query.FoldersTitles[folder.Uid] = folder.Title
+				query.ResultFoldersTitles[folder.Uid] = folder.Title
 			}
 		}
 		return nil

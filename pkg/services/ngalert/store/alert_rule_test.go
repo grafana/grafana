@@ -4,12 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
-	"sort"
-	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 
@@ -98,32 +96,30 @@ func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
 
 func Test_getFilterByOrgsString(t *testing.T) {
 	testCases := []struct {
-		testName string
-		orgs     map[int64]struct{}
-		assert   func(t *testing.T, result string)
+		testName       string
+		orgs           map[int64]struct{}
+		expectedFilter string
+		expectedArgs   []interface{}
 	}{
 		{
-			testName: "should return empty string if map is empty",
-			orgs:     map[int64]struct{}{},
-			assert: func(t *testing.T, result string) {
-				require.Empty(t, result)
-			},
+			testName:       "should return empty string if map is empty",
+			orgs:           map[int64]struct{}{},
+			expectedFilter: "",
+			expectedArgs:   nil,
 		},
 		{
-			testName: "should return empty string if map is nil",
-			orgs:     nil,
-			assert: func(t *testing.T, result string) {
-				require.Empty(t, result)
-			},
+			testName:       "should return empty string if map is nil",
+			orgs:           nil,
+			expectedFilter: "",
+			expectedArgs:   nil,
 		},
 		{
 			testName: "should return correct filter if single element",
 			orgs: map[int64]struct{}{
 				1: {},
 			},
-			assert: func(t *testing.T, result string) {
-				require.Equal(t, "org_id NOT IN(1)", result)
-			},
+			expectedFilter: "org_id NOT IN(?)",
+			expectedArgs:   []interface{}{int64(1)},
 		},
 		{
 			testName: "should return correct filter if many elements",
@@ -132,13 +128,8 @@ func Test_getFilterByOrgsString(t *testing.T) {
 				2: {},
 				3: {},
 			},
-			assert: func(t *testing.T, result string) {
-				r := regexp.MustCompile(`^org_id\sNOT\sIN\(([^)]+)\)$`)
-				str := r.FindStringSubmatch(result)
-				numbers := strings.Split(str[1], ",")
-				sort.Strings(numbers)
-				require.Equal(t, []string{"1", "2", "3"}, numbers)
-			},
+			expectedFilter: "org_id NOT IN(?,?,?)",
+			expectedArgs:   []interface{}{int64(1), int64(2), int64(3)},
 		},
 	}
 	for _, testCase := range testCases {
@@ -148,7 +139,9 @@ func Test_getFilterByOrgsString(t *testing.T) {
 					DisabledOrgs: testCase.orgs,
 				},
 			}
-			testCase.assert(t, store.getFilterByOrgsString())
+			filter, args := store.getFilterByOrgsString()
+			assert.Equal(t, testCase.expectedFilter, filter)
+			assert.ElementsMatch(t, testCase.expectedArgs, args)
 		})
 	}
 }
