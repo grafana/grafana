@@ -4,7 +4,7 @@ import React from 'react';
 import { dateTimeParse, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { TimeRangeForm } from './TimeRangeForm';
+import { TimeRangeContent } from './TimeRangeContent';
 
 type TimeRangeFormRenderResult = RenderResult & {
   getCalendarDayByLabelText(label: string): HTMLButtonElement;
@@ -20,7 +20,9 @@ const defaultTimeRange: TimeRange = {
 };
 
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc'): TimeRangeFormRenderResult {
-  const result = render(<TimeRangeForm isFullscreen={true} value={initial} onApply={() => {}} timeZone={timeZone} />);
+  const result = render(
+    <TimeRangeContent isFullscreen={true} value={initial} onApply={() => {}} timeZone={timeZone} />
+  );
 
   return {
     ...result,
