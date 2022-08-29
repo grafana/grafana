@@ -24,6 +24,9 @@ go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
 /.bingo @grafana/backend-platform
 
+# Backend code, developers environment
+/devenv/docker/blocks/auth @grafana/grafana-authnz-team
+
 # Continuous Integration
 .drone.yml @grafana/grafana-release-eng
 .drone.star @grafana/grafana-release-eng

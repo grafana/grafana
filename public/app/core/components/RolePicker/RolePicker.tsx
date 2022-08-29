@@ -5,7 +5,7 @@ import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT, ROLE_PICKER_WIDTH } from './constants';
+import { MENU_MAX_HEIGHT, ROLE_PICKER_SUBMENU_MIN_WIDTH, ROLE_PICKER_WIDTH } from './constants';
 
 export interface Props {
   basicRole?: OrgRole;
@@ -22,6 +22,7 @@ export interface Props {
    * Set {@link RolePickerMenu}'s button to display either `Apply` (apply=true) or `Update` (apply=false)
    */
   apply?: boolean;
+  maxWidth?: string | number;
 }
 
 export const RolePicker = ({
@@ -36,6 +37,7 @@ export const RolePicker = ({
   onBasicRoleChange,
   canUpdateRoles = true,
   apply = false,
+  maxWidth = ROLE_PICKER_WIDTH,
 }: Props): JSX.Element | null => {
   const [isOpen, setOpen] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<Role[]>(appliedRoles);
@@ -54,7 +56,7 @@ export const RolePicker = ({
     if (!dimensions || !isOpen) {
       return;
     }
-    const { bottom, top, left, right } = dimensions;
+    const { bottom, top, left, right, width: currentRolePickerWidth } = dimensions;
     const distance = window.innerHeight - bottom;
     const offsetVertical = bottom - top + 10; // Add extra 10px to offset to account for border and outline
     const offsetHorizontal = right - left;
@@ -65,7 +67,17 @@ export const RolePicker = ({
       vertical = offsetVertical;
     }
 
-    if (window.innerWidth - right < ROLE_PICKER_WIDTH) {
+    /*
+     * This expression calculates whether there is enough place
+     * on the right of the RolePicker input to show/fit the role picker menu and its sub menu AND
+     * whether there is enough place under the RolePicker input to show/fit
+     * both (the role picker menu and its sub menu) aligned to the left edge of the input.
+     * Otherwise, it aligns the role picker menu to the right.
+     */
+    if (
+      window.innerWidth - right < currentRolePickerWidth &&
+      currentRolePickerWidth < 2 * ROLE_PICKER_SUBMENU_MIN_WIDTH
+    ) {
       horizontal = offsetHorizontal;
     }
 
@@ -140,7 +152,14 @@ export const RolePicker = ({
   }
 
   return (
-    <div data-testid="role-picker" style={{ position: 'relative', width: ROLE_PICKER_WIDTH }} ref={ref}>
+    <div
+      data-testid="role-picker"
+      style={{
+        position: 'relative',
+        maxWidth,
+      }}
+      ref={ref}
+    >
       <ClickOutsideWrapper onClick={onClickOutside}>
         <RolePickerInput
           basicRole={selectedBuiltInRole}

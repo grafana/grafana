@@ -112,5 +112,16 @@ export function getPageStyles(theme: GrafanaTheme2) {
       margin-left: ${theme.spacing(1)};
       margin-top: ${theme.spacing(0.5)};
     }
+
+    .dashboard-content {
+      display: 'flex';
+      flex-grow: 1;
+      min-height: 0;
+      flex-direction: 'column';
+    }
+
+    .dashboard-content--hidden {
+      display: none;
+    }
   `;
 }

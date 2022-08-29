@@ -7,6 +7,7 @@ package simplejson
 
 import (
 	"bytes"
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,27 @@ func (j *Json) ToDB() ([]byte, error) {
 	}
 
 	return j.Encode()
+}
+
+func (j *Json) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		if len(v) == 0 {
+			return nil
+		}
+		return json.Unmarshal(v, &j)
+	case string:
+		if len(v) == 0 {
+			return nil
+		}
+		return json.Unmarshal([]byte(v), &j)
+	default:
+		return fmt.Errorf("unsupported type: %T", v)
+	}
+}
+
+func (j *Json) Value() (driver.Value, error) {
+	return j.ToDB()
 }
 
 // NewJson returns a pointer to a new `Json` object

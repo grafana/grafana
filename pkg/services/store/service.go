@@ -17,7 +17,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -84,7 +84,7 @@ type StorageService interface {
 }
 
 type standardStorageService struct {
-	sql          *sqlstore.SQLStore
+	sql          db.DB
 	tree         *nestedTree
 	cfg          *GlobalStorageConfig
 	authService  storageAuthService
@@ -93,7 +93,7 @@ type standardStorageService struct {
 }
 
 func ProvideService(
-	sql *sqlstore.SQLStore,
+	sql db.DB,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
@@ -245,7 +245,7 @@ func createSystemBrandingPathFilter() filestorage.PathFilter {
 }
 
 func newStandardStorageService(
-	sql *sqlstore.SQLStore,
+	sql db.DB,
 	globalRoots []storageRuntime,
 	initializeOrgStorages func(orgId int64) []storageRuntime,
 	authService storageAuthService,

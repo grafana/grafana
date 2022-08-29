@@ -12,7 +12,7 @@
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@testing-library/jest-dom": "5.16.4",
     "@testing-library/react": "12.1.4",
-    "@testing-library/user-event": "14.3.0",
+    "@testing-library/user-event": "14.4.3",
     "@types/classnames": "^2.2.7",
     "@types/deep-freeze": "^0.1.1",
     "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5",

@@ -2,12 +2,16 @@ package schedule
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+var errRuleDeleted = errors.New("rule deleted")
 
 type alertRuleInfoRegistry struct {
 	mu            sync.Mutex
@@ -78,12 +82,12 @@ type alertRuleInfo struct {
 	evalCh   chan *evaluation
 	updateCh chan ruleVersion
 	ctx      context.Context
-	stop     context.CancelFunc
+	stop     func(reason error)
 }
 
 func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
-	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleVersion), ctx: ctx, stop: cancel}
+	ctx, stop := util.WithCancelCause(parent)
+	return &alertRuleInfo{evalCh: make(chan *evaluation), updateCh: make(chan ruleVersion), ctx: ctx, stop: stop}
 }
 
 // eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped.

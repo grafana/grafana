@@ -14,16 +14,24 @@ type FieldDef = {
 };
 
 /**
- * Returns all fields for log row which consists of fields we parse from the message itself and any derived fields
- * setup in data source config.
+ * Returns all fields for log row which consists of fields we parse from the message itself and additional fields
+ * found in the dataframe (they may contain links).
  */
 export const getAllFields = memoizeOne(
   (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>) => {
-    const fields = parseMessage(row.entry);
-    const derivedFields = getDerivedFields(row, getFieldLinks);
-    const fieldsMap = [...derivedFields, ...fields].reduce((acc, field) => {
+    const logMessageFields = parseMessage(row.entry);
+    const dataframeFields = getDataframeFields(row, getFieldLinks);
+    const fieldsMap = [...dataframeFields, ...logMessageFields].reduce((acc, field) => {
       // Strip enclosing quotes for hashing. When values are parsed from log line the quotes are kept, but if same
       // value is in the dataFrame it will be without the quotes. We treat them here as the same value.
+      // We need to handle this scenario:
+      // - we use derived-fields in Loki
+      // - we name the derived field the same as the parsed-field-name
+      // - the same field will appear twice
+      //   - in the fields coming from `logMessageFields`
+      //   - in the fields coming from `dataframeFields`
+      // - but, in the fields coming from `logMessageFields`, there might be doublequotes around the value
+      // - we want to "merge" data from both sources, so we remove quotes from the beginning and end
       const value = field.value.replace(/(^")|("$)/g, '');
       const fieldHash = `${field.key}=${value}`;
       if (acc[fieldHash]) {
@@ -60,7 +68,8 @@ const parseMessage = memoizeOne((rowEntry): FieldDef[] => {
   return fields;
 });
 
-const getDerivedFields = memoizeOne(
+// creates fields from the dataframe-fields, adding data-links, when field.config.links exists
+const getDataframeFields = memoizeOne(
   (row: LogRowModel, getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>): FieldDef[] => {
     return row.dataFrame.fields
       .map((field, index) => ({ ...field, index }))
