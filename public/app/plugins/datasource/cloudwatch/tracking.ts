@@ -9,8 +9,6 @@ interface CloudWatchOnDashboardLoadedTrackingEvent {
   grafana_version?: string;
   dashboard_id?: string;
   org_id?: number;
-  user_id?: number;
-  grafanaVersion?: string;
 
   /* The number of CloudWatch logs queries present in the dashboard*/
   logs_queries_count: number;
@@ -54,7 +52,6 @@ export const onDashboardLoadedHandler = ({
         grafana_version: grafanaVersion,
         dashboard_id: dashboardId,
         org_id: orgId,
-        user_id: userId,
         logs_queries_count: logsQueries?.length,
         metrics_queries_count: metricsQueries?.length,
         metrics_search_count: 0,
