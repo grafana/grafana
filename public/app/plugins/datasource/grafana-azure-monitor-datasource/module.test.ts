@@ -36,7 +36,6 @@ describe('queriesOnInitDashboard', () => {
     expect(reportInteraction).toHaveBeenCalledWith('grafana_ds_azuremonitor_dashboard_loaded', {
       dashboard_id: 'dashboard123',
       grafana_version: 'v9.0.0',
-      ds_version: '1.0.0',
       org_id: 1,
       azure_monitor_queries_executed: 2,
       azure_log_analytics_queries_executed: 1,

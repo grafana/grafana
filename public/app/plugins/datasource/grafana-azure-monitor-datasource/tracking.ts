@@ -11,7 +11,7 @@ import { reportInteraction } from '@grafana/runtime';
  * Dashboard: https://ops.grafana.net/d/Ad0pti0N/data-sources-adoption-tracking?orgId=1
  * Changelog:
  * - v9.1.0 : list of queries logged
- * - v9.1.2 : list removed in favour of stats, ds_version added, user_id removed
+ * - v9.1.2 : list removed in favour of stats, user_id removed
  */
 export const TrackAzureMonitorDashboardLoaded = (props: AzureMonitorDashboardLoadedProps) => {
   reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', props);
@@ -21,8 +21,6 @@ type AzureMonitorDashboardLoadedProps = {
   grafana_version?: string;
   dashboard_id: string;
   org_id?: number;
-  /** version of Azure Monitor the user is running */
-  ds_version: string;
   /** number of executed queries (non hidden) of type Azure Monitor if any  */
   azure_monitor_queries_executed?: number;
   /** number of executed queries (non hidden) of type Azure Logs Analytics if any  */

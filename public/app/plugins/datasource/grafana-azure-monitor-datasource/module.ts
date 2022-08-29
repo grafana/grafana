@@ -27,7 +27,6 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
     if (azureQueries && azureQueries.length > 0) {
       TrackAzureMonitorDashboardLoaded({
         grafana_version: grafanaVersion,
-        ds_version: pluginJson.info.version,
         dashboard_id: dashboardId,
         org_id: orgId,
         ...stats,
