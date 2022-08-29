@@ -91,9 +91,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           .concat(this.getIntrinsicsCompletions('{ '))
           .concat(this.getScopesCompletions('{ '));
       }
-      case 'SPANSET_EMPTY': {
+      case 'SPANSET_EMPTY':
         return this.getTagsCompletions('.').concat(this.getIntrinsicsCompletions()).concat(this.getScopesCompletions());
-      }
       case 'SPANSET_IN_NAME':
         return this.getTagsCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getScopesCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
@@ -154,9 +153,26 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getSituationInSpanSet(textUntilCaret: string): Situation {
-    const matched = textUntilCaret.match(
-      /([\s{])((?<name>[\w./-]+)?(?<space1>\s*)((?<op>[!=+\-<>]+)(?<space2>\s*)(?<value>(?<open_quote>")?(\w[^"\n&|]*\w)?(?<close_quote>")?)?)?)(?<space3>\s*)$/
+    const nameRegex = /(?<name>[\w./-]+)?/;
+    const opRegex = /(?<op>[!=+\-<>]+)/;
+    const valueRegex = /(?<value>(?<open_quote>")?(\w[^"\n&|]*\w)?(?<close_quote>")?)?/;
+
+    // prettier-ignore
+    const fullRegex = new RegExp(
+      '([\\s{])' +      // Space(s) or initial opening bracket {
+        '(' +                   // Open full set group
+        nameRegex.source +
+        '(?<space1>\\s*)' +     // Optional space(s) between name and operator
+        '(' +                   // Open operator + value group
+        opRegex.source +
+        '(?<space2>\\s*)' +     // Optional space(s) between operator and value
+        valueRegex.source +
+        ')?' +                  // Close operator + value group
+        ')' +                   // Close full set group
+        '(?<space3>\\s*)$'      // Optional space(s) at the end of the set
     );
+
+    const matched = textUntilCaret.match(fullRegex);
 
     if (matched) {
       const nameFull = matched.groups?.name;
