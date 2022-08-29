@@ -366,7 +366,7 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	if c.OrgRole == org.RoleAdmin {
+	if c.OrgRole == org.RoleAdmin || (hs.Cfg.PluginAdminEnabled && ac.ReqGrafanaAdmin(c)) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
