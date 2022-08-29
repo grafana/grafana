@@ -11,6 +11,7 @@ import { StoreState } from 'app/types';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
+import { Troubleshooter } from '../Troubleshooter/Troubleshooter';
 
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
@@ -35,7 +36,7 @@ const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
   const location = useLocation();
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions, true);
   const metaDs = useDatasourceMetadata(data);
-  const tabs = useInspectTabs(panel, dashboard, plugin, error, metaDs);
+  let tabs = useInspectTabs(panel, dashboard, plugin, error, metaDs);
   const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
 
   const onClose = () => {
@@ -47,6 +48,10 @@ const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
 
   if (!plugin) {
     return null;
+  }
+
+  if (defaultTab === InspectTab.Trouble) {
+    return <Troubleshooter dashboard={dashboard} panel={panel} plugin={plugin} data={data} onClose={onClose} />;
   }
 
   return (

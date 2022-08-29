@@ -3,20 +3,13 @@ import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
 
-import {
-  AppEvents,
-  DataFrameJSON,
-  dataFrameToJSON,
-  DataTopic,
-  PanelData,
-  SelectableValue,
-  LoadingState,
-} from '@grafana/data';
+import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
+import { getPanelDataFrames } from '../dashboard/components/Troubleshooter/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
 
 enum ShowContent {
@@ -186,26 +179,6 @@ export class InspectJSONTab extends PureComponent<Props, State> {
       </div>
     );
   }
-}
-
-function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
-  const frames: DataFrameJSON[] = [];
-  if (data?.series) {
-    for (const f of data.series) {
-      frames.push(dataFrameToJSON(f));
-    }
-  }
-  if (data?.annotations) {
-    for (const f of data.annotations) {
-      const json = dataFrameToJSON(f);
-      if (!json.schema?.meta) {
-        json.schema!.meta = {};
-      }
-      json.schema!.meta.dataTopic = DataTopic.Annotations;
-      frames.push(json);
-    }
-  }
-  return frames;
 }
 
 function getPrettyJSON(obj: any): string {
