@@ -1,6 +1,5 @@
 import { cx } from '@emotion/css';
 import React from 'react';
-import SVG from 'react-inlinesvg';
 
 import {
   DisplayProcessor,
@@ -334,7 +333,7 @@ function makeTypeColumn(
     Cell: (p) => {
       const i = p.row.index;
       const kind = kindField?.values.get(i) ?? 'dashboard';
-      let icon = 'public/img/icons/unicons/apps.svg';
+      let icon: IconName = 'apps';
       let txt = 'Dashboard';
       if (kind) {
         txt = kind;
@@ -344,12 +343,12 @@ function makeTypeColumn(
             break;
 
           case 'folder':
-            icon = 'public/img/icons/unicons/folder.svg';
+            icon = 'folder';
             txt = 'Folder';
             break;
 
           case 'panel':
-            icon = `public/img/icons/unicons/${PluginIconName.panel}.svg`;
+            icon = `${PluginIconName.panel}`;
             const type = typeField.values.get(i);
             if (type) {
               txt = type;
@@ -360,13 +359,13 @@ function makeTypeColumn(
                 switch (type) {
                   case 'row':
                     txt = 'Row';
-                    icon = `public/img/icons/unicons/bars.svg`;
+                    icon = `bars`;
                     break;
                   case 'singlestat': // auto-migration
                     txt = 'Singlestat';
                     break;
                   default:
-                    icon = `public/img/icons/unicons/question.svg`; // plugin not found
+                    icon = `question-circle`; // plugin not found
                 }
               }
             }
@@ -375,7 +374,7 @@ function makeTypeColumn(
       }
       return (
         <div {...p.cellProps} className={styles.typeText}>
-          <SVG src={icon} width={14} height={14} title={txt} className={styles.typeIcon} />
+          <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
           {txt}
         </div>
       );

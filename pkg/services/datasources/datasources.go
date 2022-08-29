@@ -7,7 +7,7 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // DataSourceService interface for interacting with datasources.
@@ -59,8 +59,8 @@ type DataSourceService interface {
 // CacheService interface for retrieving a cached datasource.
 type CacheService interface {
 	// GetDatasource gets a datasource identified by datasource numeric identifier.
-	GetDatasource(ctx context.Context, datasourceID int64, user *models.SignedInUser, skipCache bool) (*DataSource, error)
+	GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*DataSource, error)
 
 	// GetDatasourceByUID gets a datasource identified by datasource unique identifier (UID).
-	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *models.SignedInUser, skipCache bool) (*DataSource, error)
+	GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*DataSource, error)
 }

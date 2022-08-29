@@ -44,8 +44,10 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
     if (!state?.layers) {
       // TODO? show spinner?
     } else {
+      const layersCategory = ['Map layers'];
+      const basemapCategory = ['Basemap layer'];
       builder.addCustomEditor({
-        category: ['Data layer'],
+        category: layersCategory,
         id: 'layers',
         path: '',
         name: '',
@@ -57,7 +59,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         builder.addNestedOptions(
           getLayerEditor({
             state: selected,
-            category: ['Data layer'],
+            category: layersCategory,
             basemaps: false,
           })
         );
@@ -66,18 +68,18 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       const baselayer = state.layers[0];
       if (config.geomapDisableCustomBaseLayer) {
         builder.addCustomEditor({
-          category: ['Base layer'],
+          category: basemapCategory,
           id: 'layers',
           path: '',
           name: '',
           // eslint-disable-next-line react/display-name
-          editor: () => <div>The base layer is configured by the server admin.</div>,
+          editor: () => <div>The basemap layer is configured by the server admin.</div>,
         });
       } else if (baselayer) {
         builder.addNestedOptions(
           getLayerEditor({
             state: baselayer,
-            category: ['Base layer'],
+            category: basemapCategory,
             basemaps: true,
           })
         );
@@ -113,6 +115,13 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         path: 'controls.showScale',
         name: 'Show scale',
         description: 'Indicate map scale',
+        defaultValue: false,
+      })
+      .addBooleanSwitch({
+        category,
+        path: 'controls.showMeasure',
+        name: 'Show measure tools',
+        description: 'Show tools for making measurements on the map',
         defaultValue: false,
       })
       .addBooleanSwitch({

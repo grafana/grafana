@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -124,7 +124,7 @@ func runQuery(response []byte, q *backend.QueryDataRequest, wide bool) (*backend
 	}
 	res := &http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(response)),
+		Body:       io.NopCloser(bytes.NewReader(response)),
 	}
 	tCtx.httpProvider.setResponse(res)
 	return tCtx.queryData.Execute(context.Background(), q)

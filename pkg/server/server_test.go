@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +55,7 @@ func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	secretMigrationService := &migrations.SecretMigrationServiceImpl{
 		ServerLockService: serverLockService,
 	}
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &ossaccesscontrol.OSSAccessControlService{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), secretMigrationService)
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &ossaccesscontrol.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), secretMigrationService, usertest.NewUserServiceFake())
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.

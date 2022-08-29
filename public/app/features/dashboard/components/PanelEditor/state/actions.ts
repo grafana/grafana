@@ -116,7 +116,10 @@ export function exitPanelEditor(): ThunkResult<void> {
       dashboard.exitPanelEditor();
     }
 
-    if (panel.hasChanged && !shouldDiscardChanges) {
+    // For angular panels we always commit as panel.hasChanged will not have picked up changes done from angular
+    const commitChanges = !shouldDiscardChanges && (panel.hasChanged || panel.isAngularPlugin());
+
+    if (commitChanges) {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;

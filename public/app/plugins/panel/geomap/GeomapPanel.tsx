@@ -34,6 +34,7 @@ import { PanelEditExitedEvent } from 'app/types/events';
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
+import { MeasureOverlay } from './components/MeasureOverlay';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
@@ -50,6 +51,7 @@ interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
   legends: ReactNode[];
+  measureMenuActive?: boolean;
 }
 
 export interface GeomapLayerActions {
@@ -246,15 +248,11 @@ export class GeomapPanel extends Component<Props, State> {
    */
   optionsChanged(options: GeomapPanelOptions) {
     const oldOptions = this.props.options;
-    console.log('options changed!', options);
-
     if (options.view !== oldOptions.view) {
-      console.log('View changed');
       this.map!.setView(this.initMapView(options.view, this.map!.getLayers()));
     }
 
     if (options.controls !== oldOptions.controls) {
-      console.log('Controls changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
   }
@@ -361,10 +359,14 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
+    // If measure menu is open, bypass tooltip logic and display measuring mouse events
+    if (this.state.measureMenuActive) {
+      return true;
+    }
     if (!this.map || this.state.ttipOpen) {
       return false;
     }
-    const mouse = evt.originalEvent as any;
+    const mouse = evt.originalEvent as MouseEvent;
     const pixel = this.map.getEventPixel(mouse);
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
@@ -464,7 +466,6 @@ export class GeomapPanel extends Component<Props, State> {
       } else if (this.byName.has(newOptions.name)) {
         return false;
       }
-      console.log('Layer name changed', uid, '>>>', newOptions.name);
       this.byName.delete(uid);
 
       uid = newOptions.name;
@@ -530,7 +531,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     const UID = options.name;
-    const state: MapLayerState<any> = {
+    const state: MapLayerState<unknown> = {
       // UID, // unique name when added to the map (it may change and will need special handling)
       isBasemap,
       options,
@@ -554,7 +555,7 @@ export class GeomapPanel extends Component<Props, State> {
     return state;
   }
 
-  applyLayerFilter(handler: MapLayerHandler<any>, options: MapLayerOptions<any>): void {
+  applyLayerFilter(handler: MapLayerHandler<unknown>, options: MapLayerOptions<unknown>): void {
     if (handler.update) {
       let panelData = this.props.data;
       if (options.filterData) {
@@ -605,7 +606,7 @@ export class GeomapPanel extends Component<Props, State> {
             });
           }
         } else {
-          console.log('TODO, view requires special handling', v);
+          // TODO: view requires special handling
         }
       } else {
         coord = [v.lon ?? 0, v.lat ?? 0];
@@ -652,12 +653,26 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     // Update the react overlays
-    let topRight: ReactNode[] = [];
-    if (options.showDebug) {
-      topRight = [<DebugOverlay key="debug" map={this.map} />];
+    let topRight1: ReactNode[] = [];
+    if (options.showMeasure) {
+      topRight1 = [
+        <MeasureOverlay
+          key="measure"
+          map={this.map}
+          // Lifts menuActive state and resets tooltip state upon close
+          menuActiveState={(value: boolean) => {
+            this.setState({ ttipOpen: value, measureMenuActive: value });
+          }}
+        />,
+      ];
     }
 
-    this.setState({ topRight });
+    let topRight2: ReactNode[] = [];
+    if (options.showDebug) {
+      topRight2 = [<DebugOverlay key="debug" map={this.map} />];
+    }
+
+    this.setState({ topRight1, topRight2 });
   }
 
   getLegends() {
@@ -672,7 +687,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   render() {
-    let { ttip, ttipOpen, topRight, legends } = this.state;
+    let { ttip, ttipOpen, topRight1, legends, topRight2 } = this.state;
     const { options } = this.props;
     const showScale = options.controls.showScale;
     if (!ttipOpen && options.tooltip?.mode === TooltipMode.None) {
@@ -684,7 +699,12 @@ export class GeomapPanel extends Component<Props, State> {
         <Global styles={this.globalCSS} />
         <div className={this.style.wrap} onMouseLeave={this.clearTooltip}>
           <div className={this.style.map} ref={this.initMapRef}></div>
-          <GeomapOverlay bottomLeft={legends} topRight={topRight} blStyle={{ bottom: showScale ? '35px' : '8px' }} />
+          <GeomapOverlay
+            bottomLeft={legends}
+            topRight1={topRight1}
+            topRight2={topRight2}
+            blStyle={{ bottom: showScale ? '35px' : '8px' }}
+          />
         </div>
         <GeomapTooltip ttip={ttip} isOpen={ttipOpen} onClose={this.tooltipPopupClosed} />
       </>

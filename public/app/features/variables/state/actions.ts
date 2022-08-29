@@ -54,7 +54,6 @@ import {
   VariablesChangedEvent,
   VariablesChangedInUrl,
   VariablesTimeRangeProcessDone,
-  VariableWithMultiSupport,
   VariableWithOptions,
 } from '../types';
 import {
@@ -256,7 +255,11 @@ export const addSystemTemplateVariables = (key: string, dashboard: DashboardMode
 export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, multi: boolean): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { rootStateKey: key } = identifier;
-    const variable = getVariable<VariableWithMultiSupport>(identifier, getState());
+    const variable = getVariable(identifier, getState());
+    if (!isMulti(variable)) {
+      return;
+    }
+
     const current = alignCurrentWithMulti(variable.current, multi);
 
     dispatch(
@@ -404,7 +407,11 @@ export const setOptionFromUrl = (
     }
 
     // get variable from state
-    const variableFromState = getVariable<VariableWithOptions>(toKeyedVariableIdentifier(variable), getState());
+    const variableFromState = getVariable(toKeyedVariableIdentifier(variable), getState());
+    if (!hasOptions(variableFromState)) {
+      return;
+    }
+
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
@@ -486,7 +493,11 @@ export const validateVariableSelectionState = (
   defaultValue?: string
 ): ThunkResult<Promise<void>> => {
   return (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier, getState());
+    const variableInState = getVariable(identifier, getState());
+    if (!hasOptions(variableInState)) {
+      return Promise.resolve();
+    }
+
     const current = variableInState.current || ({} as unknown as VariableOption);
     const setValue = variableAdapters.get(variableInState.type).setValue;
 
@@ -664,12 +675,20 @@ export const onTimeRangeUpdated =
 const timeRangeUpdated =
   (identifier: KeyedVariableIdentifier): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
-    const variableInState = getVariable<VariableWithOptions>(identifier, getState());
+    const variableInState = getVariable(identifier, getState());
+    if (!hasOptions(variableInState)) {
+      return;
+    }
+
     const previousOptions = variableInState.options.slice();
 
     await dispatch(updateOptions(toKeyedVariableIdentifier(variableInState), true));
 
-    const updatedVariable = getVariable<VariableWithOptions>(identifier, getState());
+    const updatedVariable = getVariable(identifier, getState());
+    if (!hasOptions(updatedVariable)) {
+      return;
+    }
+
     const updatedOptions = updatedVariable.options;
 
     if (JSON.stringify(previousOptions) !== JSON.stringify(updatedOptions)) {
@@ -918,9 +937,8 @@ export function upgradeLegacyQueries(
       return;
     }
 
-    const variable = getVariable<QueryVariableModel>(identifier, getState());
-
-    if (!isQuery(variable)) {
+    const variable = getVariable(identifier, getState());
+    if (variable.type !== 'query') {
       return;
     }
 

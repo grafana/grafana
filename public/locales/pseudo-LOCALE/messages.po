@@ -270,6 +270,42 @@ msgstr ""
 msgid "dashboard.toolbar.unmark-favorite"
 msgstr ""
 
+#: public/app/core/components/Select/FolderPicker.tsx
+msgid "folder-picker.loading"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.cancel"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.create"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.error"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.folder"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.folder-description"
+msgstr ""
+
+#: public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx
+msgid "library-panel.add-modal.name"
+msgstr ""
+
+#: public/app/features/library-panels/utils/usePanelSave.ts
+msgid "library-panels.save.error"
+msgstr ""
+
+#: public/app/features/library-panels/utils/usePanelSave.ts
+msgid "library-panels.save.success"
+msgstr ""
+
 #: public/app/core/components/NavBar/navBarItem-translations.ts
 msgid "nav.alerting"
 msgstr ""
@@ -466,6 +502,34 @@ msgstr ""
 msgid "panel.header-menu.view"
 msgstr ""
 
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.dashboard.title"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.copy"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.html"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.html-description"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.info"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.time-range"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx
+msgid "share-modal.embed.time-range-description"
+msgstr ""
+
 #: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
 msgid "share-modal.export.cancel-button"
 msgstr ""
@@ -488,6 +552,10 @@ msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareExport.tsx
 msgid "share-modal.export.view-button"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareLibraryPanel.tsx
+msgid "share-modal.library.info"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
@@ -527,27 +595,15 @@ msgid "share-modal.link.shorten-url"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme"
-msgstr ""
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-current"
-msgstr ""
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-dark"
-msgstr ""
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
-msgid "share-modal.link.theme-light"
-msgstr ""
-
-#: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
 msgid "share-modal.link.time-range-description"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareLink.tsx
 msgid "share-modal.link.time-range-label"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.panel.title"
 msgstr ""
 
 #: public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx
@@ -614,6 +670,42 @@ msgstr ""
 msgid "share-modal.snapshot.timeout-description"
 msgstr ""
 
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.embed"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.export"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.library-panel"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.link"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ShareModal.tsx
+msgid "share-modal.tab-title.snapshot"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.current"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.dark"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.field-name"
+msgstr ""
+
+#: public/app/features/dashboard/components/ShareModal/ThemePicker.tsx
+msgid "share-modal.theme-picker.light"
+msgstr ""
+
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-dashboard.fields.timezone-label"
 msgstr ""
@@ -624,10 +716,6 @@ msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.home-dashboard-placeholder"
-msgstr ""
-
-#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
-msgid "shared-preferences.fields.home-dashboard-tooltip"
 msgstr ""
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx

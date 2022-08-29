@@ -40,7 +40,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARM, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
+				ArchARMv7, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
 			},
 		},
 		PackagesBucket:  "grafana-downloads",
@@ -67,14 +67,14 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARM,
+				ArchARMv7,
 			},
 		},
 		PackagesBucket:            "grafana-downloads",
 		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
 		CDNAssetsBucket:           "grafana-static-assets",
 	},
-	ReleaseMode: {
+	TagMode: {
 		Variants: []Variant{
 			VariantArmV6,
 			VariantArmV7,
@@ -95,67 +95,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARM,
-			},
-		},
-		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
-		CDNAssetsBucket: "grafana-prerelease",
-		CDNAssetsDir:    "artifacts/static-assets",
-		StorybookBucket: "grafana-prerelease",
-		StorybookSrcDir: "artifacts/storybook",
-	},
-	BetaReleaseMode: {
-		Variants: []Variant{
-			VariantArmV6,
-			VariantArmV7,
-			VariantArmV7Musl,
-			VariantArm64,
-			VariantArm64Musl,
-			VariantDarwinAmd64,
-			VariantWindowsAmd64,
-			VariantLinuxAmd64,
-			VariantLinuxAmd64Musl,
-		},
-		PluginSignature: PluginSignature{
-			Sign:      true,
-			AdminSign: true,
-		},
-		Docker: Docker{
-			ShouldSave: true,
-			Architectures: []Architecture{
-				ArchAMD64,
-				ArchARM64,
-				ArchARM,
-			},
-		},
-		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
-		CDNAssetsBucket: "grafana-prerelease",
-		CDNAssetsDir:    "artifacts/static-assets",
-		StorybookBucket: "grafana-prerelease",
-		StorybookSrcDir: "artifacts/storybook",
-	},
-	TestReleaseMode: {
-		Variants: []Variant{
-			VariantArmV6,
-			VariantArmV7,
-			VariantArmV7Musl,
-			VariantArm64,
-			VariantArm64Musl,
-			VariantDarwinAmd64,
-			VariantWindowsAmd64,
-			VariantLinuxAmd64,
-			VariantLinuxAmd64Musl,
-		},
-		PluginSignature: PluginSignature{
-			Sign:      true,
-			AdminSign: true,
-		},
-		Docker: Docker{
-			ShouldSave: true,
-			Architectures: []Architecture{
-				ArchAMD64,
-				ArchARM64,
-				ArchARM,
+				ArchARMv7,
 			},
 		},
 		PackagesBucket:  "grafana-prerelease/artifacts/downloads",
