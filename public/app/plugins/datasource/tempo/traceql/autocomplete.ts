@@ -154,7 +154,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   private getSituationInSpanSet(textUntilCaret: string): Situation {
     const matched = textUntilCaret.match(
-      /([\s{])((?<name>[\w./]+)?(?<space1>\s*)((?<op>[!=+\-<>]+)(?<space2>\s*)(?<value>(?<open_quote>")?[^"\n&|]+(?<close_quote>")?)?)?)(?<space3>\s*)$/
+      /([\s{])((?<name>[\w./-]+)?(?<space1>\s*)((?<op>[!=+\-<>]+)(?<space2>\s*)(?<value>(?<open_quote>")?[^"\n&|]+(?<close_quote>")?)?)?)(?<space3>\s*)$/
     );
 
     if (matched) {
@@ -167,7 +167,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         };
       }
 
-      const nameMatched = nameFull.match(/^(?<pre_dot>\.)?(?<word>[\w/.]+)(?<post_dot>\.)?$/);
+      const nameMatched = nameFull.match(/^(?<pre_dot>\.)?(?<word>[\w./-]+)(?<post_dot>\.)?$/);
 
       if (!op) {
         if (this.scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
@@ -185,13 +185,19 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'SPANSET_AFTER_VALUE',
         };
       }
+
+      // remove the scopes from the word to get accurate autocompletes
+      // Ex: 'span.host.name' won't resolve to any autocomplete values, but removing 'span.' results in 'host.name' which can have autocomplete values
+      const noScopeWord = this.scopes.reduce(
+        (result, word) => result.replace(`${word}.`, ''),
+        nameMatched?.groups?.word || ''
+      );
+
       return {
         type: 'SPANSET_IN_VALUE',
-        tagName: nameMatched?.groups?.word || '',
+        tagName: noScopeWord,
         betweenQuotes: !!matched.groups?.open_quote,
       };
-    } else {
-      console.log('matched is null');
     }
 
     return {
