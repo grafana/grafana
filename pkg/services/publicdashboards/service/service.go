@@ -199,10 +199,6 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
-	if !publicDashboard.IsEnabled {
-		return nil, ErrPublicDashboardNotFound
-	}
-
 	metricReqDTO, err := pd.buildPublicDashboardMetricRequest(
 		ctx,
 		dashboard,
@@ -219,12 +215,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
-	resp, err := pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReqDTO, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReqDTO, true)
 }
 
 // BuildPublicDashboardMetricRequest merges public dashboard parameters with
