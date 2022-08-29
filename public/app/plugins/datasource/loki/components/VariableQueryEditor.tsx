@@ -20,14 +20,14 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
   const [stream, setStream] = useState('');
 
   useEffect(() => {
-    if (!query) {
+    if (!query || typeof query !== 'string') {
       return;
     }
 
     const variableQuery = migrateVariableQuery(query);
     setType(variableQuery.type);
     setLabel(variableQuery.label || '');
-    setLabel(variableQuery.stream || '');
+    setStream(variableQuery.stream || '');
   }, [query]);
 
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {

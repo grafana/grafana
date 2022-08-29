@@ -60,4 +60,15 @@ describe('LokiVariableQueryEditor', () => {
       refId: 'LokiVariableQueryEditor-VariableQuery',
     });
   });
+
+  test('Migrates legacy string queries to LokiVariableQuery instances', async () => {
+    const query = 'label_values(log stream selector, label)';
+
+    // @ts-expect-error
+    render(<LokiVariableQueryEditor {...props} onChange={() => {}} query={query} />);
+
+    await waitFor(() => expect(screen.getByText('Label values')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByDisplayValue('label')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByDisplayValue('log stream selector')).toBeInTheDocument());
+  });
 });
