@@ -13,7 +13,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
     return <>mocked-tag-filter</>;
   },
@@ -51,7 +51,7 @@ describe('PlaylistEditPage', () => {
       expect(screen.getByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /playlist name/i })).toHaveValue('Test Playlist');
       expect(screen.getByRole('textbox', { name: /playlist interval/i })).toHaveValue('5s');
-      expect(screen.getAllByRole('row', { name: /playlist item row/i })).toHaveLength(1);
+      expect(screen.getAllByRole('row')).toHaveLength(1);
     });
   });
 

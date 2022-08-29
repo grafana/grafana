@@ -4,20 +4,29 @@ import configureMockStore from 'redux-mock-store';
 import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
+import { DashboardQueryResult } from '../search/service';
+
 import { PlaylistSrv } from './PlaylistSrv';
-import { Playlist } from './types';
+import { Playlist, PlaylistItem } from './types';
 
-const getMock = jest.fn();
-
-jest.mock('@grafana/runtime', () => {
-  const original = jest.requireActual('@grafana/runtime');
-  return {
-    ...original,
-    getBackendSrv: () => ({
-      get: getMock,
-    }),
-  };
-});
+jest.mock('./api', () => ({
+  getPlaylist: jest.fn().mockReturnValue(
+    {
+      interval: '1s',
+      uid: 'xyz',
+      items: [
+        { type: 'dashboard_by_uid', value: 'aaa' },
+        { type: 'dashboard_by_uid', value: 'bbb' },
+      ],
+    } as Playlist
+  ),
+  loadDashboards: (items: PlaylistItem[]) => {
+    return Promise.resolve(items.map( v => ({
+      ...v, // same item with dashboard URLs filled in
+      dashboards: [ {url: `/url/to/${v.value}`} as unknown as DashboardQueryResult ]}
+    )));
+  },
+}));
 
 const mockStore = configureMockStore();
 
@@ -26,8 +35,6 @@ setStore(
     location: {},
   }) as any
 );
-
-const dashboards = [{ url: '/dash1' }, { url: '/dash2' }];
 
 function createPlaylistSrv(): PlaylistSrv {
   locationService.push('/playlists/foo');
@@ -64,30 +71,6 @@ describe('PlaylistSrv', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    getMock.mockImplementation(
-      jest.fn((url) => {
-        switch (url) {
-          case '/api/playlists/foo':
-            return Promise.resolve({
-              interval: '1s',
-              uid: 'xyz',
-              items: [
-                { type: 'dashboard_by_uid', value: 'aaa' },
-                { type: 'dashboard_by_uid', value: 'bbb' },
-              ],
-            } as Playlist);
-
-          // Loads dashboard details from search
-          case '/ds/query':
-            return Promise.resolve({
-              aaa: 'HELLO', // TODO, the search query
-            });
-
-          default:
-            throw new Error(`Unexpected url=${url}`);
-        }
-      })
-    );
 
     srv = createPlaylistSrv();
     [hrefMock, unmockLocation] = mockWindowLocation();
@@ -141,10 +124,11 @@ describe('PlaylistSrv', () => {
 
   it('storeUpdated should not stop playlist when navigating to next dashboard', async () => {
     await srv.start('foo');
+    expect((srv as any).validPlaylistUrl).toBe('/url/to/aaa');
 
     srv.next();
 
-    expect((srv as any).validPlaylistUrl).toBe('/dash2');
+    expect((srv as any).validPlaylistUrl).toBe('/url/to/bbb');
     expect(srv.isPlaying).toBe(true);
   });
 });
