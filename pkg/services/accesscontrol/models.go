@@ -234,6 +234,7 @@ type ResourcePermission struct {
 	Team        string
 	BuiltInRole string
 	IsManaged   bool
+	IsInherited bool
 	Created     time.Time
 	Updated     time.Time
 }
