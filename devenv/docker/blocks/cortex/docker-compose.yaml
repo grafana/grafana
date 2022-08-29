@@ -1,0 +1,8 @@
+  cortex:
+    build: docker/blocks/cortex
+    ports:
+      - "9095:9095"
+      - "9090:9090"
+      - "9009:9009"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
