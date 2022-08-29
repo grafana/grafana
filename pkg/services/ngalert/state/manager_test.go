@@ -2166,9 +2166,6 @@ func TestStaleResults(t *testing.T) {
 	getCacheID := func(t *testing.T, rule *models.AlertRule, result eval.Result) string {
 		t.Helper()
 		labels := data.Labels{}
-		labels[models.NamespaceUIDLabel] = rule.NamespaceUID
-		labels[models.RuleUIDLabel] = rule.UID
-		labels["alertname"] = rule.Title
 		for key, value := range rule.Labels {
 			labels[key] = value
 		}
@@ -2197,7 +2194,7 @@ func TestStaleResults(t *testing.T) {
 		clk := clock.NewMock()
 		clk.Set(time.Now())
 
-		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{})
+		st := state.NewManager(log.New("test_stale_results_handler"), testMetrics.GetStateMetrics(), nil, dbstore, dbstore, &dashboards.FakeDashboardService{}, &image.NoopImageService{}, clk)
 
 		orgID := rand.Int63()
 		rule := tests.CreateTestAlertRule(t, ctx, dbstore, 10, orgID)
@@ -2227,7 +2224,7 @@ func TestStaleResults(t *testing.T) {
 		}
 
 		// Init
-		processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults)
+		processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil)
 		checkExpectedStates(t, processed, initStates)
 		currentStates := st.GetStatesForRuleUID(orgID, rule.UID)
 		checkExpectedStates(t, currentStates, initStates)
@@ -2243,7 +2240,7 @@ func TestStaleResults(t *testing.T) {
 		}
 		clk.Add(time.Nanosecond) // we use time now when calculate stale states. Evaluation tick and real time are not the same. usually, difference is way greater than nanosecond.
 		expectedStaleReturned := getCacheID(t, rule, initResults[1])
-		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results)
+		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil)
 		checkExpectedStates(t, processed, map[string]struct{}{
 			getCacheID(t, rule, results[0]): {},
 			expectedStaleReturned:           {},
