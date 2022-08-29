@@ -13,24 +13,24 @@ import { reportInteraction } from '@grafana/runtime';
  * - v9.1.0 : list of queries logged
  * - v9.1.2 : list removed in favour of stats, user_id removed
  */
-export const TrackAzureMonitorDashboardLoaded = (props: AzureMonitorDashboardLoadedProps) => {
+export const trackAzureMonitorDashboardLoaded = (props: AzureMonitorDashboardLoadedProps) => {
   reportInteraction('grafana_ds_azuremonitor_dashboard_loaded', props);
 };
 
-type AzureMonitorDashboardLoadedProps = {
+export type AzureMonitorDashboardLoadedProps = {
   grafana_version?: string;
   dashboard_id: string;
   org_id?: number;
-  /** number of executed queries (non hidden) of type Azure Monitor if any  */
-  azure_monitor_queries_executed?: number;
-  /** number of executed queries (non hidden) of type Azure Logs Analytics if any  */
-  azure_log_analytics_queries_executed?: number;
-  /** number of executed queries (non hidden) of type Azure Resource Graph if any  */
-  azure_resource_graph_queries_exectued?: number;
+  /** number of non hidden queries of type Azure Monitor if any  */
+  azure_monitor_queries: number;
+  /** number of non hidden queries of type Azure Logs Analytics if any  */
+  azure_log_analytics_queries: number;
+  /** number of non hidden queries of type Azure Resource Graph if any  */
+  azure_resource_graph_queries: number;
   /** number of hidden queries (not executed) of type Azure Monitor if any  */
-  azure_monitor_queries_hidden?: number;
+  azure_monitor_queries_hidden: number;
   /** number of hidden queries (not executed) of type Azure Logs Analytics if any  */
-  azure_log_analytics_queries_hidden?: number;
+  azure_log_analytics_queries_hidden: number;
   /** number of hidden queries (not executed) of type Azure Resource Graph if any  */
-  azure_resource_graph_queries_hidden?: number;
+  azure_resource_graph_queries_hidden: number;
 };

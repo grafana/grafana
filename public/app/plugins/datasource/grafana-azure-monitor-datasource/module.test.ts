@@ -37,8 +37,11 @@ describe('queriesOnInitDashboard', () => {
       dashboard_id: 'dashboard123',
       grafana_version: 'v9.0.0',
       org_id: 1,
-      azure_monitor_queries_executed: 2,
-      azure_log_analytics_queries_executed: 1,
+      azure_monitor_queries: 2,
+      azure_log_analytics_queries: 1,
+      azure_resource_graph_queries: 0,
+      azure_monitor_queries_hidden: 0,
+      azure_log_analytics_queries_hidden: 0,
       azure_resource_graph_queries_hidden: 1,
     });
   });
