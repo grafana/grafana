@@ -267,6 +267,8 @@ export class GeomapPanel extends Component<Props, State> {
         this.applyLayerFilter(state.handler, state.options);
       }
     }
+    // Because data changed, check map view and change if needed (data fit)
+    this.map!.setView(this.initMapView(this.props.options.view, this.map!.getLayers()));
   }
 
   initMapRef = async (div: HTMLDivElement) => {
@@ -592,6 +594,8 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   initViewExtent(view: View, config: MapViewConfig, layers: Collection<BaseLayer>) {
+    //TODO add option to set extent based on last data point only
+    //const lastOnly = true;
     const v = centerPointRegistry.getIfExists(config.id);
     if (v) {
       let coord: Coordinate | undefined = undefined;
@@ -601,10 +605,18 @@ export class GeomapPanel extends Component<Props, State> {
         } else if (v.id === MapCenterID.Fit) {
           const extent = getLayersExtent(layers);
           if (!isEmpty(extent)) {
+            //TODO make padding an option
+            const padding = 1.05;
+            const res = view.getResolutionForExtent(extent, this.map?.getSize());
+            const maxZoom = config.zoom ?? config.maxZoom;
             view.fit(extent, {
-              padding: [30, 30, 30, 30],
-              maxZoom: config.zoom ?? config.maxZoom,
+              maxZoom: maxZoom,
             });
+            view.setResolution(res * padding);
+            const adjustedZoom = view.getZoom();
+            if (adjustedZoom && maxZoom && adjustedZoom > maxZoom) {
+              view.setZoom(maxZoom);
+            }
           }
         } else {
           console.log('TODO, view requires special handling', v);
