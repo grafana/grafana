@@ -91,7 +91,7 @@ export enum ComparisonOperation {
 //-------------------
 // Runtime model
 //-------------------
-export interface MapLayerState<TConfig = any> extends LayerElement {
+export interface MapLayerState<TConfig = unknown> extends LayerElement {
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance
