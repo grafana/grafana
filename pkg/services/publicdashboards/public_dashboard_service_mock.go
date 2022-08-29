@@ -4,15 +4,12 @@ package publicdashboards
 
 import (
 	context "context"
-
-	dtos "github.com/grafana/grafana/pkg/api/dtos"
-	mock "github.com/stretchr/testify/mock"
-
-	models "github.com/grafana/grafana/pkg/models"
-
-	publicdashboardsmodels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-
 	testing "testing"
+
+	mock "github.com/stretchr/testify/mock"
+	models "github.com/grafana/grafana/pkg/models"
+	publicdashboardsmodels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	user "github.com/grafana/grafana/pkg/services/user"
 )
@@ -66,20 +63,20 @@ func (_m *FakePublicDashboardService) BuildAnonymousUser(ctx context.Context, da
 	return r0, r1
 }
 
-// BuildPublicDashboardMetricRequest provides a mock function with given fields: ctx, dashboard, publicDashboard, panelId
-func (_m *FakePublicDashboardService) BuildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *publicdashboardsmodels.PublicDashboard, panelId int64) (dtos.MetricRequest, error) {
-	ret := _m.Called(ctx, dashboard, publicDashboard, panelId)
+// GetQueryDataResponse provides a mock function with given fields: ctx, skipCache, reqDTO, panelId, accessToken
+func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO *publicdashboardsmodels.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+	ret := _m.Called(ctx, skipCache, reqDTO, panelId, accessToken)
 
-	var r0 dtos.MetricRequest
-	if rf, ok := ret.Get(0).(func(context.Context, *models.Dashboard, *publicdashboardsmodels.PublicDashboard, int64) dtos.MetricRequest); ok {
-		r0 = rf(ctx, dashboard, publicDashboard, panelId)
+	var r0 *backend.QueryDataResponse
+	if rf, ok := ret.Get(0).(func(context.Context, bool, *publicdashboardsmodels.PublicDashboardQueryDTO, int64, string) *backend.QueryDataResponse); ok {
+		r0 = rf(ctx, skipCache, reqDTO, panelId, accessToken)
 	} else {
-		r0 = ret.Get(0).(dtos.MetricRequest)
+		r0 = ret.Get(0).(*backend.QueryDataResponse)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *models.Dashboard, *publicdashboardsmodels.PublicDashboard, int64) error); ok {
-		r1 = rf(ctx, dashboard, publicDashboard, panelId)
+	if rf, ok := ret.Get(1).(func(context.Context, bool, *publicdashboardsmodels.PublicDashboardQueryDTO, int64, string) error); ok {
+		r1 = rf(ctx, skipCache, reqDTO, panelId, accessToken)
 	} else {
 		r1 = ret.Error(1)
 	}
