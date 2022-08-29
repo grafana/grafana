@@ -64,8 +64,11 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 		BundledPluginsPath:     bundledPluginsPath,
 		IsFeatureToggleEnabled: features.IsEnabled,
 		PluginSettings: map[string]map[string]string{
-			"plugin.datasource-id": {
+			"plugin.test-app": {
 				"path": "testdata/test-app",
+			},
+			"plugin.test-panel": {
+				"not": "included",
 			},
 		},
 	}
