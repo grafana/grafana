@@ -33,6 +33,7 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
         id: 'series',
         path: 'series',
         name: '',
+        defaultValue: [],
         editor: ManualEditor,
         showIf: (cfg) => cfg.mode === 'manual',
       });

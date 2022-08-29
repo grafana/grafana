@@ -16,7 +16,7 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
   context,
 }) => {
   const [selected, setSelected] = useState<number>(-1);
-  const styles = useStyles(getStyles);
+  const style = useStyles(getStyles);
 
   const onXFieldChange = (x: string | undefined, index: number) => {
     onChange(
@@ -90,10 +90,10 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
   const { options } = context;
 
   const getRowStyle = (index: number) => {
-    return index === selected ? `${styles.row} ${styles.sel}` : styles.row;
+    return index === selected ? `${style.row} ${style.sel}` : style.row;
   };
 
-  if (options === undefined || !options.series || !options.series.length) {
+  if (options === undefined || !options.series) {
     return null;
   }
 
@@ -113,7 +113,7 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
             <IconButton
               name="trash-alt"
               title={'remove'}
-              className={cx(styles.actionIcon)}
+              className={cx(style.actionIcon)}
               onClick={() => onSeriesDelete(index)}
             />
           </div>
@@ -121,7 +121,7 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
       })}
       <br />
 
-      {selected >= 0 && (
+      {selected >= 0 && options.series[selected] && (
         <>
           <div key={`series/${selected}`}>
             <Label>X Field</Label>
