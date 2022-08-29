@@ -1,5 +1,6 @@
 // Libraries
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import * as H from 'history';
 import React, { useCallback, useEffect, useReducer } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
 import { createSelector } from 'reselect';
@@ -72,13 +73,13 @@ export function AppRootPage({ match, queryParams, location }: Props) {
     return pluginRoot;
   }
 
-  const finalNav = addSectionNav(pluginNav, sectionNav);
+  const finalNav = getSectionNav(location, pluginNav, sectionNav);
 
   return (
     <>
       <InPortal node={portalNode}>{pluginRoot}</InPortal>
       {finalNav ? (
-        <Page navModel={finalNav}>
+        <Page navModel={finalNav} pageNav={pluginNav?.node}>
           <Page.Contents isLoading={loading}>
             <OutPortal node={portalNode} />
           </Page.Contents>
@@ -92,7 +93,7 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 }
 
-function addSectionNav(pluginNav: NavModel | null, sectionNav: NavModel) {
+function getSectionNav(location: H.Location, pluginNav: NavModel | null, sectionNav: NavModel) {
   // When topnav is disabled we only just show pluginNav like before
   if (!config.featureToggles.topnav) {
     return pluginNav;
@@ -102,7 +103,38 @@ function addSectionNav(pluginNav: NavModel | null, sectionNav: NavModel) {
     return sectionNav;
   }
 
-  return sectionNav;
+  const newSection = {
+    main: { ...sectionNav.main },
+    node: sectionNav.node,
+  };
+
+  const currentUrl = config.appSubUrl + location.pathname + location.search;
+  console.log('current url', currentUrl);
+
+  // Set active page
+  newSection.main.children = (newSection.main?.children ?? []).map((child) => {
+    if (child.children) {
+      return {
+        ...child,
+        children: child.children.map((pluginPage) => {
+          if (currentUrl === pluginPage.url) {
+            return {
+              ...pluginPage,
+              active: true,
+            };
+          }
+          return pluginPage;
+        }),
+      };
+    }
+    return child;
+  });
+
+  // if (pluginNav.main.children) {
+  //   newSection.node = pluginNav.node;
+  // }
+
+  return newSection;
 }
 
 const stateSlice = createSlice({
