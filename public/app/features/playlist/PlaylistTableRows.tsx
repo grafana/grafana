@@ -32,19 +32,16 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
           {(provided) => (
             <div
               className={styles.row}
-              aria-label={selectors.pages.PlaylistForm.itemRow}
+              aria-label={`Playlist item, ${item.type}, ${item.value}`}
               ref={provided.innerRef}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
+              role="row"
             >
               <div className={styles.actions}>
                 {item.type === 'dashboard_by_tag' ? (
                   <>
-                    <Icon
-                      name="tag-alt"
-                      aria-label={selectors.pages.PlaylistForm.itemTagType}
-                      className={styles.rightMargin}
-                    />
+                    <Icon name="tag-alt" className={styles.rightMargin} />
                     <TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />
                     {item.dashboards ? (
                       <span>&nbsp; {pluralize('dashboard', item.dashboards.length, true)}</span>
@@ -55,11 +52,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                 ) : (
                   // dashboard_by_id | dashboard_by_uid
                   <>
-                    <Icon
-                      name="apps"
-                      aria-label={selectors.pages.PlaylistForm.itemIdType}
-                      className={styles.rightMargin}
-                    />
+                    <Icon name="apps" className={styles.rightMargin} />
                     {item.dashboards ? <span>{item.dashboards[0]?.name}</span> : <Spinner />}
                   </>
                 )}

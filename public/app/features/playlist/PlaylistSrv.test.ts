@@ -5,6 +5,7 @@ import { locationService } from '@grafana/runtime';
 import { setStore } from 'app/store/store';
 
 import { PlaylistSrv } from './PlaylistSrv';
+import { Playlist } from './types';
 
 const getMock = jest.fn();
 
@@ -67,9 +68,21 @@ describe('PlaylistSrv', () => {
       jest.fn((url) => {
         switch (url) {
           case '/api/playlists/foo':
-            return Promise.resolve({ interval: '1s' });
-          case '/api/playlists/foo/dashboards':
-            return Promise.resolve(dashboards);
+            return Promise.resolve({
+              interval: '1s',
+              uid: 'xyz',
+              items: [
+                { type: 'dashboard_by_uid', value: 'aaa' },
+                { type: 'dashboard_by_uid', value: 'bbb' },
+              ],
+            } as Playlist);
+
+          // Loads dashboard details from search
+          case '/ds/query':
+            return Promise.resolve({
+              aaa: 'HELLO', // TODO, the search query
+            });
+
           default:
             throw new Error(`Unexpected url=${url}`);
         }

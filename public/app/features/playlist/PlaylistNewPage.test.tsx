@@ -11,7 +11,7 @@ import { Playlist } from './types';
 jest.mock('./api', () => ({
   // so we don't need to add dashboard items in test
   getDefaultPlaylist: jest.fn().mockReturnValue({
-    items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+    items: [{ type: 'dashboard_by_uid', value: 'FirstUID' }],
     interval: '5m',
     name: '',
     uid: '',
@@ -23,7 +23,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
     return <>mocked-tag-filter</>;
   },
@@ -59,7 +59,7 @@ describe('PlaylistNewPage', () => {
       expect(backendSrvMock).toHaveBeenCalledWith('/api/playlists', {
         name: 'A Name',
         interval: '5m',
-        items: [{ title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' }],
+        items: [{ type: 'dashboard_by_uid', value: 'FirstUID' }],
       });
       expect(locationService.getLocation().pathname).toEqual('/playlists');
     });
