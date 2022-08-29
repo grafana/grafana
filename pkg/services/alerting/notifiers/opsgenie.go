@@ -80,7 +80,7 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Placeholder:  "AlertId",
-				Description:  "In case multiple instances of grafana are connected to a single OpsGenie account, the alias prefix is a unique identifier for each instance (a-zA-Z0-9).",
+				Description:  "If multiple instances of Grafana are connected to a single OpsGenie account, the alias prefix is a unique identifier for each instance (a-zA-Z0-9).",
 				PropertyName: "aliasPrefix",
 			},
 		},
