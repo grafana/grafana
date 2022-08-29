@@ -719,11 +719,7 @@ msgstr "Home Dashboard"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.home-dashboard-placeholder"
-msgstr "Choose default dashboard"
-
-#: public/app/core/components/SharedPreferences/SharedPreferences.tsx
-msgid "shared-preferences.fields.home-dashboard-tooltip"
-msgstr "Not finding the dashboard you want? Star it first, then it should appear in this select box."
+msgstr "Default dashboard"
 
 #: public/app/core/components/SharedPreferences/SharedPreferences.tsx
 msgid "shared-preferences.fields.locale-label"

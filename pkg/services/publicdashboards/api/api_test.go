@@ -240,7 +240,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("SavePublicDashboardConfig", mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
+			service.On("SavePublicDashboardConfig", mock.Anything, mock.Anything, mock.AnythingOfType("*models.SavePublicDashboardConfigDTO")).
 				Return(&PublicDashboard{IsEnabled: true}, test.SaveDashboardErr)
 
 			cfg := setting.NewCfg()
@@ -558,7 +558,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	service := publicdashboardsService.ProvideService(cfg, store)
-	pubdash, err := service.SavePublicDashboardConfig(context.Background(), savePubDashboardCmd)
+	pubdash, err := service.SavePublicDashboardConfig(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
 	// setup test server

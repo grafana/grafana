@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -52,9 +53,14 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 		dq := models.GetDashboardQuery{Uid: query.DashboardUid, OrgId: c.OrgID}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
-			return response.Error(http.StatusBadRequest, "Invalid dashboard UID in the request", err)
+			if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
+				// OK... the storage UIDs do not (yet?) exist in the DashboardService
+			} else {
+				return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
+			}
+		} else {
+			query.DashboardId = dq.Result.Id
 		}
-		query.DashboardId = dq.Result.Id
 	}
 
 	repo := annotations.GetRepository()

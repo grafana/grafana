@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,7 @@ import (
 var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12", "to": "now"}`))
 var defaultPubdashTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
 var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})
+var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
 
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.service")
@@ -134,7 +136,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -177,7 +179,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		pubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
@@ -208,7 +210,7 @@ func TestSavePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
+		_, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 	})
 }
@@ -235,10 +237,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
-		require.NoError(t, err)
-
-		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		savedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -261,10 +260,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// Since the dto.PublicDashboard has a uid, this will call
 		// service.updatePublicDashboardConfig
-		_, err = service.SavePublicDashboardConfig(context.Background(), dto)
-		require.NoError(t, err)
-
-		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// don't get updated
@@ -304,10 +300,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// Since the dto.PublicDashboard has a uid, this will call
 		// service.updatePublicDashboardConfig
-		_, err := service.SavePublicDashboardConfig(context.Background(), dto)
-		require.NoError(t, err)
-
-		savedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		savedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		// attempt to overwrite settings
@@ -327,10 +320,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			},
 		}
 
-		_, err = service.SavePublicDashboardConfig(context.Background(), dto)
-		require.NoError(t, err)
-
-		updatedPubdash, err := service.GetPublicDashboardConfig(context.Background(), dashboard.OrgId, dashboard.Uid)
+		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
 		timeSettings, err := simplejson.NewJson([]byte("{}"))
@@ -385,7 +375,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	publicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), dto)
+	publicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
 	nonPublicDto := &SavePublicDashboardConfigDTO{
@@ -399,7 +389,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		},
 	}
 
-	nonPublicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), nonPublicDto)
+	nonPublicDashboardPD, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, nonPublicDto)
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
@@ -521,4 +511,22 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 	dash.Data.Set("id", dash.Id)
 	dash.Data.Set("uid", dash.Uid)
 	return dash
+}
+
+func TestDashboardEnabledChanged(t *testing.T) {
+	t.Run("created isEnabled: false", func(t *testing.T) {
+		assert.False(t, publicDashboardIsEnabledChanged(nil, &PublicDashboard{IsEnabled: false}))
+	})
+
+	t.Run("created isEnabled: true", func(t *testing.T) {
+		assert.True(t, publicDashboardIsEnabledChanged(nil, &PublicDashboard{IsEnabled: true}))
+	})
+
+	t.Run("updated isEnabled same", func(t *testing.T) {
+		assert.False(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: true}, &PublicDashboard{IsEnabled: true}))
+	})
+
+	t.Run("updated isEnabled changed", func(t *testing.T) {
+		assert.True(t, publicDashboardIsEnabledChanged(&PublicDashboard{IsEnabled: false}, &PublicDashboard{IsEnabled: true}))
+	})
 }
