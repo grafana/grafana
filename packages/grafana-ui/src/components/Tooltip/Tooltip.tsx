@@ -78,6 +78,10 @@ function getStyles(theme: GrafanaTheme2) {
         pointer-events: none;
       }
 
+      &[data-popper-interactive='true'] {
+        overflow: auto;
+      }
+
       .tooltip-arrow {
         height: 1rem;
         position: absolute;
