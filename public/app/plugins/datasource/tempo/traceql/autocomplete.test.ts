@@ -107,6 +107,26 @@ describe('CompletionProvider', () => {
       expect.objectContaining({ label: '}', insertText: '}' }),
     ]);
   });
+
+  it('suggests tag values after a space inside a string', async () => {
+    const { provider, model } = setup('{foo="bar test " }', 15, defaultTags);
+
+    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolve([
+            {
+              value: 'foobar',
+              label: 'foobar',
+            },
+          ]);
+        })
+    );
+    const result = await provider.provideCompletionItems(model as any, {} as any);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      expect.objectContaining({ label: 'foobar', insertText: 'foobar' }),
+    ]);
+  });
 });
 
 const defaultTags = ['foo', 'bar'];
