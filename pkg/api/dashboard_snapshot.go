@@ -323,26 +323,24 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
 		}
-	} else {
-		// When creating an external snapshot, its dashboard content is empty. This means that the mustInt here returns a 0,
-		// which before RBAC would result in a dashboard which has no ACL. A dashboard without an ACL would fallback
-		// to the user’s org role, which for editors and admins would essentially always be allowed here. With RBAC,
-		// all permissions must be explicit, so the lack of a rule for dashboard 0 means the guardian will reject.
-		dashboardID := query.Result.Dashboard.Get("id").MustInt64()
+	}
 
-		// If for some reason the snapshot is not external and yet targets no dashboard (ID set 0), RBAC access-control
-		// can be skipped.
-		if dashboardID != 0 {
-			guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
-			canEdit, err := guardian.CanEdit()
-			// check for permissions only if the dashboard is found
-			if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
-			}
+	// Dashboard can be empty (creation error or external snapshot). This means that the mustInt here returns a 0,
+	// which before RBAC would result in a dashboard which has no ACL. A dashboard without an ACL would fallback
+	// to the user’s org role, which for editors and admins would essentially always be allowed here. With RBAC,
+	// all permissions must be explicit, so the lack of a rule for dashboard 0 means the guardian will reject.
+	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
 
-			if !canEdit && query.Result.UserId != c.SignedInUser.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
-			}
+	if dashboardID != 0 {
+		guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+		canEdit, err := guardian.CanEdit()
+		// check for permissions only if the dashboard is found
+		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
+		}
+
+		if !canEdit && query.Result.UserId != c.SignedInUser.UserID && !errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusForbidden, "Access denied to this snapshot", nil)
 		}
 	}
 
