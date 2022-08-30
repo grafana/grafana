@@ -10,14 +10,13 @@ import { LokiVariableQuery } from './types';
 
 export class LokiVariableSupport extends CustomVariableSupport<LokiDatasource, LokiVariableQuery> {
   private metricFindQuery: LokiMetricFindQuery;
+  editor = LokiVariableQueryEditor;
 
   constructor(datasource: LokiDatasource) {
     super();
     this.metricFindQuery = new LokiMetricFindQuery(datasource);
     this.query = this.query.bind(this);
   }
-
-  editor = LokiVariableQueryEditor;
 
   query(request: DataQueryRequest<LokiVariableQuery>): Observable<DataQueryResponse> {
     const executeObservable = from(this.metricFindQuery.execute(request.targets[0]));
