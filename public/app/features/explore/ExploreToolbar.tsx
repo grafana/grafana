@@ -3,14 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
-import {
-  defaultIntervals,
-  PageToolbar,
-  RefreshPicker,
-  SetInterval,
-  ToolbarButton,
-  ToolbarButtonRow,
-} from '@grafana/ui';
+import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { AccessControlAction } from 'app/types';
@@ -153,13 +146,13 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             ),
           ].filter(Boolean)}
         >
-          <ToolbarButtonRow>
+          <>
             {!splitted ? (
-              <ToolbarButton title="Split" onClick={() => split()} icon="columns" disabled={isLive}>
+              <ToolbarButton tooltip="Split the pane" onClick={() => split()} icon="columns" disabled={isLive}>
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton title="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
+              <ToolbarButton tooltip="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
                 Close
               </ToolbarButton>
             )}
@@ -216,7 +209,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 }}
               </LiveTailControls>
             )}
-          </ToolbarButtonRow>
+          </>
         </PageToolbar>
       </div>
     );

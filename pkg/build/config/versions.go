@@ -43,8 +43,9 @@ var Versions = VersionMap{
 				ArchARMv7, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
 			},
 		},
-		PackagesBucket:  "grafana-downloads",
-		CDNAssetsBucket: "grafana-static-assets",
+		PackagesBucket:            "grafana-downloads",
+		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
+		CDNAssetsBucket:           "grafana-static-assets",
 	},
 	ReleaseBranchMode: {
 		Variants: []Variant{

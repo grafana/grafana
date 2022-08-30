@@ -115,6 +115,29 @@ func (_m *FakePublicDashboardStore) GetPublicDashboard(ctx context.Context, acce
 	return r0, r1, r2
 }
 
+// GetPublicDashboardByUid provides a mock function with given fields: ctx, uid
+func (_m *FakePublicDashboardStore) GetPublicDashboardByUid(ctx context.Context, uid string) (*publicdashboardsmodels.PublicDashboard, error) {
+	ret := _m.Called(ctx, uid)
+
+	var r0 *publicdashboardsmodels.PublicDashboard
+	if rf, ok := ret.Get(0).(func(context.Context, string) *publicdashboardsmodels.PublicDashboard); ok {
+		r0 = rf(ctx, uid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*publicdashboardsmodels.PublicDashboard)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, uid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetPublicDashboardConfig provides a mock function with given fields: ctx, orgId, dashboardUid
 func (_m *FakePublicDashboardStore) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*publicdashboardsmodels.PublicDashboard, error) {
 	ret := _m.Called(ctx, orgId, dashboardUid)
@@ -160,26 +183,17 @@ func (_m *FakePublicDashboardStore) PublicDashboardEnabled(ctx context.Context, 
 }
 
 // SavePublicDashboardConfig provides a mock function with given fields: ctx, cmd
-func (_m *FakePublicDashboardStore) SavePublicDashboardConfig(ctx context.Context, cmd publicdashboardsmodels.SavePublicDashboardConfigCommand) (*publicdashboardsmodels.PublicDashboard, error) {
+func (_m *FakePublicDashboardStore) SavePublicDashboardConfig(ctx context.Context, cmd publicdashboardsmodels.SavePublicDashboardConfigCommand) error {
 	ret := _m.Called(ctx, cmd)
 
-	var r0 *publicdashboardsmodels.PublicDashboard
-	if rf, ok := ret.Get(0).(func(context.Context, publicdashboardsmodels.SavePublicDashboardConfigCommand) *publicdashboardsmodels.PublicDashboard); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, publicdashboardsmodels.SavePublicDashboardConfigCommand) error); ok {
 		r0 = rf(ctx, cmd)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*publicdashboardsmodels.PublicDashboard)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, publicdashboardsmodels.SavePublicDashboardConfigCommand) error); ok {
-		r1 = rf(ctx, cmd)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // UpdatePublicDashboardConfig provides a mock function with given fields: ctx, cmd

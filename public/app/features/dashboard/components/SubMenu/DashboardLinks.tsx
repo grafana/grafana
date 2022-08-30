@@ -37,7 +37,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
         const key = `${link.title}-$${index}`;
 
         if (link.type === 'dashboards') {
-          return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardId={dashboard.id} />;
+          return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={dashboard.uid} />;
         }
 
         const linkElement = (

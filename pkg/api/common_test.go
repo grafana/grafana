@@ -366,6 +366,7 @@ func setupHTTPServerWithCfgDb(
 
 	var acmock *accesscontrolmock.Mock
 	var ac accesscontrol.AccessControl
+	var acService accesscontrol.Service
 
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
@@ -374,13 +375,15 @@ func setupHTTPServerWithCfgDb(
 			acmock = acmock.WithDisabled()
 		}
 		ac = acmock
+		acService = acmock
 	} else {
 		var err error
-		ac, err = ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), routeRegister)
+		acService, err = ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), routeRegister)
 		require.NoError(t, err)
+		ac = ossaccesscontrol.ProvideAccessControl(cfg, acService)
 	}
 
-	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license)
+	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService)
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server
@@ -395,6 +398,7 @@ func setupHTTPServerWithCfgDb(
 		SQLStore:               store,
 		License:                &licensing.OSSLicensingService{},
 		AccessControl:          ac,
+		accesscontrolService:   acService,
 		teamPermissionsService: teamPermissionService,
 		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
@@ -410,7 +414,7 @@ func setupHTTPServerWithCfgDb(
 	}
 
 	require.NoError(t, hs.declareFixedRoles())
-	require.NoError(t, hs.AccessControl.(accesscontrol.RoleRegistry).RegisterFixedRoles(context.Background()))
+	require.NoError(t, hs.accesscontrolService.(accesscontrol.RoleRegistry).RegisterFixedRoles(context.Background()))
 
 	// Instantiate a new Server
 	m := web.New()
@@ -423,7 +427,7 @@ func setupHTTPServerWithCfgDb(
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
 
-	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.AccessControl))
+	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 
 	// Register all routes
 	hs.registerRoutes()

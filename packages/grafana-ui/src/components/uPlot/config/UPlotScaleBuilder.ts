@@ -109,6 +109,12 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         minMax[1] = hardMax!;
       }
 
+      // guard against invalid y ranges
+      if (minMax[0]! >= minMax[1]!) {
+        minMax[0] = 0;
+        minMax[1] = 100;
+      }
+
       return minMax;
     };
 
