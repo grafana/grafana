@@ -2,6 +2,7 @@ import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
 
+import { NavModelItem } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
 
 import { AlertManagerPicker } from './components/AlertManagerPicker';
@@ -27,6 +28,7 @@ const Receivers: FC = () => {
 
   const location = useLocation();
   const isRoot = location.pathname.endsWith('/alerting/notifications');
+  const isEditing = location.pathname.endsWith('/edit');
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -56,9 +58,31 @@ const Receivers: FC = () => {
 
   const disableAmSelect = !isRoot;
 
+  const contactPointInfoPage = () => {
+    let text = 'New contact point';
+    let subTitle = 'Create a new contact poing to your notifications';
+    if (isEditing) {
+      const urlToArray = location.pathname.split('/');
+      const urlArrayLength = urlToArray.length;
+      const contactPointName = urlToArray[urlArrayLength - 2];
+      text = contactPointName;
+      subTitle = 'Edit `' + text + '` settings';
+    } else if (isRoot) {
+      text = 'Contact points';
+      subTitle = 'Manage the settings of your contact points';
+    }
+    return { text, subTitle };
+  };
+
+  const pageNav: NavModelItem = {
+    text: contactPointInfoPage().text,
+    icon: 'comment-alt-share',
+    subTitle: contactPointInfoPage().subTitle,
+  };
+
   if (!alertManagerSourceName) {
     return isRoot ? (
-      <AlertingPageWrapper pageId="receivers">
+      <AlertingPageWrapper pageId="receivers" pageNav={pageNav}>
         <NoAlertManagerWarning availableAlertManagers={alertManagers} />
       </AlertingPageWrapper>
     ) : (
@@ -67,7 +91,7 @@ const Receivers: FC = () => {
   }
 
   return (
-    <AlertingPageWrapper pageId="receivers">
+    <AlertingPageWrapper pageId="receivers" pageNav={pageNav}>
       <AlertManagerPicker
         current={alertManagerSourceName}
         disabled={disableAmSelect}
