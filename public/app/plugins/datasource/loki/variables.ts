@@ -19,7 +19,7 @@ export class LokiVariableSupport extends CustomVariableSupport<LokiDatasource, L
   }
 
   query(request: DataQueryRequest<LokiVariableQuery>): Observable<DataQueryResponse> {
-    const executeObservable = from(this.metricFindQuery.execute(request.targets[0]));
+    const executeObservable = this.metricFindQuery.execute(request.targets[0]);
 
     return from(executeObservable).pipe(
       mergeMap(() => executeObservable),
