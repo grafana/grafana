@@ -1,13 +1,16 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import DBaaSRouting from './DBaaSRouting';
+import React from 'react';
+import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
+
+import { locationService } from '@grafana/runtime/src';
+
 import { configureStore } from '../../../../store/configureStore';
 import { StoreState } from '../../../../types';
-import { Provider } from 'react-redux';
 import { KubernetesClusterStatus } from '../Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
 import { KubernetesOperatorStatus } from '../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
-import { locationService } from '@grafana/runtime/src';
-import { Router } from 'react-router-dom';
+
+import DBaaSRouting from './DBaaSRouting';
 
 describe('SwitchField::', () => {
   it('should show loading when we are waiting kubernetes response', () => {
@@ -27,7 +30,7 @@ describe('SwitchField::', () => {
       </Provider>
     );
 
-    expect(screen.getByTestId('spinner-wrapper')).toBeInTheDocument();
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
   });
 
   it('should return redirect to /dbclusters  if we have one or more kubernetes clusters', async () => {

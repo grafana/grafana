@@ -1,12 +1,14 @@
 import React, { FC, useEffect, useMemo } from 'react';
-import { getKubernetes as getKubernetesSelector } from '../../../shared/core/selectors';
-import { fetchKubernetesAction } from '../../../shared/core/reducers';
-import { CHECK_OPERATOR_UPDATE_CANCEL_TOKEN, GET_KUBERNETES_CANCEL_TOKEN } from '../Kubernetes/Kubernetes.constants';
-import { useCancelToken } from '../../../shared/components/hooks/cancelToken.hook';
 import { useDispatch, useSelector } from 'react-redux';
 import { Redirect } from 'react-router-dom';
+
 import { Spinner, useStyles } from '@grafana/ui/src';
+
+import { useCancelToken } from '../../../shared/components/hooks/cancelToken.hook';
+import { fetchKubernetesAction } from '../../../shared/core/reducers';
+import { getKubernetes as getKubernetesSelector } from '../../../shared/core/selectors';
 import { getStyles } from '../DBaasRouting/DBaasRouting.styles';
+import { CHECK_OPERATOR_UPDATE_CANCEL_TOKEN, GET_KUBERNETES_CANCEL_TOKEN } from '../Kubernetes/Kubernetes.constants';
 
 export const DBaaSRouting: FC = ({}) => {
   const styles = useStyles(getStyles);
