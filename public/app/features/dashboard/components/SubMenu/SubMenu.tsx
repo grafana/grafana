@@ -26,7 +26,7 @@ interface ConnectedProps {
 
 interface DispatchProps {}
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+type Props = OwnProps & ConnectedProps & DispatchProps & { hiddenVariables: string[] };
 
 class SubMenuUnConnected extends PureComponent<Props> {
   onAnnotationStateChanged = (updatedAnnotation: any) => {
@@ -54,7 +54,11 @@ class SubMenuUnConnected extends PureComponent<Props> {
     return (
       <div className="submenu-controls">
         <form aria-label="Template variables" className={styles}>
-          <SubMenuItems variables={variables} readOnly={readOnlyVariables} />
+          <SubMenuItems
+            variables={variables}
+            readOnly={readOnlyVariables}
+            hiddenVariables={this.props.hiddenVariables}
+          />
         </form>
         <Annotations
           annotations={annotations}

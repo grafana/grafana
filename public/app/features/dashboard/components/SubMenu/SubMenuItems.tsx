@@ -8,9 +8,10 @@ import { VariableHide, VariableModel } from '../../../variables/types';
 interface Props {
   variables: VariableModel[];
   readOnly?: boolean;
+  hiddenVariables: string[];
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly }) => {
+export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly, hiddenVariables }) => {
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
 
   useEffect(() => {
@@ -24,6 +25,10 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly }) 
   return (
     <>
       {visibleVariables.map((variable) => {
+        if (hiddenVariables?.includes(variable.id)) {
+          return null;
+        }
+
         return (
           <div
             key={variable.id}

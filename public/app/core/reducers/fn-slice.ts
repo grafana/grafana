@@ -8,6 +8,7 @@ interface FNState {
   controlsContainer: HTMLElement | undefined;
   pageTitle: string;
   queryParams: object;
+  hiddenVariables: string[];
 }
 
 const initialState: FNState = {
@@ -18,6 +19,7 @@ const initialState: FNState = {
   controlsContainer: undefined,
   pageTitle: '',
   queryParams: {},
+  hiddenVariables: [],
 };
 
 const fnSlice = createSlice({

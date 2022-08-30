@@ -5,4 +5,5 @@ export interface FNDashboardProps {
   controlsContainer: HTMLElement | undefined;
   theme: string;
   fnError: FunctionComponent;
+  hiddenVariables: string[];
 }

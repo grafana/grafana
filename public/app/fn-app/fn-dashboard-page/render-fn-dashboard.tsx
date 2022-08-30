@@ -20,6 +20,7 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
         controlsContainer: data.controlsContainer,
         pageTitle: data?.pageTitle || '',
         queryParams: data.queryParams,
+        hiddenVariables: data.hiddenVariables,
       })
     );
     console.log(locationService.getLocation(), locationService.getHistory, 'location params');
@@ -52,6 +53,7 @@ export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
       pageClass: 'page-dashboard',
       component: DashboardPage,
     },
+    hiddenVariables: data.hiddenVariables,
   };
 
   return <DashboardPage isFNDashboard controlsContainer={data.controlsContainer} {...props} />;
