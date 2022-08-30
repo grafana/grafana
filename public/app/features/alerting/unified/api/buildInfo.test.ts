@@ -32,6 +32,7 @@ describe('discoverDataSourceFeatures', () => {
             status: 'success',
             data: {
               version: '2.32.1',
+              application: 'Grafana Mimir',
             },
           },
         })
@@ -57,6 +58,7 @@ describe('discoverDataSourceFeatures', () => {
             data: {
               status: 'success',
               data: {
+                application: 'Grafana Mimir',
                 version: '2.32.1',
                 features: {
                   // 'true' and 'false' as strings is intentional
