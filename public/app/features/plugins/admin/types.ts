@@ -21,9 +21,6 @@ export enum PluginAdminRoutes {
   Home = 'plugins-home',
   Browse = 'plugins-browse',
   Details = 'plugins-details',
-  HomeAdmin = 'plugins-home-admin',
-  BrowseAdmin = 'plugins-browse-admin',
-  DetailsAdmin = 'plugins-details-admin',
 }
 
 export enum PluginIconName {
