@@ -329,6 +329,19 @@ In Prometheus, browser access mode was deprecated in Grafana 7.4.0 and removed i
 - **Grafana/UI:** Add ColorPickerInput component. [#52222](https://github.com/grafana/grafana/pull/52222), [@Clarity-89](https://github.com/Clarity-89)
 - **Plugins:** Validate root URLs when signing private plugins via grafana-toolkit. [#51968](https://github.com/grafana/grafana/pull/51968), [@wbrowne](https://github.com/wbrowne)
 
+<!-- 9.0.8 START -->
+
+# 9.0.8 (unreleased)
+
+### Features and enhancements
+
+- **Alerting:** Hide "no rules" message when we are fetching from data sources. [#53778](https://github.com/grafana/grafana/pull/53778), [@gillesdemey](https://github.com/gillesdemey)
+- **Rendering:** Add support for renderer token (#54425). [#54439](https://github.com/grafana/grafana/pull/54439), [@joanlopez](https://github.com/joanlopez)
+- **Reports:** Title is showing under panels. (Enterprise)
+- **[v9.0.x] Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53680](https://github.com/grafana/grafana/pull/53680), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 9.0.8 END -->
+
 <!-- 9.0.7 START -->
 
 # 9.0.7 (2022-08-10)
