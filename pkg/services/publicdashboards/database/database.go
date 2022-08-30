@@ -36,31 +36,30 @@ func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 	}
 }
 
-func (d *PublicDashboardStoreImpl) GetPublicDashboards(ctx context.Context, orgId int64) (*models.Dashboard, error) {
+// Gets list of public dashboards by orgId
+func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]*PublicDashboardListResponse, error) {
 
-	// START HERE
-	// look up xorm retrieve slice. take brief look at selecting only specific
-	// fields
-	//
-	// create route on frontend
-	// create page container
-	// link route to page
-	// create frontend method to hit the api
-	// populate the table
+	resp := []*PublicDashboardListResponse{}
 
-	pd := &[]PublicDashboard{OrgId: orgId}
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		has, err := sess.Get(dashboard)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return ErrPublicDashboardNotFound
-		}
-		return nil
+		//Select dashboard_public.access_token ,dashboard.title, dashboard.uid, from dashboard_public, dashboard
+		//WHERE dashboard.uid == dashboard_public.uid AND dashboard.org_id = dashboard_public.uid
+
+		sess.Table("dashboard_public").
+			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid").
+			Cols("dashboard_public.access_token", "dashboard.title", "dashboard.uid").
+			Where("dashboard_public.org_id = dashboard.org_id").
+			Where("dashboard_public.org_id = ?", orgId)
+
+		err := sess.Find(resp)
+		return err
 	})
 
-	return dashboard, err
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func (d *PublicDashboardStoreImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {

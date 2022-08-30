@@ -70,6 +70,12 @@ func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
 }
 
+type PublicDashboardListResponse struct {
+	DashboardTitle     string
+	DashboardUid       string
+	PublicDashboardUid string
+}
+
 type TimeSettings struct {
 	From string `json:"from"`
 	To   string `json:"to"`

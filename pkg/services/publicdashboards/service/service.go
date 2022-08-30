@@ -45,16 +45,12 @@ func ProvideService(
 	}
 }
 
-func (pd *PublicDashboardServiceImpl) GetPublicDashboards(ctx context.Context, orgId int64) (*models.Dashboard, error) {
-	publicDashboards, err := pd.store.GetPublicDashboards(ctx, orgId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return publicDashboards, err
+// Gets a list of public dashboards by orgId
+func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]*PublicDashboardListResponse, error) {
+	return pd.store.ListPublicDashboards(ctx, orgId)
 }
 
+// Gets a dashboard by Uid
 func (pd *PublicDashboardServiceImpl) GetDashboard(ctx context.Context, dashboardUid string) (*models.Dashboard, error) {
 	dashboard, err := pd.store.GetDashboard(ctx, dashboardUid)
 
