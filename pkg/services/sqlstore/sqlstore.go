@@ -82,15 +82,10 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	// initialize and register metrics wrapper around the *sql.DB
 	db := s.engine.DB().DB
 
-	var metrics prometheus.Collector
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
-		metrics = sqlstats.NewStatsCollector("grafana", db)
-	} else {
-		// TODO: deprecate/remove these metrics
-		metrics = newSQLStoreMetrics(db)
-	}
-
-	prometheus.MustRegister(metrics)
+	// register the go_sql_stats_connections_* metrics
+	prometheus.MustRegister(sqlstats.NewStatsCollector("grafana", db))
+	// TODO: deprecate/remove these metrics
+	prometheus.MustRegister(newSQLStoreMetrics(db))
 
 	return s, nil
 }
