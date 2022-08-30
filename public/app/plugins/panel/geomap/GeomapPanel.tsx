@@ -1,16 +1,13 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { cloneDeep } from 'lodash';
-import { Collection, Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
+import { Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
-import { Coordinate } from 'ol/coordinate';
-import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
-import BaseLayer from 'ol/layer/Base';
-import { fromLonLat, toLonLat } from 'ol/proj';
+import { toLonLat } from 'ol/proj';
 import React, { Component, ReactNode } from 'react';
 import { Subject, Subscription } from 'rxjs';
 
@@ -18,9 +15,7 @@ import {
   DataFrame,
   DataHoverEvent,
   FrameGeometrySourceMode,
-  getFrameMatchers,
   GrafanaTheme,
-  MapLayerHandler,
   MapLayerOptions,
   PanelData,
   PanelProps,
@@ -37,18 +32,17 @@ import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
-import {
-  ControlsOptions,
-  GeomapPanelOptions,
-  MapLayerState,
-  MapViewConfig,
-  TooltipMode,
-  GeomapLayerActions,
-} from './types';
-import { getLayersExtent } from './utils/getLayersExtent';
+import { ControlsOptions, GeomapPanelOptions, MapLayerState, TooltipMode, GeomapLayerActions } from './types';
 import { setTooltipListeners } from './utils/tootltip';
-import { updateMap, getNewOpenLayersMap, notifyPanelEditor } from './utils/utils';
-import { centerPointRegistry, MapCenterID } from './view';
+import {
+  updateMap,
+  getNewOpenLayersMap,
+  notifyPanelEditor,
+  initViewExtent,
+  applyLayerFilter,
+  initMapView,
+  getNextLayerName,
+} from './utils/utils';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -157,17 +151,6 @@ export class GeomapPanel extends Component<Props, State> {
     this.setState({ legends: this.getLegends() });
   }
 
-  getNextLayerName = () => {
-    let idx = this.layers.length; // since basemap is 0, this looks right
-    while (true && idx < 100) {
-      const name = `Layer ${idx++}`;
-      if (!this.byName.has(name)) {
-        return name;
-      }
-    }
-    return `Layer ${Date.now()}`;
-  };
-
   actions: GeomapLayerActions = {
     selectLayer: (uid: string) => {
       const selected = this.layers.findIndex((v) => v.options.name === uid);
@@ -204,7 +187,7 @@ export class GeomapPanel extends Component<Props, State> {
         this.map!,
         {
           type: item.id,
-          name: this.getNextLayerName(),
+          name: getNextLayerName(this),
           config: cloneDeep(item.defaultOptions),
           location: item.showLocation ? { mode: FrameGeometrySourceMode.Auto } : undefined,
           tooltip: true,
@@ -241,7 +224,7 @@ export class GeomapPanel extends Component<Props, State> {
   optionsChanged(options: GeomapPanelOptions) {
     const oldOptions = this.props.options;
     if (options.view !== oldOptions.view) {
-      this.map!.setView(this.initMapView(options.view, this.map!.getLayers()));
+      this.map!.setView(initMapView(options.view, sharedView, this.map!.getLayers()));
     }
 
     if (options.controls !== oldOptions.controls) {
@@ -256,7 +239,7 @@ export class GeomapPanel extends Component<Props, State> {
     // Only update if panel data matches component data
     if (data === this.props.data) {
       for (const state of this.layers) {
-        this.applyLayerFilter(state.handler, state.options);
+        applyLayerFilter(state.handler, state.options, this.props.data);
       }
     }
   }
@@ -295,7 +278,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
     this.layers = layers;
     this.map = map; // redundant
-    this.initViewExtent(map.getView(), options.view, map.getLayers());
+    initViewExtent(map.getView(), options.view, map.getLayers());
 
     this.mouseWheelZoom = new MouseWheelZoom();
     this.map?.addInteraction(this.mouseWheelZoom);
@@ -455,7 +438,7 @@ export class GeomapPanel extends Component<Props, State> {
       group.setAt(layerIndex, info.layer);
 
       // initialize with new data
-      this.applyLayerFilter(info.handler, newOptions);
+      applyLayerFilter(info.handler, newOptions, this.props.data);
     } catch (err) {
       console.warn('ERROR', err);
       return false;
@@ -478,7 +461,7 @@ export class GeomapPanel extends Component<Props, State> {
     if (!options?.type) {
       options = {
         type: MARKERS_LAYER_ID,
-        name: this.getNextLayerName(),
+        name: getNextLayerName(this),
         config: {},
       };
     }
@@ -495,7 +478,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     if (!options.name) {
-      options.name = this.getNextLayerName();
+      options.name = getNextLayerName(this);
     }
 
     const UID = options.name;
@@ -518,81 +501,9 @@ export class GeomapPanel extends Component<Props, State> {
     this.byName.set(UID, state);
     (state.layer as any).__state = state;
 
-    this.applyLayerFilter(handler, options);
+    applyLayerFilter(handler, options, this.props.data);
 
     return state;
-  }
-
-  applyLayerFilter(handler: MapLayerHandler<unknown>, options: MapLayerOptions<unknown>): void {
-    if (handler.update) {
-      let panelData = this.props.data;
-      if (options.filterData) {
-        const matcherFunc = getFrameMatchers(options.filterData);
-        panelData = {
-          ...panelData,
-          series: panelData.series.filter(matcherFunc),
-        };
-      }
-      handler.update(panelData);
-    }
-  }
-
-  initMapView(config: MapViewConfig, layers?: Collection<BaseLayer>): View {
-    let view = new View({
-      center: [0, 0],
-      zoom: 1,
-      showFullExtent: true, // allows zooming so the full range is visible
-    });
-
-    // With shared views, all panels use the same view instance
-    if (config.shared) {
-      if (!sharedView) {
-        sharedView = view;
-      } else {
-        view = sharedView;
-      }
-    }
-    if (layers) {
-      this.initViewExtent(view, config, layers);
-    }
-    return view;
-  }
-
-  initViewExtent(view: View, config: MapViewConfig, layers: Collection<BaseLayer>) {
-    const v = centerPointRegistry.getIfExists(config.id);
-    if (v) {
-      let coord: Coordinate | undefined = undefined;
-      if (v.lat == null) {
-        if (v.id === MapCenterID.Coordinates) {
-          coord = [config.lon ?? 0, config.lat ?? 0];
-        } else if (v.id === MapCenterID.Fit) {
-          const extent = getLayersExtent(layers);
-          if (!isEmpty(extent)) {
-            view.fit(extent, {
-              padding: [30, 30, 30, 30],
-              maxZoom: config.zoom ?? config.maxZoom,
-            });
-          }
-        } else {
-          // TODO: view requires special handling
-        }
-      } else {
-        coord = [v.lon ?? 0, v.lat ?? 0];
-      }
-      if (coord) {
-        view.setCenter(fromLonLat(coord));
-      }
-    }
-
-    if (config.maxZoom) {
-      view.setMaxZoom(config.maxZoom);
-    }
-    if (config.minZoom) {
-      view.setMaxZoom(config.minZoom);
-    }
-    if (config.zoom && v?.id !== MapCenterID.Fit) {
-      view.setZoom(config.zoom);
-    }
   }
 
   initControls(options: ControlsOptions) {
