@@ -49,7 +49,7 @@ export const language = {
   tokenizer: {
     root: [
       // labels
-      [/[a-z_.][\w./-]*(?=\s*(=|!=|=~|!~))/, 'tag'],
+      [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
 
       // all keywords have the same color
       [
