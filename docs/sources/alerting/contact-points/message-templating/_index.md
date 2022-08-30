@@ -55,7 +55,7 @@ You can use any of the following built-in template options to embed custom templ
 | ----------------------- | ------------------------------------------------------------- |
 | `default.title`         | Displays high-level status information.                       |
 | `default.message`       | Provides a formatted summary of firing and resolved alerts.   |
-| `teams.default.message` | Similar to `default.messsage`, formatted for Microsoft Teams. |
+| `teams.default.message` | Similar to `default.message`, formatted for Microsoft Teams. |
 
 ### HTML in message templates
 
