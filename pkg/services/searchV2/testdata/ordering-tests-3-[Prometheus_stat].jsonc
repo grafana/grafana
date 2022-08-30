@@ -8,13 +8,13 @@
 //  | Labels:                | Labels:            |
 //  | Type: []string         | Type: []float64    |
 //  +------------------------+--------------------+
-//  | Prometheus 2.0         | 45.193422538475374 |
-//  | Prometheus 20.0        | 45.193422538475374 |
-//  | Prometheus Stats       | 45.193422538475374 |
-//  | prometheus histogram   | 45.193422538475374 |
-//  | prometheus histogram2  | 45.193422538475374 |
-//  | Prometheus 2.0 Stats   | 38.70210379766075  |
-//  | Prometheus Second Word | 38.70210379766075  |
+//  | Prometheus Stats       | 23.51591768548542  |
+//  | Prometheus 2.0         | 14.912744132482985 |
+//  | Prometheus 20.0        | 14.912744132482985 |
+//  | prometheus histogram   | 14.912744132482985 |
+//  | prometheus histogram2  | 14.912744132482985 |
+//  | Prometheus 2.0 Stats   | 13.86842776715413  |
+//  | Prometheus Second Word | 12.869180825189492 |
 //  +------------------------+--------------------+
 //  
 //  
@@ -44,22 +44,22 @@
       "data": {
         "values": [
           [
+            "Prometheus Stats",
             "Prometheus 2.0",
             "Prometheus 20.0",
-            "Prometheus Stats",
             "prometheus histogram",
             "prometheus histogram2",
             "Prometheus 2.0 Stats",
             "Prometheus Second Word"
           ],
           [
-            45.193422538475374,
-            45.193422538475374,
-            45.193422538475374,
-            45.193422538475374,
-            45.193422538475374,
-            38.70210379766075,
-            38.70210379766075
+            23.51591768548542,
+            14.912744132482985,
+            14.912744132482985,
+            14.912744132482985,
+            14.912744132482985,
+            13.86842776715413,
+            12.869180825189492
           ]
         ]
       }
