@@ -89,16 +89,24 @@ func (s dbFileStorage) getProperties(sess *sqlstore.DBSession, pathHashes []stri
 	return attributesByPath, nil
 }
 
-func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) {
+func (s dbFileStorage) Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error) {
 	var result *File
 
-	pathHash, err := createPathHash(filePath)
+	pathHash, err := createPathHash(path)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		table := &file{}
-		exists, err := sess.Table("file").Where("path_hash = ?", pathHash).Get(table)
+
+		sess.Table("file")
+		if options.WithContents {
+			sess.Cols(allFileCols...)
+		} else {
+			sess.Cols(fileColsNoContents...)
+		}
+
+		exists, err := sess.Where("path_hash = ?", pathHash).Get(table)
 		if !exists {
 			return nil
 		}
@@ -134,7 +142,7 @@ func (s dbFileStorage) Get(ctx context.Context, filePath string) (*File, error) 
 		return err
 	})
 
-	return result, err
+	return result, result != nil, err
 }
 
 func (s dbFileStorage) Delete(ctx context.Context, filePath string) error {
