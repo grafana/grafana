@@ -12,8 +12,6 @@ import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
 import { ScatterFieldConfig, ScatterLineMode } from './models.gen';
 
-const categoryStyles = undefined; // ['Scatter styles'];
-
 export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {
     standardOptions: {
@@ -34,7 +32,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addRadio({
           path: 'point',
           name: 'Points',
-          category: categoryStyles,
+          category: undefined,
           defaultValue: cfg.point,
           settings: {
             options: graphFieldOptions.showPoints,
@@ -43,7 +41,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addSliderInput({
           path: 'pointSize.fixed',
           name: 'Size',
-          category: categoryStyles,
+          category: undefined,
           defaultValue: cfg.pointSize?.fixed,
           settings: {
             min: 1,
@@ -55,7 +53,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addRadio({
           path: 'line',
           name: 'Lines',
-          category: categoryStyles,
+          category: undefined,
           defaultValue: cfg.line,
           settings: {
             options: [
@@ -68,7 +66,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
           id: 'lineStyle',
           path: 'lineStyle',
           name: 'Line style',
-          category: categoryStyles,
+          category: undefined,
           showIf: (c) => c.line !== ScatterLineMode.None,
           editor: LineStyleEditor,
           override: LineStyleEditor,
@@ -78,7 +76,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
-          category: categoryStyles,
+          category: undefined,
           defaultValue: cfg.lineWidth,
           settings: {
             min: 0,

@@ -1,9 +1,16 @@
 import React, { PureComponent } from 'react';
 
-import { PanelProps } from '@grafana/data';
+import {
+  DisplayProcessor,
+  DisplayValue,
+  fieldReducers,
+  PanelProps,
+  reduceField,
+  ReducerID,
+  getDisplayProcessor,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
-  LegendDisplayMode,
   Portal,
   TooltipDisplayMode,
   UPlotChart,
@@ -74,21 +81,90 @@ export class XYChartPanel2 extends PureComponent<Props, State> {
   };
 
   renderLegend = () => {
-    const { data } = this.props;
+    const { data, options } = this.props;
     const { series } = this.state;
     const items: VizLegendItem[] = [];
+    const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+    const theme = config.theme2;
+
     for (const s of series) {
       const frame = s.frame(data.series);
       if (frame) {
         for (const item of s.legend(frame)) {
+          item.getDisplayValues = () => {
+            const calcs = options.legend.calcs;
+
+            if (!calcs?.length) {
+              return [];
+            }
+
+            const field = s.y(frame);
+
+            const fmt = field.display ?? defaultFormatter;
+            let countFormatter: DisplayProcessor | null = null;
+
+            const fieldCalcs = reduceField({
+              field,
+              reducers: calcs,
+            });
+
+            return calcs.map<DisplayValue>((reducerId) => {
+              const fieldReducer = fieldReducers.get(reducerId);
+              let formatter = fmt;
+
+              if (fieldReducer.id === ReducerID.diffperc) {
+                formatter = getDisplayProcessor({
+                  field: {
+                    ...field,
+                    config: {
+                      ...field.config,
+                      unit: 'percent',
+                    },
+                  },
+                  theme,
+                });
+              }
+
+              if (
+                fieldReducer.id === ReducerID.count ||
+                fieldReducer.id === ReducerID.changeCount ||
+                fieldReducer.id === ReducerID.distinctCount
+              ) {
+                if (!countFormatter) {
+                  countFormatter = getDisplayProcessor({
+                    field: {
+                      ...field,
+                      config: {
+                        ...field.config,
+                        unit: 'none',
+                      },
+                    },
+                    theme,
+                  });
+                }
+                formatter = countFormatter;
+              }
+
+              return {
+                ...formatter(fieldCalcs[reducerId]),
+                title: fieldReducer.name,
+                description: fieldReducer.description,
+              };
+            });
+          };
+
           items.push(item);
         }
       }
     }
 
+    if (!options.legend.showLegend) {
+      return null;
+    }
+
     return (
-      <VizLayout.Legend placement="bottom">
-        <VizLegend placement="bottom" items={items} displayMode={LegendDisplayMode.List} />
+      <VizLayout.Legend placement={options.legend.placement} width={options.legend.width}>
+        <VizLegend placement={options.legend.placement} items={items} displayMode={options.legend.displayMode} />
       </VizLayout.Legend>
     );
   };
