@@ -51,7 +51,7 @@ const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
   }
 
   if (defaultTab === InspectTab.Trouble) {
-    return <Troubleshooter dashboard={dashboard} panel={panel} plugin={plugin} data={data} onClose={onClose} />;
+    return <Troubleshooter panel={panel} plugin={plugin} onClose={onClose} />;
   }
 
   return (

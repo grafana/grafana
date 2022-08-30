@@ -3,13 +3,25 @@ import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { PanelPlugin, GrafanaTheme2 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { Drawer, Tab, TabsBar, CodeEditor, useStyles2 } from '@grafana/ui';
+import { PanelPlugin, GrafanaTheme2, AppEvents } from '@grafana/data';
+import { getTemplateSrv, locationService } from '@grafana/runtime';
+import {
+  Drawer,
+  Tab,
+  TabsBar,
+  CodeEditor,
+  useStyles2,
+  Field,
+  HorizontalGroup,
+  InlineSwitch,
+  Button,
+} from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 import { PanelModel } from '../../state';
+import { pendingNewDashboard } from '../../state/initDashboard';
 
 import { Randomize } from './randomizer';
 import { getTroubleshootingDashboard } from './utils';
@@ -24,7 +36,7 @@ export const Troubleshooter = ({ panel, plugin, onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const [currentTab, setCurrentTab] = useState(InspectTab.Trouble);
   const [dashboardText, setDashboardText] = useState('???');
-  const [rand] = useState<Randomize>({});
+  const [rand, setRand] = useState<Randomize>({});
   useAsync(async () => {
     const dash = await getTroubleshootingDashboard(panel, rand, getTimeSrv().timeRange());
     setDashboardText(JSON.stringify(dash, null, 2));
@@ -34,6 +46,16 @@ export const Troubleshooter = ({ panel, plugin, onClose }: Props) => {
   if (!plugin) {
     return null;
   }
+
+  const toggleRandomize = (k: keyof Randomize) => {
+    setRand({ ...rand, [k]: !rand[k] });
+  };
+
+  const doImportDashboard = () => {
+    pendingNewDashboard.dashboard = JSON.parse(dashboardText);
+    locationService.push('/dashboard/new'); // will load the above body
+    appEvents.emit(AppEvents.alertSuccess, ['Panel snapshot dashboard']);
+  };
 
   const tabs = [
     { label: 'Troubleshooter', value: InspectTab.Trouble },
@@ -86,7 +108,38 @@ export const Troubleshooter = ({ panel, plugin, onClose }: Props) => {
           </AutoSizer>
         </div>
       ) : (
-        <div>The troubleshooting form!</div>
+        <div>
+          <h3>Snapshot</h3>
+          <div>
+            <Field
+              label="Randomize data"
+              description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+            >
+              <HorizontalGroup>
+                <InlineSwitch
+                  label="Labels"
+                  showLabel={true}
+                  value={Boolean(rand.labels)}
+                  onChange={(v) => toggleRandomize('labels')}
+                />
+                <InlineSwitch
+                  label="Field names"
+                  showLabel={true}
+                  value={Boolean(rand.names)}
+                  onChange={(v) => toggleRandomize('names')}
+                />
+                <InlineSwitch
+                  label="String values"
+                  showLabel={true}
+                  value={Boolean(rand.values)}
+                  onChange={(v) => toggleRandomize('values')}
+                />
+              </HorizontalGroup>
+            </Field>
+          </div>
+
+          <Button onClick={doImportDashboard}>Preview</Button>
+        </div>
       )}
     </Drawer>
   );
