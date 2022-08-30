@@ -2,23 +2,23 @@
 //  
 //  Frame[0] 
 //  Name: ordering frame
-//  Dimensions: 2 Fields by 10 Rows
-//  +---------------------------+--------------------+
-//  | Name: name                | Name: score        |
-//  | Labels:                   | Labels:            |
-//  | Type: []string            | Type: []float64    |
-//  +---------------------------+--------------------+
-//  | dynamic (2)               | 81.3597823796087   |
-//  | roci-simple-2             | 69.55619416658013  |
-//  | Prometheus 2.0            | 63.9039392081036   |
-//  | Prometheus 20.0           | 61.561356811984766 |
-//  | Prometheus Stats          | 61.561356811984766 |
-//  | prometheus histogram      | 61.561356811984766 |
-//  | prometheus histogram2     | 61.561356811984766 |
-//  | Prometheus 2.0 Stats      | 54.664339828871775 |
-//  | Panel Tests - Bar Gauge 2 | 53.98953539939794  |
-//  | Prometheus Second Word    | 52.665845944942504 |
-//  +---------------------------+--------------------+
+//  Dimensions: 2 Fields by 11 Rows
+//  +-----------------------+--------------------+
+//  | Name: name            | Name: score        |
+//  | Labels:               | Labels:            |
+//  | Type: []string        | Type: []float64    |
+//  +-----------------------+--------------------+
+//  | Prometheus 2.0        | 25.347454366155965 |
+//  | Prometheus 2.0 Stats  | 22.887588234361292 |
+//  | dynamic (2)           | 18.704513025594583 |
+//  | 2 - Stats             | 18.704513025594583 |
+//  | Prometheus 20.0       | 16.34863495886131  |
+//  | Prometheus Stats      | 16.34863495886131  |
+//  | prometheus histogram  | 16.34863495886131  |
+//  | prometheus histogram2 | 16.34863495886131  |
+//  | roci-simple-2         | 16.07440655136595  |
+//  | ...                   | ...                |
+//  +-----------------------+--------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -47,28 +47,30 @@
       "data": {
         "values": [
           [
-            "dynamic (2)",
-            "roci-simple-2",
             "Prometheus 2.0",
+            "Prometheus 2.0 Stats",
+            "dynamic (2)",
+            "2 - Stats",
             "Prometheus 20.0",
             "Prometheus Stats",
             "prometheus histogram",
             "prometheus histogram2",
-            "Prometheus 2.0 Stats",
-            "Panel Tests - Bar Gauge 2",
-            "Prometheus Second Word"
+            "roci-simple-2",
+            "Prometheus Second Word",
+            "Panel Tests - Bar Gauge 2"
           ],
           [
-            81.3597823796087,
-            69.55619416658013,
-            63.9039392081036,
-            61.561356811984766,
-            61.561356811984766,
-            61.561356811984766,
-            61.561356811984766,
-            54.664339828871775,
-            53.98953539939794,
-            52.665845944942504
+            25.347454366155965,
+            22.887588234361292,
+            18.704513025594583,
+            18.704513025594583,
+            16.34863495886131,
+            16.34863495886131,
+            16.34863495886131,
+            16.34863495886131,
+            16.07440655136595,
+            14.068507619718227,
+            12.621520215103974
           ]
         ]
       }

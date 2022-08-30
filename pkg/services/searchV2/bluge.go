@@ -24,6 +24,7 @@ const (
 	documentFieldName        = "name"
 	documentFieldName_sort   = "name_sort"
 	documentFieldName_ngram  = "name_ngram"
+	documentFieldName_no_ws  = "name_no_ws" // no whitespace
 	documentFieldDescription = "description"
 	documentFieldLocation    = "location" // parent path
 	documentFieldPanelType   = "panel_type"
@@ -230,6 +231,7 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 	if name != "" {
 		doc.AddField(bluge.NewTextField(documentFieldName, name).StoreValue().SearchTermPositions())
 		doc.AddField(bluge.NewTextField(documentFieldName_ngram, name).WithAnalyzer(ngramIndexAnalyzer))
+		doc.AddField(bluge.NewTextField(documentFieldName_no_ws, strings.ReplaceAll(name, " ", "")).StoreValue().SearchTermPositions())
 
 		// Don't add a field for empty names
 		sortStr := strings.Trim(strings.ToUpper(name), " ")
@@ -438,7 +440,7 @@ func doSearchQuery(
 		bq := bluge.NewBooleanQuery().
 			AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldName).
-				SetBoost(6)).
+				SetBoost(4)).
 			AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldDescription).
 				SetBoost(3))
@@ -469,8 +471,12 @@ func doSearchQuery(
 			for _, k := range tokens {
 				bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(k)).
 					SetField(documentFieldName)).
-					SetBoost(2)
+					SetBoost(1)
 			}
+
+			bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(strings.ReplaceAll(q.Query, " ", ""))).
+				SetField(documentFieldName_no_ws).
+				SetBoost(6))
 		}
 
 		fullQuery.AddMust(bq)

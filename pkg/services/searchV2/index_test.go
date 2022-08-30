@@ -660,6 +660,7 @@ func TestDashboardIndex_MultiTermPrefixMatch(t *testing.T) {
 				"prometheus histogram2",
 				"roci-simple-2",
 				"x not y",
+				"2 - Stats",
 			),
 			query: "Prometheus 2.",
 		},
