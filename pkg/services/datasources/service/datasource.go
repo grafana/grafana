@@ -21,12 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	SQLStore           *sqlstore.SQLStore
+	SQLStore           Store
 	SecretsStore       kvstore.SecretsKVStore
 	SecretsService     secrets.Service
 	cfg                *setting.Cfg
@@ -34,6 +34,7 @@ type Service struct {
 	permissionsService accesscontrol.DatasourcePermissionsService
 	ac                 accesscontrol.AccessControl
 	logger             log.Logger
+	db                 db.DB
 
 	ptc proxyTransportCache
 }
@@ -49,9 +50,11 @@ type cachedRoundTripper struct {
 }
 
 func ProvideService(
-	store *sqlstore.SQLStore, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
+	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 ) *Service {
+	dslogger := log.New("datasources")
+	store := &SqlStore{db: db, logger: dslogger}
 	s := &Service{
 		SQLStore:       store,
 		SecretsStore:   secretsStore,
@@ -63,7 +66,8 @@ func ProvideService(
 		features:           features,
 		permissionsService: datasourcePermissionsService,
 		ac:                 ac,
-		logger:             log.New("datasources"),
+		logger:             dslogger,
+		db:                 db,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -146,7 +150,7 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+	return s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -193,7 +197,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
-	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+	return s.db.InTransaction(ctx, func(ctx context.Context) error {
 		cmd.UpdateSecretFn = func() error {
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
@@ -203,7 +207,7 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 }
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
+	return s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		query := &datasources.GetDataSourceQuery{

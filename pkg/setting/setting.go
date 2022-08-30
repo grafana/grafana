@@ -238,6 +238,7 @@ type Cfg struct {
 	CSVsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
+	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
 
 	// Security
@@ -1408,6 +1409,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
+	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
 
 	if cfg.RendererCallbackUrl == "" {
 		cfg.RendererCallbackUrl = AppUrl
