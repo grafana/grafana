@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/build/config"
-	"github.com/grafana/grafana/pkg/build/droneutil"
-	"github.com/urfave/cli/v2"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/droneutil"
+	"github.com/urfave/cli/v2"
 )
 
 func GenerateVersions(c *cli.Context) error {
@@ -81,12 +81,12 @@ func GenerateVersions(c *cli.Context) error {
 	if err := os.RemoveAll(distDir); err != nil {
 		return err
 	}
-	if err := os.Mkdir(distDir, 0775); err != nil {
+	if err := os.Mkdir(distDir, 0750); err != nil {
 		return err
 	}
 
 	// nolint:gosec
-	if err := ioutil.WriteFile(filepath.Join(distDir, "version.json"), jsonMetadata, 0664); err != nil {
+	if err := os.WriteFile(filepath.Join(distDir, "version.json"), jsonMetadata, 0664); err != nil {
 		return err
 	}
 
