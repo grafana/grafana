@@ -21,8 +21,6 @@ type Manager interface {
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
 	// Remove removes a plugin from the store.
 	Remove(ctx context.Context, pluginID string) error
-	// AddFromSource adds a plugin to the store.
-	AddFromSource(ctx context.Context, source PluginSource) error
 }
 
 type PluginSource struct {

@@ -58,7 +58,7 @@ func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plug
 
 func (m *PluginManager) Init(ctx context.Context) error {
 	for _, ps := range m.pluginSources {
-		if err := m.AddFromSource(ctx, ps); err != nil {
+		if err := m.loadPlugins(ctx, ps.Class, ps.Paths...); err != nil {
 			return err
 		}
 	}
@@ -155,10 +155,6 @@ func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts 
 	return nil
 }
 
-func (m *PluginManager) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
-	return m.loadPlugins(ctx, source.Class, source.Paths...)
-}
-
 func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 	plugin, exists := m.plugin(ctx, pluginID)
 	if !exists {
@@ -191,7 +187,6 @@ func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.P
 }
 
 func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pluginPaths ...string) error {
-	// get all registered plugins
 	registeredPlugins := make(map[string]struct{})
 	for _, p := range m.pluginRegistry.Plugins(ctx) {
 		registeredPlugins[p.ID] = struct{}{}
