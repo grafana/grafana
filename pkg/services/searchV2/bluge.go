@@ -469,7 +469,7 @@ func doSearchQuery(
 			for _, k := range tokens {
 				bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(k)).
 					SetField(documentFieldName)).
-					SetBoost(7)
+					SetBoost(2)
 			}
 		}
 
