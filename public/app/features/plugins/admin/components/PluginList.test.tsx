@@ -9,12 +9,10 @@ import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
 import { PluginList } from './PluginList';
 
-// mock useLocation hook
 jest.mock('react-router-dom', () => ({
   useLocation: jest.fn(),
 }));
 
-// mock @grafana/runtime with require actual
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
