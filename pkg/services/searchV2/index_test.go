@@ -85,12 +85,13 @@ func getFrameWithNames(resp *backend.DataResponse) *data.Frame {
 	}
 
 	frame := resp.Frames[0]
-	field, idx := frame.FieldByName(documentFieldName)
-	if field.Len() == 0 || idx == -1 {
+	nameField, idx := frame.FieldByName(documentFieldName)
+	if nameField.Len() == 0 || idx == -1 {
 		return nil
 	}
 
-	return data.NewFrame("entity names", field)
+	scoreField, _ := frame.FieldByName("score")
+	return data.NewFrame("ordering frame", nameField, scoreField)
 }
 
 func checkSearchResponseOrdering(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery) {
@@ -100,18 +101,21 @@ func checkSearchResponseOrdering(t *testing.T, fileName string, index *orgIndex,
 
 func checkSearchResponseOrderingExtended(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
 	t.Helper()
+	query.Explain = true
 	resp := doSearchQuery(context.Background(), testLogger, index, filter, query, extender, "/pfix")
 	experimental.CheckGoldenJSONFrame(t, "testdata", fileName, getFrameWithNames(resp), true)
 }
 
 var testDashboards = []dashboard{
 	{
+		id:  1,
 		uid: "1",
 		info: &extract.DashboardInfo{
 			Title: "test",
 		},
 	},
 	{
+		id:  2,
 		uid: "2",
 		info: &extract.DashboardInfo{
 			Title: "boom",
@@ -285,12 +289,14 @@ func TestDashboardIndexSort(t *testing.T) {
 
 var testPrefixDashboards = []dashboard{
 	{
+		id:  1,
 		uid: "1",
 		info: &extract.DashboardInfo{
 			Title: "Archer Data System",
 		},
 	},
 	{
+		id:  2,
 		uid: "2",
 		info: &extract.DashboardInfo{
 			Title: "Document Sync repo",
@@ -635,20 +641,6 @@ func dashboardsWithTitles(names ...string) []dashboard {
 
 	return out
 }
-
-var multiTermPrefixMatch = dashboardsWithTitles(
-	"Panel Tests - Bar Gauge 2",
-	"Prometheus 2.0",
-	"Prometheus 2.0 Stats",
-	"Prometheus 20.0",
-	"Prometheus Second Word",
-	"Prometheus Stats",
-	"dynamic (2)",
-	"prometheus histogram",
-	"prometheus histogram2",
-	"roci-simple-2",
-	"x not y",
-)
 
 func TestDashboardIndex_MultiTermPrefixMatch(t *testing.T) {
 	var tests = []struct {
