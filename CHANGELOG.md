@@ -1017,6 +1017,16 @@ In the Loki data source, for consistency and performance reasons, we changed how
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
 
+<!-- 8.5.11 START -->
+
+# 8.5.11 (unreleased)
+
+### Features and enhancements
+
+- **[v8.5.x] Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53681](https://github.com/grafana/grafana/pull/53681), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 8.5.11 END -->
+
 <!-- 8.5.10 START -->
 
 # 8.5.10 (2022-08-08)
