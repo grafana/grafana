@@ -9,18 +9,19 @@ import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button
 import mdx from './Button.mdx';
 import { ButtonGroup } from './ButtonGroup';
 
+const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
+
 export default {
   title: 'Buttons/Button',
   component: Button,
   parameters: {
-    controls: { expanded: true },
     docs: {
       page: mdx,
     },
   },
   argTypes: {
     size: {
-      options: ['sm', 'md', 'lg'],
+      options: sizes,
     },
     tooltip: {
       table: {
@@ -32,11 +33,15 @@ export default {
         disable: true,
       },
     },
+    className: {
+      table: {
+        disable: true,
+      },
+    },
   },
 };
 
 export const Examples: ComponentStory<typeof Button> = () => {
-  const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
   return (
     <VerticalGroup>
       {allButtonFills.map((buttonFill) => (
@@ -104,8 +109,12 @@ export const Examples: ComponentStory<typeof Button> = () => {
   );
 };
 
-export const Default = ({ ...args }: ButtonProps) => <Button {...args} />;
+export const Basic: ComponentStory<typeof Button> = (args: ButtonProps) => <Button {...args} />;
 
-Default.args = {
+Basic.args = {
   children: 'Example button',
+  size: 'md',
+  variant: 'primary',
+  fill: 'solid',
+  type: 'button',
 };
