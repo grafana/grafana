@@ -318,7 +318,7 @@ Labels prefixed with `grafana_` are reserved by Grafana for special use. If a ma
 The current list of labels created by Grafana and available for use anywhere manually configured labels are:
 
 | Label          | Description                               |
-| -------------- | ----------------------------------------- |
+| -------------- | ----------------------------------------- | --------------------------------------------------------------- |
 | grafana_folder | Title of the folder containing the alert. | Issue [#50262](https://github.com/grafana/grafana/issues/50262) |
 
 In Prometheus, browser access mode was deprecated in Grafana 7.4.0 and removed in 9.0.0. If you used this mode, please switch to server access mode on the datasource configuration page. Issue [#50162](https://github.com/grafana/grafana/issues/50162)
