@@ -329,6 +329,19 @@ In Prometheus, browser access mode was deprecated in Grafana 7.4.0 and removed i
 - **Grafana/UI:** Add ColorPickerInput component. [#52222](https://github.com/grafana/grafana/pull/52222), [@Clarity-89](https://github.com/Clarity-89)
 - **Plugins:** Validate root URLs when signing private plugins via grafana-toolkit. [#51968](https://github.com/grafana/grafana/pull/51968), [@wbrowne](https://github.com/wbrowne)
 
+<!-- 9.0.8 START -->
+
+# 9.0.8 (2022-08-30)
+
+### Features and enhancements
+
+- **Alerting:** Hide "no rules" message when we are fetching from data sources. [#53778](https://github.com/grafana/grafana/pull/53778), [@gillesdemey](https://github.com/gillesdemey)
+- **Rendering:** Add support for renderer token (#54425). [#54439](https://github.com/grafana/grafana/pull/54439), [@joanlopez](https://github.com/joanlopez)
+- **Reports:** Title is showing under panels. (Enterprise)
+- **Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53680](https://github.com/grafana/grafana/pull/53680), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 9.0.8 END -->
+
 <!-- 9.0.7 START -->
 
 # 9.0.7 (2022-08-10)
@@ -702,7 +715,7 @@ The `get_alert_rules_duration_seconds` metric has been renamed to `schedule_quer
 - Alternatively or complementarily to all the points above, backing up the Grafana database before updating could be a good idea to prevent disasters (although the risk of getting some secrets corrupted only applies to those updates/created with after updating to Grafana v9.0). Issue [#49301](https://github.com/grafana/grafana/issues/49301)
 
 - According to the dynamic labels documentation, you can use up to five dynamic values per label. There’s currently no such restriction in the alias pattern system, so if more than 5 patterns are being used the GetMetricData API will return an error.
-- Dynamic labels only allow ${LABEL} to be used once per query. There’s no such restriction in the alias pattern system, so in case more than 1 is being used the GetMetricData API will return an error.
+- Dynamic labels only allow \${LABEL} to be used once per query. There’s no such restriction in the alias pattern system, so in case more than 1 is being used the GetMetricData API will return an error.
 - When no alias is provided by the user, Grafana will no longer fallback with custom rules for naming the legend.
 - In case a search expression is being used and no data is returned, Grafana will no longer expand dimension values, for instance when using a multi-valued template variable or star wildcard `*` in the dimension value field. Ref https://github.com/grafana/grafana/issues/20729
 - Time series might be displayed in a different order. Using for example the dynamic label `${PROP('MetricName')}`, might have the consequence that the time series are returned in a different order compared to when the alias pattern `{{metric}}` is used
@@ -1048,6 +1061,17 @@ In the Loki data source, for consistency and performance reasons, we changed how
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
 
+<!-- 8.5.11 START -->
+
+# 8.5.11 (2022-08-30)
+
+### Features and enhancements
+
+- **Rendering:** Add support for renderer token (#54425). [#54438](https://github.com/grafana/grafana/pull/54438), [@joanlopez](https://github.com/joanlopez)
+- **Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53681](https://github.com/grafana/grafana/pull/53681), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+<!-- 8.5.11 END -->
+
 <!-- 8.5.10 START -->
 
 # 8.5.10 (2022-08-08)
@@ -1308,6 +1332,16 @@ When user is using Github OAuth, GitHub login is showed as both Grafana login an
 
 The meaning of the default data source has now changed from being a persisted property in a panel. Before when you selected the default data source for a panel and later changed the default data source to another data source it would change all panels who were configured to use the default data source. From now on the default data source is just the default for new panels and changing the default will not impact any currently saved dashboards. Issue [#45132](https://github.com/grafana/grafana/issues/45132)
 
+<!-- 8.4.11 START -->
+
+# 8.4.11 (2022-08-30)
+
+### Features and enhancements
+
+- **Rendering:** Add support for renderer token (#54425). [#54437](https://github.com/grafana/grafana/pull/54437), [@joanlopez](https://github.com/joanlopez)
+
+<!-- 8.4.11 END -->
+
 <!-- 8.4.10 START -->
 
 # 8.4.10 (2022-07-14)
@@ -1505,6 +1539,16 @@ AngularJS plugin support is now in a deprecated state, meaning it will be remove
 - **News:** Reload feed when changing the time range or refreshing. [#42217](https://github.com/grafana/grafana/pull/42217), [@ashharrison90](https://github.com/ashharrison90)
 - **UI/Plot:** Implement keyboard controls for plot cursor. [#42244](https://github.com/grafana/grafana/pull/42244), [@kaydelaney](https://github.com/kaydelaney)
 
+<!-- 8.3.11 START -->
+
+# 8.3.11 (2022-08-30)
+
+### Features and enhancements
+
+- **Rendering:** Add support for renderer token (#54425). [#54436](https://github.com/grafana/grafana/pull/54436), [@joanlopez](https://github.com/joanlopez)
+
+<!-- 8.3.11 END -->
+
 <!-- 8.3.7 START -->
 
 # 8.3.7 (2022-03-01)
@@ -1578,7 +1622,7 @@ AngularJS plugin support is now in a deprecated state, meaning it will be remove
 - **Login:** Page no longer overflows on mobile. [#43739](https://github.com/grafana/grafana/pull/43739), [@ashharrison90](https://github.com/ashharrison90)
 - **Plugins:** Set backend metadata property for core plugins. [#43349](https://github.com/grafana/grafana/pull/43349), [@marefr](https://github.com/marefr)
 - **Prometheus:** Fill missing steps with null values. [#43622](https://github.com/grafana/grafana/pull/43622), [@ivanahuckova](https://github.com/ivanahuckova)
-- **Prometheus:** Fix interpolation of $\_\_rate_interval variable. [#44035](https://github.com/grafana/grafana/pull/44035), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** Fix interpolation of \$\_\_rate_interval variable. [#44035](https://github.com/grafana/grafana/pull/44035), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Prometheus:** Interpolate variables with curly brackets syntax. [#42927](https://github.com/grafana/grafana/pull/42927), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Prometheus:** Respect the http-method data source setting. [#42753](https://github.com/grafana/grafana/pull/42753), [@gabor](https://github.com/gabor)
 - **Table:** Fixes issue with field config applied to wrong fields when hiding columns. [#43376](https://github.com/grafana/grafana/pull/43376), [@torkelo](https://github.com/torkelo)
@@ -1895,7 +1939,7 @@ If an alert should evaluate to `OK` when one or all conditions return `No Data` 
 - **Graph:** You can now see annotation descriptions on hover. [#40581](https://github.com/grafana/grafana/pull/40581), [@axelavargas](https://github.com/axelavargas)
 - **Logs:** The system now uses the JSON parser only if the line is parsed to an object. [#40507](https://github.com/grafana/grafana/pull/40507), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Prometheus:** We fixed the issue where the system did not reuse TCP connections when querying from Grafana Alerting. [#40349](https://github.com/grafana/grafana/pull/40349), [@kminehart](https://github.com/kminehart)
-- **Prometheus:** We fixed the problem that resulted in an error when a user created a query with a $\_\_interval min step. [#40525](https://github.com/grafana/grafana/pull/40525), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Prometheus:** We fixed the problem that resulted in an error when a user created a query with a \$\_\_interval min step. [#40525](https://github.com/grafana/grafana/pull/40525), [@ivanahuckova](https://github.com/ivanahuckova)
 - **RowsToFields:** We fixed the issue where the system was not properly interpreting number values. [#40580](https://github.com/grafana/grafana/pull/40580), [@torkelo](https://github.com/torkelo)
 - **Scale:** We fixed how the system handles NaN percent when data min = data max. [#40622](https://github.com/grafana/grafana/pull/40622), [@torkelo](https://github.com/torkelo)
 - **Table panel:** You can now create a filter that includes special characters. [#40458](https://github.com/grafana/grafana/pull/40458), [@dprokop](https://github.com/dprokop)
@@ -2318,7 +2362,7 @@ Panel queries and/or annotation queries that used more than one statistic will b
 - **Legacy Alerting:** Replace simplejson with a struct in webhook notification channel. [#34952](https://github.com/grafana/grafana/pull/34952), [@KEVISONG](https://github.com/KEVISONG)
 - **Legend:** Updates display name for Last (not null) to just Last\*. [#35633](https://github.com/grafana/grafana/pull/35633), [@torkelo](https://github.com/torkelo)
 - **Logs panel:** Add option to show common labels. [#36166](https://github.com/grafana/grafana/pull/36166), [@ivanahuckova](https://github.com/ivanahuckova)
-- **Loki:** Add $\_\_range variable. [#36175](https://github.com/grafana/grafana/pull/36175), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Loki:** Add \$\_\_range variable. [#36175](https://github.com/grafana/grafana/pull/36175), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Loki:** Add support for "label_values(log stream selector, label)" in templating. [#35488](https://github.com/grafana/grafana/pull/35488), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Loki:** Add support for ad-hoc filtering in dashboard. [#36393](https://github.com/grafana/grafana/pull/36393), [@ivanahuckova](https://github.com/ivanahuckova)
 - **MySQL Datasource:** Add timezone parameter. [#27535](https://github.com/grafana/grafana/pull/27535), [@andipabst](https://github.com/andipabst)
