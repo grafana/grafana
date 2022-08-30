@@ -144,8 +144,8 @@ export interface TransformerOptions {
 }
 
 export enum LokiVariableQueryType {
-  labelNames,
-  labelValues,
+  LabelNames,
+  LabelValues,
 }
 
 export interface LokiVariableQuery extends DataQuery {
