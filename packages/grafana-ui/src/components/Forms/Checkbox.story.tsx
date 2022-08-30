@@ -20,7 +20,7 @@ const meta: ComponentMeta<typeof Checkbox> = {
   },
 };
 
-export const Controlled: ComponentStory<typeof Checkbox> = (args) => {
+export const Basic: ComponentStory<typeof Checkbox> = (args) => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback((e) => setChecked(e.currentTarget.checked), [setChecked]);
   return (
@@ -30,7 +30,7 @@ export const Controlled: ComponentStory<typeof Checkbox> = (args) => {
   );
 };
 
-Controlled.args = {
+Basic.args = {
   label: 'Skip TLS cert validation',
   description: 'Set to true if you want to skip TLS cert validation',
 };
