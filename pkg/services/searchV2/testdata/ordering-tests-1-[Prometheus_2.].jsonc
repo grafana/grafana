@@ -15,8 +15,8 @@
 //  | Prometheus Stats          |
 //  | prometheus histogram      |
 //  | prometheus histogram2     |
-//  | Panel Tests - Bar Gauge 2 |
 //  | Prometheus 2.0 Stats      |
+//  | Panel Tests - Bar Gauge 2 |
 //  | Prometheus Second Word    |
 //  +---------------------------+
 //  
@@ -47,8 +47,8 @@
             "Prometheus Stats",
             "prometheus histogram",
             "prometheus histogram2",
-            "Panel Tests - Bar Gauge 2",
             "Prometheus 2.0 Stats",
+            "Panel Tests - Bar Gauge 2",
             "Prometheus Second Word"
           ]
         ]

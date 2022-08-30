@@ -8,9 +8,9 @@
 //  | Labels:                |
 //  | Type: []string         |
 //  +------------------------+
+//  | Prometheus Stats       |
 //  | Prometheus 2.0         |
 //  | Prometheus 20.0        |
-//  | Prometheus Stats       |
 //  | prometheus histogram   |
 //  | prometheus histogram2  |
 //  | Prometheus 2.0 Stats   |
@@ -37,9 +37,9 @@
       "data": {
         "values": [
           [
+            "Prometheus Stats",
             "Prometheus 2.0",
             "Prometheus 20.0",
-            "Prometheus Stats",
             "prometheus histogram",
             "prometheus histogram2",
             "Prometheus 2.0 Stats",
