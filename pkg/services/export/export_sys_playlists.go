@@ -10,8 +10,9 @@ import (
 
 func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 	cmd := &playlist.GetPlaylistsQuery{
-		OrgId: helper.orgID,
-		Limit: 500000,
+		OrgId:        helper.orgID,
+		Limit:        500000,
+		IncludeItems: true,
 	}
 	res, err := job.playlistService.Search(helper.ctx, cmd)
 	if err != nil {
@@ -32,7 +33,7 @@ func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 
 		gitcmd.body = append(gitcmd.body, commitBody{
 			fpath: filepath.Join(helper.orgDir, "system", "playlists", fmt.Sprintf("%s-playlist.json", playlist.UID)),
-			body:  prettyJSON(playlist),
+			body:  prettyJSON(playlist.Coremodel()),
 		})
 	}
 

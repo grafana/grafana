@@ -44,7 +44,31 @@ func (s *Service) GetItems(ctx context.Context, q *playlist.GetPlaylistItemsByUi
 }
 
 func (s *Service) Search(ctx context.Context, q *playlist.GetPlaylistsQuery) (playlist.Playlists, error) {
-	return s.store.List(ctx, q)
+	playlists, err := s.store.List(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: single call
+	if q.IncludeItems {
+		for _, p := range playlists {
+			items, err := s.GetItems(ctx, &playlist.GetPlaylistItemsByUidQuery{
+				PlaylistUID: p.UID,
+				OrgId:       p.OrgId,
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			itemsDTO := []playlist.PlaylistItemDTO{}
+			for _, i := range items {
+				itemsDTO = append(itemsDTO, i.DTO())
+			}
+			p.Items = itemsDTO
+		}
+	}
+
+	return playlists, nil
 }
 
 func (s *Service) Delete(ctx context.Context, cmd *playlist.DeletePlaylistCommand) error {

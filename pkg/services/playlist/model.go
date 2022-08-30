@@ -26,7 +26,7 @@ type PlaylistDTO struct {
 	Name     string            `json:"name"`
 	Interval string            `json:"interval"`
 	OrgId    int64             `json:"-"`
-	Items    []PlaylistItemDTO `json:"items"`
+	Items    []PlaylistItemDTO `json:"items,omitempty"`
 }
 
 type PlaylistItemDTO struct {
@@ -47,7 +47,18 @@ type PlaylistItem struct {
 	Title      string `db:"title"`
 }
 
-type Playlists []*Playlist
+func (i PlaylistItem) DTO() PlaylistItemDTO {
+	return PlaylistItemDTO{
+		Id:         i.Id,
+		PlaylistId: i.PlaylistId,
+		Type:       i.Type,
+		Title:      i.Title,
+		Value:      i.Value,
+		Order:      i.Order,
+	}
+}
+
+type Playlists []*PlaylistDTO
 
 //
 // COMMANDS
@@ -78,9 +89,10 @@ type DeletePlaylistCommand struct {
 //
 
 type GetPlaylistsQuery struct {
-	Name  string
-	Limit int
-	OrgId int64
+	Name         string
+	Limit        int
+	OrgId        int64
+	IncludeItems bool
 }
 
 type GetPlaylistByUidQuery struct {
