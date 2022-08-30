@@ -680,17 +680,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend-packages
-  image: grafana/build-container:1.5.9
-  name: build-frontend-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
@@ -779,17 +771,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend-packages
-  image: grafana/build-container:1.5.9
-  name: build-frontend-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
@@ -5175,6 +5159,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 011db54ea09dbe5c8e9add487b5b1d46b1bbcefa480efc55c52c4cb2bcf084a2
+hmac: db1aa172b46e3ecda4a39b7a8276adfca90d6687a6d2457fe4558a2cd35e0277
 
 ...
