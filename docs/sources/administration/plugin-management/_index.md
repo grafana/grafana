@@ -76,11 +76,8 @@ In order to be able to install / uninstall / update plugins using plugin catalog
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
-Currently, there are two entry points to the Plugin catalog.
 
-- Grafana server administrators can find it at **Configuration >
-  Plugins**.
-- Organization administrators can find it at **Configuration > Plugins**.
+- Administrators can find the Plugin catalog at **Configuration > Plugins**.
 
 ### Browse plugins
 
