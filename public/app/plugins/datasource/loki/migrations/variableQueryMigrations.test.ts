@@ -6,7 +6,7 @@ describe('Loki migrateVariableQuery()', () => {
   it('Does not migrate LokiVariableQuery instances', () => {
     const query: LokiVariableQuery = {
       refId: 'test',
-      type: LokiVariableQueryType.labelValues,
+      type: LokiVariableQueryType.LabelValues,
       label: 'label',
       stream: 'stream',
     };
@@ -20,7 +20,7 @@ describe('Loki migrateVariableQuery()', () => {
 
     expect(migrateVariableQuery(query)).toStrictEqual({
       refId: 'LokiVariableQueryEditor-VariableQuery',
-      type: LokiVariableQueryType.labelNames,
+      type: LokiVariableQueryType.LabelNames,
     });
   });
 
@@ -29,7 +29,7 @@ describe('Loki migrateVariableQuery()', () => {
 
     expect(migrateVariableQuery(query)).toStrictEqual({
       refId: 'LokiVariableQueryEditor-VariableQuery',
-      type: LokiVariableQueryType.labelValues,
+      type: LokiVariableQueryType.LabelValues,
       label: 'label',
       stream: undefined,
     });
@@ -40,7 +40,7 @@ describe('Loki migrateVariableQuery()', () => {
 
     expect(migrateVariableQuery(query)).toStrictEqual({
       refId: 'LokiVariableQueryEditor-VariableQuery',
-      type: LokiVariableQueryType.labelValues,
+      type: LokiVariableQueryType.LabelValues,
       label: 'label',
       stream: 'log stream selector',
     });

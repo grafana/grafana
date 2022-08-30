@@ -23,7 +23,7 @@ describe('LokiMetricFindQuery', () => {
 
   it('should return label names for Loki', async () => {
     // label_names()
-    const response = await lokiMetricFindQuery.execute({ refId: 'test', type: LokiVariableQueryType.labelNames });
+    const response = await lokiMetricFindQuery.execute({ refId: 'test', type: LokiVariableQueryType.LabelNames });
 
     expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }]);
   });
@@ -32,7 +32,7 @@ describe('LokiMetricFindQuery', () => {
     // label_values(label1)
     const response = await lokiMetricFindQuery.execute({
       refId: 'test',
-      type: LokiVariableQueryType.labelValues,
+      type: LokiVariableQueryType.LabelValues,
       label: 'label1',
     });
 
@@ -43,7 +43,7 @@ describe('LokiMetricFindQuery', () => {
     // label_values({label1="value1", label2="value2"},label5)
     const response = await lokiMetricFindQuery.execute({
       refId: 'test',
-      type: LokiVariableQueryType.labelValues,
+      type: LokiVariableQueryType.LabelValues,
       stream: '{label1="value1", label2="value2"}',
       label: 'label5',
     });

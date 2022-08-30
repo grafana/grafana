@@ -5,7 +5,7 @@ export class LokiMetricFindQuery {
   constructor(private datasource: LokiDatasource) {}
 
   async execute(query: LokiVariableQuery) {
-    if (query.type === LokiVariableQueryType.labelNames) {
+    if (query.type === LokiVariableQueryType.LabelNames) {
       return this.datasource.labelNamesQuery();
     }
 

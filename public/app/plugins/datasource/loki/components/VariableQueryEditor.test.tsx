@@ -14,7 +14,7 @@ const props: Props = {
   datasource: createLokiDatasource({} as unknown as TemplateSrv),
   query: {
     refId: 'test',
-    type: LokiVariableQueryType.labelNames,
+    type: LokiVariableQueryType.LabelNames,
   },
   onRunQuery: () => {},
   onChange: () => {},
@@ -31,7 +31,7 @@ describe('LokiVariableQueryEditor', () => {
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label names');
 
     expect(onChange).toHaveBeenCalledWith({
-      type: LokiVariableQueryType.labelNames,
+      type: LokiVariableQueryType.LabelNames,
       label: '',
       stream: '',
       refId: 'LokiVariableQueryEditor-VariableQuery',
@@ -54,7 +54,7 @@ describe('LokiVariableQueryEditor', () => {
     await userEvent.click(document.body);
 
     expect(onChange).toHaveBeenCalledWith({
-      type: LokiVariableQueryType.labelValues,
+      type: LokiVariableQueryType.LabelValues,
       label: 'label',
       stream: 'stream',
       refId: 'LokiVariableQueryEditor-VariableQuery',

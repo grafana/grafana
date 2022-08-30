@@ -11,14 +11,14 @@ export function migrateVariableQuery(rawQuery: string | LokiVariableQuery): Loki
 
   const queryBase = {
     refId: 'LokiVariableQueryEditor-VariableQuery',
-    type: LokiVariableQueryType.labelNames,
+    type: LokiVariableQueryType.LabelNames,
   };
 
   const labelNames = rawQuery.match(labelNamesRegex);
   if (labelNames) {
     return {
       ...queryBase,
-      type: LokiVariableQueryType.labelNames,
+      type: LokiVariableQueryType.LabelNames,
     };
   }
 
@@ -26,7 +26,7 @@ export function migrateVariableQuery(rawQuery: string | LokiVariableQuery): Loki
   if (labelValues) {
     return {
       ...queryBase,
-      type: LokiVariableQueryType.labelValues,
+      type: LokiVariableQueryType.LabelValues,
       label: labelValues[2] ? labelValues[2] : labelValues[1],
       stream: labelValues[2] ? labelValues[1] : undefined,
     };
