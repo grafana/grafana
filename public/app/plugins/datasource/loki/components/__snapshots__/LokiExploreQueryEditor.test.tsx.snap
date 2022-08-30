@@ -322,10 +322,8 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       "type": "",
       "uid": "",
       "variables": LokiVariableSupport {
+        "datasource": [Circular],
         "editor": [Function],
-        "metricFindQuery": LokiMetricFindQuery {
-          "datasource": [Circular],
-        },
         "query": [Function],
       },
     }
