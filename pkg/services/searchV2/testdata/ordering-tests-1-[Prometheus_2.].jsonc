@@ -1,0 +1,58 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: entity names
+//  Dimensions: 1 Fields by 10 Rows
+//  +---------------------------+
+//  | Name: name                |
+//  | Labels:                   |
+//  | Type: []string            |
+//  +---------------------------+
+//  | dynamic (2)               |
+//  | roci-simple-2             |
+//  | Prometheus 2.0            |
+//  | Prometheus 20.0           |
+//  | Prometheus Stats          |
+//  | prometheus histogram      |
+//  | prometheus histogram2     |
+//  | Panel Tests - Bar Gauge 2 |
+//  | Prometheus 2.0 Stats      |
+//  | Prometheus Second Word    |
+//  +---------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "name": "entity names",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "dynamic (2)",
+            "roci-simple-2",
+            "Prometheus 2.0",
+            "Prometheus 20.0",
+            "Prometheus Stats",
+            "prometheus histogram",
+            "prometheus histogram2",
+            "Panel Tests - Bar Gauge 2",
+            "Prometheus 2.0 Stats",
+            "Prometheus Second Word"
+          ]
+        ]
+      }
+    }
+  ]
+}

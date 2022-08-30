@@ -1,0 +1,46 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: entity names
+//  Dimensions: 1 Fields by 4 Rows
+//  +----------------------+
+//  | Name: name           |
+//  | Labels:              |
+//  | Type: []string       |
+//  +----------------------+
+//  | Prometheus 2.0       |
+//  | Prometheus 20.0      |
+//  | Prometheus Stats     |
+//  | Prometheus 2.0 Stats |
+//  +----------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "name": "entity names",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "Prometheus 2.0",
+            "Prometheus 20.0",
+            "Prometheus Stats",
+            "Prometheus 2.0 Stats"
+          ]
+        ]
+      }
+    }
+  ]
+}
