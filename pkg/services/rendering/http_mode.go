@@ -28,6 +28,8 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
+const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
+
 func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
 	filePath, err := rs.getNewFilePath(RenderPNG)
 	if err != nil {
@@ -133,6 +135,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, url *url.URL, headers
 		return nil, err
 	}
 
+	req.Header.Set(authTokenHeader, rs.Cfg.RendererAuthToken)
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
 	for k, v := range headers {
 		req.Header[k] = v
