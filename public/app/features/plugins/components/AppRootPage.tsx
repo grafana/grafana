@@ -1,11 +1,11 @@
 // Libraries
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import * as H from 'history';
-import React, { useCallback, useEffect, useReducer } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
 import { createSelector } from 'reselect';
 
-import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
+import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavIndex, NavModel, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
@@ -17,6 +17,8 @@ import { StoreState, useSelector } from 'app/types';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
+
+import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 
 interface RouteParams {
   pluginId: string;
@@ -34,9 +36,12 @@ const initialState: State = { loading: true, pluginNav: null, plugin: null };
 
 export function AppRootPage({ match, queryParams, location }: Props) {
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
-  const portalNode = React.useMemo(() => createHtmlPortalNode(), []);
+  const portalNode = useMemo(() => createHtmlPortalNode(), []);
   const { plugin, loading, pluginNav } = state;
-  const sectionNav = useSelector(createSelector(getNavIndex, (navIndex) => getNavModel(navIndex, 'apps')));
+  const sectionNav = useSelector(
+    createSelector(getNavIndex, (navIndex) => buildPluginSectionNav(location, pluginNav, navIndex))
+  );
+  const context = useMemo(() => buildPluginPageContext(sectionNav), [sectionNav]);
 
   useEffect(() => {
     loadAppPlugin(match.params.pluginId, dispatch);
@@ -70,16 +75,14 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 
   if (config.featureToggles.topnav && !pluginNav) {
-    return pluginRoot;
+    return <PluginPageContext.Provider value={context}>{pluginRoot}</PluginPageContext.Provider>;
   }
-
-  const finalNav = getSectionNav(location, pluginNav, sectionNav);
 
   return (
     <>
       <InPortal node={portalNode}>{pluginRoot}</InPortal>
-      {finalNav ? (
-        <Page navModel={finalNav} pageNav={pluginNav?.node}>
+      {sectionNav ? (
+        <Page navModel={sectionNav} pageNav={pluginNav?.node}>
           <Page.Contents isLoading={loading}>
             <OutPortal node={portalNode} />
           </Page.Contents>
@@ -93,26 +96,19 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 }
 
-function getSectionNav(location: H.Location, pluginNav: NavModel | null, sectionNav: NavModel) {
+function buildPluginSectionNav(location: H.Location, pluginNav: NavModel | null, navIndex: NavIndex) {
   // When topnav is disabled we only just show pluginNav like before
   if (!config.featureToggles.topnav) {
     return pluginNav;
   }
 
-  if (!pluginNav) {
-    return sectionNav;
-  }
-
-  const newSection = {
-    main: { ...sectionNav.main },
-    node: sectionNav.node,
-  };
+  const originalSection = getNavModel(navIndex, 'apps').main;
+  const section = { ...originalSection };
 
   const currentUrl = config.appSubUrl + location.pathname + location.search;
-  console.log('current url', currentUrl);
 
   // Set active page
-  newSection.main.children = (newSection.main?.children ?? []).map((child) => {
+  section.children = (section?.children ?? []).map((child) => {
     if (child.children) {
       return {
         ...child,
@@ -130,11 +126,7 @@ function getSectionNav(location: H.Location, pluginNav: NavModel | null, section
     return child;
   });
 
-  // if (pluginNav.main.children) {
-  //   newSection.node = pluginNav.node;
-  // }
-
-  return newSection;
+  return { main: section, node: section };
 }
 
 const stateSlice = createSlice({

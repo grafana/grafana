@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 
 import { PluginPageProps } from '@grafana/runtime';
+import { PluginPageContext } from 'app/features/plugins/components/PluginPageContext';
 
 import { Page } from '../Page/Page';
 
 export function PluginPage({ children, pageNav }: PluginPageProps) {
+  const context = useContext(PluginPageContext);
+
   return (
-    <Page navId="apps" pageNav={pageNav}>
+    <Page navModel={context.sectionNav} pageNav={pageNav}>
       {children}
     </Page>
   );
