@@ -94,7 +94,7 @@ func getFrameWithNames(resp *backend.DataResponse) *data.Frame {
 		return nil
 	}
 
-	scoreField, idx := frame.FieldByName("score")
+	scoreField, _ := frame.FieldByName("score")
 	return data.NewFrame("ordering frame", nameField, scoreField)
 }
 
