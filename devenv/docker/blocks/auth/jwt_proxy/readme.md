@@ -4,7 +4,7 @@
 To launch the block, use the oauth source. Ex:
 
 ```bash
-make devenv sources="jwt_proxy"
+make devenv sources="auth/jwt_proxy"
 ```
 
 Here is the conf you need to add to your configuration file (conf/custom.ini):

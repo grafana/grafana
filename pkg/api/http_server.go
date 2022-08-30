@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -57,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
+	loginAttempt "github.com/grafana/grafana/pkg/services/login_attempt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -65,17 +67,15 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/quota"
-
-	"github.com/grafana/grafana/pkg/services/correlations"
-	loginAttempt "github.com/grafana/grafana/pkg/services/login_attempt"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsKV "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	spm "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -144,6 +144,9 @@ type HTTPServer struct {
 	EncryptionService            encryption.Internal
 	SecretsService               secrets.Service
 	secretsPluginManager         plugins.SecretsPluginManager
+	secretsStore                 secretsKV.SecretsKVStore
+	secretsMigrator              secrets.Migrator
+	secretsPluginMigrator        *spm.SecretMigrationServiceImpl
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
@@ -178,13 +181,12 @@ type HTTPServer struct {
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
-	secretsMigrator              secrets.Migrator
-	secretsPluginMigrator        *spm.SecretMigrationServiceImpl
-	userService                  user.Service
-	tempUserService              tempUser.Service
-	loginAttemptService          loginAttempt.Service
-	orgService                   org.Service
-	accesscontrolService         accesscontrol.Service
+
+	userService          user.Service
+	tempUserService      tempUser.Service
+	loginAttemptService  loginAttempt.Service
+	orgService           org.Service
+	accesscontrolService accesscontrol.Service
 }
 
 type ServerOptions struct {
@@ -208,7 +210,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
-	dataSourcesService datasources.DataSourceService, secretsService secrets.Service, queryDataService *query.Service,
+	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
@@ -220,7 +222,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
-	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsPluginMigrator *spm.SecretMigrationServiceImpl,
+	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
+	secretsPluginMigrator *spm.SecretMigrationServiceImpl, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
 	accesscontrolService accesscontrol.Service,
 ) (*HTTPServer, error) {
@@ -279,6 +282,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		EncryptionService:            encryptionService,
 		SecretsService:               secretsService,
 		secretsPluginManager:         secretsPluginManager,
+		secretsMigrator:              secretsMigrator,
+		secretsPluginMigrator:        secretsPluginMigrator,
+		secretsStore:                 secretsStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,
@@ -309,8 +315,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          publicDashboardsApi,
-		secretsMigrator:              secretsMigrator,
-		secretsPluginMigrator:        secretsPluginMigrator,
 		userService:                  userService,
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
