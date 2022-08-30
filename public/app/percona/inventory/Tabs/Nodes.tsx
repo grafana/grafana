@@ -147,7 +147,7 @@ export const NodesTab = () => {
                         <Button variant="secondary" size="md" onClick={() => setModalVisible(false)}>
                           Cancel
                         </Button>
-                        <Button size="md" variant="destructive" className={styles.destructiveButton}>
+                        <Button type="submit" size="md" variant="destructive" className={styles.destructiveButton}>
                           Proceed
                         </Button>
                       </HorizontalGroup>
