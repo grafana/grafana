@@ -119,10 +119,8 @@ export async function discoverDataSourceFeatures(dsSettings: {
   }
 
   if (buildInfoResponse.data.application === 'Grafana Mimir') {
-    // if we have both features and buildinfo reported we're talking to Mimir
-    // Do we want to return the other features returned by the mimir API?
     // Mimir does return a version, but this is the mimir version, and not the prometheus version.
-    // @todo find out if mimir API has always supported label api /w matchers or we're going to need to flag features for mimir as well (or request another feature flag)
+    // We do not want to use mimir version numbers to detect feature support, we should instead ask the mimir team to add new flags.
     return {
       application: PromApplication.Mimir,
       features: {
@@ -182,7 +180,7 @@ export async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResp
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-  ).catch(async (e) => {
+  ).catch((e) => {
     if ('status' in e && e.status === 404) {
       return undefined; // Cortex does not support buildinfo endpoint, we return an empty response
     }
