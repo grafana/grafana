@@ -8,8 +8,8 @@ import { migrateVariableQuery } from '../migrations/variableQueryMigrations';
 import { LokiOptions, LokiQuery, LokiVariableQuery, LokiVariableQueryType as QueryType } from '../types';
 
 const variableOptions = [
-  { label: 'Label names', value: QueryType.labelNames },
-  { label: 'Label values', value: QueryType.labelValues },
+  { label: 'Label names', value: QueryType.LabelNames },
+  { label: 'Label values', value: QueryType.LabelValues },
 ];
 
 export type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, LokiVariableQuery>;
@@ -68,7 +68,7 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
           width={16}
         />
       </InlineField>
-      {type === QueryType.labelValues && (
+      {type === QueryType.LabelValues && (
         <>
           <InlineField label="Label" labelWidth={20}>
             <Input type="text" aria-label="Label" value={label} onChange={onLabelChange} onBlur={handleBlur} />
