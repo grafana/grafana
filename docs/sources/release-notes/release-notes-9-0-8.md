@@ -12,4 +12,4 @@ hide_menu = true
 - **Alerting:** Hide "no rules" message when we are fetching from data sources. [#53778](https://github.com/grafana/grafana/pull/53778), [@gillesdemey](https://github.com/gillesdemey)
 - **Rendering:** Add support for renderer token (#54425). [#54439](https://github.com/grafana/grafana/pull/54439), [@joanlopez](https://github.com/joanlopez)
 - **Reports:** Title is showing under panels. (Enterprise)
-- **[v9.0.x] Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53680](https://github.com/grafana/grafana/pull/53680), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** AlertingProxy to elevate permissions for request forwarded to data proxy when RBAC enabled. [#53680](https://github.com/grafana/grafana/pull/53680), [@yuri-tceretian](https://github.com/yuri-tceretian)
