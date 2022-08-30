@@ -1,9 +1,14 @@
+import { Map as OpenLayersMap } from 'ol';
+import { defaults as interactionDefaults } from 'ol/interaction';
+
 import { SelectableValue } from '@grafana/data';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data/src';
 import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
+import { GeomapPanel } from '../GeomapPanel';
 import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
+import { GeomapPanelOptions, MapLayerState } from '../types';
 
 export function getStyleDimension(
   frame: DataFrame | undefined,
@@ -65,6 +70,36 @@ async function initGeojsonFiles() {
           }
         });
       },
+    });
+  }
+}
+
+export function getNewOpenLayersMap(this: GeomapPanel, options: GeomapPanelOptions, div: HTMLDivElement) {
+  return (this.map = new OpenLayersMap({
+    view: this.initMapView(options.view, undefined),
+    pixelRatio: 1, // or zoom?
+    layers: [], // loaded explicitly below
+    controls: [],
+    target: div,
+    interactions: interactionDefaults({
+      mouseWheelZoom: false, // managed by initControls
+    }),
+  }));
+}
+
+export function updateMap(this: GeomapPanel, options: GeomapPanelOptions) {
+  this.initControls(options.controls);
+  this.forceUpdate(); // first render
+}
+
+export function notifyPanelEditor(this: GeomapPanel, layers: MapLayerState[]) {
+  // Notify the panel editor
+  if (this.panelContext.onInstanceStateChange) {
+    this.panelContext.onInstanceStateChange({
+      map: this.map,
+      layers: layers,
+      selected: layers.length - 1, // the top layer
+      actions: this.actions,
     });
   }
 }

@@ -8,7 +8,6 @@ import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
 import { Coordinate } from 'ol/coordinate';
 import { isEmpty } from 'ol/extent';
-import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import BaseLayer from 'ol/layer/Base';
 import { fromLonLat, toLonLat } from 'ol/proj';
@@ -17,7 +16,6 @@ import { Subject, Subscription } from 'rxjs';
 
 import {
   DataFrame,
-  DataHoverClearEvent,
   DataHoverEvent,
   FrameGeometrySourceMode,
   getFrameMatchers,
@@ -48,6 +46,8 @@ import {
   GeomapLayerActions,
 } from './types';
 import { getLayersExtent } from './utils/getLayersExtent';
+import { setTooltipListeners } from './utils/tootltip';
+import { updateMap, getNewOpenLayersMap, notifyPanelEditor } from './utils/utils';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
@@ -273,16 +273,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
     const { options } = this.props;
 
-    const map = (this.map = new OpenLayersMap({
-      view: this.initMapView(options.view, undefined),
-      pixelRatio: 1, // or zoom?
-      layers: [], // loaded explicitly below
-      controls: [],
-      target: div,
-      interactions: interactionDefaults({
-        mouseWheelZoom: false, // managed by initControls
-      }),
-    }));
+    const map = getNewOpenLayersMap.call(this, options, div);
 
     this.byName.clear();
     const layers: MapLayerState[] = [];
@@ -307,26 +298,11 @@ export class GeomapPanel extends Component<Props, State> {
     this.initViewExtent(map.getView(), options.view, map.getLayers());
 
     this.mouseWheelZoom = new MouseWheelZoom();
-    this.map.addInteraction(this.mouseWheelZoom);
-    this.initControls(options.controls);
-    this.forceUpdate(); // first render
+    this.map?.addInteraction(this.mouseWheelZoom);
 
-    // Tooltip listener
-    this.map.on('singleclick', this.pointerClickListener);
-    this.map.on('pointermove', this.pointerMoveListener);
-    this.map.getViewport().addEventListener('mouseout', (evt) => {
-      this.props.eventBus.publish(new DataHoverClearEvent());
-    });
-
-    // Notify the panel editor
-    if (this.panelContext.onInstanceStateChange) {
-      this.panelContext.onInstanceStateChange({
-        map: this.map,
-        layers: layers,
-        selected: layers.length - 1, // the top layer
-        actions: this.actions,
-      });
-    }
+    updateMap.call(this, options);
+    setTooltipListeners.call(this);
+    notifyPanelEditor.call(this, layers);
 
     this.setState({ legends: this.getLegends() });
   };
