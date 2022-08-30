@@ -1,0 +1,71 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: ordering frame
+//  Dimensions: 2 Fields by 8 Rows
+//  +--------------------------+--------------------+
+//  | Name: name               | Name: score        |
+//  | Labels:                  | Labels:            |
+//  | Type: []string           | Type: []float64    |
+//  +--------------------------+--------------------+
+//  | Loki Stats               | 59.88086242607524  |
+//  | Loki 2.0 Stats           | 41.90592731738108  |
+//  | Loki 2.0                 | 17.956898082375066 |
+//  | Loki 20.0                | 17.956898082375066 |
+//  | Loki histogram           | 17.956898082375066 |
+//  | Loki histogram2          | 17.956898082375066 |
+//  | Loki Second Word         | 15.466196435260626 |
+//  | Loki Tests - Bar Gauge 2 | 12.181440822667042 |
+//  +--------------------------+--------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "name": "ordering frame",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "score",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "Loki Stats",
+            "Loki 2.0 Stats",
+            "Loki 2.0",
+            "Loki 20.0",
+            "Loki histogram",
+            "Loki histogram2",
+            "Loki Second Word",
+            "Loki Tests - Bar Gauge 2"
+          ],
+          [
+            59.88086242607524,
+            41.90592731738108,
+            17.956898082375066,
+            17.956898082375066,
+            17.956898082375066,
+            17.956898082375066,
+            15.466196435260626,
+            12.181440822667042
+          ]
+        ]
+      }
+    }
+  ]
+}

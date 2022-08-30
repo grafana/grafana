@@ -1,0 +1,77 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: ordering frame
+//  Dimensions: 2 Fields by 10 Rows
+//  +--------------------------+--------------------+
+//  | Name: name               | Name: score        |
+//  | Labels:                  | Labels:            |
+//  | Type: []string           | Type: []float64    |
+//  +--------------------------+--------------------+
+//  | Loki 2.0                 | 31.58257926529606  |
+//  | Loki Tests - Bar Gauge 2 | 31.41336795606887  |
+//  | Loki 2.0 Stats           | 28.60993673920296  |
+//  | dynamic (2)              | 27.786594126536237 |
+//  | roci-simple-2            | 23.85206472219338  |
+//  | Loki 20.0                | 20.320605938837733 |
+//  | Loki histogram2          | 19.878081207767757 |
+//  | Loki Stats               | 17.956898082375066 |
+//  | Loki histogram           | 17.956898082375066 |
+//  | Loki Second Word         | 15.466196435260626 |
+//  +--------------------------+--------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "name": "ordering frame",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "score",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "Loki 2.0",
+            "Loki Tests - Bar Gauge 2",
+            "Loki 2.0 Stats",
+            "dynamic (2)",
+            "roci-simple-2",
+            "Loki 20.0",
+            "Loki histogram2",
+            "Loki Stats",
+            "Loki histogram",
+            "Loki Second Word"
+          ],
+          [
+            31.58257926529606,
+            31.41336795606887,
+            28.60993673920296,
+            27.786594126536237,
+            23.85206472219338,
+            20.320605938837733,
+            19.878081207767757,
+            17.956898082375066,
+            17.956898082375066,
+            15.466196435260626
+          ]
+        ]
+      }
+    }
+  ]
+}

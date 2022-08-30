@@ -473,11 +473,11 @@ func doSearchQuery(
 					SetField(documentFieldName)).
 					SetBoost(1)
 			}
-
-			bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(strings.ReplaceAll(q.Query, " ", ""))).
-				SetField(documentFieldName_no_ws).
-				SetBoost(6))
 		}
+
+		bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(strings.ReplaceAll(q.Query, " ", ""))).
+			SetField(documentFieldName_no_ws).
+			SetBoost(6))
 
 		fullQuery.AddMust(bq)
 	}
