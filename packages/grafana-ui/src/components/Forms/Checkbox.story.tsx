@@ -33,6 +33,7 @@ export const Basic: ComponentStory<typeof Checkbox> = (args) => {
 Basic.args = {
   label: 'Skip TLS cert validation',
   description: 'Set to true if you want to skip TLS cert validation',
+  disabled: false,
 };
 
 export const StackedList = () => {
@@ -73,6 +74,7 @@ InAField.args = {
   label: 'Hidden',
   description:
     'Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden.',
+  disabled: false,
 };
 
 export default meta;
