@@ -74,16 +74,15 @@ export interface PromBuildInfoSeriesResponse {
   };
 }
 
-export type PrometheusVersionThroughMimir = 'unknown';
 /**
- * Describes the result of the buildinfo API endpoint, Mimir will not return a prometheus version, and instead a string of 'unknown'
+ * Describes the result of the buildinfo API endpoint
  */
 export interface PromBuildInfoResponse {
   data: {
     application?: string | 'Grafana Mimir';
-    branch: string | PrometheusVersionThroughMimir;
-    version: string | PrometheusVersionThroughMimir;
-    revision: string | PrometheusVersionThroughMimir;
+    branch: string;
+    version: string;
+    revision: string;
     goVersion?: string;
     features?: {
       ruler_config_api?: 'true' | 'false';

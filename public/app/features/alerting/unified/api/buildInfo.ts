@@ -200,7 +200,7 @@ export async function fetchPromBuildInfoFallback(url: string): Promise<PromBuild
     })
   ).catch((e) => {
     // We have failed to get the build information
-    console.warn('Failed to get prometheus build information.');
+    console.warn('Failed to get prometheus fallback build information.');
     return undefined;
   });
 
