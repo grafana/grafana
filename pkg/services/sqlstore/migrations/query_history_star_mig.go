@@ -25,6 +25,6 @@ func addQueryHistoryStarMigrations(mg *Migrator) {
 		Name: "org_id", Type: DB_BigInt, Nullable: false, Default: "1",
 	}))
 	
-	mg.AddMigration("alter table query_history_star_mig column user_id type to bigint", NewRawSQLMigration("ALTER TABLE query_history_star ALTER COLUMN user_id TYPE BIGINT;"))
+	mg.AddMigration("alter table query_history_star_mig column user_id type to bigint", NewRawSQLMigration("").Mysql("ALTER TABLE query_history_star MODIFY user_id BIGINT;")).Postgres("ALTER TABLE query_history_star ALTER COLUMN user_id TYPE BIGINT;"))
 		
 }
