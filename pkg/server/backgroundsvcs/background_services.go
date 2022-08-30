@@ -8,8 +8,6 @@ import (
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -35,12 +33,12 @@ import (
 
 func ProvideBackgroundServiceRegistry(
 	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
-	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pm *manager.PluginManager,
+	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService,
 	rendering *rendering.RenderingService, tokenService models.UserTokenBackgroundService, tracing tracing.Tracer,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
-	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, processManager *process.Manager,
+	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache,
 	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
 	// Need to make sure these are initialized, is there a better place to put them?
@@ -59,8 +57,6 @@ func ProvideBackgroundServiceRegistry(
 		tokenService,
 		provisioning,
 		alerting,
-		processManager,
-		pm,
 		grafanaUpdateChecker,
 		pluginsUpdateChecker,
 		metrics,

@@ -207,7 +207,7 @@ func TestPluginManager_Run(t *testing.T) {
 			{Class: plugins.External, Paths: []string{"path3"}},
 		}, loader, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, &fakes.FakeProcessManager{})
 
-		err := pm.Run(context.Background())
+		err := pm.Init(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, []string{"path1", "path2", "path3"}, loader.LoadedPaths)
 	})

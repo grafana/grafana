@@ -30,11 +30,15 @@ type PluginManager struct {
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repo.Service) *PluginManager {
-	return New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader,
+	pluginRepo repo.Service) (*PluginManager, error) {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader,
 		pluginRepo, storage.FileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath),
 		process.NewManager(pluginRegistry),
 	)
+	if err := pm.Init(context.Background()); err != nil {
+		return nil, err
+	}
+	return pm, nil
 }
 
 func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plugins.PluginSource,
@@ -52,7 +56,7 @@ func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plug
 	}
 }
 
-func (m *PluginManager) Run(ctx context.Context) error {
+func (m *PluginManager) Init(ctx context.Context) error {
 	for _, ps := range m.pluginSources {
 		if err := m.AddFromSource(ctx, ps); err != nil {
 			return err

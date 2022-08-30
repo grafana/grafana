@@ -101,17 +101,12 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
 	reg := registry.ProvideService()
-	pm := ProvideService(cfg, reg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
+	pm, err := ProvideService(cfg, reg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
 		provider.ProvideService(coreRegistry)), nil)
-
 	require.NoError(t, err)
 	ps := store.ProvideService(reg)
 
 	ctx := context.Background()
-
-	err = pm.Run(ctx)
-	require.NoError(t, err)
-
 	verifyCorePluginCatalogue(t, ctx, ps)
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
