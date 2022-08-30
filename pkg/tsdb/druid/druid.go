@@ -170,7 +170,7 @@ func (ds *Service) QueryVariableData(ctx context.Context, req *backend.CallResou
 	if err != nil {
 		return []grafanaMetricFindValue{}, err
 	}
-	return ds.queryVariable(req.Body, s, req.Headers)
+	return ds.queryVariable(req.Body, s, toHTTPHeaders(req.Headers))
 }
 
 func (ds *Service) queryVariable(qry []byte, s *druidInstanceSettings, headers http.Header) ([]grafanaMetricFindValue, error) {
@@ -291,10 +291,19 @@ func (ds *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 	return response, nil
 }
 
-func toHTTPHeaders(original map[string]string) http.Header {
+func toHTTPHeaders(rawOriginal interface{}) http.Header {
 	headers := http.Header{}
-	for k, v := range original {
-		headers.Set(k, v)
+	switch original := rawOriginal.(type) {
+	case map[string]string:
+		for k, v := range original {
+			headers.Set(k, v)
+		}
+	case map[string][]string:
+		for k, vv := range original {
+			for _, v := range vv {
+				headers.Set(k, v)
+			}
+		}
 	}
 	return headers
 }
