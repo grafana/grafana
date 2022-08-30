@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { MetricFindValue, TimeRange } from '@grafana/data';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import {PromApiFeatures} from "../../../types/unified-alerting-dto";
+import { PromApiFeatures } from '../../../types/unified-alerting-dto';
 
 import { PrometheusDatasource } from './datasource';
 import { PromQueryRequest } from './types';
@@ -72,7 +72,6 @@ export default class PrometheusMetricFindQuery {
   }
 
   labelValuesQuery(label: string, metric?: string) {
-    console.log('labelValuesQuery', label, metric);
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
 
@@ -93,8 +92,6 @@ export default class PrometheusMetricFindQuery {
       });
     } else {
       // prometheus version supports matchers in label api (prometheus 2.14 and up)
-      this.datasource.getBuildInfo();
-
       const params = {
         'match[]': metric,
         start: start.toString(),
@@ -102,10 +99,7 @@ export default class PrometheusMetricFindQuery {
       };
 
       return this.datasource.getBuildInfo().then((buildInfo) => {
-        console.log('is it working?');
         if (buildInfo?.features.labelApiEnabled) {
-          console.log('New API supported!');
-
           // return label values globally
           url = `/api/v1/label/${label}/values`;
 
@@ -115,7 +109,6 @@ export default class PrometheusMetricFindQuery {
             });
           });
         } else {
-          console.log('Old Endpoint fallback!');
           url = `/api/v1/series`;
           return this.datasource.metadataRequest(url, params).then((result: any) => {
             const _labels = _map(result.data.data, (metric) => {

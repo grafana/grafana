@@ -1,0 +1,95 @@
+
+# Configuration for running Cortex in single-process mode.
+# This should not be used in production.  It is only for getting started
+# and development.
+
+# Disable the requirement that every request to Cortex has a
+# X-Scope-OrgID header. `fake` will be substituted in instead.
+auth_enabled: false
+
+server:
+  http_listen_port: 9009
+
+  # Configure the server to allow messages up to 100MB.
+  grpc_server_max_recv_msg_size: 104857600
+  grpc_server_max_send_msg_size: 104857600
+  grpc_server_max_concurrent_streams: 1000
+
+distributor:
+  shard_by_all_labels: true
+  pool:
+    health_check_ingesters: true
+
+ingester_client:
+  grpc_client_config:
+    # Configure the client to allow messages up to 100MB.
+    max_recv_msg_size: 104857600
+    max_send_msg_size: 104857600
+    grpc_compression: gzip
+
+ingester:
+  lifecycler:
+    # The address to advertise for this ingester.  Will be autodiscovered by
+    # looking up address on eth0 or en0; can be specified if this fails.
+    # address: 127.0.0.1
+
+    # We want to start immediately and flush on shutdown.
+    join_after: 0
+    min_ready_duration: 0s
+    final_sleep: 0s
+    num_tokens: 512
+
+    # Use an in memory ring store, so we don't need to launch a Consul.
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+
+storage:
+  engine: blocks
+
+blocks_storage:
+  tsdb:
+    dir: /tmp/cortex/tsdb
+
+  bucket_store:
+    sync_dir: /tmp/cortex/tsdb-sync
+
+  # You can choose between local storage and Amazon S3, Google GCS and Azure storage. Each option requires additional configuration
+  # as shown below. All options can be configured via flags as well which might be handy for secret inputs.
+  backend: filesystem # s3, gcs, azure or filesystem are valid options
+    # s3:
+    #   bucket_name: cortex
+    #   endpoint: s3.dualstack.us-east-1.amazonaws.com
+    # Configure your S3 credentials below.
+    # secret_access_key: "TODO"
+  # access_key_id:     "TODO"
+  #  gcs:
+  #    bucket_name: cortex
+  #    service_account: # if empty or omitted Cortex will use your default service account as per Google's fallback logic
+  #  azure:
+  #    account_name:
+  #    account_key:
+  #    container_name:
+  #    endpoint_suffix:
+  #    max_retries: # Number of retries for recoverable errors (defaults to 20)
+  filesystem:
+    dir: ./data/tsdb
+
+compactor:
+  data_dir: /tmp/cortex/compactor
+  sharding_ring:
+    kvstore:
+      store: inmemory
+
+frontend_worker:
+  match_max_concurrent: true
+
+ruler:
+  enable_api: true
+  enable_sharding: false
+
+ruler_storage:
+  backend: local
+  local:
+    directory: /tmp/cortex/rules
