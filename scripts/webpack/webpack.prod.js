@@ -82,7 +82,10 @@ module.exports = (env = {}) =>
         chunksSortMode: 'none',
       }),
       new HTMLWebpackCSSChunks(),
-      new WebpackManifestPlugin(),
+      new WebpackManifestPlugin({
+        fileName: path.join(process.cwd(), 'manifest.json'),
+        filter: (file) => !file.name.endsWith('.map'),
+      }),
       function () {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {
