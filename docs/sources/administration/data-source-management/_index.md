@@ -5,6 +5,7 @@ aliases:
   - /docs/grafana/latest/enterprise/datasource_permissions/
   - /docs/sources/permissions/datasource_permissions/
 title: Data source management
+description: Data source management information for Grafana administrators
 weight: 100
 ---
 
@@ -38,13 +39,13 @@ To add a data source:
 
 1. Click **Select**. The data source configuration page opens.
 
-1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "/" >}}) for links to configuration instructions for all supported data sources.
+1. Configure the data source following instructions specific to that data source. See [Data sources]({{< relref "../../datasources" >}}) for links to configuration instructions for all supported data sources.
 
 ## Data source permissions
 
 Data source permissions allow you to restrict access for users to query a data source. For each data source there is a permission page that allows you to enable permissions and restrict query permissions to specific **Users** and **Teams**.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
 
 ### Enable data source permissions
 
