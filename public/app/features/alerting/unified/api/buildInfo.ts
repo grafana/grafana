@@ -133,6 +133,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
     application: PromApplication.Mimir,
     features: {
       rulerApiEnabled: features?.ruler_config_api === 'true',
+      labelApiEnabled: true
     },
   };
 }

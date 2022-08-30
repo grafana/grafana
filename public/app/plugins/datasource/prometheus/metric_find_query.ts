@@ -72,7 +72,6 @@ export default class PrometheusMetricFindQuery {
   }
 
   labelValuesQuery(label: string, metric?: string) {
-    debugger;
     console.log('labelValuesQuery', label, metric);
     const start = this.datasource.getPrometheusTime(this.range.from, false);
     const end = this.datasource.getPrometheusTime(this.range.to, true);
