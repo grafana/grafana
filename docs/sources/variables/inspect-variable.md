@@ -15,7 +15,7 @@ weight: 125
 
 # Inspect variables and their dependencies
 
-The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add]({{< relref "variable-types/" >}}) variables and [manage]({{< relref "manage-variable/" >}}) existing variables from this page.
+The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add]({{< relref "./add-template-variables/" >}}) and [manage](../manage-variable/) variables from this page.
 
 > **Note:** This feature is available in Grafana 7.4 and later versions.
 

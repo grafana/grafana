@@ -101,7 +101,7 @@ locationService.partial({ 'var-service': 'billing' }, true);
 
 ## Add support for query variables to your data source
 
-[Query variables]({{< relref "../../variables/variable-types/add-query-variable/" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.
+[Query variables]({{< relref "../../variables/add-template-variables/#add-a-query-variable" >}}) is a type of variable that allows you to query a data source for the values. By adding support for query variables to your data source plugin, users can create dynamic dashboards based on data from your data source.
 
 Let's start by defining a query model for the variable query.
 
@@ -199,4 +199,4 @@ Let's create a custom query editor to allow the user to edit the query model.
      .setVariableQueryEditor(VariableQueryEditor);
    ```
 
-That's it! You can now try out the plugin by adding a [query variable]({{< relref "../../variables/variable-types/add-query-variable/" >}}) to your dashboard.
+That's it! You can now try out the plugin by adding a [query variable]({{< relref "../../variables/add-template-variables/#add-a-query-variable" >}}) to your dashboard.

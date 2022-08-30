@@ -129,7 +129,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable]({{< relref "../../variables/variable-types/add-interval-variable/" >}}).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable]({{< relref "../../variables/add-template-variables/#add-an-interval-variable" >}}).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
