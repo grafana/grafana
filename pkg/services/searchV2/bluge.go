@@ -444,6 +444,11 @@ func doSearchQuery(
 				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
 				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
 
+		bq.AddShould(
+			bluge.NewWildcardQuery(fmt.Sprintf("*%s*", q.Query)).
+				SetField(documentFieldName).
+				SetBoost(1))
+
 		if len(q.Query) > 4 {
 			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField(documentFieldName)).SetBoost(1.5)
 		}

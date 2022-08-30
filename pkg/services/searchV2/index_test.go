@@ -85,13 +85,13 @@ func checkSearchResponseExtended(t *testing.T, fileName string, index *orgIndex,
 
 func getFrameWithNames(resp *backend.DataResponse) *data.Frame {
 	if resp == nil || len(resp.Frames) == 0 {
-		return nil
+		return data.NewFrame("ordering frame")
 	}
 
 	frame := resp.Frames[0]
 	nameField, idx := frame.FieldByName(documentFieldName)
 	if nameField.Len() == 0 || idx == -1 {
-		return nil
+		return data.NewFrame("ordering frame")
 	}
 
 	scoreField, _ := frame.FieldByName("score")
@@ -682,6 +682,23 @@ func TestDashboardIndex_MultiTermPrefixMatch(t *testing.T) {
 				"x not y",
 			),
 			query: "Prometheus stat",
+		},
+		{
+			dashboards: dashboardsWithTitles(
+				"Panel Tests - Bar Gauge 2",
+				"Prometheus 2.0",
+				"Prometheus 2.0 Stats",
+				"Prometheus 20.0",
+				"PromeTHeus Second Word",
+				"Prometheus Stats",
+				"dynamic (2)",
+				"prometheus histogram",
+				"prometheus histogram2",
+				"roci-simple-2",
+				"metheus test",
+				"x not y",
+			),
+			query: "metheu",
 		},
 	}
 
