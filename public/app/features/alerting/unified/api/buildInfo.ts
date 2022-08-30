@@ -106,7 +106,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
     };
   }
 
-  // if no features are reported but buildinfo was returned we're talking to Prometheus
+  // if no features are reported but buildinfo was returned we're talking to modern Prometheus
   const { features } = buildInfoResponse.data;
   if (!features) {
     return {
@@ -118,13 +118,21 @@ export async function discoverDataSourceFeatures(dsSettings: {
     };
   }
 
-  // if we have both features and buildinfo reported we're talking to Mimir
-  return {
-    application: PromApplication.Mimir,
-    features: {
-      rulerApiEnabled: features?.ruler_config_api === 'true',
-    },
-  };
+  if (buildInfoResponse.data.application === 'Grafana Mimir') {
+    // if we have both features and buildinfo reported we're talking to Mimir
+    // Do we want to return the other features returned by the mimir API?
+    // Mimir does return a version, but this is the mimir version, and not the prometheus version.
+    // @todo find out if mimir API has always supported label api /w matchers or we're going to need to flag features for mimir as well (or request another feature flag)
+    return {
+      application: PromApplication.Mimir,
+      features: {
+        rulerApiEnabled: features?.ruler_config_api === 'true',
+      },
+    };
+  }
+
+  // @todo remove
+  throw Error('Unknown prometheus type!');
 }
 
 export async function discoverAlertmanagerFeatures(amSourceName: string): Promise<AlertmanagerApiFeatures> {
