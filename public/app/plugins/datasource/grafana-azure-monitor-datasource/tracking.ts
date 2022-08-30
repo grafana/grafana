@@ -2,6 +2,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 /**
  * Loaded the first time a dashboard containing azure queries is loaded (not on every render)
+ * Note: The queries used here are the ones pre-migration and pre-filterQuery
  *
  * This allows answering questions about:
  * - the adoption of the three query types (Azure Monitor, Azure Logs Analytics and Azure Resource Graph)
