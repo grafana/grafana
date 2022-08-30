@@ -12,7 +12,7 @@ import { Icon } from '../../Icon/Icon';
 
 import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
-import { TimeRangeForm } from './TimeRangeForm';
+import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
@@ -155,7 +155,7 @@ const NarrowScreenForm = (props: FormProps) => {
       {!collapsed && (
         <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
-            <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
+            <TimeRangeContent value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
           {showHistory && (
             <TimeRangeList
@@ -185,7 +185,7 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
         <div className={styles.title} data-testid={selectors.components.TimePicker.absoluteTimeRangeTitle}>
           <TimePickerTitle>Absolute time range</TimePickerTitle>
         </div>
-        <TimeRangeForm
+        <TimeRangeContent
           value={value}
           timeZone={timeZone}
           fiscalYearStartMonth={fiscalYearStartMonth}
