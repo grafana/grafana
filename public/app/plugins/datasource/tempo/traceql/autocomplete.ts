@@ -206,8 +206,9 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       }
 
       // In case there's a space after the full [name + operator + value] group we can start autocompleting logical operators or close the spanset
+      // To avoid triggering this situation when we are writing a space inside a string we check the state of the open and close quotes
       // { .http.method = "GET" |
-      if (matched.groups?.space3) {
+      if (matched.groups?.space3 && matched.groups.open_quote === matched.groups.close_quote) {
         return {
           type: 'SPANSET_AFTER_VALUE',
         };
