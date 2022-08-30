@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { defaults } from 'lodash';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -14,12 +14,8 @@ import { TraceQLEditor } from './TraceQLEditor';
 type Props = QueryEditorProps<TempoDatasource, TempoQuery, MyDataSourceOptions>;
 
 export function QueryEditor(props: Props) {
-  const [query, setQuery] = useState(defaults(props.query, defaultQuery));
   const styles = useStyles2(getStyles);
-
-  const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
-    setQuery({ ...query, limit: parseInt(e.currentTarget.value, 10) });
-  };
+  const query = defaults(props.query, defaultQuery);
 
   const onEditorChange = (value: string) => {
     props.onChange({ ...query, query: value });
@@ -29,7 +25,7 @@ export function QueryEditor(props: Props) {
     <>
       <TraceQLEditor value={query.query} onChange={onEditorChange} datasource={props.datasource} />
       <div className={styles.optionsContainer}>
-        <TempoQueryBuilderOptions query={query} onLimitChange={onLimitChange} />
+        <TempoQueryBuilderOptions query={query} onChange={props.onChange} />
       </div>
     </>
   );
