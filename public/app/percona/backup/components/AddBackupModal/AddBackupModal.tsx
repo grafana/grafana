@@ -19,7 +19,7 @@ import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { validators as customValidators } from 'app/percona/shared/helpers/validators';
 
-import { BackupMode } from '../../Backup.types';
+import { BackupMode, DataModel } from '../../Backup.types';
 import { BackupErrorSection } from '../BackupErrorSection/BackupErrorSection';
 
 import {
@@ -39,11 +39,12 @@ import { AddBackupModalService } from './AddBackupModal.service';
 import { getStyles } from './AddBackupModal.styles';
 import { AddBackupFormProps, AddBackupModalProps, SelectableService } from './AddBackupModal.types';
 import {
-  getBackupModeOptions,
-  getDataModelFromVendor,
+  toFormBackup,
   isCronFieldDisabled,
   PERIOD_OPTIONS,
-  toFormBackup,
+  getBackupModeOptions,
+  getDataModelFromVendor,
+  isDataModelDisabled,
 } from './AddBackupModal.utils';
 import { RetryModeSelector } from './RetryModeSelector';
 
@@ -72,12 +73,21 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
         initialValues={initialValues}
         onSubmit={handleSubmit}
         mutators={{
-          changeVendor: ([vendor]: [Databases, BackupMode], state, tools) => {
+          changeVendor: ([vendor]: [Databases], state, tools) => {
             tools.changeValue(state, 'vendor', () => vendor);
             tools.changeValue(state, 'dataModel', () => getDataModelFromVendor(vendor));
             //TODO remove this when we support incremental backups for MySQL
             if (vendor === Databases.mysql) {
               tools.changeValue(state, 'mode', () => BackupMode.SNAPSHOT);
+            }
+          },
+          changeDataModel: ([labels]: [NodeListOf<HTMLLabelElement> | null], state, tools) => {
+            if (labels?.length) {
+              const label = labels[0].textContent;
+
+              if (label === BackupMode.PITR) {
+                tools.changeValue(state, 'dataModel', () => DataModel.LOGICAL);
+              }
             }
           },
         }}
@@ -108,6 +118,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                   name="vendor"
                   label={Messages.vendor}
                   disabled
+                  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                   format={(vendor) => DATABASE_LABELS[vendor as Databases] || ''}
                 />
               </div>
@@ -135,7 +146,7 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
               </div>
             </div>
             <RadioButtonGroupField
-              disabled
+              disabled={isDataModelDisabled(values)}
               options={DATA_MODEL_OPTIONS}
               name="dataModel"
               label={Messages.dataModel}
@@ -149,6 +160,9 @@ export const AddBackupModal: FC<AddBackupModalProps> = ({
                 disabled={!!backup || values.vendor === Databases.mysql}
                 label={Messages.type}
                 fullWidth
+                inputProps={{
+                  onInput: (e: React.ChangeEvent<HTMLInputElement>) => form.mutators.changeDataModel(e.target.labels),
+                }}
               />
             )}
             {!scheduleMode && <RetryModeSelector retryMode={values.retryMode} />}

@@ -25,33 +25,28 @@ export const ChunkedLogsViewer: FC<ChunkedLogsViewerProps> = ({ getLogChunks }) 
     [logs]
   );
 
-  useEffect(() => {
-    const refreshCurrentLogs = async () => {
-      try {
-        const { logs: newLogs = [], end } = await getLogChunks(
-          logs[0]?.id || 0,
-          LIMIT,
-          generateToken(LOGS_CANCEL_TOKEN)
-        );
-        setLogs(newLogs);
-        setLastLog(!!end);
-      } catch (e) {
-        if (isApiCancelError(e)) {
-          return;
-        }
-        logger.error(e);
-      }
-    };
+  const refreshCurrentLogs = async () => {
+    try {
+      const { logs: newLogs = [], end } = await getLogChunks(logs[0]?.id || 0, LIMIT, generateToken(LOGS_CANCEL_TOKEN));
 
+      if (end && !lastLog) {
+        stopTimeout();
+      }
+
+      setLogs(newLogs);
+      setLastLog(!!end);
+    } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
+    }
+  };
+
+  useEffect(() => {
     triggerTimeout(refreshCurrentLogs, STREAM_INTERVAL, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [triggerTimeout, getLogChunks, logs]);
-
-  useEffect(() => {
-    if (lastLog) {
-      stopTimeout();
-    }
-  }, [lastLog, stopTimeout]);
+  }, []);
 
   return (
     <>

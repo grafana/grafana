@@ -75,8 +75,18 @@ export const ScheduledBackups: FC = () => {
 
   const handleCopy = useCallback(
     async (backup: ScheduledBackup) => {
-      const { serviceId, locationId, cronExpression, name, description, retention, retryInterval, retryTimes, mode } =
-        backup;
+      const {
+        serviceId,
+        locationId,
+        cronExpression,
+        name,
+        description,
+        retention,
+        retryInterval,
+        retryTimes,
+        mode,
+        dataModel,
+      } = backup;
       const newName = `${Messages.scheduledBackups.copyOf} ${name}`;
       setActionPending(true);
       try {
@@ -90,7 +100,8 @@ export const ScheduledBackups: FC = () => {
           retryTimes,
           retention,
           false,
-          mode
+          mode,
+          dataModel
         );
         getData();
       } catch (e) {
@@ -208,6 +219,7 @@ export const ScheduledBackups: FC = () => {
       active,
       retention,
       mode,
+      dataModel,
     } = backup;
     try {
       const cronExpression = getCronStringFromValues(
@@ -244,7 +256,8 @@ export const ScheduledBackups: FC = () => {
           resultRetryTimes!,
           retention!,
           active!,
-          mode
+          mode,
+          dataModel
         );
         appEvents.emit(AppEvents.alertSuccess, [Messages.scheduledBackups.addSuccess]);
       }

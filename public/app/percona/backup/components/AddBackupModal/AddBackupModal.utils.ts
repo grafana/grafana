@@ -38,6 +38,7 @@ export const PERIOD_OPTIONS: Array<SelectableValue<PeriodType>> = [
 ];
 
 const isScheduledBackup = (backup: Backup | ScheduledBackup): backup is ScheduledBackup =>
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   (backup as ScheduledBackup).cronExpression !== undefined;
 
 export const toFormBackup = (backup: Backup | ScheduledBackup | null): AddBackupFormProps => {
@@ -166,3 +167,6 @@ export const getDataModelFromVendor = (db: Databases): DataModel => {
   const logicalDbs = [Databases.mongodb];
   return logicalDbs.includes(db) ? DataModel.LOGICAL : DataModel.PHYSICAL;
 };
+
+export const isDataModelDisabled = (values: AddBackupFormProps) =>
+  values.service?.value?.vendor === Databases.mysql || values.mode === BackupMode.PITR;

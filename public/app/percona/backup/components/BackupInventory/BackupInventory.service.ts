@@ -3,7 +3,7 @@ import { CancelToken } from 'axios';
 import { DBServiceList, ServiceListPayload } from 'app/percona/inventory/Inventory.types';
 import { api } from 'app/percona/shared/helpers/api';
 
-import { BackupLogResponse, BackupLogs } from '../../Backup.types';
+import { BackupLogResponse, BackupLogs, DataModel } from '../../Backup.types';
 
 import { Backup, BackupResponse } from './BackupInventory.types';
 
@@ -11,7 +11,7 @@ const BASE_URL = '/v1/management/backup';
 
 export const BackupInventoryService = {
   async list(token?: CancelToken): Promise<Backup[]> {
-    const { artifacts = [] } = await api.post<BackupResponse, any>(`${BASE_URL}/Artifacts/List`, {}, false, token);
+    const { artifacts = [] } = await api.post<BackupResponse, Object>(`${BASE_URL}/Artifacts/List`, {}, false, token);
     return artifacts.map(
       ({
         artifact_id,
@@ -58,6 +58,7 @@ export const BackupInventoryService = {
     description: string,
     retryInterval: string,
     retryTimes: number,
+    dataModel: DataModel,
     token?: CancelToken
   ) {
     return api.post(
@@ -69,6 +70,7 @@ export const BackupInventoryService = {
         description,
         retry_interval: retryInterval,
         retries: retryTimes,
+        data_model: dataModel,
       },
       false,
       token
@@ -78,7 +80,7 @@ export const BackupInventoryService = {
     return api.post(`${BASE_URL}/Artifacts/Delete`, { artifact_id: artifactId, remove_files: removeFiles });
   },
   async getLogs(artifactId: string, offset: number, limit: number, token?: CancelToken): Promise<BackupLogs> {
-    const { logs = [], end } = await api.post<BackupLogResponse, any>(
+    const { logs = [], end } = await api.post<BackupLogResponse, Object>(
       `${BASE_URL}/Backups/GetLogs`,
       {
         artifact_id: artifactId,
@@ -95,7 +97,7 @@ export const BackupInventoryService = {
     };
   },
   async listCompatibleServices(artifactId: string): Promise<DBServiceList> {
-    const { mysql = [], mongodb = [] } = await api.post<ServiceListPayload, any>(
+    const { mysql = [], mongodb = [] } = await api.post<ServiceListPayload, Object>(
       `${BASE_URL}/Backups/ListArtifactCompatibleServices`,
       {
         artifact_id: artifactId,

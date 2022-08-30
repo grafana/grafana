@@ -1,19 +1,22 @@
 import axios, { CancelTokenSource } from 'axios';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 
 export const useCancelToken = () => {
   const tokens = useRef<Record<string, CancelTokenSource>>({});
 
-  const cancelToken = (sourceName: string) => {
+  const cancelToken = useCallback((sourceName: string) => {
     tokens.current[sourceName] && tokens.current[sourceName].cancel();
-  };
+  }, []);
 
-  const generateToken = (sourceName: string) => {
-    cancelToken(sourceName);
-    const tokenSource = axios.CancelToken.source();
-    tokens.current = { ...tokens.current, [sourceName]: tokenSource };
-    return tokenSource.token;
-  };
+  const generateToken = useCallback(
+    (sourceName: string) => {
+      cancelToken(sourceName);
+      const tokenSource = axios.CancelToken.source();
+      tokens.current = { ...tokens.current, [sourceName]: tokenSource };
+      return tokenSource.token;
+    },
+    [cancelToken]
+  );
 
   useEffect(
     () => () => {
@@ -21,7 +24,7 @@ export const useCancelToken = () => {
         cancelToken(sourceName);
       });
     },
-    []
+    [cancelToken]
   );
 
   return [generateToken, cancelToken] as const;
