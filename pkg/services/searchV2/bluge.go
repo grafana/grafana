@@ -435,20 +435,29 @@ func doSearchQuery(
 			fullQuery.AddShould(bluge.NewMatchAllQuery())
 		}
 	} else {
-		// The actual se
 		bq := bluge.NewBooleanQuery().
-			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
-			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
+			AddShould(bluge.NewMatchQuery(q.Query).
+				SetFuzziness(2). // Allows multi-term queries to become fuzzy queries
+				SetField(documentFieldName).
+				SetBoost(6)).
+			AddShould(bluge.NewMatchQuery(q.Query).
+				SetField(documentFieldDescription).
+				SetBoost(3)).
 			AddShould(bluge.NewMatchQuery(q.Query).
 				SetField(documentFieldName_ngram).
 				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
 				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
 
-		if len(q.Query) > 4 {
-			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField(documentFieldName)).SetBoost(1.5)
-		}
-		if len(q.Query) > ngramEdgeFilterMaxLength && !strings.Contains(q.Query, " ") {
-			bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(q.Query)).SetField(documentFieldName)).SetBoost(6)
+		// Add a prefix query when values are longer than ngrams
+		if len(q.Query) > ngramEdgeFilterMaxLength {
+			tokens := strings.Fields(q.Query) // split by whitespce
+			for _, k := range tokens {
+				if len(k) > ngramEdgeFilterMaxLength {
+					bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(k)).
+						SetField(documentFieldName)).
+						SetBoost(6)
+				}
+			}
 		}
 		fullQuery.AddMust(bq)
 	}

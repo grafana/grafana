@@ -43,5 +43,6 @@ var ngramQueryAnalyzer = &analysis.Analyzer{
 	TokenFilters: []analysis.TokenFilter{
 		token.NewCamelCaseFilter(),
 		token.NewLowerCaseFilter(),
+		// fail is > ngramEdgeFilterMaxLength?
 	},
 }

@@ -31,10 +31,6 @@ var testAllowAllFilter = func(uid string) bool {
 	return true
 }
 
-var testDisallowAllFilter = func(uid string) bool {
-	return false
-}
-
 var testOrgID int64 = 1
 
 func initTestOrgIndexFromDashes(t *testing.T, dashboards []dashboard) *orgIndex {
@@ -84,14 +80,12 @@ func checkSearchResponseExtended(t *testing.T, fileName string, index *orgIndex,
 
 var testDashboards = []dashboard{
 	{
-		id:  1,
 		uid: "1",
 		info: &extract.DashboardInfo{
 			Title: "test",
 		},
 	},
 	{
-		id:  2,
 		uid: "2",
 		info: &extract.DashboardInfo{
 			Title: "boom",
@@ -109,7 +103,13 @@ func TestDashboardIndex(t *testing.T) {
 
 	t.Run("basic-filter", func(t *testing.T) {
 		index := initTestOrgIndexFromDashes(t, testDashboards)
-		checkSearchResponse(t, filepath.Base(t.Name()), index, testDisallowAllFilter,
+		checkSearchResponse(t,
+			filepath.Base(t.Name()),
+			index,
+			// Should only include UID=3
+			func(uid string) bool {
+				return uid != "2" // remove everything except items with UID 1
+			},
 			DashboardQuery{Query: "boom"},
 		)
 	})
@@ -259,17 +259,21 @@ func TestDashboardIndexSort(t *testing.T) {
 
 var testPrefixDashboards = []dashboard{
 	{
-		id:  1,
 		uid: "1",
 		info: &extract.DashboardInfo{
 			Title: "Archer Data System",
 		},
 	},
 	{
-		id:  2,
 		uid: "2",
 		info: &extract.DashboardInfo{
 			Title: "Document Sync repo",
+		},
+	},
+	{
+		uid: "3",
+		info: &extract.DashboardInfo{
+			Title: "Prometheus 2.0 stats", // Prometheus is longer than ngrams length
 		},
 	},
 }
@@ -300,6 +304,13 @@ func TestDashboardIndex_PrefixSearch(t *testing.T) {
 		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
 		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
 			DashboardQuery{Query: "syn"},
+		)
+	})
+
+	t.Run("prefix-search-longer", func(t *testing.T) {
+		index := initTestOrgIndexFromDashes(t, testPrefixDashboards)
+		checkSearchResponse(t, filepath.Base(t.Name()), index, testAllowAllFilter,
+			DashboardQuery{Query: "prometheus 2.0 st"},
 		)
 	})
 }
@@ -453,10 +464,10 @@ func TestDashboardIndex_Folders(t *testing.T) {
 		index := initTestOrgIndexFromDashes(t, dashboardsWithFolders)
 		// TODO: golden file compare does not work here.
 		resp := doSearchQuery(context.Background(), testLogger, index, testAllowAllFilter,
-			DashboardQuery{Query: "Dashboard in folder", Kind: []string{string(entityKindDashboard)}},
+			DashboardQuery{Query: "", Kind: []string{string(entityKindDashboard)}},
 			&NoopQueryExtender{}, "")
 		custom, ok := resp.Frames[0].Meta.Custom.(*customMeta)
-		require.Equal(t, uint64(2), custom.Count)
+		require.Equal(t, uint64(3), custom.Count)
 		require.True(t, ok, fmt.Sprintf("actual type: %T", resp.Frames[0].Meta.Custom))
 		require.Equal(t, "/dashboards/f/1/", custom.Locations["1"].URL)
 	})
