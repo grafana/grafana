@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import { Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
-import { FeatureLike } from 'ol/Feature';
+import { Map as OpenLayersMap, MapBrowserEvent, View } from 'ol';
 import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import React, { Component, ReactNode } from 'react';
-import { Subject, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 
-import { DataHoverEvent, GrafanaTheme, MapLayerOptions, PanelData, PanelProps } from '@grafana/data';
+import { DataHoverEvent, GrafanaTheme, PanelData, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
 import { PanelEditExitedEvent } from 'app/types/events';
@@ -20,13 +19,13 @@ import { DebugOverlay } from './components/DebugOverlay';
 import { MeasureOverlay } from './components/MeasureOverlay';
 import { GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
-import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
-import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
+import { defaultMarkersConfig } from './layers/data/markersLayer';
+import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
 import { ControlsOptions, GeomapPanelOptions, MapLayerState, TooltipMode } from './types';
 import { getActions } from './utils/actions';
-import { applyLayerFilter } from './utils/layers';
+import { applyLayerFilter, initLayer } from './utils/layers';
 import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tootltip';
-import { updateMap, getNewOpenLayersMap, notifyPanelEditor, getNextLayerName } from './utils/utils';
+import { updateMap, getNewOpenLayersMap, notifyPanelEditor } from './utils/utils';
 import { initMapView, initViewExtent } from './utils/view';
 
 // Allows multiple panels to share the same view instance
@@ -176,13 +175,13 @@ export class GeomapPanel extends Component<Props, State> {
     this.byName.clear();
     const layers: MapLayerState[] = [];
     try {
-      layers.push(await this.initLayer(map, options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
+      layers.push(await initLayer(this, map, options.basemap ?? DEFAULT_BASEMAP_CONFIG, true));
 
       // Default layer values
       const layerOptions = options.layers ?? [defaultMarkersConfig];
 
       for (const lyr of layerOptions) {
-        layers.push(await this.initLayer(map, lyr, false));
+        layers.push(await initLayer(this, map, lyr, false));
       }
     } catch (ex) {
       console.error('error loading layers', ex);
@@ -222,120 +221,6 @@ export class GeomapPanel extends Component<Props, State> {
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
     pointerMoveListener(evt, this);
   };
-
-  private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
-    if (!this.map) {
-      return false;
-    }
-    const current = this.byName.get(uid);
-    if (!current) {
-      return false;
-    }
-
-    let layerIndex = -1;
-    const group = this.map?.getLayers()!;
-    for (let i = 0; i < group?.getLength(); i++) {
-      if (group.item(i) === current.layer) {
-        layerIndex = i;
-        break;
-      }
-    }
-
-    // Special handling for rename
-    if (newOptions.name !== uid) {
-      if (!newOptions.name) {
-        newOptions.name = uid;
-      } else if (this.byName.has(newOptions.name)) {
-        return false;
-      }
-      this.byName.delete(uid);
-
-      uid = newOptions.name;
-      this.byName.set(uid, current);
-    }
-
-    // Type changed -- requires full re-initalization
-    if (current.options.type !== newOptions.type) {
-      // full init
-    } else {
-      // just update options
-    }
-
-    const layers = this.layers.slice(0);
-    try {
-      const info = await this.initLayer(this.map, newOptions, current.isBasemap);
-      layers[layerIndex]?.handler.dispose?.();
-      layers[layerIndex] = info;
-      group.setAt(layerIndex, info.layer);
-
-      // initialize with new data
-      applyLayerFilter(info.handler, newOptions, this.props.data);
-    } catch (err) {
-      console.warn('ERROR', err);
-      return false;
-    }
-
-    // Just to trigger a state update
-    this.setState({ legends: [] });
-
-    this.layers = layers;
-    this.doOptionsUpdate(layerIndex);
-    return true;
-  };
-
-  async initLayer(map: PluggableMap, options: MapLayerOptions, isBasemap?: boolean): Promise<MapLayerState> {
-    if (isBasemap && (!options?.type || config.geomapDisableCustomBaseLayer)) {
-      options = DEFAULT_BASEMAP_CONFIG;
-    }
-
-    // Use default makers layer
-    if (!options?.type) {
-      options = {
-        type: MARKERS_LAYER_ID,
-        name: getNextLayerName(this),
-        config: {},
-      };
-    }
-
-    const item = geomapLayerRegistry.getIfExists(options.type);
-    if (!item) {
-      return Promise.reject('unknown layer: ' + options.type);
-    }
-
-    const handler = await item.create(map, options, this.props.eventBus, config.theme2);
-    const layer = handler.init();
-    if (options.opacity != null) {
-      layer.setOpacity(options.opacity);
-    }
-
-    if (!options.name) {
-      options.name = getNextLayerName(this);
-    }
-
-    const UID = options.name;
-    const state: MapLayerState<unknown> = {
-      // UID, // unique name when added to the map (it may change and will need special handling)
-      isBasemap,
-      options,
-      layer,
-      handler,
-      mouseEvents: new Subject<FeatureLike | undefined>(),
-
-      getName: () => UID,
-
-      // Used by the editors
-      onChange: (cfg: MapLayerOptions) => {
-        this.updateLayer(UID, cfg);
-      },
-    };
-
-    this.byName.set(UID, state);
-    (state.layer as any).__state = state;
-
-    applyLayerFilter(handler, options, this.props.data);
-
-    return state;
-  }
 
   initControls(options: ControlsOptions) {
     if (!this.map) {
