@@ -129,13 +129,13 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
           <InlineFieldRow>
             <InlineField label="Data Scope" labelWidth={labelWidth} grow={true}>
               <RadioButtonGroup
-                value={'all'}
+                value={value?.lastOnly ? 'last' : 'all'}
                 options={[
                   { label: 'All', value: 'all' },
                   { label: 'Last Only', value: 'last' },
                 ]}
-                onChange={() => {
-                  console.log('change scope');
+                onChange={(v) => {
+                  onChange({ ...value, lastOnly: v === 'last' });
                 }}
               ></RadioButtonGroup>
             </InlineField>

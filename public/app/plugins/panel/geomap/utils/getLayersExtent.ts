@@ -4,7 +4,7 @@ import BaseLayer from 'ol/layer/Base';
 import LayerGroup from 'ol/layer/Group';
 import VectorLayer from 'ol/layer/Vector';
 
-export function getLayersExtent(layers: Collection<BaseLayer>): Extent {
+export function getLayersExtent(layers: Collection<BaseLayer>, lastOnly: boolean): Extent {
   return layers
     .getArray()
     .filter((l) => l instanceof VectorLayer || l instanceof LayerGroup)
@@ -12,6 +12,11 @@ export function getLayersExtent(layers: Collection<BaseLayer>): Extent {
       if (l instanceof LayerGroup) {
         return getLayerGroupExtent(l);
       } else if (l instanceof VectorLayer) {
+        if (lastOnly) {
+          const feat = l.getSource().getFeatures();
+          const featOfInterest = feat[feat.length - 1];
+          return [featOfInterest.getGeometry().getExtent()] ?? [];
+        }
         return [l.getSource().getExtent()] ?? [];
       } else {
         return [];
