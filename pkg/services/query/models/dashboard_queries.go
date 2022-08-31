@@ -1,4 +1,4 @@
-package models
+package query
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
