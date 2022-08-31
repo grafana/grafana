@@ -2,7 +2,7 @@ import { toLonLat } from 'ol/proj';
 import React, { FC, useMemo, useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, RadioButtonGroup, Select, VerticalGroup } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { GeomapInstanceState } from '../GeomapPanel';
@@ -99,7 +99,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
       )}
 
       <InlineFieldRow>
-        <InlineField label="Zoom" labelWidth={labelWidth} grow={true}>
+        <InlineField label={value?.id === MapCenterID.Fit ? 'Max Zoom' : 'Zoom'} labelWidth={labelWidth} grow={true}>
           <NumberInput
             value={value?.zoom ?? 1}
             min={1}
@@ -111,6 +111,37 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
           />
         </InlineField>
       </InlineFieldRow>
+
+      {value?.id === MapCenterID.Fit && (
+        <>
+          <InlineFieldRow>
+            <InlineField label="Padding %" labelWidth={labelWidth} grow={true}>
+              <NumberInput
+                value={value?.padding ?? 5}
+                min={0}
+                step={1}
+                onChange={(v) => {
+                  onChange({ ...value, padding: v });
+                }}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField label="Data Scope" labelWidth={labelWidth} grow={true}>
+              <RadioButtonGroup
+                value={'all'}
+                options={[
+                  { label: 'All', value: 'all' },
+                  { label: 'Last Only', value: 'last' },
+                ]}
+                onChange={() => {
+                  console.log('change scope');
+                }}
+              ></RadioButtonGroup>
+            </InlineField>
+          </InlineFieldRow>
+        </>
+      )}
 
       <VerticalGroup>
         <Button variant="secondary" size="sm" fullWidth onClick={onSetCurrentView}>

@@ -47,6 +47,7 @@ export interface MapViewConfig {
   zoom?: number;
   minZoom?: number;
   maxZoom?: number;
+  padding?: number;
   shared?: boolean;
 }
 

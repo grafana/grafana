@@ -606,13 +606,13 @@ export class GeomapPanel extends Component<Props, State> {
           const extent = getLayersExtent(layers);
           if (!isEmpty(extent)) {
             //TODO make padding an option
-            const padding = 1.05;
+            const padding = config.padding ?? 5;
             const res = view.getResolutionForExtent(extent, this.map?.getSize());
             const maxZoom = config.zoom ?? config.maxZoom;
             view.fit(extent, {
               maxZoom: maxZoom,
             });
-            view.setResolution(res * padding);
+            view.setResolution(res * (padding / 100 + 1));
             const adjustedZoom = view.getZoom();
             if (adjustedZoom && maxZoom && adjustedZoom > maxZoom) {
               view.setZoom(maxZoom);
