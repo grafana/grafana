@@ -3,7 +3,6 @@ import thunk from 'redux-thunk';
 import { Subject } from 'rxjs';
 
 import { FetchError, locationService, setEchoSrv } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -27,6 +26,11 @@ import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
 import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { dashboardInitCompleted, dashboardInitFetching, dashboardInitServices } from './reducers';
 
+const DASH_UID = 'DGmvKKxZz';
+const REDSHIFT_DS_UID = 'V6_lLJf7k';
+const CW_DS_UID = '9s_sJGOs';
+const AM_DS_UID = 'V8_IjsdLs8';
+
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
   const original = jest.requireActual('app/features/dashboard/services/TimeSrv');
@@ -43,6 +47,19 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { orgId: 1, orgName: 'TestOrg' },
   },
 }));
+
+type DashboardOnLoadedMocks = { [uid: string]: () => {} };
+const dashboardOnLoadedMocks: DashboardOnLoadedMocks = {
+  [CW_DS_UID]: jest.fn(),
+  [AM_DS_UID]: jest.fn(),
+  [REDSHIFT_DS_UID]: jest.fn(),
+};
+const mockGetDS = jest
+  .fn()
+  .mockImplementation(
+    (uid: keyof DashboardOnLoadedMocks): Promise<{ onDashboardLoaded: Function }> =>
+      Promise.resolve({ onDashboardLoaded: dashboardOnLoadedMocks[uid] })
+  );
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
   return {
@@ -50,6 +67,7 @@ jest.mock('@grafana/runtime', () => {
     getDataSourceSrv: jest.fn().mockImplementation(() => ({
       ...original.getDataSourceSrv(),
       getInstanceSettings: jest.fn(),
+      get: mockGetDS,
     })),
   };
 });
@@ -76,7 +94,7 @@ interface ScenarioContext {
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
-const DASH_UID = 'DGmvKKxZz';
+
 function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   describe(description, () => {
     const loaderSrv = {
@@ -99,7 +117,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
                 {
                   datasource: {
                     type: 'grafana-azure-monitor-datasource',
-                    uid: 'DSwithQueriesOnInitDashboard',
+                    uid: AM_DS_UID,
                     name: 'azMonitor',
                   },
                   queryType: 'Azure Log Analytics',
@@ -109,7 +127,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
                 {
                   datasource: {
                     type: 'cloudwatch',
-                    uid: '1234',
+                    uid: CW_DS_UID,
                     name: 'Cloud Watch',
                   },
                   refId: 'B',
@@ -129,7 +147,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
                 {
                   datasource: {
                     type: 'grafana-redshift-datasource',
-                    uid: 'V6_lLJf7k',
+                    uid: REDSHIFT_DS_UID,
                   },
                   gridPos: {
                     h: 8,
@@ -142,7 +160,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
                     {
                       datasource: {
                         type: 'grafana-redshift-datasource',
-                        uid: 'V6_lLJf7k',
+                        uid: REDSHIFT_DS_UID,
                       },
                       rawSQL: '',
                       refId: 'A',
@@ -150,7 +168,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
                     {
                       datasource: {
                         type: 'grafana-azure-monitor-datasource',
-                        uid: 'DSwithQueriesOnInitDashboard',
+                        uid: AM_DS_UID,
                         name: 'azMonitor',
                       },
                       queryType: 'Azure Monitor',
@@ -331,58 +349,66 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
     ctx.storeState.explore.left.queries = mockQueries;
   });
 
-  it('should send dashboard_loaded event', () => {
-    expect(appEvents.publish).toHaveBeenCalledWith({
-      payload: {
-        queries: {
-          cloudwatch: [
-            {
-              datasource: {
-                name: 'Cloud Watch',
-                type: 'cloudwatch',
-                uid: '1234',
-              },
-              refId: 'B',
-            },
-          ],
-          'grafana-azure-monitor-datasource': [
-            {
-              datasource: {
-                name: 'azMonitor',
-                type: 'grafana-azure-monitor-datasource',
-                uid: 'DSwithQueriesOnInitDashboard',
-              },
-              expr: 'old expr',
-              queryType: 'Azure Log Analytics',
-              refId: 'A',
-            },
-            {
-              datasource: {
-                name: 'azMonitor',
-                type: 'grafana-azure-monitor-datasource',
-                uid: 'DSwithQueriesOnInitDashboard',
-              },
-              queryType: 'Azure Monitor',
-              refId: 'B',
-            },
-          ],
-          'grafana-redshift-datasource': [
-            {
-              datasource: {
-                type: 'grafana-redshift-datasource',
-                uid: 'V6_lLJf7k',
-              },
-              rawSQL: '',
-              refId: 'A',
-            },
-          ],
+  it('should log dashboard_loaded event', () => {
+    expect(mockGetDS).toBeCalledTimes(3);
+    expect(dashboardOnLoadedMocks[AM_DS_UID]).toBeCalledTimes(1);
+    expect(dashboardOnLoadedMocks[CW_DS_UID]).toBeCalledTimes(1);
+    expect(dashboardOnLoadedMocks[REDSHIFT_DS_UID]).toBeCalledTimes(1);
+
+    expect(dashboardOnLoadedMocks[AM_DS_UID]).toHaveBeenCalledWith({
+      queries: [
+        {
+          datasource: {
+            name: 'azMonitor',
+            type: 'grafana-azure-monitor-datasource',
+            uid: AM_DS_UID,
+          },
+          expr: 'old expr',
+          queryType: 'Azure Log Analytics',
+          refId: 'A',
         },
-        dashboardId: 'DGmvKKxZz',
-        orgId: 12,
-        userId: 34,
-        grafanaVersion: '1.0',
-      },
-      type: 'dashboard-loaded',
+        {
+          datasource: {
+            name: 'azMonitor',
+            type: 'grafana-azure-monitor-datasource',
+            uid: AM_DS_UID,
+          },
+          queryType: 'Azure Monitor',
+          refId: 'B',
+        },
+      ],
+      dashboardId: 'DGmvKKxZz',
+      orgId: 12,
+    });
+
+    expect(dashboardOnLoadedMocks[REDSHIFT_DS_UID]).toHaveBeenCalledWith({
+      queries: [
+        {
+          datasource: {
+            type: 'grafana-redshift-datasource',
+            uid: REDSHIFT_DS_UID,
+          },
+          rawSQL: '',
+          refId: 'A',
+        },
+      ],
+      dashboardId: 'DGmvKKxZz',
+      orgId: 12,
+    });
+
+    expect(dashboardOnLoadedMocks[CW_DS_UID]).toHaveBeenCalledWith({
+      queries: [
+        {
+          datasource: {
+            type: 'cloudwatch',
+            uid: CW_DS_UID,
+            name: 'Cloud Watch',
+          },
+          refId: 'B',
+        },
+      ],
+      dashboardId: 'DGmvKKxZz',
+      orgId: 12,
     });
   });
 
