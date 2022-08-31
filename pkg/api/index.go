@@ -632,23 +632,23 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	var alertNav = dtos.NavLink{
-		Text:       "Alerting",
-		SubTitle:   "Alert rules and notifications",
-		Id:         "alerting",
-		Icon:       "bell",
-		Children:   alertChildNavs,
-		Section:    dtos.NavSectionCore,
-		SortWeight: dtos.WeightAlerting,
-	}
-
-	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-		alertNav.Url = hs.Cfg.AppSubURL + "/alerting"
-	} else {
-		alertNav.Url = hs.Cfg.AppSubURL + "/alerting/list"
-	}
-
 	if len(alertChildNavs) > 0 {
+		var alertNav = dtos.NavLink{
+			Text:       "Alerting",
+			SubTitle:   "Alert rules and notifications",
+			Id:         "alerting",
+			Icon:       "bell",
+			Children:   alertChildNavs,
+			Section:    dtos.NavSectionCore,
+			SortWeight: dtos.WeightAlerting,
+		}
+
+		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+			alertNav.Url = hs.Cfg.AppSubURL + "/alerting"
+		} else {
+			alertNav.Url = hs.Cfg.AppSubURL + "/alerting/list"
+		}
+
 		return []*dtos.NavLink{&alertNav}
 	}
 	return nil
