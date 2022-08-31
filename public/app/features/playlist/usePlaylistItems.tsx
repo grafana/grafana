@@ -9,7 +9,7 @@ import { PlaylistItem } from './types';
 export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
   const [items, setItems] = useState<PlaylistItem[]>(playlistItems ?? []);
 
-  // Load dashboards if missing
+  // Attach dashboards if any were missing
   useAsync(async () => {
     for (const item of items) {
       if (!item.dashboards) {
