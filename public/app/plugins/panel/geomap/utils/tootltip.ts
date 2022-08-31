@@ -2,11 +2,11 @@ import { DataHoverClearEvent } from '@grafana/data/src';
 
 import { GeomapPanel } from '../GeomapPanel';
 
-export function setTooltipListeners(this: GeomapPanel) {
+export const setTooltipListeners = (panel: GeomapPanel) => {
   // Tooltip listener
-  this.map?.on('singleclick', this.pointerClickListener);
-  this.map?.on('pointermove', this.pointerMoveListener);
-  this.map?.getViewport().addEventListener('mouseout', (evt) => {
-    this.props.eventBus.publish(new DataHoverClearEvent());
+  panel.map?.on('singleclick', panel.pointerClickListener);
+  panel.map?.on('pointermove', panel.pointerMoveListener);
+  panel.map?.getViewport().addEventListener('mouseout', (evt: MouseEvent) => {
+    panel.props.eventBus.publish(new DataHoverClearEvent());
   });
-}
+};

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
-import { cloneDeep } from 'lodash';
 import { Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import Attribution from 'ol/control/Attribution';
@@ -11,15 +10,7 @@ import { toLonLat } from 'ol/proj';
 import React, { Component, ReactNode } from 'react';
 import { Subject, Subscription } from 'rxjs';
 
-import {
-  DataFrame,
-  DataHoverEvent,
-  FrameGeometrySourceMode,
-  GrafanaTheme,
-  MapLayerOptions,
-  PanelData,
-  PanelProps,
-} from '@grafana/data';
+import { DataFrame, DataHoverEvent, GrafanaTheme, MapLayerOptions, PanelData, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
 import { PanelEditExitedEvent } from 'app/types/events';
@@ -32,17 +23,12 @@ import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
-import { ControlsOptions, GeomapPanelOptions, MapLayerState, TooltipMode, GeomapLayerActions } from './types';
+import { ControlsOptions, GeomapPanelOptions, MapLayerState, TooltipMode } from './types';
+import { getActions } from './utils/actions';
+import { applyLayerFilter } from './utils/layers';
 import { setTooltipListeners } from './utils/tootltip';
-import {
-  updateMap,
-  getNewOpenLayersMap,
-  notifyPanelEditor,
-  initViewExtent,
-  applyLayerFilter,
-  initMapView,
-  getNextLayerName,
-} from './utils/utils';
+import { updateMap, getNewOpenLayersMap, notifyPanelEditor, getNextLayerName } from './utils/utils';
+import { initMapView, initViewExtent } from './utils/view';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
@@ -129,7 +115,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   /** This function will actually update the JSON model */
-  private doOptionsUpdate(selected: number) {
+  doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
     onOptionsChange({
@@ -138,83 +124,11 @@ export class GeomapPanel extends Component<Props, State> {
       layers: layers.slice(1).map((v) => v.options),
     });
 
-    // Notify the panel editor
-    if (this.panelContext.onInstanceStateChange) {
-      this.panelContext.onInstanceStateChange({
-        map: this.map,
-        layers: layers,
-        selected,
-        actions: this.actions,
-      });
-    }
-
+    notifyPanelEditor(this, layers, selected);
     this.setState({ legends: this.getLegends() });
   }
 
-  actions: GeomapLayerActions = {
-    selectLayer: (uid: string) => {
-      const selected = this.layers.findIndex((v) => v.options.name === uid);
-      if (this.panelContext.onInstanceStateChange) {
-        this.panelContext.onInstanceStateChange({
-          map: this.map,
-          layers: this.layers,
-          selected,
-          actions: this.actions,
-        });
-      }
-    },
-    canRename: (v: string) => {
-      return !this.byName.has(v);
-    },
-    deleteLayer: (uid: string) => {
-      const layers: MapLayerState[] = [];
-      for (const lyr of this.layers) {
-        if (lyr.options.name === uid) {
-          this.map?.removeLayer(lyr.layer);
-        } else {
-          layers.push(lyr);
-        }
-      }
-      this.layers = layers;
-      this.doOptionsUpdate(0);
-    },
-    addlayer: (type: string) => {
-      const item = geomapLayerRegistry.getIfExists(type);
-      if (!item) {
-        return; // ignore empty request
-      }
-      this.initLayer(
-        this.map!,
-        {
-          type: item.id,
-          name: getNextLayerName(this),
-          config: cloneDeep(item.defaultOptions),
-          location: item.showLocation ? { mode: FrameGeometrySourceMode.Auto } : undefined,
-          tooltip: true,
-        },
-        false
-      ).then((lyr) => {
-        this.layers = this.layers.slice(0);
-        this.layers.push(lyr);
-        this.map?.addLayer(lyr.layer);
-
-        this.doOptionsUpdate(this.layers.length - 1);
-      });
-    },
-    reorder: (startIndex: number, endIndex: number) => {
-      const result = Array.from(this.layers);
-      const [removed] = result.splice(startIndex, 1);
-      result.splice(endIndex, 0, removed);
-      this.layers = result;
-
-      this.doOptionsUpdate(endIndex);
-
-      // Add the layers in the right order
-      const group = this.map?.getLayers()!;
-      group.clear();
-      this.layers.forEach((v) => group.push(v.layer));
-    },
-  };
+  actions = getActions(this);
 
   /**
    * Called when the panel options change
@@ -224,7 +138,9 @@ export class GeomapPanel extends Component<Props, State> {
   optionsChanged(options: GeomapPanelOptions) {
     const oldOptions = this.props.options;
     if (options.view !== oldOptions.view) {
-      this.map!.setView(initMapView(options.view, sharedView, this.map!.getLayers()));
+      const [updatedSharedView, view] = initMapView(options.view, sharedView, this.map!.getLayers());
+      sharedView = updatedSharedView;
+      this.map!.setView(view as View);
     }
 
     if (options.controls !== oldOptions.controls) {
@@ -256,7 +172,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
     const { options } = this.props;
 
-    const map = getNewOpenLayersMap.call(this, options, div);
+    const map = getNewOpenLayersMap(this, options, div);
 
     this.byName.clear();
     const layers: MapLayerState[] = [];
@@ -283,9 +199,9 @@ export class GeomapPanel extends Component<Props, State> {
     this.mouseWheelZoom = new MouseWheelZoom();
     this.map?.addInteraction(this.mouseWheelZoom);
 
-    updateMap.call(this, options);
-    setTooltipListeners.call(this);
-    notifyPanelEditor.call(this, layers);
+    updateMap(this, options);
+    setTooltipListeners(this);
+    notifyPanelEditor(this, layers, layers.length - 1);
 
     this.setState({ legends: this.getLegends() });
   };
