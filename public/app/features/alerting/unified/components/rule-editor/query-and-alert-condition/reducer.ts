@@ -92,6 +92,13 @@ export function queriesAndExpressionsReducer(state: State, action: Action): Stat
     case 'updateExpressionRefId':
       const { newRefId, oldRefId } = action.payload;
 
+      // if the new refId already exists we just refuse to update the state
+      // TODO we should set an error and explain what went wrong
+      const newRefIdExists = state.queries.find((query) => query.refId === newRefId);
+      if (newRefIdExists) {
+        return state;
+      }
+
       return {
         ...state,
         queries: queries.map((query) => {

@@ -139,7 +139,7 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
 
   const editing = editMode !== false;
   const editingRefId = editing && editMode === 'refId';
-  const editingExpression = editing && editMode === 'expressionType';
+  const editingType = editing && editMode === 'expressionType';
 
   const selectedExpressionType = gelTypes.find((o) => o.value === queryType);
 
@@ -168,13 +168,13 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
               }}
             />
           )}
-          {!editingExpression && (
+          {!editingType && (
             <div className={styles.editable} onClick={() => setEditMode('expressionType')}>
               <div className={styles.mutedText}>{capitalize(queryType)}</div>
               <Icon size="xs" name="pen" className={styles.mutedIcon} onClick={() => setEditMode('expressionType')} />
             </div>
           )}
-          {editingExpression && (
+          {editingType && (
             <Select
               isOpen
               autoFocus

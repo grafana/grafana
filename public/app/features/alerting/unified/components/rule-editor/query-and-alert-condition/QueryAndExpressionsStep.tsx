@@ -82,7 +82,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           onSetCondition={(refId) => {
             setValue('condition', refId);
           }}
-          // we dont use this prop (onRunQueries) as it's kinda doing funky things, we just call "runQueries" when we receive new queries
           onChangeQueries={(queries) => {
             dispatch({ type: 'setDataQueries', payload: queries });
           }}
