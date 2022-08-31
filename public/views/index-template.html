@@ -21,11 +21,11 @@
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
-    [[ if eq .Theme "light" ]]
+    [[if .LoadLegacyStyles]] [[ if eq .Theme "light" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
     [[ else ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
-    [[ end ]]
+    [[ end ]] [[ end ]]
 
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_css_time_seconds');

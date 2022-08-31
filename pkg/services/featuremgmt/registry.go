@@ -267,5 +267,10 @@ var (
 			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "hideLegacyStyles",
+			Description: "Enable to prevent the loading of legacy SASS styles",
+			State:       FeatureStateAlpha,
+		},
 	}
 )

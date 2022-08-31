@@ -825,6 +825,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		Nonce:                   c.RequestNonce,
 		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:             "public/img/grafana_icon.svg",
+		LoadLegacyStyles:        !hs.Features.IsEnabled(featuremgmt.FlagHideLegacyStyles),
 	}
 
 	if !hs.AccessControl.IsDisabled() {

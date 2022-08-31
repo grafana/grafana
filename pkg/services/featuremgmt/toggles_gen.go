@@ -198,4 +198,8 @@ const (
 	// FlagTraceqlEditor
 	// Show the TraceQL editor in the explore page
 	FlagTraceqlEditor = "traceqlEditor"
+
+	// FlagHideLegacyStyles
+	// Enable to prevent the loading of legacy SASS styles
+	FlagHideLegacyStyles = "hideLegacyStyles"
 )
