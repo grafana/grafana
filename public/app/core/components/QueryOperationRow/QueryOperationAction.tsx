@@ -1,10 +1,11 @@
-import { IconButton, IconName, useStyles2 } from '@grafana/ui';
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { IconButton, IconName, useStyles2 } from '@grafana/ui';
 
-interface QueryOperationActionProps {
+export interface QueryOperationActionProps {
   icon: IconName;
   title: string;
   onClick: (e: React.MouseEvent) => void;
@@ -25,11 +26,10 @@ export const QueryOperationAction: React.FC<QueryOperationActionProps> = ({
     <div className={cx(styles.icon, active && styles.active)}>
       <IconButton
         name={icon}
-        title={title}
+        tooltip={title}
         className={styles.icon}
         disabled={!!disabled}
         onClick={onClick}
-        surface="header"
         type="button"
         aria-label={selectors.components.QueryEditorRow.actionButton(title)}
       />

@@ -1,11 +1,12 @@
 import React, { FormEvent, PureComponent } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { VerticalGroup } from '@grafana/ui';
 
-import { ConstantVariableModel } from '../types';
-import { VariableEditorProps } from '../editor/types';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
+import { VariableEditorProps } from '../editor/types';
+import { ConstantVariableModel } from '../types';
 
 export interface Props extends VariableEditorProps<ConstantVariableModel> {}
 

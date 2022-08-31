@@ -1,6 +1,7 @@
 import { createTheme } from '../themes';
 import { Field, FieldColorModeId, FieldType } from '../types';
 import { ArrayVector } from '../vector/ArrayVector';
+
 import { fieldColorModeRegistry, FieldValueColorCalculator, getFieldSeriesColor } from './fieldColor';
 
 function getTestField(mode: string): Field {

@@ -1,3 +1,8 @@
+import { css, cx } from '@emotion/css';
+import React from 'react';
+// @ts-ignore
+import Highlighter from 'react-highlight-words';
+
 import {
   DynamicConfigValue,
   FieldConfigOptionsRegistry,
@@ -5,11 +10,9 @@ import {
   FieldOverrideContext,
   GrafanaTheme,
 } from '@grafana/data';
-import React from 'react';
 import { Counter, Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
+
 import { OptionsPaneCategory } from './OptionsPaneCategory';
-import Highlighter from 'react-highlight-words';
 
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;

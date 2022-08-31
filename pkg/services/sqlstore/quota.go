@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -13,17 +12,8 @@ import (
 const (
 	alertRuleTarget = "alert_rule"
 	dashboardTarget = "dashboard"
+	filesTarget     = "file"
 )
-
-func (ss *SQLStore) addQuotaQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.GetOrgQuotaByTarget)
-	bus.AddHandler("sql", ss.GetOrgQuotas)
-	bus.AddHandler("sql", ss.UpdateOrgQuota)
-	bus.AddHandler("sql", ss.GetUserQuotaByTarget)
-	bus.AddHandler("sql", ss.GetUserQuotas)
-	bus.AddHandler("sql", ss.UpdateUserQuota)
-	bus.AddHandler("sql", ss.GetGlobalQuotaByTarget)
-}
 
 type targetCount struct {
 	Count int64
@@ -266,7 +256,19 @@ func (ss *SQLStore) UpdateUserQuota(ctx context.Context, cmd *models.UpdateUserQ
 func (ss *SQLStore) GetGlobalQuotaByTarget(ctx context.Context, query *models.GetGlobalQuotaByTargetQuery) error {
 	return ss.WithDbSession(ctx, func(sess *DBSession) error {
 		var used int64
-		if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
+
+		if query.Target == filesTarget {
+			// get quota used.
+			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
+				dialect.Quote("file"))
+
+			notFolderCondition := fmt.Sprintf(" WHERE path NOT LIKE '%s'", "%/")
+			resp := make([]*targetCount, 0)
+			if err := sess.SQL(rawSQL + notFolderCondition).Find(&resp); err != nil {
+				return err
+			}
+			used = resp[0].Count
+		} else if query.Target != alertRuleTarget || query.UnifiedAlertingEnabled {
 			// get quota used.
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
 				dialect.Quote(query.Target))

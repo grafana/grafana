@@ -2,14 +2,13 @@ package azuremonitor
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azlog"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/deprecated"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -41,7 +40,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
@@ -125,7 +124,5 @@ func (s *Service) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/azuremonitor/", s.handleResourceReq(azureMonitor))
 	mux.HandleFunc("/loganalytics/", s.handleResourceReq(azureLogAnalytics))
 	mux.HandleFunc("/resourcegraph/", s.handleResourceReq(azureResourceGraph))
-	// Remove with Grafana 9
-	mux.HandleFunc("/appinsights/", s.handleResourceReq(deprecated.AppInsights))
 	return mux
 }

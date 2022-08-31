@@ -1,5 +1,5 @@
-import $ from 'jquery';
 import angular from 'angular';
+import $ from 'jquery';
 import { extend } from 'lodash';
 
 const $win = $(window);

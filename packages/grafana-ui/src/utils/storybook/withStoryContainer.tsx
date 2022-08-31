@@ -1,7 +1,8 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
-import { RenderFunction } from '../../types';
 import { StoryContext } from '@storybook/react';
+import React from 'react';
+
+import { RenderFunction } from '../../types';
 
 const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries: boolean }> = ({
   children,

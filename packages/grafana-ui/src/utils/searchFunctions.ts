@@ -1,4 +1,5 @@
 import { CompletionItem, SearchFunction } from '../types';
+
 import { fuzzyMatch } from './fuzzy';
 
 /**

@@ -1,12 +1,15 @@
-import React, { HTMLAttributes, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import { useId } from '@react-aria/utils';
+import React, { HTMLAttributes, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { useTheme2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { IconButton } from '../IconButton/IconButton';
 import { Button } from '../Button/Button';
+import { Icon } from '../Icon/Icon';
+import { IconButton } from '../IconButton/IconButton';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -22,7 +25,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
 }
 
-function getIconFromSeverity(severity: AlertVariant): string {
+export function getIconFromSeverity(severity: AlertVariant): string {
   switch (severity) {
     case 'error':
     case 'warning':
@@ -54,19 +57,24 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
   ) => {
     const theme = useTheme2();
     const styles = getStyles(theme, severity, elevated, bottomSpacing, topSpacing);
+    const titleId = useId();
 
     return (
       <div
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
+        role="alert"
+        aria-labelledby={titleId}
         {...restProps}
       >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
-        <div className={styles.body} role="alert">
-          <div className={styles.title}>{title}</div>
+        <div className={styles.body}>
+          <div id={titleId} className={styles.title}>
+            {title}
+          </div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
@@ -150,7 +158,7 @@ const getStyles = (
       color: ${theme.colors.text.secondary};
       padding-top: ${theme.spacing(1)};
       max-height: 50vh;
-      overflow-y: scroll;
+      overflow-y: auto;
     `,
     buttonWrapper: css`
       padding: ${theme.spacing(1)};

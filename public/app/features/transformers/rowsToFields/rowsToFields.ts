@@ -1,4 +1,5 @@
 import { map } from 'rxjs/operators';
+
 import {
   ArrayVector,
   DataFrame,
@@ -8,6 +9,7 @@ import {
   getFieldDisplayName,
   Labels,
 } from '@grafana/data';
+
 import {
   getFieldConfigFromFrame,
   FieldToConfigMapping,

@@ -1,14 +1,15 @@
-import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
+import React, { PureComponent } from 'react';
+
 import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
-import { Themeable2 } from '../../types/theme';
 import { withTheme2 } from '../../themes/index';
-import { getLogRowStyles } from './getLogRowStyles';
+import { Themeable2 } from '../../types/theme';
 
 //Components
 import { LogRow } from './LogRow';
 import { RowContextOptions } from './LogRowContextProvider';
+import { getLogRowStyles } from './getLogRowStyles';
 
 export const PREVIEW_LIMIT = 100;
 

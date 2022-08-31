@@ -1,12 +1,11 @@
-import { Task, TaskRunner } from './task';
-import { pluginBuildRunner } from './plugin.build';
-import { getPluginJson } from '../../config/utils/pluginValidation';
-import { getPluginId } from '../../config/utils/getPluginId';
 import execa = require('execa');
-import path = require('path');
 import fs from 'fs-extra';
-import { getPackageDetails, getGrafanaVersions, readGitLog } from '../../plugins/utils';
-import { buildManifest, signManifest, saveManifest } from '../../plugins/manifest';
+import path = require('path');
+import rimrafCallback from 'rimraf';
+import { promisify } from 'util';
+
+import { getPluginId } from '../../config/utils/getPluginId';
+import { assertRootUrlIsValid, getPluginJson } from '../../config/utils/pluginValidation';
 import {
   getJobFolder,
   writeJobStats,
@@ -15,10 +14,13 @@ import {
   getPullRequestNumber,
   getCircleDownloadBaseURL,
 } from '../../plugins/env';
-import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
+import { buildManifest, signManifest, saveManifest } from '../../plugins/manifest';
 import { PluginPackageDetails, PluginBuildReport } from '../../plugins/types';
-import rimrafCallback from 'rimraf';
-import { promisify } from 'util';
+import { getPackageDetails, getGrafanaVersions, readGitLog } from '../../plugins/utils';
+import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
+
+import { pluginBuildRunner } from './plugin.build';
+import { Task, TaskRunner } from './task';
 const rimraf = promisify(rimrafCallback);
 
 export interface PluginCIOptions {
@@ -138,7 +140,8 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
     if (signatureType) {
       manifest.signatureType = signatureType;
     }
-    if (rootUrls) {
+    if (rootUrls && rootUrls.length > 0) {
+      rootUrls.forEach(assertRootUrlIsValid);
       manifest.rootUrls = rootUrls;
     }
     const signedManifest = await signManifest(manifest);

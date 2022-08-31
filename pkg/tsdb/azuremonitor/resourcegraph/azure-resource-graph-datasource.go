@@ -2,18 +2,20 @@ package resourcegraph
 
 import (
 	"bytes"
-	"time"
-
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,9 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
-	"github.com/grafana/grafana/pkg/util/errutil"
-	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 // AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
@@ -47,7 +46,7 @@ type AzureResourceGraphQuery struct {
 	TimeRange         backend.TimeRange
 }
 
-const argAPIVersion = "2021-06-01-preview"
+const ArgAPIVersion = "2021-06-01-preview"
 const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 
 func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
@@ -124,7 +123,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
-	params.Add("api-version", argAPIVersion)
+	params.Add("api-version", ArgAPIVersion)
 
 	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
 		dataResponse = backend.DataResponse{Error: err}
@@ -179,7 +178,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	tracer.Inject(ctx, req.Header, span)
 
 	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, client, req)
+	res, err := client.Do(req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -189,7 +188,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data)
+	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, loganalytics.AzureLogAnalyticsResponse{})
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -226,10 +225,10 @@ func AddConfigLinks(frame data.Frame, dl string) data.Frame {
 }
 
 func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo types.DatasourceInfo, reqBody []byte, url string) (*http.Request, error) {
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("failed to create request", err)
+		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
@@ -239,7 +238,7 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 }
 
 func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (AzureResourceGraphResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return AzureResourceGraphResponse{}, err
 	}
@@ -268,13 +267,13 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 
 func GetAzurePortalUrl(azureCloud string) (string, error) {
 	switch azureCloud {
-	case setting.AzurePublic:
+	case azsettings.AzurePublic:
 		return "https://portal.azure.com", nil
-	case setting.AzureChina:
+	case azsettings.AzureChina:
 		return "https://portal.azure.cn", nil
-	case setting.AzureUSGovernment:
+	case azsettings.AzureUSGovernment:
 		return "https://portal.azure.us", nil
-	case setting.AzureGermany:
+	case azsettings.AzureGermany:
 		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")

@@ -190,23 +190,31 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(response.Body, &data)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %s", err)
+	if err = json.Unmarshal(response.Body, &data); err != nil {
+		return nil, fmt.Errorf("error unmarshalling user info: %s", err)
 	}
 
 	teamMemberships, err := s.FetchTeamMemberships(client)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting user teams: %s", err)
+		return nil, fmt.Errorf("error getting user teams: %s", err)
 	}
 
 	teams := convertToGroupList(teamMemberships)
+
+	role, err := s.extractRole(response.Body, teams)
+	if err != nil {
+		s.log.Error("Failed to extract role", "error", err)
+	}
+	if s.roleAttributeStrict && !role.IsValid() {
+		return nil, errors.New("invalid role")
+	}
 
 	userInfo := &BasicUserInfo{
 		Name:   data.Login,
 		Login:  data.Login,
 		Id:     fmt.Sprintf("%d", data.Id),
 		Email:  data.Email,
+		Role:   string(role),
 		Groups: teams,
 	}
 	if data.Name != "" {

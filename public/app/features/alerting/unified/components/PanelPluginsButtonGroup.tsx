@@ -1,7 +1,9 @@
+import React, { useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { RadioButtonGroup } from '@grafana/ui';
-import React, { useMemo } from 'react';
+
 import { STAT, TABLE, TIMESERIES } from '../utils/constants';
 
 export type SupportedPanelPlugins = 'timeseries' | 'table' | 'stat';

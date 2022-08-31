@@ -1,5 +1,6 @@
-import React, { FC, useMemo } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, useMemo } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, FieldArray, Form, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 import { AlertmanagerUrl } from 'app/plugins/datasource/alertmanager/types';
@@ -81,7 +82,9 @@ export const AddAlertManagerModal: FC<Props> = ({ alertmanagers, onChangeAlertma
               )}
             </FieldArray>
             <div>
-              <Button onSubmit={() => onSubmit}>Add Alertmanagers</Button>
+              <Button type="submit" onSubmit={() => onSubmit}>
+                Add Alertmanagers
+              </Button>
             </div>
           </div>
         )}

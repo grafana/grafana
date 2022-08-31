@@ -1,9 +1,10 @@
 import { DataSourceJsonData, PluginMeta } from '@grafana/data';
-import { alertRuleToQueries } from './query';
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { alertRuleToQueries } from './query';
 
 describe('alertRuleToQueries', () => {
   it('it should convert grafana alert', () => {
@@ -54,6 +55,7 @@ describe('alertRuleToQueries', () => {
           access: 'proxy',
           meta: {} as PluginMeta,
           jsonData: {} as DataSourceJsonData,
+          readOnly: false,
         },
       },
     };

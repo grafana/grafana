@@ -1,10 +1,13 @@
+import { ComponentMeta } from '@storybook/react';
 import React, { useState } from 'react';
-import { DatePicker } from './DatePicker';
-import { Button } from '../../Button/Button';
-import mdx from './DatePicker.mdx';
-import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
-export default {
+import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
+import { Button } from '../../Button/Button';
+
+import { DatePicker } from './DatePicker';
+import mdx from './DatePicker.mdx';
+
+const meta: ComponentMeta<typeof DatePicker> = {
   title: 'Pickers and Editors/TimePickers/Pickers And Editors/DatePicker',
   component: DatePicker,
   decorators: [withCenteredStory],
@@ -26,3 +29,5 @@ export const Basic = () => {
     </>
   );
 };
+
+export default meta;

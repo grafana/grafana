@@ -1,8 +1,10 @@
 import { concatMap, filter } from 'rxjs/operators';
 
-import { FetchQueue, FetchStatus } from './FetchQueue';
 import { BackendSrvRequest, GrafanaBootConfig } from '@grafana/runtime';
+
 import { isDataQuery } from '../utils/query';
+
+import { FetchQueue, FetchStatus } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
 
 interface WorkerEntry {

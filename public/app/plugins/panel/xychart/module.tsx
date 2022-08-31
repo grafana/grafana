@@ -1,10 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { defaultScatterConfig, XYChartOptions, ScatterFieldConfig } from './models.gen';
-import { getScatterFieldConfig } from './config';
-import { XYDimsEditor } from './XYDimsEditor';
-import { XYChartPanel2 } from './XYChartPanel2';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
+
+import { XYChartPanel2 } from './XYChartPanel2';
+import { XYDimsEditor } from './XYDimsEditor';
+import { getScatterFieldConfig } from './config';
+import { defaultScatterConfig, XYChartOptions, ScatterFieldConfig } from './models.gen';
 
 export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChartPanel2)
   .useFieldConfig(getScatterFieldConfig(defaultScatterConfig))

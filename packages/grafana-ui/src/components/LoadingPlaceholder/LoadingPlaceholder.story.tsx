@@ -1,9 +1,12 @@
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React from 'react';
-import { LoadingPlaceholder } from './LoadingPlaceholder';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { LoadingPlaceholder } from './LoadingPlaceholder';
 import mdx from './LoadingPlaceholder.mdx';
 
-export default {
+const meta: ComponentMeta<typeof LoadingPlaceholder> = {
   title: 'General/LoadingPlaceholder',
   component: LoadingPlaceholder,
   decorators: [withCenteredStory],
@@ -14,6 +17,8 @@ export default {
   },
 };
 
-export const basic = () => {
+export const basic: ComponentStory<typeof LoadingPlaceholder> = () => {
   return <LoadingPlaceholder text="Loading..." />;
 };
+
+export default meta;

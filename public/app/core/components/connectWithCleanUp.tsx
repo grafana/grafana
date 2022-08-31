@@ -1,7 +1,8 @@
-import { connect, MapDispatchToPropsParam, MapStateToPropsParam, useDispatch } from 'react-redux';
-import { cleanUpAction, StateSelector } from '../actions/cleanUp';
-import React, { ComponentType, FunctionComponent, useEffect } from 'react';
 import hoistNonReactStatics from 'hoist-non-react-statics';
+import React, { ComponentType, FunctionComponent, useEffect } from 'react';
+import { connect, MapDispatchToPropsParam, MapStateToPropsParam, useDispatch } from 'react-redux';
+
+import { cleanUpAction, StateSelector } from '../actions/cleanUp';
 
 export const connectWithCleanUp =
   <

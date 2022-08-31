@@ -1,8 +1,11 @@
-import { getCategories } from './categories';
+import { clamp } from 'lodash';
+
+import { TimeZone } from '../types';
 import { DecimalCount } from '../types/displayValue';
+
+import { getCategories } from './categories';
 import { toDateTimeValueFormatter } from './dateTimeFormatters';
 import { getOffsetFromSIPrefix, SIPrefix, currency } from './symbolFormatters';
-import { TimeZone } from '../types';
 
 export interface FormattedValue {
   text: string;
@@ -55,6 +58,10 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
     decimals = getDecimalsForValue(value);
   }
 
+  if (value === 0) {
+    return value.toFixed(decimals);
+  }
+
   const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
   const formatted = String(Math.round(value * factor) / factor);
 
@@ -66,17 +73,18 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   const decimalPos = formatted.indexOf('.');
   const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
   if (precision < decimals) {
-    return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
+    return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
   }
 
   return formatted;
 }
 
 function getDecimalsForValue(value: number): number {
-  const log10 = Math.floor(Math.log(Math.abs(value)) / Math.LN10);
+  const absValue = Math.abs(value);
+  const log10 = Math.floor(Math.log(absValue) / Math.LN10);
   let dec = -log10 + 1;
   const magn = Math.pow(10, -dec);
-  const norm = value / magn; // norm is between 1.0 and 10.0
+  const norm = absValue / magn; // norm is between 1.0 and 10.0
 
   // special case for 2.5, requires an extra decimal
   if (norm > 2.25) {
@@ -124,31 +132,25 @@ export function booleanValueFormatter(t: string, f: string): ValueFormatter {
   };
 }
 
-// Formatter which scales the unit string geometrically according to the given
-// numeric factor. Repeatedly scales the value down by the factor until it is
-// less than the factor in magnitude, or the end of the array is reached.
-export function scaledUnits(factor: number, extArray: string[]): ValueFormatter {
-  return (size: number, decimals?: DecimalCount, scaledDecimals?: DecimalCount) => {
+const logb = (b: number, x: number) => Math.log10(x) / Math.log10(b);
+
+export function scaledUnits(factor: number, extArray: string[], offset = 0): ValueFormatter {
+  return (size: number, decimals?: DecimalCount) => {
     if (size === null) {
       return { text: '' };
     }
+
     if (size === Number.NEGATIVE_INFINITY || size === Number.POSITIVE_INFINITY || isNaN(size)) {
       return { text: size.toLocaleString() };
     }
 
-    let steps = 0;
-    const limit = extArray.length;
+    const siIndex = size === 0 ? 0 : Math.floor(logb(factor, Math.abs(size)));
+    const suffix = extArray[clamp(offset + siIndex, 0, extArray.length - 1)];
 
-    while (Math.abs(size) >= factor) {
-      steps++;
-      size /= factor;
-
-      if (steps >= limit) {
-        return { text: 'NA' };
-      }
-    }
-
-    return { text: toFixed(size, decimals), suffix: extArray[steps] };
+    return {
+      text: toFixed(size / factor ** clamp(siIndex, -offset, extArray.length - offset - 1), decimals),
+      suffix,
+    };
   };
 }
 

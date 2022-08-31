@@ -1,28 +1,29 @@
-import React, { FC, useMemo, useState } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
-import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner, ConfirmModal } from '@grafana/ui';
 import { css } from '@emotion/css';
-
-import { AlertTypeStep } from './AlertTypeStep';
-import { DetailsStep } from './DetailsStep';
-import { QueryStep } from './QueryStep';
-import { useForm, FormProvider } from 'react-hook-form';
-
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { initialAsyncRequestState } from '../../utils/redux';
-import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import React, { FC, useMemo, useState } from 'react';
+import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
-import { useCleanup } from 'app/core/hooks/useCleanup';
-import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
 import { Link } from 'react-router-dom';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { CloudConditionsStep } from './CloudConditionsStep';
-import { GrafanaConditionsStep } from './GrafanaConditionsStep';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, ConfirmModal, CustomScrollbar, PageToolbar, Spinner, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { useCleanup } from 'app/core/hooks/useCleanup';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { RuleWithLocation } from 'app/types/unified-alerting';
+
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { initialAsyncRequestState } from '../../utils/redux';
+import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
+
+import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
+import { DetailsStep } from './DetailsStep';
+import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
+import { NotificationsStep } from './NotificationsStep';
+import { RuleInspector } from './RuleInspector';
+import { QueryAndAlertConditionStep } from './query-and-alert-condition/QueryAndAlertConditionStep';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -33,6 +34,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
+  const [showEditYaml, setShowEditYaml] = useState(false);
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -45,6 +47,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       ...getDefaultFormValues(),
       queries: getDefaultQueries(),
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
+      type: RuleFormType.grafana,
     };
   }, [existing, queryParams]);
 
@@ -105,7 +108,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
-        <PageToolbar title="Create alert rule" pageIcon="bell">
+        <PageToolbar title={`${existing ? 'Edit' : 'Create'} alert rule`} pageIcon="bell">
           <Link to={returnTo}>
             <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
               Cancel
@@ -116,6 +119,16 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               Delete
             </Button>
           ) : null}
+          {isCortexLokiOrRecordingRule(watch) && (
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => setShowEditYaml(true)}
+              disabled={submitState.loading}
+            >
+              Edit yaml
+            </Button>
+          )}
           <Button
             variant="primary"
             type="button"
@@ -138,12 +151,12 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
-              <AlertTypeStep editingExistingRule={!!existing} />
+              <QueryAndAlertConditionStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
-                  <QueryStep />
-                  {type === RuleFormType.grafana ? <GrafanaConditionsStep /> : <CloudConditionsStep />}
-                  <DetailsStep />
+                  {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}
+                  <DetailsStep initialFolder={defaultValues.folder} />
+                  <NotificationsStep />
                 </>
               )}
             </div>
@@ -161,8 +174,15 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           onDismiss={() => setShowDeleteModal(false)}
         />
       ) : null}
+      {showEditYaml ? <RuleInspector onClose={() => setShowEditYaml(false)} /> : null}
     </FormProvider>
   );
+};
+
+const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
+  const [ruleType, dataSourceName] = watch(['type', 'dataSourceName']);
+
+  return (ruleType === RuleFormType.cloudAlerting || ruleType === RuleFormType.cloudRecording) && dataSourceName !== '';
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

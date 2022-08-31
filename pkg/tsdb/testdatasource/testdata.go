@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/testdatasource/sims"
 )
 
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
@@ -34,6 +35,12 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Serv
 		cfg:    cfg,
 	}
 
+	var err error
+	s.sims, err = sims.NewSimulationEngine()
+	if err != nil {
+		s.logger.Error("unable to initialize SimulationEngine", "err", err)
+	}
+
 	s.registerScenarios()
 	s.resourceHandler = httpadapter.New(s.registerRoutes())
 
@@ -49,6 +56,7 @@ type Service struct {
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
 	features        featuremgmt.FeatureToggles
+	sims            *sims.SimulationEngine
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

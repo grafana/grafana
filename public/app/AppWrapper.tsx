@@ -1,23 +1,28 @@
+import { Action, KBarProvider } from 'kbar';
 import React, { ComponentType } from 'react';
-import { Router, Route, Redirect, Switch } from 'react-router-dom';
-import { config, locationService, navigationLogger } from '@grafana/runtime';
 import { Provider } from 'react-redux';
-import { store } from 'app/store/store';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider } from '@grafana/ui';
-import { GrafanaApp } from './app';
-import { getAppRoutes } from 'app/routes/routes';
-import { ConfigContext, ThemeProvider } from './core/utils/ConfigProvider';
-import { RouteDescriptor } from './core/navigation/types';
-import { contextSrv } from './core/services/context_srv';
-import { NavBar } from './core/components/NavBar/NavBar';
-import { NavBarNext } from './core/components/NavBar/NavBarNext';
-import { GrafanaRoute } from './core/navigation/GrafanaRoute';
-import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
+import { Router, Route, Redirect, Switch } from 'react-router-dom';
+
+import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
 import { SearchWrapper } from 'app/features/search';
-import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import { I18nProvider } from './core/localisation';
+import { getAppRoutes } from 'app/routes/routes';
+import { store } from 'app/store/store';
+
 import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
+import { GrafanaApp } from './app';
+import { AppChrome } from './core/components/AppChrome/AppChrome';
+import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
+import { NavBar } from './core/components/NavBar/NavBar';
+import { GrafanaContext } from './core/context/GrafanaContext';
+import { I18nProvider } from './core/internationalization';
+import { GrafanaRoute } from './core/navigation/GrafanaRoute';
+import { RouteDescriptor } from './core/navigation/types';
+import { contextSrv } from './core/services/context_srv';
+import { ThemeProvider } from './core/utils/ConfigProvider';
+import { CommandPalette } from './features/commandPalette/CommandPalette';
+import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -78,47 +83,78 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
+  renderNavBar() {
+    if (config.isPublicDashboardView || !this.state.ready || config.featureToggles.topnav) {
+      return null;
+    }
+
+    return <NavBar />;
+  }
+
+  commandPaletteEnabled() {
+    return config.featureToggles.commandPalette && !config.isPublicDashboardView;
+  }
+
+  searchBarEnabled() {
+    return !config.isPublicDashboardView;
+  }
+
   render() {
+    const { app } = this.props;
     const { ready } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
 
-    const newNavigationEnabled = Boolean(config.featureToggles.newNavigation);
+    const commandPaletteActionSelected = (action: Action) => {
+      reportInteraction('commandPalette_action_selected', {
+        actionId: action.id,
+        actionName: action.name,
+      });
+    };
 
     return (
-      <Provider store={store}>
-        <I18nProvider>
-          <ErrorBoundaryAlert style="page">
-            <ConfigContext.Provider value={config}>
-              <ThemeProvider>
-                <ModalsProvider>
-                  <GlobalStyles />
-                  <div className="grafana-app">
-                    <Router history={locationService.getHistory()}>
-                      {newNavigationEnabled ? <NavBarNext /> : <NavBar />}
-                      <main className="main-view">
-                        {pageBanners.map((Banner, index) => (
-                          <Banner key={index.toString()} />
-                        ))}
+      <React.StrictMode>
+        <Provider store={store}>
+          <I18nProvider>
+            <ErrorBoundaryAlert style="page">
+              <GrafanaContext.Provider value={app.context}>
+                <ThemeProvider value={config.theme2}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <ModalsProvider>
+                      <GlobalStyles />
+                      {this.commandPaletteEnabled() && <CommandPalette />}
+                      <div className="grafana-app">
+                        <Router history={locationService.getHistory()}>
+                          {this.renderNavBar()}
+                          <AppChrome>
+                            {pageBanners.map((Banner, index) => (
+                              <Banner key={index.toString()} />
+                            ))}
 
-                        <AngularRoot />
-                        <AppNotificationList />
-                        <SearchWrapper />
-                        {ready && this.renderRoutes()}
-                        {bodyRenderHooks.map((Hook, index) => (
-                          <Hook key={index.toString()} />
-                        ))}
-                      </main>
-                    </Router>
-                  </div>
-                  <LiveConnectionWarning />
-                  <ModalRoot />
-                </ModalsProvider>
-              </ThemeProvider>
-            </ConfigContext.Provider>
-          </ErrorBoundaryAlert>
-        </I18nProvider>
-      </Provider>
+                            <AngularRoot />
+                            <AppNotificationList />
+                            {this.searchBarEnabled() && <SearchWrapper />}
+                            {ready && this.renderRoutes()}
+                            {bodyRenderHooks.map((Hook, index) => (
+                              <Hook key={index.toString()} />
+                            ))}
+                          </AppChrome>
+                        </Router>
+                      </div>
+                      <LiveConnectionWarning />
+                      <ModalRoot />
+                      <PortalContainer />
+                    </ModalsProvider>
+                  </KBarProvider>
+                </ThemeProvider>
+              </GrafanaContext.Provider>
+            </ErrorBoundaryAlert>
+          </I18nProvider>
+        </Provider>
+      </React.StrictMode>
     );
   }
 }

@@ -1,6 +1,7 @@
 import { HistoryItem } from '@grafana/data';
-import { PromQuery } from '../../types';
+
 import type PromQlLanguageProvider from '../../language_provider';
+import { PromQuery } from '../../types';
 
 // we need to store this in a separate file,
 // because we have an async-wrapper around,
@@ -10,6 +11,7 @@ export type Props = {
   initialValue: string;
   languageProvider: PromQlLanguageProvider;
   history: Array<HistoryItem<PromQuery>>;
+  placeholder: string;
   onRunQuery: (value: string) => void;
   onBlur: (value: string) => void;
 };

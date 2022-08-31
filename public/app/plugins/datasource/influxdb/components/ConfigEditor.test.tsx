@@ -1,5 +1,6 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
+
 import ConfigEditor, { Props } from './ConfigEditor';
 
 jest.mock('lodash', () => {
@@ -13,7 +14,7 @@ jest.mock('lodash', () => {
   };
 });
 
-const setup = (propOverrides?: object) => {
+const setup = (optionOverrides?: object) => {
   const props: Props = {
     options: {
       id: 21,
@@ -25,12 +26,10 @@ const setup = (propOverrides?: object) => {
       typeLogoUrl: '',
       access: 'proxy',
       url: '',
-      password: '',
       user: '',
       database: '',
       basicAuth: false,
       basicAuthUser: '',
-      basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
       jsonData: {
@@ -40,42 +39,40 @@ const setup = (propOverrides?: object) => {
       secureJsonFields: {},
       version: 1,
       readOnly: false,
+      ...optionOverrides,
     },
     onOptionsChange: jest.fn(),
   };
 
-  Object.assign(props, propOverrides);
-
-  return shallow(<ConfigEditor {...props} />);
+  return render(<ConfigEditor {...props} />);
 };
 
-describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
-
-    expect(wrapper).toMatchSnapshot();
+describe('ConfigEditor', () => {
+  it('should render without throwing an error', () => {
+    expect(() => setup()).not.toThrow();
   });
 
   it('should disable basic auth password input', () => {
-    const wrapper = setup({
+    setup({
+      basicAuth: true,
       secureJsonFields: {
         basicAuthPassword: true,
       },
     });
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.getByDisplayValue('configured')).toBeInTheDocument();
   });
 
   it('should hide white listed cookies input when browser access chosen', () => {
-    const wrapper = setup({
+    setup({
       access: 'direct',
     });
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.queryByLabelText('Allowed cookies')).not.toBeInTheDocument();
   });
 
   it('should hide basic auth fields when switch off', () => {
-    const wrapper = setup({
+    setup({
       basicAuth: false,
     });
-    expect(wrapper).toMatchSnapshot();
+    expect(screen.queryByRole('heading', { name: 'Basic Auth Details' })).not.toBeInTheDocument();
   });
 });

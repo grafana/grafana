@@ -1,11 +1,15 @@
-import { SelectableValue } from '@grafana/data';
 import React from 'react';
 
-import { Selector, Service, SLO } from '.';
-import { AliasBy, AlignmentPeriod, AlignmentPeriodLabel, Project, QueryEditorRow } from '..';
-import { SELECT_WIDTH } from '../../constants';
+import { SelectableValue } from '@grafana/data';
+
+import { AliasBy, PeriodSelect, AlignmentPeriodLabel, Project, QueryEditorRow } from '..';
+import { ALIGNMENT_PERIODS, SELECT_WIDTH, SLO_BURN_RATE_SELECTOR_NAME } from '../../constants';
 import CloudMonitoringDatasource from '../../datasource';
 import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
+
+import { LookbackPeriodSelect } from './LookbackPeriodSelect';
+
+import { Selector, Service, SLO } from '.';
 
 export interface Props {
   refId: string;
@@ -27,6 +31,7 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery =
   serviceName: '',
   sloId: '',
   sloName: '',
+  lookbackPeriod: '',
 });
 
 export function SLOQueryEditor({
@@ -68,16 +73,23 @@ export function SLOQueryEditor({
         onChange={onChange}
       ></Selector>
 
+      {query.selectorName === SLO_BURN_RATE_SELECTOR_NAME && (
+        <LookbackPeriodSelect
+          refId={refId}
+          onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
+          current={query.lookbackPeriod}
+          templateVariableOptions={variableOptionGroup.options}
+        />
+      )}
+
       <QueryEditorRow label="Alignment period" htmlFor={`${refId}-alignment-period`}>
-        <AlignmentPeriod
+        <PeriodSelect
           inputId={`${refId}-alignment-period`}
           templateVariableOptions={variableOptionGroup.options}
-          query={{
-            ...query,
-            perSeriesAligner: query.selectorName === 'select_slo_health' ? 'ALIGN_MEAN' : 'ALIGN_NEXT_OLDER',
-          }}
-          onChange={onChange}
           selectWidth={SELECT_WIDTH}
+          current={query.alignmentPeriod}
+          onChange={(period) => onChange({ ...query, alignmentPeriod: period })}
+          aligmentPeriods={ALIGNMENT_PERIODS}
         />
         <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
       </QueryEditorRow>

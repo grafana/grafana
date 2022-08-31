@@ -1,13 +1,16 @@
-import { DataQueryRequest, DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta } from '@grafana/data';
-import { LokiQuery, LokiQueryType } from './types';
+import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta, DataQueryError } from '@grafana/data';
+
+import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
+import { dataFrameHasLokiError } from './responseUtils';
+import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 
 function isMetricFrame(frame: DataFrame): boolean {
   return frame.fields.every((field) => field.type === FieldType.time || field.type === FieldType.number);
 }
 
-// returns a new frame, with meta merged with it's original meta
+// returns a new frame, with meta shallow merged with its original meta
 function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   const { meta: oldMeta, ...rest } = frame;
   // meta maybe be undefined, we need to handle that
@@ -18,34 +21,44 @@ function setFrameMeta(frame: DataFrame, meta: QueryResultMeta): DataFrame {
   };
 }
 
-function processStreamFrame(frame: DataFrame, query: LokiQuery | undefined): DataFrame {
+function processStreamFrame(
+  frame: DataFrame,
+  query: LokiQuery | undefined,
+  derivedFieldConfigs: DerivedFieldConfig[]
+): DataFrame {
+  const custom: Record<string, string> = {
+    ...frame.meta?.custom, // keep the original meta.custom
+    // used by logsModel
+    lokiQueryStatKey: 'Summary: total bytes processed',
+  };
+
+  if (dataFrameHasLokiError(frame)) {
+    custom.error = 'Error when parsing some of the logs';
+  }
+
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
+    limit: query?.maxLines,
     searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(formatQuery(query.expr)) : undefined,
+    custom,
   };
-  const newFrame = setFrameMeta(frame, meta);
-  const newFields = frame.fields.map((field) => {
-    // the nanosecond-timestamp field must have a type-time
-    if (field.name === 'tsNs') {
-      return {
-        ...field,
-        type: FieldType.time,
-      };
-    } else {
-      return field;
-    }
-  });
 
+  const newFrame = setFrameMeta(frame, meta);
+  const derivedFields = getDerivedFields(newFrame, derivedFieldConfigs);
   return {
     ...newFrame,
-    fields: newFields,
+    fields: [...newFrame.fields, ...derivedFields],
   };
 }
 
-function processStreamsFrames(frames: DataFrame[], queryMap: Map<string, LokiQuery>): DataFrame[] {
+function processStreamsFrames(
+  frames: DataFrame[],
+  queryMap: Map<string, LokiQuery>,
+  derivedFieldConfigs: DerivedFieldConfig[]
+): DataFrame[] {
   return frames.map((frame) => {
     const query = frame.refId !== undefined ? queryMap.get(frame.refId) : undefined;
-    return processStreamFrame(frame, query);
+    return processStreamFrame(frame, query, derivedFieldConfigs);
   });
 }
 
@@ -88,11 +101,39 @@ function groupFrames(
   return { streamsFrames, metricInstantFrames, metricRangeFrames };
 }
 
+function improveError(error: DataQueryError | undefined, queryMap: Map<string, LokiQuery>): DataQueryError | undefined {
+  // many things are optional in an error-object, we need an error-message to exist,
+  // and we need to find the loki-query, based on the refId in the error-object.
+  if (error === undefined) {
+    return error;
+  }
+
+  const { refId, message } = error;
+  if (refId === undefined || message === undefined) {
+    return error;
+  }
+
+  const query = queryMap.get(refId);
+  if (query === undefined) {
+    return error;
+  }
+
+  if (message.includes('escape') && query.expr.includes('\\')) {
+    return {
+      ...error,
+      message: `${message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.`,
+    };
+  }
+
+  return error;
+}
+
 export function transformBackendResult(
   response: DataQueryResponse,
-  request: DataQueryRequest<LokiQuery>
+  queries: LokiQuery[],
+  derivedFieldConfigs: DerivedFieldConfig[]
 ): DataQueryResponse {
-  const { data, ...rest } = response;
+  const { data, error, ...rest } = response;
 
   // in the typescript type, data is an array of basically anything.
   // we do know that they have to be dataframes, so we make a quick check,
@@ -104,16 +145,17 @@ export function transformBackendResult(
     return d;
   });
 
-  const queryMap = new Map(request.targets.map((query) => [query.refId, query]));
+  const queryMap = new Map(queries.map((query) => [query.refId, query]));
 
   const { streamsFrames, metricInstantFrames, metricRangeFrames } = groupFrames(dataFrames, queryMap);
 
   return {
     ...rest,
+    error: improveError(error, queryMap),
     data: [
       ...processMetricRangeFrames(metricRangeFrames),
       ...processMetricInstantFrames(metricInstantFrames),
-      ...processStreamsFrames(streamsFrames, queryMap),
+      ...processStreamsFrames(streamsFrames, queryMap, derivedFieldConfigs),
     ],
   };
 }

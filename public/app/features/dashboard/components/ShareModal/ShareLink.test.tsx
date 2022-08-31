@@ -1,13 +1,17 @@
-import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
-import { setTemplateSrv } from '@grafana/runtime';
+import React from 'react';
+
+import { getDefaultTimeRange } from '@grafana/data';
+import { setEchoSrv, setTemplateSrv } from '@grafana/runtime';
 import config from 'app/core/config';
-import { Props, ShareLink, State } from './ShareLink';
+
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
+import { Echo } from '../../../../core/services/echo/Echo';
 import { variableAdapters } from '../../../variables/adapters';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 import { DashboardModel, PanelModel } from '../../state';
-import { getDefaultTimeRange } from '@grafana/data';
+
+import { Props, ShareLink, State } from './ShareLink';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: () => ({
@@ -28,7 +32,7 @@ function mockLocationHref(href: string) {
 
   //@ts-ignore
   delete window.location;
-  (window as any).location = {
+  window.location = {
     ...location,
     href,
     origin: new URL(href).origin,
@@ -99,6 +103,7 @@ describe('ShareModal', () => {
   let templateSrv = initTemplateSrv('key', []);
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     variableAdapters.register(createQueryVariableAdapter());
     setTemplateSrv(templateSrv);
   });
@@ -110,7 +115,7 @@ describe('ShareModal', () => {
         user: {
           orgId: 1,
         },
-      };
+      } as any;
       ctx.mount({
         panel: new PanelModel({ id: 22, options: {}, fieldConfig: { defaults: {}, overrides: [] } }),
       });
@@ -202,7 +207,7 @@ describe('when default_home_dashboard_path is set in the grafana config', () => 
       user: {
         orgId: 1,
       },
-    };
+    } as any;
   });
 
   afterAll(() => {

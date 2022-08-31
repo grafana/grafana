@@ -1,11 +1,13 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
-import { Playlist } from './types';
-import { PlaylistNewPage } from './PlaylistNewPage';
-import { backendSrv } from '../../core/services/backend_srv';
 import { locationService } from '@grafana/runtime';
+
+import { backendSrv } from '../../core/services/backend_srv';
+
+import { PlaylistNewPage } from './PlaylistNewPage';
+import { Playlist } from './types';
 
 jest.mock('./usePlaylist', () => ({
   // so we don't need to add dashboard items in test
@@ -15,33 +17,22 @@ jest.mock('./usePlaylist', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as any),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
+}));
+
+jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+  TagFilter: () => {
+    return <>mocked-tag-filter</>;
+  },
 }));
 
 function getTestContext({ name, interval, items }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
   const playlist = { name, items, interval } as unknown as Playlist;
-  const queryParams = {};
-  const route: any = {};
-  const match: any = {};
-  const location: any = {};
-  const history: any = {};
-  const navModel: any = {
-    node: {},
-    main: {},
-  };
   const backendSrvMock = jest.spyOn(backendSrv, 'post');
-  const { rerender } = render(
-    <PlaylistNewPage
-      queryParams={queryParams}
-      route={route}
-      match={match}
-      location={location}
-      history={history}
-      navModel={navModel}
-    />
-  );
+
+  const { rerender } = render(<PlaylistNewPage />);
 
   return { playlist, rerender, backendSrvMock };
 }
@@ -60,7 +51,7 @@ describe('PlaylistNewPage', () => {
       const { backendSrvMock } = getTestContext();
 
       expect(locationService.getLocation().pathname).toEqual('/');
-      userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
+      await userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
       expect(backendSrvMock).toHaveBeenCalledWith('/api/playlists', {

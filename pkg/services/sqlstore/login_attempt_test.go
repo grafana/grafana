@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
@@ -18,7 +15,10 @@ func mockTime(mock time.Time) time.Time {
 	return mock
 }
 
-func TestLoginAttempts(t *testing.T) {
+func TestIntegrationLoginAttempts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	var beginningOfTime, timePlusOneMinute, timePlusTwoMinutes time.Time
 	var sqlStore *SQLStore
 	user := "user"
@@ -51,7 +51,7 @@ func TestLoginAttempts(t *testing.T) {
 			Username: user,
 			Since:    timePlusTwoMinutes.Add(time.Second * 1),
 		}
-		err := GetUserLoginAttemptCount(context.Background(), &query)
+		err := sqlStore.GetUserLoginAttemptCount(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, int64(0), query.Result)
 	})
@@ -62,7 +62,7 @@ func TestLoginAttempts(t *testing.T) {
 			Username: user,
 			Since:    beginningOfTime,
 		}
-		err := GetUserLoginAttemptCount(context.Background(), &query)
+		err := sqlStore.GetUserLoginAttemptCount(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, int64(3), query.Result)
 	})
@@ -73,7 +73,7 @@ func TestLoginAttempts(t *testing.T) {
 			Username: user,
 			Since:    timePlusOneMinute,
 		}
-		err := GetUserLoginAttemptCount(context.Background(), &query)
+		err := sqlStore.GetUserLoginAttemptCount(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, int64(2), query.Result)
 	})
@@ -84,7 +84,7 @@ func TestLoginAttempts(t *testing.T) {
 			Username: user,
 			Since:    timePlusTwoMinutes,
 		}
-		err := GetUserLoginAttemptCount(context.Background(), &query)
+		err := sqlStore.GetUserLoginAttemptCount(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, int64(1), query.Result)
 	})

@@ -48,27 +48,28 @@ func (ap *PluginProvisioner) apply(ctx context.Context, cfg *pluginsAsConfig) er
 			app.OrgID = 1
 		}
 
-		query := &models.GetPluginSettingByIdQuery{OrgId: app.OrgID, PluginId: app.PluginID}
-		err := ap.pluginSettings.GetPluginSettingById(ctx, query)
+		ps, err := ap.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+			OrgID:    app.OrgID,
+			PluginID: app.PluginID,
+		})
 		if err != nil {
 			if !errors.Is(err, models.ErrPluginSettingNotFound) {
 				return err
 			}
 		} else {
-			app.PluginVersion = query.Result.PluginVersion
+			app.PluginVersion = ps.PluginVersion
 		}
 
 		ap.log.Info("Updating app from configuration ", "type", app.PluginID, "enabled", app.Enabled)
-		cmd := &models.UpdatePluginSettingCmd{
-			OrgId:          app.OrgID,
-			PluginId:       app.PluginID,
+		if err := ap.pluginSettings.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
+			OrgID:          app.OrgID,
+			PluginID:       app.PluginID,
 			Enabled:        app.Enabled,
 			Pinned:         app.Pinned,
-			JsonData:       app.JSONData,
-			SecureJsonData: app.SecureJSONData,
+			JSONData:       app.JSONData,
+			SecureJSONData: app.SecureJSONData,
 			PluginVersion:  app.PluginVersion,
-		}
-		if err := ap.pluginSettings.UpdatePluginSetting(ctx, cmd); err != nil {
+		}); err != nil {
 			return err
 		}
 	}

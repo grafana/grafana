@@ -1,4 +1,5 @@
 import produce from 'immer';
+
 import InfluxSeries from '../influx_series';
 
 describe('when generating timeseries from influxdb response', () => {

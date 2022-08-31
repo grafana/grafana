@@ -1,5 +1,12 @@
-import { DashboardModel, PanelModel } from '../../../state';
+import { pick } from 'lodash';
+
+import store from 'app/core/store';
+import { cleanUpPanelState, initPanelState } from 'app/features/panel/state/actions';
+import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { ThunkResult } from 'app/types';
+
+import { DashboardModel, PanelModel } from '../../../state';
+
 import {
   closeEditor,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
@@ -8,10 +15,6 @@ import {
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
-import { cleanUpPanelState, panelModelAndPluginReady } from 'app/features/panel/state/reducers';
-import store from 'app/core/store';
-import { pick } from 'lodash';
-import { initPanelState } from 'app/features/panel/state/actions';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return async (dispatch) => {
@@ -63,9 +66,10 @@ export function updateDuplicateLibraryPanels(
       panel.configRev++;
 
       if (pluginChanged) {
+        const cleanUpKey = panel.key;
         panel.generateNewKey();
 
-        dispatch(panelModelAndPluginReady({ key: panel.key, plugin: panel.plugin! }));
+        dispatch(panelModelAndPluginReady({ key: panel.key, plugin: panel.plugin!, cleanUpKey }));
       }
 
       // Resend last query result on source panel query runner
@@ -112,7 +116,10 @@ export function exitPanelEditor(): ThunkResult<void> {
       dashboard.exitPanelEditor();
     }
 
-    if (!shouldDiscardChanges) {
+    // For angular panels we always commit as panel.hasChanged will not have picked up changes done from angular
+    const commitChanges = !shouldDiscardChanges && (panel.hasChanged || panel.isAngularPlugin());
+
+    if (commitChanges) {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
@@ -125,9 +132,10 @@ export function exitPanelEditor(): ThunkResult<void> {
       if (panelTypeChanged) {
         // Loaded plugin is not included in the persisted properties so is not handled by restoreModel
         sourcePanel.plugin = panel.plugin;
+        const cleanUpKey = sourcePanel.key;
         sourcePanel.generateNewKey();
 
-        await dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin! }));
+        await dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin!, cleanUpKey }));
       }
 
       // Resend last query result on source panel query runner
@@ -138,7 +146,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       }, 20);
     }
 
-    dispatch(cleanUpPanelState({ key: panel.key }));
+    dispatch(cleanUpPanelState(panel.key));
     dispatch(closeEditor());
   };
 }

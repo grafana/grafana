@@ -1,6 +1,8 @@
 import { Field, FieldType } from '@grafana/data';
+
 import { ComponentSize } from './size';
-export type IconType = 'mono' | 'default';
+
+export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export const getAvailableIcons = () =>
@@ -22,12 +24,14 @@ export const getAvailableIcons = () =>
     'arrow-right',
     'arrow-up',
     'arrows-h',
+    'arrows-v',
     'backward',
     'bars',
     'bell',
     'bell-slash',
     'bolt',
     'book',
+    'bookmark',
     'book-open',
     'brackets-curly',
     'building',
@@ -68,6 +72,7 @@ export const getAvailableIcons = () =>
     'envelope',
     'exchange-alt',
     'exclamation-triangle',
+    'exclamation-circle',
     'external-link-alt',
     'eye',
     'eye-slash',
@@ -88,6 +93,7 @@ export const getAvailableIcons = () =>
     'gf-bar-alignment-after',
     'gf-bar-alignment-before',
     'gf-bar-alignment-center',
+    'gf-glue',
     'gf-grid',
     'gf-interpolation-linear',
     'gf-interpolation-smooth',
@@ -102,7 +108,11 @@ export const getAvailableIcons = () =>
     'heart',
     'heart-break',
     'history',
+    'home',
     'home-alt',
+    'horizontal-align-center',
+    'horizontal-align-left',
+    'horizontal-align-right',
     'hourglass',
     'import',
     'info',
@@ -139,6 +149,7 @@ export const getAvailableIcons = () =>
     'record-audio',
     'repeat',
     'rocket',
+    'ruler-combined',
     'save',
     'search',
     'search-minus',
@@ -157,6 +168,7 @@ export const getAvailableIcons = () =>
     'square-shape',
     'star',
     'step-backward',
+    'stopwatch-slash',
     'sync',
     'table',
     'tag-alt',
@@ -168,7 +180,11 @@ export const getAvailableIcons = () =>
     'upload',
     'user',
     'users-alt',
+    'vertical-align-bottom',
+    'vertical-align-center',
+    'vertical-align-top',
     'wrap-text',
+    'rss',
     'x',
   ] as const;
 

@@ -36,8 +36,18 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  textHighlight: {
+    background: string;
+    text: string;
+  };
   sidemenu: {
     width: number;
+  };
+  menuTabs: {
+    height: number;
+  };
+  horizontalDrawer: {
+    defaultHeight: number;
   };
 }
 
@@ -69,18 +79,28 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
       background: input.background,
     },
     tooltip: {
-      background: colors.mode === 'light' ? '#555' : '#35383e',
-      text: colors.mode === 'light' ? '#FFF' : colors.text.primary,
+      background: colors.background.secondary,
+      text: colors.text.primary,
     },
     dashboard: {
       background: colors.background.canvas,
       padding: 1,
     },
     overlay: {
-      background: colors.mode === 'dark' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+      background: colors.mode === 'dark' ? 'rgba(63, 62, 62, 0.45)' : 'rgba(208, 209, 211, 0.24)',
     },
     sidemenu: {
-      width: 48,
+      width: 57,
+    },
+    menuTabs: {
+      height: 41,
+    },
+    textHighlight: {
+      text: colors.warning.contrastText,
+      background: colors.warning.main,
+    },
+    horizontalDrawer: {
+      defaultHeight: 400,
     },
   };
 }

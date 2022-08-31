@@ -53,9 +53,49 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
   }
   data-testid="loki-editor-explore"
   datasource={
-    Object {
-      "getTimeRangeParams": [Function],
-      "interpolateString": [Function],
+    LokiDatasource {
+      "annotations": Object {
+        "QueryEditor": Object {
+          "$$typeof": Symbol(react.memo),
+          "compare": null,
+          "type": [Function],
+        },
+      },
+      "getLogRowContext": [Function],
+      "id": 0,
+      "instanceSettings": Object {
+        "access": "direct",
+        "id": 0,
+        "jsonData": Object {
+          "maxLines": "20",
+        },
+        "meta": Object {
+          "baseUrl": "",
+          "id": "id",
+          "info": Object {
+            "author": Object {
+              "name": "Test",
+            },
+            "description": "",
+            "links": Array [],
+            "logos": Object {
+              "large": "",
+              "small": "",
+            },
+            "screenshots": Array [],
+            "updated": "",
+            "version": "",
+          },
+          "module": "",
+          "name": "name",
+          "type": "datasource",
+        },
+        "name": "",
+        "readOnly": false,
+        "type": "",
+        "uid": "",
+        "url": "myloggingurl",
+      },
       "languageProvider": LokiLanguageProvider {
         "cleanText": [Function],
         "datasource": [Circular],
@@ -70,6 +110,8 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "allowStale": false,
           "disposeAfter": null,
           "disposed": null,
+          "fetchContext": undefined,
+          "fetchMethod": null,
           "free": Stack {
             "heap": Uint8Array [
               0,
@@ -114,6 +156,8 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
             0,
             0,
           ],
+          "noDeleteOnFetchRejection": false,
+          "noDeleteOnStaleGet": false,
           "noDisposeOnSet": false,
           "noUpdateTTL": false,
           "prev": Uint8Array [
@@ -135,6 +179,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "ttlAutopurge": false,
           "ttlResolution": 1,
           "updateAgeOnGet": false,
+          "updateAgeOnHas": false,
           "valList": Array [
             null,
             null,
@@ -154,6 +199,8 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "allowStale": false,
           "disposeAfter": null,
           "disposed": null,
+          "fetchContext": undefined,
+          "fetchMethod": null,
           "free": Stack {
             "heap": Uint8Array [
               0,
@@ -198,6 +245,8 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
             0,
             0,
           ],
+          "noDeleteOnFetchRejection": false,
+          "noDeleteOnStaleGet": false,
           "noDisposeOnSet": false,
           "noUpdateTTL": false,
           "prev": Uint8Array [
@@ -219,6 +268,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "ttlAutopurge": false,
           "ttlResolution": 1,
           "updateAgeOnGet": false,
+          "updateAgeOnHas": false,
           "valList": Array [
             null,
             null,
@@ -235,7 +285,47 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         "start": [Function],
         "started": false,
       },
-      "metadataRequest": [Function],
+      "maxLines": 20,
+      "meta": Object {
+        "baseUrl": "",
+        "id": "id",
+        "info": Object {
+          "author": Object {
+            "name": "Test",
+          },
+          "description": "",
+          "links": Array [],
+          "logos": Object {
+            "large": "",
+            "small": "",
+          },
+          "screenshots": Array [],
+          "updated": "",
+          "version": "",
+        },
+        "module": "",
+        "name": "name",
+        "type": "datasource",
+      },
+      "metadataRequest": [MockFunction],
+      "name": "",
+      "prepareLogRowContextQueryTarget": [Function],
+      "runLiveQuery": [Function],
+      "streamOptionsProvider": [Function],
+      "streams": LiveStreams {
+        "streams": Object {},
+      },
+      "templateSrv": Object {},
+      "timeSrv": Object {
+        "timeRange": [Function],
+      },
+      "type": "",
+      "uid": "",
+      "variables": LokiVariableSupport {
+        "datasource": [Circular],
+        "editor": [Function],
+        "query": [Function],
+      },
     }
   }
   history={Array []}

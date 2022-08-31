@@ -1,18 +1,18 @@
-// Libraries
 import React, { PureComponent } from 'react';
+import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 
-// Types
 import {
   CoreApp,
   DataQuery,
   DataSourceInstanceSettings,
+  DataSourceRef,
   EventBusExtended,
   HistoryItem,
   PanelData,
 } from '@grafana/data';
-import { QueryEditorRow } from './QueryEditorRow';
-import { DragDropContext, DragStart, Droppable, DropResult } from 'react-beautiful-dnd';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+
+import { QueryEditorRow } from './QueryEditorRow';
 
 interface Props {
   // The query configuration
@@ -61,13 +61,18 @@ export class QueryEditorRows extends PureComponent<Props> {
           return item;
         }
 
+        const dataSourceRef: DataSourceRef = {
+          type: dataSource.type,
+          uid: dataSource.uid,
+        };
+
         if (item.datasource) {
           const previous = getDataSourceSrv().getInstanceSettings(item.datasource);
 
           if (previous?.type === dataSource.type) {
             return {
               ...item,
-              datasource: { uid: dataSource.uid },
+              datasource: dataSourceRef,
             };
           }
         }
@@ -75,7 +80,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         return {
           refId: item.refId,
           hide: item.hide,
-          datasource: { uid: dataSource.uid },
+          datasource: dataSourceRef,
         };
       })
     );

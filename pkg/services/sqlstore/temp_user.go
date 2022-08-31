@@ -4,18 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
-
-func (ss *SQLStore) addTempUserQueryAndCommandHandlers() {
-	bus.AddHandler("sql", ss.CreateTempUser)
-	bus.AddHandler("sql", ss.GetTempUsersQuery)
-	bus.AddHandler("sql", ss.UpdateTempUserStatus)
-	bus.AddHandler("sql", ss.GetTempUserByCode)
-	bus.AddHandler("sql", ss.UpdateTempUserWithEmailSent)
-	bus.AddHandler("sql", ss.ExpireOldUserInvites)
-}
 
 func (ss *SQLStore) UpdateTempUserStatus(ctx context.Context, cmd *models.UpdateTempUserStatusCommand) error {
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {

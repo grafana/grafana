@@ -1,9 +1,8 @@
 import { AsyncThunk, createSlice, Draft, isAsyncThunkAction, PayloadAction, SerializedError } from '@reduxjs/toolkit';
-import { FetchError } from '@grafana/runtime';
-import { AppEvents } from '@grafana/data';
 
+import { AppEvents } from '@grafana/data';
+import { FetchError, isFetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
-import { isFetchError } from './alertmanager';
 
 export interface AsyncRequestState<T> {
   result?: T;
@@ -62,7 +61,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
 }
 
 /*
- * createAsyncSlice creates a slice based on a given async action, exposing it's state.
+ * createAsyncSlice creates a slice based on a given async action, exposing its state.
  * takes care to only use state of the latest invocation of the action if there are several in flight.
  */
 export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
@@ -170,6 +169,10 @@ export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>)
   return Object.values(slice).some(isAsyncRequestStatePending);
 }
 
-export function isAsyncRequestStatePending<T>(state: AsyncRequestState<T>): boolean {
+export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
+  if (!state) {
+    return false;
+  }
+
   return state.dispatched && state.loading;
 }

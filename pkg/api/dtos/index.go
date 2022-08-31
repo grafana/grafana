@@ -37,11 +37,12 @@ const (
 	// are negative to ensure that the default items are placed above
 	// any items with default weight.
 
-	WeightHome = (iota - 20) * 100
+	WeightSavedItems = (iota - 20) * 100
 	WeightCreate
 	WeightDashboard
 	WeightExplore
 	WeightAlerting
+	WeightDataConnections
 	WeightPlugin
 	WeightConfig
 	WeightAdmin
@@ -56,22 +57,24 @@ const (
 )
 
 type NavLink struct {
-	Id            string     `json:"id,omitempty"`
-	Text          string     `json:"text,omitempty"`
-	Description   string     `json:"description,omitempty"`
-	Section       string     `json:"section,omitempty"`
-	SubTitle      string     `json:"subTitle,omitempty"`
-	Icon          string     `json:"icon,omitempty"`
-	Img           string     `json:"img,omitempty"`
-	Url           string     `json:"url,omitempty"`
-	Target        string     `json:"target,omitempty"`
-	SortWeight    int64      `json:"sortWeight,omitempty"`
-	Divider       bool       `json:"divider,omitempty"`
-	HideFromMenu  bool       `json:"hideFromMenu,omitempty"`
-	HideFromTabs  bool       `json:"hideFromTabs,omitempty"`
-	Children      []*NavLink `json:"children,omitempty"`
-	HighlightText string     `json:"highlightText,omitempty"`
-	HighlightID   string     `json:"highlightId,omitempty"`
+	Id               string     `json:"id,omitempty"`
+	Text             string     `json:"text"`
+	Description      string     `json:"description,omitempty"`
+	Section          string     `json:"section,omitempty"`
+	SubTitle         string     `json:"subTitle,omitempty"`
+	Icon             string     `json:"icon,omitempty"` // Available icons can be browsed in Storybook: https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview
+	Img              string     `json:"img,omitempty"`
+	Url              string     `json:"url,omitempty"`
+	Target           string     `json:"target,omitempty"`
+	SortWeight       int64      `json:"sortWeight,omitempty"`
+	Divider          bool       `json:"divider,omitempty"`
+	HideFromMenu     bool       `json:"hideFromMenu,omitempty"`
+	HideFromTabs     bool       `json:"hideFromTabs,omitempty"`
+	ShowIconInNavbar bool       `json:"showIconInNavbar,omitempty"`
+	Children         []*NavLink `json:"children,omitempty"`
+	HighlightText    string     `json:"highlightText,omitempty"`
+	HighlightID      string     `json:"highlightId,omitempty"`
+	EmptyMessageId   string     `json:"emptyMessageId,omitempty"`
 }
 
 // NavIDCfg is the id for org configuration navigation node

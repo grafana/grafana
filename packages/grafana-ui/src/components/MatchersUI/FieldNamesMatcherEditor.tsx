@@ -1,8 +1,11 @@
 import React, { memo, useCallback } from 'react';
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+
 import { FieldMatcherID, fieldMatchers, SelectableValue, ByNamesMatcherOptions } from '@grafana/data';
-import { MultiSelect } from '../Select/Select';
+
 import { Input } from '../Input/Input';
+import { MultiSelect } from '../Select/Select';
+
+import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
@@ -36,7 +39,7 @@ export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions
     return <Input value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
   }
 
-  return <MultiSelect menuShouldPortal value={options.names} options={selectOptions} onChange={onChange} />;
+  return <MultiSelect value={options.names} options={selectOptions} onChange={onChange} />;
 });
 FieldNamesMatcherEditor.displayName = 'FieldNameMatcherEditor';
 

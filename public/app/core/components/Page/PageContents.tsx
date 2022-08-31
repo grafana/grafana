@@ -1,6 +1,6 @@
 // Libraries
-import React, { FC } from 'react';
 import { cx } from '@emotion/css';
+import React, { FC } from 'react';
 
 // Components
 import PageLoader from '../PageLoader/PageLoader';

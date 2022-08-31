@@ -5,114 +5,65 @@ import (
 	"fmt"
 	"mime"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 var (
 	directoryMarker = ".___gf_dir_marker___"
-	pathRegex       = regexp.MustCompile(`(^/$)|(^(/[A-Za-z0-9!\-_.*'() ]+)+$)`)
 )
 
 type wrapper struct {
-	log         log.Logger
-	wrapped     FileStorage
-	pathFilters *PathFilters
-	rootFolder  string
+	log        log.Logger
+	wrapped    FileStorage
+	filter     PathFilter
+	rootFolder string
 }
 
-func addRootFolderToFilters(pathFilters *PathFilters, rootFolder string) *PathFilters {
-	if pathFilters == nil {
-		return pathFilters
-	}
-
-	for i := range pathFilters.disallowedPaths {
-		pathFilters.disallowedPaths[i] = rootFolder + strings.TrimPrefix(pathFilters.disallowedPaths[i], Delimiter)
-	}
-	for i := range pathFilters.disallowedPrefixes {
-		pathFilters.disallowedPrefixes[i] = rootFolder + strings.TrimPrefix(pathFilters.disallowedPrefixes[i], Delimiter)
-	}
-	for i := range pathFilters.allowedPaths {
-		pathFilters.allowedPaths[i] = rootFolder + strings.TrimPrefix(pathFilters.allowedPaths[i], Delimiter)
-	}
-	for i := range pathFilters.allowedPrefixes {
-		pathFilters.allowedPrefixes[i] = rootFolder + strings.TrimPrefix(pathFilters.allowedPrefixes[i], Delimiter)
-	}
-
-	return pathFilters
+func wrapPathFilter(filter PathFilter, rootFolder string) PathFilter {
+	return &wrappedPathFilter{filter: filter, rootFolder: rootFolder}
 }
 
-func copyPathFilters(p *PathFilters) *PathFilters {
-	if p == nil {
-		return nil
-	}
-
-	return NewPathFilters(p.allowedPrefixes, p.allowedPaths, p.disallowedPrefixes, p.disallowedPaths)
+type wrappedPathFilter struct {
+	rootFolder string
+	filter     PathFilter
 }
 
-func addPathFilters(base *PathFilters, new *PathFilters) *PathFilters {
-	if new == nil {
-		return base
-	}
+func (w wrappedPathFilter) IsAllowed(path string) bool {
+	pathWithReplacedRoot := Delimiter + strings.TrimPrefix(path, w.rootFolder)
+	return w.filter.IsAllowed(pathWithReplacedRoot)
+}
 
-	if new.allowedPrefixes != nil {
-		if base.allowedPrefixes != nil {
-			base.allowedPrefixes = append(base.allowedPrefixes, new.allowedPrefixes...)
-		} else {
-			copiedPrefixes := make([]string, len(new.allowedPrefixes))
-			copy(copiedPrefixes, new.allowedPrefixes)
-			base.allowedPrefixes = copiedPrefixes
+func (w wrappedPathFilter) ToString() string {
+	return w.filter.ToString()
+}
+
+func (w wrappedPathFilter) asSQLFilter() accesscontrol.SQLFilter {
+	sqlFilter := w.filter.asSQLFilter()
+	for i := range sqlFilter.Args {
+		if path, ok := sqlFilter.Args[i].(string); ok {
+			sqlFilter.Args[i] = w.rootFolder + strings.TrimPrefix(path, Delimiter)
 		}
 	}
 
-	if new.allowedPaths != nil {
-		if base.allowedPaths != nil {
-			base.allowedPaths = append(base.allowedPaths, new.allowedPaths...)
-		} else {
-			copiedPaths := make([]string, len(new.allowedPaths))
-			copy(copiedPaths, new.allowedPaths)
-			base.allowedPaths = copiedPaths
-		}
-	}
-
-	if new.disallowedPrefixes != nil {
-		if base.disallowedPrefixes != nil {
-			base.disallowedPrefixes = append(base.disallowedPrefixes, new.disallowedPrefixes...)
-		} else {
-			copiedPrefixes := make([]string, len(new.disallowedPrefixes))
-			copy(copiedPrefixes, new.disallowedPrefixes)
-			base.disallowedPrefixes = copiedPrefixes
-		}
-	}
-
-	if new.disallowedPaths != nil {
-		if base.disallowedPaths != nil {
-			base.disallowedPaths = append(base.disallowedPaths, new.disallowedPaths...)
-		} else {
-			copiedPaths := make([]string, len(new.disallowedPaths))
-			copy(copiedPaths, new.disallowedPaths)
-			base.disallowedPaths = copiedPaths
-		}
-	}
-
-	return base
+	return sqlFilter
 }
 
-func newWrapper(log log.Logger, wrapped FileStorage, pathFilters *PathFilters, rootFolder string) FileStorage {
-	var rootedPathFilters *PathFilters
-	if pathFilters != nil {
-		rootedPathFilters = addRootFolderToFilters(copyPathFilters(pathFilters), rootFolder)
+func newWrapper(log log.Logger, wrapped FileStorage, pathFilter PathFilter, rootFolder string) FileStorage {
+	var wrappedPathFilter PathFilter
+	if pathFilter != nil {
+		wrappedPathFilter = wrapPathFilter(pathFilter, rootFolder)
 	} else {
-		rootedPathFilters = allowAllPathFilters()
+		wrappedPathFilter = wrapPathFilter(NewAllowAllPathFilter(), rootFolder)
 	}
 
 	return &wrapper{
-		log:         log,
-		wrapped:     wrapped,
-		pathFilters: rootedPathFilters,
-		rootFolder:  rootFolder,
+		log:        log,
+		wrapped:    wrapped,
+		filter:     wrappedPathFilter,
+		rootFolder: rootFolder,
 	}
 }
 
@@ -147,37 +98,8 @@ func getName(path string) string {
 	return split[len(split)-1]
 }
 
-func validatePath(path string) error {
-	if !filepath.IsAbs(path) {
-		return ErrRelativePath
-	}
-
-	if path == Delimiter {
-		return nil
-	}
-
-	if filepath.Clean(path) != path {
-		return ErrNonCanonicalPath
-	}
-
-	if strings.HasSuffix(path, Delimiter) {
-		return ErrPathEndsWithDelimiter
-	}
-
-	if len(path) > 1000 {
-		return ErrPathTooLong
-	}
-
-	matches := pathRegex.MatchString(path)
-	if !matches {
-		return ErrPathInvalid
-	}
-
-	return nil
-}
-
 func (b wrapper) validatePath(path string) error {
-	if err := validatePath(path); err != nil {
+	if err := ValidatePath(path); err != nil {
 		b.log.Error("Path failed validation", "path", path, "error", err)
 		return err
 	}
@@ -192,33 +114,44 @@ func (b wrapper) removeRoot(path string) string {
 	return Join(Delimiter, strings.TrimPrefix(path, b.rootFolder))
 }
 
-func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
+func (b wrapper) getOptionsWithDefaults(options *GetFileOptions) *GetFileOptions {
+	if options == nil {
+		return &GetFileOptions{WithContents: true}
+	}
+
+	return options
+}
+
+func (b wrapper) Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error) {
 	if err := b.validatePath(path); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	rootedPath := b.addRoot(path)
-	if !b.pathFilters.IsAllowed(rootedPath) {
-		return nil, nil
+	if !b.filter.IsAllowed(rootedPath) {
+		return nil, false, nil
 	}
+
+	optionsWithDefaults := b.getOptionsWithDefaults(options)
 
 	if b.rootFolder == rootedPath {
-		return nil, nil
+		return nil, false, nil
 	}
 
-	file, err := b.wrapped.Get(ctx, rootedPath)
+	file, _, err := b.wrapped.Get(ctx, rootedPath, optionsWithDefaults)
 	if file != nil {
 		file.FullPath = b.removeRoot(file.FullPath)
 	}
-	return file, err
+	return file, file != nil, err
 }
+
 func (b wrapper) Delete(ctx context.Context, path string) error {
 	if err := b.validatePath(path); err != nil {
 		return err
 	}
 
 	rootedPath := b.addRoot(path)
-	if !b.pathFilters.IsAllowed(rootedPath) {
+	if !b.filter.IsAllowed(rootedPath) {
 		return nil
 	}
 
@@ -242,7 +175,7 @@ func (b wrapper) Upsert(ctx context.Context, file *UpsertFileCommand) error {
 	}
 
 	rootedPath := b.addRoot(file.Path)
-	if !b.pathFilters.IsAllowed(rootedPath) {
+	if !b.filter.IsAllowed(rootedPath) {
 		return nil
 	}
 
@@ -284,7 +217,7 @@ func (b wrapper) listOptionsWithDefaults(options *ListOptions) *ListOptions {
 	if options == nil {
 		return &ListOptions{
 			Recursive:    false,
-			PathFilters:  b.pathFilters,
+			Filter:       b.filter,
 			WithFiles:    true,
 			WithFolders:  false,
 			WithContents: false,
@@ -295,20 +228,25 @@ func (b wrapper) listOptionsWithDefaults(options *ListOptions) *ListOptions {
 	if !options.WithFiles && !options.WithFolders {
 		withFiles = true
 	}
-	if options.PathFilters == nil {
+	if b.filter == nil {
 		return &ListOptions{
 			Recursive:    options.Recursive,
-			PathFilters:  b.pathFilters,
+			Filter:       b.filter,
 			WithFiles:    withFiles,
 			WithFolders:  options.WithFolders,
 			WithContents: options.WithContents,
 		}
 	}
 
-	rootedFilters := addRootFolderToFilters(copyPathFilters(options.PathFilters), b.rootFolder)
+	var filter PathFilter
+	if options.Filter != nil {
+		filter = newAndPathFilter(b.filter, wrapPathFilter(options.Filter, b.rootFolder))
+	} else {
+		filter = b.filter
+	}
 	return &ListOptions{
 		Recursive:    options.Recursive,
-		PathFilters:  addPathFilters(rootedFilters, b.pathFilters),
+		Filter:       filter,
 		WithFiles:    withFiles,
 		WithFolders:  options.WithFolders,
 		WithContents: options.WithContents,
@@ -321,33 +259,65 @@ func (b wrapper) CreateFolder(ctx context.Context, path string) error {
 	}
 
 	rootedPath := b.addRoot(path)
-	if !b.pathFilters.IsAllowed(rootedPath) {
+	if !b.filter.IsAllowed(rootedPath) {
 		return nil
 	}
 
 	return b.wrapped.CreateFolder(ctx, rootedPath)
 }
 
-func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
+func (b wrapper) deleteFolderOptionsWithDefaults(options *DeleteFolderOptions) *DeleteFolderOptions {
+	if options == nil {
+		return &DeleteFolderOptions{
+			Force:        false,
+			AccessFilter: b.filter,
+		}
+	}
+
+	if options.AccessFilter == nil {
+		return &DeleteFolderOptions{
+			Force:        options.Force,
+			AccessFilter: b.filter,
+		}
+	}
+
+	var filter PathFilter
+	if options.AccessFilter != nil {
+		filter = newAndPathFilter(b.filter, wrapPathFilter(options.AccessFilter, b.rootFolder))
+	} else {
+		filter = b.filter
+	}
+
+	return &DeleteFolderOptions{
+		Force:        options.Force,
+		AccessFilter: filter,
+	}
+}
+
+func (b wrapper) DeleteFolder(ctx context.Context, path string, options *DeleteFolderOptions) error {
 	if err := b.validatePath(path); err != nil {
 		return err
 	}
 
 	rootedPath := b.addRoot(path)
-	if !b.pathFilters.IsAllowed(rootedPath) {
-		return nil
+
+	optionsWithDefaults := b.deleteFolderOptionsWithDefaults(options)
+	if !optionsWithDefaults.AccessFilter.IsAllowed(rootedPath) {
+		return fmt.Errorf("delete folder unauthorized - no access to %s", rootedPath)
 	}
 
-	isEmpty, err := b.isFolderEmpty(ctx, path)
-	if err != nil {
-		return err
+	if !optionsWithDefaults.Force {
+		isEmpty, err := b.isFolderEmpty(ctx, path)
+		if err != nil {
+			return err
+		}
+
+		if !isEmpty {
+			return fmt.Errorf("folder %s is not empty - cant remove it", path)
+		}
 	}
 
-	if !isEmpty {
-		return fmt.Errorf("folder %s is not empty - cant remove it", path)
-	}
-
-	return b.wrapped.DeleteFolder(ctx, rootedPath)
+	return b.wrapped.DeleteFolder(ctx, rootedPath, optionsWithDefaults)
 }
 
 func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
@@ -356,13 +326,6 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 	}
 
 	options = b.listOptionsWithDefaults(options)
-	if (!options.WithFiles && !options.WithFolders) || options.isDenyAll() {
-		return &ListResponse{
-			Files:    []*File{},
-			HasMore:  false,
-			LastPath: "",
-		}, nil
-	}
 
 	var fileChan = make(chan *File)
 	fileRetrievalCtx, cancelFileGet := context.WithCancel(ctx)
@@ -370,7 +333,11 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 
 	go func() {
 		if options.WithFiles {
-			if f, err := b.Get(fileRetrievalCtx, folderPath); err == nil {
+			var getOptions *GetFileOptions
+			if options.WithContents {
+				getOptions = &GetFileOptions{WithContents: true}
+			}
+			if f, _, err := b.Get(fileRetrievalCtx, folderPath, getOptions); err == nil {
 				fileChan <- f
 				return
 			}
@@ -397,7 +364,6 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 
 	file := <-fileChan
 	if file != nil {
-		file.FileMetadata.FullPath = b.removeRoot(file.FileMetadata.FullPath)
 		var contents []byte
 		if options.WithContents {
 			contents = file.Contents

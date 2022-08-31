@@ -1,9 +1,12 @@
-import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2, useTheme2 } from '../../themes';
-import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 import { getFocusStyles } from '../../themes/mixins';
+
+import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 
 /**
  * @public
@@ -14,7 +17,7 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
   href?: string;
   /** On click handler for the Card */
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   /** @deprecated Use `Card.Heading` instead */
   heading?: ReactNode;
   /** @deprecated Use `Card.Description` instead */
@@ -34,7 +37,7 @@ export interface CardInterface extends FC<Props> {
 
 const CardContext = React.createContext<{
   href?: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   isSelected?: boolean;
 } | null>(null);
@@ -44,17 +47,7 @@ const CardContext = React.createContext<{
  *
  * @public
  */
-export const Card: CardInterface = ({
-  disabled,
-  href,
-  onClick,
-  children,
-  heading: deprecatedHeading,
-  description: deprecatedDescription,
-  isSelected,
-  className,
-  ...htmlProps
-}) => {
+export const Card: CardInterface = ({ disabled, href, onClick, children, isSelected, className, ...htmlProps }) => {
   const hasHeadingComponent = useMemo(
     () =>
       React.Children.toArray(children).some(
@@ -78,8 +71,6 @@ export const Card: CardInterface = ({
     >
       <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
         {!hasHeadingComponent && <Heading />}
-        {deprecatedHeading && <Heading>{deprecatedHeading}</Heading>}
-        {deprecatedDescription && <Description>{deprecatedDescription}</Description>}
         {children}
       </CardContext.Provider>
     </CardContainer>
@@ -90,9 +81,6 @@ interface ChildProps {
   className?: string;
   disabled?: boolean;
   children?: React.ReactNode;
-
-  /** @deprecated Use `className` to add new styles */
-  styles?: ReturnType<typeof getCardStyles>;
 }
 
 /** Main heading for the card */
@@ -105,7 +93,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
   return (
     <h2 className={cx(styles.heading, className)}>
       {href ? (
-        <a href={href} className={styles.linkHack} aria-label={ariaLabel}>
+        <a href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
           {children}
         </a>
       ) : onClick ? (
@@ -115,7 +103,7 @@ const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & 
       ) : (
         <>{children}</>
       )}
-      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} />}
+      {isSelected !== undefined && <input aria-label="option" type="radio" readOnly checked={isSelected} />}
     </h2>
   );
 };
@@ -232,12 +220,17 @@ const Meta = memo(({ children, className, separator = '|' }: ChildProps & { sepa
   const styles = useStyles2(getMetaStyles);
   let meta = children;
 
+  const filtered = React.Children.toArray(children).filter(Boolean);
+  if (!filtered.length) {
+    return null;
+  }
+  meta = filtered.map((element, i) => (
+    <div key={`element_${i}`} className={styles.metadataItem}>
+      {element}
+    </div>
+  ));
   // Join meta data elements by separator
-  if (Array.isArray(children) && separator) {
-    const filtered = React.Children.toArray(children).filter(Boolean);
-    if (!filtered.length) {
-      return null;
-    }
+  if (filtered.length > 1 && separator) {
     meta = filtered.reduce((prev, curr, i) => [
       prev,
       <span key={`separator_${i}`} className={styles.separator}>
@@ -261,6 +254,9 @@ const getMetaStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(0.5, 0, 0),
     lineHeight: theme.typography.bodySmall.lineHeight,
     overflowWrap: 'anywhere',
+  }),
+  metadataItem: css({
+    // Needed to allow for clickable children in metadata
     zIndex: 0,
   }),
   separator: css({

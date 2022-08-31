@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -17,8 +18,9 @@ import (
 
 type SocialAzureAD struct {
 	*SocialBase
-	allowedGroups     []string
-	autoAssignOrgRole string
+	allowedGroups       []string
+	autoAssignOrgRole   string
+	roleAttributeStrict bool
 }
 
 type azureClaims struct {
@@ -56,20 +58,23 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
 	if err != nil {
-		return nil, errutil.Wrapf(err, "error parsing id token")
+		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
 
 	var claims azureClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, errutil.Wrapf(err, "error getting claims from id token")
+		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
-	email := extractEmail(claims)
+	email := claims.extractEmail()
 	if email == "" {
 		return nil, errors.New("error getting user info: no email found in access token")
 	}
 
-	role := extractRole(claims, s.autoAssignOrgRole)
+	role := claims.extractRole(s.autoAssignOrgRole, s.roleAttributeStrict)
+	if role == "" {
+		return nil, errors.New("user does not have a valid role")
+	}
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := extractGroups(client, claims, token)
@@ -77,7 +82,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
 
-	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", groups)
+	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}
@@ -108,7 +113,7 @@ func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func extractEmail(claims azureClaims) string {
+func (claims *azureClaims) extractEmail() string {
 	if claims.Email == "" {
 		if claims.PreferredUsername != "" {
 			return claims.PreferredUsername
@@ -118,15 +123,19 @@ func extractEmail(claims azureClaims) string {
 	return claims.Email
 }
 
-func extractRole(claims azureClaims, autoAssignRole string) models.RoleType {
+func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) org.RoleType {
 	if len(claims.Roles) == 0 {
-		return models.RoleType(autoAssignRole)
+		if strictMode {
+			return org.RoleType("")
+		}
+
+		return org.RoleType(autoAssignRole)
 	}
 
-	roleOrder := []models.RoleType{
-		models.ROLE_ADMIN,
-		models.ROLE_EDITOR,
-		models.ROLE_VIEWER,
+	roleOrder := []org.RoleType{
+		org.RoleAdmin,
+		org.RoleEditor,
+		org.RoleViewer,
 	}
 
 	for _, role := range roleOrder {
@@ -135,10 +144,14 @@ func extractRole(claims azureClaims, autoAssignRole string) models.RoleType {
 		}
 	}
 
-	return models.ROLE_VIEWER
+	if strictMode {
+		return org.RoleType("")
+	}
+
+	return org.RoleViewer
 }
 
-func hasRole(roles []string, role models.RoleType) bool {
+func hasRole(roles []string, role org.RoleType) bool {
 	for _, item := range roles {
 		if strings.EqualFold(item, string(role)) {
 			return true
@@ -173,12 +186,12 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 		// See https://docs.microsoft.com/en-us/graph/migrate-azure-ad-graph-overview
 		parsedToken, err := jwt.ParseSigned(token.AccessToken)
 		if err != nil {
-			return nil, errutil.Wrapf(err, "error parsing id token")
+			return nil, fmt.Errorf("error parsing id token: %w", err)
 		}
 
 		var accessClaims azureAccessClaims
 		if err := parsedToken.UnsafeClaimsWithoutVerification(&accessClaims); err != nil {
-			return nil, errutil.Wrapf(err, "error getting claims from access token")
+			return nil, fmt.Errorf("error getting claims from access token: %w", err)
 		}
 		endpoint = fmt.Sprintf("https://graph.microsoft.com/v1.0/%s/users/%s/getMemberObjects", accessClaims.TenantID, claims.ID)
 	}
@@ -201,9 +214,12 @@ func extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token)
 
 	if res.StatusCode != http.StatusOK {
 		if res.StatusCode == http.StatusForbidden {
-			logger.Error("AzureAD OAuth: failed to fetch user groups. Token need User.Read and GroupMember.Read.All permission")
+			logger.Warn("AzureAD OAuh: Token need GroupMember.Read.All permission to fetch all groups")
+		} else {
+			body, _ := io.ReadAll(res.Body)
+			logger.Warn("AzureAD OAuh: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		}
-		return nil, errors.New("error fetching groups")
+		return []string{}, nil
 	}
 
 	var body getAzureGroupResponse

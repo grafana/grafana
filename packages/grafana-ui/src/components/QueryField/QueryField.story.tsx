@@ -1,13 +1,18 @@
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { QueryField } from '@grafana/ui';
 
-export default {
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+const meta: ComponentMeta<typeof QueryField> = {
   title: 'Data Source/QueryField',
   component: QueryField,
   decorators: [withCenteredStory],
 };
 
-export const basic = () => {
+export const basic: ComponentStory<typeof QueryField> = () => {
   return <QueryField portalOrigin="mock-origin" query="" />;
 };
+
+export default meta;

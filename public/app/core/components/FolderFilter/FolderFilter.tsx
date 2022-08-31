@@ -1,11 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import React, { useCallback, useMemo, useState } from 'react';
 
-import { FolderInfo, PermissionLevelString } from 'app/types';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchHit } from 'app/features/search/types';
+import { FolderInfo, PermissionLevelString } from 'app/types';
 
 export interface FolderFilterProps {
   onChange: (folder: FolderInfo[]) => void;
@@ -47,7 +48,7 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
         <Button
           size="xs"
           icon="trash-alt"
-          variant="link"
+          fill="text"
           className={styles.clear}
           onClick={() => onChange([])}
           aria-label="Clear folders"
@@ -56,7 +57,6 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
         </Button>
       )}
       <AsyncMultiSelect
-        menuShouldPortal
         {...selectOptions}
         isLoading={loading}
         loadOptions={debouncedLoadOptions}
@@ -76,7 +76,9 @@ async function getFoldersAsOptions(searchString: string, setLoading: (loading: b
     permission: PermissionLevelString.View,
   };
 
-  const searchHits = await getBackendSrv().search(params);
+  // FIXME: stop using id from search and use UID instead
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const searchHits = (await getBackendSrv().search(params)) as DashboardSearchHit[];
   const options = searchHits.map((d) => ({ label: d.title, value: { id: d.id, title: d.title } }));
   if (!searchString || 'general'.includes(searchString.toLowerCase())) {
     options.unshift({ label: 'General', value: { id: 0, title: 'General' } });

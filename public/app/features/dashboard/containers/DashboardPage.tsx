@@ -1,49 +1,55 @@
+import { cx } from '@emotion/css';
+import { FocusScope } from '@react-aria/focus';
 import React, { PureComponent } from 'react';
-import { css } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
-import { locationService } from '@grafana/runtime';
-import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { Branding } from 'app/core/components/Branding/Branding';
-import { DashboardGrid } from '../dashgrid/DashboardGrid';
-import { DashNav } from '../components/DashNav';
-import { DashboardSettings } from '../components/DashboardSettings';
-import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { initDashboard } from '../state/initDashboard';
+import { locationUtil, NavModel, NavModelItem, TimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
+import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { KioskMode, StoreState } from 'app/types';
+import { Page } from 'app/core/components/Page/Page';
+import { PageLayoutType } from 'app/core/components/Page/types';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { getKioskMode } from 'app/core/navigation/kiosk';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelInspector } from '../components/Inspector/PanelInspector';
-import { SubMenu } from '../components/SubMenu/SubMenu';
-import { cleanUpDashboardAndVariables } from '../state/actions';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
+import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
+import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
-import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getTimeSrv } from '../services/TimeSrv';
-import { getKioskMode } from 'app/core/navigation/kiosk';
-import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
+import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
+import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
-import classnames from 'classnames';
-import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
+import { DashboardSettings } from '../components/DashboardSettings';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
+import { PanelEditor } from '../components/PanelEditor/PanelEditor';
+import { SubMenu } from '../components/SubMenu/SubMenu';
+import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
+import { getTimeSrv } from '../services/TimeSrv';
+import { cleanUpDashboardAndVariables } from '../state/actions';
+import { initDashboard } from '../state/initDashboard';
 
 export interface DashboardPageRouteParams {
   uid?: string;
   type?: string;
   slug?: string;
+  accessToken?: string;
 }
 
-type DashboardPageRouteSearchParams = {
+export type DashboardPageRouteSearchParams = {
   tab?: string;
   folderId?: string;
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
+  panelType?: string;
   inspect?: string;
   from?: string;
   to?: string;
@@ -54,6 +60,7 @@ export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
   initError: state.dashboard.initError,
   dashboard: state.dashboard.getModel(),
+  navIndex: state.navIndex,
 });
 
 const mapDispatchToProps = {
@@ -66,7 +73,12 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export type Props = Themeable2 &
+type OwnProps = {
+  isPublic?: boolean;
+};
+
+export type Props = OwnProps &
+  Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
   ConnectedProps<typeof connector>;
 
@@ -78,6 +90,9 @@ export interface State {
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
+  scrollElement?: HTMLDivElement;
+  pageNav?: NavModelItem;
+  sectionNav?: NavModel;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -110,7 +125,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, match, queryParams } = this.props;
+    const { dashboard, isPublic, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -121,8 +136,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlUid: match.params.uid,
       urlType: match.params.type,
       urlFolderId: queryParams.folderId,
+      panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
-      fixUrl: true,
+      fixUrl: !isPublic,
+      accessToken: match.params.accessToken,
     });
 
     // small delay to start live updates
@@ -135,11 +152,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     if (!dashboard) {
       return;
-    }
-
-    // if we just got dashboard update title
-    if (prevProps.dashboard !== dashboard) {
-      document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
     if (
@@ -216,6 +228,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return state;
     }
 
+    state = updateStatePageNavFromProps(props, state);
+
     // Entering edit mode
     if (!state.editPanel && urlEditPanelId) {
       const panel = dashboard.getPanelByUrlId(urlEditPanelId);
@@ -224,14 +238,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       }
 
       if (dashboard.canEditPanel(panel)) {
-        return { ...state, editPanel: panel };
+        return { ...state, editPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop };
       } else {
         return { ...state, editPanelAccessDenied: true };
       }
     }
     // Leaving edit mode
     else if (state.editPanel && !urlEditPanelId) {
-      return { ...state, editPanel: null };
+      return { ...state, editPanel: null, updateScrollTop: state.rememberScrollTop };
     }
 
     // Entering view mode
@@ -245,11 +259,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       // Should move this state out of dashboard in the future
       dashboard.initViewPanel(panel);
 
-      return {
-        ...state,
-        viewPanel: panel,
-        updateScrollTop: 0,
-      };
+      return { ...state, viewPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop, updateScrollTop: 0 };
     }
     // Leaving view mode
     else if (state.viewPanel && !urlViewPanelId) {
@@ -290,6 +300,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     this.setState({ updateScrollTop: 0 });
   };
 
+  setScrollRef = (scrollElement: HTMLDivElement): void => {
+    this.setState({ scrollElement });
+  };
+
   getInspectPanel() {
     const { dashboard, queryParams } = this.props;
 
@@ -310,94 +324,128 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, theme } = this.props;
-    const { editPanel, viewPanel, updateScrollTop } = this.state;
-    const kioskMode = getKioskMode();
-    const styles = getStyles(theme, kioskMode);
+    const { dashboard, initError, queryParams, isPublic } = this.props;
+    const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
+    const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
 
-    if (!dashboard) {
+    if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
     }
 
     const inspectPanel = this.getInspectPanel();
-    const containerClassNames = classnames(styles.dashboardContainer, {
-      'panel-in-fullscreen': viewPanel,
-    });
     const showSubMenu = !editPanel && kioskMode === KioskMode.Off && !this.props.queryParams.editview;
 
+    const toolbar = kioskMode !== KioskMode.Full && !queryParams.editview && (
+      <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
+        <DashNav
+          dashboard={dashboard}
+          title={dashboard.title}
+          folderTitle={dashboard.meta.folderTitle}
+          isFullscreen={!!viewPanel}
+          onAddPanel={this.onAddPanel}
+          kioskMode={kioskMode}
+          hideTimePicker={dashboard.timepicker.hidden}
+        />
+      </header>
+    );
+
     return (
-      <div className={containerClassNames}>
-        {kioskMode !== KioskMode.Full && (
-          <header data-testid={selectors.pages.Dashboard.DashNav.navV2}>
-            <DashNav
-              dashboard={dashboard}
-              title={dashboard.title}
-              folderTitle={dashboard.meta.folderTitle}
-              isFullscreen={!!viewPanel}
-              onAddPanel={this.onAddPanel}
-              kioskMode={kioskMode}
-              hideTimePicker={dashboard.timepicker.hidden}
-            />
-          </header>
+      <>
+        <Page
+          navModel={sectionNav}
+          pageNav={pageNav}
+          layout={PageLayoutType.Dashboard}
+          toolbar={toolbar}
+          className={cx(viewPanel && 'panel-in-fullscreen', queryParams.editview && 'dashboard-content--hidden')}
+          scrollRef={this.setScrollRef}
+          scrollTop={updateScrollTop}
+        >
+          <DashboardPrompt dashboard={dashboard} />
+
+          {initError && <DashboardFailed />}
+          {showSubMenu && (
+            <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+              <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+            </section>
+          )}
+
+          <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
+
+          {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+          {editPanel && (
+            <FocusScope contain autoFocus restoreFocus>
+              <section>
+                <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />
+              </section>
+            </FocusScope>
+          )}
+        </Page>
+        {queryParams.editview && (
+          <DashboardSettings
+            dashboard={dashboard}
+            editview={queryParams.editview}
+            pageNav={pageNav}
+            sectionNav={sectionNav}
+          />
         )}
-
-        <DashboardPrompt dashboard={dashboard} />
-
-        <div className={styles.dashboardScroll}>
-          <CustomScrollbar
-            autoHeightMin="100%"
-            scrollTop={updateScrollTop}
-            hideHorizontalTrack={true}
-            updateAfterMountMs={500}
-          >
-            <div className={styles.dashboardContent}>
-              {initError && <DashboardFailed />}
-              {showSubMenu && (
-                <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-                </section>
-              )}
-
-              <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
-            </div>
-          </CustomScrollbar>
-        </div>
-
-        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-        {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
-        {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
-      </div>
+      </>
     );
   }
 }
 
-/*
- * Styles
- */
-export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode: KioskMode) => {
-  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
+function updateStatePageNavFromProps(props: Props, state: State): State {
+  const { dashboard } = props;
+
+  if (!dashboard) {
+    return state;
+  }
+
+  let pageNav = state.pageNav;
+  let sectionNav = state.sectionNav;
+
+  if (!pageNav || dashboard.title !== pageNav.text) {
+    pageNav = {
+      text: dashboard.title,
+      url: locationUtil.getUrlForPartial(props.history.location, {
+        editview: null,
+        editPanel: null,
+        viewPanel: null,
+      }),
+    };
+  }
+
+  // Check if folder changed
+  const { folderTitle } = dashboard.meta;
+  if (folderTitle && pageNav && pageNav.parentItem?.text !== folderTitle) {
+    pageNav = {
+      ...pageNav,
+      parentItem: {
+        text: folderTitle,
+        url: `/dashboards/f/${dashboard.meta.folderUid}`,
+      },
+    };
+  }
+
+  if (props.route.routeName === DashboardRoutes.Path) {
+    sectionNav = getRootContentNavModel();
+    const pageNav = getPageNavFromSlug(props.match.params.slug!);
+    if (pageNav?.parentItem) {
+      pageNav.parentItem = pageNav.parentItem;
+    }
+  } else {
+    sectionNav = getNavModel(props.navIndex, 'dashboards');
+  }
+
+  if (state.pageNav === pageNav && state.sectionNav === sectionNav) {
+    return state;
+  }
+
   return {
-    dashboardContainer: css`
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex: 1 1 0;
-      flex-direction: column;
-      min-height: 0;
-    `,
-    dashboardScroll: css`
-      width: 100%;
-      flex-grow: 1;
-      min-height: 0;
-      display: flex;
-    `,
-    dashboardContent: css`
-      padding: ${contentPadding};
-      flex-basis: 100%;
-      flex-grow: 1;
-    `,
+    ...state,
+    pageNav,
+    sectionNav,
   };
-});
+}
 
 export const DashboardPage = withTheme2(UnthemedDashboardPage);
 DashboardPage.displayName = 'DashboardPage';

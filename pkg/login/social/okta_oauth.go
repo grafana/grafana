@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/services/org"
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -59,12 +59,12 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 
 	parsedToken, err := jwt.ParseSigned(idToken.(string))
 	if err != nil {
-		return nil, errutil.Wrapf(err, "error parsing id token")
+		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
 
 	var claims OktaClaims
 	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
-		return nil, errutil.Wrapf(err, "error getting claims from id token")
+		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
 	email := claims.extractEmail()
@@ -82,7 +82,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	if err != nil {
 		s.log.Error("Failed to extract role", "error", err)
 	}
-	if s.roleAttributeStrict && !models.RoleType(role).IsValid() {
+	if s.roleAttributeStrict && !org.RoleType(role).IsValid() {
 		return nil, errors.New("invalid role")
 	}
 
@@ -105,7 +105,7 @@ func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) err
 	rawUserInfoResponse, err := s.httpGet(client, s.apiUrl)
 	if err != nil {
 		s.log.Debug("Error getting user info response", "url", s.apiUrl, "error", err)
-		return errutil.Wrapf(err, "error getting user info response")
+		return fmt.Errorf("error getting user info response: %w", err)
 	}
 	data.rawJSON = rawUserInfoResponse.Body
 
@@ -113,7 +113,7 @@ func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) err
 	if err != nil {
 		s.log.Debug("Error decoding user info response", "raw_json", data.rawJSON, "error", err)
 		data.rawJSON = []byte{}
-		return errutil.Wrapf(err, "error decoding user info response")
+		return fmt.Errorf("error decoding user info response: %w", err)
 	}
 
 	s.log.Debug("Received user info response", "raw_json", string(data.rawJSON), "data", data)

@@ -1,8 +1,9 @@
 import { isString } from 'lodash';
+
+import { SelectableValue } from '@grafana/data';
+
 import { ALIGNMENT_PERIODS, SELECTORS } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { CloudMonitoringVariableQuery, MetricDescriptor, MetricFindQueryTypes, MetricKind, ValueTypes } from './types';
-import { SelectableValue } from '@grafana/data';
 import {
   extractServicesFromMetricDescriptors,
   getAggregationOptionsByMetric,
@@ -10,6 +11,7 @@ import {
   getLabelKeys,
   getMetricTypesByService,
 } from './functions';
+import { CloudMonitoringVariableQuery, MetricDescriptor, MetricFindQueryTypes, MetricKind, ValueTypes } from './types';
 
 export default class CloudMonitoringMetricFindQuery {
   constructor(private datasource: CloudMonitoringDatasource) {}

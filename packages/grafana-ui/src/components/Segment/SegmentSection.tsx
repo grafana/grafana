@@ -1,9 +1,11 @@
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
-import { InlineLabel } from '../Forms/InlineLabel';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
+import { InlineLabel } from '../Forms/InlineLabel';
 
 /**
  * Horizontal section for editor components.

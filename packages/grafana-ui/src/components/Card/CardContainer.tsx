@@ -1,6 +1,8 @@
-import React, { HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { HTMLAttributes } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
 import { styleMixins, stylesFactory, useStyles2, useTheme2 } from '../../themes';
 
 /**
@@ -65,7 +67,7 @@ export const CardContainer = ({
 };
 
 export const getCardContainerStyles = stylesFactory(
-  (theme: GrafanaTheme2, disabled = false, disableHover = false, isSelected = false) => {
+  (theme: GrafanaTheme2, disabled = false, disableHover = false, isSelected) => {
     const isSelectable = isSelected !== undefined;
 
     return {

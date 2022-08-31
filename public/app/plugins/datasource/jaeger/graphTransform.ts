@@ -1,6 +1,8 @@
 import { DataFrame, NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
-import { Span, TraceResponse } from './types';
+
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
+
+import { Span, TraceResponse } from './types';
 
 interface Node {
   [Fields.id]: string;

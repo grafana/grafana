@@ -1,10 +1,13 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { PromExploreQueryEditor, testIds } from './PromExploreQueryEditor';
-import { testIds as extraFieldTestIds } from './PromExploreExtraField';
+import React from 'react';
+
+import { LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
+
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
+
+import { testIds as extraFieldTestIds } from './PromExploreExtraField';
+import { PromExploreQueryEditor, testIds } from './PromExploreQueryEditor';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related

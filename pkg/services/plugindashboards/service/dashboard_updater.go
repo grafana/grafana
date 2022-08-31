@@ -10,8 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
@@ -54,7 +56,7 @@ type DashboardUpdater struct {
 func (du *DashboardUpdater) updateAppDashboards() {
 	du.logger.Debug("Looking for app dashboard updates")
 
-	pluginSettings, err := du.pluginSettingsService.GetPluginSettings(context.Background(), 0)
+	pluginSettings, err := du.pluginSettingsService.GetPluginSettings(context.Background(), &pluginsettings.GetArgs{OrgID: 0})
 	if err != nil {
 		du.logger.Error("Failed to get all plugin settings", "error", err)
 		return
@@ -66,9 +68,9 @@ func (du *DashboardUpdater) updateAppDashboards() {
 			continue
 		}
 
-		if pluginDef, exists := du.pluginStore.Plugin(context.Background(), pluginSetting.PluginId); exists {
+		if pluginDef, exists := du.pluginStore.Plugin(context.Background(), pluginSetting.PluginID); exists {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
-				du.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgId)
+				du.syncPluginDashboards(context.Background(), pluginDef, pluginSetting.OrgID)
 			}
 		}
 	}
@@ -112,20 +114,20 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 	}
 
 	// update version in plugin_setting table to mark that we have processed the update
-	query := models.GetPluginSettingByIdQuery{PluginId: plugin.ID, OrgId: orgID}
-	if err := du.pluginSettingsService.GetPluginSettingById(ctx, &query); err != nil {
+	query := pluginsettings.GetByPluginIDArgs{PluginID: plugin.ID, OrgID: orgID}
+	ps, err := du.pluginSettingsService.GetPluginSettingByPluginID(ctx, &query)
+	if err != nil {
 		du.logger.Error("Failed to read plugin setting by ID", "error", err)
 		return
 	}
 
-	appSetting := query.Result
-	cmd := models.UpdatePluginSettingVersionCmd{
-		OrgId:         appSetting.OrgId,
-		PluginId:      appSetting.PluginId,
+	cmd := pluginsettings.UpdatePluginVersionArgs{
+		OrgID:         ps.OrgID,
+		PluginID:      ps.PluginID,
 		PluginVersion: plugin.Info.Version,
 	}
 
-	if err := du.pluginSettingsService.UpdatePluginSettingVersion(ctx, &cmd); err != nil {
+	if err := du.pluginSettingsService.UpdatePluginSettingPluginVersion(ctx, &cmd); err != nil {
 		du.logger.Error("Failed to update plugin setting version", "error", err)
 	}
 }
@@ -170,7 +172,7 @@ func (du *DashboardUpdater) autoUpdateAppDashboard(ctx context.Context, pluginDa
 		pluginDashInfo.Revision, "oldRev", pluginDashInfo.ImportedRevision)
 	_, err = du.dashboardImportService.ImportDashboard(ctx, &dashboardimport.ImportDashboardRequest{
 		PluginId:  pluginDashInfo.PluginId,
-		User:      &models.SignedInUser{UserId: 0, OrgRole: models.ROLE_ADMIN, OrgId: orgID},
+		User:      &user.SignedInUser{UserID: 0, OrgRole: org.RoleAdmin, OrgID: orgID},
 		Path:      pluginDashInfo.Reference,
 		FolderId:  0,
 		Dashboard: resp.Dashboard.Data,

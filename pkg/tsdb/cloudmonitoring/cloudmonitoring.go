@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
@@ -72,6 +71,8 @@ func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Trace
 		tracer:             tracer,
 		httpClientProvider: httpClientProvider,
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+
+		gceDefaultProjectGetter: utils.GCEDefaultProject,
 	}
 
 	s.resourceHandler = httpadapter.New(s.newResourceMux())
@@ -91,7 +92,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	defaultProject, err := s.getDefaultProject(ctx, *dsInfo)
 	if err != nil {
-		return nil, err
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
 	}
 
 	url := fmt.Sprintf("%v/v3/projects/%v/metricDescriptors", dsInfo.services[cloudMonitor].url, defaultProject)
@@ -128,6 +132,9 @@ type Service struct {
 	tracer             tracing.Tracer
 
 	resourceHandler backend.CallResourceHandler
+
+	// mocked in tests
+	gceDefaultProjectGetter func(ctx context.Context) (string, error)
 }
 
 type QueryModel struct {
@@ -330,6 +337,7 @@ func (s *Service) buildQueryExecutors(req *backend.QueryDataRequest) ([]cloudMon
 					IntervalMS:  query.Interval.Milliseconds(),
 					AliasBy:     q.MetricQuery.AliasBy,
 					timeRange:   req.Queries[0].TimeRange,
+					GraphPeriod: q.MetricQuery.GraphPeriod,
 				}
 			} else {
 				cmtsf.AliasBy = q.MetricQuery.AliasBy
@@ -421,7 +429,13 @@ func buildFilterString(metricType string, filterParts []string) string {
 }
 
 func buildSLOFilterExpression(q sloQuery) string {
-	return fmt.Sprintf(`%s("projects/%s/services/%s/serviceLevelObjectives/%s")`, q.SelectorName, q.ProjectName, q.ServiceId, q.SloId)
+	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", q.ProjectName, q.ServiceId, q.SloId)
+
+	if q.SelectorName == "select_slo_burn_rate" {
+		return fmt.Sprintf(`%s("%s", "%s")`, q.SelectorName, sloName, q.LookbackPeriod)
+	} else {
+		return fmt.Sprintf(`%s("%s")`, q.SelectorName, sloName)
+	}
 }
 
 func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {
@@ -612,13 +626,13 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, pro
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		return utils.GCEDefaultProject(ctx)
+		return s.gceDefaultProjectGetter(ctx)
 	}
 	return dsInfo.defaultProject, nil
 }
 
 func unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -649,12 +663,14 @@ func addConfigData(frames data.Frames, dl string, unit string) data.Frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
 		}
-		deepLink := data.DataLink{
-			Title:       "View in Metrics Explorer",
-			TargetBlank: true,
-			URL:         dl,
+		if len(dl) > 0 {
+			deepLink := data.DataLink{
+				Title:       "View in Metrics Explorer",
+				TargetBlank: true,
+				URL:         dl,
+			}
+			frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
 		}
-		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
 		if len(unit) > 0 {
 			if val, ok := cloudMonitoringUnitMappings[unit]; ok {
 				frames[i].Fields[1].Config.Unit = val

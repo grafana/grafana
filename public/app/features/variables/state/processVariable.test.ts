@@ -1,20 +1,21 @@
 import { UrlQueryMap } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
 
-import { getTemplatingRootReducer, TemplatingReducerType } from './helpers';
-import { variableAdapters } from '../adapters';
-import { createQueryVariableAdapter } from '../query/adapter';
-import { createCustomVariableAdapter } from '../custom/adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { initDashboardTemplating, processVariable } from './actions';
-import { setCurrentVariableValue, variableStateCompleted, variableStateFetching } from './sharedReducer';
-import { VariableRefresh } from '../types';
+import { variableAdapters } from '../adapters';
+import { createCustomVariableAdapter } from '../custom/adapter';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
+import { createQueryVariableAdapter } from '../query/adapter';
 import { updateVariableOptions } from '../query/reducer';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
-import { variablesInitTransaction } from './transactionReducer';
-import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { toKeyedAction } from './keyedVariablesReducer';
+import { VariableRefresh } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
+import { initDashboardTemplating, processVariable } from './actions';
+import { getTemplatingRootReducer, TemplatingReducerType } from './helpers';
+import { toKeyedAction } from './keyedVariablesReducer';
+import { setCurrentVariableValue, variableStateCompleted, variableStateFetching } from './sharedReducer';
+import { variablesInitTransaction } from './transactionReducer';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({

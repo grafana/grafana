@@ -1,12 +1,14 @@
-import React, { FC } from 'react';
 import { css } from '@emotion/css';
+import React, { FC } from 'react';
+
+import { NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
 import { Tab, TabsBar, Icon, IconName, useStyles2 } from '@grafana/ui';
-import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
+
 import { ProBadge } from '../Upgrade/ProBadge';
 
 export interface Props {
-  model: NavModel;
+  navItem: NavModelItem;
 }
 
 const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCss: string }) => {
@@ -73,21 +75,19 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
   );
 };
 
-export const PageHeader: FC<Props> = ({ model }) => {
+export const PageHeader: FC<Props> = ({ navItem: model }) => {
   const styles = useStyles2(getStyles);
 
   if (!model) {
     return null;
   }
 
-  const main = model.main;
-  const children = main.children;
   return (
     <div className={styles.headerCanvas}>
       <div className="page-container">
         <div className="page-header">
-          {renderHeaderTitle(main)}
-          {children && children.length && <Navigation>{children}</Navigation>}
+          {renderHeaderTitle(model)}
+          {model.children && model.children.length > 0 && <Navigation>{model.children}</Navigation>}
         </div>
       </div>
     </div>
@@ -155,5 +155,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.canvas};
   `,
 });
-
-export default PageHeader;

@@ -1,14 +1,18 @@
-import React, { HTMLProps } from 'react';
 import { cx } from '@emotion/css';
 import { isObject } from 'lodash';
-import { SegmentSelect } from './SegmentSelect';
-import { SelectableValue } from '@grafana/data';
-import { useExpandableLabel, SegmentProps } from '.';
+import React, { HTMLProps } from 'react';
 import { useAsyncFn } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsync';
-import { getSegmentStyles } from './styles';
+
+import { SelectableValue } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { InlineLabel } from '../Forms/InlineLabel';
-import { useStyles } from '../../themes';
+
+import { SegmentSelect } from './SegmentSelect';
+import { getSegmentStyles } from './styles';
+
+import { useExpandableLabel, SegmentProps } from '.';
 
 export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
@@ -44,7 +48,7 @@ export function SegmentAsync<T>({
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
-  const styles = useStyles(getSegmentStyles);
+  const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;

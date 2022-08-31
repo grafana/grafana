@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
+import React, { useMemo } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
-import React, { useMemo } from 'react';
+
 import { isCloudRulesSource } from '../../utils/datasource';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { DetailsField } from '../DetailsField';

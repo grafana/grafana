@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
+import * as React from 'react';
 
-import renderIntoCanvas from './render-into-canvas';
-import { getRgbColorByKey } from '../../utils/color-generator';
-import { TNil } from '../../types';
+import { GrafanaTheme2 } from '@grafana/data';
+import { withTheme2, stylesFactory } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
-import { withTheme2, stylesFactory } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
+import { TNil } from '../../types';
+import { getRgbColorByKey } from '../../utils/color-generator';
+
+import renderIntoCanvas from './render-into-canvas';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -49,7 +50,7 @@ export class UnthemedCanvasSpanGraph extends React.PureComponent<CanvasSpanGraph
     this._canvasElm = undefined;
   }
 
-  getColor = (key: string) => getRgbColorByKey(key, this.props.theme);
+  getColor = (key: string) => getRgbColorByKey(key);
 
   componentDidMount() {
     this._draw();

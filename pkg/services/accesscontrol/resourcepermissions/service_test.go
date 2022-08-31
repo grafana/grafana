@@ -8,11 +8,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,14 +35,14 @@ func TestService_SetUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, sql := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Users: true},
 				PermissionsToActions: nil,
 			})
 
 			// seed user
-			user, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "test", OrgId: 1})
+			user, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "test", OrgID: 1})
 			require.NoError(t, err)
 
 			var hookCalled bool
@@ -53,7 +53,7 @@ func TestService_SetUserPermission(t *testing.T) {
 				}
 			}
 
-			_, err = service.SetUserPermission(context.Background(), user.OrgId, accesscontrol.User{ID: user.Id}, "1", "")
+			_, err = service.SetUserPermission(context.Background(), user.OrgID, accesscontrol.User{ID: user.ID}, "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
 		})
@@ -79,7 +79,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, sql := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Teams: true},
 				PermissionsToActions: nil,
@@ -123,7 +123,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _ := setupTestEnvironment(t, []*accesscontrol.Permission{}, Options{
+			service, _ := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{BuiltInRoles: true},
 				PermissionsToActions: nil,
@@ -196,10 +196,10 @@ func TestService_SetPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql := setupTestEnvironment(t, []*accesscontrol.Permission{}, tt.options)
+			service, sql := setupTestEnvironment(t, []accesscontrol.Permission{}, tt.options)
 
 			// seed user
-			_, err := sql.CreateUser(context.Background(), models.CreateUserCommand{Login: "user", OrgId: 1})
+			_, err := sql.CreateUser(context.Background(), user.CreateUserCommand{Login: "user", OrgID: 1})
 			require.NoError(t, err)
 			_, err = sql.CreateTeam("team", "", 1)
 			require.NoError(t, err)
@@ -215,14 +215,18 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, permissions []*accesscontrol.Permission, ops Options) (*Service, *sqlstore.SQLStore) {
+func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, ops Options) (*Service, *sqlstore.SQLStore) {
 	t.Helper()
 
 	sql := sqlstore.InitTestDB(t)
-	store := database.ProvideService(sql)
 	cfg := setting.NewCfg()
-	cfg.IsEnterprise = true
-	service, err := New(ops, cfg, routing.NewRouteRegister(), accesscontrolmock.New().WithPermissions(permissions), store, sql)
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	mock := accesscontrolmock.New().WithPermissions(permissions)
+	service, err := New(
+		ops, cfg, routing.NewRouteRegister(), license,
+		accesscontrolmock.New().WithPermissions(permissions), mock, sql,
+	)
 	require.NoError(t, err)
 
 	return service, sql

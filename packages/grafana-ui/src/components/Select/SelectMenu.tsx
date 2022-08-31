@@ -1,11 +1,14 @@
-import React, { FC, RefCallback } from 'react';
-import { useTheme2 } from '../../themes/ThemeContext';
-import { getSelectStyles } from './getSelectStyles';
 import { cx } from '@emotion/css';
+import React, { FC, RefCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
+
+import { useTheme2 } from '../../themes/ThemeContext';
+import { IconName } from '../../types';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../Icon/Icon';
-import { IconName } from '../../types';
+
+import { getSelectStyles } from './getSelectStyles';
 
 interface SelectMenuProps {
   maxHeight: number;
@@ -32,7 +35,7 @@ interface SelectMenuOptionProps<T> {
   isDisabled: boolean;
   isFocused: boolean;
   isSelected: boolean;
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
   innerRef: RefCallback<HTMLDivElement>;
   renderOptionLabel?: (value: SelectableValue<T>) => JSX.Element;
   data: SelectableValue<T>;

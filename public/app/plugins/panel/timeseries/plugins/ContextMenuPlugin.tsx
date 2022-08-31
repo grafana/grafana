@@ -1,5 +1,8 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { css as cssCore, Global } from '@emotion/react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useClickAway } from 'react-use';
+
+import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
 import {
   ContextMenu,
   GraphContextMenuHeader,
@@ -10,8 +13,6 @@ import {
   MenuItem,
   UPlotConfigBuilder,
 } from '@grafana/ui';
-import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
-import { useClickAway } from 'react-use';
 import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
 
 type ContextMenuSelectionCoords = { viewport: CartesianCoords2D; plotCanvas: CartesianCoords2D };
@@ -23,6 +24,7 @@ export interface ContextMenuItemClickPayload {
 
 interface ContextMenuPluginProps {
   data: DataFrame;
+  frames?: DataFrame[];
   config: UPlotConfigBuilder;
   defaultItems?: Array<MenuItemsGroup<ContextMenuItemClickPayload>>;
   timeZone: TimeZone;
@@ -178,6 +180,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
       {isOpen && coords && (
         <ContextMenuView
           data={data}
+          frames={otherProps.frames}
           defaultItems={defaultItems}
           timeZone={timeZone}
           selection={{ point, coords }}
@@ -195,8 +198,9 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
   );
 };
 
-interface ContextMenuProps {
+interface ContextMenuViewProps {
   data: DataFrame;
+  frames?: DataFrame[];
   defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onClose?: () => void;
@@ -207,7 +211,7 @@ interface ContextMenuProps {
   replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuView: React.FC<ContextMenuProps> = ({
+export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
   selection,
   timeZone,
   defaultItems,
@@ -273,7 +277,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
           timestamp={xFieldFmt(xField.values.get(dataIdx)).text}
           displayValue={displayValue}
           seriesColor={displayValue.color!}
-          displayName={getFieldDisplayName(field, data)}
+          displayName={getFieldDisplayName(field, data, otherProps.frames)}
         />
       );
     }

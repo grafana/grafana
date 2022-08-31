@@ -1,12 +1,15 @@
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useAsyncFn } from 'react-use';
+
 import { locationUtil } from '@grafana/data';
-import { StoreState } from 'app/types';
-import { useAppNotification } from 'app/core/copy/appNotification';
-import { historySrv } from './HistorySrv';
-import { DashboardModel } from '../../state';
 import { locationService } from '@grafana/runtime';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { StoreState } from 'app/types';
+
+import { DashboardModel } from '../../state';
+
+import { historySrv } from './HistorySrv';
 
 const restoreDashboard = async (version: number, dashboard: DashboardModel) => {
   return await historySrv.restoreDashboard(dashboard, version);

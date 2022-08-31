@@ -1,10 +1,12 @@
-import { AnnotationQuery, EventBus, GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
-import { getDashboardQueryRunner } from '../../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
+
+import { AnnotationQuery, EventBus, GrafanaTheme2 } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
 import { LoadingIndicator } from '@grafana/ui/src/components/PanelChrome/LoadingIndicator';
-import { css } from '@emotion/css';
+
+import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
+import { getDashboardQueryRunner } from '../../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export interface AnnotationPickerProps {
   events: EventBus;
@@ -46,7 +48,7 @@ export const AnnotationPicker = ({ annotation, events, onEnabledChanged }: Annot
           <InlineSwitch value={annotation.enable} onChange={() => onEnabledChanged(annotation)} disabled={loading} />
         </InlineField>
         <div className={styles.indicator}>
-          <LoadingIndicator loading={true} onCancel={onCancel} />
+          <LoadingIndicator loading={loading} onCancel={onCancel} />
         </div>
       </InlineFieldRow>
     </div>

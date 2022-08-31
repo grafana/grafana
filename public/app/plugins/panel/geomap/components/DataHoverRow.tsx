@@ -1,5 +1,6 @@
-import React from 'react';
 import { FeatureLike } from 'ol/Feature';
+import React from 'react';
+
 import { ArrayDataFrame, DataFrame } from '@grafana/data';
 
 import { DataHoverView } from './DataHoverView';

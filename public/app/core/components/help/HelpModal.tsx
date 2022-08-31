@@ -1,5 +1,6 @@
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, useStyles2 } from '@grafana/ui';
 
@@ -9,6 +10,8 @@ const shortcuts = {
     { keys: ['g', 'p'], description: 'Go to Profile' },
     { keys: ['s', 'o'], description: 'Open search' },
     { keys: ['esc'], description: 'Exit edit/setting views' },
+    { keys: ['h'], description: 'Show all keyboard shortcuts' },
+    { keys: ['mod+k'], description: 'Open command palette' },
   ],
   Dashboard: [
     { keys: ['mod+s'], description: 'Save dashboard' },

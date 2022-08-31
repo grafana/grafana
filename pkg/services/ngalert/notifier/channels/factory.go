@@ -1,9 +1,11 @@
 package channels
 
 import (
+	"context"
 	"errors"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/prometheus/alertmanager/template"
 )
@@ -12,11 +14,17 @@ type FactoryConfig struct {
 	Config              *NotificationChannelConfig
 	NotificationService notifications.Service
 	DecryptFunc         GetDecryptedValueFn
-	Template            *template.Template
+	ImageStore          ImageStore
+	// Used to retrieve image URLs for messages, or data for uploads.
+	Template *template.Template
+}
+
+type ImageStore interface {
+	GetImage(ctx context.Context, token string) (*models.Image, error)
 }
 
 func NewFactoryConfig(config *NotificationChannelConfig, notificationService notifications.Service,
-	decryptFunc GetDecryptedValueFn, template *template.Template) (FactoryConfig, error) {
+	decryptFunc GetDecryptedValueFn, template *template.Template, imageStore ImageStore) (FactoryConfig, error) {
 	if config.Settings == nil {
 		return FactoryConfig{}, errors.New("no settings supplied")
 	}
@@ -25,18 +33,23 @@ func NewFactoryConfig(config *NotificationChannelConfig, notificationService not
 	if config.SecureSettings == nil {
 		config.SecureSettings = map[string][]byte{}
 	}
+
+	if imageStore == nil {
+		imageStore = &UnavailableImageStore{}
+	}
 	return FactoryConfig{
 		Config:              config,
 		NotificationService: notificationService,
 		DecryptFunc:         decryptFunc,
 		Template:            template,
+		ImageStore:          imageStore,
 	}, nil
 }
 
 var receiverFactories = map[string]func(FactoryConfig) (NotificationChannel, error){
 	"prometheus-alertmanager": AlertmanagerFactory,
 	"dingding":                DingDingFactory,
-	"discord":                 DiscrodFactory,
+	"discord":                 DiscordFactory,
 	"email":                   EmailFactory,
 	"googlechat":              GoogleChatFactory,
 	"kafka":                   KafkaFactory,

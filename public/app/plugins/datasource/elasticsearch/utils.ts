@@ -1,10 +1,11 @@
+import { valid, gte } from 'semver';
+
 import {
   isMetricAggregationWithField,
   MetricAggregation,
   MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { valid } from 'semver';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -94,11 +95,11 @@ export const getScriptValue = (metric: MetricAggregationWithInlineScript) =>
   (typeof metric.settings?.script === 'object' ? metric.settings?.script?.inline : metric.settings?.script) || '';
 
 /**
- * Coerces the a version string/number to a valid semver string.
+ * Coerces the version to a valid semver string.
  * It takes care of also converting from the legacy format (numeric) to the new one.
  * @param version
  */
-export const coerceESVersion = (version: string | number): string => {
+export const coerceESVersion = (version: string | number | undefined): string => {
   if (typeof version === 'string') {
     return valid(version) || '5.0.0';
   }
@@ -116,4 +117,12 @@ export const coerceESVersion = (version: string | number): string => {
     default:
       return '5.0.0';
   }
+};
+
+export const isSupportedVersion = (version: string): boolean => {
+  if (gte(version, '7.10.0')) {
+    return true;
+  }
+
+  return false;
 };

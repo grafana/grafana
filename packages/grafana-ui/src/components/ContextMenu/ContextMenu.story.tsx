@@ -1,13 +1,16 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
+
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { IconButton } from '../IconButton/IconButton';
-import { ContextMenu } from './ContextMenu';
-import { WithContextMenu } from './WithContextMenu';
-import mdx from './ContextMenu.mdx';
 import { MenuGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
 
-export default {
+import { ContextMenu } from './ContextMenu';
+import mdx from './ContextMenu.mdx';
+import { WithContextMenu } from './WithContextMenu';
+
+const meta: ComponentMeta<typeof ContextMenu> = {
   title: 'General/ContextMenu',
   component: ContextMenu,
   decorators: [withCenteredStory],
@@ -52,3 +55,5 @@ export const WithState = () => {
     </WithContextMenu>
   );
 };
+
+export default meta;

@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { DashboardAclDTO, FolderDTO, FolderState } from 'app/types';
 import { processAclItems } from 'app/core/utils/acl';
+import { DashboardAclDTO, FolderDTO, FolderState } from 'app/types';
 
 export const initialState: FolderState = {
   id: 0,

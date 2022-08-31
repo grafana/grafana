@@ -317,6 +317,31 @@ export const locationMetadata = [
     displayName: 'Brazil Southeast',
     supportsLogs: true,
   },
+  {
+    location: 'chinaeast',
+    displayName: 'China Eest',
+    supportsLogs: true,
+  },
+  {
+    location: 'chinaeast2',
+    displayName: 'China Eest 2',
+    supportsLogs: true,
+  },
+  {
+    location: 'chinanorth',
+    displayName: 'China North',
+    supportsLogs: true,
+  },
+  {
+    location: 'chinanorth2',
+    displayName: 'China North 2',
+    supportsLogs: true,
+  },
+  {
+    location: 'chinanorth3',
+    displayName: 'China North 3',
+    supportsLogs: true,
+  },
 ];
 
 export const logsSupportedLocationsKusto = locationMetadata
