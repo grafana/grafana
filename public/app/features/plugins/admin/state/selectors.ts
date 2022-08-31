@@ -56,13 +56,13 @@ export const find = (searchBy: string, filterBy: string, filterByType: string) =
 export const selectPluginErrors = createSelector(selectAll, (plugins) =>
   plugins
     ? plugins
-      .filter((p) => Boolean(p.error))
-      .map(
-        (p): PluginError => ({
-          pluginId: p.id,
-          errorCode: p!.error as PluginErrorCode,
-        })
-      )
+        .filter((p) => Boolean(p.error))
+        .map(
+          (p): PluginError => ({
+            pluginId: p.id,
+            errorCode: p!.error as PluginErrorCode,
+          })
+        )
     : []
 );
 
