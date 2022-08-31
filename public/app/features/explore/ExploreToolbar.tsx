@@ -60,6 +60,18 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     syncTimes(exploreId);
   };
 
+  onOpenSplitView = () => {
+    const { split } = this.props;
+    split();
+    reportInteraction('grafana_explore_splitView_opened');
+  };
+
+  onCloseSplitView = () => {
+    const { closeSplit, exploreId } = this.props;
+    closeSplit(exploreId);
+    reportInteraction('grafana_explore_splitView_closed');
+  };
+
   renderRefreshPicker = (showSmallTimePicker: boolean) => {
     const { loading, refreshInterval, isLive } = this.props;
 
@@ -92,7 +104,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
   render() {
     const {
       datasourceMissing,
-      closeSplit,
       exploreId,
       loading,
       range,
@@ -102,7 +113,6 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
       syncedTimes,
       refreshInterval,
       onChangeTime,
-      split,
       hasLiveOption,
       isLive,
       isPaused,
@@ -149,11 +159,11 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
         >
           <>
             {!splitted ? (
-              <ToolbarButton tooltip="Split the pane" onClick={() => split()} icon="columns" disabled={isLive}>
+              <ToolbarButton tooltip="Split the pane" onClick={this.onOpenSplitView} icon="columns" disabled={isLive}>
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton tooltip="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
+              <ToolbarButton tooltip="Close split pane" onClick={this.onCloseSplitView} icon="times">
                 Close
               </ToolbarButton>
             )}
