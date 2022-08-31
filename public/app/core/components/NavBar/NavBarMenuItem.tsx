@@ -13,7 +13,6 @@ export interface Props {
   target?: HTMLAnchorElement['target'];
   text: React.ReactNode;
   url?: string;
-  adjustHeightForBorder?: boolean;
   isMobile?: boolean;
 }
 

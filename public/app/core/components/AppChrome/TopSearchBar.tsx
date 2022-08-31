@@ -1,15 +1,37 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { cloneDeep } from 'lodash';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, FilterInput, Icon, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { GrafanaTheme2, NavSection } from '@grafana/data';
+import { FilterInput, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { StoreState } from 'app/types';
+
+import TopNavBarItem from '../NavBar/TopNavBar/TopNavBarItem';
+import { NavBarContext } from '../NavBar/context';
+import { enrichConfigItems, enrichWithInteractionTracking } from '../NavBar/utils';
+import { OrgSwitcher } from '../OrgSwitcher';
 
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
+  const location = useLocation();
+  const navBarTree = useSelector((state: StoreState) => state.navBarTree);
+  const navTree = cloneDeep(navBarTree);
+  const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
+  const [showSwitcherModal, setShowSwitcherModal] = useState(false);
+  const toggleSwitcherModal = () => {
+    setShowSwitcherModal(!showSwitcherModal);
+  };
+  const configItems = enrichConfigItems(
+    navTree.filter((item) => item.section === NavSection.Config),
+    location,
+    toggleSwitcherModal
+  ).map((item) => enrichWithInteractionTracking(item, false));
 
+  const profileNode = configItems.find((item) => item.id === 'profile');
   return (
     <div className={styles.container}>
       <div className={styles.leftContent}>
@@ -21,38 +43,31 @@ export function TopSearchBar() {
         <FilterInput placeholder="Search grafana" value={''} onChange={() => {}} className={styles.searchInput} />
       </div>
       <div className={styles.actions}>
-        <Tooltip placement="bottom" content="Help menu (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="question-circle" size="lg" />
-          </button>
-        </Tooltip>
-        <Tooltip placement="bottom" content="Grafana news (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="rss" size="lg" />
-          </button>
-        </Tooltip>
-        <Tooltip placement="bottom" content="User profile (todo)">
-          <Dropdown overlay={ProfileMenu}>
+        <NavBarContext.Provider
+          value={{
+            menuIdOpen: menuIdOpen,
+            setMenuIdOpen: setMenuIdOpen,
+          }}
+        >
+          <Tooltip placement="bottom" content="Help menu (todo)">
             <button className={styles.actionItem}>
-              <img src={contextSrv.user.gravatarUrl} />
+              <Icon name="question-circle" size="lg" />
             </button>
-          </Dropdown>
-        </Tooltip>
+          </Tooltip>
+          <Tooltip placement="bottom" content="Grafana news (todo)">
+            <button className={styles.actionItem}>
+              <Icon name="rss" size="lg" />
+            </button>
+          </Tooltip>
+          {profileNode && (
+            <Tooltip placement="bottom" content="User profile (todo)">
+              <TopNavBarItem link={profileNode} />
+            </Tooltip>
+          )}
+        </NavBarContext.Provider>
       </div>
+      {showSwitcherModal && <OrgSwitcher onDismiss={toggleSwitcherModal} />}
     </div>
-  );
-}
-
-/**
- * This is just temporary, needs syncing with the backend option like DisableSignoutMenu
- */
-export function ProfileMenu() {
-  return (
-    <Menu>
-      <MenuItem url="profile" label="Your profile" />
-      <MenuItem url="profile/notifications" label="Your notifications" />
-      <MenuItem url="logout" label="Sign out" />
-    </Menu>
   );
 }
 
