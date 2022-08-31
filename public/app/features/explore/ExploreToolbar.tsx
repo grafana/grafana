@@ -60,6 +60,11 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     syncTimes(exploreId);
   };
 
+  onCopyShortLink = async () => {
+    await createAndCopyShortLink(window.location.href);
+    reportInteraction('grafana_explore_shortened_link_clicked');
+  };
+
   onOpenSplitView = () => {
     const { split } = this.props;
     split();
@@ -141,7 +146,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 key="share"
                 tooltip="Copy shortened link"
                 icon="share-alt"
-                onClick={() => createAndCopyShortLink(window.location.href)}
+                onClick={this.onCopyShortLink}
                 aria-label="Copy shortened link"
               />
             ),
