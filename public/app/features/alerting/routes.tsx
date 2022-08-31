@@ -14,9 +14,8 @@ import { evaluateAccess } from './unified/utils/access-control';
 const commonRoutes: RouteDescriptor[] = [
   {
     path: '/alerting',
-    // eslint-disable-next-line react/display-name
-    // component: () => <Redirect to="/alerting/list" />,
-    component: () => <NavSectionLandingPage navId="alerting" />
+    component: () =>
+      config.featureToggles.topNav ? <NavSectionLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
   },
 ];
 

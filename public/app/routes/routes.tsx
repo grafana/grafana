@@ -267,9 +267,8 @@ export function getAppRoutes(): RouteDescriptor[] {
 
     {
       path: '/admin',
-      // eslint-disable-next-line react/display-name
-      // component: () => <Redirect to="/admin/users" />,
-      component: () => <NavSectionLandingPage navId="cfg" />,
+      component: () =>
+        config.featureToggles.topnav ? <NavSectionLandingPage navId="cfg" /> : <Redirect to="/admin/users" />,
     },
     {
       path: '/admin/settings',

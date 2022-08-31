@@ -364,22 +364,27 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			Text:       "Configuration",
 			SubTitle:   "Organization: " + c.OrgName,
 			Icon:       "cog",
-			Url:        "/admin",
 			Section:    dtos.NavSectionConfig,
 			SortWeight: dtos.WeightConfig,
 			Children:   configNodes,
+		}
+		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+			configNode.Url = "/admin"
+		} else {
+			configNode.Url = configNodes[0].Url
 		}
 		navTree = append(navTree, configNode)
 	}
 
 	adminNavLinks := hs.buildAdminNavLinks(c)
+	var topnavEnabled = hs.Features.IsEnabled(featuremgmt.FlagTopnav)
 
 	if len(adminNavLinks) > 0 {
-		serverAdminNode = navlinks.GetServerAdminNode(adminNavLinks)
+		serverAdminNode = navlinks.GetServerAdminNode(adminNavLinks, topnavEnabled)
 		navTree = append(navTree, serverAdminNode)
 	}
 
-	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+	if topnavEnabled {
 		// Move server admin into Configuration and rename to administration
 		if configNode != nil && serverAdminNode != nil {
 			configNode.Text = "Administration"
@@ -548,18 +553,21 @@ func (hs *HTTPServer) buildLegacyAlertNavLinks(c *models.ReqContext) []*dtos.Nav
 		})
 	}
 
-	return []*dtos.NavLink{
-		{
-			Text:       "Alerting",
-			SubTitle:   "Alert rules and notifications",
-			Id:         "alerting-legacy",
-			Icon:       "bell",
-			Url:        hs.Cfg.AppSubURL + "/alerting",
-			Children:   alertChildNavs,
-			Section:    dtos.NavSectionCore,
-			SortWeight: dtos.WeightAlerting,
-		},
+	var alertNav = dtos.NavLink{
+		Text:       "Alerting",
+		SubTitle:   "Alert rules and notifications",
+		Id:         "alerting-legacy",
+		Icon:       "bell",
+		Children:   alertChildNavs,
+		Section:    dtos.NavSectionCore,
+		SortWeight: dtos.WeightAlerting,
 	}
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		alertNav.Url = hs.Cfg.AppSubURL + "/alerting"
+	} else {
+		alertNav.Url = hs.Cfg.AppSubURL + "/alerting/list"
+	}
+	return []*dtos.NavLink{&alertNav}
 }
 
 func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
@@ -603,19 +611,24 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
+	var alertNav = dtos.NavLink{
+		Text:       "Alerting",
+		SubTitle:   "Alert rules and notifications",
+		Id:         "alerting",
+		Icon:       "bell",
+		Children:   alertChildNavs,
+		Section:    dtos.NavSectionCore,
+		SortWeight: dtos.WeightAlerting,
+	}
+
+	if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		alertNav.Url = hs.Cfg.AppSubURL + "/alerting"
+	} else {
+		alertNav.Url = hs.Cfg.AppSubURL + "/alerting/list"
+	}
+
 	if len(alertChildNavs) > 0 {
-		return []*dtos.NavLink{
-			{
-				Text:       "Alerting",
-				SubTitle:   "Alert rules and notifications",
-				Id:         "alerting",
-				Icon:       "bell",
-				Url:        hs.Cfg.AppSubURL + "/alerting",
-				Children:   alertChildNavs,
-				Section:    dtos.NavSectionCore,
-				SortWeight: dtos.WeightAlerting,
-			},
-		}
+		return []*dtos.NavLink{&alertNav}
 	}
 	return nil
 }

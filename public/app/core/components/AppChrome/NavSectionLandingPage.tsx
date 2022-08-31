@@ -21,7 +21,7 @@ export function NavSectionLandingPage({ navId }: Props) {
     <Page navId={navModel.id}>
       <Page.Contents>
         <section className={styles.grid}>
-          {directChildren?.map(child => (
+          {directChildren?.map((child) => (
             <NavSectionLandingPageCard
               key={child.id}
               description={child.description}
@@ -31,12 +31,12 @@ export function NavSectionLandingPage({ navId }: Props) {
             />
           ))}
         </section>
-        {nestedChildren?.map(child => (
+        {nestedChildren?.map((child) => (
           <section key={child.id}>
             <h2 className={styles.nestedTitle}>{child.text}</h2>
-            <div className={styles.nestedDescription}>{child.description}</div>
+            <div className={styles.nestedDescription}>{child.subTitle}</div>
             <div className={styles.grid}>
-              {child.children?.map(child => (
+              {child.children?.map((child) => (
                 <NavSectionLandingPageCard
                   key={child.id}
                   description={child.description}
@@ -57,7 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   grid: css({
     display: 'grid',
     gap: theme.spacing(2),
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
     gridAutoRows: 'minmax(200px, 1fr)',
     padding: theme.spacing(2, 1),
   }),
