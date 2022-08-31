@@ -4,7 +4,7 @@ import React, { FC, useCallback, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -199,7 +199,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, un
                 simpleFixedValues: true,
                 layerInfo,
               },
-            } as any
+            } as StandardEditorsRegistryItem
           }
         />
       </div>
