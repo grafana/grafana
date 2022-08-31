@@ -221,7 +221,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   onClickChooserButton = () => {
     this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
 
-    reportInteraction('user_grafana_prometheus_editor_mode_clicked', {
+    reportInteraction('user_grafana_prometheus_metrics_browser_clicked', {
       editorMode: this.state.labelBrowserVisible ? 'metricViewClosed' : 'metricViewOpen',
       app: this.props?.app ?? '',
     });
