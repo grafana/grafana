@@ -366,13 +366,13 @@ export class GeomapPanel extends Component<Props, State> {
     if (!this.map || this.state.ttipOpen) {
       return false;
     }
-    const mouse = evt.originalEvent as any;
+    const mouse = evt.originalEvent as MouseEvent;
     const pixel = this.map.getEventPixel(mouse);
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
     const { hoverPayload } = this;
-    hoverPayload.pageX = mouse.offsetX;
-    hoverPayload.pageY = mouse.offsetY;
+    hoverPayload.pageX = mouse.pageX;
+    hoverPayload.pageY = mouse.pageY;
     hoverPayload.point = {
       lat: hover[1],
       lon: hover[0],
@@ -436,7 +436,7 @@ export class GeomapPanel extends Component<Props, State> {
       });
     }
 
-    const found = layers.length ? true : false;
+    const found = Boolean(layers.length);
     this.mapDiv!.style.cursor = found ? 'pointer' : 'auto';
     return found;
   };
@@ -466,7 +466,6 @@ export class GeomapPanel extends Component<Props, State> {
       } else if (this.byName.has(newOptions.name)) {
         return false;
       }
-      console.log('Layer name changed', uid, '>>>', newOptions.name);
       this.byName.delete(uid);
 
       uid = newOptions.name;
@@ -532,7 +531,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     const UID = options.name;
-    const state: MapLayerState<any> = {
+    const state: MapLayerState<unknown> = {
       // UID, // unique name when added to the map (it may change and will need special handling)
       isBasemap,
       options,
@@ -556,7 +555,7 @@ export class GeomapPanel extends Component<Props, State> {
     return state;
   }
 
-  applyLayerFilter(handler: MapLayerHandler<any>, options: MapLayerOptions<any>): void {
+  applyLayerFilter(handler: MapLayerHandler<unknown>, options: MapLayerOptions<unknown>): void {
     if (handler.update) {
       let panelData = this.props.data;
       if (options.filterData) {
@@ -607,7 +606,7 @@ export class GeomapPanel extends Component<Props, State> {
             });
           }
         } else {
-          console.log('TODO, view requires special handling', v);
+          // TODO: view requires special handling
         }
       } else {
         coord = [v.lon ?? 0, v.lat ?? 0];

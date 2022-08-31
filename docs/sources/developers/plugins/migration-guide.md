@@ -708,9 +708,9 @@ import { PanelProps } from '@grafana/data';
 
 interface Props extends PanelProps<SimpleOptions> {}
 
-export const MyPanel: React.FC<Props> = ({ options, data, width, height }) => {
+export function MyPanel({ options, data, width, height }: Props) {
   // ...
-};
+}
 ```
 
 #### Migrate a data source plugin

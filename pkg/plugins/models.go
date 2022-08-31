@@ -8,10 +8,9 @@ import (
 )
 
 var (
-	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
-	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
-	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside")
-	ErrPluginNotInstalled          = errors.New("plugin is not installed")
+	ErrInstallCorePlugin   = errors.New("cannot install a Core plugin")
+	ErrUninstallCorePlugin = errors.New("cannot uninstall a Core plugin")
+	ErrPluginNotInstalled  = errors.New("plugin is not installed")
 )
 
 type NotFoundError struct {
@@ -234,6 +233,7 @@ type DataSourceDTO struct {
 	Preload    bool                   `json:"preload"`
 	Module     string                 `json:"module,omitempty"`
 	JSONData   map[string]interface{} `json:"jsonData"`
+	ReadOnly   bool                   `json:"readOnly"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`

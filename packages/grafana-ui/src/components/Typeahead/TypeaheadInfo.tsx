@@ -34,7 +34,7 @@ interface Props {
   height: number;
 }
 
-export const TypeaheadInfo: React.FC<Props> = ({ item, height }) => {
+export const TypeaheadInfo = ({ item, height }: Props) => {
   const visible = item && !!item.documentation;
   const label = item ? item.label : '';
   const documentation = renderMarkdown(item?.documentation);

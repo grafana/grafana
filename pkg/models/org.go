@@ -44,11 +44,6 @@ type DeleteOrgCommand struct {
 	Id int64
 }
 
-type UpdateOrgCommand struct {
-	Name  string
-	OrgId int64
-}
-
 type UpdateOrgAddressCommand struct {
 	OrgId int64
 	Address

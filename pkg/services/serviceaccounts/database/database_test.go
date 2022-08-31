@@ -341,7 +341,8 @@ func TestStore_RevertApiKey(t *testing.T) {
 				// Service account should be deleted
 				require.Equal(t, int64(0), serviceAccounts.TotalCount)
 
-				apiKeys := store.apiKeyService.GetAllAPIKeys(context.Background(), 1)
+				apiKeys, err := store.apiKeyService.GetAllAPIKeys(context.Background(), 1)
+				require.NoError(t, err)
 				require.Len(t, apiKeys, 1)
 				apiKey := apiKeys[0]
 				require.Equal(t, c.key.Name, apiKey.Name)

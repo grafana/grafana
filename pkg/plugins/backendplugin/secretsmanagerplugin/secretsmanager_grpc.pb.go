@@ -27,6 +27,7 @@ type SecretsManagerClient interface {
 	DeleteSecret(ctx context.Context, in *DeleteSecretRequest, opts ...grpc.CallOption) (*DeleteSecretResponse, error)
 	ListSecrets(ctx context.Context, in *ListSecretsRequest, opts ...grpc.CallOption) (*ListSecretsResponse, error)
 	RenameSecret(ctx context.Context, in *RenameSecretRequest, opts ...grpc.CallOption) (*RenameSecretResponse, error)
+	GetAllSecrets(ctx context.Context, in *GetAllSecretsRequest, opts ...grpc.CallOption) (*GetAllSecretsResponse, error)
 }
 
 type secretsManagerClient struct {
@@ -82,6 +83,15 @@ func (c *secretsManagerClient) RenameSecret(ctx context.Context, in *RenameSecre
 	return out, nil
 }
 
+func (c *secretsManagerClient) GetAllSecrets(ctx context.Context, in *GetAllSecretsRequest, opts ...grpc.CallOption) (*GetAllSecretsResponse, error) {
+	out := new(GetAllSecretsResponse)
+	err := c.cc.Invoke(ctx, "/secretsmanagerplugin.SecretsManager/GetAllSecrets", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SecretsManagerServer is the server API for SecretsManager service.
 // All implementations must embed UnimplementedSecretsManagerServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type SecretsManagerServer interface {
 	DeleteSecret(context.Context, *DeleteSecretRequest) (*DeleteSecretResponse, error)
 	ListSecrets(context.Context, *ListSecretsRequest) (*ListSecretsResponse, error)
 	RenameSecret(context.Context, *RenameSecretRequest) (*RenameSecretResponse, error)
+	GetAllSecrets(context.Context, *GetAllSecretsRequest) (*GetAllSecretsResponse, error)
 	mustEmbedUnimplementedSecretsManagerServer()
 }
 
@@ -112,6 +123,9 @@ func (UnimplementedSecretsManagerServer) ListSecrets(context.Context, *ListSecre
 }
 func (UnimplementedSecretsManagerServer) RenameSecret(context.Context, *RenameSecretRequest) (*RenameSecretResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RenameSecret not implemented")
+}
+func (UnimplementedSecretsManagerServer) GetAllSecrets(context.Context, *GetAllSecretsRequest) (*GetAllSecretsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllSecrets not implemented")
 }
 func (UnimplementedSecretsManagerServer) mustEmbedUnimplementedSecretsManagerServer() {}
 
@@ -216,6 +230,24 @@ func _SecretsManager_RenameSecret_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SecretsManager_GetAllSecrets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllSecretsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SecretsManagerServer).GetAllSecrets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/secretsmanagerplugin.SecretsManager/GetAllSecrets",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SecretsManagerServer).GetAllSecrets(ctx, req.(*GetAllSecretsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SecretsManager_ServiceDesc is the grpc.ServiceDesc for SecretsManager service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +274,10 @@ var SecretsManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RenameSecret",
 			Handler:    _SecretsManager_RenameSecret_Handler,
+		},
+		{
+			MethodName: "GetAllSecrets",
+			Handler:    _SecretsManager_GetAllSecrets_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

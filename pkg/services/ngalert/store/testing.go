@@ -404,6 +404,9 @@ func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { re
 func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
 	return nil
 }
+func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+	return nil
+}
 
 func NewFakeAdminConfigStore(t *testing.T) *FakeAdminConfigStore {
 	t.Helper()

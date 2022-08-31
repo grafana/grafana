@@ -88,7 +88,7 @@ func TestLockAndRelease(t *testing.T) {
 
 		err2 := sl.acquireForRelease(context.Background(), operationUID, duration)
 		require.Error(t, err2, "We should expect an error when trying to get the second lock")
-		require.Equal(t, "there is already a lock for this operation", err2.Error())
+		require.Equal(t, "there is already a lock for this actionName: "+operationUID, err2.Error())
 
 		err3 := sl.releaseLock(context.Background(), operationUID)
 		require.NoError(t, err3)

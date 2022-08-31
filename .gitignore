@@ -129,6 +129,9 @@ pkg/cmd/grafana-server/__debug_bin
 ## CI places the packages in a different location
 /npm-artifacts/*.tgz
 
+# Ignore frontend build manifest
+manifest.json
+
 # Ignore go local build dependencies
 /scripts/go/bin/**
 
