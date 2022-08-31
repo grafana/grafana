@@ -173,7 +173,7 @@ export const getDefaultQueries = (): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
 
   if (!dataSource) {
-    return [getDefaultExpression('A')];
+    return [...getDefaultExpressions('A', 'B')];
   }
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
@@ -188,15 +188,18 @@ export const getDefaultQueries = (): AlertQuery[] => {
         hide: false,
       },
     },
-    getDefaultExpression('B'),
+    ...getDefaultExpressions('B', 'C'),
   ];
 };
 
-const getDefaultExpression = (refId: string): AlertQuery => {
-  const model: ExpressionQuery = {
-    refId,
+const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
+  const refOne = refIds[0];
+  const refTwo = refIds[1];
+
+  const reduceExpression: ExpressionQuery = {
+    refId: refIds[0],
     hide: false,
-    type: ExpressionQueryType.classic,
+    type: ExpressionQueryType.reduce,
     datasource: {
       uid: ExpressionDatasourceUID,
       type: ExpressionDatasourceRef.type,
@@ -205,14 +208,14 @@ const getDefaultExpression = (refId: string): AlertQuery => {
       {
         type: 'query',
         evaluator: {
-          params: [3],
+          params: [],
           type: EvalFunction.IsAbove,
         },
         operator: {
           type: 'and',
         },
         query: {
-          params: ['A'],
+          params: [refOne],
         },
         reducer: {
           params: [],
@@ -220,15 +223,54 @@ const getDefaultExpression = (refId: string): AlertQuery => {
         },
       },
     ],
+    reducer: 'last',
     expression: 'A',
   };
 
-  return {
-    refId,
-    datasourceUid: ExpressionDatasourceUID,
-    queryType: '',
-    model,
+  const mathExpression: ExpressionQuery = {
+    refId: refTwo,
+    hide: false,
+    type: ExpressionQueryType.math,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [refTwo],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    expression: `$${refOne} > 0`,
   };
+
+  return [
+    {
+      refId: refOne,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: reduceExpression,
+    },
+    {
+      refId: refTwo,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: mathExpression,
+    },
+  ];
 };
 
 const dataQueriesToGrafanaQueries = async (
@@ -312,8 +354,16 @@ export const panelToRuleFormValues = async (
     return undefined;
   }
 
+  // TODO make this work with correct refids
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    queries.push(getDefaultExpression(getNextRefIdChar(queries.map((query) => query.model))));
+    const [reduceExpression, _mathExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+    queries.push(reduceExpression);
+
+    const [_reduceExpression, mathExpression] = getDefaultExpressions(
+      reduceExpression.refId,
+      getNextRefIdChar(queries)
+    );
+    queries.push(mathExpression);
   }
 
   const { folderId, folderTitle } = dashboard.meta;
