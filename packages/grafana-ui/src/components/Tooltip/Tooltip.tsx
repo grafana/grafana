@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
@@ -22,8 +22,22 @@ export interface TooltipProps {
 }
 
 export const Tooltip = React.memo(({ children, theme, interactive, show, placement, content }: TooltipProps) => {
+  const [controlledVisible, setControlledVisible] = React.useState(show);
+
+  useEffect(() => {
+    const handleKeyDown = (enterKey: KeyboardEvent) => {
+      if (enterKey.key === 'Escape') {
+        setControlledVisible(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
-    visible: show,
+    visible: controlledVisible,
     placement: placement,
     interactive: interactive,
     delayHide: interactive ? 100 : 0,
