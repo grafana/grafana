@@ -1,6 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
+import { Redirect, Route, RouteChildrenProps, Switch, useParams } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
@@ -26,11 +26,10 @@ const Receivers: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
 
-  const location = useLocation();
-  const isRoot = location.pathname.endsWith('/alerting/notifications');
-  const isEditing = location.pathname.endsWith('/edit');
+  type PageType = 'receivers' | 'templates' | 'global-config';
 
-  const { id, type } = useParams<{ id?: string; type?: string }>();
+  const { id, type } = useParams<{ id?: string; type?: PageType }>();
+  const isRoot = Boolean(!type);
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -60,32 +59,30 @@ const Receivers: FC = () => {
 
   const disableAmSelect = !isRoot;
 
-  const getPageNav: () => NavModelItem | undefined = () => {
-    let pageNav: NavModelItem | undefined;
-    const typeParams = type === 'receivers' ? 'contact point' : 'message template';
-    if (isEditing && id) {
+  let pageNav: NavModelItem | undefined;
+  if (type === 'receivers' || type === 'templates') {
+    const objectText = type === 'receivers' ? 'contact point' : 'message template';
+    if (id) {
       pageNav = {
         text: id,
-        subTitle: `Edit the settings for a specific ${typeParams}`,
-      };
-    } else if (isRoot) {
-    } else if (type === 'templates' || type === 'receivers') {
-      pageNav = {
-        text: `New ${typeParams}`,
-        subTitle: `Create a new ${typeParams} for your notifications`,
+        subTitle: `Edit the settings for a specific ${objectText}`,
       };
     } else {
       pageNav = {
-        text: 'Global config',
-        subTitle: 'Manage your global configuration',
+        text: `New ${objectText}`,
+        subTitle: `Create a new ${objectText} for your notifications`,
       };
     }
-    return pageNav;
-  };
+  } else if (type === 'global-config') {
+    pageNav = {
+      text: 'Global config',
+      subTitle: 'Manage your global configuration',
+    };
+  }
 
   if (!alertManagerSourceName) {
     return isRoot ? (
-      <AlertingPageWrapper pageId="receivers" pageNav={getPageNav()}>
+      <AlertingPageWrapper pageId="receivers" pageNav={pageNav}>
         <NoAlertManagerWarning availableAlertManagers={alertManagers} />
       </AlertingPageWrapper>
     ) : (
@@ -94,7 +91,7 @@ const Receivers: FC = () => {
   }
 
   return (
-    <AlertingPageWrapper pageId="receivers" pageNav={getPageNav()}>
+    <AlertingPageWrapper pageId="receivers" pageNav={pageNav}>
       <AlertManagerPicker
         current={alertManagerSourceName}
         disabled={disableAmSelect}
