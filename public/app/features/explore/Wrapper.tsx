@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { PageLayoutType } from 'app/core/components/Page/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
@@ -84,33 +84,20 @@ class WrapperUnconnected extends PureComponent<Props> {
   render() {
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
-    const pageNav: NavModelItem = {
-      text: 'Explore',
-      breadcrumbs: [
-        {
-          title: 'Explore',
-          url: '/explore',
-        },
-      ],
-      icon: 'compass',
-      subTitle: 'Explore your data',
-    };
 
     return (
-      <Page pageNav={pageNav} navId="explore" className={styles.pageScrollbarWrapper}>
-        <Page.Contents>
-          <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
-          <div className={styles.exploreWrapper}>
+      <Page navId="explore" layout={PageLayoutType.Dashboard} className={styles.pageScrollbarWrapper}>
+        <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
+        <div className={styles.exploreWrapper}>
+          <ErrorBoundaryAlert style="page">
+            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
+          </ErrorBoundaryAlert>
+          {hasSplit && (
             <ErrorBoundaryAlert style="page">
-              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
+              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
             </ErrorBoundaryAlert>
-            {hasSplit && (
-              <ErrorBoundaryAlert style="page">
-                <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
-              </ErrorBoundaryAlert>
-            )}
-          </div>
-        </Page.Contents>
+          )}
+        </div>
       </Page>
     );
   }
