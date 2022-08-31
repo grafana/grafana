@@ -51,14 +51,11 @@ to{
 }`;
 
 export const getLoginStyles = (theme: GrafanaTheme2) => {
-  const bgColor = theme.isDark ? '#000' : theme.colors.background.canvas;
-
   return {
     container: css({
       minHeight: '100%',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
-      backgroundColor: bgColor,
       minWidth: '100%',
       marginLeft: 0,
       display: 'flex',

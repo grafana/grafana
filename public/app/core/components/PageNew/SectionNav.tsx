@@ -22,7 +22,7 @@ export function SectionNav(props: Props) {
         {main.img && <img className={styles.sectionImg} src={main.img} alt={`logo of ${main.text}`} />}
         {props.model.main.text}
       </h2>
-      <div className={styles.items}>
+      <div className={styles.items} role="tablist">
         {directChildren.map((child, index) => {
           return (
             !child.hideFromTabs &&
@@ -81,16 +81,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.h4.fontSize,
       margin: 0,
     }),
-    items: css({
-      // paddingLeft: '9px',
-    }),
+    items: css({}),
     sectionImg: css({
       height: 48,
     }),
     subSection: css({
-      padding: theme.spacing(3, 0, 1, 1),
+      padding: theme.spacing(3, 0, 0.5, 1),
       fontWeight: 500,
-      fontSize: '16px',
     }),
   };
 };

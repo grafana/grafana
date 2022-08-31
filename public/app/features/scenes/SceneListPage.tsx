@@ -1,8 +1,7 @@
 // Libraries
 import React, { FC } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Card } from '@grafana/ui';
+import { Card, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 // Types
@@ -14,7 +13,7 @@ export const SceneListPage: FC<Props> = ({}) => {
   const scenes = getScenes();
 
   return (
-    <Page>
+    <Page navId="scenes">
       <Page.Contents>
         <Stack direction="column">
           {scenes.map((scene) => (

@@ -1,8 +1,12 @@
+import intersect from 'fast_array_intersect';
+
 import { getTimeField, sortDataFrame } from '../../dataframe';
 import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { ArrayVector } from '../../vector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
+
+import { JoinMode } from './joinByField';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -30,7 +34,7 @@ export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface JoinOptions {
   /**
@@ -52,6 +56,11 @@ export interface JoinOptions {
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
+
+  /**
+   * @internal -- Optionally specify a join mode (outer or inner)
+   */
+  mode?: JoinMode;
 }
 
 function getJoinMatcher(options: JoinOptions): FieldMatcher {
@@ -77,7 +86,7 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
-export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
+export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (!options.frames?.length) {
     return;
   }
@@ -211,7 +220,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     allData.push(a);
   }
 
-  const joined = join(allData, nullModes);
+  const joined = join(allData, nullModes, options.mode);
 
   return {
     // ...options.data[0], // keep name, meta?
@@ -272,16 +281,23 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-export function join(tables: AlignedData[], nullModes?: number[][]) {
-  const xVals = new Set<number>();
+export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
+  let xVals: Set<number>;
 
-  for (let ti = 0; ti < tables.length; ti++) {
-    let t = tables[ti];
-    let xs = t[0];
-    let len = xs.length;
+  if (mode === JoinMode.inner) {
+    // @ts-ignore
+    xVals = new Set(intersect(tables.map((t) => t[0])));
+  } else {
+    xVals = new Set();
 
-    for (let i = 0; i < len; i++) {
-      xVals.add(xs[i]);
+    for (let ti = 0; ti < tables.length; ti++) {
+      let t = tables[ti];
+      let xs = t[0];
+      let len = xs.length;
+
+      for (let i = 0; i < len; i++) {
+        xVals.add(xs[i]);
+      }
     }
   }
 

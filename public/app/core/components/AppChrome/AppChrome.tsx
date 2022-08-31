@@ -1,14 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React, { PropsWithChildren, useState } from 'react';
-import { useToggle } from 'react-use';
+import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 
-import { appChromeService } from './AppChromeService';
 import { NavToolbar } from './NavToolbar';
 import { TopSearchBar } from './TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -17,29 +16,28 @@ export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
-  const [searchBarHidden, toggleSearchBar] = useToggle(false); // repace with local storage
-  const [megaMenuOpen, setMegaMenuOpen] = useState(false);
-  const state = appChromeService.useState();
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
 
   if (state.chromeless || !config.featureToggles.topnav) {
-    return <main className="main-view">{children} </main>;
+    return <main className="main-view">{children}</main>;
   }
 
   return (
     <main className="main-view">
       <div className={styles.topNav}>
-        {!searchBarHidden && <TopSearchBar />}
+        {!state.searchBarHidden && <TopSearchBar />}
         <NavToolbar
-          searchBarHidden={searchBarHidden}
+          searchBarHidden={state.searchBarHidden}
           sectionNav={state.sectionNav}
           pageNav={state.pageNav}
           actions={state.actions}
-          onToggleSearchBar={toggleSearchBar}
-          onToggleMegaMenu={() => setMegaMenuOpen(!megaMenuOpen)}
+          onToggleSearchBar={chrome.toggleSearchBar}
+          onToggleMegaMenu={chrome.toggleMegaMenu}
         />
       </div>
-      <div className={cx(styles.content, searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
-      {megaMenuOpen && <MegaMenu searchBarHidden={searchBarHidden} onClose={() => setMegaMenuOpen(false)} />}
+      <div className={cx(styles.content, state.searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
+      <MegaMenu searchBarHidden={state.searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
     </main>
   );
 }

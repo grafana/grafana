@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
+	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
@@ -37,7 +38,6 @@ func TestQueryCondition(t *testing.T) {
 	setup := func() *queryConditionTestContext {
 		ctx := &queryConditionTestContext{}
 		store := mockstore.NewSQLStoreMock()
-		store.ExpectedDatasource = &datasources.DataSource{Id: 1, Type: "graphite"}
 
 		ctx.reducer = `{"type":"avg"}`
 		ctx.evaluator = `{"type":"gt","params":[100]}`
@@ -46,6 +46,11 @@ func TestQueryCondition(t *testing.T) {
 			Rule:             &alerting.Rule{},
 			RequestValidator: &validations.OSSPluginRequestValidator{},
 			Store:            store,
+			DatasourceService: &fd.FakeDataSourceService{
+				DataSources: []*datasources.DataSource{
+					{Id: 1, Type: datasources.DS_GRAPHITE},
+				},
+			},
 		}
 		return ctx
 	}

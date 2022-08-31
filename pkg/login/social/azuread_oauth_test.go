@@ -258,7 +258,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, ""),
 			},
 			claims: &azureClaims{
 				ID:                "1",

@@ -1,4 +1,5 @@
 import { action } from '@storybook/addon-actions';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { Input } from '../Input/Input';
@@ -7,7 +8,7 @@ import { Select } from '../Select/Select';
 import { InlineField } from './InlineField';
 import mdx from './InlineField.mdx';
 
-export default {
+const meta: ComponentMeta<typeof InlineField> = {
   title: 'Forms/InlineField',
   component: InlineField,
   parameters: {
@@ -17,7 +18,7 @@ export default {
   },
 };
 
-export const basic = () => {
+export const basic: ComponentStory<typeof InlineField> = () => {
   return (
     <InlineField label="Inline field">
       <Input placeholder="Inline input" />
@@ -25,7 +26,7 @@ export const basic = () => {
   );
 };
 
-export const withTooltip = () => {
+export const withTooltip: ComponentStory<typeof InlineField> = () => {
   return (
     <InlineField label="Label" tooltip="Tooltip">
       <Input placeholder="Inline input" />
@@ -33,7 +34,7 @@ export const withTooltip = () => {
   );
 };
 
-export const grow = () => {
+export const grow: ComponentStory<typeof InlineField> = () => {
   return (
     <InlineField label="Label" grow>
       <Input placeholder="Inline input" />
@@ -41,7 +42,7 @@ export const grow = () => {
   );
 };
 
-export const withSelect = () => {
+export const withSelect: ComponentStory<typeof InlineField> = () => {
   return (
     <InlineField label="Select option">
       <Select
@@ -56,7 +57,7 @@ export const withSelect = () => {
   );
 };
 
-export const multiple = () => {
+export const multiple: ComponentStory<typeof InlineField> = () => {
   return (
     <>
       <InlineField label="Field 1">
@@ -71,3 +72,5 @@ export const multiple = () => {
     </>
   );
 };
+
+export default meta;

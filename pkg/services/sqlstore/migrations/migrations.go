@@ -42,7 +42,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addTestDataMigrations(mg)
 	addDashboardVersionMigration(mg)
 	addTeamMigrations(mg)
-	addDashboardAclMigrations(mg) // Do NOT add more migrations to this function.
+	addDashboardACLMigrations(mg) // Do NOT add more migrations to this function.
 	addTagMigration(mg)
 	addLoginAttemptMigrations(mg)
 	addUserAuthMigrations(mg)
@@ -75,6 +75,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	addQueryHistoryStarMigrations(mg)
 
+	addCorrelationsMigrations(mg)
+
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardComments) || mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationComments) {
 			addCommentGroupMigrations(mg)
@@ -94,6 +96,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addPlaylistUIDMigration(mg)
 
 	ualert.UpdateRuleGroupIndexMigration(mg)
+	accesscontrol.AddManagedFolderAlertActionsRepeatMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

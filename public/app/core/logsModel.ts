@@ -52,7 +52,7 @@ export const LogLevelColor = {
   [LogLevel.info]: colors[0],
   [LogLevel.debug]: colors[5],
   [LogLevel.trace]: colors[2],
-  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
+  [LogLevel.unknown]: getThemeColor('#8e8e8e', '#bdc4cd'),
 };
 
 const MILLISECOND = 1;

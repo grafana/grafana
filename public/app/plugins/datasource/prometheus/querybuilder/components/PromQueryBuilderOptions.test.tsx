@@ -68,6 +68,21 @@ describe('PromQueryBuilderOptions', () => {
 
     expect(screen.getByText('Type: Instant')).toBeInTheDocument();
   });
+
+  it('Should show "Exemplars: false" by default', async () => {
+    setup();
+    expect(screen.getByText('Exemplars: false')).toBeInTheDocument();
+  });
+
+  it('Should show "Exemplars: false" when query has "Exemplars: false"', async () => {
+    setup({ exemplar: false });
+    expect(screen.getByText('Exemplars: false')).toBeInTheDocument();
+  });
+
+  it('Should show "Exemplars: true" when query has "Exemplars: true"', async () => {
+    setup({ exemplar: true });
+    expect(screen.getByText('Exemplars: true')).toBeInTheDocument();
+  });
 });
 
 function setup(queryOverrides: Partial<PromQuery> = {}) {

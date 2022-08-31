@@ -62,13 +62,12 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     const styles = useStyles2(getStyles);
 
     const buttonStyles = cx(
-      'toolbar-button',
       {
         [styles.button]: true,
         [styles.buttonFullWidth]: fullWidth,
         [styles.narrow]: narrow,
       },
-      (styles as any)[variant],
+      styles[variant],
       className
     );
 
@@ -127,6 +126,27 @@ const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
 
+  const defaultOld = css`
+    color: ${theme.colors.text.secondary};
+    background-color: ${theme.colors.background.primary};
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
+
+  const defaultTopNav = css`
+    color: ${theme.colors.text.secondary};
+    background-color: transparent;
+    border-color: transparent;
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
+
   return {
     button: css`
       label: toolbar-button;
@@ -172,15 +192,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    default: css`
-      color: ${theme.colors.text.secondary};
-      background-color: ${theme.colors.background.primary};
-
-      &:hover {
-        color: ${theme.colors.text.primary};
-        background: ${theme.colors.background.secondary};
-      }
-    `,
+    default: theme.flags.topnav ? defaultTopNav : defaultOld,
     active: css`
       color: ${theme.v1.palette.orangeDark};
       border-color: ${theme.v1.palette.orangeDark};

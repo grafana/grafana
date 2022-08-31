@@ -12,13 +12,15 @@ export function buildInitialState(): NavIndex {
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   for (const node of children) {
-    navIndex[node.id!] = {
+    const newNode = {
       ...node,
       parentItem: parentItem,
     };
 
+    navIndex[node.id!] = newNode;
+
     if (node.children) {
-      buildNavIndex(navIndex, node.children, node);
+      buildNavIndex(navIndex, node.children, newNode);
     }
   }
 
@@ -77,6 +79,7 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       ...state,
       cfg: { ...state.cfg, subTitle },
       datasources: getItemWithNewSubTitle(state.datasources, subTitle),
+      correlations: getItemWithNewSubTitle(state.correlations, subTitle),
       users: getItemWithNewSubTitle(state.users, subTitle),
       teams: getItemWithNewSubTitle(state.teams, subTitle),
       plugins: getItemWithNewSubTitle(state.plugins, subTitle),

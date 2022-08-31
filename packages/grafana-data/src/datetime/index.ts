@@ -8,4 +8,4 @@ export * from './formatter';
 export * from './parser';
 export * from './durationutil';
 export { dateMath, rangeUtil };
-export { DateTimeOptions, setTimeZoneResolver, TimeZoneResolver, getTimeZone } from './common';
+export { type DateTimeOptions, setTimeZoneResolver, type TimeZoneResolver, getTimeZone } from './common';

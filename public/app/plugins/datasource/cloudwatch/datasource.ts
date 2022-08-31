@@ -69,8 +69,8 @@ import { CloudWatchVariableSupport } from './variables';
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
 // Constants also defined in tsdb/cloudwatch/cloudwatch.go
-const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
-const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
+export const LOG_IDENTIFIER_INTERNAL = '__log__grafana_internal__';
+export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 
 const displayAlert = (datasourceName: string, region: string) =>
   store.dispatch(
@@ -89,7 +89,7 @@ const displayCustomError = (title: string, message: string) =>
 
 export class CloudWatchDatasource
   extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData>
-  implements DataSourceWithLogsContextSupport
+  implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
 {
   proxyUrl: any;
   defaultRegion: any;
@@ -474,6 +474,13 @@ export class CloudWatchDatasource
     return logGroupNames;
   }
 
+  async describeAllLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeAllLogGroups', [params]));
+
+    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
+    return logGroupNames;
+  }
+
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
     const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
 
@@ -488,7 +495,8 @@ export class CloudWatchDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {}
+    { limit = 10, direction = 'BACKWARD' }: RowContextOptions = {},
+    query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     let logStreamField = null;
     let logField = null;
@@ -510,6 +518,7 @@ export class CloudWatchDatasource
     const requestParams: GetLogEventsRequest = {
       limit,
       startFromHead: direction !== 'BACKWARD',
+      region: query?.region,
       logGroupName: parseLogGroupName(logField!.values.get(row.rowIndex)),
       logStreamName: logStreamField!.values.get(row.rowIndex),
     };
@@ -661,9 +670,7 @@ export class CloudWatchDatasource
             }
           }
         }
-        // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
-        //  if you select different than default region in editor you will get results for autocomplete from wrong
-        //  region.
+
         if (anyQuery.region) {
           anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
           anyQuery.region = this.getActualRegion(anyQuery.region);

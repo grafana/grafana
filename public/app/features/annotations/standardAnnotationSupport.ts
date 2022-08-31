@@ -125,6 +125,7 @@ const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
   { key: 'panelId' },
   { key: 'alertId' },
   { key: 'dashboardId' },
+  { key: 'dashboardUID' },
 ];
 
 export function getAnnotationsFromData(
@@ -236,6 +237,7 @@ const legacyRunner = [
   'loki',
   'elasticsearch',
   'grafana-opensearch-datasource', // external
+  'grafana-splunk-datasource', // external
 ];
 
 /**

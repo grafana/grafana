@@ -134,6 +134,71 @@ describe('panelEditor actions', () => {
       expect(dispatchedActions.length).toBe(2);
       expect(sourcePanel.getOptions()).toEqual({});
     });
+
+    it('should not increment configRev when no changes made and leaving panel edit', async () => {
+      const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
+      sourcePanel.plugin = getPanelPlugin({});
+      sourcePanel.plugin.angularPanelCtrl = undefined;
+
+      const dashboard = new DashboardModel({
+        panels: [{ id: 12, type: 'graph' }],
+      });
+
+      const panel = dashboard.initEditPanel(sourcePanel);
+
+      const state: PanelEditorState = {
+        ...initialState(),
+        getPanel: () => panel,
+        getSourcePanel: () => sourcePanel,
+      };
+
+      await thunkTester({
+        panelEditor: state,
+        panels: {},
+        dashboard: {
+          getModel: () => dashboard,
+        },
+      })
+        .givenThunk(exitPanelEditor)
+        .whenThunkIsDispatched();
+
+      expect(sourcePanel.configRev).toEqual(0);
+    });
+
+    it('should apply changes when leaving panel edit with angular panel', async () => {
+      const sourcePanel = new PanelModel({ id: 12, type: 'graph' });
+      sourcePanel.plugin = getPanelPlugin({});
+      sourcePanel.plugin.angularPanelCtrl = {};
+
+      const dashboard = new DashboardModel({
+        panels: [{ id: 12, type: 'graph' }],
+      });
+
+      const panel = dashboard.initEditPanel(sourcePanel);
+
+      const state: PanelEditorState = {
+        ...initialState(),
+        getPanel: () => panel,
+        getSourcePanel: () => sourcePanel,
+      };
+
+      // not using panel.setProperty here to simulate any prop change done from angular
+      panel.title = 'Changed title';
+
+      await thunkTester({
+        panelEditor: state,
+        panels: {},
+        dashboard: {
+          getModel: () => dashboard,
+        },
+      })
+        .givenThunk(exitPanelEditor)
+        .whenThunkIsDispatched();
+
+      expect(sourcePanel.isAngularPlugin()).toBe(true);
+      expect(sourcePanel.title).toEqual('Changed title');
+      expect(sourcePanel.configRev).toEqual(1);
+    });
   });
 
   describe('skipPanelUpdate', () => {

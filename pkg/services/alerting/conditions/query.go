@@ -147,7 +147,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		OrgId: context.Rule.OrgID,
 	}
 
-	if err := context.Store.GetDataSource(context.Ctx, getDsInfo); err != nil {
+	if err := context.GetDataSource(context.Ctx, getDsInfo); err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 

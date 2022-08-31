@@ -46,7 +46,7 @@ For example, you can have the percentage of errors represented by a red portion 
 
 Edges can also show statistics when you hover over the edge. Similar to nodes, you can open a context menu with additional details and links by clicking on the edge.
 
-The first data source supporting this visualization is X-Ray data source for it's Service map feature. For more information, refer to the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
+The first data source supporting this visualization is X-Ray data source for its Service map feature. For more information, refer to the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
 ## Navigating the node graph
 
@@ -90,9 +90,9 @@ Data source needs to return two data frames, one for nodes and one for edges. Yo
 
 Required fields:
 
-| Field name | Type   | Description                                                                                   |
-| ---------- | ------ | --------------------------------------------------------------------------------------------- |
-| id         | string | Unique identifier of the node. This ID is referenced by edge in it's source and target field. |
+| Field name | Type   | Description                                                                                  |
+| ---------- | ------ | -------------------------------------------------------------------------------------------- |
+| id         | string | Unique identifier of the node. This ID is referenced by edge in its source and target field. |
 
 Optional fields:
 

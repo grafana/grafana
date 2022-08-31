@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import React, { Component } from 'react';
 import { ReplaySubject, Subscription } from 'rxjs';
 
-import { GrafanaTheme, PanelProps } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime/src';
-import { Button, PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
+import { PanelProps } from '@grafana/data';
+import { locationService } from '@grafana/runtime/src';
+import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { CanvasFrameOptions } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -42,7 +41,6 @@ export class CanvasPanel extends Component<Props, State> {
   readonly scene: Scene;
   private subs = new Subscription();
   needsReload = false;
-  styles = getStyles(config.theme);
   isEditing = locationService.getSearchObject().editPanel !== undefined;
 
   constructor(props: Props) {
@@ -54,16 +52,21 @@ export class CanvasPanel extends Component<Props, State> {
 
     // Only the initial options are ever used.
     // later changes are all controlled by the scene
-    this.scene = new Scene(this.props.options.root, this.props.options.inlineEditing, this.onUpdateScene);
+    this.scene = new Scene(
+      this.props.options.root,
+      this.props.options.inlineEditing,
+      this.props.options.showAdvancedTypes,
+      this.onUpdateScene
+    );
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
-    this.scene.inlineEditingCallback = this.inlineEditButtonClick;
+    this.scene.inlineEditingCallback = this.openInlineEdit;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt) => {
         // Remove current selection when entering edit mode for any panel in dashboard
         this.scene.clearCurrentSelection();
-        this.inlineEditButtonClose();
+        this.closeInlineEdit();
       })
     );
 
@@ -128,7 +131,7 @@ export class CanvasPanel extends Component<Props, State> {
     });
 
     this.setState({ refresh: this.state.refresh + 1 });
-    // console.log('send changes', root);
+    activePanelSubject.next({ panel: this });
   };
 
   shouldComponentUpdate(nextProps: Props, nextState: State) {
@@ -139,7 +142,8 @@ export class CanvasPanel extends Component<Props, State> {
       this.scene.updateSize(nextProps.width, nextProps.height);
       changed = true;
     }
-    if (data !== nextProps.data) {
+
+    if (data !== nextProps.data && !this.scene.ignoreDataUpdate) {
       this.scene.updateData(nextProps.data);
       changed = true;
     }
@@ -155,9 +159,11 @@ export class CanvasPanel extends Component<Props, State> {
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
     const shouldUpdateSceneAndPanel = this.needsReload && this.props.options !== nextProps.options;
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
-    if (shouldUpdateSceneAndPanel || inlineEditingSwitched) {
+    const shouldShowAdvancedTypesSwitched =
+      this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
+    if (shouldUpdateSceneAndPanel || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
       this.needsReload = false;
-      this.scene.load(nextProps.options.root, nextProps.options.inlineEditing);
+      this.scene.load(nextProps.options.root, nextProps.options.inlineEditing, nextProps.options.showAdvancedTypes);
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;
@@ -170,7 +176,7 @@ export class CanvasPanel extends Component<Props, State> {
     return changed;
   }
 
-  inlineEditButtonClick = () => {
+  openInlineEdit = () => {
     if (isInlineEditOpen) {
       this.forceUpdate();
       this.setActivePanel();
@@ -182,7 +188,7 @@ export class CanvasPanel extends Component<Props, State> {
     isInlineEditOpen = true;
   };
 
-  inlineEditButtonClose = () => {
+  closeInlineEdit = () => {
     this.setState({ openInlineEdit: false });
     isInlineEditOpen = false;
   };
@@ -193,39 +199,15 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   renderInlineEdit = () => {
-    return (
-      <InlineEdit onClose={() => this.inlineEditButtonClose()} id={this.props.id} scene={activeCanvasPanel!.scene} />
-    );
+    return <InlineEdit onClose={() => this.closeInlineEdit()} id={this.props.id} scene={activeCanvasPanel!.scene} />;
   };
 
   render() {
     return (
       <>
         {this.scene.render()}
-        {this.props.options.inlineEditing && !this.isEditing && (
-          <div>
-            <div className={this.styles.inlineEditButton}>
-              <Button
-                size="lg"
-                variant="secondary"
-                icon="edit"
-                data-btninlineedit={this.props.id}
-                onClick={this.inlineEditButtonClick}
-              />
-            </div>
-            {this.state.openInlineEdit && this.renderInlineEdit()}
-          </div>
-        )}
+        {this.state.openInlineEdit && this.renderInlineEdit()}
       </>
     );
   }
 }
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  inlineEditButton: css`
-    position: absolute;
-    bottom: 8px;
-    left: 8px;
-    z-index: 999;
-  `,
-}));

@@ -24,6 +24,10 @@ import (
 	"xorm.io/xorm"
 )
 
+const (
+	keyIdDelimiter = '#'
+)
+
 type SecretsService struct {
 	store      secrets.Store
 	enc        encryption.Internal
@@ -137,6 +141,14 @@ func (s *SecretsService) registerUsageMetrics() {
 	})
 }
 
+func (s *SecretsService) providersInitialized() bool {
+	return len(s.providers) > 0
+}
+
+func (s *SecretsService) encryptedWithEnvelopeEncryption(payload []byte) bool {
+	return len(payload) > 0 && payload[0] == keyIdDelimiter
+}
+
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
@@ -178,8 +190,8 @@ func (s *SecretsService) EncryptWithDBSession(ctx context.Context, payload []byt
 
 	prefix := make([]byte, b64.EncodedLen(len(id))+2)
 	b64.Encode(prefix[1:], []byte(id))
-	prefix[0] = '#'
-	prefix[len(prefix)-1] = '#'
+	prefix[0] = keyIdDelimiter
+	prefix[len(prefix)-1] = keyIdDelimiter
 
 	blob := make([]byte, len(prefix)+len(encrypted))
 	copy(blob, prefix)
@@ -316,19 +328,6 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	if len(payload) == 0 {
-		return nil, fmt.Errorf("unable to decrypt empty payload")
-	}
-
-	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
-	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
-		if len(payload) > 0 && payload[0] == '#' {
-			return nil, fmt.Errorf("failed to decrypt a secret encrypted with envelope encryption: envelope encryption is disabled")
-		}
-		return s.enc.Decrypt(ctx, payload, setting.SecretKey)
-	}
-
-	// If encryption featuremgmt.FlagEnvelopeEncryption toggle is on, use envelope encryption
 	var err error
 	defer func() {
 		opsCounter.With(prometheus.Labels{
@@ -341,14 +340,28 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		}
 	}()
 
+	if len(payload) == 0 {
+		err = fmt.Errorf("unable to decrypt empty payload")
+		return nil, err
+	}
+
+	// If encrypted with envelope encryption, the feature is disabled and
+	// no provider is initialized, then we throw an error.
+	if s.encryptedWithEnvelopeEncryption(payload) &&
+		s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) &&
+		!s.providersInitialized() {
+		err = fmt.Errorf("failed to decrypt a secret encrypted with envelope encryption: envelope encryption is disabled")
+		return nil, err
+	}
+
 	var dataKey []byte
 
-	if payload[0] != '#' {
+	if !s.encryptedWithEnvelopeEncryption(payload) {
 		secretKey := s.settings.KeyValue("security", "secret_key").Value()
 		dataKey = []byte(secretKey)
 	} else {
 		payload = payload[1:]
-		endOfKey := bytes.Index(payload, []byte{'#'})
+		endOfKey := bytes.Index(payload, []byte{keyIdDelimiter})
 		if endOfKey == -1 {
 			err = fmt.Errorf("could not find valid key id in encrypted payload")
 			return nil, err
@@ -479,14 +492,24 @@ func (s *SecretsService) RotateDataKeys(ctx context.Context) error {
 
 func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 	s.log.Info("Data keys re-encryption triggered")
-	err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID)
-	if err != nil {
+
+	if s.features.IsEnabled(featuremgmt.FlagDisableEnvelopeEncryption) {
+		s.log.Info("Envelope encryption is not enabled but trying to init providers anyway...")
+
+		if err := s.InitProviders(); err != nil {
+			s.log.Error("Envelope encryption providers initialization failed", "error", err)
+			return err
+		}
+	}
+
+	if err := s.store.ReEncryptDataKeys(ctx, s.providers, s.currentProviderID); err != nil {
 		s.log.Error("Data keys re-encryption failed", "error", err)
 		return err
 	}
 
 	s.dataKeyCache.flush()
 	s.log.Info("Data keys re-encryption finished successfully")
+
 	return nil
 }
 

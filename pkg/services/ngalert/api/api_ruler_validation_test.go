@@ -94,7 +94,7 @@ func randFolder() *models2.Folder {
 		Updated:   time.Time{},
 		UpdatedBy: 0,
 		CreatedBy: 0,
-		HasAcl:    false,
+		HasACL:    false,
 	}
 }
 

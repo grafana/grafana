@@ -392,7 +392,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
-      theme,
       createSpanLink,
       focusedSpanId,
       focusedSpanIdForSearch,
@@ -401,7 +400,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (!trace) {
       return null;
     }
-    const color = getColorByKey(serviceName, theme);
+    const color = getColorByKey(serviceName);
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
@@ -415,7 +414,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       if (rpcSpan) {
         const rpcViewBounds = this.getViewedBounds()(rpcSpan.startTime, rpcSpan.startTime + rpcSpan.duration);
         rpc = {
-          color: getColorByKey(rpcSpan.process.serviceName, theme),
+          color: getColorByKey(rpcSpan.process.serviceName),
           operationName: rpcSpan.operationName,
           serviceName: rpcSpan.process.serviceName,
           viewEnd: rpcViewBounds.end,
@@ -431,7 +430,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (!span.hasChildren && peerServiceKV && isKindClient(span)) {
       noInstrumentedServer = {
         serviceName: peerServiceKV.value,
-        color: getColorByKey(peerServiceKV.value, theme),
+        color: getColorByKey(peerServiceKV.value),
       };
     }
 
@@ -487,7 +486,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
       linksGetter,
-      theme,
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
@@ -497,7 +495,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (!trace || !detailState) {
       return null;
     }
-    const color = getColorByKey(serviceName, theme);
+    const color = getColorByKey(serviceName);
     const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>

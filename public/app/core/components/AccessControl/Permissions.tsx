@@ -16,7 +16,6 @@ const INITIAL_DESCRIPTION: Description = {
   assignments: {
     teams: false,
     users: false,
-    serviceAccounts: false,
     builtInRoles: false,
   },
 };
@@ -58,7 +57,7 @@ export const Permissions = ({
 
   const onAdd = (state: SetPermission) => {
     let promise: Promise<void> | null = null;
-    if (state.target === PermissionTarget.User || state.target === PermissionTarget.ServiceAccount) {
+    if (state.target === PermissionTarget.User) {
       promise = setUserPermission(resource, resourceId, state.userId!, state.permission);
     } else if (state.target === PermissionTarget.Team) {
       promise = setTeamPermission(resource, resourceId, state.teamId!, state.permission);
@@ -103,23 +102,15 @@ export const Permissions = ({
     () =>
       sortBy(
         items.filter((i) => i.teamId),
-        ['team']
+        ['team', 'isManaged']
       ),
     [items]
   );
   const users = useMemo(
     () =>
       sortBy(
-        items.filter((i) => i.userId && !i.userIsServiceAccount),
-        ['userLogin']
-      ),
-    [items]
-  );
-  const serviceAccounts = useMemo(
-    () =>
-      sortBy(
-        items.filter((i) => i.userId && i.userIsServiceAccount),
-        ['userLogin']
+        items.filter((i) => i.userId),
+        ['userLogin', 'isManaged']
       ),
     [items]
   );
@@ -127,7 +118,7 @@ export const Permissions = ({
     () =>
       sortBy(
         items.filter((i) => i.builtInRole),
-        ['builtInRole']
+        ['builtInRole', 'isManaged']
       ),
     [items]
   );
@@ -157,6 +148,7 @@ export const Permissions = ({
         <PermissionList
           title="Role"
           items={builtInRoles}
+          compareKey={'builtInRole'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
@@ -165,14 +157,7 @@ export const Permissions = ({
         <PermissionList
           title="User"
           items={users}
-          permissionLevels={desc.permissions}
-          onChange={onChange}
-          onRemove={onRemove}
-          canSet={canSetPermissions}
-        />
-        <PermissionList
-          title="Service Account"
-          items={serviceAccounts}
+          compareKey={'userLogin'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
@@ -181,6 +166,7 @@ export const Permissions = ({
         <PermissionList
           title="Team"
           items={teams}
+          compareKey={'team'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}

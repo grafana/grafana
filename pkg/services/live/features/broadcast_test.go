@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,7 +43,7 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	require.NoError(t, err)
 	reply, status, err := handler.OnSubscribe(
 		context.Background(),
-		&models.SignedInUser{OrgId: 1, UserId: 2},
+		&user.SignedInUser{OrgID: 1, UserID: 2},
 		models.SubscribeEvent{Channel: channel, Path: "test"},
 	)
 	require.NoError(t, err)
@@ -76,7 +77,7 @@ func TestBroadcastRunner_OnPublish(t *testing.T) {
 	require.NoError(t, err)
 	reply, status, err := handler.OnPublish(
 		context.Background(),
-		&models.SignedInUser{OrgId: 1, UserId: 2},
+		&user.SignedInUser{OrgID: 1, UserID: 2},
 		models.PublishEvent{Channel: channel, Path: "test", Data: data},
 	)
 	require.NoError(t, err)

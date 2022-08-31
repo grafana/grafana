@@ -11,15 +11,17 @@ import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefI
 import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { histogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
+import { joinByFieldTransformerRegistryItem } from './editors/JoinByFieldTransformerEditor';
 import { labelsToFieldsTransformerRegistryItem } from './editors/LabelsToFieldsTransformerEditor';
+import { limitTransformRegistryItem } from './editors/LimitTransformerEditor';
 import { mergeTransformerRegistryItem } from './editors/MergeTransformerEditor';
 import { organizeFieldsTransformRegistryItem } from './editors/OrganizeFieldsTransformerEditor';
 import { reduceTransformRegistryItem } from './editors/ReduceTransformerEditor';
 import { renameByRegexTransformRegistryItem } from './editors/RenameByRegexTransformer';
-import { seriesToFieldsTransformerRegistryItem } from './editors/SeriesToFieldsTransformerEditor';
 import { seriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTransformerEditor';
 import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
+import { joinByLabelsTransformRegistryItem } from './joinByLabels/JoinByLabelsTransformerEditor';
 import { fieldLookupTransformRegistryItem } from './lookupGazetteer/FieldLookupTransformerEditor';
 import { prepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/PrepareTimeSeriesEditor';
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
@@ -33,7 +35,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     filterFramesByRefIdTransformRegistryItem,
     filterByValueTransformRegistryItem,
     organizeFieldsTransformRegistryItem,
-    seriesToFieldsTransformerRegistryItem,
+    joinByFieldTransformerRegistryItem,
     seriesToRowsTransformerRegistryItem,
     concatenateTransformRegistryItem,
     calculateFieldTransformRegistryItem,
@@ -51,5 +53,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     extractFieldsTransformRegistryItem,
     heatmapTransformRegistryItem,
     groupingToMatrixTransformRegistryItem,
+    limitTransformRegistryItem,
+    joinByLabelsTransformRegistryItem,
   ];
 };

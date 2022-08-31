@@ -22,7 +22,6 @@ import {
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
@@ -40,7 +39,6 @@ type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageR
 const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
 
 const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'import', undefined, true),
   loadingState: state.importDashboard.state,
 });
 
@@ -189,10 +187,10 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   }
 
   render() {
-    const { loadingState, navModel } = this.props;
+    const { loadingState } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="dashboards/import">
         <Page.Contents>
           {loadingState === LoadingState.Loading && (
             <VerticalGroup justify="center">

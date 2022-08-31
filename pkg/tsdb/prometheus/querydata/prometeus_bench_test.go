@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -29,7 +29,7 @@ func BenchmarkJson(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		res := http.Response{
 			StatusCode: 200,
-			Body:       ioutil.NopCloser(bytes.NewReader(body)),
+			Body:       io.NopCloser(bytes.NewReader(body)),
 		}
 		tCtx.httpProvider.setResponse(&res)
 		_, err := tCtx.queryData.Execute(context.Background(), q)

@@ -122,7 +122,7 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 
 You can use GitLab OAuth to map roles. During mapping, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
+For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint and a `groups` key containing all of the user's teams. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 An example Query could look like the following:
 
@@ -131,6 +131,19 @@ role_attribute_path = is_admin && 'Admin' || 'Viewer'
 ```
 
 This allows every GitLab Admin to be an Admin in Grafana.
+
+#### Map roles using groups
+
+Groups can also be used to map roles. Group name (lowercased and unique) is used instead of display name for identifying groups
+
+For instance, if you have a group with display name 'Example-Group' you can use the following snippet to
+ensure those members inherit the role 'Editor'.
+
+```bash
+role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'
+```
+
+Note: If a match is found in other fields, groups will be ignored.
 
 ### Team Sync (Enterprise only)
 

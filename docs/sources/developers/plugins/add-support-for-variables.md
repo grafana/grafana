@@ -31,11 +31,11 @@ For panels, the `replaceVariables` function is available in the PanelProps.
 Add `replaceVariables` to the argument list, and pass it a user-defined template string.
 
 ```ts
-export const SimplePanel: React.FC<Props> = ({ options, data, width, height, replaceVariables }) => {
+export function SimplePanel({ options, data, width, height, replaceVariables }: Props) {
   const query = replaceVariables('Now displaying $service');
 
   return <div>{query}</div>;
-};
+}
 ```
 
 ## Interpolate variables in data source plugins

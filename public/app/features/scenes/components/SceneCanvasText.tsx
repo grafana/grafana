@@ -3,9 +3,9 @@ import React, { CSSProperties } from 'react';
 import { Field, Input } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneComponentProps, SceneObjectState } from '../core/types';
+import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
 
-export interface SceneCanvasTextState extends SceneObjectState {
+export interface SceneCanvasTextState extends SceneLayoutChildState {
   text: string;
   fontSize?: number;
   align?: 'left' | 'center' | 'right';

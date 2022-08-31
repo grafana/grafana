@@ -2,7 +2,7 @@ import client from './client';
 import * as setup from './setup';
 
 describe('/api/dashboards', () => {
-  let state: any = {};
+  let state = {};
 
   beforeAll(async () => {
     state = await setup.ensureState({

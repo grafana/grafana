@@ -1,96 +1,83 @@
 import { action } from '@storybook/addon-actions';
-import { Story } from '@storybook/react';
+import { useArgs } from '@storybook/client-api';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { dateTime, DefaultTimeZone, TimeRange, TimeZone } from '@grafana/data';
+import { dateTime, DefaultTimeZone, isDateTime, TimeRange } from '@grafana/data';
 import { TimeRangeInput } from '@grafana/ui';
 
-import { UseState } from '../../utils/storybook/UseState';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { TimeRangeInputProps } from './TimeRangeInput';
 import mdx from './TimeRangeInput.mdx';
 
-export default {
+const now = dateTime(Date.now());
+
+const isOnRangeClear = (value: TimeRange) => {
+  return (
+    !value.from.isValid() &&
+    !value.to.isValid() &&
+    isDateTime(value.raw.from) &&
+    !value.raw.from.isValid() &&
+    isDateTime(value.raw.to) &&
+    !value.raw.to.isValid()
+  );
+};
+
+const nullRange = {
+  from: null,
+  to: null,
+  raw: {
+    from: null,
+    to: null,
+  },
+};
+
+const meta: ComponentMeta<typeof TimeRangeInput> = {
   title: 'Pickers and Editors/TimePickers/TimeRangeInput',
   component: TimeRangeInput,
   decorators: [withCenteredStory],
   parameters: {
+    controls: {
+      exclude: ['onChange', 'onChangeTimeZone'],
+    },
     docs: {
       page: mdx,
     },
   },
+  args: {
+    value: {
+      from: now.subtract(6, 'h'),
+      to: now,
+      raw: {
+        from: 'now-6h',
+        to: 'now',
+      },
+    },
+    timeZone: DefaultTimeZone,
+  },
 };
 
-interface State {
-  value: TimeRange;
-  timeZone: TimeZone;
-}
-
-const getComponentWithState = (initialState: State, props: TimeRangeInputProps) => (
-  <UseState initialState={initialState}>
-    {(state, updateValue) => {
-      return (
-        <TimeRangeInput
-          {...props}
-          value={state.value}
-          timeZone={state.timeZone}
-          onChange={(value) => {
-            action('onChange fired')(value);
-            updateValue({
-              ...state,
-              value,
-            });
-          }}
-          onChangeTimeZone={(timeZone) => {
-            action('onChangeTimeZone fired')(timeZone);
-            updateValue({
-              ...state,
-              timeZone,
-            });
-          }}
-        />
-      );
-    }}
-  </UseState>
-);
-
-export const Relative: Story<TimeRangeInputProps> = (props) => {
-  const to = dateTime();
-  const from = to.subtract(6, 'h');
-
-  return getComponentWithState(
-    {
-      value: {
-        from,
-        to,
-        raw: {
-          from: 'now-6h',
-          to: 'now',
-        },
-      },
-      timeZone: DefaultTimeZone,
-    },
-    props
+export const Basic: ComponentStory<typeof TimeRangeInput> = (args) => {
+  const [, updateArgs] = useArgs();
+  return (
+    <TimeRangeInput
+      {...args}
+      onChange={(value) => {
+        action('onChange fired')(value);
+        // Need some special logic to handle when the range is cleared since
+        // storybook controls don't support null datetimes
+        updateArgs({
+          value: isOnRangeClear(value) ? nullRange : value,
+        });
+      }}
+      onChangeTimeZone={(timeZone) => {
+        action('onChangeTimeZone fired')(timeZone);
+        updateArgs({
+          timeZone,
+        });
+      }}
+    />
   );
 };
 
-export const Absolute: Story<TimeRangeInputProps> = (props) => {
-  const to = dateTime();
-  const from = to.subtract(6, 'h');
-
-  return getComponentWithState(
-    {
-      value: {
-        from,
-        to,
-        raw: {
-          from,
-          to,
-        },
-      },
-      timeZone: DefaultTimeZone,
-    },
-    props
-  );
-};
+export default meta;

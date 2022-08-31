@@ -43,6 +43,16 @@ Apps can also add custom pages for things like control panels.
 
 Use app plugins when you want to create an custom out-of-the-box monitoring experience.
 
+### Managing app plugins access
+
+With [RBAC]({{< relref "../roles-and-permissions/access-control/#about-rbac" >}}), it is now possible to customize access to app plugins.
+
+By default, Viewers, Editors and Admins have access to all App Plugins that their organization role allows them to access, thanks to the `fixed:plugins.app:reader` role.
+
+> **Note:** Revoking this RBAC role from some users, will prevent them from accessing app plugins. But granting this RBAC role to users will only allow them to see app plugins their organization role allows them to see.
+
+To prevent users from seeing an app plugin, refer to [this permissions scenarios]({{< relref "../roles-and-permissions/access-control/plan-rbac-rollout-strategy#prevent-viewers-from-accessing-an-app-plugin" >}}).
+
 ## Plugin catalog
 
 The Plugin catalog allows you to browse and manage plugins from within Grafana. Only Grafana server administrators and organization administrators can access and use the plugin catalog. The following access rules apply depending on the user role:
@@ -57,7 +67,7 @@ The Plugin catalog allows you to browse and manage plugins from within Grafana. 
 
 <div class="medium-6 columns">
   <video width="700" height="600" controls>
-    <source src="/static/assets/videos/plugins-catalog-install-8-1.mp4" type="video/mp4">
+    <source src="/static/assets/videos/plugins-catalog-install-9.2.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -66,11 +76,8 @@ In order to be able to install / uninstall / update plugins using plugin catalog
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
-Currently, there are two entry points to the Plugin catalog.
 
-- Grafana server administrators can find it at **Server Admin >
-  Plugins**.
-- Organization administrators can find it at **Configuration > Plugins**.
+- Administrators can find the Plugin catalog at **Configuration > Plugins**.
 
 ### Browse plugins
 
@@ -80,7 +87,7 @@ To browse for available plugins:
 1. Click the **All** filter to browse all available plugins.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
-![Plugin catalog browse](/static/img/docs/plugins/plugins-catalog-browse-8-1.png)
+![Plugin catalog browse](/static/img/docs/plugins/plugins-catalog-browse-9.2.png)
 
 ### Install a plugin
 

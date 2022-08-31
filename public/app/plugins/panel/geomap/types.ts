@@ -26,6 +26,9 @@ export interface ControlsOptions {
 
   // Show debug
   showDebug?: boolean;
+
+  // Show measure
+  showMeasure?: boolean;
 }
 
 export enum TooltipMode {
@@ -88,7 +91,7 @@ export enum ComparisonOperation {
 //-------------------
 // Runtime model
 //-------------------
-export interface MapLayerState<TConfig = any> extends LayerElement {
+export interface MapLayerState<TConfig = unknown> extends LayerElement {
   options: MapLayerOptions<TConfig>;
   handler: MapLayerHandler;
   layer: BaseLayer; // the openlayers instance

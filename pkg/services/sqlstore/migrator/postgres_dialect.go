@@ -224,6 +224,15 @@ func (db *PostgresDialect) PostInsertId(table string, sess *xorm.Session) error 
 
 // UpsertSQL returns the upsert sql statement for PostgreSQL dialect
 func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
+	str, _ := db.UpsertMultipleSQL(tableName, keyCols, updateCols, 1)
+	return str
+}
+
+// UpsertMultipleSQL returns the upsert sql statement for PostgreSQL dialect
+func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCols []string, count int) (string, error) {
+	if count < 1 {
+		return "", fmt.Errorf("upsert statement must have count >= 1. Got %v", count)
+	}
 	columnsStr := strings.Builder{}
 	onConflictStr := strings.Builder{}
 	colPlaceHoldersStr := strings.Builder{}
@@ -249,14 +258,24 @@ func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []str
 		onConflictStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
 	}
 
-	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES (%s) ON CONFLICT(%s) DO UPDATE SET %s`,
+	valuesStr := strings.Builder{}
+	separatorVar = separator
+	colPlaceHolders := colPlaceHoldersStr.String()
+	for i := 0; i < count; i++ {
+		if i == count-1 {
+			separatorVar = ""
+		}
+		valuesStr.WriteString(fmt.Sprintf("(%s)%s", colPlaceHolders, separatorVar))
+	}
+
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON CONFLICT(%s) DO UPDATE SET %s`,
 		tableName,
 		columnsStr.String(),
-		colPlaceHoldersStr.String(),
+		valuesStr.String(),
 		onConflictStr.String(),
 		setStr.String(),
 	)
-	return s
+	return s, nil
 }
 
 func (db *PostgresDialect) Lock(cfg LockCfg) error {

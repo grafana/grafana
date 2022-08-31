@@ -169,7 +169,9 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     let errors: string[] = [];
     rejectedFiles.map((rejectedFile) => {
       rejectedFile.errors.map((error) => {
-        errors.push(error.message);
+        if (errors.indexOf(error.message) === -1) {
+          errors.push(error.message);
+        }
       });
     });
 

@@ -34,3 +34,7 @@ func (f *FakePreferenceService) GetDefaults() *pref.Preference {
 func (f *FakePreferenceService) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
 	return f.ExpectedError
 }
+
+func (f *FakePreferenceService) DeleteByUser(context.Context, int64) error {
+	return f.ExpectedError
+}

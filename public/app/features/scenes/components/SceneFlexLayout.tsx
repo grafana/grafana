@@ -3,11 +3,11 @@ import React, { CSSProperties } from 'react';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneObject, SceneObjectSize, SceneObjectState, SceneLayoutState, SceneComponentProps } from '../core/types';
+import { SceneObjectSize, SceneLayoutState, SceneComponentProps, SceneLayoutChild } from '../core/types';
 
 export type FlexLayoutDirection = 'column' | 'row';
 
-interface SceneFlexLayoutState extends SceneObjectState, SceneLayoutState {
+interface SceneFlexLayoutState extends SceneLayoutState {
   direction?: FlexLayoutDirection;
 }
 
@@ -39,7 +39,7 @@ function FlexLayoutChildComponent({
   direction,
   isEditing,
 }: {
-  item: SceneObject<SceneObjectState>;
+  item: SceneLayoutChild;
   direction: FlexLayoutDirection;
   isEditing?: boolean;
 }) {

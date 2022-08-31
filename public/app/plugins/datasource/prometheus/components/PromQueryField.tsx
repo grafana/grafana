@@ -224,8 +224,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   onClickHintFix = () => {
     const { datasource, query, onChange, onRunQuery } = this.props;
     const { hint } = this.state;
-
-    onChange(datasource.modifyQuery(query, hint!.fix!.action));
+    if (hint?.fix?.action) {
+      onChange(datasource.modifyQuery(query, hint.fix.action));
+    }
     onRunQuery();
   };
 
@@ -302,6 +303,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     onChange={this.onChangeQuery}
                     onRunQuery={this.props.onRunQuery}
                     initialValue={query.expr ?? ''}
+                    placeholder="Enter a PromQL query…"
                   />
                 </div>
               </div>

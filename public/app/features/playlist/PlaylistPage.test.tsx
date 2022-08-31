@@ -3,9 +3,7 @@ import React from 'react';
 
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { locationService } from '../../../../packages/grafana-runtime/src';
-
-import { PlaylistPage, PlaylistPageProps } from './PlaylistPage';
+import { PlaylistPage } from './PlaylistPage';
 
 const fnMock = jest.fn();
 
@@ -22,29 +20,8 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-function getTestContext(propOverrides?: object) {
-  const props: PlaylistPageProps = {
-    navModel: {
-      main: {
-        text: 'Playlist',
-      },
-      node: {
-        text: 'playlist',
-      },
-    },
-    route: {
-      path: '/playlists',
-      component: jest.fn(),
-    },
-    queryParams: { state: 'ok' },
-    match: { params: { name: 'playlist', sourceName: 'test playlist' }, isExact: false, url: 'asdf', path: '' },
-    history: locationService.getHistory(),
-    location: { pathname: '', hash: '', search: '', state: '' },
-  };
-
-  Object.assign(props, propOverrides);
-
-  return render(<PlaylistPage {...props} />);
+function getTestContext() {
+  return render(<PlaylistPage />);
 }
 
 describe('PlaylistPage', () => {

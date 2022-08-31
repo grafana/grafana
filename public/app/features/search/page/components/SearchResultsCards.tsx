@@ -21,10 +21,9 @@ export const SearchResultsCards = React.memo(
     height,
     selection,
     selectionToggle,
-    clearSelection,
     onTagSelected,
-    onDatasourceChange,
     keyboardEvents,
+    onClickItem,
   }: SearchResultsProps) => {
     const styles = useStyles2(getStyles);
     const infiniteLoaderRef = useRef<InfiniteLoader>(null);
@@ -89,11 +88,12 @@ export const SearchResultsCards = React.memo(
                 }
               }}
               editable={Boolean(selection != null)}
+              onClickItem={onClickItem}
             />
           </div>
         );
       },
-      [response.view, highlightIndex, styles, onTagSelected, selection, selectionToggle]
+      [response.view, highlightIndex, styles, onTagSelected, selection, selectionToggle, onClickItem]
     );
 
     if (!response.totalRows) {

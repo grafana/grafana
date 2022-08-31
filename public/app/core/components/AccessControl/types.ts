@@ -2,10 +2,10 @@ export type ResourcePermission = {
   id: number;
   resourceId: string;
   isManaged: boolean;
+  isInherited: boolean;
   userId?: number;
   userLogin?: string;
   userAvatarUrl?: string;
-  userIsServiceAccount?: boolean;
   team?: string;
   teamId?: number;
   teamAvatarUrl?: string;
@@ -26,7 +26,6 @@ export enum PermissionTarget {
   None = 'None',
   Team = 'Team',
   User = 'User',
-  ServiceAccount = 'Service Account',
   BuiltInRole = 'builtInRole',
 }
 export type Description = {
@@ -37,6 +36,5 @@ export type Description = {
 export type Assignments = {
   users: boolean;
   teams: boolean;
-  serviceAccounts: boolean;
   builtInRoles: boolean;
 };

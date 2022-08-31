@@ -1,8 +1,7 @@
 import React, { FunctionComponent, useMemo } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorRow, EditorField, EditorList } from '@grafana/experimental';
-import { HorizontalGroup, Select } from '@grafana/ui';
+import { AccessoryButton, EditorField, EditorList, EditorRow, HorizontalGroup, Select } from '@grafana/ui';
 
 import { labelsToGroupedOptions, stringArrayToFilters } from '../../functions';
 

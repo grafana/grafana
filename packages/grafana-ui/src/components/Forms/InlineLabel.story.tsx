@@ -1,9 +1,10 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { InlineLabel } from './InlineLabel';
 import mdx from './InlineLabel.mdx';
 
-export default {
+const meta: ComponentMeta<typeof InlineLabel> = {
   title: 'Forms/InlineLabel',
   component: InlineLabel,
   parameters: {
@@ -24,3 +25,5 @@ export const withTooltip = () => {
     </InlineLabel>
   );
 };
+
+export default meta;

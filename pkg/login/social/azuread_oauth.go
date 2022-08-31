@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
@@ -65,12 +66,12 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
-	email := extractEmail(claims)
+	email := claims.extractEmail()
 	if email == "" {
 		return nil, errors.New("error getting user info: no email found in access token")
 	}
 
-	role := extractRole(claims, s.autoAssignOrgRole, s.roleAttributeStrict)
+	role := claims.extractRole(s.autoAssignOrgRole, s.roleAttributeStrict)
 	if role == "" {
 		return nil, errors.New("user does not have a valid role")
 	}
@@ -112,7 +113,7 @@ func (s *SocialAzureAD) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func extractEmail(claims azureClaims) string {
+func (claims *azureClaims) extractEmail() string {
 	if claims.Email == "" {
 		if claims.PreferredUsername != "" {
 			return claims.PreferredUsername
@@ -122,19 +123,19 @@ func extractEmail(claims azureClaims) string {
 	return claims.Email
 }
 
-func extractRole(claims azureClaims, autoAssignRole string, strictMode bool) models.RoleType {
+func (claims *azureClaims) extractRole(autoAssignRole string, strictMode bool) org.RoleType {
 	if len(claims.Roles) == 0 {
 		if strictMode {
-			return models.RoleType("")
+			return org.RoleType("")
 		}
 
-		return models.RoleType(autoAssignRole)
+		return org.RoleType(autoAssignRole)
 	}
 
-	roleOrder := []models.RoleType{
-		models.ROLE_ADMIN,
-		models.ROLE_EDITOR,
-		models.ROLE_VIEWER,
+	roleOrder := []org.RoleType{
+		org.RoleAdmin,
+		org.RoleEditor,
+		org.RoleViewer,
 	}
 
 	for _, role := range roleOrder {
@@ -144,13 +145,13 @@ func extractRole(claims azureClaims, autoAssignRole string, strictMode bool) mod
 	}
 
 	if strictMode {
-		return models.RoleType("")
+		return org.RoleType("")
 	}
 
-	return models.ROLE_VIEWER
+	return org.RoleViewer
 }
 
-func hasRole(roles []string, role models.RoleType) bool {
+func hasRole(roles []string, role org.RoleType) bool {
 	for _, item := range roles {
 		if strings.EqualFold(item, string(role)) {
 			return true

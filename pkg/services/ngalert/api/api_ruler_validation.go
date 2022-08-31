@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -120,20 +119,9 @@ func validateRuleNode(
 		newAlertRule.Annotations = ruleNode.ApiRuleNode.Annotations
 		newAlertRule.Labels = ruleNode.ApiRuleNode.Labels
 
-		dashUID := ruleNode.ApiRuleNode.Annotations[ngmodels.DashboardUIDAnnotation]
-		panelID := ruleNode.ApiRuleNode.Annotations[ngmodels.PanelIDAnnotation]
-
-		if dashUID != "" && panelID == "" || dashUID == "" && panelID != "" {
-			return nil, fmt.Errorf("both annotations %s and %s must be specified", ngmodels.DashboardUIDAnnotation, ngmodels.PanelIDAnnotation)
-		}
-
-		if dashUID != "" {
-			panelIDValue, err := strconv.ParseInt(panelID, 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("annotation %s must be a valid integer Panel ID", ngmodels.PanelIDAnnotation)
-			}
-			newAlertRule.DashboardUID = &dashUID
-			newAlertRule.PanelID = &panelIDValue
+		err = newAlertRule.SetDashboardAndPanel()
+		if err != nil {
+			return nil, err
 		}
 	}
 	return &newAlertRule, nil

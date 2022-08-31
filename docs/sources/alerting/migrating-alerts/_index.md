@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/alerting/migrating-alerts/
   - /docs/grafana/latest/alerting/unified-alerting/
   - /docs/grafana/latest/alerting/unified-alerting/difference-old-new/
+  - /docs/grafana/latest/alerting/difference-old-new/
 description: Upgrade Grafana alerts
 title: Upgrade to Grafana Alerting
 weight: 101
@@ -12,7 +13,7 @@ weight: 101
 
 Grafana Alerting is enabled by default for new installations or existing installations whether or not legacy alerting is configured.
 
-> **Note**: We recommend that Grafana Enterprise customers with more than a dozen Grafana dashboard alert rules do not upgrade and remain on legacy alerting for now by [opting out]({{< relref "opt-out/" >}}). If you do want to upgrade to Grafana Alerting, contact customer support.
+> **Note**: When upgrading, your dashboard alerts are migrated to a new format. This migration can be rolled back easily by [opting out]({{< relref "opt-out/" >}}). If you have any questions regarding this migration, please contact us.
 
 Existing installations that do not use legacy alerting will have Grafana Alerting enabled by default unless alerting is disabled in the configuration.
 

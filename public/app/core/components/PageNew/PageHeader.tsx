@@ -6,10 +6,12 @@ import { useStyles2 } from '@grafana/ui';
 
 export interface Props {
   navItem: NavModelItem;
+  subTitle?: React.ReactNode;
 }
 
-export function PageHeader({ navItem }: Props) {
+export function PageHeader({ navItem, subTitle }: Props) {
   const styles = useStyles2(getStyles);
+  const sub = subTitle ?? navItem.subTitle;
 
   return (
     <>
@@ -17,7 +19,7 @@ export function PageHeader({ navItem }: Props) {
         {navItem.img && <img className={styles.pageImg} src={navItem.img} alt={`logo for ${navItem.text}`} />}
         {navItem.text}
       </h1>
-      {navItem.subTitle && <div className={styles.pageSubTitle}>{navItem.subTitle}</div>}
+      {sub && <div className={styles.pageSubTitle}>{sub}</div>}
     </>
   );
 }
