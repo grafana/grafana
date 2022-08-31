@@ -180,6 +180,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       'react-redux',
       'redux',
       'rxjs',
+      'react-router',
       'react-router-dom',
       'd3',
       'angular',

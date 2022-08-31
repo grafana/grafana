@@ -1,7 +1,9 @@
+import React from 'react';
+import { Redirect } from 'react-router-dom';
+
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from 'app/core/navigation/types';
 
-import { isGrafanaAdmin } from './permissions';
 import { PluginAdminRoutes } from './types';
 
 const DEFAULT_ROUTES = [
@@ -23,33 +25,13 @@ const DEFAULT_ROUTES = [
     routeName: PluginAdminRoutes.Details,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginPage" */ './pages/PluginDetails')),
   },
-];
-
-const ADMIN_ROUTES = [
   {
-    path: '/admin/plugins',
+    path: '/admin/plugins/*',
     navId: 'admin-plugins',
-    routeName: PluginAdminRoutes.HomeAdmin,
-    component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './pages/Browse')),
-  },
-  {
-    path: '/admin/plugins/browse',
-    navId: 'admin-plugins',
-    routeName: PluginAdminRoutes.BrowseAdmin,
-    component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './pages/Browse')),
-  },
-  {
-    path: '/admin/plugins/:pluginId/',
-    navId: 'admin-plugins',
-    routeName: PluginAdminRoutes.DetailsAdmin,
-    component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginPage" */ './pages/PluginDetails')),
+    component: () => <Redirect to="/plugins" />,
   },
 ];
 
 export function getRoutes(): RouteDescriptor[] {
-  if (isGrafanaAdmin()) {
-    return [...DEFAULT_ROUTES, ...ADMIN_ROUTES];
-  }
-
   return DEFAULT_ROUTES;
 }
