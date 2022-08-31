@@ -253,7 +253,6 @@ func TestAPIGetPublicDashboardConfig(t *testing.T) {
 }
 
 func TestApiSavePublicDashboardConfig(t *testing.T) {
-
 	testCases := []struct {
 		Name                  string
 		DashboardUid          string
