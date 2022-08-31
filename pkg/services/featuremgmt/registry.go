@@ -156,6 +156,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "exploreMixedDatasource",
+			Description:  "Enable mixed datasource in Explore",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,
@@ -260,6 +266,11 @@ var (
 		{
 			Name:        "customBranding",
 			Description: "Replaces whitelabeling with the new custom branding feature",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "traceqlEditor",
+			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,
 		},
 	}

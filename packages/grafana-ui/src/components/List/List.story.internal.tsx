@@ -38,8 +38,8 @@ const generateListItems = (numberOfItems: number) => {
 };
 
 const getItem = (inline = false) => {
-  const rawRenderer = (item: any) => <>{item.name}</>;
-  const customRenderer = (item: any, index: number) => (
+  const rawRenderer = (item: ReturnType<typeof generateListItems>[0]) => <>{item.name}</>;
+  const customRenderer = (item: ReturnType<typeof generateListItems>[0], index: number) => (
     <div
       className={cx([
         css`

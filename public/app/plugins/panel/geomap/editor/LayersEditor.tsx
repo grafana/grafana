@@ -10,7 +10,7 @@ import { GeomapInstanceState } from '../GeomapPanel';
 import { getLayersOptions } from '../layers/registry';
 import { GeomapPanelOptions, MapLayerState } from '../types';
 
-type LayersEditorProps = StandardEditorProps<any, any, GeomapPanelOptions, GeomapInstanceState>;
+type LayersEditorProps = StandardEditorProps<unknown, unknown, GeomapPanelOptions, GeomapInstanceState>;
 
 export const LayersEditor = (props: LayersEditorProps) => {
   const { layers, selected, actions } = props.context.instanceState ?? {};
@@ -36,19 +36,19 @@ export const LayersEditor = (props: LayersEditorProps) => {
     actions.reorder(src, dst);
   };
 
-  const onSelect = (element: MapLayerState<any>) => {
+  const onSelect = (element: MapLayerState<unknown>) => {
     actions.selectLayer(element.options.name);
   };
 
-  const onDelete = (element: MapLayerState<any>) => {
+  const onDelete = (element: MapLayerState<unknown>) => {
     actions.deleteLayer(element.options.name);
   };
 
-  const getLayerInfo = (element: MapLayerState<any>) => {
+  const getLayerInfo = (element: MapLayerState<unknown>) => {
     return element.options.type;
   };
 
-  const onNameChange = (element: MapLayerState<any>, name: string) => {
+  const onNameChange = (element: MapLayerState<unknown>, name: string) => {
     element.onChange({ ...element.options, name });
   };
 
