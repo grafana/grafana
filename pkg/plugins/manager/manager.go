@@ -2,16 +2,14 @@ package manager
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"path/filepath"
-	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
@@ -19,251 +17,229 @@ import (
 )
 
 var _ plugins.Manager = (*PluginManager)(nil)
-var _ plugins.Client = (*PluginManager)(nil)
-var _ plugins.Store = (*PluginManager)(nil)
-var _ plugins.StaticRouteResolver = (*PluginManager)(nil)
-var _ plugins.RendererManager = (*PluginManager)(nil)
-var _ plugins.SecretsPluginManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg            *plugins.Cfg
+	pluginSources  []plugins.PluginSource
+	pluginRepo     repo.Service
+	pluginStorage  storage.Manager
+	processManager process.Service
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
-	pluginRepo     repo.Service
-	pluginSources  []PluginSource
-	pluginStorage  storage.Manager
-	pluginsMu      sync.RWMutex
 	log            log.Logger
-}
-
-type PluginSource struct {
-	Class plugins.Class
-	Paths []string
 }
 
 func ProvideService(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) (*PluginManager, error) {
-	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, []PluginSource{
-		{Class: plugins.Core, Paths: corePluginPaths(grafanaCfg)},
-		{Class: plugins.Bundled, Paths: []string{grafanaCfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{grafanaCfg.PluginsPath}, pluginSettingPaths(grafanaCfg)...)},
-	}, pluginLoader, pluginRepo, storage.FileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath))
-	if err := pm.Init(); err != nil {
+	pm := New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginSources(grafanaCfg), pluginLoader,
+		pluginRepo, storage.FileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath),
+		process.NewManager(pluginRegistry),
+	)
+	if err := pm.Init(context.Background()); err != nil {
 		return nil, err
 	}
 	return pm, nil
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []PluginSource, pluginLoader loader.Service,
-	pluginRepo repo.Service, pluginFs storage.Manager) *PluginManager {
+func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginSources []plugins.PluginSource,
+	pluginLoader loader.Service, pluginRepo repo.Service, pluginStorage storage.Manager,
+	processManager process.Service) *PluginManager {
 	return &PluginManager{
 		cfg:            cfg,
-		pluginLoader:   pluginLoader,
 		pluginSources:  pluginSources,
-		pluginRegistry: pluginRegistry,
 		pluginRepo:     pluginRepo,
-		pluginStorage:  pluginFs,
+		pluginLoader:   pluginLoader,
+		pluginRegistry: pluginRegistry,
+		processManager: processManager,
+		pluginStorage:  pluginStorage,
 		log:            log.New("plugin.manager"),
 	}
 }
 
-func (m *PluginManager) Init() error {
+func (m *PluginManager) Init(ctx context.Context) error {
 	for _, ps := range m.pluginSources {
-		err := m.loadPlugins(context.Background(), ps.Class, ps.Paths...)
+		if err := m.loadPlugins(ctx, ps.Class, ps.Paths...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *PluginManager) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	compatOpts := repo.NewCompatOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
+
+	var pluginArchive *repo.PluginArchive
+	if plugin, exists := m.plugin(ctx, pluginID); exists {
+		if !plugin.IsExternalPlugin() {
+			return plugins.ErrInstallCorePlugin
+		}
+
+		if plugin.Info.Version == version {
+			return plugins.DuplicateError{
+				PluginID:          plugin.ID,
+				ExistingPluginDir: plugin.PluginDir,
+			}
+		}
+
+		// get plugin update information to confirm if target update is possible
+		dlOpts, err := m.pluginRepo.GetPluginDownloadOptions(ctx, pluginID, version, compatOpts)
+		if err != nil {
+			return err
+		}
+
+		// if existing plugin version is the same as the target update version
+		if dlOpts.Version == plugin.Info.Version {
+			return plugins.DuplicateError{
+				PluginID:          plugin.ID,
+				ExistingPluginDir: plugin.PluginDir,
+			}
+		}
+
+		if dlOpts.PluginZipURL == "" && dlOpts.Version == "" {
+			return fmt.Errorf("could not determine update options for %s", pluginID)
+		}
+
+		// remove existing installation of plugin
+		err = m.Remove(ctx, plugin.ID)
+		if err != nil {
+			return err
+		}
+
+		if dlOpts.PluginZipURL != "" {
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL, compatOpts)
+			if err != nil {
+				return err
+			}
+		} else {
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, dlOpts.Version, compatOpts)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		var err error
+		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
 	}
 
+	extractedArchive, err := m.pluginStorage.Add(ctx, pluginID, pluginArchive.File)
+	if err != nil {
+		return err
+	}
+
+	// download dependency plugins
+	pathsToScan := []string{extractedArchive.Path}
+	for _, dep := range extractedArchive.Dependencies {
+		m.log.Info("Fetching %s dependencies...", dep.ID)
+		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
+		if err != nil {
+			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
+		}
+
+		depArchive, err := m.pluginStorage.Add(ctx, dep.ID, d.File)
+		if err != nil {
+			return err
+		}
+
+		pathsToScan = append(pathsToScan, depArchive.Path)
+	}
+
+	err = m.loadPlugins(context.Background(), plugins.External, pathsToScan...)
+	if err != nil {
+		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
+		return err
+	}
+
 	return nil
 }
 
-func (m *PluginManager) Run(ctx context.Context) error {
-	<-ctx.Done()
-	m.shutdown(ctx)
-	return ctx.Err()
+func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
+	plugin, exists := m.plugin(ctx, pluginID)
+	if !exists {
+		return plugins.ErrPluginNotInstalled
+	}
+
+	if !plugin.IsExternalPlugin() {
+		return plugins.ErrUninstallCorePlugin
+	}
+
+	if err := m.unregisterAndStop(ctx, plugin); err != nil {
+		return err
+	}
+
+	return m.pluginStorage.Remove(ctx, plugin.ID)
 }
 
-func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, paths ...string) error {
-	if len(paths) == 0 {
-		return nil
+// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
+func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists {
+		return nil, false
 	}
 
-	var pluginPaths []string
-	for _, p := range paths {
-		if p != "" {
-			pluginPaths = append(pluginPaths, p)
-		}
+	if p.IsDecommissioned() {
+		return nil, false
 	}
 
-	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, m.registeredPlugins(ctx))
+	return p, true
+}
+
+func (m *PluginManager) loadPlugins(ctx context.Context, class plugins.Class, pluginPaths ...string) error {
+	registeredPlugins := make(map[string]struct{})
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
+		registeredPlugins[p.ID] = struct{}{}
+	}
+
+	loadedPlugins, err := m.pluginLoader.Load(ctx, class, pluginPaths, registeredPlugins)
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
 		return err
 	}
 
 	for _, p := range loadedPlugins {
-		if err := m.registerAndStart(context.Background(), p); err != nil {
-			m.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+		if err = m.registerAndStart(context.Background(), p); err != nil {
+			m.log.Error("Could not start plugin", "pluginID", p.ID, "err", err)
 		}
 	}
 
 	return nil
-}
-
-func (m *PluginManager) Renderer() *plugins.Plugin {
-	for _, p := range m.availablePlugins(context.TODO()) {
-		if p.IsRenderer() {
-			return p
-		}
-	}
-
-	return nil
-}
-
-func (m *PluginManager) SecretsManager() *plugins.Plugin {
-	for _, p := range m.availablePlugins(context.TODO()) {
-		if p.IsSecretsManager() {
-			return p
-		}
-	}
-
-	return nil
-}
-
-func (m *PluginManager) Routes() []*plugins.StaticRoute {
-	staticRoutes := make([]*plugins.StaticRoute, 0)
-
-	for _, p := range m.availablePlugins(context.TODO()) {
-		if p.StaticRoute() != nil {
-			staticRoutes = append(staticRoutes, p.StaticRoute())
-		}
-	}
-	return staticRoutes
 }
 
 func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin) error {
 	if err := m.pluginRegistry.Add(ctx, p); err != nil {
 		return err
 	}
-
-	if !p.IsCorePlugin() {
-		m.log.Info("Plugin registered", "pluginId", p.ID)
-	}
-
-	return m.start(ctx, p)
+	return m.processManager.Start(ctx, p.ID)
 }
 
 func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin) error {
-	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
-	m.pluginsMu.Lock()
-	defer m.pluginsMu.Unlock()
+	m.log.Debug("Stopping plugin process", "pluginID", p.ID)
 
-	if err := p.Decommission(); err != nil {
-		return err
-	}
-
-	if err := p.Stop(ctx); err != nil {
+	if err := m.processManager.Stop(ctx, p.ID); err != nil {
 		return err
 	}
 
 	if err := m.pluginRegistry.Remove(ctx, p.ID); err != nil {
 		return err
 	}
-
-	m.log.Debug("Plugin unregistered", "pluginId", p.ID)
+	m.log.Debug("Plugin unregistered", "pluginID", p.ID)
 	return nil
 }
 
-// start starts a backend plugin process
-func (m *PluginManager) start(ctx context.Context, p *plugins.Plugin) error {
-	if !p.IsManaged() || !p.Backend || p.SignatureError != nil {
-		return nil
+func pluginSources(cfg *setting.Cfg) []plugins.PluginSource {
+	return []plugins.PluginSource{
+		{Class: plugins.Core, Paths: corePluginPaths(cfg)},
+		{Class: plugins.Bundled, Paths: []string{cfg.BundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg)...)},
 	}
-
-	if _, exists := m.pluginRegistry.Plugin(ctx, p.ID); !exists {
-		return backendplugin.ErrPluginNotRegistered
-	}
-
-	if p.IsCorePlugin() {
-		return nil
-	}
-
-	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
-		return err
-	}
-
-	p.Logger().Debug("Successfully started backend plugin process")
-
-	return nil
-}
-
-func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
-	if err := p.Start(ctx); err != nil {
-		return err
-	}
-
-	go func(ctx context.Context, p *plugins.Plugin) {
-		if err := restartKilledProcess(ctx, p); err != nil {
-			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
-		}
-	}(ctx, p)
-
-	return nil
-}
-
-func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
-	ticker := time.NewTicker(time.Second * 1)
-
-	for {
-		select {
-		case <-ctx.Done():
-			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
-				return err
-			}
-			return nil
-		case <-ticker.C:
-			if p.IsDecommissioned() {
-				p.Logger().Debug("Plugin decommissioned")
-				return nil
-			}
-
-			if !p.Exited() {
-				continue
-			}
-
-			p.Logger().Debug("Restarting plugin")
-			if err := p.Start(ctx); err != nil {
-				p.Logger().Error("Failed to restart plugin", "error", err)
-				continue
-			}
-			p.Logger().Debug("Plugin restarted")
-		}
-	}
-}
-
-// shutdown stops all backend plugin processes
-func (m *PluginManager) shutdown(ctx context.Context) {
-	var wg sync.WaitGroup
-	for _, p := range m.availablePlugins(ctx) {
-		wg.Add(1)
-		go func(p backendplugin.Plugin, ctx context.Context) {
-			defer wg.Done()
-			p.Logger().Debug("Stopping plugin")
-			if err := p.Stop(ctx); err != nil {
-				p.Logger().Error("Failed to stop plugin", "error", err)
-			}
-			p.Logger().Debug("Plugin stopped")
-		}(p, ctx)
-	}
-	wg.Wait()
 }
 
 // corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()
 func corePluginPaths(cfg *setting.Cfg) []string {
 	datasourcePaths := filepath.Join(cfg.StaticRootPath, "app/plugins/datasource")
 	panelsPath := filepath.Join(cfg.StaticRootPath, "app/plugins/panel")
-
 	return []string{datasourcePaths, panelsPath}
 }
 
@@ -277,6 +253,5 @@ func pluginSettingPaths(cfg *setting.Cfg) []string {
 		}
 		pluginSettingDirs = append(pluginSettingDirs, path)
 	}
-
 	return pluginSettingDirs
 }

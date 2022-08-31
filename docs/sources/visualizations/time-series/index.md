@@ -25,7 +25,7 @@ keywords:
   - guide
   - graph
 title: Time series
-weight: 1200
+weight: 90
 ---
 
 # Time series
