@@ -31,9 +31,9 @@ Any invalid characters will be removed or replaced by the Grafana alerting engin
 
 - `Whitespace` will be removed.
 - `ASCII characters` will be replaced with `_`.
-- `All other characters` will be replaced with their lower-case hex representation.
+- `All other characters` will be replaced with their lower-case hex representation. If this is the first character it will be prefixed with `_`.
 
-Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_1f514="🔥"`.
+Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514="🔥"`.
 
 **Note** If multiple label keys are sanitized to the same value, the duplicates will have a short hash of the original label appended as a suffix.
 

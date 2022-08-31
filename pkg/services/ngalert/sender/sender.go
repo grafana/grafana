@@ -242,7 +242,10 @@ func (s *ExternalAlertmanager) sanitizeLabelName(name string) (string, error) {
 			if b <= unicode.MaxASCII {
 				buf.WriteRune('_')
 			} else {
-				_, _ = fmt.Fprintf(&buf, "%x", b)
+				if i == 0 {
+					buf.WriteRune('_')
+				}
+				_, _ = fmt.Fprintf(&buf, "%#x", b)
 			}
 		}
 	}

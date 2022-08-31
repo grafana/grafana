@@ -28,7 +28,12 @@ func TestSanitizeLabelName(t *testing.T) {
 		{
 			desc:           "Replace non-ASCII unicode with hex",
 			labelName:      "_€_ƒ_„_†_‡_œ_Ÿ_®_º_¼_×_ð_þ_¿_±_四_十_二_🔥",
-			expectedResult: "_20ac_192_201e_2020_2021_153_178_ae_ba_bc_d7_f0_fe_bf_b1_56db_5341_4e8c_1f525",
+			expectedResult: "_0x20ac_0x192_0x201e_0x2020_0x2021_0x153_0x178_0xae_0xba_0xbc_0xd7_0xf0_0xfe_0xbf_0xb1_0x56db_0x5341_0x4e8c_0x1f525",
+		},
+		{ // labels starting with a number are invalid, so we have to make sure we don't sanitize to another invalid label.
+			desc:           "If first character is replaced with hex, prefix with underscore",
+			labelName:      "😍😍😍",
+			expectedResult: "_0x1f60d0x1f60d0x1f60d",
 		},
 		{
 			desc:        "Empty string should error",
