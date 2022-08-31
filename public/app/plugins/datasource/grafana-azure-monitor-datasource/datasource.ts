@@ -3,6 +3,7 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
+  DashboardLoadedArgs,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -10,13 +11,14 @@ import {
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { config, DataSourceWithBackend } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import ResourcePickerData from './resourcePicker/resourcePickerData';
+import { trackAzureMonitorDashboardLoaded } from './tracking';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType } from './types';
 import migrateAnnotation from './utils/migrateAnnotation';
 import migrateQuery from './utils/migrateQuery';
@@ -136,6 +138,46 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     }
 
     return !!subQuery && this.templateSrv.containsTemplate(subQuery);
+  }
+
+  onDashboardLoaded(dashboardLoadedArgs: DashboardLoadedArgs<AzureMonitorQuery>) {
+    let stats = {
+      [AzureQueryType.AzureMonitor]: {
+        hidden: 0,
+        visible: 0,
+      },
+      [AzureQueryType.LogAnalytics]: {
+        hidden: 0,
+        visible: 0,
+      },
+      [AzureQueryType.AzureResourceGraph]: {
+        hidden: 0,
+        visible: 0,
+      },
+    };
+    dashboardLoadedArgs.queries.forEach((query) => {
+      if (
+        query.queryType === AzureQueryType.AzureMonitor ||
+        query.queryType === AzureQueryType.LogAnalytics ||
+        query.queryType === AzureQueryType.AzureResourceGraph
+      ) {
+        stats[query.queryType][query.hide ? 'hidden' : 'visible']++;
+      }
+    });
+
+    if (dashboardLoadedArgs.queries.length) {
+      trackAzureMonitorDashboardLoaded({
+        grafana_version: config.buildInfo.version,
+        dashboard_id: dashboardLoadedArgs.dashboardId,
+        org_id: dashboardLoadedArgs.orgId,
+        azure_monitor_queries: stats[AzureQueryType.AzureMonitor].visible,
+        azure_log_analytics_queries: stats[AzureQueryType.LogAnalytics].visible,
+        azure_resource_graph_queries: stats[AzureQueryType.AzureResourceGraph].visible,
+        azure_monitor_queries_hidden: stats[AzureQueryType.AzureMonitor].hidden,
+        azure_log_analytics_queries_hidden: stats[AzureQueryType.LogAnalytics].hidden,
+        azure_resource_graph_queries_hidden: stats[AzureQueryType.AzureResourceGraph].hidden,
+      });
+    }
   }
 
   async annotationQuery(options: any) {
