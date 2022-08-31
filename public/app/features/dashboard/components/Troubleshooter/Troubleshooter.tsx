@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { PanelPlugin, GrafanaTheme2, AppEvents } from '@grafana/data';
+import { PanelPlugin, GrafanaTheme2, AppEvents, PanelData } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import {
   Drawer,
@@ -30,19 +30,26 @@ import { getTroubleshootingDashboard } from './utils';
 interface Props {
   panel: PanelModel;
   plugin?: PanelPlugin | null;
+  data?: PanelData;
   onClose: () => void;
 }
 
-export const Troubleshooter = ({ panel, plugin, onClose }: Props) => {
+export const Troubleshooter = ({ panel, plugin, data, onClose }: Props) => {
+  console.log('Troubleshooter', data);
   const styles = useStyles2(getStyles);
   const [currentTab, setCurrentTab] = useState(InspectTab.Trouble);
   const [dashboardText, setDashboardText] = useState('...');
   const [rand, setRand] = useState<Randomize>({});
   const info = useAsync(async () => {
+    console.log('LOADING', plugin);
+    if (!data) {
+      return false;
+    }
     const dash = await getTroubleshootingDashboard(panel, rand, getTimeSrv().timeRange());
     setDashboardText(JSON.stringify(dash, null, 2));
-    console.log('LOADING', dash);
-  }, [rand, panel, setDashboardText]);
+    console.log('LOADED', dash);
+    return true;
+  }, [rand, panel, data, plugin, setDashboardText]);
 
   if (!plugin) {
     return null;
@@ -91,6 +98,8 @@ export const Troubleshooter = ({ panel, plugin, onClose }: Props) => {
       }
     >
       {info.loading && <Spinner />}
+      {info.value === false && <div>No data</div>}
+      <pre>{JSON.stringify(info)}</pre>
 
       {activeTab === InspectTab.JSON ? (
         <div className={styles.code}>
