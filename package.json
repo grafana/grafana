@@ -386,7 +386,7 @@
     "rst2html": "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809",
     "rxjs": "7.5.6",
     "sass": "link:./public/sass",
-    "selecto": "1.17.0",
+    "selecto": "1.19.0",
     "semver": "7.3.7",
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
