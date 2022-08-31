@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	dashboardthumbs "github.com/grafana/grafana/pkg/services/dashboard_thumbs"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 )
 
 type Service struct {
@@ -15,26 +15,26 @@ type Service struct {
 
 func ProvideService(
 	ss *sqlstore.SQLStore,
-) tempuser.Service {
+) dashboardthumbs.Service {
 	return &Service{
 		sqlStore: ss,
 	}
 }
 
 func (s *Service) GetThumbnail(ctx context.Context, query *models.GetDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
-	_, err := s.sqlStore.GetThumbnail(ctx, query)
+	dt, err := s.sqlStore.GetThumbnail(ctx, query)
 	if err != nil {
-		return err
+		return dt, err
 	}
-	return query, nil
+	return dt, nil
 }
 
 func (s *Service) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
-	err := s.sqlStore.SaveThumbnail(ctx, cmd)
+	dt, err := s.sqlStore.SaveThumbnail(ctx, cmd)
 	if err != nil {
-		return err
+		return dt, err
 	}
-	return nil
+	return dt, nil
 }
 
 func (s *Service) UpdateThumbnailState(ctx context.Context, cmd *models.UpdateThumbnailStateCommand) error {
@@ -46,17 +46,17 @@ func (s *Service) UpdateThumbnailState(ctx context.Context, cmd *models.UpdateTh
 }
 
 func (s *Service) FindThumbnailCount(ctx context.Context, cmd *models.FindDashboardThumbnailCountCommand) (int64, error) {
-	err := s.sqlStore.FindThumbnailCount(ctx, cmd)
+	i, err := s.sqlStore.FindThumbnailCount(ctx, cmd)
 	if err != nil {
-		return err
+		return i, err
 	}
-	return nil
+	return 0, nil
 }
 
 func (s *Service) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *models.FindDashboardsWithStaleThumbnailsCommand) ([]*models.DashboardWithStaleThumbnail, error) {
-	err := s.sqlStore.GetTempUserByCode(ctx, cmd)
+	d, err := s.sqlStore.FindDashboardsWithStaleThumbnails(ctx, cmd)
 	if err != nil {
-		return err
+		return d, err
 	}
-	return nil
+	return nil, nil
 }
