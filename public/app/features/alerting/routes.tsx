@@ -15,7 +15,7 @@ const commonRoutes: RouteDescriptor[] = [
   {
     path: '/alerting',
     component: () =>
-      config.featureToggles.topNav ? <NavSectionLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
+      config.featureToggles.topnav ? <NavSectionLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
   },
 ];
 
