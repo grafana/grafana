@@ -1,6 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
+import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
@@ -30,6 +30,8 @@ const Receivers: FC = () => {
   const isRoot = location.pathname.endsWith('/alerting/notifications');
   const isEditing = location.pathname.endsWith('/edit');
 
+  const { id, type } = useParams<{ id?: string; type?: string }>();
+
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   const {
@@ -58,31 +60,32 @@ const Receivers: FC = () => {
 
   const disableAmSelect = !isRoot;
 
-  const contactPointInfoPage = () => {
-    let text = 'New contact point';
-    let subTitle = 'Create a new contact poing to your notifications';
-    if (isEditing) {
-      const urlToArray = location.pathname.split('/');
-      const urlArrayLength = urlToArray.length;
-      const contactPointName = urlToArray[urlArrayLength - 2];
-      text = contactPointName;
-      subTitle = 'Edit `' + text + '` settings';
+  const getPageNav: () => NavModelItem | undefined = () => {
+    let pageNav: NavModelItem | undefined;
+    const typeParams = type === 'receivers' ? 'contact point' : 'message template';
+    if (isEditing && id) {
+      pageNav = {
+        text: id,
+        subTitle: `Edit the settings for a specific ${typeParams}`,
+      };
     } else if (isRoot) {
-      text = 'Contact points';
-      subTitle = 'Manage the settings of your contact points';
+    } else if (type === 'templates' || type === 'receivers') {
+      pageNav = {
+        text: `New ${typeParams}`,
+        subTitle: `Create a new ${typeParams} for your notifications`,
+      };
+    } else {
+      pageNav = {
+        text: 'Global config',
+        subTitle: 'Manage your global configuration',
+      };
     }
-    return { text, subTitle };
-  };
-
-  const pageNav: NavModelItem = {
-    text: contactPointInfoPage().text,
-    icon: 'comment-alt-share',
-    subTitle: contactPointInfoPage().subTitle,
+    return pageNav;
   };
 
   if (!alertManagerSourceName) {
     return isRoot ? (
-      <AlertingPageWrapper pageId="receivers" pageNav={pageNav}>
+      <AlertingPageWrapper pageId="receivers" pageNav={getPageNav()}>
         <NoAlertManagerWarning availableAlertManagers={alertManagers} />
       </AlertingPageWrapper>
     ) : (
@@ -91,7 +94,7 @@ const Receivers: FC = () => {
   }
 
   return (
-    <AlertingPageWrapper pageId="receivers" pageNav={pageNav}>
+    <AlertingPageWrapper pageId="receivers" pageNav={getPageNav()}>
       <AlertManagerPicker
         current={alertManagerSourceName}
         disabled={disableAmSelect}
