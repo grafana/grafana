@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -21,7 +21,7 @@ export function NavBarItemIcon({ link }: NavBarItemIconProps) {
     return <Icon name={iconName ?? 'link'} size="xl" />;
   } else {
     // consumer of NavBarItemIcon gives enclosing element an appropriate label
-    return <img className={styles.img} src={link.img} alt="" />;
+    return <img className={cx(styles.img, link.roundIcon && styles.round)} src={link.img} alt="" />;
   }
 }
 
@@ -30,6 +30,9 @@ function getStyles(theme: GrafanaTheme2) {
     img: css({
       height: theme.spacing(3),
       width: theme.spacing(3),
+    }),
+    round: css({
+      borderRadius: '50%',
     }),
   };
 }
