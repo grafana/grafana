@@ -1,3 +1,4 @@
+const GRAFANA_VERSION = 'v8.0.0';
 import { reportInteraction } from '@grafana/runtime';
 
 import { createMockInstanceSetttings } from './__mocks__/instanceSettings';
@@ -5,7 +6,6 @@ import createMockQuery from './__mocks__/query';
 import Datasource from './datasource';
 import { AzureMonitorQuery } from './types';
 
-const GRAFANA_VERSION = 'v8.0.0';
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
