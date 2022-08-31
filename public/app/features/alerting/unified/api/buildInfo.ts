@@ -67,7 +67,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
   const isLoki = type === 'loki';
   const buildInfoResponse = isLoki
     ? undefined
-    : await fetchPromBuildInfo(url).catch(async (e) => {
+    : await fetchPromBuildInfo(url).catch(async () => {
         fallBackInfoResponse = await fetchPromBuildInfoFallback(url);
       });
 
@@ -118,19 +118,15 @@ export async function discoverDataSourceFeatures(dsSettings: {
     };
   }
 
-  if (buildInfoResponse.data.application === 'Grafana Mimir') {
-    // Mimir does return a version, but this is the mimir version, and not the prometheus version.
-    // We do not want to use mimir version numbers to detect feature support, we should instead ask the mimir team to add new flags.
-    return {
-      application: PromApplication.Mimir,
-      features: {
-        rulerApiEnabled: features?.ruler_config_api === 'true',
-      },
-    };
-  }
-
-  // @todo remove
-  throw Error('Unknown prometheus type!');
+  // We've checked everything else, it must be Mimir!
+  // Mimir does return a version, but this is the mimir version, and not the prometheus version.
+  // We do not want to use mimir version numbers to detect feature support, we should instead ask the mimir team to add new flags.
+  return {
+    application: PromApplication.Mimir,
+    features: {
+      rulerApiEnabled: features?.ruler_config_api === 'true',
+    },
+  };
 }
 
 export async function discoverAlertmanagerFeatures(amSourceName: string): Promise<AlertmanagerApiFeatures> {
@@ -198,7 +194,7 @@ export async function fetchPromBuildInfoFallback(url: string): Promise<PromBuild
       showErrorAlert: false,
       showSuccessAlert: false,
     })
-  ).catch((e) => {
+  ).catch(() => {
     // We have failed to get the build information
     console.warn('Failed to get prometheus fallback build information.');
     return undefined;
