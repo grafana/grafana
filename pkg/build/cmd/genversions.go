@@ -1,0 +1,94 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/grafana/grafana/pkg/build/droneutil"
+	"github.com/urfave/cli/v2"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+func GenerateVersions(c *cli.Context) error {
+	var metadata config.Metadata
+	version := ""
+	if c.NArg() == 1 {
+		version = strings.TrimPrefix(c.Args().Get(0), "v")
+	} else {
+		buildID := c.String("build-id")
+		var err error
+		version, err = config.GetGrafanaVersion(buildID, ".")
+		if err != nil {
+			return err
+		}
+	}
+	event, err := droneutil.GetDroneEventFromEnv()
+	if err != nil {
+		return err
+	}
+
+	var releaseMode config.ReleaseMode
+	switch event {
+	case string(config.PullRequestMode):
+		releaseMode = config.ReleaseMode{Mode: config.PullRequestMode}
+	case config.Push:
+		mode, err := config.CheckDroneTargetBranch()
+		if err != nil {
+			return err
+		}
+		releaseMode = config.ReleaseMode{Mode: mode}
+	case config.Custom:
+		mode, err := config.CheckDroneTargetBranch()
+		if err != nil {
+			return err
+		}
+		// if there is a custom event targeting the main branch, that's an enterprise downstream build
+		if mode == config.MainBranch {
+			releaseMode = config.ReleaseMode{Mode: config.CustomMode}
+		} else {
+			releaseMode = config.ReleaseMode{Mode: mode}
+		}
+	case config.Tag, config.Promote:
+		mode, err := config.CheckSemverSuffix()
+		if err != nil {
+			return err
+		}
+		releaseMode = mode
+	}
+
+	currentCommit, err := config.GetDroneCommit()
+	if err != nil {
+		return err
+	}
+	metadata = config.Metadata{
+		GrafanaVersion: version,
+		ReleaseMode:    releaseMode,
+		GrabplVersion:  c.App.Version,
+		CurrentCommit:  currentCommit,
+	}
+
+	fmt.Printf("building Grafana version: %s, release mode: %+v", metadata.GrafanaVersion, metadata.ReleaseMode)
+
+	jsonMetadata, err := json.Marshal(&metadata)
+	if err != nil {
+		return fmt.Errorf("error marshalling metadata, %w", err)
+	}
+
+	const distDir = "dist"
+	if err := os.RemoveAll(distDir); err != nil {
+		return err
+	}
+	if err := os.Mkdir(distDir, 0775); err != nil {
+		return err
+	}
+
+	// nolint:gosec
+	if err := ioutil.WriteFile(filepath.Join(distDir, "version.json"), jsonMetadata, 0664); err != nil {
+		return err
+	}
+
+	return nil
+}
