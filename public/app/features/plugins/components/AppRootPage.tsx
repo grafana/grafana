@@ -5,7 +5,16 @@ import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
 import { createSelector } from 'reselect';
 
-import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavIndex, NavModel, PluginType } from '@grafana/data';
+import {
+  AppEvents,
+  AppPlugin,
+  AppPluginMeta,
+  KeyValue,
+  NavIndex,
+  NavModel,
+  NavModelItem,
+  PluginType,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
@@ -67,7 +76,7 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   const pluginRoot = plugin.root && (
     <plugin.root
       meta={plugin.meta}
-      basename={match.url}
+      basename={config.appSubUrl + match.url}
       onNavChanged={onNavChanged}
       query={queryParams as KeyValue}
       path={location.pathname}
@@ -106,6 +115,7 @@ function buildPluginSectionNav(location: H.Location, pluginNav: NavModel | null,
   const section = { ...originalSection };
 
   const currentUrl = config.appSubUrl + location.pathname + location.search;
+  let activePage: NavModelItem | undefined;
 
   // Set active page
   section.children = (section?.children ?? []).map((child) => {
@@ -114,10 +124,11 @@ function buildPluginSectionNav(location: H.Location, pluginNav: NavModel | null,
         ...child,
         children: child.children.map((pluginPage) => {
           if (currentUrl === pluginPage.url) {
-            return {
+            activePage = {
               ...pluginPage,
               active: true,
             };
+            return activePage;
           }
           return pluginPage;
         }),
@@ -126,7 +137,7 @@ function buildPluginSectionNav(location: H.Location, pluginNav: NavModel | null,
     return child;
   });
 
-  return { main: section, node: section };
+  return { main: section, node: activePage ?? section };
 }
 
 const stateSlice = createSlice({

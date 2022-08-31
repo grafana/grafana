@@ -25,7 +25,7 @@ export const OldPage: PageType = ({
   toolbar,
   scrollRef,
   scrollTop,
-  layout = PageLayoutType.Default,
+  layout = PageLayoutType.Standard,
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
@@ -36,7 +36,7 @@ export const OldPage: PageType = ({
 
   return (
     <div className={cx(styles.wrapper, className)}>
-      {layout === PageLayoutType.Default && (
+      {layout === PageLayoutType.Standard && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className="page-scrollbar-content">
             {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
@@ -45,7 +45,7 @@ export const OldPage: PageType = ({
           </div>
         </CustomScrollbar>
       )}
-      {layout === PageLayoutType.Dashboard && (
+      {layout === PageLayoutType.Canvas && (
         <>
           {toolbar}
           <div className={styles.scrollWrapper}>

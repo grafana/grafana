@@ -23,7 +23,7 @@ export const Page: PageType = ({
   subTitle,
   children,
   className,
-  layout = PageLayoutType.Default,
+  layout = PageLayoutType.Standard,
   toolbar,
   scrollTop,
   scrollRef,
@@ -40,14 +40,14 @@ export const Page: PageType = ({
     if (navModel) {
       chrome.update({
         sectionNav: navModel.node,
-        ...(pageNav && { pageNav }),
+        pageNav: pageNav,
       });
     }
   }, [navModel, pageNav, chrome]);
 
   return (
     <div className={cx(styles.wrapper, className)}>
-      {layout === PageLayoutType.Default && (
+      {layout === PageLayoutType.Standard && (
         <div className={styles.panes}>
           {navModel && navModel.main.children && <SectionNav model={navModel} />}
           <div className={styles.pageContent}>
@@ -62,7 +62,7 @@ export const Page: PageType = ({
           </div>
         </div>
       )}
-      {layout === PageLayoutType.Dashboard && (
+      {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.dashboardContent}>
             {toolbar}

@@ -1,6 +1,7 @@
 import React, { FC, HTMLAttributes, RefCallback } from 'react';
 
 import { NavModel, NavModelItem } from '@grafana/data';
+import { PluginPageLayout } from '@grafana/runtime';
 
 import { PageHeader } from '../PageHeader/PageHeader';
 
@@ -23,8 +24,8 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export enum PageLayoutType {
-  Default,
-  Dashboard,
+  Standard = PluginPageLayout.Standard,
+  Canvas = PluginPageLayout.Canvas,
 }
 
 export interface PageType extends FC<PageProps> {

@@ -353,7 +353,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         <Page
           navModel={sectionNav}
           pageNav={pageNav}
-          layout={PageLayoutType.Dashboard}
+          layout={PageLayoutType.Canvas}
           toolbar={toolbar}
           className={cx(viewPanel && 'panel-in-fullscreen', queryParams.editview && 'dashboard-content--hidden')}
           scrollRef={this.setScrollRef}

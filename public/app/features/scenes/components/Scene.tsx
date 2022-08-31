@@ -54,7 +54,7 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   );
 
   return (
-    <Page navId="scenes" layout={PageLayoutType.Dashboard} toolbar={pageToolbar}>
+    <Page navId="scenes" layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
       <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
         <layout.Component model={layout} isEditing={isEditing} />
         {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
