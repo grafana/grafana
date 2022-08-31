@@ -194,35 +194,29 @@ export function getPanelMenu(
 
   const subMenu: PanelMenuItem[] = [];
 
-  if (dashboard.canEditPanel(panel)) {
-    if (!(panel.isViewing || panel.isEditing)) {
-      subMenu.push({
-        text: 'Duplicate',
-        onClick: onDuplicatePanel,
-        shortcut: 'p d',
-      });
-
-      subMenu.push({
-        text: 'Copy',
-        onClick: onCopyPanel,
-      });
-
-      if (isPanelModelLibraryPanel(panel)) {
-        subMenu.push({
-          text: 'Unlink library panel',
-          onClick: onUnlinkLibraryPanel,
-        });
-      } else {
-        subMenu.push({
-          text: 'Create library panel',
-          onClick: onAddLibraryPanel,
-        });
-      }
-    }
+  if (dashboard.canEditPanel(panel) && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
-      text: 'Troubleshooting',
-      onClick: (e: React.MouseEvent<unknown>) => onInspectPanel('trouble'),
+      text: 'Duplicate',
+      onClick: onDuplicatePanel,
+      shortcut: 'p d',
     });
+
+    subMenu.push({
+      text: 'Copy',
+      onClick: onCopyPanel,
+    });
+
+    if (isPanelModelLibraryPanel(panel)) {
+      subMenu.push({
+        text: 'Unlink library panel',
+        onClick: onUnlinkLibraryPanel,
+      });
+    } else {
+      subMenu.push({
+        text: 'Create library panel',
+        onClick: onAddLibraryPanel,
+      });
+    }
   }
 
   // add old angular panel options
