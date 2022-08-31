@@ -49,6 +49,7 @@ import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor'
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
+import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
   addLabelToQuery,
@@ -61,6 +62,7 @@ import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { LokiOptions, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiVariableSupport } from './variables';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -107,6 +109,7 @@ export class LokiDatasource
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
+    this.variables = new LokiVariableSupport(this);
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
@@ -311,9 +314,6 @@ export class LokiDatasource
   }
 
   async processMetricFindQuery(query: string) {
-    const labelNamesRegex = /^label_names\(\)\s*$/;
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
-
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
       return await this.labelNamesQuery();
