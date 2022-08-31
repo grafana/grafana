@@ -32,13 +32,12 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
           {(provided) => (
             <div
               className={styles.row}
-              aria-label={`Playlist item, ${item.type}, ${item.value}`}
               ref={provided.innerRef}
               {...provided.draggableProps}
               {...provided.dragHandleProps}
               role="row"
             >
-              <div className={styles.actions}>
+              <div className={styles.actions} role="cell" aria-label={`Playlist item, ${item.type}, ${item.value}`}>
                 {item.type === 'dashboard_by_tag' ? (
                   <>
                     <Icon name="tag-alt" className={styles.rightMargin} />

@@ -25,6 +25,10 @@ function getTestContext() {
 }
 
 describe('PlaylistPage', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   describe('when mounted without a playlist', () => {
     it('page should load', () => {
       fnMock.mockResolvedValue([]);
