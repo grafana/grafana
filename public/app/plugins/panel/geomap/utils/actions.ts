@@ -6,6 +6,7 @@ import { GeomapPanel } from '../GeomapPanel';
 import { geomapLayerRegistry } from '../layers/registry';
 import { GeomapLayerActions, MapLayerState } from '../types';
 
+import { initLayer } from './layers';
 import { getNextLayerName } from './utils';
 
 export const getActions = (panel: GeomapPanel) => {
@@ -41,25 +42,24 @@ export const getActions = (panel: GeomapPanel) => {
       if (!item) {
         return; // ignore empty request
       }
-      panel
-        .initLayer(
-          panel.map!,
-          {
-            type: item.id,
-            name: getNextLayerName(panel),
-            config: cloneDeep(item.defaultOptions),
-            location: item.showLocation ? { mode: FrameGeometrySourceMode.Auto } : undefined,
-            tooltip: true,
-          },
-          false
-        )
-        .then((lyr) => {
-          panel.layers = panel.layers.slice(0);
-          panel.layers.push(lyr);
-          panel.map?.addLayer(lyr.layer);
+      initLayer(
+        panel,
+        panel.map!,
+        {
+          type: item.id,
+          name: getNextLayerName(panel),
+          config: cloneDeep(item.defaultOptions),
+          location: item.showLocation ? { mode: FrameGeometrySourceMode.Auto } : undefined,
+          tooltip: true,
+        },
+        false
+      ).then((lyr) => {
+        panel.layers = panel.layers.slice(0);
+        panel.layers.push(lyr);
+        panel.map?.addLayer(lyr.layer);
 
-          panel.doOptionsUpdate(panel.layers.length - 1);
-        });
+        panel.doOptionsUpdate(panel.layers.length - 1);
+      });
     },
     reorder: (startIndex: number, endIndex: number) => {
       const result = Array.from(panel.layers);
