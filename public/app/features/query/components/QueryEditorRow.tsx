@@ -21,7 +21,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, reportInteraction } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
@@ -37,6 +37,12 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
+
+export interface TrackActions {
+  duplicateQuery: string;
+  disableEnableQuery: string;
+  remove: string;
+}
 
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -57,6 +63,7 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
+  trackActions?: TrackActions;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -273,18 +280,32 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRemoveQuery = () => {
-    this.props.onRemoveQuery(this.props.query);
+    const { onRemoveQuery, query, trackActions } = this.props;
+    onRemoveQuery(query);
+
+    if (trackActions) {
+      reportInteraction(trackActions.remove);
+    }
   };
 
   onCopyQuery = () => {
-    const copy = cloneDeep(this.props.query);
-    this.props.onAddQuery(copy);
+    const { query, onAddQuery, trackActions } = this.props;
+    const copy = cloneDeep(query);
+    onAddQuery(copy);
+
+    if (trackActions) {
+      reportInteraction(trackActions.duplicateQuery);
+    }
   };
 
   onDisableQuery = () => {
-    const { query } = this.props;
-    this.props.onChange({ ...query, hide: !query.hide });
-    this.props.onRunQuery();
+    const { query, onChange, onRunQuery, trackActions } = this.props;
+    onChange({ ...query, hide: !query.hide });
+    onRunQuery();
+
+    if (trackActions) {
+      reportInteraction(trackActions.disableEnableQuery);
+    }
   };
 
   onToggleHelp = () => {

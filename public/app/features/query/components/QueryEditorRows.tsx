@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
-import { QueryEditorRow } from './QueryEditorRow';
+import { QueryEditorRow, TrackActions } from './QueryEditorRow';
 
 interface Props {
   // The query configuration
@@ -31,7 +31,7 @@ interface Props {
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
   eventBus?: EventBusExtended;
-
+  trackActions?: TrackActions;
   onDatasourceChange?: (dataSource: DataSourceInstanceSettings, query: DataQuery) => void;
 }
 
@@ -135,7 +135,7 @@ export class QueryEditorRows extends PureComponent<Props> {
   };
 
   render() {
-    const { dsSettings, data, queries, app, history, eventBus } = this.props;
+    const { dsSettings, data, queries, app, history, eventBus, trackActions } = this.props;
 
     return (
       <DragDropContext onDragStart={this.onDragStart} onDragEnd={this.onDragEnd}>
@@ -166,6 +166,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       app={app}
                       history={history}
                       eventBus={eventBus}
+                      trackActions={trackActions}
                     />
                   );
                 })}
