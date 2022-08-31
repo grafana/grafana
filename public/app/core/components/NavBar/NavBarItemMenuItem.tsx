@@ -52,7 +52,7 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
       if (e.key === 'ArrowLeft') {
-        onLeft();
+        onLeft?.();
       }
       e.continuePropagation();
     },

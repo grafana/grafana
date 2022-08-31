@@ -3,7 +3,7 @@ import { createContext, HTMLAttributes, useContext } from 'react';
 export interface NavBarItemMenuContextProps {
   menuHasFocus: boolean;
   onClose: () => void;
-  onLeft: () => void;
+  onLeft?: () => void;
   menuProps?: HTMLAttributes<HTMLElement>;
 }
 

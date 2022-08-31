@@ -193,10 +193,6 @@ export function TopNavBarItemMenuTrigger(props: TopNavBarItemMenuTriggerProps): 
               menuProps,
               menuHasFocus,
               onClose: () => state.close(),
-              onLeft: () => {
-                setMenuHasFocus(false);
-                ref.current?.focus();
-              },
             }}
           >
             <FocusScope restoreFocus>
