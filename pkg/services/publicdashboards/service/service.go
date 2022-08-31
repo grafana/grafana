@@ -46,7 +46,7 @@ func ProvideService(
 }
 
 // Gets a list of public dashboards by orgId
-func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]*PublicDashboardListResponse, error) {
+func (pd *PublicDashboardServiceImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 	return pd.store.ListPublicDashboards(ctx, orgId)
 }
 

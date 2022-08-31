@@ -157,15 +157,15 @@ func (_m *FakePublicDashboardService) GetPublicDashboardConfig(ctx context.Conte
 }
 
 // ListPublicDashboards provides a mock function with given fields: ctx, orgId
-func (_m *FakePublicDashboardService) ListPublicDashboards(ctx context.Context, orgId int64) ([]*publicdashboardsmodels.PublicDashboardListResponse, error) {
+func (_m *FakePublicDashboardService) ListPublicDashboards(ctx context.Context, orgId int64) ([]publicdashboardsmodels.PublicDashboardListResponse, error) {
 	ret := _m.Called(ctx, orgId)
 
-	var r0 []*publicdashboardsmodels.PublicDashboardListResponse
-	if rf, ok := ret.Get(0).(func(context.Context, int64) []*publicdashboardsmodels.PublicDashboardListResponse); ok {
+	var r0 []publicdashboardsmodels.PublicDashboardListResponse
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []publicdashboardsmodels.PublicDashboardListResponse); ok {
 		r0 = rf(ctx, orgId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*publicdashboardsmodels.PublicDashboardListResponse)
+			r0 = ret.Get(0).([]publicdashboardsmodels.PublicDashboardListResponse)
 		}
 	}
 

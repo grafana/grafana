@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -37,9 +38,9 @@ func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 }
 
 // Gets list of public dashboards by orgId
-func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]*PublicDashboardListResponse, error) {
+func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
 
-	resp := []*PublicDashboardListResponse{}
+	resp := make([]PublicDashboardListResponse, 0)
 
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		//Select dashboard_public.access_token ,dashboard.title, dashboard.uid, from dashboard_public, dashboard
@@ -47,15 +48,16 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 
 		sess.Table("dashboard_public").
 			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid").
-			Cols("dashboard_public.access_token", "dashboard.title", "dashboard.uid").
+			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard.title").
 			Where("dashboard_public.org_id = dashboard.org_id").
 			Where("dashboard_public.org_id = ?", orgId)
 
-		err := sess.Find(resp)
+		err := sess.Find(&resp)
 		return err
 	})
 
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 

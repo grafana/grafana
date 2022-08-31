@@ -5,6 +5,8 @@ import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   publicDashboardPersisted,
+  viewPublicDashboardUrl,
+  listPublicDashboardsUrl,
   getPublicDashboardConfigUrl,
   savePublicDashboardConfigUrl,
 } from './SharePublicDashboardUtils';
@@ -22,13 +24,6 @@ describe('dashboardHasTemplateVariables', () => {
   });
 });
 
-describe('generatePublicDashboardUrl', () => {
-  it('has the right uid', () => {
-    let pubdash = { accessToken: 'abcd1234' } as PublicDashboard;
-    expect(generatePublicDashboardUrl(pubdash)).toEqual(`${window.location.origin}/public-dashboards/abcd1234`);
-  });
-});
-
 describe('publicDashboardPersisted', () => {
   it('true', () => {
     let pubdash = { uid: 'abcd1234' } as PublicDashboard;
@@ -40,6 +35,20 @@ describe('publicDashboardPersisted', () => {
     expect(publicDashboardPersisted(pubdash)).toBe(false);
     pubdash = {} as PublicDashboard;
     expect(publicDashboardPersisted(pubdash)).toBe(false);
+  });
+});
+
+describe('viewPublicDashboardUrl', () => {
+  it('has the right url', () => {
+    expect(viewPublicDashboardUrl('myaccesstoken')).toEqual(
+      `${window.location.origin}/public-dashboards/myaccesstoken`
+    );
+  });
+});
+
+describe('listPublicDashboardsUrl', () => {
+  it('has the correct url', () => {
+    expect(listPublicDashboardsUrl()).toEqual('/api/dashboards/public');
   });
 });
 

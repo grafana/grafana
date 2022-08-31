@@ -18,6 +18,20 @@ export interface DashboardResponse {
   meta: DashboardMeta;
 }
 
+export interface ListPublicDashboardResponse {
+  uid: string;
+  accessToken: string;
+  dashboardUid: string;
+  title: string;
+}
+
+export const listPublicDashboards = async (
+  setPublicDashboards: React.Dispatch<React.SetStateAction<ListPublicDashboardResponse[]>>
+) => {
+  const resp = await getBackendSrv().get(listPublicDashboardsUrl());
+  setPublicDashboards(resp);
+};
+
 export const getPublicDashboardConfig = async (
   dashboardUid: string,
   setPublicDashboard: React.Dispatch<React.SetStateAction<PublicDashboard>>
@@ -42,6 +56,14 @@ export const savePublicDashboardConfig = async (
 
   dispatch(notifyApp(createSuccessNotification('Dashboard sharing configuration saved')));
   setPublicDashboard(pdResp);
+};
+
+export const listPublicDashboardsUrl = () => {
+  return `/api/dashboards/public`;
+};
+
+export const viewPublicDashboardUrl = (accessToken: string) => {
+  return `${window.location.origin}/public-dashboards/${accessToken}`;
 };
 
 export const getPublicDashboardConfigUrl = (dashboardUid: string) => {
