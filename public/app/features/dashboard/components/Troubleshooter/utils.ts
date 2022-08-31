@@ -39,6 +39,27 @@ export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   return frames;
 }
 
+export function getGithubMarkdown(panel: PanelModel, snapshot: object): string {
+  const saveModel = panel.getSaveModel();
+  const info = {
+    panelType: saveModel.type,
+    datasource: '??',
+  };
+  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
+
+  let md = '| Key | Value |\n|--|--|\n';
+  md += `| Panel | ${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion} |\n`;
+  md += `| Grafana | ${grafanaVersion} // ${config.buildInfo.edition} |\n`;
+
+  if (snapshot) {
+    md += `<details><summary>Panel snapshot (2.5mb)</summary>
+       <pre>${JSON.stringify(snapshot, null, 2)}</pre>
+      </details>`;
+  }
+
+  return md;
+}
+
 export async function getTroubleshootingDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
   const saveModel = panel.getSaveModel();
   const dashboard = cloneDeep(embeddedDataTemplate);

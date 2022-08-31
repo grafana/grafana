@@ -15,6 +15,7 @@ import {
   HorizontalGroup,
   InlineSwitch,
   Button,
+  Spinner,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { InspectTab } from 'app/features/inspector/types';
@@ -35,9 +36,9 @@ interface Props {
 export const Troubleshooter = ({ panel, plugin, onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const [currentTab, setCurrentTab] = useState(InspectTab.Trouble);
-  const [dashboardText, setDashboardText] = useState('???');
+  const [dashboardText, setDashboardText] = useState('...');
   const [rand, setRand] = useState<Randomize>({});
-  useAsync(async () => {
+  const info = useAsync(async () => {
     const dash = await getTroubleshootingDashboard(panel, rand, getTimeSrv().timeRange());
     setDashboardText(JSON.stringify(dash, null, 2));
     console.log('LOADING', dash);
@@ -89,6 +90,8 @@ export const Troubleshooter = ({ panel, plugin, onClose }: Props) => {
         </TabsBar>
       }
     >
+      {info.loading && <Spinner />}
+
       {activeTab === InspectTab.JSON ? (
         <div className={styles.code}>
           <div>Paste this code in a github issue</div>
