@@ -44,7 +44,7 @@
     "lodash": "4.17.21",
     "marked": "4.0.18",
     "moment": "2.29.4",
-    "moment-timezone": "0.5.34",
+    "moment-timezone": "0.5.35",
     "ol": "6.15.1",
     "papaparse": "5.3.2",
     "regenerator-runtime": "0.13.9",
