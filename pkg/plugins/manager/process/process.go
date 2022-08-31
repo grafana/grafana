@@ -54,9 +54,9 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 
 	m.log.Info("Plugin registered", "pluginID", p.ID)
 	m.mu.Lock()
-	err := startPluginAndRestartKilledProcesses(ctx, p)
-	m.mu.Unlock()
-	if err != nil {
+	defer m.mu.Unlock()
+
+	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
 	}
 
