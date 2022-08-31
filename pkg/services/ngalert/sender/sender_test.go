@@ -43,7 +43,7 @@ func TestSanitizeLabelName(t *testing.T) {
 		{
 			desc:        "Only whitespace should error",
 			labelName:   "   \t\n\v\n\f   ",
-			expectedErr: "label name only contains invalid chars",
+			expectedErr: "label name is empty after removing invalids chars",
 		},
 	}
 

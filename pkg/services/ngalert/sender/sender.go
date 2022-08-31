@@ -235,39 +235,46 @@ func (s *ExternalAlertmanager) sanitizeLabelName(name string) (string, error) {
 	// Replace other invalid characters.
 	var buf strings.Builder
 	for i, b := range sanitized {
-		// From alertmanager LabelName.IsValid().
-		if (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || (b >= '0' && b <= '9' && i > 0) {
+		if isValidCharacter(i, b) {
 			buf.WriteRune(b)
-		} else {
-			if b <= unicode.MaxASCII {
-				buf.WriteRune('_')
-			} else {
-				if i == 0 {
-					buf.WriteRune('_')
-				}
-				_, _ = fmt.Fprintf(&buf, "%#x", b)
-			}
+			continue
 		}
+
+		if b <= unicode.MaxASCII {
+			buf.WriteRune('_')
+			continue
+		}
+
+		if i == 0 {
+			buf.WriteRune('_')
+		}
+		_, _ = fmt.Fprintf(&buf, "%#x", b)
 	}
 
 	if buf.Len() == 0 {
-		return "", fmt.Errorf("label name only contains invalid chars")
+		return "", fmt.Errorf("label name is empty after removing invalids chars")
 	}
 
 	return buf.String(), nil
 }
 
-// isValidLabelName is true iff the label name matches the pattern of ^[a-zA-Z_][a-zA-Z0-9_]*$. From alertmanager LabelName.IsValid().
+// isValidLabelName is true iff the label name matches the pattern of ^[a-zA-Z_][a-zA-Z0-9_]*$.
 func isValidLabelName(ln string) bool {
 	if len(ln) == 0 {
 		return false
 	}
 	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || (b >= '0' && b <= '9' && i > 0)) {
+		if !isValidCharacter(i, b) {
 			return false
 		}
 	}
 	return true
+}
+
+// isValidCharacter checks if a specific rune is allowed at the given position in a label key for an external Prometheus alertmanager.
+// From alertmanager LabelName.IsValid().
+func isValidCharacter(pos int, b rune) bool {
+	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || (b >= '0' && b <= '9' && pos > 0)
 }
 
 func sortedKeys(m map[string]string) []string {
