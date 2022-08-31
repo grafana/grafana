@@ -7,7 +7,14 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, Drawer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 
+import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
+import {
+  alertingRulerRuleToRuleForm,
+  formValuesToRulerRuleDTO,
+  recordingRulerRuleToRuleForm,
+} from '../../utils/rule-form';
+import { isAlertingRulerRule, isRecordingRulerRule } from '../../utils/rules';
 
 interface Props {
   onClose: () => void;
@@ -75,10 +82,16 @@ interface YamlTabProps {
 const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
   const styles = useStyles2(yamlTabStyle);
   const { getValues } = useFormContext<RuleFormValues>();
-  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(dump(getValues()));
+
+  const yamlValues = formValuesToRulerRuleDTO(getValues());
+  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(dump(yamlValues));
 
   const onApply = () => {
-    onSubmit(load(alertRuleAsYaml) as RuleFormValues);
+    const rulerRule = load(alertRuleAsYaml) as RulerRuleDTO;
+    const currentFormValues = getValues();
+
+    const yamlFormValues = rulerRuleToRuleFormValues(rulerRule);
+    onSubmit({ ...currentFormValues, ...yamlFormValues });
   };
 
   return (
@@ -110,6 +123,16 @@ const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
     </>
   );
 };
+
+function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormValues> {
+  if (isAlertingRulerRule(rulerRule)) {
+    return alertingRulerRuleToRuleForm(rulerRule);
+  } else if (isRecordingRulerRule(rulerRule)) {
+    return recordingRulerRuleToRuleForm(rulerRule);
+  }
+
+  return {};
+}
 
 const yamlTabStyle = (theme: GrafanaTheme2) => ({
   content: css`
