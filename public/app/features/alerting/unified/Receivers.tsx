@@ -1,6 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { Redirect, Route, RouteChildrenProps, Switch, useParams } from 'react-router-dom';
+import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
 import { Alert, LoadingPlaceholder, withErrorBoundary } from '@grafana/ui';
@@ -29,7 +29,8 @@ const Receivers: FC = () => {
   type PageType = 'receivers' | 'templates' | 'global-config';
 
   const { id, type } = useParams<{ id?: string; type?: PageType }>();
-  const isRoot = Boolean(!type);
+  const location = useLocation();
+  const isRoot = location.pathname.endsWith('/alerting/notifications');
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
 
