@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import TempoLanguageProvider from '../language_provider';
@@ -29,6 +30,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
   private tags: { [tag: string]: Set<string> } = {};
+  private cachedValues: { [key: string]: Array<SelectableValue<string>> } = {};
 
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
@@ -104,19 +106,25 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR' as CompletionType,
         }));
       case 'SPANSET_IN_VALUE':
-        return await this.languageProvider.getOptions(situation.tagName).then((res) => {
-          const items: Completion[] = [];
-          res.forEach((val) => {
-            if (val?.label) {
-              items.push({
-                label: val.label,
-                insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
-                type: 'TAG_VALUE',
-              });
-            }
-          });
-          return items;
+        let tagValues: Array<SelectableValue<string>> = [];
+        if (this.cachedValues.hasOwnProperty(situation.tagName)) {
+          tagValues = this.cachedValues[situation.tagName];
+        } else {
+          tagValues = await this.languageProvider.getOptions(situation.tagName);
+          this.cachedValues[situation.tagName] = tagValues;
+        }
+
+        const items: Completion[] = [];
+        tagValues.forEach((val) => {
+          if (val?.label) {
+            items.push({
+              label: val.label,
+              insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
+              type: 'TAG_VALUE',
+            });
+          }
         });
+        return items;
       case 'SPANSET_AFTER_VALUE':
         return CompletionProvider.logicalOps.concat('}').map((key) => ({
           label: key,
