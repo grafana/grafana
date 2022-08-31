@@ -31,12 +31,14 @@ simple.args = {
   description: 'Option description',
 };
 
-export const categorised: ComponentStory<typeof Label> = () => {
-  return (
-    <Label category={['Category', 'Nested category']} description="Option description">
-      Option name
-    </Label>
-  );
+export const categorised: ComponentStory<typeof Label> = (args) => {
+  return <Label {...args} />;
+};
+
+categorised.args = {
+  children: 'Option name',
+  description: 'Option description',
+  category: ['Category', 'Nested category'],
 };
 
 export default meta;
