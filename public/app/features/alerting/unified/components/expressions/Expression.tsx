@@ -193,7 +193,6 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
         </Stack>
         <Spacer />
         <IconButton name="trash-alt" variant="secondary" className={styles.mutedIcon} onClick={onRemoveExpression} />
-        <Icon name="draggabledots" className={cx(styles.draggableIcon, styles.mutedIcon)} />
       </Stack>
     </header>
   );
