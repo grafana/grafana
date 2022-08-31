@@ -57,11 +57,11 @@ describe('PlaylistNewPage', () => {
       const { backendSrvMock } = getTestContext();
 
       expect(locationService.getLocation().pathname).toEqual('/');
-      await userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A Name');
+      await userEvent.type(screen.getByRole('textbox', { name: /playlist name/i }), 'A new name');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
       expect(backendSrvMock).toHaveBeenCalledWith('/api/playlists', {
-        name: 'A Name',
+        name: 'A new name',
         interval: '5m',
         items: [{ type: 'dashboard_by_uid', value: 'FirstUID' }],
       });
