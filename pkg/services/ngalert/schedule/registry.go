@@ -96,7 +96,7 @@ func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
 //   - true when message was sent
 //   - false when the send operation is stopped
 // the second element contains a dropped message that was sent by a concurrent sender.
-func (a *alertRuleInfo) eval(t time.Time, rule *models.AlertRule) (bool, *evaluation) {
+func (a *alertRuleInfo) eval(eval *evaluation) (bool, *evaluation) {
 	// read the channel in unblocking manner to make sure that there is no concurrent send operation.
 	var droppedMsg *evaluation
 	select {
@@ -105,10 +105,7 @@ func (a *alertRuleInfo) eval(t time.Time, rule *models.AlertRule) (bool, *evalua
 	}
 
 	select {
-	case a.evalCh <- &evaluation{
-		scheduledAt: t,
-		rule:        rule,
-	}:
+	case a.evalCh <- eval:
 		return true, droppedMsg
 	case <-a.ctx.Done():
 		return false, droppedMsg
@@ -141,22 +138,24 @@ func (a *alertRuleInfo) update(lastVersion ruleVersion) bool {
 type evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
+	folderTitle string
 }
 
 type alertRulesRegistry struct {
-	rules map[models.AlertRuleKey]*models.AlertRule
-	mu    sync.Mutex
+	rules        map[models.AlertRuleKey]*models.AlertRule
+	folderTitles map[string]string
+	mu           sync.Mutex
 }
 
 // all returns all rules in the registry.
-func (r *alertRulesRegistry) all() []*models.AlertRule {
+func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[string]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	result := make([]*models.AlertRule, 0, len(r.rules))
 	for _, rule := range r.rules {
 		result = append(result, rule)
 	}
-	return result
+	return result, r.folderTitles
 }
 
 func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
@@ -166,13 +165,15 @@ func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 }
 
 // set replaces all rules in the registry.
-func (r *alertRulesRegistry) set(rules []*models.AlertRule) {
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[string]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.rules = make(map[models.AlertRuleKey]*models.AlertRule)
 	for _, rule := range rules {
 		r.rules[rule.GetKey()] = rule
 	}
+	// return the map as is without copying because it is not mutated
+	r.folderTitles = folders
 }
 
 // update inserts or replaces a rule in the registry.
@@ -193,4 +194,23 @@ func (r *alertRulesRegistry) del(k models.AlertRuleKey) (*models.AlertRule, bool
 		delete(r.rules, k)
 	}
 	return rule, ok
+}
+
+func (r *alertRulesRegistry) isEmpty() bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.rules) == 0
+}
+
+func (r *alertRulesRegistry) needsUpdate(keys []models.AlertRuleKeyWithVersion) bool {
+	if len(r.rules) != len(keys) {
+		return true
+	}
+	for _, key := range keys {
+		rule, ok := r.rules[key.AlertRuleKey]
+		if !ok || rule.Version != key.Version {
+			return true
+		}
+	}
+	return false
 }

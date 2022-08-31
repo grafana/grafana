@@ -344,7 +344,10 @@ type ListAlertRulesQuery struct {
 }
 
 type GetAlertRulesForSchedulingQuery struct {
-	Result []*AlertRule
+	PopulateFolders bool
+
+	ResultRules         []*AlertRule
+	ResultFoldersTitles map[string]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
