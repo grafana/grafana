@@ -1,7 +1,6 @@
-import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
-import { config, isFetchError, locationService } from '@grafana/runtime';
+import { DataQuery, locationUtil, setWeekStart } from '@grafana/data';
+import { config, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
@@ -117,16 +116,17 @@ const getQueriesByDatasource = (
       getQueriesByDatasource(panel.panels, queries);
     } else if (panel.targets) {
       panel.targets.forEach((target) => {
-        if (target.datasource?.type) {
-          if (queries[target.datasource.type]) {
-            queries[target.datasource.type].push(target);
+        if (target?.datasource?.uid) {
+          if (queries[target.datasource.uid]) {
+            queries[target.datasource.uid].push(target);
           } else {
-            queries[target.datasource.type] = [target];
+            queries[target.datasource.uid] = [target];
           }
         }
       });
     }
   });
+
   return queries;
 };
 
@@ -237,16 +237,18 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       setWeekStart(config.bootData.user.weekStart);
     }
 
-    // Propagate an app-wide event about the dashboard being loaded
-    appEvents.publish(
-      new DashboardLoadedEvent({
-        dashboardId: dashboard.uid,
-        orgId: storeState.user.orgId,
-        userId: storeState.user.user?.id,
-        grafanaVersion: config.buildInfo.version,
-        queries: getQueriesByDatasource(dashboard.panels),
-      })
-    );
+    const queriesByDataSourceUID = getQueriesByDatasource(dashboard.panels);
+    const datasourceSrv = getDataSourceSrv();
+
+    for (const datasourceUid in queriesByDataSourceUID) {
+      const ds = await datasourceSrv.get(datasourceUid).catch(console.log);
+      ds?.onDashboardLoaded &&
+        ds.onDashboardLoaded({
+          dashboardId: dashboard.uid,
+          orgId: storeState.user.orgId,
+          queries: queriesByDataSourceUID[datasourceUid],
+        });
+    }
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
