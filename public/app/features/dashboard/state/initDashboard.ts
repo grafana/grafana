@@ -237,17 +237,21 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       setWeekStart(config.bootData.user.weekStart);
     }
 
-    const queriesByDataSourceUID = getQueriesByDatasource(dashboard.panels);
-    const datasourceSrv = getDataSourceSrv();
+    try {
+      const queriesByDataSourceUID = getQueriesByDatasource(dashboard.panels);
+      const datasourceSrv = getDataSourceSrv();
 
-    for (const datasourceUid in queriesByDataSourceUID) {
-      const ds = await datasourceSrv.get(datasourceUid).catch(console.log);
-      ds?.onDashboardLoaded &&
-        ds.onDashboardLoaded({
-          dashboardId: dashboard.uid,
-          orgId: storeState.user.orgId,
-          queries: queriesByDataSourceUID[datasourceUid],
-        });
+      for (const datasourceUid in queriesByDataSourceUID) {
+        const ds = await datasourceSrv.get(datasourceUid).catch(console.log);
+        ds?.onDashboardLoaded &&
+          ds.onDashboardLoaded({
+            dashboardId: dashboard.uid,
+            orgId: storeState.user.orgId,
+            queries: queriesByDataSourceUID[datasourceUid],
+          });
+      }
+    } catch (error) {
+      console.error('Could not invoke onDashboardLoaded');
     }
 
     // yay we are done
