@@ -17,13 +17,12 @@ import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
 import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
-import { PluginAdminRoutes, PluginListDisplayMode } from '../types';
+import { PluginListDisplayMode } from '../types';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
-  const navModelId = getNavModelId(route.routeName);
-  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, navModelId));
+  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'plugins'));
   const { displayMode, setDisplayMode } = useDisplayMode();
   const styles = useStyles2(getStyles);
   const history = useHistory();
@@ -173,13 +172,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
 });
-
-// Because the component is used under multiple paths (/plugins and /admin/plugins) we need to get
-// the correct navModel from the store
-const getNavModelId = (routeName?: string) => {
-  if (routeName === PluginAdminRoutes.HomeAdmin || routeName === PluginAdminRoutes.BrowseAdmin) {
-    return 'admin-plugins';
-  }
-
-  return 'plugins';
-};
