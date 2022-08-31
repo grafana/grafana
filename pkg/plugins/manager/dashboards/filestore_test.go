@@ -1,4 +1,4 @@
-package manager
+package dashboards
 
 import (
 	"context"
@@ -18,18 +18,18 @@ func TestDashboardFileStore(t *testing.T) {
 		t.Run("ListPluginDashboardFiles", func(t *testing.T) {
 			testCases := []struct {
 				name string
-				args *plugins.ListPluginDashboardFilesArgs
+				args *ListPluginDashboardFilesArgs
 			}{
 				{
 					name: "nil args should return error",
 				},
 				{
 					name: "empty args.PluginID should return error",
-					args: &plugins.ListPluginDashboardFilesArgs{},
+					args: &ListPluginDashboardFilesArgs{},
 				},
 				{
 					name: "args.PluginID with only space should return error",
-					args: &plugins.ListPluginDashboardFilesArgs{PluginID: " \t "},
+					args: &ListPluginDashboardFilesArgs{PluginID: " \t "},
 				},
 			}
 
@@ -45,28 +45,28 @@ func TestDashboardFileStore(t *testing.T) {
 		t.Run("GetPluginDashboardFileContents", func(t *testing.T) {
 			testCases := []struct {
 				name string
-				args *plugins.GetPluginDashboardFileContentsArgs
+				args *GetPluginDashboardFileContentsArgs
 			}{
 				{
 					name: "nil args should return error",
 				},
 				{
 					name: "empty args.PluginID should return error",
-					args: &plugins.GetPluginDashboardFileContentsArgs{},
+					args: &GetPluginDashboardFileContentsArgs{},
 				},
 				{
 					name: "args.PluginID with only space should return error",
-					args: &plugins.GetPluginDashboardFileContentsArgs{PluginID: " "},
+					args: &GetPluginDashboardFileContentsArgs{PluginID: " "},
 				},
 				{
 					name: "empty args.FileReference should return error",
-					args: &plugins.GetPluginDashboardFileContentsArgs{
+					args: &GetPluginDashboardFileContentsArgs{
 						PluginID: "pluginWithDashboards",
 					},
 				},
 				{
 					name: "args.FileReference with only space should return error",
-					args: &plugins.GetPluginDashboardFileContentsArgs{
+					args: &GetPluginDashboardFileContentsArgs{
 						PluginID:      "pluginWithDashboard",
 						FileReference: " \t",
 					},
@@ -85,7 +85,7 @@ func TestDashboardFileStore(t *testing.T) {
 
 	t.Run("Plugin without dashboards", func(t *testing.T) {
 		t.Run("Should return zero file references", func(t *testing.T) {
-			res, err := m.ListPluginDashboardFiles(context.Background(), &plugins.ListPluginDashboardFilesArgs{
+			res, err := m.ListPluginDashboardFiles(context.Background(), &ListPluginDashboardFilesArgs{
 				PluginID: "pluginWithoutDashboards",
 			})
 			require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestDashboardFileStore(t *testing.T) {
 		})
 
 		t.Run("Should return file not found error when trying to get non-existing plugin dashboard file content", func(t *testing.T) {
-			res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
+			res, err := m.GetPluginDashboardFileContents(context.Background(), &GetPluginDashboardFileContentsArgs{
 				PluginID:      "pluginWithoutDashboards",
 				FileReference: "dashboards/dash2.json",
 			})
@@ -106,7 +106,7 @@ func TestDashboardFileStore(t *testing.T) {
 
 	t.Run("Plugin with dashboards", func(t *testing.T) {
 		t.Run("Should return two file references", func(t *testing.T) {
-			res, err := m.ListPluginDashboardFiles(context.Background(), &plugins.ListPluginDashboardFilesArgs{
+			res, err := m.ListPluginDashboardFiles(context.Background(), &ListPluginDashboardFilesArgs{
 				PluginID: "pluginWithDashboards",
 			})
 			require.NoError(t, err)
@@ -136,7 +136,7 @@ func TestDashboardFileStore(t *testing.T) {
 			})
 
 			t.Run("Should return file not found error when trying to get non-existing plugin dashboard file content", func(t *testing.T) {
-				res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
+				res, err := m.GetPluginDashboardFileContents(context.Background(), &GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
 					FileReference: "dashboards/dash3.json",
 				})
@@ -146,7 +146,7 @@ func TestDashboardFileStore(t *testing.T) {
 			})
 
 			t.Run("Should return file content for dashboards/dash1.json", func(t *testing.T) {
-				res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
+				res, err := m.GetPluginDashboardFileContents(context.Background(), &GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
 					FileReference: "dashboards/dash1.json",
 				})
@@ -160,7 +160,7 @@ func TestDashboardFileStore(t *testing.T) {
 			})
 
 			t.Run("Should return file content for dashboards/dash2.json", func(t *testing.T) {
-				res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
+				res, err := m.GetPluginDashboardFileContents(context.Background(), &GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
 					FileReference: "dashboards/dash2.json",
 				})
@@ -174,7 +174,7 @@ func TestDashboardFileStore(t *testing.T) {
 			})
 
 			t.Run("Should return error when trying to read relative file", func(t *testing.T) {
-				res, err := m.GetPluginDashboardFileContents(context.Background(), &plugins.GetPluginDashboardFileContentsArgs{
+				res, err := m.GetPluginDashboardFileContents(context.Background(), &GetPluginDashboardFileContentsArgs{
 					PluginID:      "pluginWithDashboards",
 					FileReference: "dashboards/../dash2.json",
 				})
@@ -186,12 +186,12 @@ func TestDashboardFileStore(t *testing.T) {
 	})
 }
 
-func setupPluginDashboardsForTest(t *testing.T) *PluginManager {
+func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 	t.Helper()
 
-	return &PluginManager{
-		pluginRegistry: &fakePluginRegistry{
-			store: map[string]*plugins.Plugin{
+	return &FileStoreManager{
+		pluginStore: &fakePluginStore{
+			plugins: map[string]plugins.PluginDTO{
 				"pluginWithoutDashboards": {
 					JSONData: plugins.JSONData{
 						Includes: []*plugins.Includes{
@@ -222,4 +222,21 @@ func setupPluginDashboardsForTest(t *testing.T) *PluginManager {
 			},
 		},
 	}
+}
+
+type fakePluginStore struct {
+	plugins map[string]plugins.PluginDTO
+}
+
+func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := pr.plugins[pluginID]
+	return p, exists
+}
+
+func (pr fakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugins.PluginDTO {
+	var result []plugins.PluginDTO
+	for _, v := range pr.plugins {
+		result = append(result, v)
+	}
+	return result
 }

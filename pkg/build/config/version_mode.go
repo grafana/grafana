@@ -8,4 +8,5 @@ const (
 	TagMode           VersionMode = "release"
 	ReleaseBranchMode VersionMode = "branch"
 	PullRequestMode   VersionMode = "pull_request"
+	CustomMode        VersionMode = "custom"
 )
