@@ -6,11 +6,10 @@ import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
-import { toLonLat } from 'ol/proj';
 import React, { Component, ReactNode } from 'react';
 import { Subject, Subscription } from 'rxjs';
 
-import { DataFrame, DataHoverEvent, GrafanaTheme, MapLayerOptions, PanelData, PanelProps } from '@grafana/data';
+import { DataHoverEvent, GrafanaTheme, MapLayerOptions, PanelData, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
 import { PanelEditExitedEvent } from 'app/types/events';
@@ -19,14 +18,14 @@ import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
 import { MeasureOverlay } from './components/MeasureOverlay';
-import { GeomapHoverPayload, GeomapLayerHover } from './event';
+import { GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from './layers/registry';
 import { ControlsOptions, GeomapPanelOptions, MapLayerState, TooltipMode } from './types';
 import { getActions } from './utils/actions';
 import { applyLayerFilter } from './utils/layers';
-import { setTooltipListeners } from './utils/tootltip';
+import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tootltip';
 import { updateMap, getNewOpenLayersMap, notifyPanelEditor, getNextLayerName } from './utils/utils';
 import { initMapView, initViewExtent } from './utils/view';
 
@@ -217,95 +216,11 @@ export class GeomapPanel extends Component<Props, State> {
   };
 
   pointerClickListener = (evt: MapBrowserEvent<UIEvent>) => {
-    if (this.pointerMoveListener(evt)) {
-      evt.preventDefault();
-      evt.stopPropagation();
-      this.mapDiv!.style.cursor = 'auto';
-      this.setState({ ttipOpen: true });
-    }
+    pointerClickListener(evt, this);
   };
 
   pointerMoveListener = (evt: MapBrowserEvent<UIEvent>) => {
-    // If measure menu is open, bypass tooltip logic and display measuring mouse events
-    if (this.state.measureMenuActive) {
-      return true;
-    }
-    if (!this.map || this.state.ttipOpen) {
-      return false;
-    }
-    const mouse = evt.originalEvent as MouseEvent;
-    const pixel = this.map.getEventPixel(mouse);
-    const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
-
-    const { hoverPayload } = this;
-    hoverPayload.pageX = mouse.pageX;
-    hoverPayload.pageY = mouse.pageY;
-    hoverPayload.point = {
-      lat: hover[1],
-      lon: hover[0],
-    };
-    hoverPayload.data = undefined;
-    hoverPayload.columnIndex = undefined;
-    hoverPayload.rowIndex = undefined;
-    hoverPayload.layers = undefined;
-
-    const layers: GeomapLayerHover[] = [];
-    const layerLookup = new Map<MapLayerState, GeomapLayerHover>();
-
-    let ttip: GeomapHoverPayload = {} as GeomapHoverPayload;
-    this.map.forEachFeatureAtPixel(
-      pixel,
-      (feature, layer, geo) => {
-        const s: MapLayerState = (layer as any).__state;
-        //match hover layer to layer in layers
-        //check if the layer show tooltip is enabled
-        //then also pass the list of tooltip fields if exists
-        //this is used as the generic hover event
-        if (!hoverPayload.data) {
-          const props = feature.getProperties();
-          const frame = props['frame'];
-          if (frame) {
-            hoverPayload.data = ttip.data = frame as DataFrame;
-            hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
-          }
-
-          if (s?.mouseEvents) {
-            s.mouseEvents.next(feature);
-          }
-        }
-
-        if (s) {
-          let h = layerLookup.get(s);
-          if (!h) {
-            h = { layer: s, features: [] };
-            layerLookup.set(s, h);
-            layers.push(h);
-          }
-          h.features.push(feature);
-        }
-      },
-      {
-        layerFilter: (l) => {
-          const hoverLayerState = (l as any).__state as MapLayerState;
-          return hoverLayerState?.options?.tooltip !== false;
-        },
-      }
-    );
-    this.hoverPayload.layers = layers.length ? layers : undefined;
-    this.props.eventBus.publish(this.hoverEvent);
-
-    this.setState({ ttip: { ...hoverPayload } });
-
-    if (!layers.length) {
-      // clear mouse events
-      this.layers.forEach((layer) => {
-        layer.mouseEvents.next(undefined);
-      });
-    }
-
-    const found = Boolean(layers.length);
-    this.mapDiv!.style.cursor = found ? 'pointer' : 'auto';
-    return found;
+    pointerMoveListener(evt, this);
   };
 
   private updateLayer = async (uid: string, newOptions: MapLayerOptions): Promise<boolean> => {
