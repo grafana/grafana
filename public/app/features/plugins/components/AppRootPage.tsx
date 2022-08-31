@@ -92,7 +92,15 @@ class AppRootPage extends Component<Props, State> {
   render() {
     const { loading, plugin, nav, portalNode } = this.state;
 
-    if (plugin && !plugin.root) {
+    if (!plugin || this.props.match.params.pluginId !== plugin.meta.id) {
+      return (
+        <Page>
+          <PageLoader />
+        </Page>
+      );
+    }
+
+    if (!plugin.root) {
       // TODO? redirect to plugin page?
       return <div>No Root App</div>;
     }
@@ -100,15 +108,13 @@ class AppRootPage extends Component<Props, State> {
     return (
       <>
         <InPortal node={portalNode}>
-          {plugin && plugin.root && (
-            <plugin.root
-              meta={plugin.meta}
-              basename={this.props.match.url}
-              onNavChanged={this.onNavChanged}
-              query={this.props.queryParams as KeyValue}
-              path={this.props.location.pathname}
-            />
-          )}
+          <plugin.root
+            meta={plugin.meta}
+            basename={this.props.match.url}
+            onNavChanged={this.onNavChanged}
+            query={this.props.queryParams as KeyValue}
+            path={this.props.location.pathname}
+          />
         </InPortal>
         {nav ? (
           <Page navModel={nav}>
