@@ -5,12 +5,15 @@ import { firstValueFrom } from 'rxjs';
 
 import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { locationService } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
-import { getPanelDataFrames } from '../dashboard/components/Troubleshooter/utils';
+import { getPanelDataFrames } from '../dashboard/components/DebugWizard/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
+
+import { InspectTab } from './types';
 
 enum ShowContent {
   PanelJSON = 'panel',
@@ -131,6 +134,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
     }
   };
 
+  onShowSupportWizard = () => {
+    const queryParms = locationService.getSearch();
+    queryParms.set('inspectTab', InspectTab.Debug.toString());
+    locationService.push('?' + queryParms.toString());
+  };
+
   render() {
     const { dashboard } = this.props;
     const { show, text } = this.state;
@@ -157,6 +166,11 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           {this.hasPanelJSON && isPanelJSON && canEdit && (
             <Button className={styles.toolbarItem} onClick={this.onApplyPanelModel}>
               Apply
+            </Button>
+          )}
+          {show === ShowContent.DataFrames && (
+            <Button className={styles.toolbarItem} onClick={this.onShowSupportWizard}>
+              Debug
             </Button>
           )}
         </div>
