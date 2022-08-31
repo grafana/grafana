@@ -7,6 +7,8 @@ import { GeomapPanel } from '../GeomapPanel';
 import { GeomapHoverPayload, GeomapLayerHover } from '../event';
 import { MapLayerState } from '../types';
 
+import { getMapLayerState } from './layers';
+
 export const setTooltipListeners = (panel: GeomapPanel) => {
   // Tooltip listener
   panel.map?.on('singleclick', panel.pointerClickListener);
@@ -33,7 +35,7 @@ export const pointerMoveListener = (evt: MapBrowserEvent<UIEvent>, panel: Geomap
   if (!panel.map || panel.state.ttipOpen) {
     return false;
   }
-  const mouse = evt.originalEvent as MouseEvent;
+  const mouse = evt.originalEvent as MouseEvent; // eslint-disable-line
   const pixel = panel.map.getEventPixel(mouse);
   const hover = toLonLat(panel.map.getCoordinateFromPixel(pixel));
 
@@ -56,7 +58,7 @@ export const pointerMoveListener = (evt: MapBrowserEvent<UIEvent>, panel: Geomap
   panel.map.forEachFeatureAtPixel(
     pixel,
     (feature, layer, geo) => {
-      const s: MapLayerState = (layer as any).__state;
+      const s: MapLayerState = getMapLayerState(layer);
       //match hover layer to layer in layers
       //check if the layer show tooltip is enabled
       //then also pass the list of tooltip fields if exists
@@ -86,7 +88,7 @@ export const pointerMoveListener = (evt: MapBrowserEvent<UIEvent>, panel: Geomap
     },
     {
       layerFilter: (l) => {
-        const hoverLayerState = (l as any).__state as MapLayerState;
+        const hoverLayerState = getMapLayerState(l);
         return hoverLayerState?.options?.tooltip !== false;
       },
     }

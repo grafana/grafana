@@ -69,6 +69,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
+    // eslint-disable-next-line
     this.panelContext = this.context as PanelContext;
   }
 
@@ -138,6 +139,7 @@ export class GeomapPanel extends Component<Props, State> {
     if (options.view !== oldOptions.view) {
       const [updatedSharedView, view] = initMapView(options.view, sharedView, this.map!.getLayers());
       sharedView = updatedSharedView;
+      // eslint-disable-next-line
       this.map!.setView(view as View);
     }
 
@@ -165,6 +167,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     if (!div) {
+      // eslint-disable-next-line
       this.map = undefined as unknown as OpenLayersMap;
       return;
     }
@@ -184,7 +187,7 @@ export class GeomapPanel extends Component<Props, State> {
         layers.push(await initLayer(this, map, lyr, false));
       }
     } catch (ex) {
-      console.error('error loading layers', ex);
+      console.error('error loading layers', ex); // eslint-disable-line no-console
     }
 
     for (const lyr of layers) {

@@ -40,6 +40,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       defaultValue: defaultView.shared,
     });
 
+    // eslint-disable-next-line
     const state = context.instanceState as GeomapInstanceState;
     if (!state?.layers) {
       // TODO? show spinner?
