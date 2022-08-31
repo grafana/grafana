@@ -19,7 +19,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
-import { queriesWithUpdatedReferences } from './util';
 
 interface Props {
   // The query configuration
@@ -110,12 +109,8 @@ export class QueryRows extends PureComponent<Props> {
   onChangeQuery = (query: DataQuery, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
-    // find what queries still have a reference to the old name
-    const previousRefId = queries[index].refId;
-    const newRefId = query.refId;
-
     onQueriesChange(
-      queriesWithUpdatedReferences(queries, previousRefId, newRefId).map((item, itemIndex) => {
+      queries.map((item, itemIndex) => {
         if (itemIndex !== index) {
           return item;
         }

@@ -5,6 +5,7 @@ import { LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Alert, Button, Stack, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 import { RuleFormValues } from '../../../types/rule-form';
@@ -57,6 +58,13 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     return () => currentRunner.destroy();
   }, []);
 
+  // run the queries at least once if we're editing an existing one
+  useEffect(() => {
+    if (editingExistingRule) {
+      runQueries();
+    }
+  }, [editingExistingRule, runQueries]);
+
   const noCompatibleDataSources = getDefaultOrFirstCompatibleDataSource() === undefined;
 
   const isDataLoading = useMemo(() => {
@@ -88,6 +96,23 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     [condition, queries, setValue]
   );
 
+  const onChangeQueries = useCallback(
+    (updatedQueries: AlertQuery[]) => {
+      dispatch({ type: 'setDataQueries', payload: updatedQueries });
+
+      // check if we need to rewire expressions
+      updatedQueries.forEach((query, index) => {
+        const oldRefId = queries[index].refId;
+        const newRefId = query.refId;
+
+        if (oldRefId !== newRefId) {
+          dispatch({ type: 'rewireExpressions', payload: { oldRefId, newRefId } });
+        }
+      });
+    },
+    [queries]
+  );
+
   return (
     <RuleEditorSection stepNo={1} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
@@ -100,9 +125,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           onSetCondition={(refId) => {
             setValue('condition', refId);
           }}
-          onChangeQueries={(queries) => {
-            dispatch({ type: 'setDataQueries', payload: queries });
-          }}
+          onChangeQueries={onChangeQueries}
         />
         {/* Expression Queries */}
         <ExpressionsEditor

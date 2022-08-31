@@ -10,7 +10,7 @@ import { defaultCondition } from 'app/features/expressions/utils/expressionTypes
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { refIdExists } from '../util';
+import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
 interface State {
   queries: AlertQuery[];
@@ -25,6 +25,7 @@ type Action =
   | RemoveExpression
   | UpdateExpression
   | UpdateExpressionRefId
+  | RewireExpressions
   | UpdateExpressionType;
 
 // panel data actions
@@ -39,6 +40,7 @@ type AddNewExpression = { type: 'addNewExpression' };
 type RemoveExpression = { type: 'removeExpression'; payload: string };
 type UpdateExpression = { type: 'updateExpression'; payload: ExpressionQuery };
 type UpdateExpressionRefId = { type: 'updateExpressionRefId'; payload: { oldRefId: string; newRefId: string } };
+type RewireExpressions = { type: 'rewireExpressions'; payload: { oldRefId: string; newRefId: string } };
 type UpdateExpressionType = { type: 'updateExpressionType'; payload: { refId: string; type: ExpressionQueryType } };
 
 export function queriesAndExpressionsReducer(state: State, action: Action): State {
@@ -90,6 +92,11 @@ export function queriesAndExpressionsReducer(state: State, action: Action): Stat
         ...state,
         queries: queries.filter((query) => query.refId !== action.payload),
       };
+    case 'rewireExpressions':
+      return {
+        ...state,
+        queries: queriesWithUpdatedReferences(queries, action.payload.oldRefId, action.payload.newRefId),
+      };
     case 'updateExpressionRefId':
       const { newRefId, oldRefId } = action.payload;
 
@@ -99,9 +106,11 @@ export function queriesAndExpressionsReducer(state: State, action: Action): Stat
         return state;
       }
 
+      const updatedQueries = queriesWithUpdatedReferences(queries, oldRefId, newRefId);
+
       return {
         ...state,
-        queries: queries.map((query) => {
+        queries: updatedQueries.map((query) => {
           if (query.refId === oldRefId) {
             return {
               ...query,
