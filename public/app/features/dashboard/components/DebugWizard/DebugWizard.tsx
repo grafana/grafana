@@ -97,7 +97,7 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
   return (
     <Drawer
       title={`Debug: ${panelTitle}`}
-      width="50%"
+      width="75%"
       onClose={onClose}
       expandable
       scrollableContent
@@ -175,6 +175,8 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
           </div>
 
           <Button onClick={doImportDashboard}>Preview</Button>
+
+          <iframe src={`/dashboard/new?orgId=1&kiosk`} width="100%" />
         </div>
       )}
     </Drawer>
