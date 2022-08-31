@@ -13,7 +13,6 @@ import { Table } from 'app/percona/shared/components/Elements/Table';
 import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
-import { Databases } from 'app/percona/shared/core';
 import { fetchKubernetesAction, deleteKubernetesAction, addKubernetesAction } from 'app/percona/shared/core/reducers';
 import {
   getKubernetes as getKubernetesSelector,
@@ -36,7 +35,7 @@ import { Kubernetes, OperatorToUpdate, NewKubernetesCluster } from './Kubernetes
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus';
 import { ManageComponentsVersionsModal } from './ManageComponentsVersionsModal/ManageComponentsVersionsModal';
 import { UpdateOperatorModal } from './OperatorStatusItem/KubernetesOperatorStatus/UpdateOperatorModal/UpdateOperatorModal';
-import { OperatorStatusItem } from './OperatorStatusItem/OperatorStatusItem';
+import { OperatorStatusRow } from './OperatorStatusRow/OperatorStatusRow';
 import { PortalK8sFreeClusterPromotingMessage } from './PortalK8sFreeClusterPromotingMessage/PortalK8sFreeClusterPromotingMessage';
 import { ViewClusterConfigModal } from './ViewClusterConfigModal/ViewClusterConfigModal';
 
@@ -82,24 +81,12 @@ export const KubernetesInventory: FC = () => {
       {
         Header: Messages.kubernetes.table.operatorsColumn,
         accessor: (element: Kubernetes) => (
-          <div>
-            <OperatorStatusItem
-              databaseType={Databases.mysql}
-              operator={element.operators.pxc}
-              kubernetes={element}
-              setSelectedCluster={setSelectedCluster}
-              setOperatorToUpdate={setOperatorToUpdate}
-              setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
-            />
-            <OperatorStatusItem
-              databaseType={Databases.mongodb}
-              operator={element.operators.psmdb}
-              kubernetes={element}
-              setSelectedCluster={setSelectedCluster}
-              setOperatorToUpdate={setOperatorToUpdate}
-              setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
-            />
-          </div>
+          <OperatorStatusRow
+            element={element}
+            setSelectedCluster={setSelectedCluster}
+            setOperatorToUpdate={setOperatorToUpdate}
+            setUpdateOperatorModalVisible={setUpdateOperatorModalVisible}
+          />
         ),
       },
       {

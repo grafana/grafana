@@ -18,12 +18,22 @@ import { getInitialValues, updateDatabaseClusterNameInitialValue } from './AddDB
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
 
-export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({ kubernetes, isVisible, setVisible, onSubmit }) => {
+export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
+  kubernetes,
+  isVisible,
+  setVisible,
+  onSubmit,
+  preSelectedKubernetesCluster,
+}) => {
   const styles = useStyles(getStyles);
   const { loading } = useSelector(getAddDbCluster);
   const [showPMMAddressWarning] = useShowPMMAddressWarning();
 
-  const initialValues = useMemo(() => getInitialValues(kubernetes), [kubernetes]);
+  const initialValues = useMemo(
+    () => getInitialValues(kubernetes, preSelectedKubernetesCluster),
+    [kubernetes, preSelectedKubernetesCluster]
+  );
+
   const updatedItialValues = useMemo(
     () => (isVisible ? updateDatabaseClusterNameInitialValue(initialValues) : initialValues),
     [initialValues, isVisible]

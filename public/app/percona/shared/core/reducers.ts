@@ -232,6 +232,27 @@ export const addKubernetesAction = createAsyncThunk(
     await thunkAPI.dispatch(fetchKubernetesAction());
   }
 );
+export interface PerconaDBaaSState {
+  selectedKubernetesCluster: Kubernetes | null;
+}
+
+export const initialDBaaSState: PerconaDBaaSState = {
+  selectedKubernetesCluster: null,
+};
+
+const perconaDBaaSSlice = createSlice({
+  name: 'perconaDBaaS',
+  initialState: initialDBaaSState,
+  reducers: {
+    selectKubernetesCluster: (state, action: PayloadAction<Kubernetes | null>): PerconaDBaaSState => ({
+      ...state,
+      selectedKubernetesCluster: action.payload,
+    }),
+  },
+});
+
+export const { selectKubernetesCluster } = perconaDBaaSSlice.actions;
+export const perconaDBaaSReducers = perconaDBaaSSlice.reducer;
 
 export const addDbClusterAction = createAsyncThunk(
   'percona/addDbCluster',
@@ -373,6 +394,7 @@ export default {
     settings: settingsReducer,
     updateSettings: updateSettingsReducer,
     user: perconaUserReducers,
+    dbaas: perconaDBaaSReducers,
     kubernetes: kubernetesReducer,
     deleteKubernetes: deleteKubernetesReducer,
     addKubernetes: addKubernetesReducer,

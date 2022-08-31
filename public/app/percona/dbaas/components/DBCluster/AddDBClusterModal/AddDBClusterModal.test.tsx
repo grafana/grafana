@@ -7,6 +7,8 @@ import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
+import { KubernetesClusterStatus } from '../../Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
+import { KubernetesOperatorStatus } from '../../Kubernetes/OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';
 import { kubernetesStub } from '../../Kubernetes/__mocks__/kubernetesStubs';
 
 import { AddDBClusterModal } from './AddDBClusterModal';
@@ -49,6 +51,7 @@ describe('AddDBClusterModal::', () => {
             isVisible
             setVisible={setVisibleStub}
             onSubmit={onDBClusterAddedStub}
+            preSelectedKubernetesCluster={null}
           />
         </Router>
       </Provider>
@@ -81,6 +84,7 @@ describe('AddDBClusterModal::', () => {
             isVisible
             setVisible={setVisibleStub}
             onSubmit={onDBClusterAddedStub}
+            preSelectedKubernetesCluster={null}
           />
         </Router>
       </Provider>
@@ -108,6 +112,7 @@ describe('AddDBClusterModal::', () => {
             isVisible
             setVisible={setVisibleStub}
             onSubmit={onDBClusterAddedStub}
+            preSelectedKubernetesCluster={null}
           />
         </Router>
       </Provider>
@@ -135,6 +140,7 @@ describe('AddDBClusterModal::', () => {
             isVisible
             setVisible={setVisibleStub}
             onSubmit={onDBClusterAddedStub}
+            preSelectedKubernetesCluster={null}
           />
         </Router>
       </Provider>
@@ -145,6 +151,56 @@ describe('AddDBClusterModal::', () => {
         databaseType: expect.objectContaining({ value: 'mongodb' }),
         kubernetesCluster: expect.objectContaining({
           value: 'Cluster 1',
+        }),
+        name: expect.stringContaining('mongodb-'),
+      })
+    );
+  });
+
+  it('form should have default values from preselectedCluster', () => {
+    const preSelectedCluster = {
+      kubernetesClusterName: 'testPreselectedCluster',
+      operators: {
+        psmdb: {
+          availableVersion: '1.12.0',
+          status: KubernetesOperatorStatus.ok,
+          version: '1.11.0',
+        },
+        pxc: {
+          availableVersion: undefined,
+          status: KubernetesOperatorStatus.ok,
+          version: '1.11.0',
+        },
+      },
+      status: KubernetesClusterStatus.ok,
+    };
+
+    render(
+      <Provider
+        store={configureStore({
+          percona: {
+            user: { isAuthorized: true },
+            settings: { loading: false, result: { isConnectedToPortal: true, alertingEnabled: true } },
+          },
+        } as StoreState)}
+      >
+        <Router history={locationService.getHistory()}>
+          <AddDBClusterModal
+            kubernetes={kubernetesStub}
+            isVisible
+            setVisible={setVisibleStub}
+            onSubmit={onDBClusterAddedStub}
+            preSelectedKubernetesCluster={preSelectedCluster}
+          />
+        </Router>
+      </Provider>
+    );
+
+    expect(updateDatabaseClusterNameInitialValue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        databaseType: expect.objectContaining({ value: 'mongodb' }),
+        kubernetesCluster: expect.objectContaining({
+          value: 'testPreselectedCluster',
         }),
         name: expect.stringContaining('mongodb-'),
       })
