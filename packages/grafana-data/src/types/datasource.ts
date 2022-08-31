@@ -14,7 +14,7 @@ import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
-import { DataSourceRef, WithAccessControlMetadata } from '.';
+import { DashboardLoadedArgs, DataSourceRef, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -355,6 +355,12 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
+
+  /*
+   * Optionally, implement this method to receive data about a dashboard immediately after it's been loaded
+   * @alpha -- experimental
+   */
+  onDashboardLoaded?(dashboardLoadedArgs: DashboardLoadedArgs<TQuery>): void;
 }
 
 export interface MetadataInspectorProps<

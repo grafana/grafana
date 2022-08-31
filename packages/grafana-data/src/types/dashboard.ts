@@ -38,3 +38,9 @@ export interface PanelModel<TOptions = any, TCustomFieldConfig = any> {
   /** alerting v1 object */
   alert?: any;
 }
+
+export interface DashboardLoadedArgs<TQuery extends DataQuery = DataQuery> {
+  dashboardId: string;
+  orgId?: number;
+  queries: TQuery[];
+}
