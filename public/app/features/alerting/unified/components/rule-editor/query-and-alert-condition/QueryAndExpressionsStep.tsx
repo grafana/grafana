@@ -11,6 +11,7 @@ import { RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
+import { refIdExists } from '../util';
 
 import { AlertType } from './AlertType';
 import { Query } from './Query';
@@ -43,7 +44,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   // whenever we update the queries we have to update the form too
   useEffect(() => {
     setValue('queries', queries, { shouldValidate: false });
-    runQueries();
   }, [queries, runQueries, setValue]);
 
   // set up the AlertQueryRunner
@@ -69,6 +69,24 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   }, [queries]);
 
   const emptyQueries = queries.length === 0;
+
+  const onUpdateRefId = useCallback(
+    (oldRefId: string, newRefId: string) => {
+      const newRefIdExists = refIdExists(queries, newRefId);
+      // TODO we should set an error and explain what went wrong instead of just refusing to update
+      if (newRefIdExists) {
+        return;
+      }
+
+      dispatch({ type: 'updateExpressionRefId', payload: { oldRefId, newRefId } });
+
+      // update condition too if refId was updated
+      if (condition === oldRefId) {
+        setValue('condition', newRefId);
+      }
+    },
+    [condition, queries, setValue]
+  );
 
   return (
     <RuleEditorSection stepNo={1} title="Set a query and alert condition">
@@ -100,9 +118,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           onRemoveExpression={(refId) => {
             dispatch({ type: 'removeExpression', payload: refId });
           }}
-          onUpdateRefId={(oldRefId, newRefId) => {
-            dispatch({ type: 'updateExpressionRefId', payload: { oldRefId, newRefId } });
-          }}
+          onUpdateRefId={onUpdateRefId}
           onUpdateExpressionType={(refId, type) => {
             dispatch({ type: 'updateExpressionType', payload: { refId, type } });
           }}

@@ -67,6 +67,10 @@ export function updateMathExpressionRefs(expression: string, previousRefId: stri
   return expression.replace(oldExpression, newExpression);
 }
 
+export function refIdExists(queries: AlertQuery[], refId: string): boolean {
+  return queries.find((query) => query.refId === refId) !== undefined;
+}
+
 // some gateways (like Istio) will decode "/" and "\" characters – this will cause 404 errors for any API call
 // that includes these values in the URL (ie. /my/path%2fto/resource -> /my/path/to/resource)
 //

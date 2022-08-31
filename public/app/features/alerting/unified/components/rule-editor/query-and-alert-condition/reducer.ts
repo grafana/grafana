@@ -10,6 +10,7 @@ import { defaultCondition } from 'app/features/expressions/utils/expressionTypes
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { refIdExists } from '../util';
 
 interface State {
   queries: AlertQuery[];
@@ -93,8 +94,7 @@ export function queriesAndExpressionsReducer(state: State, action: Action): Stat
       const { newRefId, oldRefId } = action.payload;
 
       // if the new refId already exists we just refuse to update the state
-      // TODO we should set an error and explain what went wrong
-      const newRefIdExists = state.queries.find((query) => query.refId === newRefId);
+      const newRefIdExists = refIdExists(state.queries, newRefId);
       if (newRefIdExists) {
         return state;
       }
