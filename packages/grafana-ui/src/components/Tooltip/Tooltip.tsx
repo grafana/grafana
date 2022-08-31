@@ -28,13 +28,15 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
     const handleKeyDown = (enterKey: KeyboardEvent) => {
       if (enterKey.key === 'Escape') {
         setControlledVisible(false);
+      } else {
+        setControlledVisible(show);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [show]);
 
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
     visible: controlledVisible,
