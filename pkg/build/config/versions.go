@@ -47,6 +47,34 @@ var Versions = VersionMap{
 		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
 		CDNAssetsBucket:           "grafana-static-assets",
 	},
+	CustomMode: {
+		Variants: []Variant{
+			VariantArmV6,
+			VariantArmV7,
+			VariantArmV7Musl,
+			VariantArm64,
+			VariantArm64Musl,
+			VariantDarwinAmd64,
+			VariantWindowsAmd64,
+			VariantLinuxAmd64,
+			VariantLinuxAmd64Musl,
+		},
+		PluginSignature: PluginSignature{
+			Sign:      true,
+			AdminSign: true,
+		},
+		Docker: Docker{
+			ShouldSave: true,
+			Architectures: []Architecture{
+				ArchAMD64,
+				ArchARM64,
+				ArchARMv7, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
+			},
+		},
+		PackagesBucket:            "grafana-downloads",
+		PackagesBucketEnterprise2: "grafana-downloads-enterprise2",
+		CDNAssetsBucket:           "grafana-static-assets",
+	},
 	ReleaseBranchMode: {
 		Variants: []Variant{
 			VariantArmV6,

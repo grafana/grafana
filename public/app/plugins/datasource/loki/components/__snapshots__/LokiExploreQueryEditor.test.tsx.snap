@@ -321,6 +321,11 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       },
       "type": "",
       "uid": "",
+      "variables": LokiVariableSupport {
+        "datasource": [Circular],
+        "editor": [Function],
+        "query": [Function],
+      },
     }
   }
   history={Array []}
