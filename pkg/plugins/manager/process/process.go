@@ -34,7 +34,7 @@ func NewManager(pluginRegistry registry.Service) *Manager {
 
 func (m *Manager) Run(ctx context.Context) error {
 	<-ctx.Done()
-	m.Shutdown(ctx)
+	m.shutdown(ctx)
 	return ctx.Err()
 }
 
@@ -52,7 +52,7 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 		return nil
 	}
 
-	m.log.Info("Plugin registered", "pluginId", p.ID)
+	m.log.Info("Plugin registered", "pluginID", p.ID)
 	m.mu.Lock()
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
@@ -68,7 +68,7 @@ func (m *Manager) Stop(ctx context.Context, pluginID string) error {
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
-	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	m.log.Debug("Stopping plugin process", "pluginID", p.ID)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -83,10 +83,10 @@ func (m *Manager) Stop(ctx context.Context, pluginID string) error {
 	return nil
 }
 
-// Shutdown stops all backend plugin processes
-func (m *Manager) Shutdown(ctx context.Context) {
+// shutdown stops all backend plugin processes
+func (m *Manager) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range m.pluginRegistry.Plugins(ctx) { // skip decommissioned?
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
 		wg.Add(1)
 		go func(p backendplugin.Plugin, ctx context.Context) {
 			defer wg.Done()

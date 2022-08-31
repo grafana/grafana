@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
 import (
 	"github.com/grafana/thema"
@@ -37,6 +37,7 @@ Panel: thema.#Lineage & {
 					} @cuetsy(kind="interface")
 
 					PanelFieldConfig: {
+						ui.AxisConfig
 						ui.HideableFieldConfig
 						// Controls line width of the bars.
 						lineWidth?:    uint32 & <= 10 | *1

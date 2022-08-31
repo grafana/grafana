@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -41,6 +42,7 @@ type Loader struct {
 	pluginFinder       finder.Finder
 	processManager     process.Service
 	pluginRegistry     registry.Service
+	pluginStorage      storage.Manager
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	log                log.Logger
@@ -212,13 +214,11 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
-	path, err := filepath.Rel(l.cfg.PluginsPath, plugin.PluginDir)
-	if err != nil || strings.HasPrefix(path, ".."+string(filepath.Separator)) {
-		return plugins.ErrUninstallOutsideOfPluginDir
+	if err := l.pluginStorage.Remove(ctx, pluginID); err != nil {
+		return err
 	}
 
-	if err = l.unregisterAndStop(ctx, plugin); err != nil {
+	if err := l.unregisterAndStop(ctx, plugin); err != nil {
 		return err
 	}
 	return nil

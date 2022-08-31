@@ -34,24 +34,20 @@ func NewEnt(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginLoader load
 }
 
 func (m *PluginInstallerEnt) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
-	return m.loadPlugins(ctx, source.Class, source.Paths)
+	_, err := m.pluginLoader.Load(ctx, source.Class, source.Paths)
+	if err != nil {
+		m.log.Error("Could not load plugins", "paths", source.Paths, "err", err)
+		return err
+	}
+	return nil
 }
 
-func (m *PluginInstallerEnt) Add(ctx context.Context, pluginID, version string) error {
+func (m *PluginInstallerEnt) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
 	// TODO Call grafana.com API
 	return nil
 }
 
 func (m *PluginInstallerEnt) Remove(ctx context.Context, pluginID string) error {
 	// TODO Call grafana.com API
-	return nil
-}
-
-func (m *PluginInstallerEnt) loadPlugins(ctx context.Context, class plugins.Class, pluginPaths []string) error {
-	_, err := m.pluginLoader.Load(ctx, class, pluginPaths)
-	if err != nil {
-		m.log.Error("Could not load plugins", "paths", pluginPaths, "err", err)
-		return err
-	}
 	return nil
 }

@@ -44,7 +44,6 @@ type RuleStore interface {
 	DeleteAlertInstancesByRuleUID(ctx context.Context, orgID int64, ruleUID string) error
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) error
-	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) error
 	// GetRuleGroups returns the unique rule groups across all organizations.
 	GetRuleGroups(ctx context.Context, query *ngmodels.ListRuleGroupsQuery) error
@@ -416,23 +415,72 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 	return folder, nil
 }
 
-// GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
-func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		alerts := make([]*ngmodels.AlertRule, 0)
-		q := sess.Table(ngmodels.AlertRule{})
-		if len(st.Cfg.DisabledOrgs) > 0 {
-			excludeOrgs := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
-			for orgID := range st.Cfg.DisabledOrgs {
-				excludeOrgs = append(excludeOrgs, orgID)
-			}
-			q = q.NotIn("org_id", excludeOrgs...)
+func (st DBstore) getFilterByOrgsString() (string, []interface{}) {
+	if len(st.Cfg.DisabledOrgs) == 0 {
+		return "", nil
+	}
+	builder := strings.Builder{}
+	builder.WriteString("org_id NOT IN(")
+	idx := len(st.Cfg.DisabledOrgs)
+	args := make([]interface{}, 0, len(st.Cfg.DisabledOrgs))
+	for orgId := range st.Cfg.DisabledOrgs {
+		args = append(args, orgId)
+		builder.WriteString("?")
+		idx--
+		if idx == 0 {
+			builder.WriteString(")")
+			break
 		}
-		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
-		if err := q.Find(&alerts); err != nil {
+		builder.WriteString(",")
+	}
+	return builder.String(), args
+}
+
+func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
+	var result []ngmodels.AlertRuleKeyWithVersion
+	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		alertRulesSql := "SELECT org_id, uid, version FROM alert_rule"
+		filter, args := st.getFilterByOrgsString()
+		if filter != "" {
+			alertRulesSql += " WHERE " + filter
+		}
+		if err := sess.SQL(alertRulesSql, args...).Find(&result); err != nil {
 			return err
 		}
-		query.Result = alerts
+		return nil
+	})
+	return result, err
+}
+
+// GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
+func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
+	var folders []struct {
+		Uid   string
+		Title string
+	}
+	var rules []*ngmodels.AlertRule
+	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		foldersSql := "SELECT D.uid, D.title FROM dashboard AS D WHERE is_folder = 1 AND EXISTS (SELECT 1 FROM alert_rule AS A WHERE D.uid = A.namespace_uid)"
+		alertRulesSql := "SELECT * FROM alert_rule"
+		filter, args := st.getFilterByOrgsString()
+		if filter != "" {
+			foldersSql += " AND " + filter
+			alertRulesSql += " WHERE " + filter
+		}
+
+		if err := sess.SQL(alertRulesSql, args...).Find(&rules); err != nil {
+			return fmt.Errorf("failed to fetch alert rules: %w", err)
+		}
+		query.ResultRules = rules
+		if query.PopulateFolders {
+			if err := sess.SQL(foldersSql, args...).Find(&folders); err != nil {
+				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
+			}
+			query.ResultFoldersTitles = make(map[string]string, len(folders))
+			for _, folder := range folders {
+				query.ResultFoldersTitles[folder.Uid] = folder.Title
+			}
+		}
 		return nil
 	})
 }

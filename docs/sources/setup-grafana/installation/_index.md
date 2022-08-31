@@ -49,13 +49,15 @@ Grafana requires a database to store its configuration data, such as users, data
 
 Grafana supports the following databases:
 
-- SQLite
-- MySQL
-- PostgreSQL
+- [SQLite 3](https://www.sqlite.org/index.html)
+- [MySQL 5.7+](https://www.mysql.com/support/supportedplatforms/database.html)
+- [PostgreSQL 10+](https://www.postgresql.org/support/versioning/)
 
 By default, Grafana installs with and uses SQLite, which is an embedded database stored in the Grafana installation location.
 
-> **Note:** PostgreSQL versions 9.5.18, 9.4.23, 9.6.14, 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
+Grafana will support the versions of these databases that are officially supported by the project at the time of a Grafana version's release. When a version becomes unsupported, Grafana may also drop support for that version. See the links above for the support policies for each project.
+
+> **Note:** PostgreSQL versions 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
 
 ## Supported web browsers
 

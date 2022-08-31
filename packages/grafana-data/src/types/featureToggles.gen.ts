@@ -43,6 +43,7 @@ export interface FeatureToggles {
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
   cloudWatchDynamicLabels?: boolean;
@@ -63,4 +64,5 @@ export interface FeatureToggles {
   internationalization?: boolean;
   topnav?: boolean;
   customBranding?: boolean;
+  traceqlEditor?: boolean;
 }
