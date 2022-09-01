@@ -296,10 +296,18 @@ func toHTTPHeaders(rawOriginal interface{}) http.Header {
 	switch original := rawOriginal.(type) {
 	case map[string]string:
 		for k, v := range original {
+			// This is temporary fix. List of allowed headers should be configurable.
+			if k != "Cookie" {
+				continue
+			}
 			headers.Set(k, v)
 		}
 	case map[string][]string:
 		for k, vv := range original {
+			// This is temporary fix. List of allowed headers should be configurable.
+			if k != "Cookie" {
+				continue
+			}
 			for _, v := range vv {
 				headers.Set(k, v)
 			}
