@@ -12,7 +12,7 @@ export function PluginPage({ children, pageNav, layout }: PluginPageProps) {
 
   return (
     <Page navModel={context.sectionNav} pageNav={pageNav} layout={pageLayout}>
-      {children}
+      <Page.Contents>{children}</Page.Contents>
     </Page>
   );
 }

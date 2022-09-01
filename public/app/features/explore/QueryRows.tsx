@@ -2,14 +2,15 @@ import { createSelector } from '@reduxjs/toolkit';
 import React, { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { CoreApp, DataQuery } from '@grafana/data';
+import { CoreApp, DataQuery, DataSourceInstanceSettings } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { ExploreId } from 'app/types/explore';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
-import { runQueries, changeQueriesAction } from './state/query';
+import { runQueries, changeQueriesAction, importQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
@@ -66,9 +67,16 @@ export const QueryRows = ({ exploreId }: Props) => {
     [onChange, queries]
   );
 
+  const onMixedDataSourceChange = async (ds: DataSourceInstanceSettings, query: DataQuery) => {
+    const queryDatasource = await getDataSourceSrv().get(query.datasource);
+    const targetDS = await getDataSourceSrv().get({ uid: ds.uid });
+    dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, query.refId));
+  };
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
+      onDatasourceChange={(ds: DataSourceInstanceSettings, query: DataQuery) => onMixedDataSourceChange(ds, query)}
       queries={queries}
       onQueriesChange={onChange}
       onAddQuery={onAddQuery}

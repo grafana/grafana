@@ -76,7 +76,7 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   const pluginRoot = plugin.root && (
     <plugin.root
       meta={plugin.meta}
-      basename={config.appSubUrl + match.url}
+      basename={match.url}
       onNavChanged={onNavChanged}
       query={queryParams as KeyValue}
       path={location.pathname}
@@ -123,7 +123,7 @@ function buildPluginSectionNav(location: H.Location, pluginNav: NavModel | null,
       return {
         ...child,
         children: child.children.map((pluginPage) => {
-          if (currentUrl === pluginPage.url) {
+          if (currentUrl.startsWith(pluginPage.url ?? '')) {
             activePage = {
               ...pluginPage,
               active: true,
