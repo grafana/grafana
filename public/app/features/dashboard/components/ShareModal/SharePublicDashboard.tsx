@@ -117,7 +117,8 @@ export const SharePublicDashboard = (props: Props) => {
             className="text-link"
           >
             GitHub discussion
-          </a>.
+          </a>
+          .
           <hr />
           <div>
             Before you click Save, please acknowledge the following information: <br />
