@@ -1,7 +1,7 @@
-import React, { FC, useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Alert, Button, Stack, Tooltip } from '@grafana/ui';
@@ -17,7 +17,17 @@ import { refIdExists } from '../util';
 
 import { AlertType } from './AlertType';
 import { Query } from './Query';
-import { queriesAndExpressionsReducer } from './reducer';
+import {
+  addNewDataQuery,
+  addNewExpression,
+  queriesAndExpressionsReducer,
+  removeExpression,
+  rewireExpressions,
+  setDataQueries,
+  updateExpression,
+  updateExpressionRefId,
+  updateExpressionType,
+} from './reducer';
 
 interface Props {
   editingExistingRule: boolean;
@@ -26,12 +36,13 @@ interface Props {
 export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   const runner = useRef(new AlertingQueryRunner());
   const { setValue, getValues, watch } = useFormContext<RuleFormValues>();
+  const [panelData, setPanelData] = useState<Record<string, PanelData>>({});
 
   const initialState = {
     queries: getValues('queries'),
     panelData: {},
   };
-  const [{ queries, panelData }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
+  const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
 
   const condition = watch('condition');
 
@@ -53,7 +64,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     const currentRunner = runner.current;
 
     runner.current.get().subscribe((data) => {
-      dispatch({ type: 'updatePanelData', payload: data });
+      setPanelData(data);
     });
 
     return () => currentRunner.destroy();
@@ -80,7 +91,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
         return;
       }
 
-      dispatch({ type: 'updateExpressionRefId', payload: { oldRefId, newRefId } });
+      dispatch(updateExpressionRefId({ oldRefId, newRefId }));
 
       // update condition too if refId was updated
       if (condition === oldRefId) {
@@ -92,7 +103,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
-      dispatch({ type: 'setDataQueries', payload: updatedQueries });
+      dispatch(setDataQueries(updatedQueries));
 
       // check if we need to rewire expressions
       updatedQueries.forEach((query, index) => {
@@ -100,7 +111,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
         const newRefId = query.refId;
 
         if (oldRefId !== newRefId) {
-          dispatch({ type: 'rewireExpressions', payload: { oldRefId, newRefId } });
+          dispatch(rewireExpressions({ oldRefId, newRefId }));
         }
       });
     },
@@ -138,14 +149,14 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
             setValue('condition', refId);
           }}
           onRemoveExpression={(refId) => {
-            dispatch({ type: 'removeExpression', payload: refId });
+            dispatch(removeExpression(refId));
           }}
           onUpdateRefId={onUpdateRefId}
           onUpdateExpressionType={(refId, type) => {
-            dispatch({ type: 'updateExpressionType', payload: { refId, type } });
+            dispatch(updateExpressionType({ refId, type }));
           }}
           onUpdateQueryExpression={(model) => {
-            dispatch({ type: 'updateExpression', payload: model });
+            dispatch(updateExpression(model));
           }}
         />
         {/* action buttons */}
@@ -155,7 +166,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
               type="button"
               icon="plus"
               onClick={() => {
-                dispatch({ type: 'addNewDataQuery' });
+                dispatch(addNewDataQuery());
               }}
               variant="secondary"
               aria-label={selectors.components.QueryTab.addQuery}
@@ -170,7 +181,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
               type="button"
               icon="plus"
               onClick={() => {
-                dispatch({ type: 'addNewExpression' });
+                dispatch(addNewExpression());
               }}
               variant="secondary"
             >

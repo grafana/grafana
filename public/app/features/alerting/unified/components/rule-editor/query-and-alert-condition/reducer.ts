@@ -1,4 +1,6 @@
-import { PanelData, DataQuery, RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import { createAction, createReducer } from '@reduxjs/toolkit';
+
+import { DataQuery, RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import {
   dataSource as expressionDatasource,
@@ -14,152 +16,118 @@ import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
 interface State {
   queries: AlertQuery[];
-  panelData: Record<string, PanelData>;
 }
 
-type Action =
-  | UpdatePanelDataAction
-  | AddNewDataQuery
-  | SetDataQueries
-  | AddNewExpression
-  | RemoveExpression
-  | UpdateExpression
-  | UpdateExpressionRefId
-  | RewireExpressions
-  | UpdateExpressionType;
+const initialState: State = {
+  queries: [],
+};
 
-// panel data actions
-type UpdatePanelDataAction = { type: 'updatePanelData'; payload: Record<string, PanelData> };
+export const addNewDataQuery = createAction('addNewDataQuery');
+export const setDataQueries = createAction<AlertQuery[]>('setDataQueries');
 
-// data queries actions
-type AddNewDataQuery = { type: 'addNewDataQuery' };
-type SetDataQueries = { type: 'setDataQueries'; payload: AlertQuery[] };
+export const addNewExpression = createAction('addNewExpression');
+export const removeExpression = createAction<string>('removeExpression');
+export const updateExpression = createAction<ExpressionQuery>('updateExpression');
+export const updateExpressionRefId = createAction<{ oldRefId: string; newRefId: string }>('updateExpressionRefId');
+export const rewireExpressions = createAction<{ oldRefId: string; newRefId: string }>('rewireExpressions');
+export const updateExpressionType = createAction<{ refId: string; type: ExpressionQueryType }>('updateExpressionType');
 
-// expressions actions
-type AddNewExpression = { type: 'addNewExpression' };
-type RemoveExpression = { type: 'removeExpression'; payload: string };
-type UpdateExpression = { type: 'updateExpression'; payload: ExpressionQuery };
-type UpdateExpressionRefId = { type: 'updateExpressionRefId'; payload: { oldRefId: string; newRefId: string } };
-type RewireExpressions = { type: 'rewireExpressions'; payload: { oldRefId: string; newRefId: string } };
-type UpdateExpressionType = { type: 'updateExpressionType'; payload: { refId: string; type: ExpressionQueryType } };
-
-export function queriesAndExpressionsReducer(state: State, action: Action): State {
-  const { queries } = state;
-
-  switch (action.type) {
-    case 'updatePanelData':
-      return { ...state, panelData: action.payload };
-    case 'addNewDataQuery':
+export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
+  // data queries actions
+  builder
+    .addCase(addNewDataQuery, (state) => {
       const datasource = getDefaultOrFirstCompatibleDataSource();
       if (!datasource) {
-        return state;
+        return;
       }
 
-      return {
-        ...state,
-        queries: addQuery(state.queries, {
-          datasourceUid: datasource.uid,
-          model: {
-            refId: '',
-            datasource: {
-              type: datasource.type,
-              uid: datasource.uid,
-            },
+      state.queries = addQuery(state.queries, {
+        datasourceUid: datasource.uid,
+        model: {
+          refId: '',
+          datasource: {
+            type: datasource.type,
+            uid: datasource.uid,
           },
-        }),
-      };
-    case 'setDataQueries':
+        },
+      });
+    })
+    .addCase(setDataQueries, (state, { payload }) => {
       const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
+      state.queries = [...payload, ...expressionQueries];
+    });
 
-      return {
-        ...state,
-        queries: [...action.payload, ...expressionQueries],
-      };
-    case 'addNewExpression':
-      return {
-        ...state,
-        queries: addQuery(state.queries, {
-          datasourceUid: ExpressionDatasourceUID,
-          model: expressionDatasource.newQuery({
-            type: ExpressionQueryType.classic,
-            conditions: [{ ...defaultCondition, query: { params: [] } }],
-            expression: '',
-          }),
+  // expressions actions
+  builder
+    .addCase(addNewExpression, (state) => {
+      state.queries = addQuery(state.queries, {
+        datasourceUid: ExpressionDatasourceUID,
+        model: expressionDatasource.newQuery({
+          type: ExpressionQueryType.classic,
+          conditions: [{ ...defaultCondition, query: { params: [] } }],
+          expression: '',
         }),
-      };
-    case 'removeExpression':
-      return {
-        ...state,
-        queries: queries.filter((query) => query.refId !== action.payload),
-      };
-    case 'rewireExpressions':
-      return {
-        ...state,
-        queries: queriesWithUpdatedReferences(queries, action.payload.oldRefId, action.payload.newRefId),
-      };
-    case 'updateExpressionRefId':
-      const { newRefId, oldRefId } = action.payload;
+      });
+    })
+    .addCase(removeExpression, (state, { payload }) => {
+      state.queries = state.queries.filter((query) => query.refId !== payload);
+    })
+    .addCase(updateExpression, (state, { payload }) => {
+      state.queries = state.queries.map((query) => {
+        return query.refId === payload.refId
+          ? {
+              ...query,
+              model: payload,
+            }
+          : query;
+      });
+    })
+    .addCase(updateExpressionRefId, (state, { payload }) => {
+      const { newRefId, oldRefId } = payload;
 
       // if the new refId already exists we just refuse to update the state
       const newRefIdExists = refIdExists(state.queries, newRefId);
       if (newRefIdExists) {
-        return state;
+        return;
       }
 
-      const updatedQueries = queriesWithUpdatedReferences(queries, oldRefId, newRefId);
-
-      return {
-        ...state,
-        queries: updatedQueries.map((query) => {
-          if (query.refId === oldRefId) {
-            return {
-              ...query,
+      const updatedQueries = queriesWithUpdatedReferences(state.queries, oldRefId, newRefId);
+      state.queries = updatedQueries.map((query) => {
+        if (query.refId === oldRefId) {
+          return {
+            ...query,
+            refId: newRefId,
+            model: {
+              ...query.model,
               refId: newRefId,
-              model: {
-                ...query.model,
-                refId: newRefId,
-              },
-            };
-          }
+            },
+          };
+        }
 
-          return query;
-        }),
-      };
-    case 'updateExpressionType':
-      return {
-        ...state,
-        queries: queries.map((query) => {
-          return query.refId === action.payload.refId
-            ? {
-                ...query,
-                model: {
-                  ...expressionDatasource.newQuery({
-                    type: action.payload.type,
-                    conditions: [{ ...defaultCondition, query: { params: [] } }],
-                    expression: '',
-                  }),
-                  refId: action.payload.refId,
-                },
-              }
-            : query;
-        }),
-      };
-    case 'updateExpression':
-      return {
-        ...state,
-        queries: queries.map((query) => {
-          return query.refId === action.payload.refId
-            ? {
-                ...query,
-                model: action.payload,
-              }
-            : query;
-        }),
-      };
-    default:
-      return state;
-  }
-}
+        return query;
+      });
+    })
+    .addCase(rewireExpressions, (state, { payload }) => {
+      state.queries = queriesWithUpdatedReferences(state.queries, payload.oldRefId, payload.newRefId);
+    })
+    .addCase(updateExpressionType, (state, action) => {
+      state.queries = state.queries.map((query) => {
+        return query.refId === action.payload.refId
+          ? {
+              ...query,
+              model: {
+                ...expressionDatasource.newQuery({
+                  type: action.payload.type,
+                  conditions: [{ ...defaultCondition, query: { params: [] } }],
+                  expression: '',
+                }),
+                refId: action.payload.refId,
+              },
+            }
+          : query;
+      });
+    });
+});
 
 const addQuery = (queries: AlertQuery[], queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid'>): AlertQuery[] => {
   const refId = getNextRefIdChar(queries);
