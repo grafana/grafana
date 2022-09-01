@@ -98,16 +98,6 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) TimeSet
 		return ts
 	}
 
-	/*
-		TODO use time settings from public dashboard once we add a time range picker
-		to := pd.TimeSettings.Get("to").MustString("")
-		from := pd.TimeSettings.Get("from").MustString("")
-		if to != "" && from != "" {
-			ts.From = from
-			ts.To = to
-		}
-	*/
-
 	return ts
 }
 
