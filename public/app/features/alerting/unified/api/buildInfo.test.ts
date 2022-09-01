@@ -18,16 +18,12 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({ fetch }),
 }));
 
-const getMocks = () => {
-  return {
-    fetchRules: jest.mocked(fetchRules),
-    fetchTestRulerRulesGroup: jest.mocked(fetchTestRulerRulesGroup),
-  };
+const mocks = {
+  fetchRules: jest.mocked(fetchRules),
+  fetchTestRulerRulesGroup: jest.mocked(fetchTestRulerRulesGroup),
 };
 
-beforeEach(() => {
-  jest.clearAllMocks();
-});
+beforeEach(() => jest.clearAllMocks());
 
 describe('discoverDataSourceFeatures', () => {
   describe('When buildinfo returns 404 error', () => {
@@ -37,8 +33,6 @@ describe('discoverDataSourceFeatures', () => {
           status: 404,
         }))
       );
-
-      const mocks = getMocks();
 
       mocks.fetchTestRulerRulesGroup.mockRejectedValue({
         status: 404,
@@ -72,8 +66,6 @@ describe('discoverDataSourceFeatures', () => {
         }))
       );
 
-      const mocks = getMocks();
-
       mocks.fetchTestRulerRulesGroup.mockResolvedValue(null);
       mocks.fetchRules.mockResolvedValue([]);
 
@@ -95,7 +87,6 @@ describe('discoverDataSourceFeatures', () => {
   });
   describe('When buildinfo returns 200 response', () => {
     it('Should return Prometheus with disabled ruler API when application and features fields are missing', async () => {
-      const mocks = getMocks();
       fetch
         .mockReturnValueOnce(
           of({
@@ -144,8 +135,6 @@ describe('discoverDataSourceFeatures', () => {
           )
           .mockReturnValueOnce(of(undefined));
 
-        const mocks = getMocks();
-
         const response = await discoverDataSourceFeatures({
           url: '/datasource/proxy',
           name: 'Prometheus',
@@ -160,7 +149,6 @@ describe('discoverDataSourceFeatures', () => {
     );
 
     it('When the data source is Loki should not call the buildinfo endpoint', async () => {
-      const mocks = getMocks();
       mocks.fetchTestRulerRulesGroup.mockResolvedValue(null);
       mocks.fetchRules.mockResolvedValue([]);
       await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Loki', type: 'loki' });
@@ -168,7 +156,6 @@ describe('discoverDataSourceFeatures', () => {
       expect(fetch).not.toBeCalled();
     });
     it('When the data source is Loki should test Prom and Ruler API endpoints to discover available features', async () => {
-      const mocks = getMocks();
       mocks.fetchTestRulerRulesGroup.mockResolvedValue(null);
       mocks.fetchRules.mockResolvedValue([]);
 
@@ -184,8 +171,6 @@ describe('discoverDataSourceFeatures', () => {
       expect(mocks.fetchRules).toHaveBeenCalledWith('Loki');
     });
     it('Should return Thanos with enabled ruler API', async () => {
-      const mocks = getMocks();
-
       fetch
         .mockReturnValueOnce(
           of({
@@ -220,8 +205,6 @@ describe('discoverDataSourceFeatures', () => {
 
     // Mocking the `fetchRules` appears to break subsequent tests that do not explicitly mock this, placing this test last
     it('Should return Thanos with disabled ruler API', async () => {
-      const mocks = getMocks();
-
       mocks.fetchTestRulerRulesGroup.mockRejectedValueOnce({
         data: {
           message: RULER_NOT_SUPPORTED_MSG,
