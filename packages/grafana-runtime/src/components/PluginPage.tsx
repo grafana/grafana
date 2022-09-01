@@ -15,6 +15,16 @@ export enum PluginPageLayout {
 
 export type PluginPageType = React.ComponentType<PluginPageProps>;
 
-export const PluginPage: PluginPageType = ({ children }) => {
+export let PluginPage: PluginPageType = ({ children }) => {
   return <div>{children}</div>;
 };
+
+/**
+ * Used to bootstrap the PluginPage during application start
+ * is exposed via runtime.
+ *
+ * @internal
+ */
+export function setPluginPage(component: PluginPageType) {
+  PluginPage = component;
+}

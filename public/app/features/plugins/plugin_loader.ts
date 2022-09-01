@@ -19,7 +19,6 @@ import * as grafanaRuntime from '@grafana/runtime';
 import slateReact from '@grafana/slate-react';
 import * as grafanaUIraw from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
-import { PluginPage } from 'app/core/components/PageNew/PluginPage';
 import config from 'app/core/config';
 import { appEvents, contextSrv } from 'app/core/core';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
@@ -42,12 +41,6 @@ grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
 grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
 grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
-
-// Expose the real runtime plugin page
-const grafanaRuntimeWithMods = {
-  ...grafanaRuntime,
-  PluginPage,
-};
 
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
 
@@ -80,7 +73,7 @@ export function exposeToPlugin(name: string, component: any) {
 
 exposeToPlugin('@grafana/data', grafanaData);
 exposeToPlugin('@grafana/ui', grafanaUI);
-exposeToPlugin('@grafana/runtime', grafanaRuntimeWithMods);
+exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
