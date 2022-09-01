@@ -195,6 +195,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		EmptyMessageId: "starred-empty",
 	})
 
+	// @PERCONA
+	// All these NavLink down to pmmChildNavs are Percona's dashboards
 	nodeChildNavs := []*dtos.NavLink{
 		{Text: "Node Overview", Id: "node-overview", Url: setting.AppSubUrl + "/d/node-instance-overview/nodes-overview", Icon: "percona-cluster-network", HideFromTabs: true},
 		{Text: "Node Summary", Id: "node-summary", Url: setting.AppSubUrl + "/d/node-instance-summary/node-summary", Icon: "percona-summary", HideFromTabs: true, Children: nodeSummaryChildNavs},
@@ -338,6 +340,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
 	}
 
+	// @PERCONA
+	// Dashboards & QAN
 	navTree = append(navTree, &dtos.NavLink{
 		Text:       "PMM dashboards",
 		Id:         "pmm",

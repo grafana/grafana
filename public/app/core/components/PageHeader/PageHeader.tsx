@@ -9,6 +9,7 @@ import { ProBadge } from '../Upgrade/ProBadge';
 
 export interface Props {
   navItem: NavModelItem;
+  // @PERCONA
   vertical?: boolean;
   tabsDataTestId?: string;
 }
@@ -55,6 +56,7 @@ const Navigation = ({
   dataTestId = '',
 }: {
   children: NavModelItem[];
+  // @PERCONA
   vertical?: boolean;
   dataTestId?: string;
   tabsdataTestId?: string;
@@ -184,6 +186,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     headerCanvas: css`
       background: ${theme.colors.background.canvas};
     `,
+    // @PERCONA
     verticalNav: css`
       width: 20%;
       @media (min-width: ${maxWidthBreakpoint}px) {

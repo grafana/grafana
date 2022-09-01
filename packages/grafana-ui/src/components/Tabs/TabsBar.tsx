@@ -11,6 +11,7 @@ export interface Props {
   className?: string;
   /** For hiding the bottom border (on PageHeader for example) */
   hideBorder?: boolean;
+  // @PERCONA
   vertical?: boolean;
   dataTestId?: string;
 }

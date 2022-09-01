@@ -304,6 +304,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		hs.log.Debug("Using provided listener")
 	}
 	hs.registerRoutes()
+	// @PERCONA
 	hs.registerPerconaRoutes()
 
 	// Register access control scope resolver for annotations

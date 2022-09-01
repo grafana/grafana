@@ -34,6 +34,8 @@ export function getPageStyles(theme: GrafanaTheme2) {
       width: 100%;
       height: 100%;
 
+      // @PERCONA
+      // This adjusts our settings page
       &.vertical-content > .page-container.page-body {
         @media (min-width: ${theme.breakpoints.values.lg}px) {
           margin-left: auto;

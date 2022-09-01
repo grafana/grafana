@@ -11,7 +11,10 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   navId?: string;
   navModel?: NavModel;
+  // @PERCONA
   tabsDataTestId?: string;
+  // @PERCONA
+  // For page settings, with vertical tabs
   vertical?: boolean;
   pageNav?: NavModelItem;
   subTitle?: React.ReactNode;

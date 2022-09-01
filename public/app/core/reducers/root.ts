@@ -46,6 +46,7 @@ const rootReducers = {
 };
 
 const addedReducers = {
+  // @PERCONA
   ...perconaReducers,
 };
 

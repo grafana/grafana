@@ -75,6 +75,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
 export function createAsyncSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
   name: string,
   asyncThunk: AsyncThunk<T, ThunkArg, ThunkApiConfig>,
+  // @PERCONA
   initialState?: T
 ) {
   return createSlice({
@@ -125,6 +126,7 @@ export function withSerializedError<T>(p: Promise<T>): Promise<T> {
     const err: SerializedError = {
       message: messageFromError(e),
       code: e.statusCode,
+      // @PERCONA
       name: isApiCancelError(e) ? PERCONA_CANCELLED_ERROR_NAME : '',
     };
     throw err;
