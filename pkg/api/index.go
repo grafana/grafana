@@ -312,10 +312,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	adminNavLinks := hs.buildAdminNavLinks(c)
-	var topnavEnabled = hs.Features.IsEnabled(featuremgmt.FlagTopnav)
 
 	if len(adminNavLinks) > 0 {
-		serverAdminNode = navlinks.GetServerAdminNode(adminNavLinks, topnavEnabled)
+		serverAdminNode = navlinks.GetServerAdminNode(adminNavLinks)
 		navTree = append(navTree, serverAdminNode)
 	}
 
@@ -323,6 +322,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		// Move server admin into Configuration and rename to administration
 		if configNode != nil && serverAdminNode != nil {
 			configNode.Text = "Administration"
+			serverAdminNode.Url = "/admin"
 			configNode.Children = append(configNode.Children, serverAdminNode)
 			adminNodeIndex := len(navTree) - 1
 			navTree = navTree[:adminNodeIndex]

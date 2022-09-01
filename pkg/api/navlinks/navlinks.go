@@ -2,14 +2,11 @@ package navlinks
 
 import "github.com/grafana/grafana/pkg/api/dtos"
 
-func GetServerAdminNode(children []*dtos.NavLink, topnavEnabled bool) *dtos.NavLink {
+func GetServerAdminNode(children []*dtos.NavLink) *dtos.NavLink {
 	url := ""
-	if topnavEnabled {
-		url = "/admin"
-	} else if len(children) > 0 {
+	if len(children) > 0 {
 		url = children[0].Url
 	}
-
 	return &dtos.NavLink{
 		Text:         "Server admin",
 		SubTitle:     "Manage all users and orgs",
