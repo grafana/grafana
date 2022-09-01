@@ -4,19 +4,20 @@ import { useFormContext } from 'react-hook-form';
 import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { Alert, Button, Stack, Tooltip } from '@grafana/ui';
+import { Alert, Button, Field, InputControl, Stack, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
-import { RuleFormValues } from '../../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
+import { QueryEditor } from '../QueryEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
 import { refIdExists } from '../util';
 
 import { AlertType } from './AlertType';
-import { Query } from './Query';
 import {
   addNewDataQuery,
   addNewExpression,
@@ -35,7 +36,13 @@ interface Props {
 
 export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   const runner = useRef(new AlertingQueryRunner());
-  const { setValue, getValues, watch } = useFormContext<RuleFormValues>();
+  const {
+    setValue,
+    getValues,
+    watch,
+    formState: { errors },
+    control,
+  } = useFormContext<RuleFormValues>();
   const [panelData, setPanelData] = useState<Record<string, PanelData>>({});
 
   const initialState = {
@@ -44,7 +51,15 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   };
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
 
+  const type = watch('type');
   const condition = watch('condition');
+  const dataSourceName = watch('dataSourceName');
+
+  const isGrafanaManagedType = type === RuleFormType.grafana;
+  const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
+  const isRecordingRuleType = type === RuleFormType.cloudRecording;
+
+  const showCloudExpressionEditor = (isRecordingRuleType || isCloudAlertRuleType) && dataSourceName;
 
   const cancelQueries = useCallback(() => {
     runner.current.cancel();
@@ -129,85 +144,105 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   return (
     <RuleEditorSection stepNo={1} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
-      <Stack direction="column">
-        {/* Data Queries */}
-        <Query
-          queries={dataQueries}
-          panelData={panelData}
-          condition={condition}
-          onSetCondition={(refId) => {
-            setValue('condition', refId);
-          }}
-          onChangeQueries={onChangeQueries}
-        />
-        {/* Expression Queries */}
-        <ExpressionsEditor
-          queries={queries}
-          panelData={panelData}
-          condition={condition}
-          onSetCondition={(refId) => {
-            setValue('condition', refId);
-          }}
-          onRemoveExpression={(refId) => {
-            dispatch(removeExpression(refId));
-          }}
-          onUpdateRefId={onUpdateRefId}
-          onUpdateExpressionType={(refId, type) => {
-            dispatch(updateExpressionType({ refId, type }));
-          }}
-          onUpdateQueryExpression={(model) => {
-            dispatch(updateExpression(model));
-          }}
-        />
-        {/* action buttons */}
-        <Stack direction="row">
-          <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
-            <Button
-              type="button"
-              icon="plus"
-              onClick={() => {
-                dispatch(addNewDataQuery());
-              }}
-              variant="secondary"
-              aria-label={selectors.components.QueryTab.addQuery}
-              disabled={noCompatibleDataSources}
-            >
-              Add query
-            </Button>
-          </Tooltip>
 
-          {config.expressionsEnabled && (
-            <Button
-              type="button"
-              icon="plus"
-              onClick={() => {
-                dispatch(addNewExpression());
-              }}
-              variant="secondary"
-            >
-              Add expression
-            </Button>
-          )}
+      {/* This is the PromQL Editor for Cloud rules and recording rules */}
+      {showCloudExpressionEditor && (
+        <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+          <InputControl
+            name="expression"
+            render={({ field: { ref, ...field } }) => {
+              return <ExpressionEditor {...field} dataSourceName={dataSourceName} />;
+            }}
+            control={control}
+            rules={{
+              required: { value: true, message: 'A valid expression is required' },
+            }}
+          />
+        </Field>
+      )}
 
-          {isDataLoading && (
-            <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
-              Cancel
-            </Button>
-          )}
-          {!isDataLoading && (
-            <Button icon="sync" type="button" onClick={() => runQueries()} disabled={emptyQueries}>
-              Preview
-            </Button>
+      {/* This is the editor for Grafana managed rules */}
+      {isGrafanaManagedType && (
+        <Stack direction="column">
+          {/* Data Queries */}
+          <QueryEditor
+            queries={dataQueries}
+            onChangeQueries={onChangeQueries}
+            panelData={panelData}
+            condition={condition}
+            onSetCondition={(refId) => {
+              setValue('condition', refId);
+            }}
+          />
+          {/* Expression Queries */}
+          <ExpressionsEditor
+            queries={queries}
+            panelData={panelData}
+            condition={condition}
+            onSetCondition={(refId) => {
+              setValue('condition', refId);
+            }}
+            onRemoveExpression={(refId) => {
+              dispatch(removeExpression(refId));
+            }}
+            onUpdateRefId={onUpdateRefId}
+            onUpdateExpressionType={(refId, type) => {
+              dispatch(updateExpressionType({ refId, type }));
+            }}
+            onUpdateQueryExpression={(model) => {
+              dispatch(updateExpression(model));
+            }}
+          />
+          {/* action buttons */}
+          <Stack direction="row">
+            <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
+              <Button
+                type="button"
+                icon="plus"
+                onClick={() => {
+                  dispatch(addNewDataQuery());
+                }}
+                variant="secondary"
+                aria-label={selectors.components.QueryTab.addQuery}
+                disabled={noCompatibleDataSources}
+              >
+                Add query
+              </Button>
+            </Tooltip>
+
+            {config.expressionsEnabled && (
+              <Button
+                type="button"
+                icon="plus"
+                onClick={() => {
+                  dispatch(addNewExpression());
+                }}
+                variant="secondary"
+              >
+                Add expression
+              </Button>
+            )}
+
+            {isDataLoading && (
+              <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
+                Cancel
+              </Button>
+            )}
+            {!isDataLoading && (
+              <Button icon="sync" type="button" onClick={() => runQueries()} disabled={emptyQueries}>
+                Preview
+              </Button>
+            )}
+          </Stack>
+
+          {/* No Queries */}
+          {emptyQueries && (
+            <Alert title="No queries or expressions have been configured" severity="warning">
+              Create at least one query or expression to be alerted on
+            </Alert>
           )}
         </Stack>
-
-        {/* No Queries */}
-        {emptyQueries && (
-          <Alert title="No queries or expressions have been configured" severity="warning">
-            Create at least one query or expression to be alerted on
-          </Alert>
-        )}
-      </Stack>
+      )}
     </RuleEditorSection>
   );
 };
