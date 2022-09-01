@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, IconButton, useStyles2, Spinner } from '@grafana/ui';
+import { Icon, IconButton, useStyles2, Spinner, IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { PlaylistItem } from './types';
@@ -25,6 +25,41 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
     );
   }
 
+  const renderItem = (item: PlaylistItem) => {
+    let icon: IconName = item.type === 'dashboard_by_tag' ? 'apps' : 'tag-alt';
+    const info: ReactNode[] = [];
+
+    const first = item.dashboards?.[0];
+    if (!item.dashboards) {
+      info.push(<Spinner />);
+    } else if (item.type === 'dashboard_by_tag') {
+      info.push(<TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />);
+      if (!first) {
+        icon = 'exclamation-triangle';
+        info.push(<span>&nbsp; No dashboards found</span>);
+      } else {
+        info.push(<span>&nbsp; {pluralize('dashboard', item.dashboards.length, true)}</span>);
+      }
+    } else if (first) {
+      info.push(
+        item.dashboards.length > 1 ? (
+          <span>Multiple items found: ${item.value}</span>
+        ) : (
+          <span>{first.name ?? item.value}</span>
+        )
+      );
+    } else {
+      icon = 'exclamation-triangle';
+      info.push(<span>&nbsp; Not found: {item.value}</span>);
+    }
+    return (
+      <>
+        <Icon name={icon} className={styles.rightMargin} />
+        {info}
+      </>
+    );
+  };
+
   return (
     <>
       {items.map((item, index) => (
@@ -38,23 +73,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
               role="row"
             >
               <div className={styles.actions} role="cell" aria-label={`Playlist item, ${item.type}, ${item.value}`}>
-                {item.type === 'dashboard_by_tag' ? (
-                  <>
-                    <Icon name="tag-alt" className={styles.rightMargin} />
-                    <TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />
-                    {item.dashboards ? (
-                      <span>&nbsp; {pluralize('dashboard', item.dashboards.length, true)}</span>
-                    ) : (
-                      <Spinner />
-                    )}
-                  </>
-                ) : (
-                  // dashboard_by_id | dashboard_by_uid
-                  <>
-                    <Icon name="apps" className={styles.rightMargin} />
-                    {item.dashboards ? <span>{item.dashboards[0]?.name}</span> : <Spinner />}
-                  </>
-                )}
+                {renderItem(item)}
               </div>
               <div className={styles.actions}>
                 <IconButton
