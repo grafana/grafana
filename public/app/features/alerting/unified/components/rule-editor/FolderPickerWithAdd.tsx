@@ -1,17 +1,17 @@
 import { t } from '@lingui/macro';
 import { debounce } from 'lodash';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ActionMeta, AsyncSelect } from '@grafana/ui';
+import { ActionMeta, AsyncSelect, Input } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { getInitialValues } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
-
-import { AccessControlAction, PermissionLevelString } from '../../../types';
-import appEvents from '../../app_events';
+import { AccessControlAction, PermissionLevelString } from 'app/types';
 
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
@@ -20,7 +20,7 @@ export interface Props {
   enableCreateNew?: boolean;
   rootName?: string;
   enableReset?: boolean;
-  dashboardId?: any;
+  dashboardId?: number | string;
   initialTitle?: string;
   initialFolderId?: number;
   permissionLevel?: Exclude<PermissionLevelString, PermissionLevelString.Admin>;
@@ -40,8 +40,9 @@ export interface Props {
   inputId?: string;
 }
 export type SelectedFolder = SelectableValue<number>;
+const VALUE_FOR_ADD = -10;
 
-export function FolderPicker(props: Props) {
+export function FolderPickerWithAdd(props: Props) {
   const {
     dashboardId,
     allowEmpty,
@@ -61,6 +62,7 @@ export function FolderPicker(props: Props) {
   } = props;
   const isClearable = typeof onClear === 'function';
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
+  const [isCustom, setIsCustom] = useState(false);
 
   const getOptions = useCallback(
     async (query: string) => {
@@ -83,10 +85,23 @@ export function FolderPicker(props: Props) {
       ) {
         options.unshift({ label: initialTitle, value: initialFolderId });
       }
-
-      return options;
+      if (enableCreateNew) {
+        return [...options, { value: VALUE_FOR_ADD, label: '+ Add new', title: query }];
+      } else {
+        return options;
+      }
     },
-    [enableReset, initialFolderId, initialTitle, permissionLevel, rootName, showRoot, accessControlMetadata, filter]
+    [
+      enableReset,
+      initialFolderId,
+      initialTitle,
+      permissionLevel,
+      rootName,
+      showRoot,
+      accessControlMetadata,
+      filter,
+      enableCreateNew,
+    ]
   );
 
   const debouncedSearch = useMemo(() => {
@@ -122,8 +137,7 @@ export function FolderPicker(props: Props) {
         }
       }
     }
-
-    setFolder(folder);
+    !isCustom && setFolder(folder);
   };
 
   useEffect(() => {
@@ -147,76 +161,111 @@ export function FolderPicker(props: Props) {
     await loadInitialValue();
   }, [skipInitialLoad, initialFolderId, initialTitle]);
 
-  const onFolderChange = (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
-    if (!newFolder) {
-      newFolder = { value: 0, label: rootName };
+  useEffect(() => {
+    if (folder && folder.id === VALUE_FOR_ADD) {
+      setIsCustom(true);
     }
+  }, [folder]);
 
-    if (actionMeta.action === 'clear' && onClear) {
-      onClear();
-      return;
-    }
+  const onFolderChange = useCallback(
+    (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
+      const value = newFolder.value;
+      if (value === VALUE_FOR_ADD) {
+        setFolder({ id: VALUE_FOR_ADD, title: newFolder?.title?.split('/').join('') || '' }); //slashes not allowed
+      } else {
+        if (!newFolder) {
+          newFolder = { value: 0, label: rootName };
+        }
 
-    setFolder(newFolder);
-    onChange({ id: newFolder.value!, title: newFolder.label! });
-  };
+        if (actionMeta.action === 'clear' && onClear) {
+          onClear();
+          return;
+        }
 
-  const createNewFolder = async (folderName: string) => {
-    const newFolder = await createFolder({ title: folderName });
-    let folder: SelectableValue<number> = { value: -1, label: 'Not created' };
-
-    if (newFolder.id > -1) {
-      appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
-      folder = { value: newFolder.id, label: newFolder.title };
-
-      setFolder(newFolder);
-      onFolderChange(folder, { action: 'create-option', option: folder });
-    } else {
-      appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
-    }
-
-    return folder;
-  };
-
-  return (
-    <div data-testid={selectors.components.FolderPicker.containerV2}>
-      <AsyncSelect
-        inputId={inputId}
-        aria-label={selectors.components.FolderPicker.input}
-        loadingMessage={t({ id: 'folder-picker.loading', message: 'Loading folders...' })}
-        defaultOptions
-        defaultValue={folder}
-        value={folder}
-        allowCustomValue={enableCreateNew}
-        loadOptions={debouncedSearch}
-        onChange={onFolderChange}
-        onCreateOption={createNewFolder}
-        isClearable={isClearable}
-      />
-    </div>
+        setFolder(newFolder);
+        onChange({ id: newFolder.value!, title: newFolder.label! });
+      }
+    },
+    [onChange, onClear, rootName]
   );
+
+  const createNewFolder = useCallback(
+    async (folderName: string) => {
+      const newFolder = await createFolder({ title: folderName });
+      let folder: SelectableValue<number> = { value: -1, label: 'Not created' };
+
+      if (newFolder.id > -1) {
+        appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
+        folder = { value: newFolder.id, label: newFolder.title };
+
+        setFolder(newFolder);
+        onFolderChange(folder, { action: 'create-option', option: folder });
+      } else {
+        appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
+      }
+
+      return folder;
+    },
+    [onFolderChange]
+  );
+
+  const onKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      switch (event.key) {
+        case 'Enter': {
+          createNewFolder(folder?.title!);
+          setIsCustom(false);
+          break;
+        }
+        case 'Escape': {
+          setFolder({ value: 0, label: rootName });
+          setIsCustom(false);
+        }
+      }
+    },
+    [createNewFolder, folder, rootName]
+  );
+
+  const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {
+    const value = e.currentTarget.value;
+    const withoutSlashes = value.split('/').join('');
+    setFolder({ id: -1, title: withoutSlashes });
+  };
+
+  if (isCustom) {
+    return (
+      <Input
+        aria-label={'aria-label'}
+        width={30}
+        autoFocus={true}
+        value={folder?.title || ''}
+        onChange={onNewFolderChange}
+        onKeyDown={onKeyDown}
+        placeholder="Press enter to confirm new folder"
+      />
+    );
+  } else {
+    return (
+      <div data-testid={selectors.components.FolderPicker.containerV2}>
+        <AsyncSelect
+          inputId={inputId}
+          aria-label={selectors.components.FolderPicker.input}
+          loadingMessage={t({ id: 'folder-picker.loading', message: 'Loading folders...' })}
+          defaultOptions
+          defaultValue={folder}
+          value={folder}
+          allowCustomValue={false}
+          loadOptions={debouncedSearch}
+          onChange={onFolderChange}
+          onCreateOption={createNewFolder}
+          isClearable={isClearable}
+        />
+      </div>
+    );
+  }
 }
 
 function mapSearchHitsToOptions(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
   const filteredHits = filter ? filter(hits) : hits;
   return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
-}
-
-interface Args {
-  getFolder: typeof getFolderById;
-  folderId?: number;
-  folderName?: string;
-}
-
-export async function getInitialValues({ folderName, folderId, getFolder }: Args): Promise<SelectableValue<number>> {
-  if (folderId === null || folderId === undefined || folderId < 0) {
-    throw new Error('folderId should to be greater or equal to zero.');
-  }
-
-  if (folderName) {
-    return { label: folderName, value: folderId };
-  }
-
-  const folderDto = await getFolder(folderId);
-  return { label: folderDto.title, value: folderId };
 }

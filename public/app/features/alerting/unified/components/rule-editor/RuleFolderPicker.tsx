@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
 
-import { FolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/FolderPicker';
+import { Props as FolderPickerProps } from 'app/core/components/Select/FolderPicker';
 import { PermissionLevelString } from 'app/types';
+
+import { FolderPickerWithAdd } from './FolderPickerWithAdd';
 
 export interface Folder {
   title: string;
@@ -14,7 +16,7 @@ export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialT
 
 export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, ...props }) => {
   return (
-    <FolderPicker
+    <FolderPickerWithAdd
       showRoot={false}
       allowEmpty={true}
       initialTitle={value?.title}
