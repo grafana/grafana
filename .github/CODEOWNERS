@@ -13,9 +13,9 @@
 
 # Documentation owner: Jita Chatterjee
 /docs/ @grafana/docs-squad
-/contribute/ @marcusolsson @grafana/docs-squad
-/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/docs/sources/developers/plugins/backend @marcusolsson @grafana/docs-squad @grafana/plugins-platform-backend
+/contribute/ @grafana/docs-squad
+/docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/backend @grafana/docs-squad @grafana/plugins-platform-backend
 /docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
 
 # Backend code
@@ -136,8 +136,6 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /scripts/build/release-packages.sh @grafana/plugins-platform-frontend
 /scripts/circle-release-next-packages.sh @grafana/plugins-platform-frontend
 /scripts/ci-frontend-metrics.sh @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
-/scripts/ci-reference-docs-build.sh @grafana/plugins-platform-frontend
-/scripts/ci-reference-docs-lint.sh @grafana/plugins-platform-frontend
 /scripts/grunt @grafana/frontend-ops
 /scripts/webpack @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/user-essentials
@@ -152,7 +150,7 @@ lerna.json @grafana/frontend-ops
 .betterer.results @joshhunt
 
 # @grafana/ui component documentation
-*.mdx @marcusolsson @jessover9000 @grafana/plugins-platform-frontend
+*.mdx @jessover9000 @grafana/plugins-platform-frontend
 
 # Core datasources
 /public/app/plugins/datasource/cloudwatch @grafana/aws-plugins

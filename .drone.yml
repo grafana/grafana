@@ -651,17 +651,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend-packages
-  image: grafana/build-container:1.5.9
-  name: build-frontend-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
@@ -743,17 +735,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend-packages
-  image: grafana/build-container:1.5.9
-  name: build-frontend-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
@@ -5108,6 +5092,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 40c8c66094bd5928aff25edef47082ff5686a0ca8c57e7d08f76eb5857103e72
+hmac: 93835e0362c0a924e8da207d3c89296a1d68f3997f86ac4859b356a872bc9f4a
 
 ...
