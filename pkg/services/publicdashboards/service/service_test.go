@@ -352,7 +352,7 @@ func TestBuildAnonymousUser(t *testing.T) {
 	})
 }
 
-func TestBuildPublicDashboardMetricRequest(t *testing.T) {
+func TestBuildMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
 	publicdashboardStore := database.ProvideStore(sqlStore)
@@ -366,7 +366,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		intervalCalculator: intervalv2.NewCalculator(),
 	}
 
-	publicDashboardQueryDTO := &PublicDashboardQueryDTO{
+	publicDashboardQueryDTO := PublicDashboardQueryDTO{
 		IntervalMs:    int64(10000000),
 		MaxDataPoints: int64(200),
 	}
@@ -400,7 +400,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
-		reqDTO, err := service.buildPublicDashboardMetricRequest(
+		reqDTO, err := service.buildMetricRequest(
 			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
@@ -409,7 +409,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.Equal(t, timeSettings.Get("from").MustString(), reqDTO.From)
+		require.Equal(t, "1661990400000", reqDTO.From)
 		require.Equal(t, timeSettings.Get("to").MustString(), reqDTO.To)
 
 		for i := range reqDTO.Queries {
@@ -449,7 +449,7 @@ func TestBuildPublicDashboardMetricRequest(t *testing.T) {
 	})
 
 	t.Run("returns an error when panel missing", func(t *testing.T) {
-		_, err := service.buildPublicDashboardMetricRequest(
+		_, err := service.buildMetricRequest(
 			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
@@ -514,6 +514,10 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 			"templating": map[string]interface{}{
 				"list": templateVars,
 			},
+			"time": map[string]interface{}{
+				"from": "2022-09-01T00:00:00.000Z",
+				"to":   "2022-09-01T12:00:00.000Z",
+			},
 		}),
 	}
 	dash, err := dashboardStore.SaveDashboard(cmd)
@@ -526,8 +530,8 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 
 func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T) {
 	type args struct {
-		reqDTO *PublicDashboardQueryDTO
-		ts     *TimeSettings
+		reqDTO PublicDashboardQueryDTO
+		ts     TimeSettings
 	}
 	tests := []struct {
 		name                  string
@@ -538,11 +542,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return original interval",
 			args: args{
-				reqDTO: &PublicDashboardQueryDTO{
+				reqDTO: PublicDashboardQueryDTO{
 					IntervalMs:    10000,
 					MaxDataPoints: 300,
 				},
-				ts: &TimeSettings{
+				ts: TimeSettings{
 					From: "now-3h",
 					To:   "now",
 				},
@@ -553,11 +557,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval because of a small interval",
 			args: args{
-				reqDTO: &PublicDashboardQueryDTO{
+				reqDTO: PublicDashboardQueryDTO{
 					IntervalMs:    1000,
 					MaxDataPoints: 300,
 				},
-				ts: &TimeSettings{
+				ts: TimeSettings{
 					From: "now-6h",
 					To:   "now",
 				},
@@ -568,11 +572,11 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval for long time range",
 			args: args{
-				reqDTO: &PublicDashboardQueryDTO{
+				reqDTO: PublicDashboardQueryDTO{
 					IntervalMs:    100,
 					MaxDataPoints: 300,
 				},
-				ts: &TimeSettings{
+				ts: TimeSettings{
 					From: "now-90d",
 					To:   "now",
 				},
@@ -583,8 +587,8 @@ func TestPublicDashboardServiceImpl_getSafeIntervalAndMaxDataPoints(t *testing.T
 		{
 			name: "return safe interval when reqDTO is empty",
 			args: args{
-				reqDTO: &PublicDashboardQueryDTO{},
-				ts: &TimeSettings{
+				reqDTO: PublicDashboardQueryDTO{},
+				ts: TimeSettings{
 					From: "now-90d",
 					To:   "now",
 				},
