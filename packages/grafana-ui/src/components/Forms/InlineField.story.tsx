@@ -11,19 +11,41 @@ import mdx from './InlineField.mdx';
 const meta: ComponentMeta<typeof InlineField> = {
   title: 'Forms/InlineField',
   component: InlineField,
+  argTypes: {
+    label: { control: { type: 'text' } },
+    labelWidth: { control: { type: 'number', min: 12 } },
+    tooltip: { control: { type: 'text' } },
+    error: { control: { type: 'text' } },
+  },
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['htmlFor', 'className', 'children'],
+    },
   },
 };
 
-export const basic: ComponentStory<typeof InlineField> = () => {
+export const basic: ComponentStory<typeof InlineField> = (args) => {
   return (
-    <InlineField label="Inline field">
+    <InlineField {...args}>
       <Input placeholder="Inline input" />
     </InlineField>
   );
+};
+
+basic.args = {
+  label: 'Inline field',
+  transparent: false,
+  grow: false,
+  shrink: false,
+  disabled: false,
+  interactive: false,
+  loading: false,
+  required: false,
+  invalid: false,
+  validationMessageHorizontalOverflow: false,
 };
 
 export const withTooltip: ComponentStory<typeof InlineField> = () => {
