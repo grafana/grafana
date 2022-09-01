@@ -3,7 +3,6 @@ load(
     'build_image',
     'yarn_install_step',
     'identify_runner_step',
-    'gen_version_step',
     'download_grabpl_step',
     'lint_frontend_step',
     'codespell_step',
@@ -39,7 +38,6 @@ def docs_pipelines(edition, ver_mode, trigger):
     steps = [
         download_grabpl_step(),
         identify_runner_step(),
-        gen_version_step(ver_mode),
         yarn_install_step(),
         codespell_step(),
         lint_docs(),

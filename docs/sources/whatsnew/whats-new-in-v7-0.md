@@ -190,7 +190,7 @@ It was released as a beta feature in Grafana 6.7. The feedback has been really p
 
 ## Time zone support
 
-You can now override the [time zone]({{< relref "../dashboards/time-range-controls/#dashboard-time-settings" >}}) used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
+You can now override the [time zone]({{< relref "../dashboards/manage-dashboards/#dashboard-time-settings" >}}) used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
 
 ## Alerting and deep linking for Azure Log Analytics
 
@@ -215,7 +215,7 @@ This includes problems like:
 
 ### Usage insights and Presence indicator
 
-This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../enterprise/usage-insights/#improved-dashboard-search" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../enterprise/usage-insights/#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../enterprise/usage-insights/#dashboard-insights" >}}) allows you to view recent dashboard usage.
+This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../dashboards/assess-dashboard-usage/#sort-dashboards-by-using-insights-data" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../dashboards/assess-dashboard-usage/#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../dashboards/assess-dashboard-usage/#dashboard-insights" >}}) allows you to view recent dashboard usage.
 
 {{< figure src="/static/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
 
