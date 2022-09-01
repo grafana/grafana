@@ -58,13 +58,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     return () => currentRunner.destroy();
   }, []);
 
-  // run the queries at least once if we're editing an existing one
-  useEffect(() => {
-    if (editingExistingRule) {
-      runQueries();
-    }
-  }, [editingExistingRule, runQueries]);
-
   const noCompatibleDataSources = getDefaultOrFirstCompatibleDataSource() === undefined;
 
   const isDataLoading = useMemo(() => {
