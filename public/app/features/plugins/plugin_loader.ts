@@ -85,7 +85,7 @@ exposeToPlugin('react-router-dom', reactRouter);
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('slate-reacvt', slateReact);
+exposeToPlugin('slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
