@@ -96,13 +96,17 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		appLink := &dtos.NavLink{
-			Text: plugin.Name,
-			Id:   "plugin-page-" + plugin.ID,
-			// Url:        path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
-			Url:        path.Join(hs.Cfg.AppSubURL, "landingPage"),
+			Text:       plugin.Name,
+			Id:         "plugin-page-" + plugin.ID,
 			Img:        plugin.Info.Logos.Small,
 			Section:    dtos.NavSectionPlugin,
 			SortWeight: dtos.WeightPlugin,
+		}
+
+		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+			appLink.Url = path.Join(hs.Cfg.AppSubURL, "a", plugin.ID, "landing-page")
+		} else {
+			appLink.Url = path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL)
 		}
 
 		for _, include := range plugin.Includes {
@@ -117,7 +121,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 						Url:  hs.Cfg.AppSubURL + include.Path,
 						Text: include.Name,
 					}
-					if include.DefaultNav {
+					if include.DefaultNav && !hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
 						appLink.Url = link.Url // Overwrite the hardcoded page logic
 					}
 				} else {

@@ -13,30 +13,18 @@ interface Props {
 }
 
 export function NavSectionLandingPage({ navId }: Props) {
-  const navModel = useNavModel(navId).main;
+  const { node } = useNavModel(navId);
   const styles = useStyles2(getStyles);
-  const directChildren = navModel.children?.filter((child) => !child.hideFromTabs && !child.children);
-  const nestedChildren = navModel.children?.filter((child) => child.children && child.children.length);
+  const directChildren = node.children?.filter((child) => !child.hideFromTabs && !child.children);
+  const nestedChildren = node.children?.filter((child) => child.children && child.children.length);
+
   return (
-    <Page navId={navModel.id}>
+    <Page navId={node.id}>
       <Page.Contents>
-        <section className={styles.grid}>
-          {directChildren?.map((child) => (
-            <NavSectionLandingPageCard
-              key={child.id}
-              description={child.description}
-              icon={child.icon as IconName}
-              text={child.text}
-              url={child.url ?? ''}
-            />
-          ))}
-        </section>
-        {nestedChildren?.map((child) => (
-          <section key={child.id}>
-            <h2 className={styles.nestedTitle}>{child.text}</h2>
-            <div className={styles.nestedDescription}>{child.subTitle}</div>
-            <div className={styles.grid}>
-              {child.children?.map((child) => (
+        <div className={styles.content}>
+          {directChildren && directChildren.length > 0 && (
+            <section className={styles.grid}>
+              {directChildren?.map((child) => (
                 <NavSectionLandingPageCard
                   key={child.id}
                   description={child.description}
@@ -45,15 +33,39 @@ export function NavSectionLandingPage({ navId }: Props) {
                   url={child.url ?? ''}
                 />
               ))}
-            </div>
-          </section>
-        ))}
+            </section>
+          )}
+          {nestedChildren?.map((child) => (
+            <section key={child.id}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <h2 className={styles.nestedTitle}>{child.text}</h2>
+              </div>
+              <div className={styles.nestedDescription}>{child.subTitle}</div>
+              <div className={styles.grid}>
+                {child.children?.map((child) => (
+                  <NavSectionLandingPageCard
+                    key={child.id}
+                    description={child.description}
+                    icon={child.icon as IconName}
+                    text={child.text}
+                    url={child.url ?? ''}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </Page.Contents>
     </Page>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  content: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+  }),
   grid: css({
     display: 'grid',
     gap: theme.spacing(2),
