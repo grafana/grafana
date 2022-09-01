@@ -54,6 +54,7 @@ export enum PromApplication {
   Lotex = 'Lotex',
   Mimir = 'Mimir',
   Prometheus = 'Prometheus',
+  Thanos = 'Thanos',
 }
 
 export interface PromBuilderInfoSeriesMetric {
@@ -71,6 +72,49 @@ export interface PromBuildInfoSeriesResponse {
   data: {
     resultType: string;
     result: PromBuilderInfoSeriesMetric[];
+  };
+}
+
+export interface ThanosFlagsResponse {
+  data: {
+    'grpc-address': string;
+    'grpc-client-server-name': string;
+    'grpc-client-tls-ca': string;
+    'grpc-client-tls-cert': string;
+    'grpc-client-tls-key': string;
+    'grpc-client-tls-secure': string;
+    'grpc-grace-period': string;
+    'grpc-server-tls-cert': string;
+    'grpc-server-tls-client-ca': string;
+    'grpc-server-tls-key': string;
+    'http-address': string;
+    'http-grace-period': string;
+    'log.request.decision': string;
+    'query.auto-downsampling': string;
+    'query.default-evaluation-interval': string;
+    'query.dynamic-lookback-delta': string;
+    'query.instant.default.max_source_resolution': string;
+    'query.lookback-delta': string;
+    'query.max-concurrent': string;
+    'query.max-concurrent-select': string;
+    'query.metadata.default-time-range': string;
+    'query.partial-response': string;
+    'query.replica-label': string;
+    'query.timeout': string;
+    rule: string;
+    'rule.partial-response': string;
+    'selector-label': string;
+    store: string;
+    'store-strict': string;
+    'store.response-timeout': string;
+    'store.sd-dns-interval': string;
+    'store.sd-dns-resolver': string;
+    'store.sd-files': string;
+    'store.sd-interval': string;
+    'store.unhealthy-timeout': string;
+    'web.external-prefix': string;
+    'web.prefix-header': string;
+    'web.route-prefix': string;
   };
 }
 

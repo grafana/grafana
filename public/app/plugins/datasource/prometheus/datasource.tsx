@@ -902,18 +902,21 @@ export class PrometheusDatasource
       [PromApplication.Lotex]: '/public/app/plugins/datasource/prometheus/img/cortex_logo.svg',
       [PromApplication.Mimir]: '/public/app/plugins/datasource/prometheus/img/mimir_logo.svg',
       [PromApplication.Prometheus]: '/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg',
+      [PromApplication.Thanos]: '/public/app/plugins/datasource/prometheus/img/thanos_logo.svg',
     };
 
     const COLORS: Record<PromApplication, BadgeColor> = {
       [PromApplication.Lotex]: 'blue',
       [PromApplication.Mimir]: 'orange',
       [PromApplication.Prometheus]: 'red',
+      [PromApplication.Thanos]: 'purple', // Purple hex taken from thanos.io
     };
 
     const AppDisplayNames: Record<PromApplication, string> = {
       [PromApplication.Lotex]: 'Cortex',
       [PromApplication.Mimir]: 'Mimir',
       [PromApplication.Prometheus]: 'Prometheus',
+      [PromApplication.Thanos]: 'Thanos',
     };
 
     // this will inform the user about what "subtype" the datasource is; Mimir, Cortex or vanilla Prometheus

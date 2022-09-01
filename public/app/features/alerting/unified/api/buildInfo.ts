@@ -7,6 +7,7 @@ import {
   PromApplication,
   PromBuildInfoResponse,
   PromBuildInfoSeriesResponse,
+  ThanosFlagsResponse,
 } from 'app/types/unified-alerting-dto';
 
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
@@ -87,6 +88,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
     // check if the ruler is enabled
     const rulerSupported = await hasRulerSupport(name);
 
+    // Thanos versions before 0.15 do not support the buildinfo api endpoint, and will currently get marked as Cortex
     return {
       application: PromApplication.Lotex,
       features: {
@@ -106,6 +108,19 @@ export async function discoverDataSourceFeatures(dsSettings: {
     };
   }
 
+  // If it's not cortex or old prometheus, it might be Thanos let's check their flags API
+  const thanosFlags = await fetchThanosFlags(url);
+  if (thanosFlags) {
+    const rulerSupported = await hasRulerSupport(name);
+    return {
+      application: PromApplication.Thanos,
+      version: buildInfoResponse.data.version,
+      features: {
+        rulerApiEnabled: rulerSupported,
+      },
+    };
+  }
+
   // if no features are reported but buildinfo was returned we're talking to modern Prometheus
   const { features } = buildInfoResponse.data;
   if (!features) {
@@ -118,13 +133,26 @@ export async function discoverDataSourceFeatures(dsSettings: {
     };
   }
 
-  // We've checked everything else, it must be Mimir!
   // Mimir does return a version, but this is the mimir version, and not the prometheus version.
   // We do not want to use mimir version numbers to detect feature support, we should instead ask the mimir team to add new flags.
+  if (buildInfoResponse.data.application === 'Grafana Mimir') {
+    return {
+      version: buildInfoResponse.data.version,
+      application: PromApplication.Mimir,
+      features: {
+        rulerApiEnabled: features?.ruler_config_api === 'true',
+      },
+    };
+  }
+
+  // If everything else failed? We don't know what the flavor is, this shouldn't happen, but anything is possible.
+  console.warn(
+    'Unknown prometheus flavor! Returning default prometheus configuration: some features may not be available'
+  );
   return {
-    application: PromApplication.Mimir,
+    application: PromApplication.Prometheus,
     features: {
-      rulerApiEnabled: features?.ruler_config_api === 'true',
+      rulerApiEnabled: false,
     },
   };
 }
@@ -187,6 +215,22 @@ export async function fetchPromBuildInfo(url: string): Promise<PromBuildInfoResp
   return response?.data;
 }
 
+async function fetchThanosFlags(url: string): Promise<ThanosFlagsResponse | undefined> {
+  // This API endpoint only works on versions of prometheus 2.14.0 and up
+  const response = await lastValueFrom(
+    getBackendSrv().fetch<ThanosFlagsResponse>({
+      url: `${url}/api/v1/status/flags`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+  ).catch((e) => {
+    console.warn('Unable to get Thanos API flags');
+    return undefined; // Cortex does not support buildinfo endpoint, we return an empty response
+  });
+
+  return response?.data;
+}
+
 export async function fetchPromBuildInfoFallback(url: string): Promise<PromBuildInfoSeriesResponse | undefined> {
   const response = await lastValueFrom(
     getBackendSrv().fetch<PromBuildInfoSeriesResponse>({
@@ -230,6 +274,7 @@ async function hasRulerSupport(dataSourceName: string) {
     throw e;
   }
 }
+
 // there errors indicate that the ruler API might be disabled or not supported for Cortex
 function errorIndicatesMissingRulerSupport(error: any) {
   return (
