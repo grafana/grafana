@@ -225,7 +225,7 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 		)
 
 		execArgs := make([]interface{}, 0, 3+len(rd.labelHashes))
-		execArgs = []interface{}{queryString, rd.ruleOrgID, rd.ruleUID}
+		execArgs = append(execArgs, queryString, rd.ruleOrgID, rd.ruleUID)
 		execArgs = append(execArgs, rd.labelHashes...)
 		_, err := s.Exec(execArgs...)
 		if err != nil {
