@@ -32,7 +32,7 @@ func ProvideService(
 	store = NewSQLSecretsKVStore(sqlStore, secretsService, logger)
 	err := EvaluateRemoteSecretsPlugin(pluginsManager, cfg)
 	if err != nil {
-		logger.Debug(err.Error())
+		logger.Debug("secrets manager evaluator returned false", "reason", err.Error())
 	} else {
 		// Attempt to start the plugin
 		var secretsPlugin secretsmanagerplugin.SecretsManagerPlugin
