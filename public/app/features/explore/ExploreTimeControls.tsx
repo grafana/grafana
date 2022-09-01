@@ -50,7 +50,6 @@ export class ExploreTimeControls extends Component<Props> {
       reportInteraction('grafana_explore_ds_picker_ds_change', {
         selectedTimeRange: adjustedFrom,
       });
-      console.log('grafana_explore_ds_picker_ds_change');
     }
   };
 
