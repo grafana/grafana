@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { saveAs } from 'file-saver';
+import React, { useState, useMemo } from 'react';
 import { useAsync, useCopyToClipboard } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { PanelPlugin, GrafanaTheme2, AppEvents, PanelData, SelectableValue } from '@grafana/data';
+import { PanelPlugin, GrafanaTheme2, AppEvents, PanelData, SelectableValue, dateTimeFormat } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import {
   Drawer,
@@ -28,7 +29,7 @@ import { PanelModel } from '../../state';
 import { pendingNewDashboard } from '../../state/initDashboard';
 
 import { Randomize } from './randomizer';
-import { getTroubleshootingDashboard } from './utils';
+import { getGithubMarkdown, getTroubleshootingDashboard } from './utils';
 
 interface Props {
   panel: PanelModel;
@@ -59,7 +60,7 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const [currentTab, setCurrentTab] = useState(InspectTab.Debug);
   const [showMessage, setShowMessge] = useState(ShowMessge.GithubComment);
-  const [dashboardText, setDashboardText] = useState('...');
+  const [snapshotText, setDashboardText] = useState('...');
   const [rand, setRand] = useState<Randomize>({});
   const [_, copyToClipboard] = useCopyToClipboard();
   const info = useAsync(async () => {
@@ -67,18 +68,36 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
     setDashboardText(JSON.stringify(dash, null, 2));
   }, [rand, panel, plugin, setDashboardText]);
 
+  const messageText = useMemo(() => {
+    console.log({ showMessage });
+    if (showMessage === ShowMessge.GithubComment) {
+      return getGithubMarkdown(panel, snapshotText);
+    }
+    return snapshotText;
+  }, [snapshotText, showMessage, panel]);
+
   if (!plugin) {
     return null;
   }
+
+  const panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
 
   const toggleRandomize = (k: keyof Randomize) => {
     setRand({ ...rand, [k]: !rand[k] });
   };
 
   const doImportDashboard = () => {
-    pendingNewDashboard.dashboard = JSON.parse(dashboardText);
+    pendingNewDashboard.dashboard = JSON.parse(snapshotText);
     locationService.push('/dashboard/new'); // will load the above body
     appEvents.emit(AppEvents.alertSuccess, ['Panel snapshot dashboard']);
+  };
+
+  const doDownloadDashboard = () => {
+    const blob = new Blob([snapshotText], {
+      type: 'application/json',
+    });
+    const fileName = `debug-${panelTitle}-${dateTimeFormat(new Date())}.json`;
+    saveAs(blob, fileName);
   };
 
   const tabs = [
@@ -95,7 +114,6 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
     return <Alert title="Error loading dashboard">{`${info.error}`}</Alert>;
   };
 
-  const panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
   return (
     <Drawer
       title={`Debug: ${panelTitle}`}
@@ -133,23 +151,23 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
             </Field>
             <Button
               onClick={() => {
-                copyToClipboard(dashboardText);
+                copyToClipboard(messageText);
                 appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
               }}
             >
               Copy
             </Button>
-            <Button onClick={() => alert('hello')}>Download</Button>
+            {showMessage === ShowMessge.GithubComment && <Button onClick={doDownloadDashboard}>Download</Button>}
           </div>
           <AutoSizer disableWidth>
             {({ height }) => (
               <CodeEditor
                 width="100%"
                 height={height}
-                language="json"
+                language={showMessage === ShowMessge.GithubComment ? 'markdown' : 'json'}
                 showLineNumbers={true}
                 showMiniMap={true}
-                value={dashboardText || ''}
+                value={messageText || ''}
                 readOnly={false}
                 onBlur={setDashboardText}
               />
@@ -189,6 +207,7 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
 
           <Button onClick={doImportDashboard}>Preview</Button>
 
+          {/* TODO: can we iframe in the preview? */}
           {false && <iframe src={`/dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`} width="100%" height={300} />}
         </div>
       )}

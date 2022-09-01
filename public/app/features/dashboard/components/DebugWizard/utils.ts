@@ -39,7 +39,7 @@ export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   return frames;
 }
 
-export function getGithubMarkdown(panel: PanelModel, snapshot: object): string {
+export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
   const saveModel = panel.getSaveModel();
   const info = {
     panelType: saveModel.type,
@@ -53,7 +53,7 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: object): string {
 
   if (snapshot) {
     md += `<details><summary>Panel snapshot (2.5mb)</summary>
-       <pre>${JSON.stringify(snapshot, null, 2)}</pre>
+       <pre>${snapshot}</pre>
       </details>`;
   }
 
