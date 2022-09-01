@@ -80,7 +80,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/login_attempt/loginattemptimpl"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
