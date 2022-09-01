@@ -20,6 +20,7 @@ import {
   Select,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { getTimeSrv } from '../../services/TimeSrv';
@@ -36,27 +37,28 @@ interface Props {
   onClose: () => void;
 }
 
-enum ShowContent {
+enum ShowMessge {
   PanelSnapshot = 'snap',
   GithubComment = 'github',
 }
 
-const options: Array<SelectableValue<ShowContent>> = [
+const options: Array<SelectableValue<ShowMessge>> = [
   {
     label: 'Github comment',
     description: 'Copy and paste this message into a github issue or comment',
-    value: ShowContent.GithubComment,
+    value: ShowMessge.GithubComment,
   },
   {
     label: 'Panel debug snapshot',
     description: 'Dashboard to help debug any visualization issues',
-    value: ShowContent.PanelSnapshot,
+    value: ShowMessge.PanelSnapshot,
   },
 ];
 
 export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const [currentTab, setCurrentTab] = useState(InspectTab.Debug);
+  const [showMessage, setShowMessge] = useState(ShowMessge.GithubComment);
   const [dashboardText, setDashboardText] = useState('...');
   const [rand, setRand] = useState<Randomize>({});
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -97,7 +99,7 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
   return (
     <Drawer
       title={`Debug: ${panelTitle}`}
-      width="75%"
+      width="80%"
       onClose={onClose}
       expandable
       scrollableContent
@@ -123,9 +125,20 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
         <div className={styles.code}>
           <div className={styles.opts}>
             <Field label="Template" className={styles.field}>
-              <Select options={options} value={options[0]} onChange={(v) => console.log(v)} />
+              <Select
+                options={options}
+                value={options.find((v) => v.value === showMessage) ?? options[0]}
+                onChange={(v) => setShowMessge(v.value ?? options[0].value!)}
+              />
             </Field>
-            <Button onClick={() => copyToClipboard(dashboardText)}>Copy</Button>
+            <Button
+              onClick={() => {
+                copyToClipboard(dashboardText);
+                appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
+              }}
+            >
+              Copy
+            </Button>
             <Button onClick={() => alert('hello')}>Download</Button>
           </div>
           <AutoSizer disableWidth>
@@ -176,7 +189,7 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
 
           <Button onClick={doImportDashboard}>Preview</Button>
 
-          <iframe src={`/dashboard/new?orgId=1&kiosk`} width="100%" />
+          {false && <iframe src={`/dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`} width="100%" height={300} />}
         </div>
       )}
     </Drawer>
@@ -194,7 +207,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   opts: css`
     display: flex;
-    border: 1px solid red;
     display: flex;
     width: 100%;
     flex-grow: 0;
