@@ -62,12 +62,18 @@ withTooltip.args = {
   label: 'Label',
 };
 
-export const grow: ComponentStory<typeof InlineField> = () => {
+export const grow: ComponentStory<typeof InlineField> = (args) => {
   return (
-    <InlineField label="Label" grow>
+    <InlineField {...args}>
       <Input placeholder="Inline input" />
     </InlineField>
   );
+};
+
+grow.args = {
+  ...basic.args,
+  label: 'Label',
+  grow: true,
 };
 
 export const withSelect: ComponentStory<typeof InlineField> = () => {
