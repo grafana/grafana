@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import { FocusScope } from '@react-aria/focus';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -372,13 +371,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-          {editPanel && (
-            <FocusScope contain autoFocus restoreFocus>
-              <section>
-                <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />
-              </section>
-            </FocusScope>
-          )}
+          {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
         </Page>
         {queryParams.editview && (
           <DashboardSettings
