@@ -144,6 +144,7 @@ func setupTestMigratorServiceWithDeletionError(
 	err := fallback.Set(context.Background(), orgId, str, str, "bogus")
 	require.NoError(t, err)
 	fallback.DeletionError(true)
-	secretskvs.ReplaceFallback(t, secretskv, fallback)
+	err = secretskvs.ReplaceFallback(t, secretskv, fallback)
+	require.NoError(t, err)
 	return migratorService
 }
