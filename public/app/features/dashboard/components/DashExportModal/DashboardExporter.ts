@@ -167,11 +167,10 @@ export class DashboardExporter {
       }
     };
 
-    const processLibraryPanels = (panel: any) => {
+    const processLibraryPanels = (panel: PanelModel) => {
       if (isPanelModelLibraryPanel(panel)) {
-        const { libraryPanel, ...model } = panel;
-        const { name, uid } = libraryPanel;
-        const { gridPos, id, ...rest } = model;
+        const { name, uid } = panel.libraryPanel;
+        const { gridPos, id, ...rest } = panel.libraryPanel.model;
         if (!libraryPanels.has(uid)) {
           libraryPanels.set(uid, { name, uid, kind: LibraryElementKind.Panel, model: rest });
         }
@@ -221,7 +220,7 @@ export class DashboardExporter {
 
       // we need to process all panels again after all the promises are resolved
       // so all data sources, variables and targets have been templateized when we process library panels
-      for (const panel of saveModel.panels) {
+      for (const panel of dashboard.panels) {
         processLibraryPanels(panel);
         if (panel.collapsed !== undefined && panel.collapsed === true && panel.panels) {
           for (const rowPanel of panel.panels) {

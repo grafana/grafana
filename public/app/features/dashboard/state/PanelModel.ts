@@ -29,7 +29,7 @@ import {
   RenderEvent,
 } from 'app/types/events';
 
-import { LibraryElementDTO, PanelModelLibraryPanel } from '../../library-panels/types';
+import { LibraryElementDTO, LibraryPanelRef } from '../../library-panels/types';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import { getTimeSrv } from '../services/TimeSrv';
@@ -170,7 +170,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   links?: DataLink[];
   declare transparent: boolean;
 
-  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
+  libraryPanel?: LibraryPanelRef | LibraryElementDTO;
 
   autoMigrateFrom?: string;
 

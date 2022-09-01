@@ -59,10 +59,13 @@ export interface LibraryElementDTOMetaUser {
   avatarUrl: string;
 }
 
-export type PanelModelLibraryPanel = Pick<LibraryElementDTO, 'uid' | 'name' | 'meta' | 'version'>;
+export interface LibraryPanelRef {
+  name: string;
+  uid: string;
+}
 
 export interface PanelModelWithLibraryPanel extends PanelModel {
-  libraryPanel: PanelModelLibraryPanel;
+  libraryPanel: LibraryElementDTO;
 }
 
 export type DispatchResult = (dispatch: Dispatch<AnyAction>) => void;
