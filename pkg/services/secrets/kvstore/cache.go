@@ -15,7 +15,7 @@ type CachedKVStore struct {
 	store SecretsKVStore
 }
 
-func NewCachedKVStore(store SecretsKVStore, defaultExpiration time.Duration, cleanupInterval time.Duration) *CachedKVStore {
+func WithCache(store SecretsKVStore, defaultExpiration time.Duration, cleanupInterval time.Duration) *CachedKVStore {
 	return &CachedKVStore{
 		log:   log.New("secrets.kvstore"),
 		cache: localcache.New(defaultExpiration, cleanupInterval),
@@ -81,14 +81,6 @@ func (kv *CachedKVStore) GetAll(ctx context.Context) ([]Item, error) {
 	return kv.store.GetAll(ctx)
 }
 
-func (kv *CachedKVStore) Fallback() SecretsKVStore {
-	return kv.store.Fallback()
-}
-
-func (kv *CachedKVStore) SetFallback(store SecretsKVStore) error {
-	return kv.store.SetFallback(store)
-}
-
-func (kv *CachedKVStore) GetUnwrappedStore() SecretsKVStore {
-	return kv.store
+func GetUnwrappedStoreFromCache(kv SecretsKVStore) SecretsKVStore {
+	return kv.(*CachedKVStore).store
 }

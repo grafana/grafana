@@ -2,7 +2,6 @@ package migrations
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -46,10 +45,8 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 	if err := secretskvs.EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to get the fallback store since in this scenario the secrets store would be the plugin.
-		fallbackStore := s.secretsStore.Fallback()
-		if fallbackStore == nil {
-			return errors.New("unable to get fallback secret store for migration")
-		}
+		pluginStore := secretskvs.GetUnwrappedStoreFromCache(s.secretsStore).(*secretskvs.SecretsKVStorePlugin)
+		fallbackStore := pluginStore.Fallback()
 
 		// before we start migrating, check see if plugin startup failures were already fatal
 		namespacedKVStore := secretskvs.GetNamespacedKVStore(s.kvstore)
@@ -58,22 +55,32 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 			logger.Warn("unable to determine whether plugin startup failures are fatal - continuing migration anyway.")
 		}
 
+		// get all secrets in the fallback store
 		allSec, err := fallbackStore.GetAll(ctx)
 		if err != nil {
 			return nil
 		}
 		totalSec := len(allSec)
-		// We just set it again as the current secret store should be the plugin secret
 		logger.Debug(fmt.Sprintf("Total amount of secrets to migrate: %d", totalSec))
-		for i, sec := range allSec {
-			logger.Debug(fmt.Sprintf("Migrating secret %d of %d", i+1, totalSec), "current", i+1, "secretCount", totalSec)
-			err = s.secretsStore.Set(ctx, *sec.OrgId, *sec.Namespace, *sec.Type, sec.Value)
-			if err != nil {
-				return err
+
+		// during migration we need to have fallback enabled while we move secrets to plugin
+		err = pluginStore.WithFallbackEnabled(func() error {
+			// We just set it again as the current secret store should be the plugin secret
+			for i, sec := range allSec {
+				logger.Debug(fmt.Sprintf("Migrating secret %d of %d", i+1, totalSec), "current", i+1, "secretCount", totalSec)
+				err = pluginStore.Set(ctx, *sec.OrgId, *sec.Namespace, *sec.Type, sec.Value)
+				if err != nil {
+					return err
+				}
 			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
-		logger.Debug("migrated unified secrets to plugin", "number of secrets", totalSec)
+
 		// as no err was returned, when we delete all the secrets from the sql store
+		logger.Debug("migrated unified secrets to plugin", "number of secrets", totalSec)
 		for index, sec := range allSec {
 			logger.Debug(fmt.Sprintf("Cleaning secret %d of %d", index+1, totalSec), "current", index+1, "secretCount", totalSec)
 

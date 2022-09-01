@@ -7,17 +7,36 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"gopkg.in/ini.v1"
 )
+
+func NewFakeSQLSecretsKVStore(t *testing.T) *SecretsKVStoreSQL {
+	t.Helper()
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	return NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+}
+
+func NewFakePluginSecretsKVStore(t *testing.T, features featuremgmt.FeatureToggles, fallback SecretsKVStore) *SecretsKVStorePlugin {
+	t.Helper()
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	store := kvstore.ProvideService(sqlStore)
+	namespacedKVStore := GetNamespacedKVStore(store)
+	manager := NewFakeSecretsPluginManager(t, false)
+	return NewPluginSecretsKVStore(manager.SecretsManager().SecretsManager, secretsService, namespacedKVStore, features, fallback, log.New("test.logger"))
+}
 
 // In memory kv store used for testing
 type FakeSecretsKVStore struct {
@@ -284,7 +303,22 @@ func SetupTestConfig(t *testing.T) *setting.Cfg {
 	return &setting.Cfg{Raw: raw}
 }
 
-func ResetPlugin() {
-	fatalFlagOnce = sync.Once{}
-	startupOnce = sync.Once{}
+func ResetPlugin(t *testing.T) {
+	t.Helper()
+	t.Cleanup(func() {
+		fatalFlagOnce = sync.Once{}
+		startupOnce = sync.Once{}
+	})
+}
+
+func ReplaceFallback(t *testing.T, kv SecretsKVStore, fb SecretsKVStore) error {
+	t.Helper()
+	if store, ok := kv.(*CachedKVStore); ok {
+		kv = store.store
+	}
+	if store, ok := kv.(*SecretsKVStorePlugin); ok {
+		store.fallbackStore = fb
+		return nil
+	}
+	return errors.New("not a plugin store")
 }

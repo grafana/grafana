@@ -90,8 +90,6 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	if err != nil {
 		logger.Error("Failed to remove plugin error fatal flag", "error", err.Error())
 	}
-	// Reset the fatal flag setter in case another secret is created on the plugin
-	secretskvs.ResetPlugin()
 
 	logger.Debug("Shutting down secrets plugin now that migration is complete")
 	// if `use_plugin` wasn't set, stop the plugin after migration

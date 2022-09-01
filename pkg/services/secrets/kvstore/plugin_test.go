@@ -26,7 +26,7 @@ func TestFatalPluginErr_PluginFailsToStartWithFatalFlagNotSet(t *testing.T) {
 	require.IsType(t, &CachedKVStore{}, p.SecretsKVStore)
 
 	cachedKv, _ := p.SecretsKVStore.(*CachedKVStore)
-	assert.IsType(t, &SecretsKVStoreSQL{}, cachedKv.GetUnwrappedStore())
+	assert.IsType(t, &SecretsKVStoreSQL{}, GetUnwrappedStoreFromCache(cachedKv))
 }
 
 // With fatal flag not set, store a secret in the plugin while backwards compatibility is disabled
