@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -22,6 +22,7 @@ import {
   VizTooltipContainer,
 } from '@grafana/ui';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { TooltipView } from './TooltipView';
 import { XYChartOptions } from './models.gen';
@@ -29,6 +30,7 @@ import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
 import { ScatterHoverEvent, ScatterSeries } from './types';
 
 type Props = PanelProps<XYChartOptions>;
+const TOOLTIP_OFFSET = 10;
 
 export const XYChartPanel2: React.FC<Props> = (props: Props) => {
   const [error, setError] = useState<string | undefined>();
@@ -36,12 +38,39 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
   const [facets, setFacets] = useState<FacetedData | undefined>();
   const [hover, setHover] = useState<ScatterHoverEvent | undefined>();
+  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+
+  const isToolTipOpen = useRef<boolean>(false);
   const oldOptions = usePrevious(props.options);
   const oldData = usePrevious(props.data);
 
+  const onCloseToolTip = () => {
+    isToolTipOpen.current = false;
+    setShouldDisplayCloseButton(false);
+    scatterHoverCallback(undefined);
+  };
+
+  const onUPlotClick = () => {
+    isToolTipOpen.current = !isToolTipOpen.current;
+
+    // Linking into useState required to re-render tooltip
+    setShouldDisplayCloseButton(isToolTipOpen.current);
+  };
+
+  const scatterHoverCallback = (hover?: ScatterHoverEvent) => {
+    setHover(hover);
+  };
+
   const initSeries = useCallback(() => {
     const getData = () => props.data.series;
-    const info: ScatterPanelInfo = prepScatter(props.options, getData, config.theme2, scatterHoverCallback);
+    const info: ScatterPanelInfo = prepScatter(
+      props.options,
+      getData,
+      config.theme2,
+      scatterHoverCallback,
+      onUPlotClick,
+      isToolTipOpen
+    );
 
     if (info.series.length && props.data.series) {
       setBuilder(info.builder);
@@ -63,10 +92,6 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props]);
-
-  const scatterHoverCallback = (hover?: ScatterHoverEvent) => {
-    setHover(hover);
-  };
 
   const renderLegend = () => {
     const items: VizLegendItem[] = [];
@@ -167,8 +192,6 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     );
   }
 
-  console.log(facets);
-
   return (
     <>
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
@@ -183,13 +206,37 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
       </VizLayout>
       <Portal>
         {hover && props.options.tooltip.mode !== TooltipDisplayMode.None && (
-          <VizTooltipContainer position={{ x: hover.pageX, y: hover.pageY }} offset={{ x: 10, y: 10 }}>
+          <VizTooltipContainer
+            position={{ x: hover.pageX, y: hover.pageY }}
+            offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+            allowPointerEvents={isToolTipOpen.current}
+          >
+            {shouldDisplayCloseButton && (
+              <div
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <CloseButton
+                  onClick={onCloseToolTip}
+                  style={{
+                    position: 'relative',
+                    top: 'auto',
+                    right: 'auto',
+                    marginRight: 0,
+                  }}
+                />
+              </div>
+            )}
             <TooltipView
               options={props.options.tooltip}
               allSeries={series}
               rowIndex={hover.xIndex}
               hoveredPointIndex={hover.scatterIndex}
               data={props.data.series}
+              range={props.timeRange}
             />
           </VizTooltipContainer>
         )}

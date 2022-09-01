@@ -8,9 +8,20 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme2,
+  LinkModel,
+  TimeRange,
 } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
-import { SeriesIcon, TooltipDisplayMode, useStyles2, VizTooltipOptions } from '@grafana/ui';
+import {
+  LinkButton,
+  SeriesIcon,
+  TooltipDisplayMode,
+  usePanelContext,
+  useStyles2,
+  VerticalGroup,
+  VizTooltipOptions,
+} from '@grafana/ui';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { ScatterSeries } from './types';
 
@@ -20,10 +31,12 @@ export interface Props {
   rowIndex?: number; // the hover row
   hoveredPointIndex: number; // the hovered point
   options: VizTooltipOptions;
+  range: TimeRange;
 }
 
-export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, options }: Props) => {
+export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, options, range }: Props) => {
   const style = useStyles2(getStyles);
+  const { onSplitOpen } = usePanelContext();
 
   if (!allSeries || rowIndex == null) {
     return null;
@@ -33,6 +46,12 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
   const frame = series.frame(data);
   const xField = series.x(frame);
   const yField = series.y(frame);
+  const links: Array<LinkModel<Field>> = getFieldLinksForExplore({
+    field: yField,
+    splitOpenFn: onSplitOpen,
+    rowIndex,
+    range,
+  });
 
   let yValues = [];
   if (options.mode === TooltipDisplayMode.Single) {
@@ -100,6 +119,27 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
               </tr>
             );
           })}
+          {links.length > 0 && (
+            <tr>
+              <td colSpan={2}>
+                <VerticalGroup>
+                  {links.map((link, i) => (
+                    <LinkButton
+                      key={i}
+                      icon={'external-link-alt'}
+                      target={link.target}
+                      href={link.href}
+                      onClick={link.onClick}
+                      fill="text"
+                      style={{ width: '100%' }}
+                    >
+                      {link.title}
+                    </LinkButton>
+                  ))}
+                </VerticalGroup>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </>

@@ -1,3 +1,4 @@
+import { MutableRefObject } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -41,14 +42,16 @@ export function prepScatter(
   options: XYChartOptions,
   getData: () => DataFrame[],
   theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback
+  ttip: ScatterHoverCallback,
+  onUPlotClick: null | ((evt?: Object) => void),
+  isToolTipOpen: MutableRefObject<boolean>
 ): ScatterPanelInfo {
   let series: ScatterSeries[];
   let builder: UPlotConfigBuilder;
 
   try {
     series = prepSeries(options, getData());
-    builder = prepConfig(getData, series, theme, ttip);
+    builder = prepConfig(getData, series, theme, ttip, onUPlotClick, isToolTipOpen);
   } catch (e) {
     let errorMsg = 'Unknown error in prepScatter';
     if (typeof e === 'string') {
@@ -287,7 +290,9 @@ const prepConfig = (
   getData: () => DataFrame[],
   scatterSeries: ScatterSeries[],
   theme: GrafanaTheme2,
-  ttip: ScatterHoverCallback
+  ttip: ScatterHoverCallback,
+  onUPlotClick: null | ((evt?: Object) => void),
+  isToolTipOpen: MutableRefObject<boolean>
 ) => {
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -498,9 +503,32 @@ const prepConfig = (
     },
   });
 
+  const clearPopupIfOpened = () => {
+    if (isToolTipOpen.current) {
+      ttip(undefined);
+      if (onUPlotClick) {
+        onUPlotClick();
+      }
+    }
+  };
+
+  let ref_parent: HTMLElement | null = null;
+
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
     u.over.style.overflow = 'hidden';
+    ref_parent = u.root.parentElement;
+
+    if (onUPlotClick) {
+      ref_parent?.addEventListener('click', onUPlotClick);
+    }
+  });
+
+  builder.addHook('destroy', (u) => {
+    if (onUPlotClick) {
+      ref_parent?.removeEventListener('click', onUPlotClick);
+      clearPopupIfOpened();
+    }
   });
 
   let rect: DOMRect;
@@ -514,7 +542,7 @@ const prepConfig = (
     if (u.cursor.idxs != null) {
       for (let i = 0; i < u.cursor.idxs.length; i++) {
         const sel = u.cursor.idxs[i];
-        if (sel != null) {
+        if (sel != null && !isToolTipOpen.current) {
           ttip({
             scatterIndex: i - 1,
             xIndex: sel,
@@ -525,10 +553,15 @@ const prepConfig = (
         }
       }
     }
-    ttip(undefined);
+
+    if (!isToolTipOpen.current) {
+      ttip(undefined);
+    }
   });
 
   builder.addHook('drawClear', (u) => {
+    clearPopupIfOpened();
+
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
