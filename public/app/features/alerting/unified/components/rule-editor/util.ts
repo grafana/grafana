@@ -67,7 +67,7 @@ export function updateMathExpressionRefs(expression: string, previousRefId: stri
   return expression.replace(oldExpression, newExpression);
 }
 
-export function refIdExists(queries: AlertQuery[], refId: string): boolean {
+export function refIdExists(queries: AlertQuery[], refId: string | null): boolean {
   return queries.find((query) => query.refId === refId) !== undefined;
 }
 

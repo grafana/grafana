@@ -106,6 +106,14 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     [queries]
   );
 
+  // update the condition if it's been removed
+  useEffect(() => {
+    if (!refIdExists(queries, condition)) {
+      const lastRefId = queries.at(-1)?.refId ?? null;
+      setValue('condition', lastRefId);
+    }
+  }, [condition, queries, setValue]);
+
   return (
     <RuleEditorSection stepNo={1} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
