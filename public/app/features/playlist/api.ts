@@ -95,14 +95,13 @@ export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistIte
     const searcher = getGrafanaSearcher();
     const res: PlaylistItem[] = [];
     for (let i = 0; i < targets.length; i++) {
-      const item = items[i];
       const view = (await searcher.search(targets[i].search!)).view;
-      res.push({ ...item, dashboards: view.map((v) => ({ ...v })) });
+      res.push({ ...items[i], dashboards: view.map((v) => ({ ...v })) });
     }
     return res;
   }
 
-  // The bluge based service can execute multiple
+  // The bluge backend can execute multiple queries in a single request
   const ds = await getGrafanaDatasource();
   // eslint-disable-next-line
   const rsp = await lastValueFrom(ds.query({ targets } as unknown as DataQueryRequest<GrafanaQuery>));
