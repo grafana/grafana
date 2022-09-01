@@ -7,22 +7,24 @@ import {
   DataLink,
   DataQueryRequest,
   DataSourceInstanceSettings,
-  DataSourcePluginMeta,
   dateMath,
   DateTime,
   dateTime,
   Field,
   MutableDataFrame,
+  RawTimeRange,
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, TemplateSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
 
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { ElasticDatasource, enhanceDataFrame } from './datasource';
+import { createElasticDatasource } from './mocks';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
@@ -41,6 +43,17 @@ jest.mock('@grafana/runtime', () => ({
 
 const TIMESRV_START = [2022, 8, 21, 6, 10, 10];
 const TIMESRV_END = [2022, 8, 24, 6, 10, 21];
+const DATAQUERY_BASE = {
+  requestId: '1',
+  interval: '',
+  intervalMs: 0,
+  scopedVars: {
+    test: { text: '', value: '' },
+  },
+  timezone: '',
+  app: 'test',
+  startTime: 0,
+};
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...(jest.requireActual('app/features/dashboard/services/TimeSrv') as unknown as object),
@@ -58,73 +71,78 @@ const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
   },
 });
 
-interface Args {
-  data?: any;
+interface Buckets {
+  buckets: Array<Record<string, number | string>>;
+}
+
+interface Aggregations {
+  aggregations: Record<string, Buckets>;
+}
+
+interface Data {
+  responses: Aggregations[] | ErrorResponse[];
+  took?: number;
+}
+
+type ErrorResponse = Record<string, string | number | Record<string, string>>;
+
+interface TestContext {
+  data?: Data;
   from?: string;
-  jsonData?: any;
+  jsonData?: Partial<ElasticsearchOptions>;
   database?: string;
-  mockImplementation?: (options: BackendSrvRequest) => Observable<FetchResponse>;
+  fetchImplementation?: (options: BackendSrvRequest) => Observable<FetchResponse>;
 }
 
 function getTestContext({
-  data = {},
+  data = { responses: [] },
   from = 'now-5m',
-  jsonData = {},
-  database = '[asd-]YYYY.MM.DD',
-  mockImplementation = undefined,
-}: Args = {}) {
-  jest.clearAllMocks();
-
+  jsonData,
+  database = '[test-]YYYY.MM.DD',
+  fetchImplementation = undefined,
+}: TestContext = {}) {
   const defaultMock = (options: BackendSrvRequest) => of(createFetchResponse(data));
 
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
-  fetchMock.mockImplementation(mockImplementation ?? defaultMock);
+  fetchMock.mockImplementation(fetchImplementation ?? defaultMock);
 
-  const templateSrv: any = {
-    replace: jest.fn((text?: string) => {
+  const timeSrv = {
+    time: { from, to: 'now' },
+    timeRange: () => ({
+      from: dateMath.parse(timeSrv.time.from, false),
+      to: dateMath.parse(timeSrv.time.to, true),
+    }),
+    setTime: (time: RawTimeRange) => {
+      timeSrv.time = time;
+    },
+  } as TimeSrv;
+
+  const settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = { url: ELASTICSEARCH_MOCK_URL };
+  if (jsonData) {
+    settings.jsonData = jsonData as ElasticsearchOptions;
+  }
+
+  const templateSrv = {
+    replace: (text?: string) => {
       if (text?.startsWith('$')) {
         return `resolvedVariable`;
       } else {
         return text;
       }
-    }),
-    getAdhocFilters: jest.fn(() => []),
-  };
+    },
+    getAdhocFilters: () => [],
+  } as unknown as TemplateSrv;
 
-  const timeSrv: any = {
-    time: { from, to: 'now' },
-  };
-
-  timeSrv.timeRange = jest.fn(() => {
-    return {
-      from: dateMath.parse(timeSrv.time.from, false),
-      to: dateMath.parse(timeSrv.time.to, true),
-    };
-  });
-
-  timeSrv.setTime = jest.fn((time) => {
-    timeSrv.time = time;
-  });
-
-  const instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions> = {
-    id: 1,
-    meta: {} as DataSourcePluginMeta,
-    name: 'test-elastic',
-    type: 'type',
-    uid: 'uid',
-    access: 'proxy',
-    url: ELASTICSEARCH_MOCK_URL,
-    database,
-    jsonData,
-    readOnly: false,
-  };
-
-  const ds = new ElasticDatasource(instanceSettings, templateSrv);
+  const ds = createElasticDatasource(settings, templateSrv);
 
   return { timeSrv, ds, fetchMock };
 }
 
-describe('ElasticDatasource', function (this: any) {
+describe('ElasticDatasource', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('When calling getTagValues', () => {
     it('should respect the currently selected time range', () => {
       const data = {
@@ -181,16 +199,17 @@ describe('ElasticDatasource', function (this: any) {
 
   describe('When issuing metric query with interval pattern', () => {
     async function runScenario() {
-      const range = { from: toUtc([2015, 4, 30, 10]), to: toUtc([2015, 5, 1, 10]) };
-      const targets = [
+      const range = { from: toUtc([2015, 4, 30, 10]), to: toUtc([2015, 5, 1, 10]), raw: { from: '', to: '' } };
+      const targets: ElasticsearchQuery[] = [
         {
+          refId: '',
           alias: '$varAlias',
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
           metrics: [{ type: 'count', id: '1' }],
           query: 'escape\\:test',
         },
       ];
-      const query: any = { range, targets };
+      const query = { ...DATAQUERY_BASE, range, targets };
       const data = {
         responses: [
           {
@@ -209,7 +228,7 @@ describe('ElasticDatasource', function (this: any) {
       };
       const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0' }, data });
 
-      let result: any = {};
+      let result = {};
       await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toEqual({
@@ -291,7 +310,7 @@ describe('ElasticDatasource', function (this: any) {
       } as DataQueryRequest<ElasticsearchQuery>;
 
       const queryBuilderSpy = jest.spyOn(ds.queryBuilder, 'getLogsQuery');
-      let response: any = {};
+      let response = {};
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
@@ -328,8 +347,10 @@ describe('ElasticDatasource', function (this: any) {
   describe('When issuing document query', () => {
     async function runScenario() {
       const range = createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10]));
-      const targets = [{ refId: 'A', metrics: [{ type: 'raw_document', id: '1' }], query: 'test' }];
-      const query: any = { range, targets };
+      const targets: ElasticsearchQuery[] = [
+        { refId: 'A', metrics: [{ type: 'raw_document', id: '1' }], query: 'test' },
+      ];
+      const query = { ...DATAQUERY_BASE, range, targets };
       const data = { responses: [] };
 
       const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: '7.10.0' }, data, database: 'test' });
@@ -420,7 +441,7 @@ describe('ElasticDatasource', function (this: any) {
       };
 
       const { ds } = getTestContext({
-        mockImplementation: () => throwError(response),
+        fetchImplementation: () => throwError(response),
         from: undefined,
         jsonData: { esVersion: '7.10.0' },
       });
@@ -628,7 +649,7 @@ describe('ElasticDatasource', function (this: any) {
       const { ds, timeSrv, fetchMock } = getTestContext({
         from: 'now-2w',
         jsonData: { interval: 'Daily', esVersion: '7.10.0' },
-        mockImplementation: (options) => {
+        fetchImplementation: (options) => {
           if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
             return of(createFetchResponse(basicResponse));
           }
@@ -649,7 +670,7 @@ describe('ElasticDatasource', function (this: any) {
       const { ds, timeSrv, fetchMock } = getTestContext({
         from: 'now-2w',
         jsonData: { interval: 'Daily', esVersion: '7.10.0' },
-        mockImplementation: (options) => {
+        fetchImplementation: (options) => {
           return throwError({ status: 404 });
         },
       });
@@ -824,7 +845,7 @@ describe('ElasticDatasource', function (this: any) {
   describe('When issuing aggregation query on es5.x', () => {
     async function runScenario() {
       const range = createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10]));
-      const targets = [
+      const targets: ElasticsearchQuery[] = [
         {
           refId: 'A',
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
@@ -832,7 +853,7 @@ describe('ElasticDatasource', function (this: any) {
           query: 'test',
         },
       ];
-      const query: any = { range, targets };
+      const query = { ...DATAQUERY_BASE, range, targets };
       const data = { responses: [] };
 
       const { ds, fetchMock } = getTestContext({ jsonData: { esVersion: '7.10.0' }, data, database: 'test' });
@@ -926,7 +947,7 @@ describe('ElasticDatasource', function (this: any) {
   describe('query', () => {
     it('should replace range as integer not string', async () => {
       const { ds } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0', timeField: '@time' } });
-      const postMock = jest.fn((url: string, data: any) => of(createFetchResponse({ responses: [] })));
+      const postMock = jest.fn((url: string, data) => of(createFetchResponse({ responses: [] })));
       ds['post'] = postMock;
 
       await expect(ds.query(createElasticQuery())).toEmitValuesWith((received) => {
@@ -1140,7 +1161,11 @@ const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {
     range: {
       from: dateTime([2015, 4, 30, 10]),
       to: dateTime([2015, 5, 1, 10]),
-    } as any,
+      raw: {
+        from: '',
+        to: '',
+      },
+    },
     targets: [
       {
         refId: '',
