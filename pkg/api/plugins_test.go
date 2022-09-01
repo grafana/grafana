@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -23,9 +22,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -64,7 +65,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/install", strings.NewReader("{ \"version\": \"1.0.2\" }"))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_EDITOR, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
@@ -82,7 +83,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			req := srv.NewPostRequest("/api/plugins/test/uninstall", strings.NewReader("{}"))
-			webtest.RequestWithSignedInUser(req, &models.SignedInUser{UserId: 1, OrgId: 1, OrgRole: models.ROLE_VIEWER, IsGrafanaAdmin: true})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: true})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
@@ -128,11 +129,11 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		sc := setupHTTPServerWithCfg(t, true, true, &setting.Cfg{
+		sc := setupHTTPServerWithCfg(t, true, &setting.Cfg{
 			PluginAdminEnabled:               tc.pluginAdminEnabled,
 			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
 		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgId)
+		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgID)
 		sc.hs.pluginManager = pm
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
@@ -152,9 +153,9 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 func Test_GetPluginAssets(t *testing.T) {
 	pluginID := "test-plugin"
 	pluginDir := "."
-	tmpFile, err := ioutil.TempFile(pluginDir, "")
+	tmpFile, err := os.CreateTemp(pluginDir, "")
 	require.NoError(t, err)
-	tmpFileInParentDir, err := ioutil.TempFile("..", "")
+	tmpFileInParentDir, err := os.CreateTemp("..", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(tmpFile.Name())
@@ -439,15 +440,15 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 
 	type testCase struct {
 		expectedCode    int
-		role            models.RoleType
+		role            org.RoleType
 		isGrafanaAdmin  bool
 		expectedPlugins []string
 		filters         map[string]string
 	}
 	tcs := []testCase{
-		{expectedCode: http.StatusOK, role: models.ROLE_VIEWER, expectedPlugins: []string{"mysql"}},
-		{expectedCode: http.StatusOK, role: models.ROLE_VIEWER, isGrafanaAdmin: true, expectedPlugins: []string{"mysql", "test-app"}},
-		{expectedCode: http.StatusOK, role: models.ROLE_ADMIN, expectedPlugins: []string{"mysql", "test-app"}},
+		{expectedCode: http.StatusOK, role: org.RoleViewer, expectedPlugins: []string{"mysql"}},
+		{expectedCode: http.StatusOK, role: org.RoleViewer, isGrafanaAdmin: true, expectedPlugins: []string{"mysql", "test-app"}},
+		{expectedCode: http.StatusOK, role: org.RoleAdmin, expectedPlugins: []string{"mysql", "test-app"}},
 	}
 
 	testName := func(tc testCase) string {
@@ -455,10 +456,10 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			tc.expectedCode, tc.role, tc.isGrafanaAdmin, tc.filters)
 	}
 
-	testUser := func(role models.RoleType, isGrafanaAdmin bool) models.SignedInUser {
-		return models.SignedInUser{
-			UserId:         2,
-			OrgId:          2,
+	testUser := func(role org.RoleType, isGrafanaAdmin bool) user.SignedInUser {
+		return user.SignedInUser{
+			UserID:         2,
+			OrgID:          2,
 			OrgName:        "TestOrg2",
 			OrgRole:        role,
 			Login:          "testUser",
@@ -471,7 +472,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		sc := setupHTTPServer(t, true, true)
+		sc := setupHTTPServer(t, true)
 		sc.hs.PluginSettings = &pluginSettings
 		sc.hs.pluginStore = pluginStore
 		sc.hs.pluginsUpdateChecker = updatechecker.ProvidePluginsService(sc.hs.Cfg, pluginStore)

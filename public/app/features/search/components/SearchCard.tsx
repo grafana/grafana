@@ -20,13 +20,14 @@ export interface Props {
   item: DashboardSectionItem;
   onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
+  onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 export function getThumbnailURL(uid: string, isLight?: boolean) {
   return `/api/dashboards/uid/${uid}/img/thumb/${isLight ? 'light' : 'dark'}`;
 }
 
-export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: Props) {
+export function SearchCard({ editable, item, onTagSelected, onToggleChecked, onClick }: Props) {
   const [hasImage, setHasImage] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [showExpandedView, setShowExpandedView] = useState(false);
@@ -118,6 +119,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onMouseMove={onMouseMove}
+      onClick={onClick}
     >
       <div className={styles.imageContainer}>
         <SearchCheckbox
@@ -152,6 +154,7 @@ export function SearchCard({ editable, item, onTagSelected, onToggleChecked }: P
               imageWidth={320}
               item={item}
               lastUpdated={lastUpdated}
+              onClick={onClick}
             />
           </div>
         </Portal>

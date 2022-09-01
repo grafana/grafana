@@ -4,8 +4,6 @@
 // To regenerate, run "make gen-cue" from the repository root.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 export enum AxisPlacement {
   Auto = 'auto',
   Bottom = 'bottom',
@@ -209,11 +207,11 @@ export interface OptionsWithLegend {
 }
 
 export interface OptionsWithTimezones {
-  timezones?: string[];
+  timezone?: string[];
 }
 
 export const defaultOptionsWithTimezones: Partial<OptionsWithTimezones> = {
-  timezones: [],
+  timezone: [],
 };
 
 export interface OptionsWithTextFormatting {
@@ -289,6 +287,7 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
+  showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
   width?: number;

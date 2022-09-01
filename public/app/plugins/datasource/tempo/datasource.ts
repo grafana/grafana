@@ -43,7 +43,9 @@ import {
   rateMetric,
   durationMetric,
   errorRateMetric,
+  defaultTableFilter,
 } from './graphTransform';
+import TempoLanguageProvider from './language_provider';
 import {
   transformTrace,
   transformTraceList,
@@ -52,7 +54,7 @@ import {
 } from './resultTransformer';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
+export type TempoQueryType = 'traceql' | 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -75,7 +77,7 @@ export interface TempoQuery extends DataQuery {
   query: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
-  search: string;
+  search?: string;
   queryType: TempoQueryType;
   serviceName?: string;
   spanName?: string;
@@ -89,7 +91,7 @@ interface SearchQueryParams {
   minDuration?: string;
   maxDuration?: string;
   limit?: number;
-  tags: string;
+  tags?: string;
   start?: number;
   end?: number;
 }
@@ -110,6 +112,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
+  languageProvider: TempoLanguageProvider;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -121,6 +124,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
+    this.languageProvider = new TempoLanguageProvider(this);
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -418,16 +422,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return searchQuery;
   }
 
-  async getServiceGraphLabels() {
-    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
-    return ds.getTagKeys!();
-  }
-
-  async getServiceGraphLabelValues(key: string) {
-    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
-    return ds.getTagValues!({ key });
-  }
-
   // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
   getLokiSearchDS = (): string | undefined => {
     const legacyLogsDatasourceUid =
@@ -487,7 +481,7 @@ function rateQuery(
   datasourceUid: string
 ) {
   const serviceMapRequest = makePromServiceMapRequest(request);
-  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, '', request)]);
+  serviceMapRequest.targets = makeApmRequest([buildExpr(rateMetric, defaultTableFilter, request)]);
 
   return queryPrometheus(serviceMapRequest, datasourceUid).pipe(
     toArray(),
@@ -660,7 +654,7 @@ function getApmTable(
 ) {
   let df: any = { fields: [] };
   const rate = rateResponse.data[0]?.filter((x: { refId: string }) => {
-    return x.refId === buildExpr(rateMetric, '', request);
+    return x.refId === buildExpr(rateMetric, defaultTableFilter, request);
   });
   const errorRate = secondResponse.data.filter((x) => {
     return x.refId === errorRateBySpanName;

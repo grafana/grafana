@@ -30,7 +30,7 @@ import { LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import { HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
-import { constraintViewable, dimensionViewable } from './ables';
+import { constraintViewable, dimensionViewable, settingsViewable } from './ables';
 import { ElementState } from './element';
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -59,6 +59,7 @@ export class Scene {
   div?: HTMLDivElement;
   currentLayer?: FrameState;
   isEditingEnabled?: boolean;
+  shouldShowAdvancedTypes?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
 
@@ -66,8 +67,13 @@ export class Scene {
 
   inlineEditingCallback?: () => void;
 
-  constructor(cfg: CanvasFrameOptions, enableEditing: boolean, public onSave: (cfg: CanvasFrameOptions) => void) {
-    this.root = this.load(cfg, enableEditing);
+  constructor(
+    cfg: CanvasFrameOptions,
+    enableEditing: boolean,
+    showAdvancedTypes: boolean,
+    public onSave: (cfg: CanvasFrameOptions) => void
+  ) {
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes);
   }
 
   getNextElementName = (isFrame = false) => {
@@ -89,7 +95,7 @@ export class Scene {
     return !this.byName.has(v);
   };
 
-  load(cfg: CanvasFrameOptions, enableEditing: boolean) {
+  load(cfg: CanvasFrameOptions, enableEditing: boolean, showAdvancedTypes: boolean) {
     this.root = new RootElement(
       cfg ?? {
         type: 'frame',
@@ -100,6 +106,7 @@ export class Scene {
     );
 
     this.isEditingEnabled = enableEditing;
+    this.shouldShowAdvancedTypes = showAdvancedTypes;
 
     setTimeout(() => {
       if (this.div) {
@@ -253,6 +260,22 @@ export class Scene {
     return undefined;
   };
 
+  setNonTargetPointerEvents = (target: HTMLElement | SVGElement, disablePointerEvents: boolean) => {
+    const stack = [...this.root.elements];
+    while (stack.length > 0) {
+      const currentElement = stack.shift();
+
+      if (currentElement && currentElement.div && currentElement.div !== target) {
+        currentElement.applyLayoutStylesToDiv(disablePointerEvents);
+      }
+
+      const nestedElements = currentElement instanceof FrameState ? currentElement.elements : [];
+      for (const nestedElement of nestedElements) {
+        stack.unshift(nestedElement);
+      }
+    }
+  };
+
   setRef = (sceneContainer: HTMLDivElement) => {
     this.div = sceneContainer;
   };
@@ -266,7 +289,6 @@ export class Scene {
 
   private updateSelection = (selection: SelectionParams) => {
     this.moveable!.target = selection.targets;
-
     if (this.skipNextSelectionBroadcast) {
       this.skipNextSelectionBroadcast = false;
       return;
@@ -319,10 +341,11 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges,
       resizable: allowChanges,
-      ables: [dimensionViewable, constraintViewable(this)],
+      ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
         dimensionViewable: allowChanges,
         constraintViewable: allowChanges,
+        settingsViewable: allowChanges,
       },
       origin: false,
       className: this.styles.selected,
@@ -332,6 +355,7 @@ export class Scene {
       })
       .on('dragStart', (event) => {
         this.ignoreDataUpdate = true;
+        this.setNonTargetPointerEvents(event.target, true);
       })
       .on('dragGroupStart', (event) => {
         this.ignoreDataUpdate = true;
@@ -365,6 +389,7 @@ export class Scene {
 
         this.moved.next(Date.now());
         this.ignoreDataUpdate = false;
+        this.setNonTargetPointerEvents(event.target, false);
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -428,15 +453,15 @@ export class Scene {
       targets = event.selected;
       this.updateSelection({ targets });
 
-      // @TODO Figure out click-drag functionality without phantom mouseup issue
-      // https://github.com/daybrush/moveable/issues/481
-
-      // if (event.isDragStart) {
-      //   event.inputEvent.preventDefault();
-      //   setTimeout(() => {
-      //     this.moveable!.dragStart(event.inputEvent);
-      //   });
-      // }
+      if (event.isDragStart) {
+        if (this.isEditingEnabled && this.selecto?.getSelectedTargets().length) {
+          this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+        }
+        event.inputEvent.preventDefault();
+        setTimeout(() => {
+          this.moveable!.dragStart(event.inputEvent);
+        });
+      }
     });
   };
 

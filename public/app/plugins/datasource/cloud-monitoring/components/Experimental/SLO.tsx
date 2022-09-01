@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow, Select } from '@grafana/ui';
+import { Select, EditorField } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
 import { SLOQuery } from '../../types';
@@ -14,7 +14,7 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
 }
 
-export const SLO: React.FC<Props> = ({ refId, query, templateVariableOptions, onChange, datasource }) => {
+export const SLO = ({ refId, query, templateVariableOptions, onChange, datasource }: Props) => {
   const [slos, setSLOs] = useState<Array<SelectableValue<string>>>([]);
   const { projectName, serviceId } = query;
 
@@ -35,22 +35,20 @@ export const SLO: React.FC<Props> = ({ refId, query, templateVariableOptions, on
   }, [datasource, projectName, serviceId, templateVariableOptions]);
 
   return (
-    <EditorRow>
-      <EditorField label="SLO">
-        <Select
-          inputId={`${refId}-slo`}
-          width="auto"
-          allowCustomValue
-          value={query?.sloId && { value: query?.sloId, label: query?.sloName || query?.sloId }}
-          placeholder="Select SLO"
-          options={slos}
-          onChange={async ({ value: sloId = '', label: sloName = '' }) => {
-            const slos = await datasource.getServiceLevelObjectives(projectName, serviceId);
-            const slo = slos.find(({ value }) => value === datasource.templateSrv.replace(sloId));
-            onChange({ ...query, sloId, sloName, goal: slo?.goal });
-          }}
-        />
-      </EditorField>
-    </EditorRow>
+    <EditorField label="SLO">
+      <Select
+        inputId={`${refId}-slo`}
+        width="auto"
+        allowCustomValue
+        value={query?.sloId && { value: query?.sloId, label: query?.sloName || query?.sloId }}
+        placeholder="Select SLO"
+        options={slos}
+        onChange={async ({ value: sloId = '', label: sloName = '' }) => {
+          const slos = await datasource.getServiceLevelObjectives(projectName, serviceId);
+          const slo = slos.find(({ value }) => value === datasource.templateSrv.replace(sloId));
+          onChange({ ...query, sloId, sloName, goal: slo?.goal });
+        }}
+      />
+    </EditorField>
   );
 };

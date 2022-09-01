@@ -51,10 +51,6 @@ const (
 	// Show APM table
 	FlagTempoApmTable = "tempoApmTable"
 
-	// FlagPrometheusAzureAuth
-	// Experimental. Azure authentication for Prometheus datasource
-	FlagPrometheusAzureAuth = "prometheus_azure_auth"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
@@ -119,6 +115,10 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
+	// FlagExploreMixedDatasource
+	// Enable mixed datasource in Explore
+	FlagExploreMixedDatasource = "exploreMixedDatasource"
+
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
@@ -142,6 +142,10 @@ const (
 	// FlagPrometheusStreamingJSONParser
 	// Enable streaming JSON parser for Prometheus datasource
 	FlagPrometheusStreamingJSONParser = "prometheusStreamingJSONParser"
+
+	// FlagPrometheusStreamingJSONParserTest
+	// Run both old and streaming requests and log differences
+	FlagPrometheusStreamingJSONParserTest = "prometheusStreamingJSONParserTest"
 
 	// FlagValidateDashboardsOnSave
 	// Validate dashboard JSON POSTed to api/dashboards/db
@@ -194,4 +198,8 @@ const (
 	// FlagCustomBranding
 	// Replaces whitelabeling with the new custom branding feature
 	FlagCustomBranding = "customBranding"
+
+	// FlagTraceqlEditor
+	// Show the TraceQL editor in the explore page
+	FlagTraceqlEditor = "traceqlEditor"
 )

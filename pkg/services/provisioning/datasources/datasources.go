@@ -135,14 +135,14 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 }
 
 func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUid string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
-	targetUid, ok := correlation["targetUid"].(string)
+	targetUID, ok := correlation["targetUID"].(string)
 	if !ok {
-		return correlations.CreateCorrelationCommand{}, fmt.Errorf("correlation missing targetUid")
+		return correlations.CreateCorrelationCommand{}, fmt.Errorf("correlation missing targetUID")
 	}
 
 	return correlations.CreateCorrelationCommand{
 		SourceUID:         SourceUid,
-		TargetUID:         targetUid,
+		TargetUID:         targetUID,
 		Label:             correlation["label"].(string),
 		Description:       correlation["description"].(string),
 		OrgId:             OrgId,

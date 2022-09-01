@@ -27,7 +27,6 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   tempoApmTable?: boolean;
-  prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;
@@ -44,12 +43,14 @@ export interface FeatureToggles {
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
+  prometheusStreamingJSONParserTest?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
@@ -63,4 +64,5 @@ export interface FeatureToggles {
   internationalization?: boolean;
   topnav?: boolean;
   customBranding?: boolean;
+  traceqlEditor?: boolean;
 }

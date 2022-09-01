@@ -37,9 +37,10 @@ type simpleCrawler struct {
 	queueMutex              sync.Mutex
 	log                     log.Logger
 	renderingSessionByOrgId map[int64]rendering.Session
+	dsUidsLookup            getDatasourceUidsForDashboard
 }
 
-func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings) dashRenderer {
+func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings, dsUidsLookup getDatasourceUidsForDashboard) dashRenderer {
 	threadCount := int(settings.CrawlThreadCount)
 	c := &simpleCrawler{
 		// temporarily increases the concurrentLimit from the 'cfg.RendererConcurrentRequestLimit' to 'cfg.RendererConcurrentRequestLimit + crawlerThreadCount'
@@ -48,6 +49,7 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 		renderService:    renderService,
 		threadCount:      threadCount,
 		glive:            gl,
+		dsUidsLookup:     dsUidsLookup,
 		thumbnailRepo:    repo,
 		log:              log.New("thumbnails_crawler"),
 		status: crawlStatus{
@@ -287,6 +289,13 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 		url := models.GetKioskModeDashboardUrl(item.Uid, item.Slug, r.opts.Theme)
 		r.log.Info("Getting dashboard thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url)
 
+		dsUids, err := r.dsUidsLookup(ctx, item.Uid, item.OrgId)
+		if err != nil {
+			r.log.Warn("Error getting datasource uids", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err)
+			r.newErrorResult()
+			continue
+		}
+
 		res, err := r.renderService.Render(ctx, rendering.Opts{
 			Width:             320,
 			Height:            240,
@@ -321,7 +330,7 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 					OrgId:        item.OrgId,
 					Theme:        r.opts.Theme,
 					Kind:         r.thumbnailKind,
-				}, item.Version)
+				}, item.Version, dsUids)
 
 				if err != nil {
 					r.log.Warn("Error saving image image", "walkerId", id, "dashboardUID", item.Uid, "url", url, "err", err, "itemTime", time.Since(itemStarted))

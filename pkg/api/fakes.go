@@ -10,6 +10,8 @@ import (
 )
 
 type fakePluginManager struct {
+	plugins.Manager
+
 	plugins map[string]fakePlugin
 }
 
@@ -18,7 +20,7 @@ type fakePlugin struct {
 	version  string
 }
 
-func (pm *fakePluginManager) Add(_ context.Context, pluginID, version string) error {
+func (pm *fakePluginManager) Add(_ context.Context, pluginID, version string, _ plugins.CompatOpts) error {
 	pm.plugins[pluginID] = fakePlugin{
 		pluginID: pluginID,
 		version:  version,

@@ -13,7 +13,7 @@ datasources:
     withCredentials: true
     isDefault: true
     correlations:
-      - targetUid: a target
+      - targetUID: a target
         label: a label
         description: a description
     jsonData:

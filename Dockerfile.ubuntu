@@ -29,7 +29,6 @@ COPY go.mod go.sum embed.go ./
 COPY Makefile build.go package.json ./
 COPY .bingo .bingo
 COPY pkg pkg/
-COPY cue cue/
 COPY cue.mod cue.mod/
 COPY packages/grafana-schema packages/grafana-schema/
 COPY public/app/plugins public/app/plugins/
@@ -69,6 +68,7 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
              "$GF_PATHS_PROVISIONING/notifiers" \
              "$GF_PATHS_PROVISIONING/plugins" \
              "$GF_PATHS_PROVISIONING/access-control" \
+             "$GF_PATHS_PROVISIONING/alerting" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \

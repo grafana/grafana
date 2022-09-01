@@ -2,13 +2,14 @@ import { render, screen } from '@testing-library/react';
 import { range } from 'lodash';
 import React from 'react';
 
-import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame, LogsSortOrder } from '@grafana/data';
+import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
+import { createLogRow } from './__mocks__/logRow';
 
 describe('LogRows', () => {
   it('renders rows', () => {
-    const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
+    const rows: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' }), createLogRow({ uid: '3' })];
     render(
       <LogRows
         logRows={rows}
@@ -29,7 +30,7 @@ describe('LogRows', () => {
   });
 
   it('renders rows only limited number of rows first', () => {
-    const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
+    const rows: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' }), createLogRow({ uid: '3' })];
     jest.useFakeTimers();
     const { rerender } = render(
       <LogRows
@@ -73,8 +74,8 @@ describe('LogRows', () => {
   });
 
   it('renders deduped rows if supplied', () => {
-    const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
-    const dedupedRows: LogRowModel[] = [makeLog({ uid: '4' }), makeLog({ uid: '5' })];
+    const rows: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' }), createLogRow({ uid: '3' })];
+    const dedupedRows: LogRowModel[] = [createLogRow({ uid: '4' }), createLogRow({ uid: '5' })];
     render(
       <LogRows
         logRows={rows}
@@ -95,7 +96,7 @@ describe('LogRows', () => {
 
   it('renders with default preview limit', () => {
     // PREVIEW_LIMIT * 2 is there because otherwise we just render all rows
-    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map((num) => makeLog({ uid: num.toString() }));
+    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map((num) => createLogRow({ uid: num.toString() }));
     render(
       <LogRows
         logRows={rows}
@@ -115,9 +116,9 @@ describe('LogRows', () => {
 
   it('renders asc ordered rows if order and function supplied', () => {
     const rows: LogRowModel[] = [
-      makeLog({ uid: '1', timeEpochMs: 1 }),
-      makeLog({ uid: '3', timeEpochMs: 3 }),
-      makeLog({ uid: '2', timeEpochMs: 2 }),
+      createLogRow({ uid: '1', timeEpochMs: 1 }),
+      createLogRow({ uid: '3', timeEpochMs: 3 }),
+      createLogRow({ uid: '2', timeEpochMs: 2 }),
     ];
     render(
       <LogRows
@@ -139,9 +140,9 @@ describe('LogRows', () => {
   });
   it('renders desc ordered rows if order and function supplied', () => {
     const rows: LogRowModel[] = [
-      makeLog({ uid: '1', timeEpochMs: 1 }),
-      makeLog({ uid: '3', timeEpochMs: 3 }),
-      makeLog({ uid: '2', timeEpochMs: 2 }),
+      createLogRow({ uid: '1', timeEpochMs: 1 }),
+      createLogRow({ uid: '3', timeEpochMs: 3 }),
+      createLogRow({ uid: '2', timeEpochMs: 2 }),
     ];
     render(
       <LogRows
@@ -162,29 +163,3 @@ describe('LogRows', () => {
     expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 1');
   });
 });
-
-const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
-  const uid = overrides.uid || '1';
-  const timeEpochMs = overrides.timeEpochMs || 1;
-  const entry = `log message ${uid}`;
-  return {
-    entryFieldIndex: 0,
-    rowIndex: 0,
-    // Does not need to be filled with current tests
-    dataFrame: new MutableDataFrame(),
-    uid,
-    logLevel: LogLevel.debug,
-    entry,
-    hasAnsi: false,
-    hasUnescapedContent: false,
-    labels: {},
-    raw: entry,
-    timeFromNow: '',
-    timeEpochMs,
-    timeEpochNs: (timeEpochMs * 1000000).toString(),
-    timeLocal: '',
-    timeUtc: '',
-    searchWords: [],
-    ...overrides,
-  };
-};

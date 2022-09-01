@@ -94,7 +94,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
             width={40}
             name="database"
             value={options.database || ''}
-            placeholder="datbase name"
+            placeholder="database name"
             onChange={onDSOptionChanged('database')}
           ></Input>
         </InlineField>

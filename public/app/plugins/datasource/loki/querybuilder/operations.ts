@@ -12,6 +12,7 @@ import {
 import { FUNCTIONS } from '../syntax';
 
 import { binaryScalarOperations } from './binaryScalarOperations';
+import { UnwrapParamEditor } from './components/UnwrapParamEditor';
 import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
@@ -362,7 +363,14 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       id: LokiOperationId.Unwrap,
       name: 'Unwrap',
       params: [
-        { name: 'Identifier', type: 'string', hideName: true, minWidth: 16, placeholder: 'Label key' },
+        {
+          name: 'Identifier',
+          type: 'string',
+          hideName: true,
+          minWidth: 16,
+          placeholder: 'Label key',
+          editor: UnwrapParamEditor,
+        },
         {
           name: 'Conversion function',
           hideName: true,

@@ -69,6 +69,23 @@ func TestIntegrationSqlStorage(t *testing.T) {
 		require.Len(t, res, 0)
 	})
 
+	t.Run("Should return dashboards with thumbnails with empty ds_uids array", func(t *testing.T) {
+		setup()
+		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
+
+		upsertTestDashboardThumbnail(t, sqlStore, dash.Uid, dash.OrgId, dash.Version)
+
+		cmd := models.FindDashboardsWithStaleThumbnailsCommand{
+			Kind:                             kind,
+			IncludeThumbnailsWithEmptyDsUIDs: true,
+			Theme:                            theme,
+		}
+		res, err := sqlStore.FindDashboardsWithStaleThumbnails(context.Background(), &cmd)
+		require.NoError(t, err)
+		require.Len(t, res, 1)
+		require.Equal(t, dash.Id, res[0].Id)
+	})
+
 	t.Run("Should return dashboards with thumbnails marked as stale", func(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")

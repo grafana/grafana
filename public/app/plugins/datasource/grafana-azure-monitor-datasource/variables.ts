@@ -91,7 +91,10 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             }
           default:
             request.targets[0] = queryObj;
-            return lastValueFrom(this.datasource.query(request));
+            const queryResp = await lastValueFrom(this.datasource.query(request));
+            return {
+              data: queryResp.data,
+            };
         }
       } catch (err) {
         return { data: [], error: new Error(messageFromError(err)) };
@@ -111,18 +114,11 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
       return this.datasource.getResourceGroups(this.replaceVariable(query.subscription));
     }
 
-    if (query.kind === 'MetricDefinitionsQuery') {
-      return this.datasource.getMetricDefinitions(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup)
-      );
-    }
-
     if (query.kind === 'ResourceNamesQuery') {
       return this.datasource.getResourceNames(
         this.replaceVariable(query.subscription),
         this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricDefinition)
+        this.replaceVariable(query.metricNamespace)
       );
     }
 

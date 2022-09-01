@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
-import { LegendDisplayMode, VisibilityMode } from '@grafana/schema';
+import { VisibilityMode } from '@grafana/schema';
 import {
   PanelContext,
   PanelContextRoot,
@@ -62,7 +62,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
       ...this.props,
 
       // Ensure timezones is passed as an array
-      timeZones: Array.isArray(this.props.timeZones) ? this.props.timeZones : [this.props.timeZones],
+      timeZones: Array.isArray(this.props.timeZone) ? this.props.timeZone : [this.props.timeZone],
 
       // When there is only one row, use the full space
       rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
@@ -73,7 +73,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, legendItems } = this.props;
 
-    if (!config || !legendItems || !legend || legend.displayMode === LegendDisplayMode.Hidden) {
+    if (!config || !legendItems || !legend || legend.showLegend === false) {
       return null;
     }
 

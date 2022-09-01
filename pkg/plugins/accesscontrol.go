@@ -1,8 +1,8 @@
 package plugins
 
 import (
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,14 +18,10 @@ const (
 var (
 	ScopeProvider = ac.NewScopeProvider("plugins")
 	// Protects access to the Configuration > Plugins page
-	// FIXME: In another iteration we'll add a read settings permission check as well
-	ConfigurationAccessEvaluator = ac.EvalPermission(ActionSettingsWrite)
-
-	// Protects access to the Server Admin > Plugins page
-	AdminAccessEvaluator = ac.EvalPermission(ActionInstall)
+	AdminAccessEvaluator = ac.EvalAny(ac.EvalPermission(ActionSettingsWrite), ac.EvalPermission(ActionInstall))
 )
 
-func DeclareRBACRoles(acService ac.AccessControl, cfg *setting.Cfg) error {
+func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 	AppPluginsReader := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        ac.FixedRolePrefix + "plugins.app:reader",
@@ -36,7 +32,7 @@ func DeclareRBACRoles(acService ac.AccessControl, cfg *setting.Cfg) error {
 				{Action: ActionAppAccess, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
-		Grants: []string{string(models.ROLE_VIEWER)},
+		Grants: []string{string(org.RoleViewer)},
 	}
 	PluginsWriter := ac.RoleRegistration{
 		Role: ac.RoleDTO{
@@ -48,7 +44,7 @@ func DeclareRBACRoles(acService ac.AccessControl, cfg *setting.Cfg) error {
 				{Action: ActionSettingsWrite, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
-		Grants: []string{string(models.ROLE_ADMIN)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 	PluginsMaintainer := ac.RoleRegistration{
 		Role: ac.RoleDTO{
@@ -68,5 +64,5 @@ func DeclareRBACRoles(acService ac.AccessControl, cfg *setting.Cfg) error {
 		PluginsMaintainer.Grants = []string{}
 	}
 
-	return acService.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsMaintainer)
+	return service.DeclareFixedRoles(AppPluginsReader, PluginsWriter, PluginsMaintainer)
 }

@@ -309,7 +309,7 @@ func validateDatasource(t *testing.T, dsCfg *configs) {
 	require.Equal(t, ds.Version, 10)
 
 	require.Equal(t, []map[string]interface{}{{
-		"targetUid":   "a target",
+		"targetUID":   "a target",
 		"label":       "a label",
 		"description": "a description",
 	}}, ds.Correlations)

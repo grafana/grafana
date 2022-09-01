@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -32,8 +33,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)
-		starService = starimpl.ProvideService(sqlStore)
-		dashboardStore = ProvideDashboardStore(sqlStore)
+		starService = starimpl.ProvideService(sqlStore, sqlStore.Cfg)
+		dashboardStore = ProvideDashboardStore(sqlStore, testFeatureToggles)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.Id, false, "prod")
@@ -239,7 +240,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			OrgId:        1,
 			FolderIds:    []int64{savedFolder.Id},
-			SignedInUser: &models.SignedInUser{},
+			SignedInUser: &user.SignedInUser{},
 		}
 
 		res, err := dashboardStore.FindDashboards(context.Background(), &query)
@@ -306,9 +307,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			Title: "1 test dash folder",
 			OrgId: 1,
-			SignedInUser: &models.SignedInUser{
-				OrgId:   1,
-				OrgRole: models.ROLE_EDITOR,
+			SignedInUser: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}},
 				},
@@ -330,9 +331,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			OrgId: 1,
 			Limit: 1,
-			SignedInUser: &models.SignedInUser{
-				OrgId:   1,
-				OrgRole: models.ROLE_EDITOR,
+			SignedInUser: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionFoldersRead: []string{dashboards.ScopeFoldersAll}},
 				},
@@ -352,9 +353,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 			Limit: 1,
 			Page:  2,
-			SignedInUser: &models.SignedInUser{
-				OrgId:   1,
-				OrgRole: models.ROLE_EDITOR,
+			SignedInUser: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {
 						dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll},
@@ -377,9 +378,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 			OrgId: 1,
 			Type:  "dash-db",
 			Tags:  []string{"prod"},
-			SignedInUser: &models.SignedInUser{
-				OrgId:   1,
-				OrgRole: models.ROLE_EDITOR,
+			SignedInUser: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 				},
@@ -398,9 +399,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		query := models.FindPersistedDashboardsQuery{
 			OrgId:     1,
 			FolderIds: []int64{savedFolder.Id},
-			SignedInUser: &models.SignedInUser{
-				OrgId:   1,
-				OrgRole: models.ROLE_EDITOR,
+			SignedInUser: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 				},
@@ -424,9 +425,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := models.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{savedDash.Id, savedDash2.Id},
-			SignedInUser: &models.SignedInUser{
-				OrgId:   1,
-				OrgRole: models.ROLE_EDITOR,
+			SignedInUser: &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 				},
@@ -461,10 +462,10 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.FindPersistedDashboardsQuery{
-			SignedInUser: &models.SignedInUser{
-				UserId:  10,
-				OrgId:   1,
-				OrgRole: models.ROLE_EDITOR,
+			SignedInUser: &user.SignedInUser{
+				UserID:  10,
+				OrgID:   1,
+				OrgRole: org.RoleEditor,
 				Permissions: map[int64]map[string][]string{
 					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 				},
@@ -484,7 +485,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 	pluginId := "test-app"
 
 	appFolder := insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, 0, true, pluginId)
@@ -506,17 +507,17 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	assert.NotZero(t, dashA.Id)
 	assert.Less(t, dashB.Id, dashA.Id)
 	qNoSort := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{
-			OrgId:   1,
-			UserId:  1,
-			OrgRole: models.ROLE_ADMIN,
+		SignedInUser: &user.SignedInUser{
+			OrgID:   1,
+			UserID:  1,
+			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 			},
@@ -529,10 +530,10 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	assert.Equal(t, dashB.Id, results[1].ID)
 
 	qSort := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{
-			OrgId:   1,
-			UserId:  1,
-			OrgRole: models.ROLE_ADMIN,
+		SignedInUser: &user.SignedInUser{
+			OrgID:   1,
+			UserID:  1,
+			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 			},
@@ -555,14 +556,14 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlStore := sqlstore.InitTestDB(t)
-	dashboardStore := ProvideDashboardStore(sqlStore)
+	dashboardStore := ProvideDashboardStore(sqlStore, testFeatureToggles)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
 	qNoFilter := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{
-			OrgId:   1,
-			UserId:  1,
-			OrgRole: models.ROLE_ADMIN,
+		SignedInUser: &user.SignedInUser{
+			OrgID:   1,
+			UserID:  1,
+			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 			},
@@ -573,10 +574,10 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	require.Len(t, results, 2)
 
 	qFilter := &models.FindPersistedDashboardsQuery{
-		SignedInUser: &models.SignedInUser{
-			OrgId:   1,
-			UserId:  1,
-			OrgRole: models.ROLE_ADMIN,
+		SignedInUser: &user.SignedInUser{
+			OrgID:   1,
+			UserID:  1,
+			OrgRole: org.RoleAdmin,
 			Permissions: map[int64]map[string][]string{
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 			},
@@ -678,7 +679,7 @@ func CreateUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role str
 	q1 := models.GetUserOrgListQuery{UserId: currentUser.ID}
 	err = sqlStore.GetUserOrgList(context.Background(), &q1)
 	require.NoError(t, err)
-	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
+	require.Equal(t, org.RoleType(role), q1.Result[0].Role)
 	return *currentUser
 }
 

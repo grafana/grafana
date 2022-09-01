@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
@@ -16,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/gobwas/glob"
+
 	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
 	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp"
@@ -28,7 +28,8 @@ import (
 )
 
 // Soon we can fetch keys from:
-//  https://grafana.com/api/plugins/ci/keys
+//
+//	https://grafana.com/api/plugins/ci/keys
 const publicKeyText = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
@@ -88,15 +89,8 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to parse public key", err)
-	}
-
-	if _, err := openpgp.CheckDetachedSignature(keyring,
-		bytes.NewBuffer(block.Bytes),
-		block.ArmoredSignature.Body); err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to check signature", err)
+	if err = validateManifest(manifest, block); err != nil {
+		return nil, err
 	}
 
 	return &manifest, nil
@@ -122,7 +116,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
 	// on plugin the folder structure on disk and not user input.
-	byteValue, err := ioutil.ReadFile(manifestPath)
+	byteValue, err := os.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
 		mlog.Debug("Plugin is unsigned", "id", plugin.ID)
 		return plugins.Signature{
@@ -132,7 +126,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
-		mlog.Debug("Plugin signature invalid", "id", plugin.ID)
+		mlog.Debug("Plugin signature invalid", "id", plugin.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -313,4 +307,53 @@ func urlMatch(specs []string, target string, signatureType plugins.SignatureType
 		}
 	}
 	return false, nil
+}
+
+type invalidFieldErr struct {
+	field string
+}
+
+func (r invalidFieldErr) Error() string {
+	return fmt.Sprintf("valid manifest field %s is required", r.field)
+}
+
+func validateManifest(m pluginManifest, block *clearsign.Block) error {
+	if len(m.Plugin) == 0 {
+		return invalidFieldErr{field: "plugin"}
+	}
+	if len(m.Version) == 0 {
+		return invalidFieldErr{field: "version"}
+	}
+	if len(m.KeyID) == 0 {
+		return invalidFieldErr{field: "keyId"}
+	}
+	if m.Time == 0 {
+		return invalidFieldErr{field: "time"}
+	}
+	if len(m.Files) == 0 {
+		return invalidFieldErr{field: "files"}
+	}
+	if m.isV2() {
+		if len(m.SignedByOrg) == 0 {
+			return invalidFieldErr{field: "signedByOrg"}
+		}
+		if len(m.SignedByOrgName) == 0 {
+			return invalidFieldErr{field: "signedByOrgName"}
+		}
+		if !m.SignatureType.IsValid() {
+			return fmt.Errorf("%s is not a valid signature type", m.SignatureType)
+		}
+	}
+	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse public key", err)
+	}
+
+	if _, err = openpgp.CheckDetachedSignature(keyring,
+		bytes.NewBuffer(block.Bytes),
+		block.ArmoredSignature.Body); err != nil {
+		return fmt.Errorf("%v: %w", "failed to check signature", err)
+	}
+
+	return nil
 }
