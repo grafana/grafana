@@ -181,7 +181,7 @@ var wireSet = wire.NewSet(
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	manager.ProvideService,
-	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
+	//wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,

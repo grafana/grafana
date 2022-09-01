@@ -15,19 +15,27 @@ import (
 )
 
 type FakeLoader struct {
-	LoadFunc func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error)
+	LoadFunc   func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error)
+	UnloadFunc func(_ context.Context, _ string) error
 
 	LoadedPaths []string
 }
 
-func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string, ignore map[string]struct{}) ([]*plugins.Plugin, error) {
+func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
 	if l.LoadFunc != nil {
-		return l.LoadFunc(ctx, class, paths, ignore)
+		return l.LoadFunc(ctx, class, paths)
 	}
 
 	l.LoadedPaths = append(l.LoadedPaths, paths...)
 
 	return nil, nil
+}
+
+func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
+	if l.LoadFunc != nil {
+		return l.UnloadFunc(ctx, pluginID)
+	}
+	return nil
 }
 
 type FakePluginClient struct {

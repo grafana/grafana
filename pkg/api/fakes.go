@@ -7,7 +7,7 @@ import (
 )
 
 type fakePluginManager struct {
-	plugins.Manager
+	plugins.Installer
 
 	plugins map[string]fakePlugin
 }

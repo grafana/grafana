@@ -32,7 +32,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		}}}}
 
 		loader := &fakes.FakeLoader{
-			LoadFunc: func(_ context.Context, _ plugins.Class, paths []string, _ map[string]struct{}) ([]*plugins.Plugin, error) {
+			LoadFunc: func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error) {
 				require.Equal(t, []string{zipNameV1}, paths)
 				return []*plugins.Plugin{pluginV1}, nil
 			},
@@ -61,7 +61,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		}
 		proc := fakes.NewFakeProcessManager()
 
-		pm := New(&plugins.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{}, loader, pluginRepo, fs, proc)
+		pm := New(&plugins.Cfg{}, fakes.NewFakePluginRegistry(), loader)
 		err := pm.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 		require.NoError(t, err)
 

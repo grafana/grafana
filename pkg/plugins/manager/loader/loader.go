@@ -192,7 +192,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		if err != nil {
 			return nil, err
 		}
-		metrics.SetPluginBuildInformation(p.ID, p.Type, p.Info.Version, string(p.Signature))
+		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 
 	for _, p := range verifiedPlugins {
@@ -261,15 +261,15 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	}
 
 	plugin := plugins.JSONData{}
-	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
+	if err = json.NewDecoder(reader).Decode(&plugin); err != nil {
 		return plugins.JSONData{}, err
 	}
 
-	if err := reader.Close(); err != nil {
+	if err = reader.Close(); err != nil {
 		l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
 	}
 
-	if err := validatePluginJSON(plugin); err != nil {
+	if err = validatePluginJSON(plugin); err != nil {
 		return plugins.JSONData{}, err
 	}
 
@@ -403,17 +403,15 @@ func (l *Loader) PluginErrors() []*plugins.Error {
 
 func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
 	if class == plugins.Core {
-		return path.Join("public/app/plugins", pluginJSON.Type, filepath.Base(pluginDir))
+		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
 	}
-
 	return path.Join("public/plugins", pluginJSON.ID)
 }
 
 func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
 	if class == plugins.Core {
-		return path.Join("app/plugins", pluginJSON.Type, filepath.Base(pluginDir), "module")
+		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
 	}
-
 	return path.Join("plugins", pluginJSON.ID, "module")
 }
 

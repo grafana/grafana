@@ -39,13 +39,12 @@ func TestLoader_Load(t *testing.T) {
 		return
 	}
 	tests := []struct {
-		name            string
-		class           plugins.Class
-		cfg             *plugins.Cfg
-		pluginPaths     []string
-		existingPlugins map[string]struct{}
-		want            []*plugins.Plugin
-		pluginErrors    map[string]*plugins.Error
+		name         string
+		class        plugins.Class
+		cfg          *plugins.Cfg
+		pluginPaths  []string
+		want         []*plugins.Plugin
+		pluginErrors map[string]*plugins.Error
 	}{
 		{
 			name:  "Load a Core plugin",
@@ -429,7 +428,7 @@ func TestLoader_Load(t *testing.T) {
 	for _, tt := range tests {
 		l := newLoader(tt.cfg)
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := l.Load(context.Background(), tt.class, tt.pluginPaths, tt.existingPlugins)
+			got, err := l.Load(context.Background(), tt.class, tt.pluginPaths)
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts))
@@ -580,7 +579,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				})
 				setting.AppUrl = tt.appURL
 
-				got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths, tt.existingPlugins)
+				got, err := l.Load(context.Background(), plugins.External, tt.pluginPaths)
 				require.NoError(t, err)
 				sort.SliceStable(got, func(i, j int) bool {
 					return got[i].ID < got[j].ID
@@ -649,7 +648,7 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 		}
 
 		l := newLoader(&plugins.Cfg{PluginsPath: filepath.Join(parentDir)})
-		got, err := l.Load(context.Background(), plugins.External, paths, map[string]struct{}{})
+		got, err := l.Load(context.Background(), plugins.External, paths)
 		assert.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
@@ -721,7 +720,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			PluginsPath: filepath.Dir(pluginDir),
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir}, map[string]struct{}{})
+		got, err := l.Load(context.Background(), plugins.External, []string{pluginDir, pluginDir})
 		assert.NoError(t, err)
 
 		if !cmp.Equal(got, expected, compareOpts) {
@@ -810,7 +809,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: rootDir,
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"}, map[string]struct{}{})
+		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
 		assert.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -832,9 +831,9 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: rootDir,
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"}, map[string]struct{}{
-			"test-panel": {},
-		})
+		//l.pluginRegistry =
+
+		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/nested-plugins"})
 		assert.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -974,7 +973,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			PluginsPath: rootDir,
 		})
 
-		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"}, map[string]struct{}{})
+		got, err := l.Load(context.Background(), plugins.External, []string{"../testdata/app-with-child"})
 		assert.NoError(t, err)
 
 		// to ensure we can compare with expected
@@ -990,9 +989,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			parentPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/plugin.json")
 			childPluginJSON := filepath.Join(rootDir, "testdata/app-with-child/dist/child/plugin.json")
 
-			got, err := l.loadPlugins(context.Background(), plugins.External, []string{
-				parentPluginJSON, childPluginJSON},
-				map[string]struct{}{})
+			got, err := l.loadPlugins(context.Background(), plugins.External, []string{parentPluginJSON, childPluginJSON})
 			assert.NoError(t, err)
 
 			// to ensure we can compare with expected
@@ -1004,9 +1001,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts))
 			}
 
-			got, err = l.loadPlugins(context.Background(), plugins.External, []string{
-				childPluginJSON, parentPluginJSON},
-				map[string]struct{}{})
+			got, err = l.loadPlugins(context.Background(), plugins.External, []string{childPluginJSON, parentPluginJSON})
 			assert.NoError(t, err)
 
 			// to ensure we can compare with expected

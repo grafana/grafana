@@ -15,8 +15,12 @@ type PluginManager struct {
 	log             log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, pluginInstaller plugins.Installer) *PluginManager {
-	return NewManager(pluginInstaller, pluginSources(cfg))
+func ProvideService(cfg *setting.Cfg, pluginInstaller plugins.Installer) (*PluginManager, error) {
+	pm := NewManager(pluginInstaller, pluginSources(cfg))
+	if err := pm.Init(context.Background()); err != nil {
+		return nil, err
+	}
+	return pm, nil
 }
 
 func NewManager(pluginInstaller plugins.Installer, pluginSources []plugins.PluginSource) *PluginManager {
@@ -27,7 +31,7 @@ func NewManager(pluginInstaller plugins.Installer, pluginSources []plugins.Plugi
 	}
 }
 
-func (m *PluginManager) Run(ctx context.Context) error {
+func (m *PluginManager) Init(ctx context.Context) error {
 	for _, ps := range m.pluginSources {
 		if err := m.pluginInstaller.AddFromSource(ctx, ps); err != nil {
 			return err
