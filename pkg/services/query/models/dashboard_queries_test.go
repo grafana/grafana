@@ -1,4 +1,4 @@
-package models
+package query
 
 import (
 	"testing"
@@ -67,6 +67,53 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "promds2"
+          },
+          "exemplar": true,
+          "expr": "query2",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 35
+}`
+
+	dashboardWithQueriesAndExpression = `
+{
+  "panels": [
+    {
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "_yxMP8Ynk"
+          },
+          "exemplar": true,
+          "expr": "go_goroutines{job=\"$job\"}",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        },
+		{
+          "datasource": {
+            "name": "Expression",
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "$A + 1",
+          "hide": false,
+          "refId": "EXPRESSION",
+          "type": "math"
         },
         {
           "datasource": {
@@ -283,6 +330,25 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 
 		uids := GetUniqueDashboardDatasourceUids(json)
 		require.Len(t, uids, 0)
+	})
+}
+
+func TestHasExpressionQuery(t *testing.T) {
+	t.Run("will return true when expression query exists", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithQueriesAndExpression))
+		require.NoError(t, err)
+
+		queries := GroupQueriesByPanelId(json)
+		panelId := int64(2)
+		require.True(t, HasExpressionQuery(queries[panelId]))
+	})
+	t.Run("will return false when no expression query exists", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithMixedDatasource))
+		require.NoError(t, err)
+
+		queries := GroupQueriesByPanelId(json)
+		panelId := int64(2)
+		require.False(t, HasExpressionQuery(queries[panelId]))
 	})
 }
 

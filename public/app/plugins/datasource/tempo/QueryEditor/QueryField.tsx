@@ -78,7 +78,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
 
     const queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
       { value: 'traceId', label: 'TraceID' },
-      { value: 'upload', label: 'JSON file' },
+      { value: 'upload', label: 'JSON File' },
       { value: 'serviceMap', label: 'Service Graph' },
     ];
 

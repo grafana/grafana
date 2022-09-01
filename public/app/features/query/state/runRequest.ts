@@ -174,7 +174,11 @@ export function callQueryMethod(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
-  // If any query has an expression, use the expression endpoint
+  // If its a public datasource, just return the result. Expressions will be handled on the backend.
+  if (datasource.type === 'public-ds') {
+    return from(datasource.query(request));
+  }
+
   for (const target of request.targets) {
     if (isExpressionReference(target.datasource)) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);
