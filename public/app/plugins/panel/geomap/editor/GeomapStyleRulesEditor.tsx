@@ -9,7 +9,7 @@ import { FeatureStyleConfig } from '../types';
 
 import { StyleRuleEditor, StyleRuleEditorSettings } from './StyleRuleEditor';
 
-export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[], any, any>> = (props) => {
+export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[], unknown, unknown>> = (props) => {
   const { value, onChange, context, item } = props;
   const theme = useTheme2();
 
@@ -44,7 +44,7 @@ export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[]
     value.map((style, idx: number) => {
       const itemSettings: StandardEditorsRegistryItem<any, StyleRuleEditorSettings> = {
         settings,
-      } as any;
+      } as StandardEditorsRegistryItem;
 
       return (
         <StyleRuleEditor

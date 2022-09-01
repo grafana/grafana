@@ -93,6 +93,7 @@ export const getAvailableIcons = () =>
     'gf-bar-alignment-after',
     'gf-bar-alignment-before',
     'gf-bar-alignment-center',
+    'gf-glue',
     'gf-grid',
     'gf-interpolation-linear',
     'gf-interpolation-smooth',
