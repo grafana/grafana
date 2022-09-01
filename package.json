@@ -256,7 +256,7 @@
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "^0.0.2-canary.36",
     "@grafana/google-sdk": "0.0.3",
-    "@grafana/lezer-logql": "0.0.15",
+    "@grafana/lezer-logql": "0.0.17",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/slate-react": "0.22.10-grafana",
