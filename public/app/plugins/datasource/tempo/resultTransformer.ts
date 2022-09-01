@@ -18,6 +18,7 @@ import {
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
+import { TraceSearchMetadata } from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame,
@@ -549,15 +550,7 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
   };
 }
 
-export type SearchResponse = {
-  traceID: string;
-  rootServiceName: string;
-  rootTraceName: string;
-  startTimeUnixNano: string;
-  durationMs: number;
-};
-
-export function createTableFrameFromSearch(data: SearchResponse[], instanceSettings: DataSourceInstanceSettings) {
+export function createTableFrameFromSearch(data: TraceSearchMetadata[], instanceSettings: DataSourceInstanceSettings) {
   const frame = new MutableDataFrame({
     fields: [
       {
@@ -605,7 +598,7 @@ export function createTableFrameFromSearch(data: SearchResponse[], instanceSetti
   return frame;
 }
 
-function transformToTraceData(data: SearchResponse) {
+function transformToTraceData(data: TraceSearchMetadata) {
   let traceName = '';
   if (data.rootServiceName) {
     traceName += data.rootServiceName + ' ';

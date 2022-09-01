@@ -52,6 +52,7 @@ import {
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
 } from './resultTransformer';
+import { mockedSearchResponse } from './traceql/mockedSearchResponse';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
 export type TempoQueryType = 'traceql' | 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
@@ -203,6 +204,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               return of({ error: { message: error.data.message }, data: [] });
             })
           )
+        );
+      } catch (error) {
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      }
+    }
+    if (targets.traceql?.length) {
+      try {
+        reportInteraction('grafana_traces_traceql_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+        });
+
+        subQueries.push(
+          of({
+            data: [createTableFrameFromSearch(mockedSearchResponse().traces, this.instanceSettings)],
+          })
         );
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
