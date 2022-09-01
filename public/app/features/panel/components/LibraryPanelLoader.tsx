@@ -18,11 +18,13 @@ export function getLibraryPanelLoadingView(panel: PanelModel): PanelPlugin {
   };
 
   const plugin = new PanelPlugin(LoaderView);
+
   plugin.meta = {
     id: 'libarry-panel-loader',
     name: 'libarry-panel-loader',
     sort: 100,
     type: PluginType.panel,
+    skipDataQuery: true,
     module: '',
     baseUrl: '',
     info: {
@@ -40,5 +42,6 @@ export function getLibraryPanelLoadingView(panel: PanelModel): PanelPlugin {
       version: '',
     },
   };
+
   return plugin;
 }
