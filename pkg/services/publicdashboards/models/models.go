@@ -88,6 +88,7 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) TimeSet
 	to := dashboard.Data.GetPath("time", "to").MustString()
 	timeRange := legacydata.NewDataTimeRange(from, to)
 
+	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which expected the time range in epoch milliseconds.
 	ts := TimeSettings{
 		From: strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10),
 		To:   strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10),
