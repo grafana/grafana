@@ -6,6 +6,7 @@ import {
   CoreApp,
   DataLink,
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
@@ -71,27 +72,16 @@ const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
   },
 });
 
-interface Buckets {
-  buckets: Array<Record<string, number | string>>;
-}
-
-interface Aggregations {
-  aggregations: Record<string, Buckets>;
-}
-
-interface Data {
-  responses: Aggregations[] | ErrorResponse[];
-  took?: number;
-}
-
-type ErrorResponse = Record<string, string | number | Record<string, string>>;
-
 interface TestContext {
   data?: Data;
   from?: string;
   jsonData?: Partial<ElasticsearchOptions>;
   database?: string;
   fetchImplementation?: (options: BackendSrvRequest) => Observable<FetchResponse>;
+}
+
+interface Data {
+  [key: string]: undefined | string | string[] | number | Data | Data[];
 }
 
 function getTestContext({
@@ -228,7 +218,7 @@ describe('ElasticDatasource', () => {
       };
       const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0' }, data });
 
-      let result = {};
+      let result: DataQueryResponse = { data: [] };
       await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         expect(received[0]).toEqual({
@@ -310,7 +300,7 @@ describe('ElasticDatasource', () => {
       } as DataQueryRequest<ElasticsearchQuery>;
 
       const queryBuilderSpy = jest.spyOn(ds.queryBuilder, 'getLogsQuery');
-      let response = {};
+      let response: DataQueryResponse = { data: [] };
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
