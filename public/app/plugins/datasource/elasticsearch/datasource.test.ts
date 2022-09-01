@@ -123,6 +123,7 @@ function getTestContext({
     getAdhocFilters: () => [],
   } as unknown as TemplateSrv;
 
+  // @ts-expect-error
   const ds = createElasticDatasource(settings, templateSrv);
 
   return { timeSrv, ds, fetchMock };
@@ -183,7 +184,7 @@ describe('ElasticDatasource', () => {
 
       const today = toUtc().format('YYYY.MM.DD');
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock.mock.calls[0][0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/asd-${today}/_mapping`);
+      expect(fetchMock.mock.calls[0][0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/test-${today}/_mapping`);
     });
   });
 
@@ -192,7 +193,7 @@ describe('ElasticDatasource', () => {
       const range = { from: toUtc([2015, 4, 30, 10]), to: toUtc([2015, 5, 1, 10]), raw: { from: '', to: '' } };
       const targets: ElasticsearchQuery[] = [
         {
-          refId: '',
+          refId: 'test',
           alias: '$varAlias',
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
           metrics: [{ type: 'count', id: '1' }],
@@ -227,7 +228,7 @@ describe('ElasticDatasource', () => {
               datapoints: [[10, 1000]],
               metric: 'count',
               props: {},
-              refId: undefined,
+              refId: 'test',
               target: 'resolvedVariable',
             },
           ],
@@ -246,7 +247,7 @@ describe('ElasticDatasource', () => {
 
     it('should translate index pattern to current day', async () => {
       const { header } = await runScenario();
-      expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
+      expect(header.index).toEqual(['test-2015.05.30', 'test-2015.05.31', 'test-2015.06.01']);
     });
 
     it('should not resolve the variable in the original alias field in the query', async () => {
