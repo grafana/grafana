@@ -1055,6 +1055,28 @@ def publish_grafanacom_step(edition, ver_mode):
         ],
     }
 
+def publish_linux_packages_step(edition):
+    return {
+        'name': 'publish-linux-packages',
+        # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
+        'image': 'us.gcr.io/kubernetes-dev/package-publish:latest',
+        'depends_on': [
+            'gen-version'
+        ],
+        'failure': 'ignore', # While we're testing it
+        'settings': {
+            'access_key_id': from_secret('packages_access_key_id'),
+            'secret_access_key': from_secret('packages_secret_access_key'),
+            'service_account_json': from_secret('packages_service_account_json'),
+            'target_bucket': 'grafana-packages',
+            'deb_distribution': 'stable',
+            'gpg_passphrase': from_secret('packages_gpg_passphrase'),
+            'gpg_public_key': from_secret('packages_gpg_public_key'),
+            'gpg_private_key': from_secret('packages_gpg_private_key'),
+            'package_path': 'gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.deb'.format(edition)
+        }
+    }
+
 
 def get_windows_steps(edition, ver_mode):
     init_cmds = []

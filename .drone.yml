@@ -3617,6 +3617,27 @@ steps:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-grafanacom-oss
+- depends_on:
+  - gen-version
+  failure: ignore
+  image: us.gcr.io/kubernetes-dev/package-publish:latest
+  name: publish-linux-packages
+  settings:
+    access_key_id:
+      from_secret: packages_access_key_id
+    deb_distribution: stable
+    gpg_passphrase:
+      from_secret: packages_gpg_passphrase
+    gpg_private_key:
+      from_secret: packages_gpg_private_key
+    gpg_public_key:
+      from_secret: packages_gpg_public_key
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.deb
+    secret_access_key:
+      from_secret: packages_secret_access_key
+    service_account_json:
+      from_secret: packages_service_account_json
+    target_bucket: grafana-packages
 trigger:
   event:
   - promote
@@ -3682,6 +3703,27 @@ steps:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-grafanacom-enterprise
+- depends_on:
+  - gen-version
+  failure: ignore
+  image: us.gcr.io/kubernetes-dev/package-publish:latest
+  name: publish-linux-packages
+  settings:
+    access_key_id:
+      from_secret: packages_access_key_id
+    deb_distribution: stable
+    gpg_passphrase:
+      from_secret: packages_gpg_passphrase
+    gpg_private_key:
+      from_secret: packages_gpg_private_key
+    gpg_public_key:
+      from_secret: packages_gpg_public_key
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/enterprise/**.deb
+    secret_access_key:
+      from_secret: packages_secret_access_key
+    service_account_json:
+      from_secret: packages_service_account_json
+    target_bucket: grafana-packages
 trigger:
   event:
   - promote
@@ -5174,7 +5216,43 @@ get:
 kind: secret
 name: gcp_upload_artifacts_key
 ---
+get:
+  name: public-key
+  path: infra/data/ci/packages-publish/gpg
+kind: secret
+name: packages_gpg_public_key
+---
+get:
+  name: private-key
+  path: infra/data/ci/packages-publish/gpg
+kind: secret
+name: packages_gpg_private_key
+---
+get:
+  name: passphrase
+  path: infra/data/ci/packages-publish/gpg
+kind: secret
+name: packages_gpg_passphrase
+---
+get:
+  name: credentials.json
+  path: infra/data/ci/packages-publish/service-account
+kind: secret
+name: packages_service_account
+---
+get:
+  name: AccessID
+  path: infra/data/ci/packages-publish/bucket-credentials
+kind: secret
+name: packages_access_key_id
+---
+get:
+  name: Secret
+  path: infra/data/ci/packages-publish/bucket-credentials
+kind: secret
+name: packages_secret_access_key
+---
 kind: signature
-hmac: 50fdfb13ce364613fc8359736da906ba838f9ac60e32b8608ec08b4ca2c335aa
+hmac: ce0208c16afae599091c3df008a9bbe3cf98bdfdd962554b722c9bc6985ad5ac
 
 ...
