@@ -19,8 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -1165,14 +1164,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *plugins.Cfg) *Loader {
-	return &Loader{
-		cfg:                cfg,
-		pluginFinder:       finder.New(),
-		pluginInitializer:  initializer.New(cfg, provider.ProvideService(coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))), &fakeLicensingService{}),
-		signatureValidator: signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)),
-		errs:               make(map[string]*plugins.SignatureError),
-		log:                &logtest.Fake{},
-	}
+	return New(cfg, &fakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), &fakes.FakePluginRegistry{}, provider.ProvideService(coreplugin.NewRegistry(make(map[string]backendplugin.PluginFactoryFunc))))
 }
 
 type fakeLicensingService struct {

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
@@ -42,7 +43,6 @@ type Loader struct {
 	pluginFinder       finder.Finder
 	processManager     process.Service
 	pluginRegistry     registry.Service
-	pluginStorage      storage.Manager
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	log                log.Logger
@@ -214,7 +214,8 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	if err := l.pluginStorage.Remove(ctx, pluginID); err != nil {
+	pluginStorage := storage.FileSystem(logger.WithLogger(l.log), plugin.PluginDir)
+	if err := pluginStorage.Remove(ctx, pluginID); err != nil {
 		return err
 	}
 
