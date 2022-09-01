@@ -452,6 +452,8 @@ type Cfg struct {
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
+	// Enable Permission validation during role creation and provisioning
+	RBACPermissionValidationEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -1354,6 +1356,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
 	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
+	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(true)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
