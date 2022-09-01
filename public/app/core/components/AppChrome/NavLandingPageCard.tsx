@@ -11,14 +11,12 @@ interface Props {
   url: string;
 }
 
-export function NavSectionLandingPageCard({ description, icon, text, url }: Props) {
+export function NavLandingPageCard({ description, icon, text, url }: Props) {
   const styles = useStyles2(getStyles);
   return (
     <Card className={styles.card} href={url}>
       <Card.Heading>{text}</Card.Heading>
-      <Card.Figure align={'center'}>
-        {icon && <Icon name={icon} size="xxxl" />}
-      </Card.Figure>
+      <Card.Figure align={'center'}>{icon && <Icon name={icon} size="xxxl" />}</Card.Figure>
       <Card.Description>{description}</Card.Description>
     </Card>
   );

@@ -6,13 +6,13 @@ import { toIconName, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
-import { NavSectionLandingPageCard } from './NavSectionLandingPageCard';
+import { NavLandingPageCard } from './NavLandingPageCard';
 
 interface Props {
   navId: string;
 }
 
-export function NavSectionLandingPage({ navId }: Props) {
+export function NavLandingPage({ navId }: Props) {
   const { node } = useNavModel(navId);
   const styles = useStyles2(getStyles);
   const directChildren = node.children?.filter((child) => !child.hideFromTabs && !child.children);
@@ -25,7 +25,7 @@ export function NavSectionLandingPage({ navId }: Props) {
           {directChildren && directChildren.length > 0 && (
             <section className={styles.grid}>
               {directChildren?.map((child) => (
-                <NavSectionLandingPageCard
+                <NavLandingPageCard
                   key={child.id}
                   description={child.description}
                   icon={child.icon ? toIconName(child.icon) : undefined}
@@ -43,7 +43,7 @@ export function NavSectionLandingPage({ navId }: Props) {
               <div className={styles.nestedDescription}>{child.subTitle}</div>
               <div className={styles.grid}>
                 {child.children?.map((child) => (
-                  <NavSectionLandingPageCard
+                  <NavLandingPageCard
                     key={child.id}
                     description={child.description}
                     icon={child.icon ? toIconName(child.icon) : undefined}

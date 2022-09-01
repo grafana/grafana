@@ -1,7 +1,7 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 
-import { NavSectionLandingPage } from 'app/core/components/AppChrome/NavSectionLandingPage';
+import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
@@ -182,11 +182,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/apps',
-      component: () => <NavSectionLandingPage navId="apps" />,
+      component: () => <NavLandingPage navId="apps" />,
     },
     {
       path: '/a/:pluginId/landing-page',
-      component: (props) => <NavSectionLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />,
+      component: (props) => <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />,
     },
     {
       path: '/a/:pluginId/',
@@ -281,8 +281,7 @@ export function getAppRoutes(): RouteDescriptor[] {
 
     {
       path: '/admin',
-      component: () =>
-        config.featureToggles.topnav ? <NavSectionLandingPage navId="cfg" /> : <Redirect to="/admin/users" />,
+      component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
     },
     {
       path: '/admin/settings',
