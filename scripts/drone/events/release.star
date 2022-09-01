@@ -3,7 +3,6 @@ load(
     'disable_tests',
     'clone_enterprise_step',
     'download_grabpl_step',
-    'gen_version_step',
     'yarn_install_step',
     'wire_install_step',
     'init_enterprise_step',
@@ -164,7 +163,6 @@ def get_steps(edition, ver_mode):
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
-        gen_version_step(ver_mode),
         verify_gen_cue_step(edition),
         wire_install_step(),
         yarn_install_step(),
@@ -312,7 +310,7 @@ def get_enterprise_pipelines(trigger, ver_mode):
         init_enterprise_step(ver_mode),
         compile_build_cmd(edition),
     ]
-    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step(edition)]:
+    for step in [wire_install_step(), yarn_install_step(), verify_gen_cue_step(edition)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 
@@ -392,7 +390,6 @@ def publish_packages_pipeline():
     }
     oss_steps = [
         download_grabpl_step(),
-        gen_version_step(ver_mode='release'),
         publish_packages_step(edition='oss', ver_mode='release'),
         publish_grafanacom_step(edition='oss', ver_mode='release'),
         publish_linux_packages_step(edition='oss'),
@@ -400,7 +397,6 @@ def publish_packages_pipeline():
 
     enterprise_steps = [
         download_grabpl_step(),
-        gen_version_step(ver_mode='release'),
         publish_packages_step(edition='enterprise', ver_mode='release'),
         publish_grafanacom_step(edition='enterprise', ver_mode='release'),
         publish_linux_packages_step(edition='enterprise'),
