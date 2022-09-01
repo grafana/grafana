@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -359,6 +360,7 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{})
+	from, to := getTimeRangeFromDashboard(t, publicDashboard)
 
 	service := &PublicDashboardServiceImpl{
 		log:                log.New("test.logger"),
@@ -409,8 +411,8 @@ func TestBuildMetricRequest(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		require.Equal(t, "1661990400000", reqDTO.From)
-		require.Equal(t, timeSettings.Get("to").MustString(), reqDTO.To)
+		require.Equal(t, from, reqDTO.From)
+		require.Equal(t, to, reqDTO.To)
 
 		for i := range reqDTO.Queries {
 			require.Equal(t, publicDashboardQueryDTO.IntervalMs, reqDTO.Queries[i].Get("intervalMs").MustInt64())
@@ -459,6 +461,20 @@ func TestBuildMetricRequest(t *testing.T) {
 
 		require.ErrorContains(t, err, "Panel not found")
 	})
+}
+
+// Gets time range from dashboard in unix milliseconds
+func getTimeRangeFromDashboard(t *testing.T, publicDashboard *models.Dashboard) (string, string) {
+	to := publicDashboard.Data.GetPath("time", "to").MustString()
+	from := publicDashboard.Data.GetPath("time", "from").MustString()
+	toTime, err := time.Parse("2006-01-02T15:04:05.000Z", to)
+	require.NoError(t, err)
+	fromTime, err := time.Parse("2006-01-02T15:04:05.000Z", from)
+	require.NoError(t, err)
+	toUnixMilli := strconv.FormatInt(toTime.UnixMilli(), 10)
+	fromUnixMilli := strconv.FormatInt(fromTime.UnixMilli(), 10)
+
+	return fromUnixMilli, toUnixMilli
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
