@@ -242,7 +242,7 @@ export function NavItem({
                   key={`${link.text}-${childLink.text}`}
                   isActive={activeItem === childLink}
                   isDivider={childLink.divider}
-                  icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
+                  icon={childLink.showIconInNavbar ? toIconName(childLink.icon) : undefined}
                   onClick={() => {
                     childLink.onClick?.();
                     onClose();
@@ -458,4 +458,7 @@ const getCollapsibleStyles = (theme: GrafanaTheme2) => ({
 
 function linkHasChildren(link: NavModelItem): link is NavModelItem & { children: NavModelItem[] } {
   return Boolean(link.children && link.children.length > 0);
+}
+function toIconName(icon: string | undefined): IconName | undefined {
+  throw new Error('Function not implemented.');
 }
