@@ -76,9 +76,9 @@ grow.args = {
   grow: true,
 };
 
-export const withSelect: ComponentStory<typeof InlineField> = () => {
+export const withSelect: ComponentStory<typeof InlineField> = (args) => {
   return (
-    <InlineField label="Select option">
+    <InlineField {...args}>
       <Select
         width={16}
         onChange={action('item selected')}
@@ -89,6 +89,11 @@ export const withSelect: ComponentStory<typeof InlineField> = () => {
       />
     </InlineField>
   );
+};
+
+withSelect.args = {
+  ...basic.args,
+  label: 'Select option',
 };
 
 export const multiple: ComponentStory<typeof InlineField> = () => {
