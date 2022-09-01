@@ -96,9 +96,10 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		appLink := &dtos.NavLink{
-			Text:       plugin.Name,
-			Id:         "plugin-page-" + plugin.ID,
-			Url:        path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
+			Text: plugin.Name,
+			Id:   "plugin-page-" + plugin.ID,
+			// Url:        path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
+			Url:        path.Join(hs.Cfg.AppSubURL, "landingPage"),
 			Img:        plugin.Info.Logos.Small,
 			Section:    dtos.NavSectionPlugin,
 			SortWeight: dtos.WeightPlugin,

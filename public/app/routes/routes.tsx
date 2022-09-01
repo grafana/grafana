@@ -181,6 +181,11 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/a/:pluginId/landingPage',
+      // Someday * and will get a ReactRouter under that path!
+      component: (props) => <NavSectionLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />,
+    },
+    {
       path: '/a/:pluginId/',
       exact: false,
       // Someday * and will get a ReactRouter under that path!
