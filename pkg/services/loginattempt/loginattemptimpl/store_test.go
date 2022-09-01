@@ -11,11 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func mockTime(mock time.Time) time.Time {
-	getTimeNow = func() time.Time { return mock }
-	return mock
-}
-
 func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -54,20 +49,25 @@ func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 			models.GetUserLoginAttemptCountQuery{Username: user, Since: timePlusTwoMinutes}, nil, 1,
 		},
 	} {
-		loginAttemptService = ProvideService(sqlstore.InitTestDB(t))
-		mockTime(beginningOfTime)
+		mockTime := beginningOfTime
+		loginAttemptService = &Service{
+			store: &xormStore{
+				db:  sqlstore.InitTestDB(t),
+				now: func() time.Time { return mockTime },
+			},
+		}
 		err := loginAttemptService.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
-		mockTime(timePlusOneMinute)
+		mockTime = timePlusOneMinute
 		err = loginAttemptService.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
-		mockTime(timePlusTwoMinutes)
+		mockTime = timePlusTwoMinutes
 		err = loginAttemptService.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
@@ -113,20 +113,25 @@ func TestIntegrationLoginAttemptsDelete(t *testing.T) {
 			models.DeleteOldLoginAttemptsCommand{OlderThan: timePlusTwoMinutes.Add(time.Second * 1)}, nil, 3,
 		},
 	} {
-		loginAttemptService = ProvideService(sqlstore.InitTestDB(t))
-		mockTime(beginningOfTime)
+		mockTime := beginningOfTime
+		loginAttemptService = &Service{
+			store: &xormStore{
+				db:  sqlstore.InitTestDB(t),
+				now: func() time.Time { return mockTime },
+			},
+		}
 		err := loginAttemptService.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
-		mockTime(timePlusOneMinute)
+		mockTime = timePlusOneMinute
 		err = loginAttemptService.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
 		require.Nil(t, err)
-		mockTime(timePlusTwoMinutes)
+		mockTime = timePlusTwoMinutes
 		err = loginAttemptService.CreateLoginAttempt(context.Background(), &models.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",

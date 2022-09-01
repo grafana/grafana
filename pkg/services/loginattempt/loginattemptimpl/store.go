@@ -11,7 +11,8 @@ import (
 )
 
 type xormStore struct {
-	db db.DB
+	db  db.DB
+	now func() time.Time
 }
 
 type store interface {
@@ -20,14 +21,12 @@ type store interface {
 	GetUserLoginAttemptCount(context.Context, *models.GetUserLoginAttemptCountQuery) error
 }
 
-var getTimeNow = time.Now
-
 func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
 	return xs.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		loginAttempt := models.LoginAttempt{
 			Username:  cmd.Username,
 			IpAddress: cmd.IpAddress,
-			Created:   getTimeNow().Unix(),
+			Created:   xs.now().Unix(),
 		}
 
 		if _, err := sess.Insert(&loginAttempt); err != nil {
