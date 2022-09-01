@@ -1,0 +1,59 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: ordering frame
+//  Dimensions: 2 Fields by 4 Rows
+//  +----------------------+--------------------+
+//  | Name: name           | Name: score        |
+//  | Labels:              | Labels:            |
+//  | Type: []string       | Type: []float64    |
+//  +----------------------+--------------------+
+//  | Prometheus 2.0       | 2.861163199700355  |
+//  | Prometheus 20.0      | 2.795309067950216  |
+//  | Prometheus Stats     | 2.6766576425310045 |
+//  | Prometheus 2.0 Stats | 2.5727172425512226 |
+//  +----------------------+--------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "frames": [
+    {
+      "schema": {
+        "name": "ordering frame",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "score",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "Prometheus 2.0",
+            "Prometheus 20.0",
+            "Prometheus Stats",
+            "Prometheus 2.0 Stats"
+          ],
+          [
+            2.861163199700355,
+            2.795309067950216,
+            2.6766576425310045,
+            2.5727172425512226
+          ]
+        ]
+      }
+    }
+  ]
+}

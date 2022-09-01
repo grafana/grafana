@@ -74,6 +74,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		Section:    dtos.NavSectionConfig,
 		SortWeight: dtos.WeightProfile,
 		Children:   children,
+		RoundIcon:  true,
 	}
 }
 
