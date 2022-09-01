@@ -85,7 +85,7 @@ export const Expression: FC<ExpressionProps> = ({
 
   return (
     <div className={cx(styles.expression.wrapper, alertCondition && styles.expression.alertCondition)}>
-      <Stack direction="column" gap={0}>
+      <div className={styles.expression.stack}>
         <Header
           refId={query.refId}
           queryType={queryType}
@@ -115,7 +115,7 @@ export const Expression: FC<ExpressionProps> = ({
             )}
           </Stack>
         </div>
-      </Stack>
+      </div>
     </div>
   );
 };
@@ -237,6 +237,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
       border-radius: ${theme.shape.borderRadius()};
       max-width: 640px;
+    `,
+    stack: css`
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: 0;
+      min-width: 0; // this one is important to prevent text overflow
     `,
     alertCondition: css``,
     body: css`
