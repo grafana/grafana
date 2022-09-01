@@ -13,9 +13,9 @@
 
 # Documentation owner: Jita Chatterjee
 /docs/ @grafana/docs-squad
-/contribute/ @marcusolsson @grafana/docs-squad
-/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/docs/sources/developers/plugins/backend @marcusolsson @grafana/docs-squad @grafana/plugins-platform-backend
+/contribute/ @grafana/docs-squad
+/docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/backend grafana/docs-squad @grafana/plugins-platform-backend
 /docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
 
 # Backend code
@@ -150,7 +150,7 @@ lerna.json @grafana/frontend-ops
 .betterer.results @joshhunt
 
 # @grafana/ui component documentation
-*.mdx @marcusolsson @jessover9000 @grafana/plugins-platform-frontend
+*.mdx @jessover9000 @grafana/plugins-platform-frontend
 
 # Core datasources
 /public/app/plugins/datasource/cloudwatch @grafana/aws-plugins
