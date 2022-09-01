@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, CodeEditor, Drawer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, useStyles2, Tooltip } from '@grafana/ui';
 
 import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
@@ -100,6 +100,9 @@ const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
         <Button type="button" onClick={onApply}>
           Apply
         </Button>
+        <Tooltip content={<YamlContentInfo />} theme="info" placement="left-start">
+          <Icon name="info-circle" size="xl" />
+        </Tooltip>
       </div>
 
       <div className={styles.content}>
@@ -124,6 +127,15 @@ const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
   );
 };
 
+function YamlContentInfo() {
+  return (
+    <div>
+      The YAML content in the editor represents a single alert only. <br />
+      It does not contain the complete configuration of alert rules needed for Prometheus configuration
+    </div>
+  );
+}
+
 function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormValues> {
   if (isAlertingRulerRule(rulerRule)) {
     return alertingRulerRuleToRuleForm(rulerRule);
@@ -143,7 +155,11 @@ const yamlTabStyle = (theme: GrafanaTheme2) => ({
   `,
   applyButton: css`
     display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     flex-grow: 0;
+    margin-bottom: ${theme.spacing(2)};
   `,
 });
 
