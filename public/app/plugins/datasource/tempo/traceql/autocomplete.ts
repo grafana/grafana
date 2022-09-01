@@ -17,7 +17,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.languageProvider = props.languageProvider;
   }
 
-  triggerCharacters = ['{', ',', '[', '(', '=', '~', ' ', '"'];
+  triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
+
+  static readonly intrinsics: string[] = ['name', 'status', 'duration'];
+  static readonly scopes: string[] = ['span', 'resource'];
+  static readonly operators: string[] = ['=', '-', '+', '<', '>', '>=', '<='];
+  static readonly logicalOps: string[] = ['&&', '||'];
 
   // We set these directly and ae required for the provider to function.
   monaco: Monaco | undefined;
@@ -41,7 +46,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
-    const situation = getSituation(model.getValue(), offset);
+    const situation = this.getSituation(model.getValue(), offset);
     const completionItems = this.getCompletions(situation);
 
     return completionItems.then((items) => {
@@ -82,23 +87,23 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return [];
       }
       case 'EMPTY': {
-        return Object.keys(this.tags).map((key) => {
-          return {
-            label: key,
-            insertText: `{${key}="`,
-            type: 'TAG_NAME',
-          };
-        });
+        return this.getTagsCompletions('{ .')
+          .concat(this.getIntrinsicsCompletions('{ '))
+          .concat(this.getScopesCompletions('{ '));
       }
-      case 'IN_TAG_NAME':
-        return Object.keys(this.tags).map((key) => {
-          return {
-            label: key,
-            insertText: key,
-            type: 'TAG_NAME',
-          };
-        });
-      case 'IN_TAG_VALUE':
+      case 'SPANSET_EMPTY':
+        return this.getTagsCompletions('.').concat(this.getIntrinsicsCompletions()).concat(this.getScopesCompletions());
+      case 'SPANSET_IN_NAME':
+        return this.getTagsCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getScopesCompletions());
+      case 'SPANSET_IN_NAME_SCOPE':
+        return this.getTagsCompletions().concat(this.getIntrinsicsCompletions());
+      case 'SPANSET_AFTER_NAME':
+        return CompletionProvider.operators.map((key) => ({
+          label: key,
+          insertText: key,
+          type: 'OPERATOR' as CompletionType,
+        }));
+      case 'SPANSET_IN_VALUE':
         return await this.languageProvider.getOptions(situation.tagName).then((res) => {
           const items: Completion[] = [];
           res.forEach((val) => {
@@ -112,9 +117,150 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           });
           return items;
         });
+      case 'SPANSET_AFTER_VALUE':
+        return CompletionProvider.logicalOps.concat('}').map((key) => ({
+          label: key,
+          insertText: key,
+          type: 'OPERATOR' as CompletionType,
+        }));
       default:
         throw new Error(`Unexpected situation ${situation}`);
     }
+  }
+
+  private getTagsCompletions(prepend?: string): Completion[] {
+    return Object.keys(this.tags).map((key) => ({
+      label: key,
+      insertText: (prepend || '') + key,
+      type: 'TAG_NAME' as CompletionType,
+    }));
+  }
+
+  private getIntrinsicsCompletions(prepend?: string): Completion[] {
+    return CompletionProvider.intrinsics.map((key) => ({
+      label: key,
+      insertText: (prepend || '') + key,
+      type: 'KEYWORD' as CompletionType,
+    }));
+  }
+
+  private getScopesCompletions(prepend?: string): Completion[] {
+    return CompletionProvider.scopes.map((key) => ({
+      label: key,
+      insertText: (prepend || '') + key,
+      type: 'SCOPE' as CompletionType,
+    }));
+  }
+
+  private getSituationInSpanSet(textUntilCaret: string): Situation {
+    const nameRegex = /(?<name>[\w./-]+)?/;
+    const opRegex = /(?<op>[!=+\-<>]+)/;
+    const valueRegex = /(?<value>(?<open_quote>")?(\w[^"\n&|]*\w)?(?<close_quote>")?)?/;
+
+    // prettier-ignore
+    const fullRegex = new RegExp(
+      '([\\s{])' +      // Space(s) or initial opening bracket {
+        '(' +                   // Open full set group
+        nameRegex.source +
+        '(?<space1>\\s*)' +     // Optional space(s) between name and operator
+        '(' +                   // Open operator + value group
+        opRegex.source +
+        '(?<space2>\\s*)' +     // Optional space(s) between operator and value
+        valueRegex.source +
+        ')?' +                  // Close operator + value group
+        ')' +                   // Close full set group
+        '(?<space3>\\s*)$'      // Optional space(s) at the end of the set
+    );
+
+    const matched = textUntilCaret.match(fullRegex);
+
+    if (matched) {
+      const nameFull = matched.groups?.name;
+      const op = matched.groups?.op;
+
+      if (!nameFull) {
+        return {
+          type: 'SPANSET_EMPTY',
+        };
+      }
+
+      const nameMatched = nameFull.match(/^(?<pre_dot>\.)?(?<word>\w[\w./-]*\w)(?<post_dot>\.)?$/);
+
+      // We already have a (potentially partial) tag name so let's check if there's an operator declared
+      // { .tag_name|
+      if (!op) {
+        // There's no operator so we check if the name is one of the known scopes
+        // { resource.|
+
+        if (CompletionProvider.scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
+          return {
+            type: 'SPANSET_IN_NAME_SCOPE',
+          };
+        }
+        // It's not one of the scopes, so we now check if we're after the name (there's a space after the word) or if we still have to autocomplete the rest of the name
+        // In case there's a space we start autocompleting the operators { .http.method |
+        // Otherwise we keep showing the tags/intrinsics/scopes list { .http.met|
+        return {
+          type: matched.groups?.space1 ? 'SPANSET_AFTER_NAME' : 'SPANSET_IN_NAME',
+        };
+      }
+
+      // In case there's a space after the full [name + operator + value] group we can start autocompleting logical operators or close the spanset
+      // To avoid triggering this situation when we are writing a space inside a string we check the state of the open and close quotes
+      // { .http.method = "GET" |
+      if (matched.groups?.space3 && matched.groups.open_quote === matched.groups.close_quote) {
+        return {
+          type: 'SPANSET_AFTER_VALUE',
+        };
+      }
+
+      // remove the scopes from the word to get accurate autocompletes
+      // Ex: 'span.host.name' won't resolve to any autocomplete values, but removing 'span.' results in 'host.name' which can have autocomplete values
+      const noScopeWord = CompletionProvider.scopes.reduce(
+        (result, word) => result.replace(`${word}.`, ''),
+        nameMatched?.groups?.word || ''
+      );
+
+      // We already have an operator and know that the set isn't complete so let's autocomplete the possible values for the tag name
+      // { .http.method = |
+      return {
+        type: 'SPANSET_IN_VALUE',
+        tagName: noScopeWord,
+        betweenQuotes: !!matched.groups?.open_quote,
+      };
+    }
+
+    return {
+      type: 'EMPTY',
+    };
+  }
+
+  /**
+   * Figure out where is the cursor and what kind of suggestions are appropriate.
+   * As currently TraceQL handles just a simple {foo="bar", baz="zyx"} kind of values we can do with simple regex to figure
+   * out where we are with the cursor.
+   * @param text
+   * @param offset
+   */
+  private getSituation(text: string, offset: number): Situation {
+    if (text === '' || offset === 0) {
+      return {
+        type: 'EMPTY',
+      };
+    }
+
+    const textUntilCaret = text.substring(0, offset);
+
+    // Check if we're inside a span set
+    let isInSpanSet = textUntilCaret.lastIndexOf('{') > textUntilCaret.lastIndexOf('}');
+    if (isInSpanSet) {
+      return this.getSituationInSpanSet(textUntilCaret);
+    }
+
+    // Will happen only if user writes something that isn't really a tag selector
+    return {
+      type: 'UNKNOWN',
+    };
   }
 }
 
@@ -127,14 +273,20 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
   switch (type) {
     case 'TAG_NAME':
       return monaco.languages.CompletionItemKind.Enum;
+    case 'KEYWORD':
+      return monaco.languages.CompletionItemKind.Keyword;
+    case 'OPERATOR':
+      return monaco.languages.CompletionItemKind.Operator;
     case 'TAG_VALUE':
       return monaco.languages.CompletionItemKind.EnumMember;
+    case 'SCOPE':
+      return monaco.languages.CompletionItemKind.Class;
     default:
       throw new Error(`Unexpected CompletionType: ${type}`);
   }
 }
 
-export type CompletionType = 'TAG_NAME' | 'TAG_VALUE';
+export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE';
 type Completion = {
   type: CompletionType;
   label: string;
@@ -154,63 +306,25 @@ export type Situation =
       type: 'EMPTY';
     }
   | {
-      type: 'IN_TAG_NAME';
-      otherTags: Tag[];
+      type: 'SPANSET_EMPTY';
     }
   | {
-      type: 'IN_TAG_VALUE';
+      type: 'SPANSET_AFTER_NAME';
+    }
+  | {
+      type: 'SPANSET_IN_NAME';
+    }
+  | {
+      type: 'SPANSET_IN_NAME_SCOPE';
+    }
+  | {
+      type: 'SPANSET_IN_VALUE';
       tagName: string;
       betweenQuotes: boolean;
-      otherTags: Tag[];
+    }
+  | {
+      type: 'SPANSET_AFTER_VALUE';
     };
-
-/**
- * Figure out where is the cursor and what kind of suggestions are appropriate.
- * As currently TraceQL handles just a simple {foo="bar", baz="zyx"} kind of values we can do with simple regex to figure
- * out where we are with the cursor.
- * @param text
- * @param offset
- */
-function getSituation(text: string, offset: number): Situation {
-  if (text === '') {
-    return {
-      type: 'EMPTY',
-    };
-  }
-
-  // Get all the tags so far in the query so we can do some more filtering.
-  const matches = text.matchAll(/(\w+)="(\w+)"/g);
-  const existingTags = Array.from(matches).reduce((acc, match) => {
-    const [_, name, value] = match[1];
-    acc.push({ name, value });
-    return acc;
-  }, [] as Tag[]);
-
-  // Check if we are editing a tag value right now. If so also get name of the tag
-  const matchTagValue = text.substring(0, offset).match(/([\w.]+)=("?)[^"]*$/);
-  if (matchTagValue) {
-    return {
-      type: 'IN_TAG_VALUE',
-      tagName: matchTagValue[1],
-      betweenQuotes: !!matchTagValue[2],
-      otherTags: existingTags,
-    };
-  }
-
-  // Check if we are editing a tag name
-  const matchTagName = text.substring(0, offset).match(/[{,]\s*[^"]*$/);
-  if (matchTagName) {
-    return {
-      type: 'IN_TAG_NAME',
-      otherTags: existingTags,
-    };
-  }
-
-  // Will happen only if user writes something that isn't really a tag selector
-  return {
-    type: 'UNKNOWN',
-  };
-}
 
 function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel, position: monacoTypes.Position) {
   const word = model.getWordAtPosition(position);
