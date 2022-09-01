@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
-import { Tab, TabsBar, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Tab, TabsBar, Icon, useStyles2, toIconName } from '@grafana/ui';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
 
 import { ProBadge } from '../Upgrade/ProBadge';
@@ -57,13 +57,14 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
       <SelectNav customCss="page-header__select-nav">{children}</SelectNav>
       <TabsBar className="page-header__tabs" hideBorder={true}>
         {children.map((child, index) => {
+          const icon = child.icon ? toIconName(child.icon) : undefined;
           return (
             !child.hideFromTabs && (
               <Tab
                 label={child.text}
                 active={child.active}
                 key={`${child.url}-${index}`}
-                icon={child.icon as IconName}
+                icon={icon}
                 href={child.url}
                 suffix={child.tabSuffix}
               />
@@ -96,11 +97,12 @@ export const PageHeader: FC<Props> = ({ navItem: model }) => {
 
 function renderHeaderTitle(main: NavModelItem) {
   const marginTop = main.icon === 'grafana' ? 12 : 14;
+  const icon = main.icon && toIconName(main.icon);
 
   return (
     <div className="page-header__inner">
       <span className="page-header__logo">
-        {main.icon && <Icon name={main.icon as IconName} size="xxxl" style={{ marginTop }} />}
+        {icon && <Icon name={icon} size="xxxl" style={{ marginTop }} />}
         {main.img && <img className="page-header__img" src={main.img} alt={`logo of ${main.text}`} />}
       </span>
 
