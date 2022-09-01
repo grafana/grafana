@@ -215,7 +215,7 @@ export const SharePublicDashboard = (props: Props) => {
               {publicDashboardPersisted(publicDashboard) && publicDashboard.isEnabled && (
                 <Field label="Link URL">
                   <Input
-                    value={generatePublicDashboardUrl(publicDashboard)}
+                    value={generatePublicDashboardUrl(publicDashboard.accessToken)}
                     readOnly
                     data-testid={selectors.CopyUrlInput}
                     addonAfter={
@@ -224,7 +224,7 @@ export const SharePublicDashboard = (props: Props) => {
                         variant="primary"
                         icon="copy"
                         getText={() => {
-                          return generatePublicDashboardUrl(publicDashboard);
+                          return generatePublicDashboardUrl(publicDashboard.accessToken);
                         }}
                       >
                         Copy

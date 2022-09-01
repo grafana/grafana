@@ -3,9 +3,8 @@ import { VariableModel } from 'app/features/variables/types';
 import {
   PublicDashboard,
   dashboardHasTemplateVariables,
-  generatePublicDashboardUrl,
   publicDashboardPersisted,
-  viewPublicDashboardUrl,
+  generatePublicDashboardUrl,
   listPublicDashboardsUrl,
   getPublicDashboardConfigUrl,
   savePublicDashboardConfigUrl,
@@ -38,9 +37,9 @@ describe('publicDashboardPersisted', () => {
   });
 });
 
-describe('viewPublicDashboardUrl', () => {
+describe('generatePublicDashboardUrl', () => {
   it('has the right url', () => {
-    expect(viewPublicDashboardUrl('myaccesstoken')).toEqual(
+    expect(generatePublicDashboardUrl('myaccesstoken')).toEqual(
       `${window.location.origin}/public-dashboards/myaccesstoken`
     );
   });

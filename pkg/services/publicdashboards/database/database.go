@@ -48,7 +48,7 @@ func (d *PublicDashboardStoreImpl) ListPublicDashboards(ctx context.Context, org
 
 		sess.Table("dashboard_public").
 			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid").
-			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard.title").
+			Cols("dashboard_public.uid", "dashboard_public.access_token", "dashboard_public.dashboard_uid", "dashboard_public.is_enabled", "dashboard.title").
 			Where("dashboard_public.org_id = dashboard.org_id").
 			Where("dashboard_public.org_id = ?", orgId)
 

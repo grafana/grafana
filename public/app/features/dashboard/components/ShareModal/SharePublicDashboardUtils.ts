@@ -23,13 +23,14 @@ export interface ListPublicDashboardResponse {
   accessToken: string;
   dashboardUid: string;
   title: string;
+  isEnabled: boolean;
 }
 
 export const listPublicDashboards = async (
   setPublicDashboards: React.Dispatch<React.SetStateAction<ListPublicDashboardResponse[]>>
 ) => {
-  const resp = await getBackendSrv().get(listPublicDashboardsUrl());
-  setPublicDashboards(resp);
+  const resp: ListPublicDashboardResponse[] = await getBackendSrv().get(listPublicDashboardsUrl());
+  setPublicDashboards(resp.sort((a, b) => Number(b.isEnabled) - Number(a.isEnabled)));
 };
 
 export const getPublicDashboardConfig = async (
@@ -58,22 +59,6 @@ export const savePublicDashboardConfig = async (
   setPublicDashboard(pdResp);
 };
 
-export const listPublicDashboardsUrl = () => {
-  return `/api/dashboards/public`;
-};
-
-export const viewPublicDashboardUrl = (accessToken: string) => {
-  return `${window.location.origin}/public-dashboards/${accessToken}`;
-};
-
-export const getPublicDashboardConfigUrl = (dashboardUid: string) => {
-  return `/api/dashboards/uid/${dashboardUid}/public-config`;
-};
-
-export const savePublicDashboardConfigUrl = (dashboardUid: string) => {
-  return `/api/dashboards/uid/${dashboardUid}/public-config`;
-};
-
 // Instance methods
 export const dashboardHasTemplateVariables = (variables: VariableModel[]): boolean => {
   return variables.length > 0;
@@ -83,6 +68,18 @@ export const publicDashboardPersisted = (publicDashboard: PublicDashboard): bool
   return publicDashboard.uid !== '' && publicDashboard.uid !== undefined;
 };
 
-export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
-  return `${window.location.origin}/public-dashboards/${publicDashboard.accessToken}`;
+export const listPublicDashboardsUrl = () => {
+  return `/api/dashboards/public`;
+};
+
+export const generatePublicDashboardUrl = (accessToken?: string): string => {
+  return `${window.location.origin}/public-dashboards/${accessToken}`;
+};
+
+export const getPublicDashboardConfigUrl = (dashboardUid: string) => {
+  return `/api/dashboards/uid/${dashboardUid}/public-config`;
+};
+
+export const savePublicDashboardConfigUrl = (dashboardUid: string) => {
+  return `/api/dashboards/uid/${dashboardUid}/public-config`;
 };

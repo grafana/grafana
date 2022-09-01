@@ -75,6 +75,7 @@ type PublicDashboardListResponse struct {
 	AccessToken  string `json:"accessToken" xorm:"access_token"`
 	Title        string `json:"title" xorm:"title"`
 	DashboardUid string `json:"dashboardUid" xorm:"dashboard_uid"`
+	IsEnabled    bool   `json:"isEnabled" xorm:"is_enabled"`
 }
 
 type TimeSettings struct {
