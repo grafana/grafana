@@ -31,7 +31,6 @@ export const Query: FC = () => {
           <InputControl
             name="expression"
             render={({ field: { ref, ...field } }) => {
-              console.log('Expr value', field.value);
               return <ExpressionEditor {...field} dataSourceName={dataSourceName} />;
             }}
             control={control}
