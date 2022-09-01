@@ -185,7 +185,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   /**
    * We need to handle blur events here mainly because of dashboard panels which expect to have query executed on blur.
    */
-  handleBlur = (event: React.FocusEvent, editor: Editor, next: Function) => {
+  handleBlur = (_: React.FocusEvent | undefined, editor: Editor, next: Function) => {
     const { onBlur } = this.props;
 
     if (onBlur) {

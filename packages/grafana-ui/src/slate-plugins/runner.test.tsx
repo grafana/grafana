@@ -1,8 +1,7 @@
 import { shallow } from 'enzyme';
 import React from 'react';
 import Plain from 'slate-plain-serializer';
-
-import { Editor } from '@grafana/slate-react';
+import { Editor } from 'slate-react';
 
 import { RunnerPlugin } from './runner';
 
@@ -14,7 +13,7 @@ describe('runner', () => {
     const value = Plain.deserialize('');
     const editor = shallow<Editor>(<Editor value={value} />);
     handler(
-      { key: 'Enter', shiftKey: true, preventDefault: () => {} } as KeyboardEvent,
+      new window.KeyboardEvent({ key: 'Enter', shiftKey: true, preventDefault: () => {} }),
       editor.instance() as any,
       () => {}
     );
