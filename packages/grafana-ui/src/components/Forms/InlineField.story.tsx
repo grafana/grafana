@@ -48,12 +48,18 @@ basic.args = {
   validationMessageHorizontalOverflow: false,
 };
 
-export const withTooltip: ComponentStory<typeof InlineField> = () => {
+export const withTooltip: ComponentStory<typeof InlineField> = (args) => {
   return (
-    <InlineField label="Label" tooltip="Tooltip">
+    <InlineField {...args}>
       <Input placeholder="Inline input" />
     </InlineField>
   );
+};
+
+withTooltip.args = {
+  tooltip: 'Tooltip',
+  ...basic.args,
+  label: 'Label',
 };
 
 export const grow: ComponentStory<typeof InlineField> = () => {
