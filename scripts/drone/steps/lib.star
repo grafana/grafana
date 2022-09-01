@@ -30,25 +30,6 @@ def slack_step(channel, template, secret):
         },
     }
 
-
-def gen_version_step(ver_mode):
-    if ver_mode == 'release':
-        args = '${DRONE_TAG}'
-    else:
-        build_no = '${DRONE_BUILD_NUMBER}'
-        args = '--build-id {}'.format(build_no)
-    return {
-        'name': 'gen-version',
-        'image': build_image,
-        'depends_on': [
-            'grabpl',
-        ],
-        'commands': [
-            './bin/grabpl gen-version {}'.format(args),
-        ],
-    }
-
-
 def yarn_install_step():
     return {
         'name': 'yarn-install',
@@ -392,7 +373,6 @@ def build_backend_step(edition, ver_mode, variants=None):
         'name': 'build-backend' + enterprise2_suffix(edition),
         'image': build_image,
         'depends_on': [
-            'gen-version',
             'wire-install',
             'compile-build-cmd',
         ],
@@ -423,7 +403,6 @@ def build_frontend_step(edition, ver_mode):
         },
         'depends_on': [
             'compile-build-cmd',
-            'gen-version',
             'yarn-install',
         ],
         'commands': cmds,
@@ -452,7 +431,6 @@ def build_frontend_package_step(edition, ver_mode):
             'NODE_OPTIONS': '--max_old_space_size=8192',
         },
         'depends_on': [
-            'gen-version',
             'yarn-install',
         ],
         'commands': cmds,
@@ -484,7 +462,6 @@ def build_plugins_step(edition, ver_mode):
         'image': build_image,
         'environment': env,
         'depends_on': [
-            'gen-version',
             'yarn-install',
         ],
         'commands': [
@@ -1014,7 +991,7 @@ def publish_packages_step(edition, ver_mode):
         'name': 'publish-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
-            'gen-version',
+            'grabpl',
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
@@ -1061,7 +1038,7 @@ def publish_linux_packages_step(edition):
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
         'image': 'us.gcr.io/kubernetes-dev/package-publish:latest',
         'depends_on': [
-            'gen-version'
+            'grabpl'
         ],
         'failure': 'ignore', # While we're testing it
         'settings': {
@@ -1121,7 +1098,6 @@ def get_windows_steps(edition, ver_mode):
             'release',
         ):
             installer_commands.extend([
-                '.\\grabpl.exe gen-version {}'.format(ver_part),
                 '.\\grabpl.exe windows-installer --edition {} {}'.format(edition, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
             ])
