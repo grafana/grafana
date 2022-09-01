@@ -11,30 +11,32 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var installPluginOnce sync.Once
 
 const awsPluginName string = "grafana-aws-secretsmanager"
+const pluginDir string = "/tmp/awsplugin"
 
 func TestIntegrationSecretsPluginEnabled(t *testing.T) {
-	grafanaDir, _ := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
+	grafanaDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{})
 
 	setupSecretsPluginTest(t, grafanaDir)
 
-	// grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
-	// ctx := context.Background()
-
+	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, grafanaDir, cfgPath)
+	assert.NotEmpty(t, grafanaListeningAddr)
+	assert.NotNil(t, testEnv)
 }
 
 func setupSecretsPluginTest(t *testing.T, grafanaDir string) {
 	t.Helper()
 	defer func() {
-		os.RemoveAll("/tmp/awsplugin")
+		os.RemoveAll(pluginDir)
 	}()
 	installPluginOnce.Do(func() {
-		os.RemoveAll("/tmp/awsplugin")
+		os.RemoveAll(pluginDir)
 		buildSecretsPlugin(t, grafanaDir)
 	})
 
@@ -42,15 +44,15 @@ func setupSecretsPluginTest(t *testing.T, grafanaDir string) {
 
 func buildSecretsPlugin(t *testing.T, grafanaDir string) {
 	t.Helper()
-	const pluginDir string = "/tmp/awsplugin"
+
 	// const pluginDir string = filepath.Join(grafanaDir, "tmp")
 	// Clone the plugin repository
 	fmt.Println("git clone https://github.com/grafana/grafana-aws-secrets-manager.git")
 	_, err := git.PlainClone(pluginDir, false, &git.CloneOptions{
 		URL: "https://github.com/grafana/grafana-aws-secrets-manager.git",
 		Auth: &http.BasicAuth{
-			Username: "",
-			Password: "",
+			Username: os.Getenv("SECRETS_PLUGIN_TEST_USER"),
+			Password: os.Getenv("SECRETS_PLUGIN_TEST_TOKEN"),
 		},
 		Progress: os.Stdout,
 	})
