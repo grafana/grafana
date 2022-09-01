@@ -105,7 +105,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 		}
 
 		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
-			appLink.Url = path.Join(hs.Cfg.AppSubURL, "a", plugin.ID, "landing-page")
+			appLink.Url = path.Join(hs.Cfg.AppSubURL, "a", plugin.ID)
 		} else {
 			appLink.Url = path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL)
 		}

@@ -13,6 +13,7 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connect
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import AppRootPage from 'app/features/plugins/components/AppRootPage';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
@@ -20,6 +21,8 @@ import { AccessControlAction, DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
+
+import { pluginHasRootPage } from './utils';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -31,8 +34,17 @@ export function getAppRoutes(): RouteDescriptor[] {
           component: () => <NavLandingPage navId="apps" />,
         },
         {
-          path: '/a/:pluginId/landing-page',
-          component: (props) => <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />,
+          path: '/a/:pluginId',
+          exact: true,
+          component: (props) => {
+            const hasRoot = pluginHasRootPage(props.match.params.pluginId, config.bootData.navTree);
+            const hasQueryParams = Object.keys(props.queryParams).length > 0;
+            return hasRoot || hasQueryParams ? (
+              <AppRootPage {...props} />
+            ) : (
+              <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />
+            );
+          },
         },
       ]
     : [];
