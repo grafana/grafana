@@ -41,6 +41,7 @@ load(
     'upload_cdn_step',
     'verify_gen_cue_step',
     'publish_images_step',
+    'publish_linux_packages_step',
     'trigger_oss',
     'artifacts_page_step',
     'compile_build_cmd',
@@ -403,12 +404,14 @@ def publish_packages_pipeline():
         download_grabpl_step(),
         gen_version_step(ver_mode='release'),
         store_packages_step(edition='oss', ver_mode='release'),
+        publish_linux_packages_step(edition='oss'),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
         gen_version_step(ver_mode='release'),
         store_packages_step(edition='enterprise', ver_mode='release'),
+        publish_linux_packages_step(edition='enterprise'),
     ]
     deps = [
         'publish-artifacts-public',
