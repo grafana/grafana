@@ -3,7 +3,7 @@ import React, { FC, useState } from 'react';
 
 import { PanelMenuItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, IconName, toIconName, useTheme } from '@grafana/ui';
+import { Icon, toIconName, useTheme } from '@grafana/ui';
 
 interface Props {
   children?: any;
