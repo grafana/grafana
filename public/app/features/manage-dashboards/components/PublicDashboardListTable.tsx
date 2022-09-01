@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC, useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Link, Field, Switch, ClipboardButton, useStyles2 } from '@grafana/ui';
+import { Link, Switch, ClipboardButton, useStyles2 } from '@grafana/ui';
 import {
   ListPublicDashboardResponse,
   listPublicDashboards,
