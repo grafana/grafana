@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gap: theme.spacing(2),
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gridAutoRows: 'minmax(200px, 1fr)',
+    gridAutoRows: '200px',
     padding: theme.spacing(2, 1),
   }),
   nestedTitle: css({

@@ -24,6 +24,19 @@ import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
+  const topnavRoutes: RouteDescriptor[] = config.featureToggles.topnav
+    ? [
+        {
+          path: '/apps',
+          component: () => <NavLandingPage navId="apps" />,
+        },
+        {
+          path: '/a/:pluginId/landing-page',
+          component: (props) => <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />,
+        },
+      ]
+    : [];
+
   return [
     {
       path: '/',
@@ -180,14 +193,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
     },
-    {
-      path: '/apps',
-      component: () => <NavLandingPage navId="apps" />,
-    },
-    {
-      path: '/a/:pluginId/landing-page',
-      component: (props) => <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />,
-    },
+    ...topnavRoutes,
     {
       path: '/a/:pluginId/',
       exact: false,
