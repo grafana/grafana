@@ -74,9 +74,12 @@ export const Page: PageType = ({
   );
 };
 
+const OldNavOnly = () => null;
+OldNavOnly.displayName = 'OldNavOnly';
+
 Page.Header = PageHeader;
 Page.Contents = PageContents;
-Page.OldNavOnly = () => null;
+Page.OldNavOnly = OldNavOnly;
 
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark

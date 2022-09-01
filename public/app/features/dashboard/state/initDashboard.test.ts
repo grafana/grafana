@@ -160,6 +160,10 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
                   title: 'Redshift and Azure',
                   type: 'stat',
                 },
+                {
+                  id: 9,
+                  type: 'text',
+                },
               ],
               title: 'Collapsed Panel',
               type: 'row',

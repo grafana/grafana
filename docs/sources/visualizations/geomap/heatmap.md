@@ -9,7 +9,7 @@ keywords:
   - panel
   - documentation
 title: Heatmap layer
-weight: 500
+weight: 2
 ---
 
 # Heatmap layer

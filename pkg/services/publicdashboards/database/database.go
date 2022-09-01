@@ -113,6 +113,31 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Con
 	return uid, nil
 }
 
+// Retrieves public dashboard configuration by Uid
+func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error) {
+	if uid == "" {
+		return nil, nil
+	}
+
+	var found bool
+	pdRes := &PublicDashboard{Uid: uid}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		found, err = sess.Get(pdRes)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !found {
+		return nil, nil
+	}
+
+	return pdRes, err
+}
+
 // Retrieves public dashboard configuration
 func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
@@ -138,7 +163,11 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context,
 }
 
 // Persists public dashboard configuration
-func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+	if cmd.PublicDashboard.DashboardUid == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
@@ -148,11 +177,7 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &cmd.PublicDashboard, nil
+	return err
 }
 
 // updates existing public dashboard configuration

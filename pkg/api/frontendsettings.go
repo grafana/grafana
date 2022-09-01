@@ -112,7 +112,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
 		"azureAuthEnabled":                    setting.AzureAuthEnabled,
 		"rbacEnabled":                         hs.Cfg.RBACEnabled,
-		"rbacBuiltInRoleAssignmentEnabled":    hs.Cfg.RBACBuiltInRoleAssignmentEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
 		"helpEnabled":                         setting.HelpEnabled,
 		"profileEnabled":                      setting.ProfileEnabled,
@@ -237,6 +236,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			URL:       url,
 			IsDefault: ds.IsDefault,
 			Access:    string(ds.Access),
+			ReadOnly:  ds.ReadOnly,
 		}
 
 		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)

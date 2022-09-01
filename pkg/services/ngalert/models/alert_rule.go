@@ -227,6 +227,10 @@ type AlertRuleKey struct {
 	UID   string `xorm:"uid"`
 }
 
+func (k AlertRuleKey) LogContext() []interface{} {
+	return []interface{}{"rule_uid", k.UID, "org_id", k.OrgID}
+}
+
 type AlertRuleKeyWithVersion struct {
 	Version      int64
 	AlertRuleKey `xorm:"extends"`
@@ -340,7 +344,10 @@ type ListAlertRulesQuery struct {
 }
 
 type GetAlertRulesForSchedulingQuery struct {
-	Result []*AlertRule
+	PopulateFolders bool
+
+	ResultRules         []*AlertRule
+	ResultFoldersTitles map[string]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules

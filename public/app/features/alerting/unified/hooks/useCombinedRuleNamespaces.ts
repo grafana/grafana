@@ -115,7 +115,7 @@ export function sortRulesByName(rules: CombinedRule[]) {
   return rules.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[]): void {
+function addRulerGroupsToCombinedNamespace(namespace: CombinedRuleNamespace, groups: RulerRuleGroupDTO[] = []): void {
   namespace.groups = groups.map((group) => {
     const combinedGroup: CombinedRuleGroup = {
       name: group.name,

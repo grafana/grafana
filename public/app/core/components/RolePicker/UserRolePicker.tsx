@@ -8,39 +8,49 @@ import { RolePicker } from './RolePicker';
 import { fetchUserRoles, updateUserRoles } from './api';
 
 export interface Props {
-  builtInRole: OrgRole;
+  basicRole: OrgRole;
   userId: number;
   orgId?: number;
-  onBuiltinRoleChange: (newRole: OrgRole) => void;
+  onBasicRoleChange: (newRole: OrgRole) => void;
   roleOptions: Role[];
-  builtInRoles?: { [key: string]: Role[] };
   disabled?: boolean;
-  builtinRolesDisabled?: boolean;
+  basicRoleDisabled?: boolean;
+  /**
+   * Set whether the component should send a request with the new roles to the
+   * backend in UserRolePicker.onRolesChange (apply=false), or call {@link onApplyRoles}
+   * with the updated list of roles (apply=true).
+   *
+   * Besides it sets the RolePickerMenu's Button title to
+   *   * `Update` in case apply equals false
+   *   * `Apply` in case apply equals true
+   *
+   * @default false
+   */
   apply?: boolean;
   onApplyRoles?: (newRoles: Role[], userId: number, orgId: number | undefined) => void;
   pendingRoles?: Role[];
+  maxWidth?: string | number;
 }
 
 export const UserRolePicker: FC<Props> = ({
-  builtInRole,
+  basicRole,
   userId,
   orgId,
-  onBuiltinRoleChange,
+  onBasicRoleChange,
   roleOptions,
-  builtInRoles,
   disabled,
-  builtinRolesDisabled,
+  basicRoleDisabled,
   apply = false,
   onApplyRoles,
   pendingRoles,
+  maxWidth,
 }) => {
   const [{ loading, value: appliedRoles = [] }, getUserRoles] = useAsyncFn(async () => {
     try {
-      if (apply) {
-        if (pendingRoles?.length! > 0) {
-          return pendingRoles;
-        }
+      if (apply && Boolean(pendingRoles?.length)) {
+        return pendingRoles;
       }
+
       if (contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)) {
         return await fetchUserRoles(userId, orgId);
       }
@@ -74,17 +84,17 @@ export const UserRolePicker: FC<Props> = ({
   return (
     <RolePicker
       appliedRoles={appliedRoles}
-      builtInRole={builtInRole}
+      basicRole={basicRole}
       onRolesChange={onRolesChange}
-      onBuiltinRoleChange={onBuiltinRoleChange}
+      onBasicRoleChange={onBasicRoleChange}
       roleOptions={roleOptions}
-      builtInRoles={builtInRoles}
       isLoading={loading}
       disabled={disabled}
-      builtinRolesDisabled={builtinRolesDisabled}
-      showBuiltInRole
+      basicRoleDisabled={basicRoleDisabled}
+      showBasicRole
       apply={apply}
       canUpdateRoles={canUpdateRoles}
+      maxWidth={maxWidth}
     />
   );
 };

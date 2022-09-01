@@ -57,6 +57,7 @@ export const FolderSection: FC<SectionHeaderProps> = ({
       kind: ['dashboard'],
       location: section.uid,
       sort: 'name_sort',
+      limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
     };
     if (section.itemsUIDs) {
       query = {
