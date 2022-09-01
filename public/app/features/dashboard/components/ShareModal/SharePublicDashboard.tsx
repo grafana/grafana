@@ -116,8 +116,9 @@ export const SharePublicDashboard = (props: Props) => {
             rel="noreferrer"
             className="text-link"
           >
-            github discussion
+            GitHub discussion
           </a>
+          .
           <hr />
           <div>
             Before you click Save, please acknowledge the following information: <br />
