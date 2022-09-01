@@ -2,6 +2,7 @@ package loginattemptimpl
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
@@ -14,7 +15,7 @@ type Service struct {
 
 func ProvideService(db db.DB) loginattempt.Service {
 	return &Service{
-		store: &xormStore{db: db},
+		store: &xormStore{db: db, now: time.Now},
 	}
 }
 
