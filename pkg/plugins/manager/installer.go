@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,25 +16,29 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	cfg            *plugins.Cfg
-	pluginRepo     repo.Service
-	pluginStorage  storage.Manager
-	pluginRegistry registry.Service
-	pluginLoader   loader.Service
-	log            log.Logger
+	cfg           *plugins.Cfg
+	pluginRepo    repo.Service
+	pluginStorage storage.Manager
+	pluginStore   plugins.Store
+	pluginLoader  loader.Service
+	log           log.Logger
 }
 
-func ProvideInstaller(grafanaCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) (*PluginInstaller, error) {
-	return New(plugins.FromGrafanaCfg(grafanaCfg), pluginRegistry, pluginLoader), nil
+func ProvideInstaller(grafanaCfg *setting.Cfg, pluginStore plugins.Store, pluginLoader loader.Service,
+	pluginRepo repo.Service) *PluginInstaller {
+	return New(plugins.FromGrafanaCfg(grafanaCfg), pluginStore, pluginLoader,
+		storage.FileSystem(logger.NewLogger("plugin.fs"), grafanaCfg.PluginsPath), pluginRepo)
 }
 
-func New(cfg *plugins.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) *PluginInstaller {
-	logger := log.New("plugin.installer")
+func New(cfg *plugins.Cfg, pluginStore plugins.Store, pluginLoader loader.Service,
+	pluginStorage storage.Manager, pluginRepo repo.Service) *PluginInstaller {
 	return &PluginInstaller{
-		cfg:            cfg,
-		pluginLoader:   pluginLoader,
-		pluginRegistry: pluginRegistry,
-		log:            logger,
+		cfg:           cfg,
+		pluginLoader:  pluginLoader,
+		pluginStore:   pluginStore,
+		pluginRepo:    pluginRepo,
+		pluginStorage: pluginStorage,
+		log:           log.New("plugin.installer"),
 	}
 }
 
@@ -119,7 +123,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		pathsToScan = append(pathsToScan, depArchive.Path)
 	}
 
-	err = m.AddFromSource(context.Background(), plugins.PluginSource{Class: plugins.External, Paths: pathsToScan})
+	err = m.AddFromSource(ctx, plugins.PluginSource{Class: plugins.External, Paths: pathsToScan})
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
 		return err
@@ -153,15 +157,11 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 	return nil
 }
 
-// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
-func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+// plugin finds a plugin with `pluginID` from the store
+func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := m.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
-		return nil, false
-	}
-
-	if p.IsDecommissioned() {
-		return nil, false
+		return plugins.PluginDTO{}, false
 	}
 
 	return p, true

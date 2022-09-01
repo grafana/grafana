@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -47,7 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
-func TestIntegrationPluginManager_Run(t *testing.T) {
+func TestIntegrationPluginManager(t *testing.T) {
 	t.Helper()
 
 	staticRootPath, err := filepath.Abs("../../../public/")
@@ -101,16 +102,17 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 
 	pmCfg := plugins.FromGrafanaCfg(cfg)
 	reg := registry.ProvideService()
-	pm, err := ProvideService(cfg, reg, loader.New(pmCfg, license, signature.NewUnsignedAuthorizer(pmCfg),
-		provider.ProvideService(coreRegistry)), nil)
-	require.NoError(t, err)
+	l := loader.ProvideService(cfg, license, signature.NewUnsignedAuthorizer(pmCfg), reg, provider.ProvideService(coreRegistry))
 	ps := store.ProvideService(reg)
+	inst := ProvideInstaller(cfg, ps, l, repo.ProvideService())
+	_, err = ProvideService(cfg, inst)
+	require.NoError(t, err)
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, ps)
 	verifyBundledPlugins(t, ctx, ps)
 	verifyPluginStaticRoutes(t, ctx, ps)
-	verifyBackendProcesses(t, pm.pluginRegistry.Plugins(ctx))
+	verifyBackendProcesses(t, reg.Plugins(ctx))
 	verifyPluginQuery(t, ctx, client.ProvideService(reg))
 }
 

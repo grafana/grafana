@@ -14,25 +14,49 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
+type FakeInstaller struct {
+	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
+	// Remove removes a plugin from the store.
+	RemoveFunc func(ctx context.Context, pluginID string) error
+	// AddFromSource adds a plugin to the store.
+	AddFromSourceFunc func(ctx context.Context, source plugins.PluginSource) error
+}
+
+func (i *FakeInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	if i.AddFunc != nil {
+		return i.AddFunc(ctx, pluginID, version, opts)
+	}
+	return nil
+}
+
+func (i *FakeInstaller) Remove(ctx context.Context, pluginID string) error {
+	if i.RemoveFunc != nil {
+		return i.RemoveFunc(ctx, pluginID)
+	}
+	return nil
+}
+
+func (i *FakeInstaller) AddFromSource(ctx context.Context, source plugins.PluginSource) error {
+	if i.AddFromSourceFunc != nil {
+		return i.AddFromSourceFunc(ctx, source)
+	}
+	return nil
+}
+
 type FakeLoader struct {
 	LoadFunc   func(_ context.Context, _ plugins.Class, paths []string) ([]*plugins.Plugin, error)
 	UnloadFunc func(_ context.Context, _ string) error
-
-	LoadedPaths []string
 }
 
 func (l *FakeLoader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
 	if l.LoadFunc != nil {
 		return l.LoadFunc(ctx, class, paths)
 	}
-
-	l.LoadedPaths = append(l.LoadedPaths, paths...)
-
 	return nil, nil
 }
 
 func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
-	if l.LoadFunc != nil {
+	if l.UnloadFunc != nil {
 		return l.UnloadFunc(ctx, pluginID)
 	}
 	return nil
@@ -145,6 +169,31 @@ func (pc *FakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 
 func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
+}
+
+type FakePluginStore struct {
+	Store map[string]plugins.PluginDTO
+}
+
+func NewFakePluginStore() *FakePluginStore {
+	return &FakePluginStore{
+		Store: make(map[string]plugins.PluginDTO),
+	}
+}
+
+func (f *FakePluginStore) Plugin(_ context.Context, id string) (plugins.PluginDTO, bool) {
+	p, exists := f.Store[id]
+	return p, exists
+}
+
+func (f *FakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugins.PluginDTO {
+	var res []plugins.PluginDTO
+
+	for _, p := range f.Store {
+		res = append(res, p)
+	}
+
+	return res
 }
 
 type FakePluginRegistry struct {

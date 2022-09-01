@@ -50,9 +50,9 @@ type Loader struct {
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(plugins.FromGrafanaCfg(cfg), license, authorizer, pluginRegistry, backendProvider), nil
+func ProvideService(grafanaCfg *setting.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider) *Loader {
+	return New(plugins.FromGrafanaCfg(grafanaCfg), license, authorizer, pluginRegistry, backendProvider)
 }
 
 func New(cfg *plugins.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
@@ -196,7 +196,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 	}
 
 	for _, p := range verifiedPlugins {
-		if err := l.registerAndStart(context.Background(), p); err != nil {
+		if err := l.registerAndStart(ctx, p); err != nil {
 			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
 		}
 	}
