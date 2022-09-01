@@ -8689,16 +8689,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/dragscroll@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "@scena/dragscroll@npm:1.2.1"
-  dependencies:
-    "@daybrush/utils": 1.6.0
-    "@scena/event-emitter": ^1.0.2
-  checksum: 217b0612b0b5d2e721cd41b7534cc1b831aca236a4256b30bdeb965b3b0b7cf9f3934801a7158cb38483242e2568f8b734eeccfaee43b5df4e5df9ead7653dd5
-  languageName: node
-  linkType: hard
-
 "@scena/event-emitter@npm:^1.0.2, @scena/event-emitter@npm:^1.0.5":
   version: 1.0.5
   resolution: "@scena/event-emitter@npm:1.0.5"
@@ -21275,16 +21265,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.13.0":
-  version: 1.13.0
-  resolution: "gesto@npm:1.13.0"
-  dependencies:
-    "@daybrush/utils": ^1.7.1
-    "@scena/event-emitter": ^1.0.2
-  checksum: 6042fffce17853e7d2c7df64ffa5a310e02a3be77171c58bb82aa83381e92e0c284750b34634a4c80cc30fc1dd446bbbb71110eafeb8307a07566f9792765cec
-  languageName: node
-  linkType: hard
-
 "gesto@npm:^1.9.0":
   version: 1.9.0
   resolution: "gesto@npm:1.9.0"
@@ -22046,7 +22026,7 @@ __metadata:
     rxjs: 7.5.6
     sass: 1.54.0
     sass-loader: 13.0.2
-    selecto: 1.19.0
+    selecto: 1.17.0
     semver: 7.3.7
     sinon: 14.0.0
     slate: 0.47.8
@@ -34048,21 +34028,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"selecto@npm:1.19.0":
-  version: 1.19.0
-  resolution: "selecto@npm:1.19.0"
+"selecto@npm:1.17.0":
+  version: 1.17.0
+  resolution: "selecto@npm:1.17.0"
   dependencies:
     "@daybrush/utils": ^1.7.1
     "@egjs/children-differ": ^1.0.1
-    "@scena/dragscroll": ^1.2.1
+    "@scena/dragscroll": ^1.1.1
     "@scena/event-emitter": ^1.0.5
     css-styled: ^1.0.0
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.13.0
+    gesto: ^1.9.0
     keycon: ^1.2.0
     overlap-area: ^1.1.0
-  checksum: ab07175404fda0218d09b9ff122bb66cdad30a46b11447d9c1fee6e6edf5be7f7af0941ad4a7adecbe02938f59a52d148615af9992d7b7a74a5acbc0e3e71b48
+  checksum: ad288ee4be3bc2610925010a5a215370e0664f2075d7157ef2c020d08ac7244e9d6818fccb67998dbd655be8c5b9f2912cac329b8a9961787c9e86873adba47d
   languageName: node
   linkType: hard
 
