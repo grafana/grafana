@@ -11,10 +11,13 @@ describe('runner', () => {
 
   it('should execute query when enter with shift is pressed', () => {
     const value = Plain.deserialize('');
-    const editor = shallow<Editor>(<Editor value={value} />);
+    const editor = shallow(<Editor value={value} />);
     handler(
-      new window.KeyboardEvent({ key: 'Enter', shiftKey: true, preventDefault: () => {} }),
-      editor.instance() as any,
+      new window.KeyboardEvent('keydown', {
+        key: 'Enter',
+        shiftKey: true,
+      }) as any,
+      editor.instance() as Editor,
       () => {}
     );
     expect(mockHandler).toBeCalled();

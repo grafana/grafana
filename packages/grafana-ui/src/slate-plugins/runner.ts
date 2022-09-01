@@ -1,6 +1,7 @@
+import React from 'react';
 import { Plugin } from 'slate-react';
 
-export function RunnerPlugin({ handler }: any): Plugin {
+export function RunnerPlugin({ handler }: { handler?: (e: React.KeyboardEvent) => void }): Plugin {
   return {
     onKeyDown(event, editor, next) {
       // Handle enter
