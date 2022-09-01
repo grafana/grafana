@@ -7,6 +7,7 @@ import {
   PromApplication,
   PromBuildInfoResponse,
   PromBuildInfoSeriesResponse,
+  RulesQueryErrorResponse,
   ThanosFlagsResponse,
 } from 'app/types/unified-alerting-dto';
 
@@ -72,13 +73,15 @@ export async function discoverDataSourceFeatures(dsSettings: {
         fallBackInfoResponse = await fetchPromBuildInfoFallback(url);
       });
 
-  const metric = fallBackInfoResponse?.data.result[0].metric;
+  const prometheusBuildInfoSeriesMetric = fallBackInfoResponse?.data?.result?.length
+    ? fallBackInfoResponse?.data?.result[0]?.metric ?? undefined
+    : undefined;
   // check if the component returns buildinfo
   const hasBuildInfo = buildInfoResponse !== undefined;
 
   // Assuming we couldn't get build info, and the fetchPromBuildInfo didn't throw an Error causing the fallback to get triggered,
   // we are dealing with a Cortex or Loki datasource since the response for buildinfo came up empty
-  if (!hasBuildInfo && !metric) {
+  if (!hasBuildInfo && !prometheusBuildInfoSeriesMetric) {
     // check if we can fetch rules via the prometheus compatible api
     const promRulesSupported = await hasPromRulesSupport(name);
     if (!promRulesSupported) {
@@ -100,7 +103,7 @@ export async function discoverDataSourceFeatures(dsSettings: {
   // Otherwise if we don't have build info, but we did trigger the fallback, we should be dealing with a prometheus datasource that's older than 2.14.0
   else if (!hasBuildInfo) {
     return {
-      version: metric?.version,
+      version: prometheusBuildInfoSeriesMetric?.version,
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: false,
@@ -224,8 +227,7 @@ async function fetchThanosFlags(url: string): Promise<ThanosFlagsResponse | unde
       showSuccessAlert: false,
     })
   ).catch((e) => {
-    console.warn('Unable to get Thanos API flags');
-    return undefined; // Cortex does not support buildinfo endpoint, we return an empty response
+    return undefined;
   });
 
   return response?.data;
@@ -268,7 +270,7 @@ async function hasRulerSupport(dataSourceName: string) {
     await fetchTestRulerRulesGroup(dataSourceName);
     return true;
   } catch (e) {
-    if (errorIndicatesMissingRulerSupport(e)) {
+    if (errorIndicatesMissingRulerSupport(e as RulesQueryErrorResponse)) {
       return false;
     }
     throw e;
@@ -276,7 +278,7 @@ async function hasRulerSupport(dataSourceName: string) {
 }
 
 // there errors indicate that the ruler API might be disabled or not supported for Cortex
-function errorIndicatesMissingRulerSupport(error: any) {
+function errorIndicatesMissingRulerSupport(error: RulesQueryErrorResponse) {
   return (
     (isFetchError(error) &&
       (error.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage

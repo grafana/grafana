@@ -75,6 +75,13 @@ export interface PromBuildInfoSeriesResponse {
   };
 }
 
+export interface RulesQueryErrorResponse {
+  data: {
+    message?: string;
+  };
+  message?: string;
+}
+
 export interface ThanosFlagsResponse {
   data: {
     'grpc-address': string;

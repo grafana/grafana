@@ -1,12 +1,14 @@
 import { of, throwError } from 'rxjs';
 
-import { PromApplication } from 'app/types/unified-alerting-dto';
+import { PromApplication, RulesQueryErrorResponse, ThanosFlagsResponse } from 'app/types/unified-alerting-dto';
+
+import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
 import { discoverDataSourceFeatures } from './buildInfo';
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
 
-const fetch = jest.fn();
+let fetch = jest.fn();
 
 jest.mock('./prometheus');
 jest.mock('./ruler');
@@ -21,22 +23,104 @@ const mocks = {
   fetchTestRulerRulesGroup: jest.mocked(fetchTestRulerRulesGroup),
 };
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  fetch.mockClear();
+});
 
 describe('discoverDataSourceFeatures', () => {
   describe('When buildinfo returns 200 response', () => {
-    it('Should return Prometheus with disabled ruler API when application and features fields are missing', async () => {
-      fetch.mockReturnValue(
-        of({
-          data: {
-            status: 'success',
+    it('Should return Thanos with disabled ruler API', async () => {
+      fetch = jest.fn();
+
+      mocks.fetchTestRulerRulesGroup.mockRejectedValueOnce({
+        data: {
+          message: RULER_NOT_SUPPORTED_MSG,
+        },
+      } as RulesQueryErrorResponse);
+      mocks.fetchRules.mockRejectedValueOnce(undefined);
+
+      fetch
+        .mockReturnValueOnce(
+          of({
             data: {
-              version: '2.32.1',
-              application: 'Grafana Mimir',
+              status: 'success',
+              data: {
+                version: '0.18.0',
+              },
             },
-          },
-        })
-      );
+          })
+          // For the second call (to thanos flags api) return flags as this is a mock thanos datasource
+        )
+        .mockReturnValueOnce(
+          of({
+            data: {
+              'grpc-address': 'true',
+            },
+          } as ThanosFlagsResponse)
+        )
+        // Third call to rules API should fail
+        .mockRejectedValueOnce(new Error('404'));
+
+      const response = await discoverDataSourceFeatures({
+        url: '/datasource/proxy',
+        name: 'Prometheus',
+        type: 'prometheus',
+      });
+
+      expect(response.application).toBe(PromApplication.Thanos);
+      expect(response.features.rulerApiEnabled).toBe(false);
+      expect(mocks.fetchRules).not.toHaveBeenCalled();
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalled();
+    });
+    // it('Should return Thanos with enabled ruler API', async () => {
+    //   fetch
+    //     .mockReturnValueOnce(
+    //       of({
+    //         data: {
+    //           status: 'success',
+    //           data: {
+    //             version: '0.28.0',
+    //           },
+    //         },
+    //       })
+    //       // For the second call (to thanos flags api) return flags as this is a mock thanos datasource
+    //     )
+    //     .mockReturnValueOnce(of({
+    //       data: {
+    //         'grpc-address': 'true'
+    //       }
+    //     } as ThanosFlagsResponse))
+    //     // Third call to rules API should fail
+    //     .mockRejectedValueOnce(new Error('404'));
+    //
+    //   const response = await discoverDataSourceFeatures({
+    //     url: '/datasource/proxy',
+    //     name: 'Prometheus',
+    //     type: 'prometheus',
+    //   });
+    //
+    //   expect(response.application).toBe(PromApplication.Thanos);
+    //   expect(response.features.rulerApiEnabled).toBe(true);
+    //   expect(mocks.fetchRules).not.toHaveBeenCalled();
+    //   expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalled();
+    // });
+
+    it('Should return Prometheus with disabled ruler API when application and features fields are missing', async () => {
+      fetch = jest.fn();
+      fetch
+        .mockReturnValueOnce(
+          of({
+            data: {
+              status: 'success',
+              data: {
+                version: '2.32.1',
+              },
+            },
+          })
+          // For the second call (to thanos flags api) return undefined as this isn't a mock thanos instance
+        )
+        .mockReturnValueOnce(of(undefined));
 
       const response = await discoverDataSourceFeatures({
         url: '/datasource/proxy',
@@ -53,22 +137,24 @@ describe('discoverDataSourceFeatures', () => {
     it.each([true, false])(
       `Should return Mimir with rulerApiEnabled set to %p according to the ruler_config_api value`,
       async (rulerApiEnabled) => {
-        fetch.mockReturnValue(
-          of({
-            data: {
-              status: 'success',
+        fetch
+          .mockReturnValueOnce(
+            of({
               data: {
-                application: 'Grafana Mimir',
-                version: '2.32.1',
-                features: {
-                  // 'true' and 'false' as strings is intentional
-                  // This is the format returned from the buildinfo endpoint
-                  ruler_config_api: rulerApiEnabled ? 'true' : 'false',
+                status: 'success',
+                data: {
+                  application: 'Grafana Mimir',
+                  version: '2.32.1',
+                  features: {
+                    // 'true' and 'false' as strings is intentional
+                    // This is the format returned from the buildinfo endpoint
+                    ruler_config_api: rulerApiEnabled ? 'true' : 'false',
+                  },
                 },
               },
-            },
-          })
-        );
+            })
+          )
+          .mockReturnValueOnce(of(undefined));
 
         const response = await discoverDataSourceFeatures({
           url: '/datasource/proxy',
