@@ -25,7 +25,6 @@ const mocks = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  fetch.mockClear();
 });
 
 describe('discoverDataSourceFeatures', () => {
