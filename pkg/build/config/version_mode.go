@@ -10,3 +10,15 @@ const (
 	PullRequestMode   VersionMode = "pull_request"
 	CustomMode        VersionMode = "custom"
 )
+
+const (
+	Tag         = "tag"
+	PullRequest = "pull_request"
+	Push        = "push"
+	Custom      = "custom"
+	Promote     = "promote"
+)
+
+const (
+	MainBranch = "main"
+)

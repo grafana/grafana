@@ -38,7 +38,6 @@
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
     "open": "cypress open",
     "start": "cypress run --browser=chrome",
     "start-benchmark": "CYPRESS_NO_COMMAND_LOG=1 yarn start",
