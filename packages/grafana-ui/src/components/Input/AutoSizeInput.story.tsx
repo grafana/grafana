@@ -1,9 +1,8 @@
 import { Story, Meta } from '@storybook/react';
 import React from 'react';
 
-import { Icon, Button, AutoSizeInput } from '@grafana/ui';
+import { Button, AutoSizeInput } from '@grafana/ui';
 
-import { IconName, toIconName } from '../../types';
 import { iconOptions } from '../../utils/storybook/knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 

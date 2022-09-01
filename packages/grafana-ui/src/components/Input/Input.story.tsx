@@ -2,9 +2,9 @@ import { Story, Meta } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { KeyValue } from '@grafana/data';
-import { Field, Icon, Button, Input } from '@grafana/ui';
+import { Field, Button, Input } from '@grafana/ui';
 
-import { getAvailableIcons, IconName, toIconName } from '../../types';
+import { getAvailableIcons } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Input.mdx';

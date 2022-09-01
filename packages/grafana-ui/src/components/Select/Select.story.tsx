@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 
-import { getAvailableIcons, IconName, toIconName } from '../../types';
+import { getAvailableIcons, toIconName } from '../../types';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Select.mdx';
