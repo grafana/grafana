@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconName, useStyles2 } from '@grafana/ui';
+import { toIconName, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
@@ -28,7 +28,7 @@ export function NavSectionLandingPage({ navId }: Props) {
                 <NavSectionLandingPageCard
                   key={child.id}
                   description={child.description}
-                  icon={child.icon as IconName}
+                  icon={child.icon ? toIconName(child.icon) : undefined}
                   text={child.text}
                   url={child.url ?? ''}
                 />
@@ -46,7 +46,7 @@ export function NavSectionLandingPage({ navId }: Props) {
                   <NavSectionLandingPageCard
                     key={child.id}
                     description={child.description}
-                    icon={child.icon as IconName}
+                    icon={child.icon ? toIconName(child.icon) : undefined}
                     text={child.text}
                     url={child.url ?? ''}
                   />
