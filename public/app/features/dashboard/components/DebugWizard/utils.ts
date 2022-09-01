@@ -53,7 +53,7 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
 
   if (snapshot) {
     md += `<details><summary>Panel snapshot (2.5mb)</summary>
-       <pre>${snapshot}</pre>
+       <pre><code>${snapshot.replace('<', '&lt;').replace('>', '&gt;')}</code></pre>
       </details>`;
   }
 
@@ -99,7 +99,7 @@ export async function getTroubleshootingDashboard(panel: PanelModel, rand: Rando
       <th>Grafana</th>
       <td>${grafanaVersion} // ${config.buildInfo.edition}</td>
     </tr>
-  </table>`;
+  </table>`.trim();
 
   // Replace the panel with embedded data
   dashboard.panels[0] = {
@@ -181,14 +181,16 @@ function getDataRow(data: PanelData, raw: string): string {
   for (const frame of data.series) {
     fieldCount += frame.fields.length;
   }
-  return `<tr>
-    <th>Data</th>
-    <td>
-     ${data.state !== LoadingState.Done ? data.state : ''} 
-     ${frameCount} frames, ${fieldCount} fields
-     (${formattedValueToString(getValueFormat('decbytes')(raw?.length))} JSON)
-    </td>
-  </tr>`;
+  return (
+    '<tr>' +
+    '<th>Data</th>' +
+    '<td>' +
+    `${data.state !== LoadingState.Done ? data.state : ''} ` +
+    `${frameCount} frames, ${fieldCount} fields` +
+    `(${formattedValueToString(getValueFormat('decbytes')(raw?.length))} JSON)` +
+    '</td>' +
+    '</tr>'
+  );
 }
 
 function getAnnotationsRow(data: PanelData): string {
