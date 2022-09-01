@@ -21,11 +21,11 @@ const meta: ComponentMeta<typeof IconButton> = {
   },
   args: {
     name: 'apps',
-    size: 'xxxl',
+    size: 'md',
     iconType: 'default',
     tooltip: 'sample tooltip message',
     tooltipPlacement: 'top',
-    variant: 'primary',
+    variant: 'secondary',
     ariaLabel: 'sample aria-label content',
   },
   argTypes: {
