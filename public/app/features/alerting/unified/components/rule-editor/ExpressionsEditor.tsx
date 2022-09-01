@@ -1,8 +1,7 @@
 import React, { FC, useMemo } from 'react';
 
 import { PanelData } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Button, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -14,7 +13,6 @@ interface Props {
   onSetCondition: (refId: string) => void;
   panelData: Record<string, PanelData>;
   queries: AlertQuery[];
-  onNewExpression: () => void;
   onRemoveExpression: (refId: string) => void;
   onUpdateRefId: (oldRefId: string, newRefId: string) => void;
   onUpdateExpressionType: (refId: string, type: ExpressionQueryType) => void;
@@ -27,7 +25,6 @@ export const ExpressionsEditor: FC<Props> = ({
   queries,
   panelData,
   onUpdateRefId,
-  onNewExpression,
   onRemoveExpression,
   onUpdateExpressionType,
   onUpdateQueryExpression,
@@ -54,11 +51,6 @@ export const ExpressionsEditor: FC<Props> = ({
           onChangeQuery={onUpdateQueryExpression}
         />
       ))}
-      {config.expressionsEnabled && (
-        <Button type="button" icon="plus" onClick={() => onNewExpression()} variant="secondary">
-          Add expression
-        </Button>
-      )}
     </Stack>
   );
 };

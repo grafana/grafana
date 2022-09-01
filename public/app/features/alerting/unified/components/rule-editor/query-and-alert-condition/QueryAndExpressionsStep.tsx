@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Alert, Button, Stack, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -136,9 +137,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           onSetCondition={(refId) => {
             setValue('condition', refId);
           }}
-          onNewExpression={() => {
-            dispatch({ type: 'addNewExpression' });
-          }}
           onRemoveExpression={(refId) => {
             dispatch({ type: 'removeExpression', payload: refId });
           }}
@@ -166,6 +164,19 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
               Add query
             </Button>
           </Tooltip>
+
+          {config.expressionsEnabled && (
+            <Button
+              type="button"
+              icon="plus"
+              onClick={() => {
+                dispatch({ type: 'addNewExpression' });
+              }}
+              variant="secondary"
+            >
+              Add expression
+            </Button>
+          )}
 
           {isDataLoading && (
             <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
