@@ -335,7 +335,7 @@
     "lru-cache": "7.13.1",
     "memoize-one": "6.0.0",
     "moment": "2.29.4",
-    "moment-timezone": "0.5.34",
+    "moment-timezone": "0.5.35",
     "monaco-editor": "0.34.0",
     "monaco-promql": "1.7.4",
     "mousetrap": "1.6.5",
