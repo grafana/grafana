@@ -1,14 +1,14 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataQueryRequest, DataFrameView } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, config } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { dispatch } from 'app/store/store';
 
-import { notifyApp } from '../../core/actions';
-import { createErrorNotification, createSuccessNotification } from '../../core/copy/appNotification';
-import { dispatch } from '../../store/store';
-import { DashboardQueryResult, SearchQuery } from '../search/service';
+import { DashboardQueryResult, getGrafanaSearcher, SearchQuery } from '../search/service';
 
 import { Playlist, PlaylistItem } from './types';
 
@@ -90,6 +90,19 @@ export async function loadDashboards(items: PlaylistItem[]): Promise<PlaylistIte
     });
   }
 
+  // The SQL based store can only execute individual queries
+  if (!config.featureToggles.panelTitleSearch) {
+    const searcher = getGrafanaSearcher();
+    const res: PlaylistItem[] = [];
+    for (let i = 0; i < targets.length; i++) {
+      const item = items[i];
+      const view = (await searcher.search(targets[i].search!)).view;
+      res.push({ ...item, dashboards: view.map((v) => ({ ...v })) });
+    }
+    return res;
+  }
+
+  // The bluge based service can execute multiple
   const ds = await getGrafanaDatasource();
   // eslint-disable-next-line
   const rsp = await lastValueFrom(ds.query({ targets } as unknown as DataQueryRequest<GrafanaQuery>));
