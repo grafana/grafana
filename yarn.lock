@@ -34455,12 +34455,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-dev-environment@npm:^0.2.2":
+"slate-dev-environment@npm:0.2.5":
   version: 0.2.5
   resolution: "slate-dev-environment@npm:0.2.5"
   dependencies:
     is-in-browser: ^1.1.3
   checksum: 3a94d855a5c50f650f38c93741700d1e840eb923c79a3b1e01a5e7ca347944662099dc5773521c84ee939cb156ccc27af7e39ecb79d3d9e2ddfcfe3ead312073
+  languageName: node
+  linkType: hard
+
+"slate-dev-environment@patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::locator=grafana%40workspace%3A.":
+  version: 0.2.5
+  resolution: "slate-dev-environment@patch:slate-dev-environment@npm%3A0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::version=0.2.5&hash=13521e&locator=grafana%40workspace%3A."
+  dependencies:
+    is-in-browser: ^1.1.3
+  checksum: 1be7514ac0b10b0232f3c19e02bf5f9211850e119a235743fd46ab2f182c8b892dc58edf40130308d85d14f755b348b86ab2daea757e8ee0beb74746f653fc03
   languageName: node
   linkType: hard
 
