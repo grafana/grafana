@@ -23,7 +23,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	alertRule := tests.CreateTestAlertRule(b, ctx, dbstore, 60, mainOrgID)
 
 	// Create some instances to write down and then delete.
-	count := 10_000
+	count := 10_003
 	instances := make([]models.AlertInstance, 0, count)
 	keys := make([]models.AlertInstanceKey, 0, count)
 	for i := 0; i < count; i++ {

@@ -68,7 +68,7 @@ mainloop:
 		}
 		if existing == nil {
 			folders = append(folders, &models2.Folder{
-				Id:    rand.Int63(),
+				Id:    rand.Int63n(1500),
 				Uid:   r.NamespaceUID,
 				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
 			})
