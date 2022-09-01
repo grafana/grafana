@@ -1,4 +1,4 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, escape } from 'lodash';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -53,10 +53,9 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
 
   if (snapshot) {
     md += `<details><summary>Panel snapshot (2.5mb)</summary>
-       <pre><code>${snapshot.replace('<', '&lt;').replace('>', '&gt;')}</code></pre>
+       <pre><code>${escape(snapshot)}</code></pre>
       </details>`;
   }
-
   return md;
 }
 

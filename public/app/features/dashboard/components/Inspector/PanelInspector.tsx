@@ -51,7 +51,7 @@ const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
   }
 
   if (defaultTab === InspectTab.Debug) {
-    return <DebugWizard panel={panel} plugin={plugin} data={data} onClose={onClose} />;
+    return <DebugWizard panel={panel} plugin={plugin} onClose={onClose} />;
   }
 
   return (

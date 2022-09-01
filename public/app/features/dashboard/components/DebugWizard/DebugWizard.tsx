@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useAsync, useCopyToClipboard } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { PanelPlugin, GrafanaTheme2, AppEvents, PanelData, SelectableValue, dateTimeFormat } from '@grafana/data';
+import { PanelPlugin, GrafanaTheme2, AppEvents, SelectableValue, dateTimeFormat } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import {
   Drawer,
@@ -34,7 +34,6 @@ import { getGithubMarkdown, getTroubleshootingDashboard } from './utils';
 interface Props {
   panel: PanelModel;
   plugin?: PanelPlugin | null;
-  data?: PanelData;
   onClose: () => void;
 }
 
@@ -56,7 +55,7 @@ const options: Array<SelectableValue<ShowMessge>> = [
   },
 ];
 
-export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
+export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   const styles = useStyles2(getStyles);
   const [currentTab, setCurrentTab] = useState(InspectTab.Debug);
   const [showMessage, setShowMessge] = useState(ShowMessge.GithubComment);
@@ -94,9 +93,9 @@ export const DebugWizard = ({ panel, plugin, data, onClose }: Props) => {
 
   const doDownloadDashboard = () => {
     const blob = new Blob([snapshotText], {
-      type: 'application/json',
+      type: 'text/plain',
     });
-    const fileName = `debug-${panelTitle}-${dateTimeFormat(new Date())}.json`;
+    const fileName = `debug-${panelTitle}-${dateTimeFormat(new Date())}.json.txt`;
     saveAs(blob, fileName);
   };
 
