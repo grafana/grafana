@@ -123,7 +123,7 @@ func (d byOrgId) Less(i, j int) bool { return d[i].OrgId > d[j].OrgId }
 func (d byOrgId) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
 
 func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, thumbnailKind models.ThumbnailKind) error {
-	res, err := r.renderService.HasCapability(rendering.ScalingDownImages)
+	res, err := r.renderService.HasCapability(ctx, rendering.ScalingDownImages)
 	if err != nil {
 		return err
 	}

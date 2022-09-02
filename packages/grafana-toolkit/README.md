@@ -166,6 +166,16 @@ Currently we support following Jest configuration properties:
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
+### I want to use monaco-editor, is there anything particular I should pay attention?
+
+Yes there is.
+We already bundled monaco-editor in grafana. See [webpack config](https://github.
+com/grafana/grafana/blob/main/scripts/webpack/webpack.common.js#L49-L58).
+We use `@monaco-editor/react` package with loader-config https://github.com/suren-atoyan/monaco-react#loader-config
+By default, monaco files are being downloaded from CDN. We use the bundled version.
+Initialization: https://github.com/grafana/grafana/blob/main/scripts/webpack/webpack.common.js#L49-L58t
+We suggest to use the bundled version to prevent unwanted issues related to version mismatch.
+
 ### How can I customize Webpack rules or plugins?
 
 You can provide your own `webpack.config.js` file that exports a `getWebpackConfig` function. We recommend that you extend the standard configuration, but you are free to create your own:
