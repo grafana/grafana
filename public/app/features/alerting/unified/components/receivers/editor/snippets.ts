@@ -29,10 +29,10 @@ Annotations:
 `;
 
 export const groupLabelsLoopSnippet = getKeyValueTemplate('GroupLabels');
-export const commonLabelsLoopSnippet = getKeyValueTemplate('GroupLabels');
-export const commonAnnotationsLoopSnippet = getKeyValueTemplate('GroupLabels');
-export const labelsLoopSnippet = getKeyValueTemplate('GroupLabels');
-export const annotationsLoopSnippet = getKeyValueTemplate('GroupLabels');
+export const commonLabelsLoopSnippet = getKeyValueTemplate('CommonLabels');
+export const commonAnnotationsLoopSnippet = getKeyValueTemplate('CommonAnnotations');
+export const labelsLoopSnippet = getKeyValueTemplate('Labels');
+export const annotationsLoopSnippet = getKeyValueTemplate('Annotations');
 
 function getKeyValueTemplate(arrayName: string) {
   return `

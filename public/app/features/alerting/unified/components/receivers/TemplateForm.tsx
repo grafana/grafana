@@ -16,6 +16,7 @@ import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { TemplateEditor } from './TemplateEditor';
+import { snippetsSuggestions } from './editor/templateDataSuggestions';
 
 interface Values {
   name: string;
@@ -120,34 +121,8 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
             autoFocus={true}
           />
         </Field>
-        <Field
-          description={
-            <>
-              You can use the{' '}
-              <a
-                href="https://pkg.go.dev/text/template?utm_source=godoc"
-                target="__blank"
-                rel="noreferrer"
-                className={styles.externalLink}
-              >
-                Go templating language
-              </a>
-              .{' '}
-              <a
-                href="https://prometheus.io/blog/2016/03/03/custom-alertmanager-templates/"
-                target="__blank"
-                rel="noreferrer"
-                className={styles.externalLink}
-              >
-                More info about alertmanager templates
-              </a>
-            </>
-          }
-          label="Content"
-          error={errors?.content?.message}
-          invalid={!!errors.content?.message}
-          required
-        >
+        <TemplatingGuideline />
+        <Field label="Content" error={errors?.content?.message} invalid={!!errors.content?.message} required>
           <div className={styles.editWrapper}>
             <AutoSizer>
               {({ width, height }) => (
@@ -187,7 +162,67 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
   );
 };
 
+function TemplatingGuideline() {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Alert title="Templating guideline" severity="info">
+      <div>
+        Grafana uses the{' '}
+        <a
+          href="https://pkg.go.dev/text/template?utm_source=godoc"
+          target="__blank"
+          rel="noreferrer"
+          className={styles.externalLink}
+        >
+          Go templating language{' '}
+        </a>
+        to create notification messages.{' '}
+        <a
+          href="https://prometheus.io/blog/2016/03/03/custom-alertmanager-templates/"
+          target="__blank"
+          rel="noreferrer"
+          className={styles.externalLink}
+        >
+          More info about alertmanager templates
+        </a>
+      </div>
+      <div>
+        The list of available template data can be found{' '}
+        <a
+          href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating/template-data/"
+          target="_blank"
+          rel="noreferrer"
+          className={styles.externalLink}
+        >
+          here.
+        </a>
+      </div>
+      <div>
+        Examples about how to create a custom template message are available{' '}
+        <a
+          href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating/example-template/"
+          target="_blank"
+          rel="noreferrer"
+          className={styles.externalLink}
+        >
+          here.
+        </a>
+      </div>
+      <div>
+        To make templating easier we provide a few snippets to speed up your workflow.{' '}
+        <div className={styles.code}>
+          {snippetsSuggestions.map((s) => (typeof s.label === 'string' ? s.label : s.label.label)).join(', ')}
+        </div>
+      </div>
+    </Alert>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
+  code: css`
+    color: ${theme.colors.text.link};
+  `,
   externalLink: css`
     color: ${theme.colors.text.secondary};
     text-decoration: underline;
