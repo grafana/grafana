@@ -17,23 +17,22 @@
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/esm/index.js",
-    "types": "dist/index.d.ts",
-    "bin": {
-      "grafana-e2e": "dist/bin/grafana-e2e.js"
-    },
-    "access": "public"
-  },
-  "files": [
-    "dist",
-    "CHANGELOG.md",
-    "LICENSE_APACHE2"
-  ],
   "bin": {
     "grafana-e2e": "bin/grafana-e2e.js"
   },
+  "publishConfig": {
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "cypress",
+    "dist",
+    "cli.js",
+    "cypress.json",
+    "CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts",
@@ -52,7 +51,6 @@
     "@types/uuid": "8.3.4",
     "esbuild": "^0.14.47",
     "rollup": "2.77.2",
-    "rollup-plugin-copy": "3.4.0",
     "rollup-plugin-dts": "^4.2.2",
     "rollup-plugin-esbuild": "^4.9.1",
     "rollup-plugin-node-externals": "^4.1.0",

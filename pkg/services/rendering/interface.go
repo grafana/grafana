@@ -117,13 +117,13 @@ type CapabilitySupportRequestResult struct {
 
 //go:generate mockgen -destination=mock.go -package=rendering github.com/grafana/grafana/pkg/services/rendering Service
 type Service interface {
-	IsAvailable() bool
+	IsAvailable(ctx context.Context) bool
 	Version() string
 	Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
 	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
-	HasCapability(capability CapabilityName) (CapabilitySupportRequestResult, error)
+	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
 	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 }
