@@ -9,7 +9,7 @@ type contextKey struct{}
 
 var dbCallCounterNameKey = contextKey{}
 
-// InitCounter creates a pointer on the context that can be increamented later
+// InitCounter creates a pointer on the context that can be incremented later
 func InitCounter(ctx context.Context) context.Context {
 	var ptr *int64 = new(int64)
 	return context.WithValue(ctx, dbCallCounterNameKey, ptr)
