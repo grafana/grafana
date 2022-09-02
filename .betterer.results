@@ -77,9 +77,6 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:4057721851": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:146069464": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2402631398": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ]
@@ -7050,9 +7047,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/components/LokiOptionFields.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/loki/components/LokiQueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -7840,7 +7834,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "16"]
     ],
     "public/app/plugins/datasource/tempo/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
