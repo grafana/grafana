@@ -30,7 +30,6 @@ export function ExploreQueryInspector(props: Props) {
 
   useEffect(() => {
     reportInteraction('grafana_explore_query_inspector_opened');
-    console.log('grafana_explore_query_inspector_opened');
   }, []);
 
   const statsTab: TabConfig = {
