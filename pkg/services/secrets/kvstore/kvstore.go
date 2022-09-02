@@ -29,18 +29,19 @@ func ProvideService(
 ) (SecretsKVStore, error) {
 	var logger = log.New("secrets.kvstore")
 	var store SecretsKVStore
+	ctx := context.Background()
 	store = NewSQLSecretsKVStore(sqlStore, secretsService, logger)
-	err := EvaluateRemoteSecretsPlugin(pluginsManager, cfg)
+	err := EvaluateRemoteSecretsPlugin(ctx, pluginsManager, cfg)
 	if err != nil {
 		logger.Debug("secrets manager evaluator returned false", "reason", err.Error())
 	} else {
 		// Attempt to start the plugin
 		var secretsPlugin secretsmanagerplugin.SecretsManagerPlugin
-		secretsPlugin, err = StartAndReturnPlugin(pluginsManager, context.Background())
+		secretsPlugin, err = StartAndReturnPlugin(pluginsManager, ctx)
 		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
 			logger.Error("failed to start remote secrets management plugin", "msg", err.Error())
-			if isFatal, readErr := IsPluginStartupErrorFatal(context.Background(), namespacedKVStore); isFatal || readErr != nil {
+			if isFatal, readErr := IsPluginStartupErrorFatal(ctx, namespacedKVStore); isFatal || readErr != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
 				logger.Error("secrets management plugin is required to start -- exiting app")
 				if readErr != nil {

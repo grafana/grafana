@@ -77,9 +77,6 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:4057721851": [
       [1, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/components/LokiExploreQueryEditor.test.tsx:2984948507": [
-      [0, 26, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2402631398": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ]
