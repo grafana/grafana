@@ -52,7 +52,7 @@ func ProvideService(
 			// as the plugin is installed, SecretsKVStoreSQL is now replaced with
 			// an instance of SecretsKVStorePlugin with the sql store as a fallback
 			// (used for migration and in case a secret is not found).
-			store = NewPluginSecretsKVStore(secretsPlugin, secretsService, namespacedKVStore, features, store, logger)
+			store = NewPluginSecretsKVStore(secretsPlugin, secretsService, namespacedKVStore, features, WithCache(store, 5*time.Second, 5*time.Minute), logger)
 		}
 	}
 
