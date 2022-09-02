@@ -8,7 +8,6 @@ import (
 )
 
 func TestCountngDatabaseCalls(t *testing.T) {
-
 	ctx := context.Background()
 
 	ctx = IncDBCallCounter(ctx)
