@@ -32,7 +32,6 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
         e2e().get('[aria-label="Client ID"]').type(datasource.jsonData.clientId),
         e2e().get('[aria-label="Client Secret"]').type(datasource.secureJsonData.clientSecret),
         e2e().get('[aria-label="Load Subscriptions"]').click().wait('@subscriptions');
-      e2e().get('[aria-label="Default Subscription"]').should('contain.text', 'Primary Subscription').wait(500);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
   });
