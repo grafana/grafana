@@ -1,4 +1,4 @@
-import { cloneDeep, escape } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -47,14 +47,14 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
   };
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
 
-  let md = '| Key | Value |\n|--|--|\n';
-  md += `| Panel | ${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion} |\n`;
-  md += `| Grafana | ${grafanaVersion} // ${config.buildInfo.edition} |\n`;
+  let md = `| Key | Value |
+|--|--|
+| Panel | ${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion} |
+| Grafana | ${grafanaVersion} // ${config.buildInfo.edition} |
+`;
 
   if (snapshot) {
-    md += `<details><summary>Panel snapshot (2.5mb)</summary>
-<pre>${escape(snapshot)}</pre>
-</details>`;
+    md += '<details><summary>Panel debug snapshot dashboard</summary>\n\n```json\n' + snapshot + '\n```\n</details>';
   }
   return md;
 }

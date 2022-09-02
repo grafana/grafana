@@ -4,7 +4,15 @@ import React, { useState, useMemo } from 'react';
 import { useAsync, useCopyToClipboard } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { PanelPlugin, GrafanaTheme2, AppEvents, SelectableValue, dateTimeFormat } from '@grafana/data';
+import {
+  PanelPlugin,
+  GrafanaTheme2,
+  AppEvents,
+  SelectableValue,
+  dateTimeFormat,
+  getValueFormat,
+  formattedValueToString,
+} from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
 import {
   Drawer,
@@ -66,6 +74,10 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
     const dash = await getDebugDashboard(panel, rand, getTimeSrv().timeRange());
     setDashboardText(JSON.stringify(dash, null, 2));
   }, [rand, panel, plugin, setDashboardText]);
+
+  const snapshotSize = useMemo(() => {
+    return formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
+  }, [snapshotText]);
 
   const markdownText = useMemo(() => {
     return getGithubMarkdown(panel, snapshotText);
@@ -151,9 +163,13 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
             </Field>
 
             {showMessage === ShowMessge.GithubComment ? (
-              <Button onClick={doCopyMarkdown}>Copy</Button>
+              <Button icon="github" onClick={doCopyMarkdown}>
+                Copy
+              </Button>
             ) : (
-              <Button onClick={doDownloadDashboard}>Download</Button>
+              <Button icon="download-alt" onClick={doDownloadDashboard}>
+                Download ({snapshotSize})
+              </Button>
             )}
           </div>
           <AutoSizer disableWidth>
@@ -205,7 +221,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
           >
             <HorizontalGroup>
               <Button icon="download-alt" onClick={doDownloadDashboard}>
-                Download
+                Download ({snapshotSize})
               </Button>
               <Button icon="github" onClick={doCopyMarkdown}>
                 Copy for github
