@@ -164,6 +164,7 @@
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "8.3.4",
+    "@types/yargs": "17.0.12",
     "@typescript-eslint/eslint-plugin": "5.42.0",
     "@typescript-eslint/parser": "5.42.0",
     "autoprefixer": "10.4.13",
@@ -244,7 +245,8 @@
     "webpack-cli": "4.10.0",
     "webpack-dev-server": "4.11.1",
     "webpack-manifest-plugin": "5.0.0",
-    "webpack-merge": "5.8.0"
+    "webpack-merge": "5.8.0",
+    "yargs": "^17.5.1"
   },
   "dependencies": {
     "@daybrush/utils": "1.10.0",
