@@ -33,7 +33,7 @@ Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your k
 - `mod+o` Toggle shared graph crosshair
 - `d` `l` Toggle all panel legends
 
-### Focused Panel
+### Focused panel
 
 - `e` Toggle panel edit view
 - `v` Toggle panel fullscreen view
@@ -42,7 +42,7 @@ Grafana has a number of keyboard shortcuts available. Press `?` or `h` on your k
 - `p` `r` Remove Panel
 - `p` `l` Toggle panel legend
 
-### Time Range
+### Time range
 
 - `t` `z` Zoom out time range
 - `t` `←` Move time range back
