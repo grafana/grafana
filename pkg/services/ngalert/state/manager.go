@@ -138,9 +138,10 @@ func (st *Manager) Warm(ctx context.Context) {
 	}
 }
 
-func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
-	return st.cache.getOrCreate(ctx, alertRule, result, extraLabels)
-}
+//
+// func (st *Manager) getOrCreate(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels) *State {
+// 	return st.cache.getOrCreate(ctx, alertRule, result, extraLabels)
+// }
 
 func (st *Manager) set(entry *State) {
 	st.cache.set(entry)
