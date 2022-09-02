@@ -266,7 +266,7 @@
     "@lezer/lr": "1.0.0",
     "@lingui/core": "3.14.0",
     "@lingui/react": "3.14.0",
-    "@opentelemetry/api": "1.1.0",
+    "@opentelemetry/api": "1.2.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.6.0",
     "@popperjs/core": "2.11.5",
