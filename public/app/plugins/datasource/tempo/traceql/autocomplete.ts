@@ -117,7 +117,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_VALUE':
         const tagName = this.overrideTagName(situation.tagName);
         let tagValues: Array<SelectableValue<string>> = [];
-        
+
         if (this.cachedValues.hasOwnProperty(tagName)) {
           tagValues = this.cachedValues[tagName];
         } else {
