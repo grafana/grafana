@@ -42,7 +42,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate
                   {isExpired && (
                     <span className={styles.tooltipContainer}>
                       <Tooltip content="This API key has expired.">
-                        <Icon name={'exclamation-triangle' as IconName} />
+                        <Icon name="exclamation-triangle" />
                       </Tooltip>
                     </span>
                   )}

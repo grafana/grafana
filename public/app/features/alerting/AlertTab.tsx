@@ -220,7 +220,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
     const model = {
       title: 'Panel has no alert rule defined',
-      buttonIcon: 'bell' as IconName,
+      buttonIcon: 'bell' as const,
       onClick: this.onAddAlert,
       buttonTitle: 'Create Alert',
     };
