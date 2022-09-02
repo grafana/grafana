@@ -27,17 +27,17 @@ export const LoginLayout: FC<LoginLayoutProps> = ({ children, branding }) => {
   const subTitle = branding?.loginSubtitle || Branding.GetLoginSubTitle();
   const loginTitle = branding?.loginTitle || Branding.LoginTitle;
   const loginBoxBackground = branding?.loginBoxBackground || Branding.LoginBoxBackground();
+  const loginLogo = branding?.loginLogo;
 
   useEffect(() => setStartAnim(true), []);
 
-  console.log('bg', branding);
   return (
     <Branding.LoginBackground
       className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground)}
     >
       <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
         <div className={loginStyles.loginLogoWrapper}>
-          <Branding.LoginLogo className={loginStyles.loginLogo} />
+          <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
           <div className={loginStyles.titleWrapper}>
             <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
             {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
