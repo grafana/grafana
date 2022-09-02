@@ -50,7 +50,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	}
 }
 
-func TestAlertInstanceBulkWrite(t *testing.T) {
+func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
