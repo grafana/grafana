@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/droneutil"
-	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
@@ -72,7 +71,7 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 		CurrentCommit:  currentCommit,
 	}
 
-	log.Info().Msgf("building Grafana version: %s, release mode: %+v", metadata.GrafanaVersion, metadata.ReleaseMode)
+	fmt.Printf("building Grafana version: %s, release mode: %+v", metadata.GrafanaVersion, metadata.ReleaseMode)
 
 	return metadata, nil
 }
