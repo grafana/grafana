@@ -34,6 +34,7 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
+			// we have to init the context with the counter here to update the request
 			r = r.WithContext(log.InitCounter(r.Context()))
 
 			rw := web.Rw(w, r)
