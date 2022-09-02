@@ -34,7 +34,7 @@ type TokenExpiredError struct {
 	TokenID int64
 }
 
-func (e *TokenExpiredError) Error() string { return fmt.Sprintf("user token expired for user with id: %d", e.UserID) }
+func (e *TokenExpiredError) Error() string { return fmt.Sprintf("user token expired for user with id %d", e.UserID) }
 
 type TokenRevokedError struct {
 	UserID                int64
@@ -42,7 +42,7 @@ type TokenRevokedError struct {
 	MaxConcurrentSessions int64
 }
 
-func (e *TokenRevokedError) Error() string { return fmt.Sprintf("user token revoked for user with id: %d", e.UserID) }
+func (e *TokenRevokedError) Error() string { return fmt.Sprintf("user token revoked for user with id %d", e.UserID) }
 
 // UserToken represents a user token
 type UserToken struct {
