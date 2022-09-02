@@ -60,7 +60,7 @@ Grafana 8.1 includes some significant enhancements to transformations, including
 
 #### Config from query (Beta)
 
-This transformation enables panel config (Threshold, Min, Max, etc.) to be derived from query results. For more information, refer to [Config from query results]({{< relref "../panels/transform-data/transformation-functions/#config-from-query-results" >}}).
+This transformation enables panel config (Threshold, Min, Max, etc.) to be derived from query results. For more information, refer to [Config from query results]({{< relref "../panels/transform-data/#config-from-query-results" >}}).
 
 #### Rows to fields (Beta)
 
@@ -82,7 +82,7 @@ Output:
 
 As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
-For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels/transform-data/transformation-functions/#rows-to-fields" >}}).
+For more on how to use this transformation, refer to [Rows to fields transform]({{< relref "../panels/transform-data/#rows-to-fields" >}}).
 
 #### Contextual & Inline Help
 
@@ -150,7 +150,7 @@ Fine grained access control allows you to customize roles and permissions in Gra
 
 ### New and improved reporting scheduler
 
-We’ve enhanced the scheduler for Reports to be more flexible, so you can send reports at just the right time. When scheduling a report, you can now choose to send a report at custom intervals such as every 4 hours or every 2 weeks. You can also send a report for a limited time period by providing a start and end date, or send a report only on weekdays or on the last day of each month. This change accompanies some other recent improvements to Reporting, like the ability to choose template variables for reports and an improved UX for authoring reports. To learn more, refer to the [reporting]({{< relref "../enterprise/reporting/" >}}) documentation.
+We’ve enhanced the scheduler for Reports to be more flexible, so you can send reports at just the right time. When scheduling a report, you can now choose to send a report at custom intervals such as every 4 hours or every 2 weeks. You can also send a report for a limited time period by providing a start and end date, or send a report only on weekdays or on the last day of each month. This change accompanies some other recent improvements to Reporting, like the ability to choose template variables for reports and an improved UX for authoring reports. To learn more, refer to the [reporting]({{< relref "../share-dashboards-panels/#reporting" >}}) documentation.
 
 ### Encrypt data in the query cache
 

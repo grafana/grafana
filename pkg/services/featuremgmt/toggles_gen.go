@@ -115,6 +115,10 @@ const (
 	// Experimental Explore to Dashboard workflow
 	FlagExplore2Dashboard = "explore2Dashboard"
 
+	// FlagExploreMixedDatasource
+	// Enable mixed datasource in Explore
+	FlagExploreMixedDatasource = "exploreMixedDatasource"
+
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
@@ -194,4 +198,8 @@ const (
 	// FlagCustomBranding
 	// Replaces whitelabeling with the new custom branding feature
 	FlagCustomBranding = "customBranding"
+
+	// FlagTraceqlEditor
+	// Show the TraceQL editor in the explore page
+	FlagTraceqlEditor = "traceqlEditor"
 )

@@ -121,7 +121,7 @@ Lots of panel editor improvements, heavily informed by user research and communi
 
 - All options are now shown in a single pane.
 - You can now search panel options.
-- The Value mappings feature has been completely redesigned. For more information, refer to [About value mappings]({{< relref "../panels/format-data/about-value-mapping/" >}}).
+- The Value mappings feature has been completely redesigned. For more information, refer to [Configure value mappings]({{< relref "../panels/configure-value-mappings/" >}}).
 - New **Table view** option is always available.
 
 The [Panels]({{< relref "../panels/" >}}) section has been updated to reflect these changes.
@@ -312,7 +312,7 @@ When creating a report, you can now choose to export Table panels as .csv files 
 
 You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
 
-For more information, refer to [Reporting docs]({{< relref "../enterprise/reporting/" >}}).
+For more information, refer to [Reporting docs]({{< relref "../share-dashboards-panels/#reporting" >}}).
 
 ### License restrictions clarification in the docs
 

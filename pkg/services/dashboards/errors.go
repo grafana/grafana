@@ -125,28 +125,6 @@ var (
 		StatusCode: 404,
 		Status:     "not-found",
 	}
-	ErrPublicDashboardFailedGenerateUniqueUid = DashboardErr{
-		Reason:     "Failed to generate unique public dashboard id",
-		StatusCode: 500,
-	}
-	ErrPublicDashboardFailedGenerateAccesstoken = DashboardErr{
-		Reason:     "Failed to public dashboard access token",
-		StatusCode: 500,
-	}
-	ErrPublicDashboardNotFound = DashboardErr{
-		Reason:     "Public dashboard not found",
-		StatusCode: 404,
-		Status:     "not-found",
-	}
-	ErrPublicDashboardPanelNotFound = DashboardErr{
-		Reason:     "Panel not found in dashboard",
-		StatusCode: 404,
-		Status:     "not-found",
-	}
-	ErrPublicDashboardIdentifierNotSet = DashboardErr{
-		Reason:     "No Uid for public dashboard specified",
-		StatusCode: 400,
-	}
 
 	ErrFolderNotFound                = errors.New("folder not found")
 	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")

@@ -81,28 +81,76 @@ func (i *orgIndex) readerForIndex(idxType indexType) (*bluge.Reader, func(), err
 }
 
 type searchIndex struct {
-	mu             sync.RWMutex
-	loader         dashboardLoader
-	perOrgIndex    map[int64]*orgIndex
-	eventStore     eventStore
-	logger         log.Logger
-	buildSignals   chan buildSignal
-	extender       DocumentExtender
-	folderIdLookup folderUIDLookup
-	syncCh         chan chan struct{}
+	mu                      sync.RWMutex
+	loader                  dashboardLoader
+	perOrgIndex             map[int64]*orgIndex
+	initializedOrgs         map[int64]bool
+	initialIndexingComplete bool
+	initializationMutex     sync.RWMutex
+	eventStore              eventStore
+	logger                  log.Logger
+	buildSignals            chan buildSignal
+	extender                DocumentExtender
+	folderIdLookup          folderUIDLookup
+	syncCh                  chan chan struct{}
 }
 
 func newSearchIndex(dashLoader dashboardLoader, evStore eventStore, extender DocumentExtender, folderIDs folderUIDLookup) *searchIndex {
 	return &searchIndex{
-		loader:         dashLoader,
-		eventStore:     evStore,
-		perOrgIndex:    map[int64]*orgIndex{},
-		logger:         log.New("searchIndex"),
-		buildSignals:   make(chan buildSignal),
-		extender:       extender,
-		folderIdLookup: folderIDs,
-		syncCh:         make(chan chan struct{}),
+		loader:          dashLoader,
+		eventStore:      evStore,
+		perOrgIndex:     map[int64]*orgIndex{},
+		initializedOrgs: map[int64]bool{},
+		logger:          log.New("searchIndex"),
+		buildSignals:    make(chan buildSignal),
+		extender:        extender,
+		folderIdLookup:  folderIDs,
+		syncCh:          make(chan chan struct{}),
 	}
+}
+
+func (i *searchIndex) isInitialized(_ context.Context, orgId int64) IsSearchReadyResponse {
+	i.initializationMutex.RLock()
+	orgInitialized := i.initializedOrgs[orgId]
+	initialInitComplete := i.initialIndexingComplete
+	i.initializationMutex.RUnlock()
+
+	if orgInitialized && initialInitComplete {
+		return IsSearchReadyResponse{IsReady: true}
+	}
+
+	if !initialInitComplete {
+		return IsSearchReadyResponse{IsReady: false, Reason: "initial-indexing-ongoing"}
+	}
+
+	i.triggerBuildingOrgIndex(orgId)
+	return IsSearchReadyResponse{IsReady: false, Reason: "org-indexing-ongoing"}
+}
+
+func (i *searchIndex) triggerBuildingOrgIndex(orgId int64) {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		doneIndexing := make(chan error, 1)
+		signal := buildSignal{orgID: orgId, done: doneIndexing}
+		select {
+		case i.buildSignals <- signal:
+		case <-ctx.Done():
+			i.logger.Warn("Failed to send a build signal to initialize org index", "orgId", orgId)
+			return
+		}
+		select {
+		case err := <-doneIndexing:
+			if err != nil {
+				i.logger.Error("Failed to build org index", "orgId", orgId, "error", err)
+			} else {
+				i.logger.Debug("Successfully built org index", "orgId", orgId)
+			}
+		case <-ctx.Done():
+			i.logger.Warn("Building org index timeout", "orgId", orgId)
+		}
+	}()
 }
 
 func (i *searchIndex) sync(ctx context.Context) error {
@@ -148,6 +196,10 @@ func (i *searchIndex) run(ctx context.Context, orgIDs []int64, reIndexSignalCh c
 
 	// Channel to handle signals about asynchronous full re-indexing completion.
 	reIndexDoneCh := make(chan int64, 1)
+
+	i.initializationMutex.Lock()
+	i.initialIndexingComplete = true
+	i.initializationMutex.Unlock()
 
 	for {
 		select {
@@ -420,6 +472,10 @@ func (i *searchIndex) buildOrgIndex(ctx context.Context, orgID int64) (int, erro
 	}
 	i.perOrgIndex[orgID] = index
 	i.mu.Unlock()
+
+	i.initializationMutex.Lock()
+	i.initializedOrgs[orgID] = true
+	i.initializationMutex.Unlock()
 
 	if orgID == 1 {
 		go func() {
