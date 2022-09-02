@@ -25,7 +25,7 @@ export const VerticalTab = React.forwardRef<HTMLAnchorElement, TabProps>(
     const linkClass = cx(tabsStyles.link, active && tabsStyles.activeStyle);
 
     return (
-      <li className={tabsStyles.item}>
+      <div className={tabsStyles.item}>
         <a
           href={href}
           className={linkClass}
@@ -38,7 +38,7 @@ export const VerticalTab = React.forwardRef<HTMLAnchorElement, TabProps>(
         >
           {content()}
         </a>
-      </li>
+      </div>
     );
   }
 );

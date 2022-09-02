@@ -26,6 +26,6 @@ func addDashboardThumbsMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add unique indexes for dashboard_thumbnail", migrator.NewAddIndexMigration(dashThumbs, dashThumbs.Indices[0]))
 	mg.AddMigration("Add ds_uids column to dashboard_thumbnail table", migrator.NewAddColumnMigration(dashThumbs,
 		// uids of datasources used in the dashboard when taking preview
-		&migrator.Column{Name: "ds_uids", Type: migrator.DB_Text, Nullable: false, Default: ""},
+		&migrator.Column{Name: "ds_uids", Type: migrator.DB_Text, Nullable: true, Default: ""},
 	))
 }

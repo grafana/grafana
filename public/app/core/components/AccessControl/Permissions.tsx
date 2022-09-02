@@ -102,7 +102,7 @@ export const Permissions = ({
     () =>
       sortBy(
         items.filter((i) => i.teamId),
-        ['team']
+        ['team', 'isManaged']
       ),
     [items]
   );
@@ -110,7 +110,7 @@ export const Permissions = ({
     () =>
       sortBy(
         items.filter((i) => i.userId),
-        ['userLogin']
+        ['userLogin', 'isManaged']
       ),
     [items]
   );
@@ -118,7 +118,7 @@ export const Permissions = ({
     () =>
       sortBy(
         items.filter((i) => i.builtInRole),
-        ['builtInRole']
+        ['builtInRole', 'isManaged']
       ),
     [items]
   );
@@ -148,6 +148,7 @@ export const Permissions = ({
         <PermissionList
           title="Role"
           items={builtInRoles}
+          compareKey={'builtInRole'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
@@ -156,6 +157,7 @@ export const Permissions = ({
         <PermissionList
           title="User"
           items={users}
+          compareKey={'userLogin'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}
@@ -164,6 +166,7 @@ export const Permissions = ({
         <PermissionList
           title="Team"
           items={teams}
+          compareKey={'team'}
           permissionLevels={desc.permissions}
           onChange={onChange}
           onRemove={onRemove}

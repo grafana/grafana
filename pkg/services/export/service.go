@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -150,12 +151,14 @@ type StandardExport struct {
 	// Services
 	sql                       *sqlstore.SQLStore
 	dashboardsnapshotsService dashboardsnapshots.Service
+	playlistService           playlist.Service
 
 	// updated with mutex
 	exportJob Job
 }
 
-func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg, dashboardsnapshotsService dashboardsnapshots.Service) ExportService {
+func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, gl *live.GrafanaLive, cfg *setting.Cfg,
+	dashboardsnapshotsService dashboardsnapshots.Service, playlistService playlist.Service) ExportService {
 	if !features.IsEnabled(featuremgmt.FlagExport) {
 		return &StubExport{}
 	}
@@ -165,6 +168,7 @@ func ProvideService(sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles,
 		glive:                     gl,
 		logger:                    log.New("export_service"),
 		dashboardsnapshotsService: dashboardsnapshotsService,
+		playlistService:           playlistService,
 		exportJob:                 &stoppedJob{},
 		dataDir:                   cfg.DataPath,
 	}
@@ -211,7 +215,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 
 	var job Job
 	broadcast := func(s ExportStatus) {
-		ex.broadcastStatus(c.OrgId, s)
+		ex.broadcastStatus(c.OrgID, s)
 	}
 	switch cfg.Format {
 	case "dummy":
@@ -221,7 +225,7 @@ func (ex *StandardExport) HandleRequestExport(c *models.ReqContext) response.Res
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return response.Error(http.StatusBadRequest, "Error creating export folder", nil)
 		}
-		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgId, broadcast)
+		job, err = startGitExportJob(cfg, ex.sql, ex.dashboardsnapshotsService, dir, c.OrgID, broadcast, ex.playlistService)
 	default:
 		return response.Error(http.StatusBadRequest, "Unsupported job format", nil)
 	}

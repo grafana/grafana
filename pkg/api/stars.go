@@ -12,7 +12,7 @@ import (
 
 func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 	query := star.GetUserStarsQuery{
-		UserID: c.SignedInUser.UserId,
+		UserID: c.SignedInUser.UserID,
 	}
 
 	iuserstars, err := hs.starService.GetByUser(c.Req.Context(), &query)
@@ -24,7 +24,7 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 	for dashboardId := range iuserstars.UserStars {
 		query := &models.GetDashboardQuery{
 			Id:    dashboardId,
-			OrgId: c.OrgId,
+			OrgId: c.OrgID,
 		}
 		err := hs.DashboardService.GetDashboard(c.Req.Context(), query)
 
@@ -53,7 +53,7 @@ func (hs *HTTPServer) StarDashboard(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	cmd := star.StarDashboardCommand{UserID: c.UserId, DashboardID: id}
+	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: id}
 
 	if cmd.DashboardID <= 0 {
 		return response.Error(400, "Missing dashboard id", nil)
@@ -83,7 +83,7 @@ func (hs *HTTPServer) UnstarDashboard(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	cmd := star.UnstarDashboardCommand{UserID: c.UserId, DashboardID: id}
+	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: id}
 
 	if cmd.DashboardID <= 0 {
 		return response.Error(400, "Missing dashboard id", nil)

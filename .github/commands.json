@@ -151,7 +151,7 @@
     "name":"datasource/Tempo",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
+      "url":"https://github.com/orgs/grafana/projects/221"
     }
   },
   {
@@ -167,7 +167,7 @@
     "name":"datasource/Jaeger",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
+      "url":"https://github.com/orgs/grafana/projects/221"
     }
   },
   {
@@ -175,7 +175,7 @@
     "name":"datasource/Zipkin",
     "action":"addToProject",
     "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/110"
+      "url":"https://github.com/orgs/grafana/projects/221"
     }
   },
   {

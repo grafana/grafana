@@ -59,6 +59,21 @@ export function Metrics(props: Props) {
   );
 
   useEffect(() => {
+    const loadMetricDescriptors = async () => {
+      if (projectName) {
+        const metricDescriptors = await datasource.getMetricTypes(projectName);
+        const services = getServicesList(metricDescriptors);
+        setState((prevState) => ({
+          ...prevState,
+          metricDescriptors,
+          services,
+        }));
+      }
+    };
+    loadMetricDescriptors();
+  }, [datasource, projectName, customStyle, selectStyles.optionDescription]);
+
+  useEffect(() => {
     const getMetricsList = (metricDescriptors: MetricDescriptor[]) => {
       const selectedMetricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
       if (!selectedMetricDescriptor) {
@@ -82,26 +97,16 @@ export function Metrics(props: Props) {
         }));
       return metricsByService;
     };
-
-    const loadMetricDescriptors = async () => {
-      if (projectName) {
-        const metricDescriptors = await datasource.getMetricTypes(projectName);
-        const services = getServicesList(metricDescriptors);
-        const metrics = getMetricsList(metricDescriptors);
-        const service = metrics.length > 0 ? metrics[0].service : '';
-        const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
-        setState((prevState) => ({
-          ...prevState,
-          metricDescriptors,
-          services,
-          metrics,
-          service: service,
-          metricDescriptor,
-        }));
-      }
-    };
-    loadMetricDescriptors();
-  }, [datasource, getSelectedMetricDescriptor, metricType, projectName, customStyle, selectStyles.optionDescription]);
+    const metrics = getMetricsList(metricDescriptors);
+    const service = metrics.length > 0 ? metrics[0].service : '';
+    const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
+    setState((prevState) => ({
+      ...prevState,
+      metricDescriptor,
+      metrics,
+      service: service,
+    }));
+  }, [metricDescriptors, getSelectedMetricDescriptor, metricType, customStyle, selectStyles.optionDescription]);
 
   const onServiceChange = ({ value: service }: any) => {
     const metrics = metricDescriptors

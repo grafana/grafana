@@ -36,7 +36,7 @@ Once the secure configuration has been encrypted, it can no longer be accessed f
 
 To demonstrate how you can add secrets to a data source plugin, let's add support for configuring an API key.
 
-Create a new interface in `types.go` to hold the API key.
+Create a new interface in `types.ts` to hold the API key.
 
 ```ts
 export interface MySecureJsonData {

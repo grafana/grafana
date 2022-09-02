@@ -11,7 +11,6 @@ import { useNavModel } from './hooks/useNavModel';
 import { CloudIntegrations } from './tabs/CloudIntegrations';
 import { DataSourcesEdit } from './tabs/DataSourcesEdit';
 import { Plugins } from './tabs/Plugins';
-import { RecordedQueries } from './tabs/RecordedQueries';
 
 export default function DataConnectionsPage() {
   const navModel = useNavModel();
@@ -33,7 +32,6 @@ export default function DataConnectionsPage() {
             <Route path={ROUTES.DataSources} component={DataSourcesList} />
             <Route path={ROUTES.Plugins} component={Plugins} />
             <Route path={ROUTES.CloudIntegrations} component={CloudIntegrations} />
-            <Route path={ROUTES.RecordedQueries} component={RecordedQueries} />
 
             {/* Default page */}
             <Route component={DataSourcesList} />

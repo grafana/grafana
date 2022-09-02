@@ -14,9 +14,9 @@ export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {
 export function GrafanaRoute(props: Props) {
   const { chrome } = useGrafana();
 
-  useEffect(() => {
-    chrome.routeMounted(props.route);
+  chrome.registerRouteRender(props.route);
 
+  useEffect(() => {
     updateBodyClassNames(props.route);
     cleanupDOM();
     reportPageview();
@@ -26,7 +26,9 @@ export function GrafanaRoute(props: Props) {
       navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);
       updateBodyClassNames(props.route, true);
     };
-  }, [chrome, props.route, props.match]);
+    // props.match instance change even though only query params changed so to make this effect only trigger on route mount we have to disable exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // unbinds all and re-bind global keybindins

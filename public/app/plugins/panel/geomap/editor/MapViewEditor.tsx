@@ -9,11 +9,9 @@ import { GeomapInstanceState } from '../GeomapPanel';
 import { GeomapPanelOptions, MapViewConfig } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 
-export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPanelOptions, GeomapInstanceState>> = ({
-  value,
-  onChange,
-  context,
-}) => {
+export const MapViewEditor: FC<
+  StandardEditorProps<MapViewConfig, unknown, GeomapPanelOptions, GeomapInstanceState>
+> = ({ value, onChange, context }) => {
   const labelWidth = 10;
 
   const views = useMemo(() => {

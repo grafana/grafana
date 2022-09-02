@@ -5,7 +5,7 @@ import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 
-export const getFocusStyle = (theme: GrafanaTheme) => css`
+export const getFocusStyle = (theme: GrafanaTheme | GrafanaTheme2) => css`
   &:focus {
     ${focusCss(theme)}
   }

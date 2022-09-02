@@ -27,7 +27,6 @@ RUN apk add --no-cache gcc g++ make
 WORKDIR /grafana
 
 COPY go.mod go.sum embed.go Makefile build.go package.json ./
-COPY cue cue
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
 COPY public/api-spec.json public/api-spec.json
@@ -40,7 +39,7 @@ RUN go mod verify
 RUN make build-go
 
 # Final stage
-FROM alpine:3.15
+FROM alpine:3.15.6
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
@@ -76,6 +75,7 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
   "$GF_PATHS_PROVISIONING/notifiers" \
   "$GF_PATHS_PROVISIONING/plugins" \
   "$GF_PATHS_PROVISIONING/access-control" \
+  "$GF_PATHS_PROVISIONING/alerting" \
   "$GF_PATHS_LOGS" \
   "$GF_PATHS_PLUGINS" \
   "$GF_PATHS_DATA" && \

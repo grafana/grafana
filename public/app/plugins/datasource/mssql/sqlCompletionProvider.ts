@@ -1,4 +1,3 @@
-import { LinkedToken } from 'app/features/plugins/sql';
 import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
 import {
   ColumnDefinition,
@@ -6,6 +5,7 @@ import {
   CompletionItemPriority,
   DB,
   LanguageCompletionProvider,
+  LinkedToken,
   SQLQuery,
   StatementPlacementProvider,
   SuggestionKindProvider,

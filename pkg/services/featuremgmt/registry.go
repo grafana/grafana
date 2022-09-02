@@ -69,11 +69,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheus_azure_auth",
-			Description: "Experimental. Azure authentication for Prometheus datasource",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
@@ -136,9 +131,10 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "dashboardsFromStorage",
-			Description: "Load dashboards from the generic storage interface",
-			State:       FeatureStateAlpha,
+			Name:            "dashboardsFromStorage",
+			Description:     "Load dashboards from the generic storage interface",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
 		},
 		{
 			Name:            "export",
@@ -157,6 +153,12 @@ var (
 			Name:         "explore2Dashboard",
 			Description:  "Experimental Explore to Dashboard workflow",
 			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "exploreMixedDatasource",
+			Description:  "Enable mixed datasource in Explore",
+			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
@@ -264,6 +266,11 @@ var (
 		{
 			Name:        "customBranding",
 			Description: "Replaces whitelabeling with the new custom branding feature",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "traceqlEditor",
+			Description: "Show the TraceQL editor in the explore page",
 			State:       FeatureStateAlpha,
 		},
 	}

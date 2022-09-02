@@ -128,7 +128,7 @@ func (ss *SQLStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *
 		args := []interface{}{models.ThumbnailStateStale}
 
 		if cmd.IncludeThumbnailsWithEmptyDsUIDs {
-			query += " OR dashboard_thumbnail.ds_uids = ?"
+			query += " OR dashboard_thumbnail.ds_uids = ? OR dashboard_thumbnail.ds_uids IS NULL"
 			args = append(args, "")
 		}
 		sess.Where(query+")", args...)

@@ -67,7 +67,7 @@ The Plugin catalog allows you to browse and manage plugins from within Grafana. 
 
 <div class="medium-6 columns">
   <video width="700" height="600" controls>
-    <source src="/static/assets/videos/plugins-catalog-install-8-1.mp4" type="video/mp4">
+    <source src="/static/assets/videos/plugins-catalog-install-9.2.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -76,11 +76,8 @@ In order to be able to install / uninstall / update plugins using plugin catalog
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
-Currently, there are two entry points to the Plugin catalog.
 
-- Grafana server administrators can find it at **Server Admin >
-  Plugins**.
-- Organization administrators can find it at **Configuration > Plugins**.
+- Administrators can find the Plugin catalog at **Configuration > Plugins**.
 
 ### Browse plugins
 
@@ -90,7 +87,7 @@ To browse for available plugins:
 1. Click the **All** filter to browse all available plugins.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
-![Plugin catalog browse](/static/img/docs/plugins/plugins-catalog-browse-8-1.png)
+![Plugin catalog browse](/static/img/docs/plugins/plugins-catalog-browse-9.2.png)
 
 ### Install a plugin
 

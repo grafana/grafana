@@ -6,7 +6,9 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow, getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
-import { MetricDescriptor } from '../../types';
+import { MetricDescriptor, MetricQuery } from '../../types';
+
+import { Project } from './Project';
 
 export interface Props {
   refId: string;
@@ -15,7 +17,9 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
   projectName: string;
   metricType: string;
+  query: MetricQuery;
   children: (metricDescriptor?: MetricDescriptor) => JSX.Element;
+  onProjectChange: (query: MetricQuery) => void;
 }
 
 export function Metrics(props: Props) {
@@ -30,7 +34,17 @@ export function Metrics(props: Props) {
 
   const customStyle = useStyles2(getStyles);
 
-  const { metricType, templateVariableOptions, projectName, datasource, onChange, children } = props;
+  const {
+    onProjectChange,
+    query,
+    refId,
+    metricType,
+    templateVariableOptions,
+    projectName,
+    datasource,
+    onChange,
+    children,
+  } = props;
   const { templateSrv } = datasource;
 
   const getSelectedMetricDescriptor = useCallback(
@@ -121,6 +135,16 @@ export function Metrics(props: Props) {
     <>
       <EditorRow>
         <EditorFieldGroup>
+          <Project
+            refId={refId}
+            templateVariableOptions={templateVariableOptions}
+            projectName={projectName}
+            datasource={datasource}
+            onChange={(projectName) => {
+              onProjectChange({ ...query, projectName });
+            }}
+          />
+
           <EditorField label="Service" width="auto">
             <Select
               width="auto"

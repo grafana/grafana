@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -25,7 +26,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetCurrentOrg(c *models.ReqContext) response.Response {
-	return hs.getOrgHelper(c.Req.Context(), c.OrgId)
+	return hs.getOrgHelper(c.Req.Context(), c.OrgID)
 }
 
 // swagger:route GET /orgs/{org_id} orgs getOrgByID
@@ -134,7 +135,7 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusForbidden, "Access denied", nil)
 	}
 
-	cmd.UserId = c.UserId
+	cmd.UserId = c.UserID
 	if err := hs.SQLStore.CreateOrg(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(http.StatusConflict, "Organization name taken", err)
@@ -165,7 +166,7 @@ func (hs *HTTPServer) UpdateCurrentOrg(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.updateOrgHelper(c.Req.Context(), form, c.OrgId)
+	return hs.updateOrgHelper(c.Req.Context(), form, c.OrgID)
 }
 
 // swagger:route PUT /orgs/{org_id} orgs updateOrg
@@ -194,8 +195,8 @@ func (hs *HTTPServer) UpdateOrg(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) response.Response {
-	cmd := models.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
-	if err := hs.SQLStore.UpdateOrg(ctx, &cmd); err != nil {
+	cmd := org.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
+	if err := hs.orgService.UpdateOrg(ctx, &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(http.StatusBadRequest, "Organization name taken", err)
 		}
@@ -220,7 +221,7 @@ func (hs *HTTPServer) UpdateCurrentOrgAddress(c *models.ReqContext) response.Res
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.updateOrgAddressHelper(c.Req.Context(), form, c.OrgId)
+	return hs.updateOrgAddressHelper(c.Req.Context(), form, c.OrgID)
 }
 
 // swagger:route PUT /orgs/{org_id}/address orgs updateOrgAddress
@@ -285,7 +286,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
 	// before deleting an org, check if user does not belong to the current org
-	if c.OrgId == orgID {
+	if c.OrgID == orgID {
 		return response.Error(http.StatusBadRequest, "Can not delete org for current user", nil)
 	}
 

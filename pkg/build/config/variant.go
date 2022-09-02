@@ -21,6 +21,7 @@ type Architecture string
 const (
 	ArchAMD64 Architecture = "amd64"
 	ArchARMv6 Architecture = "armv6"
+	ArchARMv7 Architecture = "armv7"
 	ArchARM64 Architecture = "arm64"
 	ArchARMHF Architecture = "armhf"
 	ArchARM   Architecture = "arm"

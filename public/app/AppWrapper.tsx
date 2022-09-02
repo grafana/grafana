@@ -113,46 +113,48 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     };
 
     return (
-      <Provider store={store}>
-        <I18nProvider>
-          <ErrorBoundaryAlert style="page">
-            <GrafanaContext.Provider value={app.context}>
-              <ThemeProvider value={config.theme2}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <ModalsProvider>
-                    <GlobalStyles />
-                    {this.commandPaletteEnabled() && <CommandPalette />}
-                    <div className="grafana-app">
-                      <Router history={locationService.getHistory()}>
-                        {this.renderNavBar()}
-                        <AppChrome>
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
+      <React.StrictMode>
+        <Provider store={store}>
+          <I18nProvider>
+            <ErrorBoundaryAlert style="page">
+              <GrafanaContext.Provider value={app.context}>
+                <ThemeProvider value={config.theme2}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <ModalsProvider>
+                      <GlobalStyles />
+                      {this.commandPaletteEnabled() && <CommandPalette />}
+                      <div className="grafana-app">
+                        <Router history={locationService.getHistory()}>
+                          {this.renderNavBar()}
+                          <AppChrome>
+                            {pageBanners.map((Banner, index) => (
+                              <Banner key={index.toString()} />
+                            ))}
 
-                          <AngularRoot />
-                          <AppNotificationList />
-                          {this.searchBarEnabled() && <SearchWrapper />}
-                          {ready && this.renderRoutes()}
-                          {bodyRenderHooks.map((Hook, index) => (
-                            <Hook key={index.toString()} />
-                          ))}
-                        </AppChrome>
-                      </Router>
-                    </div>
-                    <LiveConnectionWarning />
-                    <ModalRoot />
-                    <PortalContainer />
-                  </ModalsProvider>
-                </KBarProvider>
-              </ThemeProvider>
-            </GrafanaContext.Provider>
-          </ErrorBoundaryAlert>
-        </I18nProvider>
-      </Provider>
+                            <AngularRoot />
+                            <AppNotificationList />
+                            {this.searchBarEnabled() && <SearchWrapper />}
+                            {ready && this.renderRoutes()}
+                            {bodyRenderHooks.map((Hook, index) => (
+                              <Hook key={index.toString()} />
+                            ))}
+                          </AppChrome>
+                        </Router>
+                      </div>
+                      <LiveConnectionWarning />
+                      <ModalRoot />
+                      <PortalContainer />
+                    </ModalsProvider>
+                  </KBarProvider>
+                </ThemeProvider>
+              </GrafanaContext.Provider>
+            </ErrorBoundaryAlert>
+          </I18nProvider>
+        </Provider>
+      </React.StrictMode>
     );
   }
 }

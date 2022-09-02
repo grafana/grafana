@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -132,6 +133,18 @@ func WithSequentialGroupIndex() AlertRuleMutator {
 	}
 }
 
+func WithOrgID(orgId int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.OrgID = orgId
+	}
+}
+
+func WithNamespace(namespace *models2.Folder) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NamespaceUID = namespace.Uid
+	}
+}
+
 func GenerateAlertLabels(count int, prefix string) data.Labels {
 	labels := make(data.Labels, count)
 	for i := 0; i < count; i++ {
@@ -173,6 +186,11 @@ func GenerateUniqueAlertRules(count int, f func() *AlertRule) (map[string]*Alert
 		uIDs[rule.UID] = rule
 	}
 	return uIDs, result
+}
+
+// GenerateAlertRulesSmallNonEmpty generates 1 to 5 rules using the provided generator
+func GenerateAlertRulesSmallNonEmpty(f func() *AlertRule) []*AlertRule {
+	return GenerateAlertRules(rand.Intn(4)+1, f)
 }
 
 // GenerateAlertRules generates many random alert rules. Does not guarantee that rules are unique (by UID)

@@ -48,7 +48,7 @@ export class GrafanaJavascriptAgentBackend
       instrumentations.push(new WebVitalsInstrumentation());
     }
 
-    // initialize GrafanaJavascriptAgent so it can set up it's hooks and start collecting errors
+    // initialize GrafanaJavascriptAgent so it can set up its hooks and start collecting errors
     const grafanaJavaScriptAgentOptions: BrowserConfig = {
       globalObjectKey: options.globalObjectKey || 'grafanaAgent',
       preventGlobalExposure: options.preventGlobalExposure || false,

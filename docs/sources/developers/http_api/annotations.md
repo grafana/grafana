@@ -122,6 +122,10 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 | ------------------ | ----------------------- |
 | annotations:create | annotations:type:<type> |
 
+**Required JSON Body Fields**
+
+- `text`: description of the annotation.
+
 **Example Request**:
 
 ```http
