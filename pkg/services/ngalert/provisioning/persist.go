@@ -37,6 +37,7 @@ type RuleStore interface {
 	InsertAlertRules(ctx context.Context, rule []models.AlertRule) (map[string]int64, error)
 	UpdateAlertRules(ctx context.Context, rule []store.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
+	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) error
 }
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.

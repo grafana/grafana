@@ -24,5 +24,16 @@ var (
 		Name:  "tries",
 		Usage: "Specify number of tries before failing",
 		Value: 1,
+	noInstallDepsFlag = cli.BoolFlag{
+		Name:  "no-install-deps",
+		Usage: "Don't install dependencies",
+	}
+	signingAdminFlag = cli.BoolFlag{
+		Name:  "signing-admin",
+		Usage: "Use manifest signing admin API endpoint?",
+	}
+	signFlag = cli.BoolFlag{
+		Name:  "sign",
+		Usage: "Enable plug-in signing (you must set GRAFANA_API_KEY)",
 	}
 )

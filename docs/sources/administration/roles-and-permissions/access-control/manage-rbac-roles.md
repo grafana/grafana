@@ -12,7 +12,7 @@ weight: 50
 
 # Manage RBAC roles
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
 

@@ -93,7 +93,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     }
   }
 
-  getYRange(field: Field) {
+  getYRange(field: Field): Range.MinMax {
     let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
 
     if (min === max) {
@@ -103,12 +103,11 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         min = 0;
         max! *= 2;
       }
+
+      return [min, max!];
     }
 
-    return [
-      Math.max(min!, field.config.min ?? -Infinity),
-      Math.min(max!, field.config.max ?? Infinity),
-    ] as Range.MinMax;
+    return [Math.max(min!, field.config.min ?? -Infinity), Math.min(max!, field.config.max ?? Infinity)];
   }
 
   prepareConfig(data: DataFrame) {

@@ -102,6 +102,10 @@ export function makeDataSourceLink<T>(dataSource: DataSourceInstanceSettings<T>)
   return `${config.appSubUrl}/datasources/edit/${dataSource.uid}`;
 }
 
+export function makeFolderLink(folderUID: string): string {
+  return `${config.appSubUrl}/dashboards/f/${folderUID}`;
+}
+
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
 export function retryWhile<T, E = Error>(
   fn: () => Promise<T>,

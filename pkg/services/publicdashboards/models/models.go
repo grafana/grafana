@@ -49,6 +49,10 @@ var (
 		Reason:     "Public dashboard has template variables",
 		StatusCode: 422,
 	}
+	ErrPublicDashboardBadRequest = PublicDashboardErr{
+		Reason:     "Bad Request",
+		StatusCode: 400,
+	}
 )
 
 type PublicDashboard struct {
@@ -108,12 +112,15 @@ type SavePublicDashboardConfigDTO struct {
 	PublicDashboard *PublicDashboard
 }
 
+type PublicDashboardQueryDTO struct {
+	IntervalMs    int64
+	MaxDataPoints int64
+}
+
 //
 // COMMANDS
 //
 
 type SavePublicDashboardConfigCommand struct {
-	DashboardUid    string
-	OrgId           int64
 	PublicDashboard PublicDashboard
 }

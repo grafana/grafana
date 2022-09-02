@@ -412,7 +412,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             value: threshold.value,
             color: 'transparent',
           });
-          // if next is a lt we need to use it's color
+          // if next is a lt we need to use its color
         } else if (next && next.op === 'lt') {
           steps.push({
             value: threshold.value,

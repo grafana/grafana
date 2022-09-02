@@ -120,8 +120,8 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 
 	t.Run("Empty log group name prefix", func(t *testing.T) {
 		cli = fakeCWLogsClient{
-			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
-				LogGroups: []*cloudwatchlogs.LogGroup{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{LogGroups: []*cloudwatchlogs.LogGroup{
 					{
 						LogGroupName: aws.String("group_a"),
 					},
@@ -131,7 +131,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 					{
 						LogGroupName: aws.String("group_c"),
 					},
-				},
+				}},
 			},
 		}
 
@@ -176,8 +176,8 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 
 	t.Run("Non-empty log group name prefix", func(t *testing.T) {
 		cli = fakeCWLogsClient{
-			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
-				LogGroups: []*cloudwatchlogs.LogGroup{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{LogGroups: []*cloudwatchlogs.LogGroup{
 					{
 						LogGroupName: aws.String("group_a"),
 					},
@@ -187,7 +187,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 					{
 						LogGroupName: aws.String("group_c"),
 					},
-				},
+				}},
 			},
 		}
 
@@ -223,6 +223,92 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 						Fields: []*data.Field{
 							data.NewField("logGroupName", nil, []*string{
 								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+							}),
+						},
+					},
+				},
+			},
+		},
+		}, resp)
+	})
+}
+
+func TestQuery_DescribeAllLogGroups(t *testing.T) {
+	origNewCWLogsClient := NewCWLogsClient
+	t.Cleanup(func() {
+		NewCWLogsClient = origNewCWLogsClient
+	})
+
+	var cli fakeCWLogsClient
+
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+		return &cli
+	}
+
+	t.Run("multiple batches", func(t *testing.T) {
+		token := "foo"
+		cli = fakeCWLogsClient{
+			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
+				{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_a"),
+						},
+						{
+							LogGroupName: aws.String("group_b"),
+						},
+						{
+							LogGroupName: aws.String("group_c"),
+						},
+					},
+					NextToken: &token,
+				},
+				{
+					LogGroups: []*cloudwatchlogs.LogGroup{
+						{
+							LogGroupName: aws.String("group_x"),
+						},
+						{
+							LogGroupName: aws.String("group_y"),
+						},
+						{
+							LogGroupName: aws.String("group_z"),
+						},
+					},
+				},
+			},
+		}
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
+				{
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "DescribeAllLogGroups",
+						"limit":   50
+					}`),
+				},
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": backend.DataResponse{
+				Frames: data.Frames{
+					&data.Frame{
+						Name: "logGroups",
+						Fields: []*data.Field{
+							data.NewField("logGroupName", nil, []*string{
+								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"), aws.String("group_x"), aws.String("group_y"), aws.String("group_z"),
 							}),
 						},
 					},

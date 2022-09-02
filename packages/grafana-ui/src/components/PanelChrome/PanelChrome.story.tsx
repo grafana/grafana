@@ -3,8 +3,8 @@ import { merge } from 'lodash';
 import React, { CSSProperties, useState } from 'react';
 import { useInterval } from 'react-use';
 
-import { GrafanaTheme } from '@grafana/data';
-import { PanelChrome, useTheme, PanelChromeProps } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { PanelChrome, useTheme2, PanelChromeProps } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
@@ -18,7 +18,7 @@ const meta: ComponentMeta<typeof PanelChrome> = {
   },
 };
 
-function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: GrafanaTheme) {
+function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: GrafanaTheme2) {
   const props: PanelChromeProps = {
     width: 400,
     height: 130,
@@ -29,7 +29,7 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
   merge(props, overrides);
 
   const contentStyle: CSSProperties = {
-    background: theme.colors.bg2,
+    background: theme.colors.background.secondary,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -45,13 +45,13 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
 }
 
 export const Examples = () => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const [loading, setLoading] = useState(true);
 
   useInterval(() => setLoading(true), 5000);
 
   return (
-    <div style={{ background: theme.colors.dashboardBg, padding: 100 }}>
+    <div style={{ background: theme.colors.background.canvas, padding: 100 }}>
       <HorizontalGroup spacing="md">
         <VerticalGroup spacing="md">
           {renderPanel('Default panel', {}, theme)}
@@ -66,7 +66,7 @@ export const Examples = () => {
           )}
         </VerticalGroup>
       </HorizontalGroup>
-      <div style={{ marginTop: theme.spacing.md }} />
+      <div style={{ marginTop: theme.spacing(2) }} />
       <HorizontalGroup spacing="md">
         <VerticalGroup spacing="md">
           {renderPanel(

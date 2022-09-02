@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func (s *standardStorageService) sanitizeContents(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) ([]byte, error) {
+func (s *standardStorageService) sanitizeContents(ctx context.Context, user *user.SignedInUser, req *UploadRequest, storagePath string) ([]byte, error) {
 	if req.EntityType == EntityTypeImage {
 		ext := filepath.Ext(req.Path)
 		if ext == ".svg" {
@@ -36,7 +36,7 @@ func (s *standardStorageService) sanitizeContents(ctx context.Context, user *mod
 	return req.Contents, nil
 }
 
-func (s *standardStorageService) sanitizeUploadRequest(ctx context.Context, user *models.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error) {
+func (s *standardStorageService) sanitizeUploadRequest(ctx context.Context, user *user.SignedInUser, req *UploadRequest, storagePath string) (*filestorage.UpsertFileCommand, error) {
 	contents, err := s.sanitizeContents(ctx, user, req, storagePath)
 	if err != nil {
 		return nil, err
