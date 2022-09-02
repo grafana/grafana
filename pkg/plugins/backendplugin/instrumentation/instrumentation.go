@@ -4,6 +4,7 @@ package instrumentation
 import (
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -24,7 +25,7 @@ var (
 )
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
-func instrumentPluginRequest(pluginID string, endpoint string, fn func() error) error {
+func instrumentPluginRequest(pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
 	status := "ok"
 
 	start := time.Now()
@@ -35,28 +36,28 @@ func instrumentPluginRequest(pluginID string, endpoint string, fn func() error) 
 	}
 
 	elapsed := time.Since(start) / time.Millisecond
-	pluginRequestDuration.WithLabelValues(pluginID, endpoint).Observe(float64(elapsed))
-	pluginRequestCounter.WithLabelValues(pluginID, endpoint, status).Inc()
+	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint).Observe(float64(elapsed))
+	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status).Inc()
 
 	return err
 }
 
 // InstrumentCollectMetrics instruments collectMetrics.
-func InstrumentCollectMetrics(pluginID string, fn func() error) error {
-	return instrumentPluginRequest(pluginID, "collectMetrics", fn)
+func InstrumentCollectMetrics(req *backend.PluginContext, fn func() error) error {
+	return instrumentPluginRequest(req, "collectMetrics", fn)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
-func InstrumentCheckHealthRequest(pluginID string, fn func() error) error {
-	return instrumentPluginRequest(pluginID, "checkHealth", fn)
+func InstrumentCheckHealthRequest(req *backend.PluginContext, fn func() error) error {
+	return instrumentPluginRequest(req, "checkHealth", fn)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
-func InstrumentCallResourceRequest(pluginID string, fn func() error) error {
-	return instrumentPluginRequest(pluginID, "callResource", fn)
+func InstrumentCallResourceRequest(req *backend.PluginContext, fn func() error) error {
+	return instrumentPluginRequest(req, "callResource", fn)
 }
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
-func InstrumentQueryDataRequest(pluginID string, fn func() error) error {
-	return instrumentPluginRequest(pluginID, "queryData", fn)
+func InstrumentQueryDataRequest(req *backend.PluginContext, fn func() error) error {
+	return instrumentPluginRequest(req, "queryData", fn)
 }
