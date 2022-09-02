@@ -497,7 +497,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7
   name: mysql
   volumes:
   - name: mysql
@@ -1380,7 +1380,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7
   name: mysql
   volumes:
   - name: mysql
@@ -2124,7 +2124,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7
   name: mysql
   volumes:
   - name: mysql
@@ -2805,7 +2805,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7
   name: mysql
   volumes:
   - name: mysql
@@ -4058,7 +4058,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7
   name: mysql
   volumes:
   - name: mysql
@@ -4704,7 +4704,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7
   name: mysql
   volumes:
   - name: mysql
@@ -5054,6 +5054,7 @@ get:
   path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
 name: gcp_upload_artifacts_key
+<<<<<<< HEAD
 ---
 get:
   name: public-key
@@ -5095,3 +5096,5 @@ kind: signature
 hmac: 93835e0362c0a924e8da207d3c89296a1d68f3997f86ac4859b356a872bc9f4a
 
 ...
+=======
+>>>>>>> 8f58d9ff7f (CI: Update Drone MySQL version to match database policy.)
