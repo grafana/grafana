@@ -354,7 +354,6 @@ export const panelToRuleFormValues = async (
     return undefined;
   }
 
-  // TODO make this work with correct refids
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
     const [reduceExpression, _mathExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
     queries.push(reduceExpression);

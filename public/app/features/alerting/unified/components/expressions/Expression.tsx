@@ -217,7 +217,6 @@ const FrameRow: FC<FrameProps> = ({ frame, isAlertCondition }) => {
         <span className={cx(styles.mutedText, styles.expression.resultLabel)} title={name}>
           {name}
         </span>
-        {/* TODO format the values with american notation or SI notation? */}
         <div className={styles.expression.resultValue}>{value}</div>
         {showFiring && <AlertStateTag state={PromAlertingRuleState.Firing} size="sm" />}
         {showNormal && <AlertStateTag state={PromAlertingRuleState.Inactive} size="sm" />}
