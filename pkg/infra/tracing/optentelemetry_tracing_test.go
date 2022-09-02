@@ -28,15 +28,27 @@ func TestSplitCustomAttribs(t *testing.T) {
 			input:    "",
 			expected: []attribute.KeyValue{},
 		},
-		{
-			input:    "key1",
-			expected: []attribute.KeyValue{},
-		},
 	}
 
 	for _, test := range tests {
-		attribs := splitCustomAttribs(test.input)
+		attribs, err := splitCustomAttribs(test.input)
+		assert.NoError(t, err)
 		assert.EqualValues(t, test.expected, attribs)
+	}
+}
+
+func TestSplitCustomAttribs_Malformed(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []attribute.KeyValue
+	}{
+		{input: "key1=value1"},
+		{input: "key1"},
+	}
+
+	for _, test := range tests {
+		_, err := splitCustomAttribs(test.input)
+		assert.Error(t, err)
 	}
 }
 

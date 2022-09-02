@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -96,7 +97,10 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 		return err
 	}
 
-	ots.customAttribs = splitCustomAttribs(section.Key("custom_attributes").MustString(""))
+	ots.customAttribs, err = splitCustomAttribs(section.Key("custom_attributes").MustString(""))
+	if err != nil {
+		return err
+	}
 
 	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.jaeger")
 	if err != nil {
@@ -124,7 +128,7 @@ func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
 	return nil
 }
 
-func splitCustomAttribs(s string) []attribute.KeyValue {
+func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 	res := []attribute.KeyValue{}
 
 	attribs := strings.Split(s, ",")
@@ -132,10 +136,12 @@ func splitCustomAttribs(s string) []attribute.KeyValue {
 		parts := strings.SplitN(v, ":", 2)
 		if len(parts) > 1 {
 			res = append(res, attribute.String(parts[0], parts[1]))
+		} else if v != "" {
+			return nil, fmt.Errorf("custom attribute malformed - must be in 'key:value' form: %q", v)
 		}
 	}
 
-	return res
+	return res, nil
 }
 
 func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
