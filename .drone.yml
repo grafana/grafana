@@ -5054,7 +5054,6 @@ get:
   path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
 name: gcp_upload_artifacts_key
-<<<<<<< HEAD
 ---
 get:
   name: public-key
@@ -5093,8 +5092,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 93835e0362c0a924e8da207d3c89296a1d68f3997f86ac4859b356a872bc9f4a
+hmac: acb2294121aeef5b815019e404b3aa9b329921b0d9273ba80697a5290866dfd5
 
 ...
-=======
->>>>>>> 8f58d9ff7f (CI: Update Drone MySQL version to match database policy.)
