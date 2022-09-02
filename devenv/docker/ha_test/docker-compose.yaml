@@ -16,7 +16,7 @@ services:
         tag: nginx
 
   db:
-    image: mysql:5.6
+    image: mysql:5.7
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: grafana
@@ -41,7 +41,7 @@ services:
         condition: service_healthy
 
   # db:
-  #   image: postgres:9.3
+  #   image: postgres:10.15
   #   environment:
   #     POSTGRES_DATABASE: grafana
   #     POSTGRES_USER: grafana

@@ -1,27 +1,40 @@
 export const languageConfiguration = {
   // the default separators except `@$`
   wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g,
-  brackets: [['{', '}']],
+  brackets: [
+    ['{', '}'],
+    ['(', ')'],
+  ],
   autoClosingPairs: [
     { open: '{', close: '}' },
+    { open: '(', close: ')' },
     { open: '"', close: '"' },
     { open: "'", close: "'" },
   ],
   surroundingPairs: [
     { open: '{', close: '}' },
+    { open: '(', close: ')' },
     { open: '"', close: '"' },
     { open: "'", close: "'" },
   ],
   folding: {},
 };
 
+const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+
+const intrinsics = ['duration', 'name', 'status', 'parent'];
+
+const scopes: string[] = ['resource', 'span'];
+
+const keywords = intrinsics.concat(scopes);
+
 export const language = {
   ignoreCase: false,
   defaultToken: '',
   tokenPostfix: '.traceql',
 
-  keywords: [],
-  operators: [],
+  keywords,
+  operators,
 
   // we include these common regular expressions
   symbols: /[=><!~?:&|+\-*\/^%]+/,
@@ -36,7 +49,18 @@ export const language = {
   tokenizer: {
     root: [
       // labels
-      [/[a-z_][\w.]*(?=\s*(=|!=|=~|!~))/, 'tag'],
+      [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
+
+      // all keywords have the same color
+      [
+        /[a-zA-Z_.]\w*/,
+        {
+          cases: {
+            '@keywords': 'type',
+            '@default': 'identifier',
+          },
+        },
+      ],
 
       // strings
       [/"([^"\\]|\\.)*$/, 'string.invalid'], // non-teminated string
