@@ -1,5 +1,5 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
-import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
+import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
@@ -336,7 +336,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async metadataRequest(url: string, params = {}) {
-    return await this._request(url, params, { method: 'GET', hideFromInspector: true }).toPromise();
+    return await lastValueFrom(this._request(url, params, { method: 'GET', hideFromInspector: true }));
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -353,7 +353,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-    const response = await getBackendSrv().fetch<any>(options).toPromise();
+    const response = await lastValueFrom(getBackendSrv().fetch<any>(options));
 
     if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };

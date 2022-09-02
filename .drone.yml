@@ -1504,6 +1504,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe gen-version --build-id $$env:DRONE_BUILD_NUMBER
   - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/main/
@@ -5091,6 +5092,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: f1e0b7d56ba6cc06c4b92148767cd0bfc926386c0270fc071a02f3278b47107b
+hmac: c6f95769626222c01276a4147fe35043400d4e14d5f75fc8fa0151f7ccdbfc38
 
 ...
