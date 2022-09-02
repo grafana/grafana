@@ -52,7 +52,7 @@ func TestFatalPluginErr_FatalFlagGetsUnSetWithBackwardsCompatEnabled(t *testing.
 	require.NotNil(t, p.SecretsKVStore)
 
 	// setup - store secret and manually bypassing the remote plugin impl
-	_, err = p.PluginManager.SecretsManager().SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
+	_, err = p.PluginManager.SecretsManager(context.Background()).SecretsManager.SetSecret(context.Background(), &secretsmanagerplugin.SetSecretRequest{
 		KeyDescriptor: &secretsmanagerplugin.Key{
 			OrgId:     0,
 			Namespace: "postgres",

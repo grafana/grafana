@@ -69,49 +69,6 @@ func TestStore_Plugins(t *testing.T) {
 	})
 }
 
-func TestStore_Renderer(t *testing.T) {
-	t.Run("Renderer returns a single (non-decommissioned) renderer plugin", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.App}}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.DataSource}}
-		p4.RegisterClient(&DecommissionedPlugin{})
-
-		ps := ProvideService(
-			newFakePluginRegistry(map[string]*plugins.Plugin{
-				p1.ID: p1,
-				p2.ID: p2,
-				p3.ID: p3,
-				p4.ID: p4,
-			}),
-		)
-
-		r := ps.Renderer()
-		require.Equal(t, p1, r)
-	})
-}
-
-func TestStore_SecretsManager(t *testing.T) {
-	t.Run("Renderer returns a single (non-decommissioned) secrets manager plugin", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.SecretsManager}}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.DataSource}}
-
-		ps := ProvideService(
-			newFakePluginRegistry(map[string]*plugins.Plugin{
-				p1.ID: p1,
-				p2.ID: p2,
-				p3.ID: p3,
-				p4.ID: p4,
-			}),
-		)
-
-		r := ps.SecretsManager()
-		require.Equal(t, p3, r)
-	})
-}
-
 func TestStore_Routes(t *testing.T) {
 	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
 		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, PluginDir: "/some/dir"}

@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/correlations"
+	"github.com/grafana/grafana/pkg/services/dashboard_thumbs/dashboardthumbsimpl"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -79,7 +80,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/login_attempt/loginattemptimpl"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -175,12 +176,12 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*manager.PluginManager)),
 	client.ProvideService,
 	wire.Bind(new(plugins.Client), new(*client.Service)),
 	managerStore.ProvideService,
 	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
-	wire.Bind(new(plugins.RendererManager), new(*managerStore.Service)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*managerStore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*managerStore.Service)),
 	pluginDashboards.ProvideFileStoreManager,
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
@@ -326,6 +327,7 @@ var wireBasicSet = wire.NewSet(
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	tempuserimpl.ProvideService,
+	dashboardthumbsimpl.ProvideService,
 	loginattemptimpl.ProvideService,
 	secretsMigrations.ProvideDataSourceMigrationService,
 	secretsMigrations.ProvideMigrateToPluginService,
