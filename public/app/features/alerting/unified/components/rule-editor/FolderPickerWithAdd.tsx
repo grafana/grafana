@@ -13,6 +13,8 @@ import { createFolder, getFolderById, searchFolders } from 'app/features/manage-
 import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, PermissionLevelString } from 'app/types';
 
+import { initialFolderLabel } from './DetailsStep';
+
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
 export interface Props {
@@ -29,6 +31,8 @@ export interface Props {
   showRoot?: boolean;
   onClear?: () => void;
   accessControlMetadata?: boolean;
+  folderLabel: string;
+  setFolderLabel: (label: string) => void;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -59,6 +63,7 @@ export function FolderPickerWithAdd(props: Props) {
     showRoot,
     skipInitialLoad,
     accessControlMetadata,
+    setFolderLabel,
   } = props;
   const isClearable = typeof onClear === 'function';
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
@@ -164,8 +169,9 @@ export function FolderPickerWithAdd(props: Props) {
   useEffect(() => {
     if (folder && folder.id === VALUE_FOR_ADD) {
       setIsCustom(true);
+      setFolderLabel('Press enter to create and confirm the new folder.');
     }
-  }, [folder]);
+  }, [folder, setFolderLabel]);
 
   const onFolderChange = useCallback(
     (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
@@ -215,15 +221,17 @@ export function FolderPickerWithAdd(props: Props) {
         case 'Enter': {
           createNewFolder(folder?.title!);
           setIsCustom(false);
+          setFolderLabel(initialFolderLabel);
           break;
         }
         case 'Escape': {
           setFolder({ value: 0, label: rootName });
           setIsCustom(false);
+          setFolderLabel(initialFolderLabel);
         }
       }
     },
-    [createNewFolder, folder, rootName]
+    [createNewFolder, folder, rootName, setFolderLabel]
   );
 
   const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {
@@ -241,7 +249,7 @@ export function FolderPickerWithAdd(props: Props) {
         value={folder?.title || ''}
         onChange={onNewFolderChange}
         onKeyDown={onKeyDown}
-        placeholder="Press enter to confirm new folder"
+        placeholder="Press enter to confirm new folder."
       />
     );
   } else {

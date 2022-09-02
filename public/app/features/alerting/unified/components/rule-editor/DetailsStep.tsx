@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -28,6 +28,8 @@ interface DetailsStepProps {
   initialFolder: RuleForm | null;
 }
 
+export const initialFolderLabel = 'Select a folder to store your rule.';
+
 export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
   const {
     register,
@@ -42,6 +44,9 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
   const type = watch('type');
 
   const folderFilter = useRuleFolderFilter(initialFolder);
+
+  const [folderLabel, setFolderLabel] = useState(initialFolderLabel);
+  const isCreatingFolder = folderLabel !== initialFolderLabel;
 
   return (
     <RuleEditorSection
@@ -87,7 +92,7 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
         <div className={classNames([styles.flexRow, styles.alignBaseline])}>
           <Field
             label={
-              <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+              <Label htmlFor="folder" description={folderLabel}>
                 <Stack gap={0.5}>
                   Folder
                   <Tooltip
@@ -101,6 +106,7 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
                   >
                     <Icon name="info-circle" size="xs" />
                   </Tooltip>
+                  {isCreatingFolder && <span className={styles.newFolder}>Press enter to add the new folder.</span>}
                 </Stack>
               </Label>
             }
@@ -117,6 +123,8 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
                   enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
                   enableReset={true}
                   filter={folderFilter}
+                  folderLabel={folderLabel}
+                  setFolderLabel={setFolderLabel}
                 />
               )}
               name="folder"
@@ -194,5 +202,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: row;
     justify-content: flex-start;
     align-items: flex-end;
+  `,
+  newFolder: css`
+    color: ${theme.colors.warning.main};
   `,
 });
