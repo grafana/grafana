@@ -4,7 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useStyles2, TabsBar, TabContent, Tab, Alert, IconName, toIconName } from '@grafana/ui';
+import { useStyles2, TabsBar, TabContent, Tab, Alert, toIconName } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';

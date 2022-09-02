@@ -4,7 +4,7 @@ import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, config, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, ConfirmModal, Container, CustomScrollbar, HorizontalGroup, IconName, Modal } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Container, CustomScrollbar, HorizontalGroup, Modal } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { AppNotificationSeverity, StoreState } from 'app/types';
