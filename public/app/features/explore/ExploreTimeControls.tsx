@@ -47,7 +47,7 @@ export class ExploreTimeControls extends Component<Props> {
     });
 
     if (typeof adjustedFrom === 'string' && adjustedFrom.startsWith('now-')) {
-      reportInteraction('grafana_explore_ds_picker_ds_change', {
+      reportInteraction('grafana_explore_time_picker_time_range', {
         selectedTimeRange: adjustedFrom,
       });
     }
