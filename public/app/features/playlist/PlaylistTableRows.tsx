@@ -31,30 +31,30 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
 
     const first = item.dashboards?.[0];
     if (!item.dashboards) {
-      info.push(<Spinner />);
+      info.push(<Spinner key="spinner" />);
     } else if (item.type === 'dashboard_by_tag') {
       info.push(<TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />);
       if (!first) {
         icon = 'exclamation-triangle';
-        info.push(<span>&nbsp; No dashboards found</span>);
+        info.push(<span key="info">&nbsp; No dashboards found</span>);
       } else {
-        info.push(<span>&nbsp; {pluralize('dashboard', item.dashboards.length, true)}</span>);
+        info.push(<span key="info">&nbsp; {pluralize('dashboard', item.dashboards.length, true)}</span>);
       }
     } else if (first) {
       info.push(
         item.dashboards.length > 1 ? (
-          <span>Multiple items found: ${item.value}</span>
+          <span key="info">Multiple items found: ${item.value}</span>
         ) : (
-          <span>{first.name ?? item.value}</span>
+          <span key="info">{first.name ?? item.value}</span>
         )
       );
     } else {
       icon = 'exclamation-triangle';
-      info.push(<span>&nbsp; Not found: {item.value}</span>);
+      info.push(<span key="info">&nbsp; Not found: {item.value}</span>);
     }
     return (
       <>
-        <Icon name={icon} className={styles.rightMargin} />
+        <Icon name={icon} className={styles.rightMargin} key="icon" />
         {info}
       </>
     );
