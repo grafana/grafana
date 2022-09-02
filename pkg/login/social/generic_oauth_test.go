@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -230,6 +231,152 @@ func TestSearchJSONForRole(t *testing.T) {
 					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
 				}
 				require.Equal(t, test.ExpectedResult, actualResult)
+			})
+		}
+	})
+}
+
+func TestSearchJSONForOrgRoles(t *testing.T) {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: newLogger("generic_oauth_test", "debug"),
+			},
+		}
+
+		tests := []struct {
+			Name                  string
+			UserInfoJSONResponse  []byte
+			OrgRolesAttributePath string
+			ExpectedResult        string
+			ExpectedResultObj     map[string]string
+			ExpectedError         string
+		}{
+			{
+				Name:                  "Given an invalid user info JSON response",
+				UserInfoJSONResponse:  []byte("{"),
+				OrgRolesAttributePath: "attributes.org_roles",
+				ExpectedResult:        "",
+				ExpectedError:         "failed to unmarshal user info JSON response: unexpected end of JSON input",
+			},
+			{
+				Name:                  "Given an empty user info JSON response and empty JMES path",
+				UserInfoJSONResponse:  []byte{},
+				OrgRolesAttributePath: "",
+				ExpectedResult:        "",
+				ExpectedError:         "no attribute path specified",
+			},
+			{
+				Name:                  "Given an empty user info JSON response and valid JMES path",
+				UserInfoJSONResponse:  []byte{},
+				OrgRolesAttributePath: "attributes.role",
+				ExpectedResult:        "",
+				ExpectedError:         "empty user info JSON response provided",
+			},
+			{
+				Name: "Given a simple user info JSON response and valid JMES path",
+				UserInfoJSONResponse: []byte(`{
+	"attributes": {
+		"orgroles": {
+			"test" : "Admin"
+		}
+	}
+}`),
+				OrgRolesAttributePath: "attributes.orgroles",
+				ExpectedResultObj:     map[string]string{"test": "Admin"},
+			},
+		}
+
+		for _, test := range tests {
+			provider.orgRolesAttributePath = test.OrgRolesAttributePath
+			t.Run(test.Name, func(t *testing.T) {
+				actualResult, err := provider.searchJSONForAttr(test.OrgRolesAttributePath, test.UserInfoJSONResponse)
+				if test.ExpectedError == "" {
+					require.NoError(t, err, "Testing case %q", test.Name)
+				} else {
+					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+				}
+
+				if test.ExpectedResult == "" && test.ExpectedResultObj == nil {
+					require.Equal(t, test.ExpectedResult, actualResult)
+				} else {
+					obj, ok := actualResult.(map[string]interface{})
+					if !ok {
+						require.NoError(t, fmt.Errorf("Result in not map[string]string: %v", actualResult), "Testing case %q", test.Name)
+					}
+
+					strObj := map[string]string{}
+					for k, v := range obj {
+						if d, ok := v.(string); ok {
+							strObj[k] = d
+						}
+					}
+					require.Equal(t, test.ExpectedResultObj, strObj)
+				}
+			})
+		}
+	})
+}
+
+func TestSearchJSONForOrgRolesBase64(t *testing.T) {
+	t.Run("Given a generic OAuth provider Base64", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: newLogger("generic_oauth_test", "debug"),
+			},
+		}
+
+		tests := []struct {
+			Name                  string
+			UserInfoJSONResponse  []byte
+			OrgRolesAttributePath string
+			ExpectedResult        string
+			ExpectedError         string
+		}{
+			{
+				Name:                  "Given an invalid user info JSON response",
+				UserInfoJSONResponse:  []byte("{"),
+				OrgRolesAttributePath: "attributes.org_roles",
+				ExpectedResult:        "",
+				ExpectedError:         "failed to unmarshal user info JSON response: unexpected end of JSON input",
+			},
+			{
+				Name:                  "Given an empty user info JSON response and empty JMES path",
+				UserInfoJSONResponse:  []byte{},
+				OrgRolesAttributePath: "",
+				ExpectedResult:        "",
+				ExpectedError:         "no attribute path specified",
+			},
+			{
+				Name:                  "Given an empty user info JSON response and valid JMES path",
+				UserInfoJSONResponse:  []byte{},
+				OrgRolesAttributePath: "attributes.role",
+				ExpectedResult:        "",
+				ExpectedError:         "empty user info JSON response provided",
+			},
+			{
+				Name: "Given a simple user info JSON response and valid JMES path",
+				UserInfoJSONResponse: []byte(`{
+	"attributes": {
+		"orgroles": "base64"
+	}
+}`),
+				OrgRolesAttributePath: "attributes.orgroles",
+				ExpectedResult:        "base64",
+			},
+		}
+
+		for _, test := range tests {
+			provider.orgRolesAttributePath = test.OrgRolesAttributePath
+			t.Run(test.Name, func(t *testing.T) {
+				actualResult, err := provider.searchJSONForStringAttr(test.OrgRolesAttributePath, test.UserInfoJSONResponse)
+				if test.ExpectedError == "" {
+					require.NoError(t, err, "Testing case %q", test.Name)
+				} else {
+					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+				}
+				require.Equal(t, test.ExpectedResult, actualResult)
+
 			})
 		}
 	})

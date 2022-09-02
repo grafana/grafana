@@ -184,20 +184,22 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
 			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
-				apiUrl:               info.ApiUrl,
-				teamsUrl:             info.TeamsUrl,
-				emailAttributeName:   info.EmailAttributeName,
-				emailAttributePath:   info.EmailAttributePath,
-				nameAttributePath:    sec.Key("name_attribute_path").String(),
-				roleAttributePath:    info.RoleAttributePath,
-				roleAttributeStrict:  info.RoleAttributeStrict,
-				groupsAttributePath:  info.GroupsAttributePath,
-				loginAttributePath:   sec.Key("login_attribute_path").String(),
-				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
-				teamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
-				teamIds:              sec.Key("team_ids").Strings(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				SocialBase:                      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				apiUrl:                          info.ApiUrl,
+				teamsUrl:                        info.TeamsUrl,
+				emailAttributeName:              info.EmailAttributeName,
+				emailAttributePath:              info.EmailAttributePath,
+				nameAttributePath:               sec.Key("name_attribute_path").String(),
+				roleAttributePath:               info.RoleAttributePath,
+				roleAttributeStrict:             info.RoleAttributeStrict,
+				orgRolesAttributePath:           sec.Key("org_roles_attribute_path").String(),
+				orgRolesAttributeEncoding:       sec.Key("org_roles_attribute_encoding").String(),
+				groupsAttributePath:             info.GroupsAttributePath,
+				loginAttributePath:              sec.Key("login_attribute_path").String(),
+				idTokenAttributeName:            sec.Key("id_token_attribute_name").String(),
+				teamIdsAttributePath:            sec.Key("team_ids_attribute_path").String(),
+				teamIds:                         sec.Key("team_ids").Strings(","),
+				allowedOrganizations:            util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 
@@ -226,18 +228,19 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 }
 
 type BasicUserInfo struct {
-	Id      string
-	Name    string
-	Email   string
-	Login   string
-	Company string
-	Role    string
-	Groups  []string
+	Id       string
+	Name     string
+	Email    string
+	Login    string
+	Company  string
+	Role     string
+	OrgRoles map[string]string
+	Groups   []string
 }
 
 func (b *BasicUserInfo) String() string {
-	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Company: %s, Role: %s, Groups: %v",
-		b.Id, b.Name, b.Email, b.Login, b.Company, b.Role, b.Groups)
+	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Company: %s, Role: %s, Groups: %v, OrgRoles: %v",
+		b.Id, b.Name, b.Email, b.Login, b.Company, b.Role, b.Groups, b.OrgRoles)
 }
 
 type SocialConnector interface {
@@ -258,9 +261,12 @@ type SocialBase struct {
 	allowSignup    bool
 	allowedDomains []string
 
-	roleAttributePath   string
-	roleAttributeStrict bool
-	autoAssignOrgRole   string
+	roleAttributePath         string
+	roleAttributeStrict       bool
+	orgRolesAttributePath     string
+	orgRolesAttributeEncoding string
+	autoAssignOrgRole         string
+	autoAssignOrgID           int64
 }
 
 type Error struct {

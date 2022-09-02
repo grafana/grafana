@@ -291,6 +291,19 @@ func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *socia
 		}
 	}
 
+	if len(userInfo.OrgRoles) > 0 && !hs.Cfg.OAuthSkipOrgRoleUpdateSync {
+		for k, v := range userInfo.OrgRoles {
+			if obj, err := hs.SQLStore.GetOrgByName(k); err == nil {
+				rt := org.RoleType(v)
+				if rt.IsValid() {
+					extUser.OrgRoles[obj.Id] = rt
+				} else {
+					plog.Debug("The sure had a role assigned that was not valid", userInfo.OrgRoles, k, v)
+				}
+			}
+		}
+	}
+
 	return extUser
 }
 

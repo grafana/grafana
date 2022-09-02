@@ -20,19 +20,21 @@ import (
 
 type SocialGenericOAuth struct {
 	*SocialBase
-	allowedOrganizations []string
-	apiUrl               string
-	teamsUrl             string
-	emailAttributeName   string
-	emailAttributePath   string
-	loginAttributePath   string
-	nameAttributePath    string
-	roleAttributePath    string
-	roleAttributeStrict  bool
-	groupsAttributePath  string
-	idTokenAttributeName string
-	teamIdsAttributePath string
-	teamIds              []string
+	allowedOrganizations      []string
+	apiUrl                    string
+	teamsUrl                  string
+	emailAttributeName        string
+	emailAttributePath        string
+	loginAttributePath        string
+	nameAttributePath         string
+	roleAttributePath         string
+	roleAttributeStrict       bool
+	orgRolesAttributePath     string
+	orgRolesAttributeEncoding string
+	groupsAttributePath       string
+	idTokenAttributeName      string
+	teamIdsAttributePath      string
+	teamIds                   []string
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -104,7 +106,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	tokenData := s.extractFromToken(token)
 	apiData := s.extractFromAPI(client)
 
-	userInfo := &BasicUserInfo{}
+	userInfo := &BasicUserInfo{OrgRoles: make(map[string]string)}
 	for _, data := range []*UserInfoJson{tokenData, apiData} {
 		if data == nil {
 			continue
@@ -143,6 +145,18 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 			userInfo.Email = s.extractEmail(data)
 			if userInfo.Email != "" {
 				s.log.Debug("Set user info email from extracted email", "email", userInfo.Email)
+			}
+		}
+
+		if len(userInfo.OrgRoles) == 0 {
+			orgRoles, err := s.extractOrgRoles(data)
+			if err != nil {
+				s.log.Warn("Failed to extract org roles", "error", err)
+			} else {
+				for k, v := range orgRoles {
+					userInfo.OrgRoles[k] = v
+				}
+				s.log.Debug("Setting user info role from extracted orgRole", "role", userInfo)
 			}
 		}
 
@@ -366,6 +380,48 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 		return "", err
 	}
 	return role, nil
+}
+
+func (s *SocialGenericOAuth) extractOrgRoles(data *UserInfoJson) (map[string]string, error) {
+	orgRoles := make(map[string]string)
+	if s.orgRolesAttributePath == "" {
+		return orgRoles, nil
+	}
+
+	var orgStruct map[string]string
+	if s.orgRolesAttributeEncoding == "base64" {
+		data, err := s.searchJSONForStringAttr(s.orgRolesAttributePath, data.rawJSON)
+		if err != nil {
+			return orgRoles, err
+		}
+
+		b64, err := base64.RawURLEncoding.DecodeString(data)
+		if err != nil {
+			return orgRoles, fmt.Errorf("extractOrgRole: innerJSON in response was not base64: %v", b64)
+		}
+
+		if err := json.Unmarshal([]byte(b64), &orgStruct); err != nil {
+			return orgRoles, err
+		}
+	} else {
+		data, err := s.searchJSONForAttr(s.orgRolesAttributePath, data.rawJSON)
+		if err != nil {
+			return orgRoles, err
+		}
+
+		obj, ok := data.(map[string]string)
+		if !ok {
+			return orgRoles, fmt.Errorf("extractOrgRoles: innerJSON in response was not map[string]string: %v", data)
+		}
+
+		orgStruct = obj
+	}
+
+	for k, v := range orgStruct {
+		orgRoles[k] = v
+	}
+
+	return orgRoles, nil
 }
 
 func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error) {
