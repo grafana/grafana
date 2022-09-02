@@ -37,8 +37,8 @@ import {
   GraphiteMetricLokiMatcher,
   GraphiteOptions,
   GraphiteQuery,
-  GraphiteQueryRequest,
   GraphiteQueryImportConfiguration,
+  GraphiteQueryRequest,
   GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
@@ -859,6 +859,8 @@ export class GraphiteDatasource
       panelId: 3,
       rangeRaw: { from: 'now-1h', to: 'now' },
       range: {
+        from: dateTime('now-1h'),
+        to: dateTime('now'),
         raw: { from: 'now-1h', to: 'now' },
       },
       targets: [{ target: 'constantLine(100)' }],
