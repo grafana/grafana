@@ -268,7 +268,10 @@ export class GeomapPanel extends Component<Props, State> {
       }
     }
     // Because data changed, check map view and change if needed (data fit)
-    this.map!.setView(this.initMapView(this.props.options.view, this.map!.getLayers()));
+    const v = centerPointRegistry.getIfExists(this.props.options.view.id);
+    if (v && v.id === MapCenterID.Fit) {
+      this.map!.setView(this.initMapView(this.props.options.view, this.map!.getLayers()));
+    }
   }
 
   initMapRef = async (div: HTMLDivElement) => {
