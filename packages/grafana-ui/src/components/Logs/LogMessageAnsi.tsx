@@ -1,6 +1,5 @@
 import ansicolor from 'ansicolor';
 import React, { PureComponent } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';

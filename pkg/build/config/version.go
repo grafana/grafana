@@ -141,6 +141,7 @@ func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 
 func CheckDroneTargetBranch() (VersionMode, error) {
 	reRlsBranch := regexp.MustCompile(`^v\d+\.\d+\.x$`)
+	rePRCheckBranch := regexp.MustCompile(`^pr-check-\d+`)
 	target := os.Getenv("DRONE_TARGET_BRANCH")
 	if target == "" {
 		return "", fmt.Errorf("failed to get DRONE_TARGET_BRANCH environmental variable")
@@ -150,7 +151,11 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 	if reRlsBranch.MatchString(target) {
 		return ReleaseBranchMode, nil
 	}
-	return "", fmt.Errorf("unrecognized target branch: %s", target)
+	if rePRCheckBranch.MatchString(target) {
+		return PullRequestMode, nil
+	}
+	fmt.Printf("unrecognized target branch: %s, defaulting to %s", target, PullRequestMode)
+	return PullRequestMode, nil
 }
 
 func CheckSemverSuffix() (ReleaseMode, error) {

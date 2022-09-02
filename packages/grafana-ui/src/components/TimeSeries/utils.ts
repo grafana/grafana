@@ -222,6 +222,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
+          range: customConfig.stacking?.mode === StackingMode.Percent ? [0, 1] : undefined,
         },
         field
       )
