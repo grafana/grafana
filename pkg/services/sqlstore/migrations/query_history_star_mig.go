@@ -29,5 +29,4 @@ func addQueryHistoryStarMigrations(mg *Migrator) {
 		NewRawSQLMigration("").
 			Mysql("ALTER TABLE query_history_star MODIFY user_id BIGINT;").
 			Postgres("ALTER TABLE query_history_star ALTER COLUMN user_id TYPE BIGINT;"))
-		
 }
