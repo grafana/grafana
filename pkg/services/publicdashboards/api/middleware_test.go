@@ -1,15 +1,19 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
+	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/mock"
@@ -57,7 +61,27 @@ func TestRequiresValidAccessToken(t *testing.T) {
 func mockAccessTokenExistsResponse(returnArguments ...interface{}) *publicdashboardsService.PublicDashboardServiceImpl {
 	fakeStore := &publicdashboards.FakePublicDashboardStore{}
 	fakeStore.On("AccessTokenExists", mock.Anything, mock.Anything).Return(returnArguments[0], returnArguments[1])
-	return publicdashboardsService.ProvideService(setting.NewCfg(), fakeStore)
+
+	qds := query.ProvideService(
+		nil,
+		nil,
+		nil,
+		&fakePluginRequestValidator{},
+		&fakeDatasources.FakeDataSourceService{},
+		&fakePluginClient{
+			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				resp := backend.Responses{
+					"A": backend.DataResponse{
+						Error: fmt.Errorf("query failed"),
+					},
+				}
+				return &backend.QueryDataResponse{Responses: resp}, nil
+			},
+		},
+		&fakeOAuthTokenService{},
+	)
+
+	return publicdashboardsService.ProvideService(setting.NewCfg(), fakeStore, qds)
 }
 
 func runMiddleware(request *http.Request, pubdashService *publicdashboardsService.PublicDashboardServiceImpl) *httptest.ResponseRecorder {

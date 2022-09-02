@@ -44,7 +44,7 @@ export const GeomapStyleRulesEditor: FC<StandardEditorProps<FeatureStyleConfig[]
     value.map((style, idx: number) => {
       const itemSettings: StandardEditorsRegistryItem<any, StyleRuleEditorSettings> = {
         settings,
-      } as any;
+      } as StandardEditorsRegistryItem;
 
       return (
         <StyleRuleEditor

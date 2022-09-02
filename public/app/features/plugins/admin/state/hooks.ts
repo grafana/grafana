@@ -20,7 +20,7 @@ import {
 } from './selectors';
 
 type Filters = {
-  query?: string;
+  query?: string; // Note: this will be an escaped regex string as it comes from `FilterInput`
   filterBy?: string;
   filterByType?: string;
   sortBy?: Sorters;
