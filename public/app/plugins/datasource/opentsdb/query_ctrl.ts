@@ -25,6 +25,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
 
+    // X moved to OpenTsdbQueryEditor
     this.errors = this.validateTarget();
     this.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
     this.fillPolicies = ['none', 'nan', 'null', 'zero'];
@@ -37,33 +38,36 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       'literal_or',
       'regexp',
     ];
-
+    // X moved to OpenTsdbQueryEditor
     this.tsdbVersion = this.datasource.tsdbVersion;
-
+    // X moved to OpenTsdbQueryEditor
     if (!this.target.aggregator) {
       this.target.aggregator = 'sum';
     }
-
+    // X moved to OpenTsdbQueryEditor
     if (!this.target.downsampleAggregator) {
       this.target.downsampleAggregator = 'avg';
     }
-
+    // X moved to OpenTsdbQueryEditor
     if (!this.target.downsampleFillPolicy) {
       this.target.downsampleFillPolicy = 'none';
     }
 
+    // X moved to OpenTsdbQueryEditor
     this.datasource.getAggregators().then((aggs: { length: number }) => {
       if (aggs.length !== 0) {
         this.aggregators = aggs;
       }
     });
 
+    // X moved to OpenTsdbQueryEditor
     this.datasource.getFilterTypes().then((filterTypes: { length: number }) => {
       if (filterTypes.length !== 0) {
         this.filterTypes = filterTypes;
       }
     });
 
+    // X moved to OpenTsdbQueryEditor
     // needs to be defined here as it is called from typeahead
     this.suggestMetrics = (query: string, callback: any) => {
       this.datasource
@@ -89,6 +93,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.refresh();
   }
 
+  // X moved to OpenTsdbQueryEditor
   getTextValues(metricFindResult: any) {
     return map(metricFindResult, (value) => {
       return textUtil.escapeHtml(value.text);

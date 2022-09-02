@@ -1,7 +1,17 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface OpenTsdbQuery extends DataQuery {
-  metric?: any;
+  // migrating to react
+  // metrics section
+  metric?: string;
+  aggregator?: string;
+  alias?: string;
+
+  //downsample section
+  downsampleInterval?: string;
+  downsampleAggregator?: string;
+  downsampleFillPolicy?: string;
+
   // annotation attrs
   fromAnnotations?: boolean;
   isGlobal?: boolean;
