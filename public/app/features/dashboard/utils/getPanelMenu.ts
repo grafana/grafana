@@ -179,6 +179,14 @@ export function getPanelMenu(
     onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
   });
 
+  // Only show for editors
+  if (panel.plugin && dashboard.meta.canEdit && !panel.plugin.meta.skipDataQuery) {
+    inspectMenu.push({
+      text: 'Debug snapshot', // Support?
+      onClick: (e: React.MouseEvent) => onInspectPanel('debug'),
+    });
+  }
+
   const inspectTextTranslation = t({
     id: 'panel.header-menu.inspect',
     message: `Inspect`,

@@ -137,7 +137,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
       subtitle={
         <div>
           <p>
-            <FeatureBadge featureState={FeatureState.alpha} />
+            <FeatureBadge featureState={FeatureState.beta} />
           </p>
         </div>
       }
