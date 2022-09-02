@@ -14,9 +14,12 @@ const variableOptions = [
 
 export type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions, LokiVariableQuery>;
 
-export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
+const refId = 'LokiVariableQueryEditor-VariableQuery';
+
+export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource }) => {
   const [type, setType] = useState<number | undefined>(undefined);
   const [label, setLabel] = useState('');
+  const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
   const [stream, setStream] = useState('');
 
   useEffect(() => {
@@ -30,6 +33,16 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
     setStream(variableQuery.stream || '');
   }, [query]);
 
+  useEffect(() => {
+    if (type !== QueryType.LabelValues) {
+      return;
+    }
+
+    datasource.labelNamesQuery().then((labelNames: Array<{ text: string }>) => {
+      setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
+    });
+  }, [datasource, type]);
+
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {
     setType(newType.value);
     if (newType.value !== undefined) {
@@ -37,13 +50,13 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
         type: newType.value,
         label,
         stream,
-        refId: 'LokiVariableQueryEditor-VariableQuery',
+        refId,
       });
     }
   };
 
-  const onLabelChange = (e: FormEvent<HTMLInputElement>) => {
-    setLabel(e.currentTarget.value);
+  const onLabelChange = (newLabel: SelectableValue<string>) => {
+    setLabel(newLabel.value || '');
   };
 
   const onStreamChange = (e: FormEvent<HTMLInputElement>) => {
@@ -71,7 +84,14 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query }) => {
       {type === QueryType.LabelValues && (
         <>
           <InlineField label="Label" labelWidth={20}>
-            <Input type="text" aria-label="Label" value={label} onChange={onLabelChange} onBlur={handleBlur} />
+            <Select
+              aria-label="Label"
+              onChange={onLabelChange}
+              onBlur={handleBlur}
+              value={label}
+              options={labelOptions}
+              width={16}
+            />
           </InlineField>
           <InlineField label="Stream selector" labelWidth={20}>
             <Input
