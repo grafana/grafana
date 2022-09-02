@@ -76,11 +76,15 @@ export const addTooltipSupport = ({
   const tooltipInterpolator = config.getTooltipInterpolator();
   if (tooltipInterpolator) {
     config.addHook('setCursor', (u) => {
+      if (isToolTipOpen.current) {
+        return;
+      }
+
       tooltipInterpolator(
         setFocusedSeriesIdx,
         setFocusedPointIdx,
         (clear) => {
-          if (clear && !isToolTipOpen.current) {
+          if (clear) {
             setCoords(null);
             return;
           }
@@ -90,7 +94,7 @@ export const addTooltipSupport = ({
           }
 
           const { x, y } = positionTooltip(u, rect);
-          if (x !== undefined && y !== undefined && !isToolTipOpen.current) {
+          if (x !== undefined && y !== undefined) {
             setCoords({ canvas: { x: u.cursor.left!, y: u.cursor.top! }, viewport: { x, y } });
           }
         },

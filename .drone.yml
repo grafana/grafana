@@ -17,7 +17,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -62,16 +62,10 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - yarn install --immutable
   depends_on:
@@ -147,7 +141,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -158,12 +152,6 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.17
   name: compile-build-cmd
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -258,7 +246,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -269,12 +257,6 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.17
   name: compile-build-cmd
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -312,7 +294,6 @@ steps:
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - wire-install
   - compile-build-cmd
   image: grafana/build-container:1.5.9
@@ -321,7 +302,6 @@ steps:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - compile-build-cmd
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -330,7 +310,6 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -339,7 +318,6 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
-  - gen-version
   - yarn-install
   environment: null
   image: grafana/build-container:1.5.9
@@ -527,7 +505,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -630,7 +608,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -638,12 +616,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - yarn install --immutable
   depends_on:
@@ -673,24 +645,15 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend-packages
-  image: grafana/build-container:1.5.9
-  name: build-frontend-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
@@ -729,7 +692,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -737,12 +700,6 @@ steps:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - yarn install --immutable
   depends_on:
@@ -772,24 +729,15 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend-packages
-  image: grafana/build-container:1.5.9
-  name: build-frontend-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
@@ -833,16 +781,10 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - yarn install --immutable
   depends_on:
@@ -915,7 +857,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -926,12 +868,6 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.17
   name: compile-build-cmd
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -1025,7 +961,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1036,12 +972,6 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.17
   name: compile-build-cmd
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -1105,7 +1035,6 @@ steps:
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - wire-install
   - compile-build-cmd
   image: grafana/build-container:1.5.9
@@ -1114,7 +1043,6 @@ steps:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - compile-build-cmd
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -1123,7 +1051,6 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -1132,7 +1059,6 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -1462,7 +1388,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1566,7 +1492,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -1662,16 +1588,10 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -1687,7 +1607,7 @@ steps:
   - ./bin/grabpl publish packages --edition oss --gcp-key /tmp/gcpkey.json --build-id
     ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
+  - grabpl
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -1774,16 +1694,10 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
-- commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -1815,7 +1729,6 @@ steps:
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
-  - gen-version
   - wire-install
   - compile-build-cmd
   image: grafana/build-container:1.5.9
@@ -1824,7 +1737,6 @@ steps:
   - ./bin/build build-frontend --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
   - compile-build-cmd
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -1833,7 +1745,6 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -1842,7 +1753,6 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -2084,16 +1994,10 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
-- commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -2229,7 +2133,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2325,7 +2229,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -2337,7 +2241,6 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe gen-version ${DRONE_TAG}
   - .\grabpl.exe windows-installer --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
@@ -2384,7 +2287,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2438,12 +2341,6 @@ steps:
   image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.5.9
-  name: gen-version
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -2456,7 +2353,6 @@ steps:
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
-  - gen-version
   - wire-install
   - compile-build-cmd
   image: grafana/build-container:1.5.9
@@ -2465,7 +2361,6 @@ steps:
   - ./bin/build build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
   - compile-build-cmd
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -2474,7 +2369,6 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -2483,7 +2377,6 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -2493,7 +2386,6 @@ steps:
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise2 ${DRONE_TAG}
   depends_on:
-  - gen-version
   - wire-install
   - compile-build-cmd
   image: grafana/build-container:1.5.9
@@ -2743,7 +2635,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2796,12 +2688,6 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.5.9
   name: yarn-install
-- commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -2934,7 +2820,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3076,7 +2962,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -3108,7 +2994,6 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe gen-version ${DRONE_TAG}
   - .\grabpl.exe windows-installer --edition enterprise ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/enterprise/release/
@@ -3153,7 +3038,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3233,7 +3118,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3296,7 +3181,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3377,7 +3262,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3441,7 +3326,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3481,7 +3366,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3521,7 +3406,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3581,20 +3466,14 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
-- commands:
   - ./bin/grabpl publish packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   depends_on:
-  - gen-version
+  - grabpl
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3617,6 +3496,27 @@ steps:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-grafanacom-oss
+- depends_on:
+  - grabpl
+  failure: ignore
+  image: us.gcr.io/kubernetes-dev/package-publish:latest
+  name: publish-linux-packages
+  settings:
+    access_key_id:
+      from_secret: packages_access_key_id
+    deb_distribution: stable
+    gpg_passphrase:
+      from_secret: packages_gpg_passphrase
+    gpg_private_key:
+      from_secret: packages_gpg_private_key
+    gpg_public_key:
+      from_secret: packages_gpg_public_key
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.deb
+    secret_access_key:
+      from_secret: packages_secret_access_key
+    service_account_json:
+      from_secret: packages_service_account_json
+    target_bucket: grafana-packages
 trigger:
   event:
   - promote
@@ -3645,21 +3545,15 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl gen-version ${DRONE_TAG}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
-- commands:
   - ./bin/grabpl publish packages --edition enterprise --gcp-key /tmp/gcpkey.json
     ${DRONE_TAG}
   depends_on:
-  - gen-version
+  - grabpl
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -3682,6 +3576,27 @@ steps:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-grafanacom-enterprise
+- depends_on:
+  - grabpl
+  failure: ignore
+  image: us.gcr.io/kubernetes-dev/package-publish:latest
+  name: publish-linux-packages
+  settings:
+    access_key_id:
+      from_secret: packages_access_key_id
+    deb_distribution: stable
+    gpg_passphrase:
+      from_secret: packages_gpg_passphrase
+    gpg_private_key:
+      from_secret: packages_gpg_private_key
+    gpg_public_key:
+      from_secret: packages_gpg_public_key
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/enterprise/**.deb
+    secret_access_key:
+      from_secret: packages_secret_access_key
+    service_account_json:
+      from_secret: packages_service_account_json
+    target_bucket: grafana-packages
 trigger:
   event:
   - promote
@@ -3707,7 +3622,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3748,16 +3663,10 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -3789,7 +3698,6 @@ steps:
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - wire-install
   - compile-build-cmd
   image: grafana/build-container:1.5.9
@@ -3798,7 +3706,6 @@ steps:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - compile-build-cmd
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -3807,7 +3714,6 @@ steps:
 - commands:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -3816,7 +3722,6 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -4029,16 +3934,10 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - grabpl
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -4168,7 +4067,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4258,7 +4157,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -4306,7 +4205,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4357,12 +4256,6 @@ steps:
   image: grafana/build-container:1.5.9
   name: yarn-install
 - commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.5.9
-  name: gen-version
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -4375,7 +4268,6 @@ steps:
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - wire-install
   - compile-build-cmd
   image: grafana/build-container:1.5.9
@@ -4384,7 +4276,6 @@ steps:
   - ./bin/build build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - compile-build-cmd
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -4394,7 +4285,6 @@ steps:
   - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise --build-id
     ${DRONE_BUILD_NUMBER}
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
@@ -4403,7 +4293,6 @@ steps:
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
   depends_on:
-  - gen-version
   - yarn-install
   environment:
     GRAFANA_API_KEY:
@@ -4414,7 +4303,6 @@ steps:
   - ./bin/build build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
     --variants linux-amd64
   depends_on:
-  - gen-version
   - wire-install
   - compile-build-cmd
   image: grafana/build-container:1.5.9
@@ -4655,7 +4543,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4705,12 +4593,6 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.5.9
   name: yarn-install
-- commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - init-enterprise
-  image: grafana/build-container:1.5.9
-  name: gen-version
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -4837,7 +4719,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4970,7 +4852,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.2/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.5/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -5174,7 +5056,43 @@ get:
 kind: secret
 name: gcp_upload_artifacts_key
 ---
+get:
+  name: public-key
+  path: infra/data/ci/packages-publish/gpg
+kind: secret
+name: packages_gpg_public_key
+---
+get:
+  name: private-key
+  path: infra/data/ci/packages-publish/gpg
+kind: secret
+name: packages_gpg_private_key
+---
+get:
+  name: passphrase
+  path: infra/data/ci/packages-publish/gpg
+kind: secret
+name: packages_gpg_passphrase
+---
+get:
+  name: credentials.json
+  path: infra/data/ci/packages-publish/service-account
+kind: secret
+name: packages_service_account
+---
+get:
+  name: AccessID
+  path: infra/data/ci/packages-publish/bucket-credentials
+kind: secret
+name: packages_access_key_id
+---
+get:
+  name: Secret
+  path: infra/data/ci/packages-publish/bucket-credentials
+kind: secret
+name: packages_secret_access_key
+---
 kind: signature
-hmac: 011db54ea09dbe5c8e9add487b5b1d46b1bbcefa480efc55c52c4cb2bcf084a2
+hmac: 54f9d4c1b212da26968eb3c35278ad82bc9d204ca0f6f99eb990df1b9950516b
 
 ...

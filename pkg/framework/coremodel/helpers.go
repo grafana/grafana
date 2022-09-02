@@ -9,9 +9,10 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema/kernel"
 	tload "github.com/grafana/thema/load"
+
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 // Embed for all framework-related CUE files in this directory
@@ -54,13 +55,22 @@ func doLoadFrameworkCUE(ctx *cue.Context) (v cue.Value, err error) {
 	}
 
 	over := make(map[string]load.Source)
-	err = tload.ToOverlay(prefix, m, over)
+
+	absolutePath := prefix
+	if !filepath.IsAbs(absolutePath) {
+		absolutePath, err = filepath.Abs(absolutePath)
+		if err != nil {
+			return
+		}
+	}
+
+	err = tload.ToOverlay(absolutePath, m, over)
 	if err != nil {
 		return
 	}
 
 	bi := load.Instances(nil, &load.Config{
-		Dir:     prefix,
+		Dir:     absolutePath,
 		Package: "coremodel",
 		Overlay: over,
 	})

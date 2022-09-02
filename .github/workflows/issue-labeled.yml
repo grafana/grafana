@@ -37,6 +37,15 @@ jobs:
           echo "BOARD=${BOARD}" >> $GITHUB_ENV
           echo "CHANNEL=${CHANNEL}" >> $GITHUB_ENV
 
+      - name: "Add to GitHub board"
+        if: ${{ env.BOARD != 'null' }}
+        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        with:
+          project_id: ${{ env.BOARD }}
+          organization: grafana
+          resource_node_id: ${{ github.event.issue.node_id }}
+          gh_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: "Prepare payload"
         uses: frabert/replace-string-action@v2.0
         id: preparePayload
@@ -46,15 +55,6 @@ jobs:
           pattern: '"'
           replace-with: "'"
           flags: 'g'
-
-      - name: "Add to GitHub board"
-        if: ${{ env.BOARD != 'null' }}
-        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
-        with:
-          project_id: ${{ env.BOARD }}
-          organization: grafana
-          resource_node_id: ${{ github.event.issue.node_id }}
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Send Slack notification"
         if: ${{ env.CHANNEL != 'null' }}
