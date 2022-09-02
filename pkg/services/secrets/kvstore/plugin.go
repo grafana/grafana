@@ -25,6 +25,7 @@ var (
 
 // SecretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
 type SecretsKVStorePlugin struct {
+	sync.Mutex
 	log                            log.Logger
 	secretsPlugin                  smp.SecretsManagerPlugin
 	secretsService                 secrets.Service
@@ -180,6 +181,8 @@ func (kv *SecretsKVStorePlugin) Fallback() SecretsKVStore {
 }
 
 func (kv *SecretsKVStorePlugin) WithFallbackEnabled(fn func() error) error {
+	kv.Lock()
+	defer kv.Unlock()
 	kv.fallbackEnabled = true
 	err := fn()
 	kv.fallbackEnabled = false
