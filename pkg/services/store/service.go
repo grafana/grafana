@@ -334,7 +334,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *user.SignedIn
 	grafanaStorageLogger.Info("uploading a file", "path", req.Path)
 
 	if !req.OverwriteExistingFile {
-		file, err := root.Store().Get(ctx, storagePath)
+		file, _, err := root.Store().Get(ctx, storagePath, &filestorage.GetFileOptions{WithContents: false})
 		if err != nil {
 			grafanaStorageLogger.Error("failed while checking file existence", "err", err, "path", req.Path)
 			return ErrUploadInternalError

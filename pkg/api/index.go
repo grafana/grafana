@@ -74,6 +74,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		Section:    dtos.NavSectionConfig,
 		SortWeight: dtos.WeightProfile,
 		Children:   children,
+		RoundIcon:  true,
 	}
 }
 
@@ -366,7 +367,7 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	if c.OrgRole == org.RoleAdmin {
+	if c.OrgRole == org.RoleAdmin || (hs.Cfg.PluginAdminEnabled && ac.ReqGrafanaAdmin(c)) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
@@ -721,12 +722,6 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
-		})
-	}
-
-	if hs.Cfg.PluginAdminEnabled && ac.ReqGrafanaAdmin(c) {
-		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-			Text: "Plugins", Id: "admin-plugins", Url: hs.Cfg.AppSubURL + "/admin/plugins", Icon: "plug",
 		})
 	}
 

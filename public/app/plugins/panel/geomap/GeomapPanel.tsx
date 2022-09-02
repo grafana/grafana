@@ -35,6 +35,7 @@ import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
 import { MeasureOverlay } from './components/MeasureOverlay';
+import { MeasureVectorLayer } from './components/MeasureVectorLayer';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
@@ -146,6 +147,12 @@ export class GeomapPanel extends Component<Props, State> {
   private doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
+    this.map?.getLayers().forEach((l) => {
+      if (l instanceof MeasureVectorLayer) {
+        this.map?.removeLayer(l);
+        this.map?.addLayer(l);
+      }
+    });
     onOptionsChange({
       ...options,
       basemap: layers[0].options,
@@ -227,6 +234,7 @@ export class GeomapPanel extends Component<Props, State> {
       });
     },
     reorder: (startIndex: number, endIndex: number) => {
+      // TODO look into reorder with respect to measure layer
       const result = Array.from(this.layers);
       const [removed] = result.splice(startIndex, 1);
       result.splice(endIndex, 0, removed);
@@ -371,8 +379,8 @@ export class GeomapPanel extends Component<Props, State> {
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
     const { hoverPayload } = this;
-    hoverPayload.pageX = mouse.offsetX;
-    hoverPayload.pageY = mouse.offsetY;
+    hoverPayload.pageX = mouse.pageX;
+    hoverPayload.pageY = mouse.pageY;
     hoverPayload.point = {
       lat: hover[1],
       lon: hover[0],
@@ -436,7 +444,7 @@ export class GeomapPanel extends Component<Props, State> {
       });
     }
 
-    const found = layers.length ? true : false;
+    const found = Boolean(layers.length);
     this.mapDiv!.style.cursor = found ? 'pointer' : 'auto';
     return found;
   };
