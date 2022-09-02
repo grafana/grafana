@@ -102,7 +102,7 @@ You can query and display traces from Tempo via [Explore]({{< relref "../explore
 
 ### Tempo search
 
-Tempo search is an experimental feature behind a feature toggle. Use this to search for traces by service name, span name, duration range, or process-level attributes that are included in your application’s instrumentation, such as HTTP status code and customer ID.
+Use this to search for traces by service name, span name, duration range, or process-level attributes that are included in your application’s instrumentation, such as HTTP status code and customer ID.
 
 {{< figure src="/static/img/docs/explore/tempo-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo search feature with a trace rendered in the right panel" >}}
 
