@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
+import { Location as HistoryLocation } from 'history';
 import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationSearchToObject, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2 } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
@@ -39,7 +40,6 @@ export const NavBar = React.memo(() => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const location = useLocation();
-  const kiosk = getKioskMode();
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
@@ -86,9 +86,10 @@ export const NavBar = React.memo(() => {
 
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
 
-  if (kiosk !== KioskMode.Off) {
+  if (shouldHideNavBar(location)) {
     return null;
   }
+
   return (
     <div className={styles.navWrapper}>
       <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
@@ -174,6 +175,22 @@ export const NavBar = React.memo(() => {
     </div>
   );
 });
+
+function shouldHideNavBar(location: HistoryLocation) {
+  const queryParams = locationSearchToObject(location.search);
+  const kiosk = getKioskMode(queryParams);
+
+  if (kiosk !== KioskMode.Off) {
+    return true;
+  }
+
+  // Temporary, can be removed after topnav is made permanent
+  if ((location.pathname.indexOf('/d/') === 0 && queryParams.editview) || queryParams.editPanel) {
+    return true;
+  }
+
+  return false;
+}
 
 NavBar.displayName = 'NavBar';
 

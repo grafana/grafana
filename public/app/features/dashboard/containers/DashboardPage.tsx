@@ -325,7 +325,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   render() {
     const { dashboard, initError, queryParams, isPublic } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
-    const kioskMode = !isPublic ? getKioskMode() : KioskMode.Full;
+    const kioskMode = !isPublic ? getKioskMode(this.props.queryParams) : KioskMode.Full;
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -355,7 +355,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           pageNav={pageNav}
           layout={PageLayoutType.Dashboard}
           toolbar={toolbar}
-          className={cx(viewPanel && 'panel-in-fullscreen', queryParams.editview && 'dashboard-content--hidden')}
+          className={cx(
+            viewPanel && 'panel-in-fullscreen',
+            (queryParams.editview || editPanel) && 'dashboard-content--hidden'
+          )}
           scrollRef={this.setScrollRef}
           scrollTop={updateScrollTop}
         >
@@ -371,8 +374,16 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-          {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
         </Page>
+        {editPanel && (
+          <PanelEditor
+            dashboard={dashboard}
+            sourcePanel={editPanel}
+            tab={this.props.queryParams.tab}
+            sectionNav={sectionNav}
+            pageNav={pageNav}
+          />
+        )}
         {queryParams.editview && (
           <DashboardSettings
             dashboard={dashboard}

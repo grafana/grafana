@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
-import { FieldConfigSource, GrafanaTheme2 } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
@@ -18,6 +18,8 @@ import {
   ToolbarButton,
   withTheme2,
 } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { PageLayoutType } from 'app/core/components/Page/types';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { appEvents } from 'app/core/core';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
@@ -56,6 +58,8 @@ import { calculatePanelSize } from './utils';
 interface OwnProps {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
+  sectionNav: NavModel;
+  pageNav: NavModelItem;
   tab?: string;
 }
 
@@ -433,18 +437,27 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, initDone, updatePanelEditorUIState, uiState, theme } = this.props;
+    const { dashboard, initDone, updatePanelEditorUIState, uiState, theme, sectionNav, pageNav } = this.props;
     const styles = getStyles(theme, this.props);
 
     if (!initDone) {
       return null;
     }
 
+    const toolbar = (
+      <PageToolbar title={dashboard.title} section="Edit Panel" onGoBack={this.onGoBackToDashboard}>
+        {this.renderEditorActions()}
+      </PageToolbar>
+    );
+
     return (
-      <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <PageToolbar title={dashboard.title} section="Edit Panel" onGoBack={this.onGoBackToDashboard}>
-          {this.renderEditorActions()}
-        </PageToolbar>
+      <Page
+        navModel={sectionNav}
+        pageNav={pageNav}
+        aria-label={selectors.components.PanelEditor.General.content}
+        layout={PageLayoutType.Dashboard}
+        toolbar={toolbar}
+      >
         <div className={styles.verticalSplitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={this.renderPanelAndEditor(styles)}
@@ -463,7 +476,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             onDismiss={this.onConfirmAndDismissLibarayPanelModel}
           />
         )}
-      </div>
+      </Page>
     );
   }
 }
@@ -481,12 +494,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
     wrapper: css`
       width: 100%;
       height: 100%;
-      position: fixed;
-      z-index: ${theme.zIndex.sidemenu};
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
       background: ${theme.colors.background.canvas};
       display: flex;
       flex-direction: column;
