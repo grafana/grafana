@@ -68,7 +68,7 @@ mainloop:
 		}
 		if existing == nil {
 			folders = append(folders, &models2.Folder{
-				Id:    rand.Int63(),
+				Id:    rand.Int63n(1500),
 				Uid:   r.NamespaceUID,
 				Title: "TEST-FOLDER-" + util.GenerateShortUID(),
 			})
@@ -426,15 +426,17 @@ func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.List
 	f.RecordedOps = append(f.RecordedOps, *q)
 	return nil
 }
-func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q *models.SaveAlertInstanceCommand) error {
+func (f *FakeInstanceStore) SaveAlertInstances(_ context.Context, q ...models.AlertInstance) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.RecordedOps = append(f.RecordedOps, *q)
+	for _, inst := range q {
+		f.RecordedOps = append(f.RecordedOps, inst)
+	}
 	return nil
 }
 
 func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
-func (f *FakeInstanceStore) DeleteAlertInstance(_ context.Context, _ int64, _, _ string) error {
+func (f *FakeInstanceStore) DeleteAlertInstances(_ context.Context, _ ...models.AlertInstanceKey) error {
 	return nil
 }
 func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
