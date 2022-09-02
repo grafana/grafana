@@ -9,8 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +25,7 @@ func TestAuthenticateUser(t *testing.T) {
 			Username: "user",
 			Password: "",
 		}
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginAttemptService: nil, loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), &loginQuery)
 
 		require.EqualError(t, err, ErrPasswordEmpty.Error())
@@ -41,7 +40,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, nil, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrTooManyLoginAttempts.Error())
@@ -58,7 +57,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, ErrInvalidCredentials, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.NoError(t, err)
@@ -76,7 +75,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, ErrInvalidCredentials, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, customErr.Error())
@@ -93,7 +92,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(false, nil, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, user.ErrUserNotFound.Error())
@@ -110,7 +109,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrInvalidCredentials.Error())
@@ -127,7 +126,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, nil, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.NoError(t, err)
@@ -145,7 +144,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, customErr, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, customErr.Error())
@@ -162,7 +161,7 @@ func TestAuthenticateUser(t *testing.T) {
 		mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 		mockSaveInvalidLoginAttempt(sc)
 
-		a := AuthenticatorService{store: mockstore.NewSQLStoreMock(), loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginService: &logintest.LoginServiceFake{}}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrInvalidCredentials.Error())
@@ -198,14 +197,14 @@ func mockLoginUsingLDAP(enabled bool, err error, sc *authScenarioContext) {
 }
 
 func mockLoginAttemptValidation(err error, sc *authScenarioContext) {
-	validateLoginAttempts = func(context.Context, *models.LoginUserQuery, sqlstore.Store) error {
+	validateLoginAttempts = func(context.Context, *models.LoginUserQuery, loginattempt.Service) error {
 		sc.loginAttemptValidationWasCalled = true
 		return err
 	}
 }
 
 func mockSaveInvalidLoginAttempt(sc *authScenarioContext) {
-	saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery, _ sqlstore.Store) error {
+	saveInvalidLoginAttempt = func(ctx context.Context, query *models.LoginUserQuery, _ loginattempt.Service) error {
 		sc.saveInvalidLoginAttemptWasCalled = true
 		return nil
 	}

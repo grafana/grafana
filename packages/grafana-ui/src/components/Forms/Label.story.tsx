@@ -7,6 +7,10 @@ import mdx from './Label.mdx';
 const meta: ComponentMeta<typeof Label> = {
   title: 'Forms/Label',
   component: Label,
+  argTypes: {
+    children: { control: { type: 'text' } },
+    description: { control: { type: 'text' } },
+  },
   parameters: {
     docs: {
       page: mdx,
@@ -14,16 +18,27 @@ const meta: ComponentMeta<typeof Label> = {
   },
 };
 
-export const simple: ComponentStory<typeof Label> = () => {
-  return <Label description="Option description">Option name</Label>;
+export const simple: ComponentStory<typeof Label> = (args) => {
+  return <Label {...args} />;
 };
 
-export const categorised: ComponentStory<typeof Label> = () => {
-  return (
-    <Label category={['Category', 'Nested category']} description="Option description">
-      Option name
-    </Label>
-  );
+simple.parameters = {
+  controls: { exclude: ['category'] },
+};
+
+simple.args = {
+  children: 'Option name',
+  description: 'Option description',
+};
+
+export const categorised: ComponentStory<typeof Label> = (args) => {
+  return <Label {...args} />;
+};
+
+categorised.args = {
+  children: 'Option name',
+  description: 'Option description',
+  category: ['Category', 'Nested category'],
 };
 
 export default meta;
