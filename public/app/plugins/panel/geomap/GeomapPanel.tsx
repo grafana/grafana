@@ -594,7 +594,6 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   initViewExtent(view: View, config: MapViewConfig, layers: Collection<BaseLayer>) {
-    //TODO add option to set extent based on last data point only
     const v = centerPointRegistry.getIfExists(config.id);
     if (v) {
       let coord: Coordinate | undefined = undefined;
@@ -604,7 +603,6 @@ export class GeomapPanel extends Component<Props, State> {
         } else if (v.id === MapCenterID.Fit) {
           const extent = getLayersExtent(layers, config.lastOnly ?? false);
           if (!isEmpty(extent)) {
-            //TODO make padding an option
             const padding = config.padding ?? 5;
             const res = view.getResolutionForExtent(extent, this.map?.getSize());
             const maxZoom = config.zoom ?? config.maxZoom;
