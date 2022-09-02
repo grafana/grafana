@@ -54,7 +54,8 @@
     "i18n:compile": "echo 'no i18n compile yet, all good'",
     "betterer": "betterer",
     "betterer:merge": "betterer merge",
-    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
+    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
+    "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v9-2/",
@@ -307,6 +308,7 @@
     "calculate-size": "1.1.1",
     "centrifuge": "3.1.0",
     "classnames": "2.3.2",
+    "codeowners": "^5.1.1",
     "comlink": "4.3.1",
     "common-tags": "1.8.2",
     "core-js": "3.27.1",
