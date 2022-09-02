@@ -29,7 +29,7 @@ import { PanelModel } from '../../state';
 import { pendingNewDashboard } from '../../state/initDashboard';
 
 import { Randomize } from './randomizer';
-import { getGithubMarkdown, getTroubleshootingDashboard } from './utils';
+import { getGithubMarkdown, getDebugDashboard } from './utils';
 
 interface Props {
   panel: PanelModel;
@@ -63,17 +63,13 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   const [rand, setRand] = useState<Randomize>({});
   const [_, copyToClipboard] = useCopyToClipboard();
   const info = useAsync(async () => {
-    const dash = await getTroubleshootingDashboard(panel, rand, getTimeSrv().timeRange());
+    const dash = await getDebugDashboard(panel, rand, getTimeSrv().timeRange());
     setDashboardText(JSON.stringify(dash, null, 2));
   }, [rand, panel, plugin, setDashboardText]);
 
-  const messageText = useMemo(() => {
-    console.log({ showMessage });
-    if (showMessage === ShowMessge.GithubComment) {
-      return getGithubMarkdown(panel, snapshotText);
-    }
-    return snapshotText;
-  }, [snapshotText, showMessage, panel]);
+  const markdownText = useMemo(() => {
+    return getGithubMarkdown(panel, snapshotText);
+  }, [snapshotText, panel]);
 
   if (!plugin) {
     return null;
@@ -99,9 +95,14 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
     saveAs(blob, fileName);
   };
 
+  const doCopyMarkdown = () => {
+    copyToClipboard(markdownText);
+    appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
+  };
+
   const tabs = [
-    { label: 'Wizard', value: InspectTab.Debug },
-    { label: 'Reports', value: InspectTab.JSON },
+    { label: 'Snapshot', value: InspectTab.Debug },
+    { label: 'Code', value: InspectTab.JSON },
   ];
   let activeTab = currentTab;
   if (!tabs.find((item) => item.value === currentTab)) {
@@ -148,15 +149,12 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
                 onChange={(v) => setShowMessge(v.value ?? options[0].value!)}
               />
             </Field>
-            <Button
-              onClick={() => {
-                copyToClipboard(messageText);
-                appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
-              }}
-            >
-              Copy
-            </Button>
-            {showMessage === ShowMessge.GithubComment && <Button onClick={doDownloadDashboard}>Download</Button>}
+
+            {showMessage === ShowMessge.GithubComment ? (
+              <Button onClick={doCopyMarkdown}>Copy</Button>
+            ) : (
+              <Button onClick={doDownloadDashboard}>Download</Button>
+            )}
           </div>
           <AutoSizer disableWidth>
             {({ height }) => (
@@ -166,7 +164,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
                 language={showMessage === ShowMessge.GithubComment ? 'markdown' : 'json'}
                 showLineNumbers={true}
                 showMiniMap={true}
-                value={messageText || ''}
+                value={showMessage === ShowMessge.GithubComment ? markdownText : snapshotText}
                 readOnly={false}
                 onBlur={setDashboardText}
               />
@@ -175,20 +173,18 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
         </div>
       ) : (
         <div>
-          <h3>Snapshot</h3>
-          <div>
-            <Field
-              label="Randomize data"
-              description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
-            >
-              <HorizontalGroup>
-                <InlineSwitch
-                  label="Labels"
-                  showLabel={true}
-                  value={Boolean(rand.labels)}
-                  onChange={(v) => toggleRandomize('labels')}
-                />
-                {/* <InlineSwitch
+          <Field
+            label="Randomize data"
+            description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+          >
+            <HorizontalGroup>
+              <InlineSwitch
+                label="Labels"
+                showLabel={true}
+                value={Boolean(rand.labels)}
+                onChange={(v) => toggleRandomize('labels')}
+              />
+              {/* <InlineSwitch
                   label="Field names"
                   showLabel={true}
                   value={Boolean(rand.names)}
@@ -200,11 +196,25 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
                   value={Boolean(rand.values)}
                   onChange={(v) => toggleRandomize('values')}
                 /> */}
-              </HorizontalGroup>
-            </Field>
-          </div>
+            </HorizontalGroup>
+          </Field>
 
-          <Button onClick={doImportDashboard}>Preview</Button>
+          <Field
+            label="Debug snapshot"
+            description="A panel debug snapshot creates a dashboard that can reproduce visualization issues while disconnected from the original data sources."
+          >
+            <HorizontalGroup>
+              <Button icon="download-alt" onClick={doDownloadDashboard}>
+                Download
+              </Button>
+              <Button icon="github" onClick={doCopyMarkdown}>
+                Copy for github
+              </Button>
+              <Button onClick={doImportDashboard} variant="secondary">
+                Preview
+              </Button>
+            </HorizontalGroup>
+          </Field>
 
           {/* TODO: can we iframe in the preview? */}
           {false && <iframe src={`/dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`} width="100%" height={300} />}

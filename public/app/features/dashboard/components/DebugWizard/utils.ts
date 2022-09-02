@@ -53,13 +53,13 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
 
   if (snapshot) {
     md += `<details><summary>Panel snapshot (2.5mb)</summary>
-       <pre><code>${escape(snapshot)}</code></pre>
-      </details>`;
+<pre>${escape(snapshot)}</pre>
+</details>`;
   }
   return md;
 }
 
-export async function getTroubleshootingDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
+export async function getDebugDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
   const saveModel = panel.getSaveModel();
   const dashboard = cloneDeep(embeddedDataTemplate);
   const info = {
@@ -153,8 +153,8 @@ export async function getTroubleshootingDashboard(panel: PanelModel, rand: Rando
   dashboard.panels[1].options.content = html;
   dashboard.panels[2].options.content = JSON.stringify(saveModel, null, 2);
 
-  dashboard.title = `Troubleshooting: ${saveModel.title} // ${dateTimeFormat(new Date())}`;
-  dashboard.tags = ['troubleshoot', `troubleshoot-${info.panelType}`];
+  dashboard.title = `Debug: ${saveModel.title} // ${dateTimeFormat(new Date())}`;
+  dashboard.tags = ['debug', `debug-${info.panelType}`];
   dashboard.time = {
     from: timeRange.from.toISOString(),
     to: timeRange.to.toISOString(),
@@ -233,7 +233,7 @@ const embeddedDataTemplate: any = {
         content: '...',
         mode: 'html',
       },
-      title: 'Troubleshooting info',
+      title: 'Debug info',
       type: 'text',
     },
     {
