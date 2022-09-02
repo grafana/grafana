@@ -80,7 +80,7 @@ Query expressions are different for each data source. For more information, refe
    - **Label:** The variable dropdown only displays the selected variable value and a down arrow.
    - **Variable:** No variable dropdown is displayed on the dashboard.
 
-### Enter Query Options
+### Enter query options
 
 1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source/" >}}).
 1. In the **Refresh** list, select when the variable should update options.
