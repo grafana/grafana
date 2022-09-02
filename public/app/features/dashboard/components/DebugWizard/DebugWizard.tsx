@@ -197,18 +197,19 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
         </div>
       ) : (
         <div>
-          <Field
-            label="Randomize data"
-            description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
-          >
-            <HorizontalGroup>
-              <InlineSwitch
-                label="Labels"
-                showLabel={true}
-                value={Boolean(rand.labels)}
-                onChange={(v) => toggleRandomize('labels')}
-              />
-              {/* <InlineSwitch
+          {false && (
+            <Field
+              label="Randomize data"
+              description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+            >
+              <HorizontalGroup>
+                <InlineSwitch
+                  label="Labels"
+                  showLabel={true}
+                  value={Boolean(rand.labels)}
+                  onChange={(v) => toggleRandomize('labels')}
+                />
+                {/* <InlineSwitch
                   label="Field names"
                   showLabel={true}
                   value={Boolean(rand.names)}
@@ -220,24 +221,31 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
                   value={Boolean(rand.values)}
                   onChange={(v) => toggleRandomize('values')}
                 /> */}
-            </HorizontalGroup>
-          </Field>
+              </HorizontalGroup>
+            </Field>
+          )}
 
           <Field
             label="Debug snapshot"
             description="A panel debug snapshot creates a dashboard that can reproduce visualization issues while disconnected from the original data sources."
           >
-            <HorizontalGroup>
-              <Button icon="download-alt" onClick={doDownloadDashboard}>
-                Download ({snapshotSize})
-              </Button>
-              <Button icon="github" onClick={doCopyMarkdown}>
-                Copy for github
-              </Button>
-              <Button onClick={doImportDashboard} variant="secondary">
-                Preview
-              </Button>
-            </HorizontalGroup>
+            <>
+              <HorizontalGroup>
+                <Button icon="download-alt" onClick={doDownloadDashboard}>
+                  Download ({snapshotSize})
+                </Button>
+                <Button icon="github" onClick={doCopyMarkdown}>
+                  Copy for github
+                </Button>
+              </HorizontalGroup>
+              <div>
+                <br />
+                <Button onClick={doImportDashboard} variant="secondary">
+                  Preview
+                </Button>
+                &nbsp;Requires <a href="/plugins/testdata">Testdata DB</a> to be installed
+              </div>
+            </>
           </Field>
 
           {/* TODO: can we iframe in the preview? */}
