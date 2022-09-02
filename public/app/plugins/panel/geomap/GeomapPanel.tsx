@@ -35,6 +35,7 @@ import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
 import { MeasureOverlay } from './components/MeasureOverlay';
+import { MeasureVectorLayer } from './components/MeasureVectorLayer';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
@@ -147,7 +148,7 @@ export class GeomapPanel extends Component<Props, State> {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
     this.map?.getLayers().forEach((l) => {
-      if (l.get('name') !== undefined && l.get('name') === 'measureLayer') {
+      if (l instanceof MeasureVectorLayer) {
         this.map?.removeLayer(l);
         this.map?.addLayer(l);
       }
