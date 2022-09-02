@@ -14,7 +14,7 @@ import { DimensionSupplier } from 'app/features/dimensions';
 import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 
 import { StyleConfigState } from '../style/types';
-import { getMapLayerState } from '../utils/layers';
+import { MapLayerState } from '../types';
 
 export interface MarkersLegendProps {
   size?: DimensionSupplier<number>;
@@ -27,7 +27,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
   const { layerName, styleConfig, layer } = props;
   const style = useStyles2(getStyles);
 
-  const hoverEvent = useObservable(getMapLayerState(layer)?.mouseEvents ?? of(undefined));
+  const hoverEvent = useObservable(((layer as any)?.__state as MapLayerState)?.mouseEvents ?? of(undefined));
 
   const colorField = styleConfig?.dims?.color?.field;
   const hoverValue = useMemo(() => {
