@@ -5231,6 +5231,7 @@ __metadata:
     "@types/react-calendar": 3.5.1
     "@types/react-color": 3.0.6
     "@types/react-dom": 17.0.14
+    "@types/react-highlight-words": 0.16.4
     "@types/react-router-dom": 5.3.3
     "@types/react-table": 7.7.12
     "@types/react-test-renderer": 17.0.1
