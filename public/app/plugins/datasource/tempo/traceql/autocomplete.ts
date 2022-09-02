@@ -74,6 +74,15 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     tags.forEach((t) => (this.tags[t] = new Set<string>()));
   }
 
+  private overrideTagName(tagName: string): string {
+    switch (tagName) {
+      case 'status':
+        return 'status.code';
+      default:
+        return tagName;
+    }
+  }
+
   /**
    * Get suggestion based on the situation we are in like whether we should suggest tag names or values.
    * @param situation
@@ -106,12 +115,14 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR' as CompletionType,
         }));
       case 'SPANSET_IN_VALUE':
+        const tagName = this.overrideTagName(situation.tagName);
         let tagValues: Array<SelectableValue<string>> = [];
-        if (this.cachedValues.hasOwnProperty(situation.tagName)) {
-          tagValues = this.cachedValues[situation.tagName];
+        
+        if (this.cachedValues.hasOwnProperty(tagName)) {
+          tagValues = this.cachedValues[tagName];
         } else {
-          tagValues = await this.languageProvider.getOptions(situation.tagName);
-          this.cachedValues[situation.tagName] = tagValues;
+          tagValues = await this.languageProvider.getOptions(tagName);
+          this.cachedValues[tagName] = tagValues;
         }
 
         const items: Completion[] = [];
