@@ -146,6 +146,12 @@ export class GeomapPanel extends Component<Props, State> {
   private doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
+    this.map?.getLayers().forEach((l) => {
+      if (l.get('name') !== undefined && l.get('name') === 'measureLayer') {
+        this.map?.removeLayer(l);
+        this.map?.addLayer(l);
+      }
+    });
     onOptionsChange({
       ...options,
       basemap: layers[0].options,
@@ -227,6 +233,7 @@ export class GeomapPanel extends Component<Props, State> {
       });
     },
     reorder: (startIndex: number, endIndex: number) => {
+      // TODO look into reorder with respect to measure layer
       const result = Array.from(this.layers);
       const [removed] = result.splice(startIndex, 1);
       result.splice(endIndex, 0, removed);

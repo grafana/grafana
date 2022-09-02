@@ -53,6 +53,8 @@ export const MeasureOverlay = ({ map, menuActiveState }: Props) => {
       if (firstLoad) {
         // Initialize on first load
         setFirstLoad(false);
+        vector.current.setZIndex(1);
+        vector.current.set('name', 'measureLayer');
         map.addLayer(vector.current);
         map.addInteraction(vector.current.modify);
       }
