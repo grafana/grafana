@@ -1,12 +1,12 @@
+import { load } from 'js-yaml';
 import { e2e } from '@grafana/e2e';
 
 import {
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
 } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/types';
-import EXAMPLE_DASHBOARD from './example-dashboards/azure-monitor.json';
 
-import { load } from 'js-yaml';
+import EXAMPLE_DASHBOARD from './example-dashboards/azure-monitor.json';
 
 const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
 
