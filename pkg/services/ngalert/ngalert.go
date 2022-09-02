@@ -41,26 +41,27 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
 	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
-	bus bus.Bus) (*AlertNG, error) {
+	bus bus.Bus, accesscontrolService accesscontrol.Service) (*AlertNG, error) {
 	ng := &AlertNG{
-		Cfg:                 cfg,
-		DataSourceCache:     dataSourceCache,
-		DataSourceService:   dataSourceService,
-		RouteRegister:       routeRegister,
-		SQLStore:            sqlStore,
-		KVStore:             kvStore,
-		ExpressionService:   expressionService,
-		DataProxy:           dataProxy,
-		QuotaService:        quotaService,
-		SecretsService:      secretsService,
-		Metrics:             m,
-		Log:                 log.New("ngalert"),
-		NotificationService: notificationService,
-		folderService:       folderService,
-		accesscontrol:       ac,
-		dashboardService:    dashboardService,
-		renderService:       renderService,
-		bus:                 bus,
+		Cfg:                  cfg,
+		DataSourceCache:      dataSourceCache,
+		DataSourceService:    dataSourceService,
+		RouteRegister:        routeRegister,
+		SQLStore:             sqlStore,
+		KVStore:              kvStore,
+		ExpressionService:    expressionService,
+		DataProxy:            dataProxy,
+		QuotaService:         quotaService,
+		SecretsService:       secretsService,
+		Metrics:              m,
+		Log:                  log.New("ngalert"),
+		NotificationService:  notificationService,
+		folderService:        folderService,
+		accesscontrol:        ac,
+		dashboardService:     dashboardService,
+		renderService:        renderService,
+		bus:                  bus,
+		accesscontrolService: accesscontrolService,
 	}
 
 	if ng.IsDisabled() {
@@ -100,6 +101,7 @@ type AlertNG struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
+	accesscontrolService accesscontrol.Service
 
 	bus bus.Bus
 }
@@ -156,7 +158,7 @@ func (ng *AlertNG) init() error {
 		Cfg:           ng.Cfg.UnifiedAlerting,
 		C:             clk,
 		Logger:        ng.Log,
-		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.SecretsService, ng.ExpressionService),
+		Evaluator:     eval.NewEvaluator(ng.Cfg, ng.Log, ng.DataSourceCache, ng.ExpressionService),
 		InstanceStore: store,
 		RuleStore:     store,
 		Metrics:       ng.Metrics.GetSchedulerMetrics(),
@@ -192,7 +194,6 @@ func (ng *AlertNG) init() error {
 		Schedule:             ng.schedule,
 		DataProxy:            ng.DataProxy,
 		QuotaService:         ng.QuotaService,
-		SecretsService:       ng.SecretsService,
 		TransactionManager:   store,
 		InstanceStore:        store,
 		RuleStore:            store,
@@ -211,7 +212,7 @@ func (ng *AlertNG) init() error {
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	return DeclareFixedRoles(ng.accesscontrol)
+	return DeclareFixedRoles(ng.accesscontrolService)
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore store.RuleStore, scheduler schedule.ScheduleService) {
