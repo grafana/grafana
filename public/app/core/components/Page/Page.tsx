@@ -2,7 +2,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 
@@ -12,7 +12,7 @@ import { Page as NewPage } from '../PageNew/Page';
 
 import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
-import { PageLayoutType, PageType } from './types';
+import { PageType } from './types';
 import { usePageNav } from './usePageNav';
 import { usePageTitle } from './usePageTitle';
 

@@ -1,16 +1,11 @@
 import React from 'react';
 
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, PageLayoutType } from '@grafana/data';
 
 export interface PluginPageProps {
   pageNav?: NavModelItem;
   children: React.ReactNode;
-  layout?: PluginPageLayout;
-}
-
-export enum PluginPageLayout {
-  Standard,
-  Canvas,
+  layout?: PageLayoutType;
 }
 
 export type PluginPageType = React.ComponentType<PluginPageProps>;

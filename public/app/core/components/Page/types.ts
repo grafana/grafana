@@ -1,7 +1,6 @@
 import React, { FC, HTMLAttributes, RefCallback } from 'react';
 
-import { NavModel, NavModelItem } from '@grafana/data';
-import { PluginPageLayout } from '@grafana/runtime';
+import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 
 import { PageHeader } from '../PageHeader/PageHeader';
 
@@ -21,11 +20,6 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   scrollRef?: RefCallback<HTMLDivElement>;
   /** Can be used to update the current scroll position */
   scrollTop?: number;
-}
-
-export enum PageLayoutType {
-  Standard = PluginPageLayout.Standard,
-  Canvas = PluginPageLayout.Canvas,
 }
 
 export interface PageType extends FC<PageProps> {

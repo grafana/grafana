@@ -1,10 +1,10 @@
 import React from 'react';
 
+import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLayoutType } from 'app/core/components/Page/types';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneObjectStatePlain, SceneObject } from '../core/types';
