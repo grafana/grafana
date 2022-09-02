@@ -212,7 +212,7 @@ const embeddedDataTemplate: any = {
       title: 'Reproduced with embedded data',
       datasource: {
         type: 'testdata',
-        uid: 'nVPrVUQGk',
+        uid: '${testdata}',
       },
       gridPos: {
         h: 13,
