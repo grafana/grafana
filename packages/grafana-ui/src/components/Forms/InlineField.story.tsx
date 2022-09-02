@@ -112,4 +112,19 @@ export const multiple: ComponentStory<typeof InlineField> = () => {
   );
 };
 
+export const error: ComponentStory<typeof InlineField> = (args) => {
+  return (
+    <InlineField {...args}>
+      <Input placeholder="Inline input" />
+    </InlineField>
+  );
+};
+
+error.args = {
+  ...basic.args,
+  label: 'Label',
+  error: 'Error',
+  invalid: true,
+};
+
 export default meta;
