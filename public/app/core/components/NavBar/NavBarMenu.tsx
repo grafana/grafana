@@ -9,7 +9,7 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { CollapsableSection, CustomScrollbar, Icon, IconButton, IconName, useStyles2, useTheme2 } from '@grafana/ui';
+import { CollapsableSection, CustomScrollbar, Icon, IconButton, toIconName, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { NavBarItemIcon } from './NavBarItemIcon';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
@@ -235,14 +235,15 @@ export function NavItem({
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
-          {link.children.map(
-            (childLink) =>
+          {link.children.map((childLink) => {
+            const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
+            return (
               !childLink.divider && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}
                   isActive={activeItem === childLink}
                   isDivider={childLink.divider}
-                  icon={childLink.showIconInNavbar ? (childLink.icon as IconName) : undefined}
+                  icon={childLink.showIconInNavbar ? icon : undefined}
                   onClick={() => {
                     childLink.onClick?.();
                     onClose();
@@ -254,7 +255,8 @@ export function NavItem({
                   isMobile={true}
                 />
               )
-          )}
+            );
+          })}
         </ul>
       </CollapsibleNavItem>
     );
