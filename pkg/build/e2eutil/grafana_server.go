@@ -37,6 +37,7 @@ func (g *GrafanaServer) Wait() {
 
 		case <-ticker.C:
 			url := fmt.Sprintf("http://%s:%d", g.Host, g.Port)
+			//nolint:gosec
 			resp, err := http.Get(url)
 			if err == nil {
 				body, err := io.ReadAll(resp.Body)
