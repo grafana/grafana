@@ -211,6 +211,11 @@ func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin)
 	if err := m.pluginRegistry.Add(ctx, p); err != nil {
 		return err
 	}
+
+	if !p.IsCorePlugin() {
+		m.log.Info("Plugin registered", "pluginID", p.ID)
+	}
+
 	return m.processManager.Start(ctx, p.ID)
 }
 

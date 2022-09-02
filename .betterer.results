@@ -83,9 +83,6 @@ exports[`no enzyme tests`] = {
     "public/app/plugins/datasource/loki/components/LokiQueryEditor.test.tsx:146069464": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/plugins/datasource/loki/configuration/ConfigEditor.test.tsx:2659566901": [
-      [0, 17, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/plugins/datasource/loki/configuration/DerivedFields.test.tsx:2402631398": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ]
