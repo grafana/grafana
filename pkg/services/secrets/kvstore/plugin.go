@@ -70,7 +70,7 @@ func (kv *SecretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 	}
 
 	if res.Exists {
-		updateFatalFlag(ctx, *kv)
+		updateFatalFlag(ctx, kv)
 	}
 
 	if kv.fallbackEnabled {
@@ -99,7 +99,7 @@ func (kv *SecretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	updateFatalFlag(ctx, *kv)
+	updateFatalFlag(ctx, kv)
 
 	return err
 }
@@ -211,7 +211,7 @@ func parseItems(items []*smp.Item) []Item {
 	return newItems
 }
 
-func updateFatalFlag(ctx context.Context, skv SecretsKVStorePlugin) {
+func updateFatalFlag(ctx context.Context, skv *SecretsKVStorePlugin) {
 	// This function makes the most sense in here because it handles all possible scenarios:
 	//   - User changed backwards compatibility flag, so we have to migrate secrets either to or from the plugin (get or set)
 	//   - Migration is on, so we migrate secrets to the plugin (set)

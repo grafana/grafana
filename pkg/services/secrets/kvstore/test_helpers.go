@@ -35,7 +35,8 @@ func NewFakePluginSecretsKVStore(t *testing.T, features featuremgmt.FeatureToggl
 	store := kvstore.ProvideService(sqlStore)
 	namespacedKVStore := GetNamespacedKVStore(store)
 	manager := NewFakeSecretsPluginManager(t, false)
-	return NewPluginSecretsKVStore(manager.SecretsManager().SecretsManager, secretsService, namespacedKVStore, features, fallback, log.New("test.logger"))
+	plugin := manager.SecretsManager().SecretsManager
+	return NewPluginSecretsKVStore(plugin, secretsService, namespacedKVStore, features, fallback, log.New("test.logger"))
 }
 
 // In memory kv store used for testing
