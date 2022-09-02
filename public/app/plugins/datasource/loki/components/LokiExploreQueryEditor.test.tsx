@@ -1,6 +1,5 @@
-import { mount, shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { LoadingState, PanelData, toUtc, TimeRange, HistoryItem } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
@@ -11,10 +10,15 @@ import { createLokiDatasource } from '../mocks';
 import { LokiQuery } from '../types';
 
 import { LokiExploreQueryEditor, Props } from './LokiExploreQueryEditor';
-import { LokiOptionFields } from './LokiOptionFields';
 
-const setup = (renderMethod: (c: JSX.Element) => ReturnType<typeof shallow> | ReturnType<typeof mount>) => {
-  const datasource: LokiDatasource = createLokiDatasource({} as unknown as TemplateSrv);
+const setup = () => {
+  const mockTemplateSrv: TemplateSrv = {
+    getVariables: jest.fn(),
+    replace: jest.fn(),
+    containsTemplate: jest.fn(),
+    updateTimeRange: jest.fn(),
+  };
+  const datasource: LokiDatasource = createLokiDatasource(mockTemplateSrv);
   datasource.languageProvider = new LokiLanguageProvider(datasource);
   jest.spyOn(datasource, 'metadataRequest').mockResolvedValue([]);
 
@@ -73,7 +77,7 @@ const setup = (renderMethod: (c: JSX.Element) => ReturnType<typeof shallow> | Re
     onRunQuery,
   };
 
-  return renderMethod(<LokiExploreQueryEditor {...props} />);
+  render(<LokiExploreQueryEditor {...props} />);
 };
 
 describe('LokiExploreQueryEditor', () => {
@@ -87,16 +91,12 @@ describe('LokiExploreQueryEditor', () => {
     window.getSelection = originalGetSelection;
   });
 
-  it('should render component', () => {
-    const wrapper = setup(shallow);
-    expect(wrapper).toMatchSnapshot();
+  it('should render component without throwing an error', () => {
+    expect(() => setup()).not.toThrow();
   });
 
   it('should render LokiQueryField with ExtraFieldElement when ExploreMode is set to Logs', async () => {
-    // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
-    await act(async () => {
-      const wrapper = setup(mount);
-      expect(wrapper.find(LokiOptionFields).length).toBe(1);
-    });
+    setup();
+    expect(screen.getByLabelText('Loki extra field')).toBeInTheDocument();
   });
 });
