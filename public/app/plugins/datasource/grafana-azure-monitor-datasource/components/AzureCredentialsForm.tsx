@@ -182,6 +182,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               tooltip="Choose an Azure Cloud"
               data-testid={selectors.components.configEditor.azureCloud.input}
               htmlFor="azure-cloud-type"
+              disabled={disabled}
             >
               <Select
                 inputId="azure-cloud-type"
@@ -190,7 +191,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                 value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                 options={azureCloudOptions}
                 onChange={onAzureCloudChange}
-                disabled={disabled}
               />
             </InlineField>
           )}
