@@ -2,12 +2,15 @@ package kvstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
+
+var errSecretStoreIsNotCached = errors.New("SecretsKVStore is not a CachedKVStore")
 
 type CachedKVStore struct {
 	log   log.Logger
@@ -81,6 +84,9 @@ func (kv *CachedKVStore) GetAll(ctx context.Context) ([]Item, error) {
 	return kv.store.GetAll(ctx)
 }
 
-func GetUnwrappedStoreFromCache(kv SecretsKVStore) SecretsKVStore {
-	return kv.(*CachedKVStore).store
+func GetUnwrappedStoreFromCache(kv SecretsKVStore) (SecretsKVStore, error) {
+	if cache, ok := kv.(*CachedKVStore); ok {
+		return cache.store, nil
+	}
+	return nil, errSecretStoreIsNotCached
 }

@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -11,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var errSecretStoreIsNotPlugin = errors.New("SecretsKVStore is not a SecretsKVStorePlugin")
 
 // MigrateToPluginService This migrator will handle migration of datasource secrets (aka Unified secrets)
 // into the plugin secrets configured
@@ -45,7 +48,15 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 	if err := secretskvs.EvaluateRemoteSecretsPlugin(s.manager, s.cfg); err == nil {
 		logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to get the fallback store since in this scenario the secrets store would be the plugin.
-		pluginStore := secretskvs.GetUnwrappedStoreFromCache(s.secretsStore).(*secretskvs.SecretsKVStorePlugin)
+		tmpStore, err := secretskvs.GetUnwrappedStoreFromCache(s.secretsStore)
+		if err != nil {
+			tmpStore = s.secretsStore
+			logger.Warn("secret store is not cached, this is unexpected - continuing migration anyway.")
+		}
+		pluginStore, ok := tmpStore.(*secretskvs.SecretsKVStorePlugin)
+		if !ok {
+			return errSecretStoreIsNotPlugin
+		}
 		fallbackStore := pluginStore.Fallback()
 
 		// before we start migrating, check see if plugin startup failures were already fatal
