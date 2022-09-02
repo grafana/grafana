@@ -196,7 +196,7 @@ type fakePluginManager struct {
 	plugin            *plugins.Plugin
 }
 
-func (mg *fakePluginManager) SecretsManager() *plugins.Plugin {
+func (mg *fakePluginManager) SecretsManager(_ context.Context) *plugins.Plugin {
 	if mg.plugin != nil {
 		return mg.plugin
 	}
