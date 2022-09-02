@@ -121,7 +121,7 @@ func TestFeatureUsageStats(t *testing.T) {
 
 func TestCollectingUsageStats(t *testing.T) {
 	sqlStore := mockstore.NewSQLStoreMock()
-	sqlStore.ExpectedDataSources = []*datasources.DataSource{
+	expectedDataSources := []*datasources.DataSource{
 		{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"esVersion": "2.0.0",
@@ -149,7 +149,7 @@ func TestCollectingUsageStats(t *testing.T) {
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
 	}, sqlStore,
-		withDatasources(mockDatasourceService{datasources: sqlStore.ExpectedDataSources}))
+		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
 	s.startTime = time.Now().Add(-1 * time.Minute)
 
@@ -204,19 +204,7 @@ func TestCollectingUsageStats(t *testing.T) {
 func TestElasticStats(t *testing.T) {
 	sqlStore := mockstore.NewSQLStoreMock()
 
-	s := createService(t, &setting.Cfg{
-		ReportingEnabled:     true,
-		BuildVersion:         "5.0.0",
-		AnonymousEnabled:     true,
-		BasicAuthEnabled:     true,
-		LDAPEnabled:          true,
-		AuthProxyEnabled:     true,
-		Packaging:            "deb",
-		ReportingDistributor: "hosted-grafana",
-	}, sqlStore,
-		withDatasources(mockDatasourceService{datasources: sqlStore.ExpectedDataSources}))
-
-	sqlStore.ExpectedDataSources = []*datasources.DataSource{
+	expectedDataSources := []*datasources.DataSource{
 		{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"esVersion": "2.0.0",
@@ -233,6 +221,18 @@ func TestElasticStats(t *testing.T) {
 			}),
 		},
 	}
+
+	s := createService(t, &setting.Cfg{
+		ReportingEnabled:     true,
+		BuildVersion:         "5.0.0",
+		AnonymousEnabled:     true,
+		BasicAuthEnabled:     true,
+		LDAPEnabled:          true,
+		AuthProxyEnabled:     true,
+		Packaging:            "deb",
+		ReportingDistributor: "hosted-grafana",
+	}, sqlStore,
+		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
 	metrics, err := s.collectElasticStats(context.Background())
 	require.NoError(t, err)
@@ -265,7 +265,7 @@ func TestDatasourceStats(t *testing.T) {
 		},
 	}
 
-	sqlStore.ExpectedDataSources = []*datasources.DataSource{
+	_ = []*datasources.DataSource{
 		{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"esVersion": 2,

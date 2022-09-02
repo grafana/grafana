@@ -19,6 +19,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DataHoverPayload,
+  DecimalCount,
   FieldDisplay,
   FieldType,
   formattedValueToString,
@@ -58,7 +59,7 @@ import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { isLegacyGraphHoverEvent } from './utils';
 
-const LegendWithThemeProvider = provideTheme(Legend);
+const LegendWithThemeProvider = provideTheme(Legend, config.theme2);
 
 class GraphElement {
   ctrl: GraphCtrl;
@@ -945,11 +946,7 @@ class GraphElement {
     return ticks;
   }
 
-  configureAxisMode(
-    axis: { tickFormatter: (val: any, axis: any) => string },
-    format: string,
-    decimals?: number | null
-  ) {
+  configureAxisMode(axis: { tickFormatter: (val: any, axis: any) => string }, format: string, decimals?: DecimalCount) {
     axis.tickFormatter = (val, axis) => {
       const formatter = getValueFormat(format);
 

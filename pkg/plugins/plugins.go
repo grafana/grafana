@@ -5,21 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/manifest"
 	"github.com/grafana/grafana/pkg/plugins/signature"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,7 +34,7 @@ type Plugin struct {
 
 	// Signature fields
 	Signature      signature.Status
-	SignatureType  manifest.Type
+	SignatureType  manifest.SignatureType
 	SignatureOrg   string
 	Parent         *Plugin
 	Children       []*Plugin
@@ -66,7 +64,7 @@ type PluginDTO struct {
 
 	// Signature fields
 	Signature      signature.Status
-	SignatureType  manifest.Type
+	SignatureType  manifest.SignatureType
 	SignatureOrg   string
 	SignedFiles    PluginFiles
 	SignatureError *signature.Error
@@ -168,7 +166,7 @@ func (d JSONData) DashboardIncludes() []*Includes {
 type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
-	ReqRole      models.RoleType `json:"reqRole"`
+	ReqRole      org.RoleType    `json:"reqRole"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
@@ -220,7 +218,6 @@ func (p *Plugin) Start(ctx context.Context) error {
 	if p.client == nil {
 		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
-
 	return p.client.Start(ctx)
 }
 
@@ -364,47 +361,30 @@ func (p *Plugin) CalculateSignature() error {
 		return nil
 	}
 
-	// Validate that private is running within defined root URLs
-	if m.SignatureType == manifest.Private {
-		appURL, err := url.Parse(setting.AppUrl)
-		if err != nil {
+	// Validate that plugin is running within defined root URLs
+	if len(m.RootURLs) > 0 {
+		if match, err := manifest.UrlMatch(m.RootURLs, setting.AppUrl, m.SignatureType); err != nil {
+			p.Logger().Warn("Could not verify if root URLs match", "plugin", p.ID, "rootUrls", m.RootURLs)
 			return err
-		}
-
-		foundMatch := false
-		for _, u := range m.RootURLs {
-			rootURL, err := url.Parse(u)
-			if err != nil {
-				p.Logger().Warn("Could not parse plugin root URL", "plugin", p.ID, "rootUrl", rootURL)
-				return err
-			}
-
-			if rootURL.Scheme == appURL.Scheme &&
-				rootURL.Host == appURL.Host &&
-				path.Clean(rootURL.RequestURI()) == path.Clean(appURL.RequestURI()) {
-				foundMatch = true
-				break
-			}
-		}
-
-		if !foundMatch {
+		} else if !match {
 			p.Logger().Warn("Could not find root URL that matches running application URL", "plugin", p.ID,
-				"appUrl", appURL, "rootUrls", m.RootURLs)
+				"appUrl", setting.AppUrl, "rootUrls", m.RootURLs)
 			p.Signature = signature.Invalid
 			return nil
 		}
 	}
 
-	// Verify the manifest contents
 	manifestFiles := make(map[string]struct{}, len(m.Files))
-	for fp, hash := range m.Files {
-		err = manifest.VerifyHash(p.Logger(), filepath.Join(p.PluginDir, fp), hash)
+
+	// Verify the manifest contents
+	for pf, hash := range m.Files {
+		err = manifest.VerifyHash(p.Logger(), filepath.Join(p.PluginDir, pf), hash)
 		if err != nil {
 			p.Signature = signature.Modified
 			return nil
 		}
 
-		manifestFiles[fp] = struct{}{}
+		manifestFiles[pf] = struct{}{}
 	}
 
 	if m.IsV2() {
@@ -419,8 +399,6 @@ func (p *Plugin) CalculateSignature() error {
 		if len(unsignedFiles) > 0 {
 			p.Logger().Warn("The following files were not included in the signature", "plugin", p.ID, "files", unsignedFiles)
 			p.Signature = signature.Modified
-			//p.SignedFiles = manifestFiles
-
 			return nil
 		}
 	}
@@ -464,7 +442,7 @@ func (p *Plugin) filesRequiringVerification() ([]string, error) {
 				return fmt.Errorf("file '%s' not inside of plugin directory", p)
 			}
 
-			// skip symlink directories
+			// skip adding symlinked directories
 			if symlink.IsDir() {
 				return nil
 			}

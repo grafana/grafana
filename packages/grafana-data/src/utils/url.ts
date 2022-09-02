@@ -32,7 +32,10 @@ function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
     .replace(/%24/g, '$')
     .replace(/%2C/gi, ',')
     .replace(/%3B/gi, ';')
-    .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
+    .replace(/%20/g, pctEncodeSpaces ? '%20' : '+')
+    .replace(/[!'()*]/g, function (c) {
+      return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+    });
 }
 
 function toUrlParams(a: any) {
@@ -136,7 +139,7 @@ function getUrlSearchParams(): UrlQueryMap {
  * @returns {Object.<string,boolean|Array>}
  */
 export function parseKeyValue(keyValue: string) {
-  var obj: any = {};
+  const obj: any = {};
   const parts = (keyValue || '').split('&');
 
   for (let keyValue of parts) {

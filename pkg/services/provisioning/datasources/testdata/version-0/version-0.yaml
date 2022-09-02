@@ -10,6 +10,10 @@ datasources:
     basic_auth_user: basic_auth_user
     with_credentials: true
     is_default: true
+    correlations:
+      - targetUID: a target
+        label: a label
+        description: a description
     json_data:
       graphiteVersion: "1.1"
       tlsAuth: true

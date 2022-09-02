@@ -4,31 +4,105 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
+
+func Test_PluginsInstallAndUninstall(t *testing.T) {
+	type tc struct {
+		pluginAdminEnabled               bool
+		pluginAdminExternalManageEnabled bool
+		expectedHTTPStatus               int
+		expectedHTTPBody                 string
+	}
+	tcs := []tc{
+		{pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
+		{pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, expectedHTTPStatus: 200, expectedHTTPBody: ""},
+		{pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
+		{pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
+	}
+
+	testName := func(action string, testCase tc) string {
+		return fmt.Sprintf("%s request returns %d when adminEnabled: %t and externalEnabled: %t",
+			action, testCase.expectedHTTPStatus, testCase.pluginAdminEnabled, testCase.pluginAdminExternalManageEnabled)
+	}
+
+	pm := &fakePluginManager{
+		plugins: make(map[string]fakePlugin),
+	}
+	for _, tc := range tcs {
+		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = &setting.Cfg{
+				PluginAdminEnabled:               tc.pluginAdminEnabled,
+				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
+			}
+			hs.pluginManager = pm
+			hs.QuotaService = quotatest.NewQuotaServiceFake()
+		})
+
+		t.Run(testName("Install", tc), func(t *testing.T) {
+			req := srv.NewPostRequest("/api/plugins/test/install", strings.NewReader("{ \"version\": \"1.0.2\" }"))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
+			resp, err := srv.SendJSON(req)
+			require.NoError(t, err)
+
+			body := new(strings.Builder)
+			_, err = io.Copy(body, resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedHTTPBody, body.String())
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
+
+			if tc.expectedHTTPStatus == 200 {
+				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, pm.plugins["test"])
+			}
+		})
+
+		t.Run(testName("Uninstall", tc), func(t *testing.T) {
+			req := srv.NewPostRequest("/api/plugins/test/uninstall", strings.NewReader("{}"))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: true})
+			resp, err := srv.SendJSON(req)
+			require.NoError(t, err)
+
+			body := new(strings.Builder)
+			_, err = io.Copy(body, resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedHTTPBody, body.String())
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
+
+			if tc.expectedHTTPStatus == 200 {
+				require.Empty(t, pm.plugins)
+			}
+		})
+	}
+}
 
 func Test_GetPluginAssets(t *testing.T) {
 	pluginID := "test-plugin"
 	pluginDir := "."
-	tmpFile, err := ioutil.TempFile(pluginDir, "")
+	tmpFile, err := os.CreateTemp(pluginDir, "")
 	require.NoError(t, err)
-	tmpFileInParentDir, err := ioutil.TempFile("..", "")
+	tmpFileInParentDir, err := os.CreateTemp("..", "")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		err := os.RemoveAll(tmpFile.Name())

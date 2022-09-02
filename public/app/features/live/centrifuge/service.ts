@@ -18,6 +18,7 @@ import {
   StreamingFrameOptions,
 } from '@grafana/runtime/src/services/live';
 import { BackendDataSourceResponse } from '@grafana/runtime/src/utils/queryResponse';
+import { loadUrlToken } from 'app/core/utils/urlToken';
 
 import { StreamingResponseData } from '../data/utils';
 
@@ -66,7 +67,14 @@ export class CentrifugeService implements CentrifugeSrv {
 
   constructor(private deps: CentrifugeSrvDeps) {
     this.dataStreamSubscriberReadiness = deps.dataStreamSubscriberReadiness.pipe(share(), startWith(true));
-    const liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+
+    let liveUrl = `${deps.appUrl.replace(/^http/, 'ws')}/api/live/ws`;
+
+    const token = loadUrlToken();
+    if (token !== null && token !== '') {
+      liveUrl += '?auth_token=' + token;
+    }
+
     this.centrifuge = new Centrifuge(liveUrl, {
       timeout: 30000,
     });

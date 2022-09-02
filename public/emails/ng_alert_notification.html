@@ -211,20 +211,20 @@ text-decoration: underline;
 
 {{ define "alert" }}
 
-  {{if ne .ImageURL "" }}
+  {{ if ne .ImageURL "" }}
   <tr style="vertical-align: top; padding: 0;" align="left">
-    <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 0;" align="left" valign="top">
-       <img src="{{.ImageURL}}" class="fluid-centered" alt="Alerting Panel" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: auto; clear: both; display: block; border: 0;" align="left" />
-		</td>
-	</tr>
-  {{end}}
-  {{if ne .EmbeddedImage "" }}
+    <td colspan="2" class="value" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 0;" align="left" valign="top">
+      <img src="{{.ImageURL}}" class="fluid-centered" alt="Alerting Panel" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: auto; clear: both; display: block; border-width: 0;" align="left" />
+    </td>
+  </tr>
+  {{ end }}
+  {{ if ne .EmbeddedImage "" }}
   <tr style="vertical-align: top; padding: 0;" align="left">
-    <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 0;" align="left" valign="top">
-       <img src="cid:{{.EmbeddedImage}}" alt="Alerting Chart Attached Below" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: auto; clear: both; display: block; border: 0;" align="left" />
-		</td>
-	</tr>
-	{{end}}
+    <td colspan="2" class="value" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 0;" align="left" valign="top">
+      <img src="cid:{{.EmbeddedImage}}" alt="Alerting Chart Attached Below" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: auto; clear: both; display: block; border-width: 0;" align="left" />
+    </td>
+  </tr>
+  {{ end }}
   <tr style="vertical-align: top; padding: 0;" align="left">
     <td colspan="2" class="value" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 0;" align="left" valign="top">
       <span class="value-heading" style="font-weight: bold;">Value:</span> <span class="value-value" style="padding-left: 8px;">{{ .ValueString }}</span>
@@ -286,7 +286,7 @@ text-decoration: underline;
 {{ end }}
 
 {{ if gt (len .Message) 0 }}
- {{ .Message }}
+  <div style="white-space: pre-line;" align="left">{{ .Message }}
 {{ else }}
 
 
@@ -349,8 +349,9 @@ text-decoration: underline;
 {{ end }}
 
 </div>
+
 								
-							</td>
+							</div></td>
 						</tr>
 					</table>
 					

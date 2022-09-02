@@ -35,7 +35,9 @@ const setup = (propOverrides?: object) => {
   jest.clearAllMocks();
   // needed because SharedPreferences is rendered in the test
   jest.spyOn(backendSrv, 'put');
-  jest.spyOn(backendSrv, 'get').mockResolvedValue({ timezone: 'UTC', homeDashboardId: 0, theme: 'dark' });
+  jest
+    .spyOn(backendSrv, 'get')
+    .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
   jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
   const props: Props = {
@@ -70,7 +72,7 @@ describe('Render', () => {
           id: 1,
         },
         preferences: {
-          homeDashboardId: 1,
+          homeDashboardUID: 'home-dashboard',
           theme: 'Default',
           timezone: 'Default',
           locale: '',

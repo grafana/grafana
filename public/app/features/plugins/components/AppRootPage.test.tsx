@@ -1,9 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
 import React, { Component } from 'react';
 import { Route, Router } from 'react-router-dom';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
 import { locationService, setEchoSrv } from '@grafana/runtime';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 
@@ -66,7 +68,9 @@ function renderUnderRouter() {
 
   render(
     <Router history={locationService.getHistory()}>
-      <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+      <GrafanaContext.Provider value={getGrafanaContextMock()}>
+        <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+      </GrafanaContext.Provider>
     </Router>
   );
 }
@@ -77,17 +81,18 @@ describe('AppRootPage', () => {
     setEchoSrv(new Echo());
   });
 
+  const pluginMeta = getMockPlugin({
+    id: 'my-awesome-plugin',
+    type: PluginType.app,
+    enabled: true,
+  });
+
   it('should not mount plugin twice if nav is changed', async () => {
     // reproduces https://github.com/grafana/grafana/pull/28105
-
-    getPluginSettingsMock.mockResolvedValue(
-      getMockPlugin({
-        type: PluginType.app,
-        enabled: true,
-      })
-    );
+    getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
     plugin.root = RootComponent;
 
     importAppPluginMock.mockResolvedValue(plugin);
@@ -102,12 +107,7 @@ describe('AppRootPage', () => {
   });
 
   it('should not render component if not at plugin path', async () => {
-    getPluginSettingsMock.mockResolvedValue(
-      getMockPlugin({
-        type: PluginType.app,
-        enabled: true,
-      })
-    );
+    getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     class RootComponent extends Component<AppRootProps> {
       static timesRendered = 0;
@@ -118,6 +118,7 @@ describe('AppRootPage', () => {
     }
 
     const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
     plugin.root = RootComponent;
 
     importAppPluginMock.mockResolvedValue(plugin);
@@ -127,18 +128,18 @@ describe('AppRootPage', () => {
     expect(await screen.findByText('my great component')).toBeVisible();
 
     // renders the first time
-    expect(RootComponent.timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(2);
 
     await act(async () => {
       locationService.push('/foo');
     });
 
-    expect(RootComponent.timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(2);
 
     await act(async () => {
       locationService.push('/a/my-awesome-plugin');
     });
 
-    expect(RootComponent.timesRendered).toEqual(2);
+    expect(RootComponent.timesRendered).toEqual(4);
   });
 });

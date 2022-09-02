@@ -407,7 +407,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     size: yAxisConfig.axisWidth || null,
     label: yAxisConfig.axisLabel,
     theme: theme,
-    formatValue: (v: number) => formattedValueToString(dispY(v)),
+    formatValue: (v, decimals) => formattedValueToString(dispY(v, yField.config.decimals ?? decimals)),
     splits: isOrdianalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);

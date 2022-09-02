@@ -7,13 +7,14 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/org"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -109,7 +110,7 @@ func TestLoader_Load(t *testing.T) {
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
-						ID:   "test",
+						ID:   "test-datasource",
 						Type: "datasource",
 						Name: "Test",
 						Info: plugins.Info{
@@ -132,8 +133,8 @@ func TestLoader_Load(t *testing.T) {
 						Backend:    true,
 						State:      "alpha",
 					},
-					Module:        "plugins/test/module",
-					BaseURL:       "public/plugins/test",
+					Module:        "plugins/test-datasource/module",
+					BaseURL:       "public/plugins/test-datasource",
 					PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/"),
 					Signature:     "valid",
 					SignatureType: manifest.Grafana,
@@ -230,7 +231,7 @@ func TestLoader_Load(t *testing.T) {
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
-						ID:   "test",
+						ID:   "test-datasource",
 						Type: "datasource",
 						Name: "Test",
 						Info: plugins.Info{
@@ -252,8 +253,8 @@ func TestLoader_Load(t *testing.T) {
 						State:   plugins.AlphaRelease,
 					},
 					Class:     plugins.External,
-					Module:    "plugins/test/module",
-					BaseURL:   "public/plugins/test",
+					Module:    "plugins/test-datasource/module",
+					BaseURL:   "public/plugins/test-datasource",
 					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
 					Signature: "unsigned",
 				},
@@ -267,8 +268,8 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]plugins.Error{
-				"test": {
-					PluginID:  "test",
+				"test-datasource": {
+					PluginID:  "test-datasource",
 					ErrorCode: "signatureMissing",
 				},
 			},
@@ -278,13 +279,13 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.External,
 			cfg: &config.Cfg{
 				PluginsPath:          filepath.Join(parentDir),
-				PluginsAllowUnsigned: []string{"test"},
+				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
-						ID:   "test",
+						ID:   "test-datasource",
 						Type: "datasource",
 						Name: "Test",
 						Info: plugins.Info{
@@ -306,8 +307,8 @@ func TestLoader_Load(t *testing.T) {
 						State:   plugins.AlphaRelease,
 					},
 					Class:     plugins.External,
-					Module:    "plugins/test/module",
-					BaseURL:   "public/plugins/test",
+					Module:    "plugins/test-datasource/module",
+					BaseURL:   "public/plugins/test-datasource",
 					PluginDir: filepath.Join(parentDir, "testdata/unsigned-datasource/plugin"),
 					Signature: signature.Unsigned,
 				},
@@ -322,8 +323,8 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]plugins.Error{
-				"test": {
-					PluginID:  "test",
+				"test-datasource": {
+					PluginID:  "test-datasource",
 					ErrorCode: "signatureModified",
 				},
 			},
@@ -333,13 +334,45 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.External,
 			cfg: &config.Cfg{
 				PluginsPath:          filepath.Join(parentDir),
-				PluginsAllowUnsigned: []string{"test"},
+				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]plugins.Error{
-				"test": {
-					PluginID:  "test",
+				"test-datasource": {
+					PluginID:  "test-datasource",
+					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
+			name:  "Load a plugin with manifest which has a file not found in plugin folder",
+			class: plugins.External,
+			cfg: &config.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test-datasource"},
+			},
+			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
+			want:        []*plugins.Plugin{},
+			pluginErrors: map[string]plugins.Error{
+				"test-datasource": {
+					PluginID:  "test-datasource",
+					ErrorCode: "signatureModified",
+				},
+			},
+		},
+		{
+			name:  "Load a plugin with file which is missing from the manifest",
+			class: plugins.External,
+			cfg: &config.Cfg{
+				PluginsPath:          filepath.Join(parentDir),
+				PluginsAllowUnsigned: []string{"test-datasource"},
+			},
+			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
+			want:        []*plugins.Plugin{},
+			pluginErrors: map[string]plugins.Error{
+				"test-datasource": {
+					PluginID:  "test-datasource",
 					ErrorCode: "signatureModified",
 				},
 			},
@@ -499,7 +532,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				want: []*plugins.Plugin{
 					{
 						JSONData: plugins.JSONData{
-							ID:   "test",
+							ID:   "test-datasource",
 							Type: "datasource",
 							Name: "Test",
 							Info: plugins.Info{
@@ -523,8 +556,8 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 							State:      plugins.AlphaRelease,
 						},
 						Class:         plugins.External,
-						Module:        "plugins/test/module",
-						BaseURL:       "public/plugins/test",
+						Module:        "plugins/test-datasource/module",
+						BaseURL:       "public/plugins/test-datasource",
 						PluginDir:     filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin"),
 						Signature:     "valid",
 						SignatureType: manifest.Private,
@@ -590,7 +623,7 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 		expected := []*plugins.Plugin{
 			{
 				JSONData: plugins.JSONData{
-					ID:   "test",
+					ID:   "test-datasource",
 					Type: "datasource",
 					Name: "Test",
 					Info: plugins.Info{
@@ -612,8 +645,8 @@ func TestLoader_Signature_RootURL(t *testing.T) {
 				Signature:     signature.Valid,
 				SignatureType: manifest.Private,
 				SignatureOrg:  "Will Browne",
-				Module:        "plugins/test/module",
-				BaseURL:       "public/plugins/test",
+				Module:        "plugins/test-datasource/module",
+				BaseURL:       "public/plugins/test-datasource",
 			},
 		}
 
@@ -707,7 +740,7 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 	}
 	parent := &plugins.Plugin{
 		JSONData: plugins.JSONData{
-			ID:   "test-ds",
+			ID:   "test-datasource",
 			Type: "datasource",
 			Name: "Parent",
 			Info: plugins.Info{
@@ -729,8 +762,8 @@ func TestLoader_loadNestedPlugins(t *testing.T) {
 			},
 			Backend: true,
 		},
-		Module:        "plugins/test-ds/module",
-		BaseURL:       "public/plugins/test-ds",
+		Module:        "plugins/test-datasource/module",
+		BaseURL:       "public/plugins/test-datasource",
 		PluginDir:     filepath.Join(rootDir, "testdata/nested-plugins/parent"),
 		Signature:     signature.Valid,
 		SignatureType: manifest.Grafana,
@@ -1033,10 +1066,10 @@ func TestLoader_readPluginJSON(t *testing.T) {
 					},
 				},
 				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: models.ROLE_VIEWER},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: models.ROLE_VIEWER},
-					{Name: "Nginx Panel", Type: "panel", Role: models.ROLE_VIEWER},
-					{Name: "Nginx Datasource", Type: "datasource", Role: models.ROLE_VIEWER},
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
+					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
+					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
 				},
 				Backend: false,
 			},
@@ -1118,23 +1151,23 @@ func Test_validatePluginJSON(t *testing.T) {
 func Test_setPathsBasedOnApp(t *testing.T) {
 	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		child := &plugins.Plugin{
-			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata\\datasources\\datasource",
+			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource",
 		}
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				Type: plugins.App,
-				ID:   "testdata",
+				ID:   "testdata-app",
 			},
 			Class:     plugins.Core,
-			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata",
-			BaseURL:   "public/app/plugins/app/testdata",
+			PluginDir: "c:\\grafana\\public\\app\\plugins\\app\\testdata-app",
+			BaseURL:   "public/app/plugins/app/testdata-app",
 		}
 
 		configureAppChildOPlugin(parent, child)
 
-		assert.Equal(t, "app/plugins/app/testdata/datasources/datasource/module", child.Module)
-		assert.Equal(t, "testdata", child.IncludedInAppID)
-		assert.Equal(t, "public/app/plugins/app/testdata", child.BaseURL)
+		assert.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
+		assert.Equal(t, "testdata-app", child.IncludedInAppID)
+		assert.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
 	})
 }
 

@@ -16,6 +16,10 @@ Further documentation can be found at http://docs.grafana.org/installation/docke
 
 ## Changelog
 
+### v9.0.3
+
+- Upgraded glibc version to glibc [2.35](https://sourceware.org/pipermail/libc-alpha/2022-February/136040.html) [#51107](https://github.com/grafana/grafana/pull/51107/files)
+
 ### v8.3.0-beta2
 
 - Our Alpine based images have been upgraded to Alpine [3.14.3](https://alpinelinux.org/posts/Alpine-3.14.3-released.html) [#41922](https://github.com/grafana/grafana/pull/41922) [@hairyhenderson](https://github.com/hairyhenderson)

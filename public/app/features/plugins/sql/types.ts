@@ -1,7 +1,6 @@
 import { JsonTree } from 'react-awesome-query-builder';
 
 import {
-  AnnotationEvent,
   DataFrame,
   DataQuery,
   DataSourceJsonData,
@@ -10,8 +9,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
-import { BackendDataSourceResponse } from '@grafana/runtime';
+import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 
 import { QueryWithDefaults } from './defaults';
 import {
@@ -23,27 +21,42 @@ import {
 export interface SqlQueryForInterpolation {
   dataset?: string;
   alias?: string;
-  format?: ResultFormat;
+  format?: QueryFormat;
   rawSql?: string;
   refId: string;
   hide?: boolean;
 }
 
-export interface SQLOptions extends DataSourceJsonData {
-  timeInterval: string;
-  database: string;
+export interface SQLConnectionLimits {
+  maxOpenConns: number;
+  maxIdleConns: number;
+  connMaxLifetime: number;
 }
 
-export type ResultFormat = 'time_series' | 'table';
+export interface SQLOptions extends SQLConnectionLimits, DataSourceJsonData {
+  tlsAuth: boolean;
+  tlsAuthWithCACert: boolean;
+  timezone: string;
+  tlsSkipVerify: boolean;
+  user: string;
+  database: string;
+  url: string;
+  timeInterval: string;
+}
 
 export enum QueryFormat {
   Timeseries = 'time_series',
   Table = 'table',
 }
 
+export enum EditorMode {
+  Builder = 'builder',
+  Code = 'code',
+}
+
 export interface SQLQuery extends DataQuery {
   alias?: string;
-  format?: ResultFormat | QueryFormat | string | undefined;
+  format?: QueryFormat;
   rawSql?: string;
   dataset?: string;
   table?: string;
@@ -113,17 +126,25 @@ export interface SQLSelectableValue extends SelectableValue {
   type?: string;
   raqbFieldType?: RAQBFieldTypes;
 }
+
+export interface Aggregate {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export interface DB {
   init?: (datasourceId?: string) => Promise<boolean>;
   datasets: () => Promise<string[]>;
   tables: (dataset?: string) => Promise<string[]>;
   fields: (query: SQLQuery, order?: boolean) => Promise<SQLSelectableValue[]>;
   validateQuery: (query: SQLQuery, range?: TimeRange) => Promise<ValidationResults>;
-  dsID: () => string;
+  dsID: () => number;
   dispose?: (dsID?: string) => void;
   lookup: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getSqlCompletionProvider: () => LanguageCompletionProvider;
   toRawSql?: (query: SQLQuery) => string;
+  functions: () => Promise<Aggregate[]>;
 }
 
 export interface QueryEditorProps {
@@ -135,7 +156,7 @@ export interface QueryEditorProps {
 
 export interface ValidationResults {
   query: SQLQuery;
-  rawSql: string;
+  rawSql?: string;
   error: string;
   isError: boolean;
   isValid: boolean;
@@ -150,7 +171,6 @@ export interface SqlQueryModel {
 }
 
 export interface ResponseParser {
-  transformAnnotationResponse: (options: object, data: BackendDataSourceResponse) => Promise<AnnotationEvent[]>;
   transformMetricFindResponse: (frame: DataFrame) => MetricFindValue[];
 }
 
@@ -159,3 +179,18 @@ export interface MetaDefinition {
   completion?: string;
   kind: CompletionItemKind;
 }
+
+export {
+  CompletionItemKind,
+  LanguageCompletionProvider,
+  LinkedToken,
+  ColumnDefinition,
+  CompletionItemPriority,
+  StatementPlacementProvider,
+  SuggestionKindProvider,
+  TableDefinition,
+  TokenType,
+  OperatorType,
+  StatementPosition,
+  PositionContext,
+} from '@grafana/experimental';

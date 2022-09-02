@@ -2,8 +2,9 @@ import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
 import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DashboardDataDTO, DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
+import { DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
 
 import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
@@ -262,14 +263,7 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export interface SaveDashboardOptions {
-  dashboard: DashboardDataDTO;
-  message?: string;
-  folderId?: number;
-  overwrite?: boolean;
-}
-
-export function saveDashboard(options: SaveDashboardOptions) {
+export function saveDashboard(options: SaveDashboardCommand) {
   dashboardWatcher.ignoreNextSave();
 
   return getBackendSrv().post('/api/dashboards/db/', {

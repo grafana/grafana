@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manifest"
 	"github.com/grafana/grafana/pkg/plugins/signature"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 const (
@@ -14,10 +14,9 @@ const (
 )
 
 var (
-	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
-	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
-	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside")
-	ErrPluginNotInstalled          = errors.New("plugin is not installed")
+	ErrInstallCorePlugin   = errors.New("cannot install a Core plugin")
+	ErrUninstallCorePlugin = errors.New("cannot uninstall a Core plugin")
+	ErrPluginNotInstalled  = errors.New("plugin is not installed")
 )
 
 type NotFoundError struct {
@@ -50,16 +49,16 @@ type Dependencies struct {
 }
 
 type Includes struct {
-	Name       string          `json:"name"`
-	Path       string          `json:"path"`
-	Type       string          `json:"type"`
-	Component  string          `json:"component"`
-	Role       models.RoleType `json:"role"`
-	AddToNav   bool            `json:"addToNav"`
-	DefaultNav bool            `json:"defaultNav"`
-	Slug       string          `json:"slug"`
-	Icon       string          `json:"icon"`
-	UID        string          `json:"uid"`
+	Name       string       `json:"name"`
+	Path       string       `json:"path"`
+	Type       string       `json:"type"`
+	Component  string       `json:"component"`
+	Role       org.RoleType `json:"role"`
+	AddToNav   bool         `json:"addToNav"`
+	DefaultNav bool         `json:"defaultNav"`
+	Slug       string       `json:"slug"`
+	Icon       string       `json:"icon"`
+	UID        string       `json:"uid"`
 
 	ID string `json:"-"`
 }
@@ -126,7 +125,7 @@ type PluginFiles map[string]struct{}
 
 type Signature struct {
 	Status     signature.Status
-	Type       manifest.Type
+	Type       manifest.SignatureType
 	SigningOrg string
 	Files      PluginFiles
 }
@@ -152,6 +151,7 @@ type DataSourceDTO struct {
 	Preload    bool                   `json:"preload"`
 	Module     string                 `json:"module,omitempty"`
 	JSONData   map[string]interface{} `json:"jsonData"`
+	ReadOnly   bool                   `json:"readOnly"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`

@@ -15,6 +15,7 @@ import {
   getFieldDisplayName,
   getDisplayProcessor,
   FieldColorModeId,
+  DecimalCount,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -26,13 +27,16 @@ import {
   ScaleOrientation,
   StackingMode,
   GraphTransform,
+  AxisColorMode,
+  GraphGradientMode,
 } from '@grafana/schema';
 
 import { buildScaleKey } from '../GraphNG/utils';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
+import { getScaleGradientFn } from '../uPlot/config/gradientFills';
 import { getStackingGroups, preparePlotData2 } from '../uPlot/utils';
 
-const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
@@ -45,7 +49,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 }> = ({
   frame,
   theme,
-  timeZone,
+  timeZones,
   getTimeRange,
   eventBus,
   sync,
@@ -54,7 +58,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
 }) => {
-  const builder = new UPlotConfigBuilder(timeZone);
+  const builder = new UPlotConfigBuilder(timeZones[0]);
 
   let alignedFrame: DataFrame;
 
@@ -94,16 +98,51 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
     });
 
-    builder.addAxis({
-      scaleKey: xScaleKey,
-      isTime: true,
-      placement: xFieldAxisPlacement,
-      show: xFieldAxisShow,
-      label: xField.config.custom?.axisLabel,
-      timeZone,
-      theme,
-      grid: { show: xField.config.custom?.axisGridShow },
-    });
+    // filters first 2 ticks to make space for timezone labels
+    const filterTicks: uPlot.Axis.Filter | undefined =
+      timeZones.length > 1
+        ? (u, splits) => {
+            return splits.map((v, i) => (i < 2 ? null : v));
+          }
+        : undefined;
+
+    for (let i = 0; i < timeZones.length; i++) {
+      const timeZone = timeZones[i];
+      builder.addAxis({
+        scaleKey: xScaleKey,
+        isTime: true,
+        placement: xFieldAxisPlacement,
+        show: xFieldAxisShow,
+        label: xField.config.custom?.axisLabel,
+        timeZone,
+        theme,
+        grid: { show: i === 0 && xField.config.custom?.axisGridShow },
+        filter: filterTicks,
+      });
+    }
+
+    // render timezone labels
+    if (timeZones.length > 1) {
+      builder.addHook('drawAxes', (u: uPlot) => {
+        u.ctx.save();
+
+        u.ctx.fillStyle = theme.colors.text.primary;
+        u.ctx.textAlign = 'left';
+        u.ctx.textBaseline = 'bottom';
+
+        let i = 0;
+        u.axes.forEach((a) => {
+          if (a.side === 2) {
+            //@ts-ignore
+            let cssBaseline: number = a._pos + a._size;
+            u.ctx.fillText(timeZones[i], u.bbox.left, cssBaseline * uPlot.pxRatio);
+            i++;
+          }
+        });
+
+        u.ctx.restore();
+      });
+    }
   } else {
     // Not time!
     if (xField.config.unit) {
@@ -182,6 +221,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           max: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
+          centeredZero: customConfig.axisCenteredZero,
         },
         field
       )
@@ -192,6 +232,36 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+      let axisColor: uPlot.Axis.Stroke | undefined;
+
+      if (customConfig.axisColorMode === AxisColorMode.Series) {
+        if (
+          colorMode.isByValue &&
+          field.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+          colorMode.id === FieldColorModeId.Thresholds
+        ) {
+          axisColor = getScaleGradientFn(1, theme, colorMode, field.config.thresholds);
+        } else {
+          axisColor = seriesColor;
+        }
+      }
+
+      let axisColorOpts = {};
+
+      if (axisColor) {
+        axisColorOpts = {
+          border: {
+            show: true,
+            width: 1,
+            stroke: axisColor,
+          },
+          ticks: {
+            stroke: axisColor,
+          },
+          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
+        };
+      }
+
       builder.addAxis(
         tweakAxis(
           {
@@ -199,10 +269,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v) => formattedValueToString(fmt(v)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
-            show: customConfig.hideFrom?.viz === false,
+            ...axisColorOpts,
           },
           field
         )

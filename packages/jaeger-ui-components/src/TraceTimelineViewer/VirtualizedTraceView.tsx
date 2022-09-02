@@ -23,7 +23,7 @@ import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { Accessors } from '../ScrollManager';
 import { PEER_SERVICE } from '../constants/tag-keys';
-import { SpanLinkFunc, TNil } from '../types';
+import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
@@ -89,6 +89,7 @@ type TVirtualizedTraceViewOwnProps = {
   scrollToFirstVisibleSpan: () => void;
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
+  spanBarOptions: SpanBarOptions | undefined;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
   clearShouldScrollToFirstUiFindMatch: () => void;
@@ -387,10 +388,10 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       findMatchesIDs,
       spanNameColumnWidth,
       trace,
+      spanBarOptions,
       hoverIndentGuideIds,
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
-      theme,
       createSpanLink,
       focusedSpanId,
       focusedSpanIdForSearch,
@@ -399,7 +400,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (!trace) {
       return null;
     }
-    const color = getColorByKey(serviceName, theme);
+    const color = getColorByKey(serviceName);
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
@@ -413,7 +414,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       if (rpcSpan) {
         const rpcViewBounds = this.getViewedBounds()(rpcSpan.startTime, rpcSpan.startTime + rpcSpan.duration);
         rpc = {
-          color: getColorByKey(rpcSpan.process.serviceName, theme),
+          color: getColorByKey(rpcSpan.process.serviceName),
           operationName: rpcSpan.operationName,
           serviceName: rpcSpan.process.serviceName,
           viewEnd: rpcViewBounds.end,
@@ -429,7 +430,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (!span.hasChildren && peerServiceKV && isKindClient(span)) {
       noInstrumentedServer = {
         serviceName: peerServiceKV.value,
-        color: getColorByKey(peerServiceKV.value, theme),
+        color: getColorByKey(peerServiceKV.value),
       };
     }
 
@@ -440,6 +441,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           clippingLeft={this.getClipping().left}
           clippingRight={this.getClipping().right}
           color={color}
+          spanBarOptions={spanBarOptions}
           columnDivision={spanNameColumnWidth}
           isChildrenExpanded={!isCollapsed}
           isDetailExpanded={isDetailExpanded}
@@ -484,7 +486,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       addHoverIndentGuideId,
       removeHoverIndentGuideId,
       linksGetter,
-      theme,
       createSpanLink,
       focusedSpanId,
       createFocusSpanLink,
@@ -494,7 +495,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (!trace || !detailState) {
       return null;
     }
-    const color = getColorByKey(serviceName, theme);
+    const color = getColorByKey(serviceName);
     const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>

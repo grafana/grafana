@@ -8,8 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
+	"path"
 	"strings"
+
+	"github.com/gobwas/glob"
 
 	// TODO: replace deprecated `golang.org/x/crypto` package https://github.com/grafana/grafana/issues/46050
 	// nolint:staticcheck
@@ -55,19 +59,30 @@ type PluginManifest struct {
 	Files   map[string]string `json:"files"`
 
 	// V2 supported fields
-	ManifestVersion string   `json:"manifestVersion"`
-	SignatureType   Type     `json:"signatureType"`
-	SignedByOrg     string   `json:"signedByOrg"`
-	SignedByOrgName string   `json:"signedByOrgName"`
-	RootURLs        []string `json:"rootUrls"`
+	ManifestVersion string        `json:"manifestVersion"`
+	SignatureType   SignatureType `json:"signatureType"`
+	SignedByOrg     string        `json:"signedByOrg"`
+	SignedByOrgName string        `json:"signedByOrgName"`
+	RootURLs        []string      `json:"rootUrls"`
 }
 
-type Type string
+type SignatureType string
 
 const (
-	Grafana Type = "grafana"
-	Private Type = "private"
+	GrafanaSignatureType     SignatureType = "grafana"
+	CommercialSignatureType  SignatureType = "commercial"
+	CommunitySignatureType   SignatureType = "community"
+	PrivateSignatureType     SignatureType = "private"
+	PrivateGlobSignatureType SignatureType = "private-glob"
 )
+
+func (s SignatureType) IsValid() bool {
+	switch s {
+	case GrafanaSignatureType, CommercialSignatureType, CommunitySignatureType, PrivateSignatureType, PrivateGlobSignatureType:
+		return true
+	}
+	return false
+}
 
 func (m *PluginManifest) IsV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
@@ -88,15 +103,8 @@ func ReadPluginManifest(body []byte) (*PluginManifest, error) {
 		return nil, fmt.Errorf("%v: %w", "Error parsing manifest JSON", err)
 	}
 
-	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to parse public key", err)
-	}
-
-	if _, err := openpgp.CheckDetachedSignature(keyring,
-		bytes.NewBuffer(block.Bytes),
-		block.ArmoredSignature.Body); err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to check signature", err)
+	if err = validateManifest(manifest, block); err != nil {
+		return nil, err
 	}
 
 	return &manifest, nil
@@ -123,6 +131,87 @@ func VerifyHash(mlog log.Logger, path string, hash string) error {
 	sum := hex.EncodeToString(h.Sum(nil))
 	if sum != hash {
 		return fmt.Errorf("checksum for plugin file %s does not match signature checksum", path)
+	}
+
+	return nil
+}
+
+func UrlMatch(specs []string, target string, signatureType SignatureType) (bool, error) {
+	targetURL, err := url.Parse(target)
+	if err != nil {
+		return false, err
+	}
+
+	for _, spec := range specs {
+		specURL, err := url.Parse(spec)
+		if err != nil {
+			return false, err
+		}
+
+		if specURL.Scheme == targetURL.Scheme && specURL.Host == targetURL.Host &&
+			path.Clean(specURL.RequestURI()) == path.Clean(targetURL.RequestURI()) {
+			return true, nil
+		}
+
+		if signatureType != PrivateGlobSignatureType {
+			continue
+		}
+
+		sp, err := glob.Compile(spec, '/', '.')
+		if err != nil {
+			return false, err
+		}
+		if match := sp.Match(target); match {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+type invalidFieldErr struct {
+	field string
+}
+
+func (r invalidFieldErr) Error() string {
+	return fmt.Sprintf("valid manifest field %s is required", r.field)
+}
+
+func validateManifest(m PluginManifest, block *clearsign.Block) error {
+	if len(m.Plugin) == 0 {
+		return invalidFieldErr{field: "plugin"}
+	}
+	if len(m.Version) == 0 {
+		return invalidFieldErr{field: "version"}
+	}
+	if len(m.KeyID) == 0 {
+		return invalidFieldErr{field: "keyId"}
+	}
+	if m.Time == 0 {
+		return invalidFieldErr{field: "time"}
+	}
+	if len(m.Files) == 0 {
+		return invalidFieldErr{field: "files"}
+	}
+	if m.IsV2() {
+		if len(m.SignedByOrg) == 0 {
+			return invalidFieldErr{field: "signedByOrg"}
+		}
+		if len(m.SignedByOrgName) == 0 {
+			return invalidFieldErr{field: "signedByOrgName"}
+		}
+		if !m.SignatureType.IsValid() {
+			return fmt.Errorf("%s is not a valid signature type", m.SignatureType)
+		}
+	}
+	keyring, err := openpgp.ReadArmoredKeyRing(bytes.NewBufferString(publicKeyText))
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse public key", err)
+	}
+
+	if _, err = openpgp.CheckDetachedSignature(keyring,
+		bytes.NewBuffer(block.Bytes),
+		block.ArmoredSignature.Body); err != nil {
+		return fmt.Errorf("%v: %w", "failed to check signature", err)
 	}
 
 	return nil

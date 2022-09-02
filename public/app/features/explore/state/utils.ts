@@ -3,6 +3,7 @@ import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 import {
   AbsoluteTimeRange,
   DataSourceApi,
+  DataSourceRef,
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
@@ -86,11 +87,12 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
 
 export async function loadAndInitDatasource(
   orgId: number,
-  datasourceUid?: string
+  datasource: DataSourceRef | string
 ): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
   let instance;
   try {
-    instance = await getDatasourceSrv().get(datasourceUid);
+    // let datasource be a ref if we have the info, otherwise a name or uid will do for lookup
+    instance = await getDatasourceSrv().get(datasource);
   } catch (error) {
     // Falling back to the default data source in case the provided data source was not found.
     // It may happen if last used data source or the data source provided in the URL has been
@@ -129,7 +131,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
-    datasource: pane.datasourceInstance?.name || '',
+    datasource: pane.datasourceInstance?.uid || '',
     queries: pane.queries.map(clearQueryKeys),
     range: toRawTimeRange(pane.range),
     // don't include panelsState in the url unless a piece of state is actually set

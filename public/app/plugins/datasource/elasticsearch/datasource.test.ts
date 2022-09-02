@@ -39,6 +39,16 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+const TIMESRV_START = [2022, 8, 21, 6, 10, 10];
+const TIMESRV_END = [2022, 8, 24, 6, 10, 21];
+
+jest.mock('app/features/dashboard/services/TimeSrv', () => ({
+  ...(jest.requireActual('app/features/dashboard/services/TimeSrv') as unknown as object),
+  getTimeSrv: () => ({
+    timeRange: () => createTimeRange(toUtc(TIMESRV_START), toUtc(TIMESRV_END)),
+  }),
+}));
+
 const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
   from,
   to,
@@ -106,6 +116,7 @@ function getTestContext({
     url: ELASTICSEARCH_MOCK_URL,
     database,
     jsonData,
+    readOnly: false,
   };
 
   const ds = new ElasticDatasource(instanceSettings, templateSrv);
@@ -114,6 +125,48 @@ function getTestContext({
 }
 
 describe('ElasticDatasource', function (this: any) {
+  describe('When calling getTagValues', () => {
+    it('should respect the currently selected time range', () => {
+      const data = {
+        responses: [
+          {
+            aggregations: {
+              '1': {
+                buckets: [
+                  {
+                    doc_count: 10,
+                    key: 'val1',
+                  },
+                  {
+                    doc_count: 20,
+                    key: 'val2',
+                  },
+                  {
+                    doc_count: 30,
+                    key: 'val3',
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+      const { ds, fetchMock } = getTestContext({
+        data,
+        jsonData: { interval: 'Daily', esVersion: '7.10.0', timeField: '@timestamp' },
+      });
+
+      ds.getTagValues({ key: 'test' });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const obj = JSON.parse(fetchMock.mock.calls[0][0].data.split('\n')[1]);
+      const { lte, gte } = obj.query.bool.filter[0].range['@timestamp'];
+
+      expect(gte).toBe('1663740610000'); // 2022-09-21T06:10:10Z
+      expect(lte).toBe('1663999821000'); // 2022-09-24T06:10:21Z
+    });
+  });
+
   describe('When testing datasource with index pattern', () => {
     it('should translate index pattern to current day', () => {
       const { ds, fetchMock } = getTestContext({ jsonData: { interval: 'Daily', esVersion: '7.10.0' } });
@@ -1018,6 +1071,58 @@ describe('enhanceDataFrame', () => {
     enhanceDataFrame(df, [], 10);
 
     expect(df.meta?.limit).toBe(10);
+  });
+});
+
+describe('modifyQuery', () => {
+  let ds: ElasticDatasource;
+  beforeEach(() => {
+    ds = getTestContext().ds;
+  });
+  describe('with empty query', () => {
+    let query: ElasticsearchQuery;
+    beforeEach(() => {
+      query = { query: '', refId: 'A' };
+    });
+
+    it('should add the filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'foo:"bar"'
+      );
+    });
+
+    it('should add the negative filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
+    });
+
+    it('should do nothing on unknown type', () => {
+      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
+    });
+  });
+
+  describe('with non-empty query', () => {
+    let query: ElasticsearchQuery;
+    beforeEach(() => {
+      query = { query: 'test:"value"', refId: 'A' };
+    });
+
+    it('should add the filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'test:"value" AND foo:"bar"'
+      );
+    });
+
+    it('should add the negative filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'test:"value" AND -foo:"bar"'
+      );
+    });
+
+    it('should do nothing on unknown type', () => {
+      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
+    });
   });
 });
 

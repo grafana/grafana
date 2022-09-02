@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/signature"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -46,16 +47,16 @@ type Loader struct {
 
 func ProvideService(cfg *setting.Cfg, license models.Licensing, authorizer signature.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) (*Loader, error) {
-	return New(config.FromGrafanaCfg(cfg), license, signature.NewValidator(authorizer), backendProvider), nil
+	return New(config.FromGrafanaCfg(cfg), license, authorizer, backendProvider), nil
 }
 
-func New(cfg *config.Cfg, license models.Licensing, signatureValidator signature.Validator,
+func New(cfg *config.Cfg, license models.Licensing, authorizer signature.PluginLoaderAuthorizer,
 	backendProvider plugins.BackendFactoryProvider) *Loader {
 	return &Loader{
 		cfg:                cfg,
 		pluginFinder:       finder.New(),
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
-		signatureValidator: signatureValidator,
+		signatureValidator: signature.NewValidator(authorizer),
 		errs:               make(map[string]*signature.Error),
 		log:                log.New("plugin.loader"),
 	}
@@ -254,7 +255,7 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 
 	for _, include := range plugin.Includes {
 		if include.Role == "" {
-			include.Role = models.ROLE_VIEWER
+			include.Role = org.RoleViewer
 		}
 	}
 

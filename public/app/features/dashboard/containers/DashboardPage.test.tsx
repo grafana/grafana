@@ -8,10 +8,10 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
@@ -74,7 +74,7 @@ interface ScenarioContext {
   setup: (fn: () => void) => void;
 }
 
-function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel {
+function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',
@@ -103,12 +103,17 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         setupFn = fn;
       },
       mount: (propOverrides?: Partial<Props>) => {
+        config.bootData.navTree = [{ text: 'Dashboards', id: 'dashboards' }];
+
         const store = configureStore();
         const props: Props = {
           ...getRouteComponentProps({
             match: { params: { slug: 'my-dash', uid: '11' } } as any,
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
+          navIndex: {
+            dashboards: { text: 'Dashboards' },
+          },
           initPhase: DashboardInitPhase.NotStarted,
           initError: null,
           initDashboard: jest.fn(),
@@ -189,7 +194,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should update title', () => {
-      expect(document.title).toBe('My dashboard - Grafana');
+      expect(document.title).toBe('My dashboard - Dashboards - Grafana');
     });
   });
 
@@ -236,7 +241,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should render panel editor', () => {
-      expect(screen.getByTitle('Apply changes and go back to dashboard')).toBeInTheDocument();
+      expect(screen.getByLabelText('Apply changes and go back to dashboard')).toBeInTheDocument();
     });
 
     it('Should reset state when leaving', () => {

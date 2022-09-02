@@ -4,12 +4,14 @@ import { openMenu, select } from 'react-select-event';
 
 import { createMockDatasource } from '../../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../../__mocks__/cloudMonitoringMetricDescriptor';
+import { createMockMetricQuery } from '../../__mocks__/cloudMonitoringQuery';
 
 import { Metrics } from './Metrics';
 
 describe('Metrics', () => {
   it('renders metrics fields', async () => {
     const onChange = jest.fn();
+    const query = createMockMetricQuery();
     const datasource = createMockDatasource();
 
     render(
@@ -20,6 +22,8 @@ describe('Metrics', () => {
         templateVariableOptions={[]}
         datasource={datasource}
         onChange={onChange}
+        onProjectChange={jest.fn()}
+        query={query}
       >
         {() => <div />}
       </Metrics>
@@ -31,6 +35,7 @@ describe('Metrics', () => {
 
   it('can select a service', async () => {
     const onChange = jest.fn();
+    const query = createMockMetricQuery();
     const datasource = createMockDatasource({
       getMetricTypes: jest.fn().mockResolvedValue([createMockMetricDescriptor()]),
     });
@@ -43,6 +48,8 @@ describe('Metrics', () => {
         templateVariableOptions={[]}
         datasource={datasource}
         onChange={onChange}
+        onProjectChange={jest.fn()}
+        query={query}
       >
         {() => <div />}
       </Metrics>
@@ -56,6 +63,7 @@ describe('Metrics', () => {
 
   it('can select a metric name', async () => {
     const onChange = jest.fn();
+    const query = createMockMetricQuery();
     const datasource = createMockDatasource({
       getMetricTypes: jest.fn().mockResolvedValue([createMockMetricDescriptor()]),
     });
@@ -68,6 +76,8 @@ describe('Metrics', () => {
         templateVariableOptions={[]}
         datasource={datasource}
         onChange={onChange}
+        onProjectChange={jest.fn()}
+        query={query}
       >
         {() => <div />}
       </Metrics>
@@ -81,6 +91,7 @@ describe('Metrics', () => {
 
   it('should render available metric options according to the selected service', async () => {
     const onChange = jest.fn();
+    const query = createMockMetricQuery();
     const datasource = createMockDatasource({
       getMetricTypes: jest.fn().mockResolvedValue([
         createMockMetricDescriptor({
@@ -115,6 +126,8 @@ describe('Metrics', () => {
         templateVariableOptions={[]}
         datasource={datasource}
         onChange={onChange}
+        onProjectChange={jest.fn()}
+        query={query}
       >
         {() => <div />}
       </Metrics>
@@ -167,6 +180,7 @@ describe('Metrics', () => {
         }),
       ]),
     });
+    const query = createMockMetricQuery();
 
     render(
       <Metrics
@@ -176,11 +190,12 @@ describe('Metrics', () => {
         templateVariableOptions={[]}
         datasource={datasource}
         onChange={onChange}
+        onProjectChange={jest.fn()}
+        query={query}
       >
         {() => <div />}
       </Metrics>
     );
-
     const service = await screen.findByLabelText('Service');
     await openMenu(service);
     expect(screen.getAllByLabelText('Select option').length).toEqual(2);

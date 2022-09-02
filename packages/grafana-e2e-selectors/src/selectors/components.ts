@@ -123,7 +123,7 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
-    applyButton: 'panel editor apply',
+    applyButton: 'Apply changes and go back to dashboard',
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
     toggleTableView: 'toggle-table-view',
@@ -198,6 +198,27 @@ export const Components = {
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
+    },
+    SpatialOperations: {
+      actionLabel: 'root Action field property editor',
+      locationLabel: 'root Location field property editor',
+      location: {
+        autoOption: 'Auto location option',
+        coords: {
+          option: 'Coords location option',
+          latitudeFieldLabel: 'root Latitude field field property editor',
+          longitudeFieldLabel: 'root Longitude field field property editor',
+        },
+        geohash: {
+          option: 'Geohash location option',
+          geohashFieldLabel: 'root Geohash field field property editor',
+        },
+        lookup: {
+          option: 'Lookup location option',
+          lookupFieldLabel: 'root Lookup field field property editor',
+          gazetteerFieldLabel: 'root Gazetteer field property editor',
+        },
+      },
     },
     searchInput: 'search transformations',
   },

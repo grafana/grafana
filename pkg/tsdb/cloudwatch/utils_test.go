@@ -23,13 +23,16 @@ type fakeCWLogsClient struct {
 
 	calls logsQueryCalls
 
-	logGroups      cloudwatchlogs.DescribeLogGroupsOutput
+	logGroups      []cloudwatchlogs.DescribeLogGroupsOutput
 	logGroupFields cloudwatchlogs.GetLogGroupFieldsOutput
 	queryResults   cloudwatchlogs.GetQueryResultsOutput
+
+	logGroupsIndex int
 }
 
 type logsQueryCalls struct {
 	startQueryWithContext []*cloudwatchlogs.StartQueryInput
+	getEventsWithContext  []*cloudwatchlogs.GetLogEventsInput
 }
 
 func (m *fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
@@ -51,11 +54,21 @@ func (m *fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *clou
 }
 
 func (m *fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
-	return &m.logGroups, nil
+	output := &m.logGroups[m.logGroupsIndex]
+	m.logGroupsIndex++
+	return output, nil
 }
 
 func (m *fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return &m.logGroupFields, nil
+}
+
+func (m *fakeCWLogsClient) GetLogEventsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogEventsInput, option ...request.Option) (*cloudwatchlogs.GetLogEventsOutput, error) {
+	m.calls.getEventsWithContext = append(m.calls.getEventsWithContext, input)
+
+	return &cloudwatchlogs.GetLogEventsOutput{
+		Events: []*cloudwatchlogs.OutputLogEvent{},
+	}, nil
 }
 
 type fakeCWClient struct {

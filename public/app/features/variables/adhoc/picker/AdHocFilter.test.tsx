@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
-import { setDataSourceSrv } from '../../../../../../packages/grafana-runtime';
+import { setDataSourceSrv } from '@grafana/runtime';
+
 import { AdHocVariableFilter } from '../../types';
 
 import { AdHocFilter } from './AdHocFilter';

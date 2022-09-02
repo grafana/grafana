@@ -1,3 +1,4 @@
+import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
@@ -5,7 +6,7 @@ import { VerticalGroup } from '../Layout/Layout';
 
 import { Typography } from './Typography';
 
-export default {
+const meta: Meta = {
   title: 'General/Typography',
   component: Typography,
   parameters: {
@@ -13,7 +14,7 @@ export default {
   },
 };
 
-export const Typopgraphy = () => {
+export const Typopgraphy: Story = () => {
   return (
     <VerticalGroup>
       <StoryExample name="Native header elements (global styles)">
@@ -27,3 +28,5 @@ export const Typopgraphy = () => {
     </VerticalGroup>
   );
 };
+
+export default meta;

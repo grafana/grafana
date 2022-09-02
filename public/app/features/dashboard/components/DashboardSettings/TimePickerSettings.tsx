@@ -67,7 +67,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
   render() {
     return (
       <CollapsableSection label="Time options" isOpen={true}>
-        <Field label="Timezone" data-testid={selectors.components.TimeZonePicker.containerV2}>
+        <Field label="Time zone" data-testid={selectors.components.TimeZonePicker.containerV2}>
           <TimeZonePicker
             inputId="time-options-input"
             includeInternal={true}

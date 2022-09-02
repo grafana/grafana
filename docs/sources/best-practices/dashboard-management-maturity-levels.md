@@ -53,7 +53,7 @@ How can you tell you are here?
 - Directed browsing cuts down on "guessing."
   - Template variables make it harder to “just browse” randomly or aimlessly.
   - Most dashboards should be linked to by alerts.
-  - Browsing is directed with links. For more information, refer to [Linking]({{< relref "../linking/" >}}).
+  - Browsing is directed with links. For more information, refer to [Manage dashboard links]({{< relref "../dashboards/manage-dashboard-links/" >}}).
 - Version-controlled dashboard JSON.
 
 ## High - optimized use
@@ -63,7 +63,7 @@ At this stage, you have optimized your dashboard management use with a consisten
 - Actively reducing sprawl.
   - Regularly review existing dashboards to make sure they are still relevant.
   - Only approved dashboards added to master dashboard list.
-  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../enterprise/usage-insights/" >}}).
+  - Tracking dashboard use. If you're an Enterprise user, you can take advantage of [Usage insights]({{< relref "../dashboards/assess-dashboard-usage/" >}}).
 - Consistency by design.
 - Use scripting libraries to generate dashboards, ensure consistency in pattern and style.
   - grafonnet (Jsonnet)

@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -22,6 +23,18 @@ func (ss *SQLStore) GetThumbnail(ctx context.Context, query *models.GetDashboard
 	return query.Result, err
 }
 
+func marshalDatasourceUids(dsUids []string) (string, error) {
+	if dsUids == nil {
+		return "", nil
+	}
+
+	b, err := json.Marshal(dsUids)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
 func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboardThumbnailCommand) (*models.DashboardThumbnail, error) {
 	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
@@ -30,11 +43,17 @@ func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboard
 			return err
 		}
 
+		dsUids, err := marshalDatasourceUids(cmd.DatasourceUIDs)
+		if err != nil {
+			return err
+		}
+
 		if existing != nil {
 			existing.Image = cmd.Image
 			existing.MimeType = cmd.MimeType
 			existing.Updated = time.Now()
 			existing.DashboardVersion = cmd.DashboardVersion
+			existing.DsUIDs = dsUids
 			existing.State = models.ThumbnailStateDefault
 			_, err = sess.ID(existing.Id).Update(existing)
 			cmd.Result = existing
@@ -53,6 +72,7 @@ func (ss *SQLStore) SaveThumbnail(ctx context.Context, cmd *models.SaveDashboard
 		thumb.Theme = cmd.Theme
 		thumb.Kind = cmd.Kind
 		thumb.Image = cmd.Image
+		thumb.DsUIDs = dsUids
 		thumb.MimeType = cmd.MimeType
 		thumb.DashboardId = dash.Id
 		thumb.DashboardVersion = cmd.DashboardVersion
@@ -101,9 +121,17 @@ func (ss *SQLStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *
 		sess.Table("dashboard")
 		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id AND dashboard_thumbnail.theme = ? AND dashboard_thumbnail.kind = ?", cmd.Theme, cmd.Kind)
 		sess.Where("dashboard.is_folder = ?", dialect.BooleanStr(false))
-		sess.Where("(dashboard.version != dashboard_thumbnail.dashboard_version "+
-			"OR dashboard_thumbnail.state = ? "+
-			"OR dashboard_thumbnail.id IS NULL)", models.ThumbnailStateStale)
+
+		query := "(dashboard.version != dashboard_thumbnail.dashboard_version " +
+			"OR dashboard_thumbnail.state = ? " +
+			"OR dashboard_thumbnail.id IS NULL"
+		args := []interface{}{models.ThumbnailStateStale}
+
+		if cmd.IncludeThumbnailsWithEmptyDsUIDs {
+			query += " OR dashboard_thumbnail.ds_uids = ? OR dashboard_thumbnail.ds_uids IS NULL"
+			args = append(args, "")
+		}
+		sess.Where(query+")", args...)
 
 		if !cmd.IncludeManuallyUploadedThumbnails {
 			sess.Where("(dashboard_thumbnail.id is not null AND dashboard_thumbnail.dashboard_version != ?) "+
@@ -119,13 +147,13 @@ func (ss *SQLStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *
 			"dashboard.version",
 			"dashboard.slug")
 
-		var dashboards = make([]*models.DashboardWithStaleThumbnail, 0)
-		err := sess.Find(&dashboards)
+		var result = make([]*models.DashboardWithStaleThumbnail, 0)
+		err := sess.Find(&result)
 
 		if err != nil {
 			return err
 		}
-		cmd.Result = dashboards
+		cmd.Result = result
 		return err
 	})
 
@@ -145,6 +173,7 @@ func findThumbnailByMeta(sess *DBSession, meta models.DashboardThumbnailMeta) (*
 		"dashboard_thumbnail.dashboard_version",
 		"dashboard_thumbnail.state",
 		"dashboard_thumbnail.kind",
+		"dashboard_thumbnail.ds_uids",
 		"dashboard_thumbnail.mime_type",
 		"dashboard_thumbnail.theme",
 		"dashboard_thumbnail.updated")

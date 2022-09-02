@@ -4,7 +4,7 @@ import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react
 
 import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { appEvents } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -80,9 +80,7 @@ class AppRootPage extends Component<Props, State> {
     const { params } = this.props.match;
 
     if (prevProps.match.params.pluginId !== params.pluginId) {
-      this.setState({
-        loading: true,
-      });
+      this.setState({ loading: true, plugin: null });
       this.loadPluginSettings();
     }
   }
@@ -94,7 +92,15 @@ class AppRootPage extends Component<Props, State> {
   render() {
     const { loading, plugin, nav, portalNode } = this.state;
 
-    if (plugin && !plugin.root) {
+    if (!plugin || this.props.match.params.pluginId !== plugin.meta.id) {
+      return (
+        <Page>
+          <PageLoader />
+        </Page>
+      );
+    }
+
+    if (!plugin.root) {
       // TODO? redirect to plugin page?
       return <div>No Root App</div>;
     }
@@ -102,15 +108,13 @@ class AppRootPage extends Component<Props, State> {
     return (
       <>
         <InPortal node={portalNode}>
-          {plugin && plugin.root && (
-            <plugin.root
-              meta={plugin.meta}
-              basename={this.props.match.url}
-              onNavChanged={this.onNavChanged}
-              query={this.props.queryParams as KeyValue}
-              path={this.props.location.pathname}
-            />
-          )}
+          <plugin.root
+            meta={plugin.meta}
+            basename={this.props.match.url}
+            onNavChanged={this.onNavChanged}
+            query={this.props.queryParams as KeyValue}
+            path={this.props.location.pathname}
+          />
         </InPortal>
         {nav ? (
           <Page navModel={nav}>

@@ -3,6 +3,7 @@ var config = {
     concurrency: 1,
     runners: ['axe'],
     useIncognitoBrowserContext: false,
+    standard: 'WCAG2AA',
     chromeLaunchConfig: {
       args: ['--no-sandbox'],
     },

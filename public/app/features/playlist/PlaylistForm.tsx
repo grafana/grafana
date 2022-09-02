@@ -23,7 +23,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
   const { name, interval, items: propItems } = playlist;
   const { items, addById, addByTag, deleteItem, moveDown, moveUp } = usePlaylistItems(propItems);
   return (
-    <>
+    <div>
       <Form onSubmit={(list: Playlist) => onSubmit({ ...list, items })} validateOn={'onBlur'}>
         {({ register, errors }) => {
           const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
@@ -81,6 +81,6 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
           );
         }}
       </Form>
-    </>
+    </div>
   );
 };
