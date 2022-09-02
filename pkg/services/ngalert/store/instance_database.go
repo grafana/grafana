@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -88,21 +89,23 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 	})
 }
 
-// SaveAlertInstances saves all the provided alert instances to the store. It
-// writes transactions with a maximum count of 400 rows. Larger writes are
-// split into multiple transactions.
+// SaveAlertInstances saves all the provided alert instances to the store in a single transaction.
 func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error {
-	// SQLite has a limit of 999 variables per write. We use 9 per row, so we split up our writes into separate upsert statements.
+	// SQLite has a limit of 999 variables per write. We use 9 per row, so we split up our
+	// writes into separate upsert statements.
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		keysPerRow := 9
+		keyNames := []string{"rule_org_id", "rule_uid", "labels_hash"}
+		fieldNames := []string{
+			"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state",
+			"current_reason", "current_state_since", "current_state_end", "last_eval_time",
+		}
+		fieldsPerRow := len(fieldNames)
 		maxRows := 20
+		maxArgs := maxRows * fieldsPerRow
 
 		// Prepare the statement to bind each argument to.
 		bigUpsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
-			"alert_instance",
-			[]string{"rule_org_id", "rule_uid", "labels_hash"},
-			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"},
-			maxRows)
+			"alert_instance", keyNames, fieldNames, maxRows)
 		if err != nil {
 			return err
 		}
@@ -112,12 +115,10 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 			return err
 		}
 
-		maxArgs := maxRows * keysPerRow
 		args := make([]interface{}, 0, maxArgs)
 		for _, alertInstance := range cmd {
 			if len(args) >= maxArgs {
-				_, err = bigStmt.ExecContext(ctx, args...)
-				if err != nil {
+				if _, err = bigStmt.ExecContext(ctx, args...); err != nil {
 					return err
 				}
 				args = args[:0]
@@ -138,12 +139,9 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 				alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 		}
 
-		if len(args) >= 0 {
+		if len(args) > 0 && len(args)%fieldsPerRow == 0 {
 			upsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
-				"alert_instance",
-				[]string{"rule_org_id", "rule_uid", "labels_hash"},
-				[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"},
-				len(args)/keysPerRow)
+				"alert_instance", keyNames, fieldNames, len(args)/fieldsPerRow)
 			if err != nil {
 				return err
 			}
@@ -157,6 +155,8 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 			if err != nil {
 				return err
 			}
+		} else {
+			return fmt.Errorf("failed to upsert alert instances. Last statements had %v fields, which is not a multiple of the number of fields, %v", len(args), fieldsPerRow)
 		}
 
 		return nil
@@ -202,6 +202,22 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 		ruleUID     string
 		labelHashes []interface{}
 	}
+
+	// Sort by org and rule UID. Most callers will have grouped already, but it's
+	// cheap to verify and leads to more compact transactions.
+	sort.Slice(keys, func(i, j int) bool {
+		aye := keys[i]
+		jay := keys[j]
+
+		if aye.RuleOrgID < jay.RuleOrgID {
+			return true
+		}
+
+		if aye.RuleOrgID == jay.RuleOrgID && aye.RuleUID < jay.RuleUID {
+			return true
+		}
+		return false
+	})
 
 	maxRows := 200
 	rowData := data{

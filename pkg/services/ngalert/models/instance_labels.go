@@ -42,7 +42,7 @@ func (il *InstanceLabels) StringKey() (string, error) {
 	tl := labelsToTupleLabels(*il)
 	b, err := json.Marshal(tl)
 	if err != nil {
-		return "", fmt.Errorf("can not generate key due to failure to encode labels: %w", err)
+		return "", fmt.Errorf("could not generate key due to failure to encode labels: %w", err)
 	}
 	return string(b), nil
 }
@@ -54,7 +54,7 @@ func (il *InstanceLabels) StringAndHash() (string, string, error) {
 
 	b, err := json.Marshal(tl)
 	if err != nil {
-		return "", "", fmt.Errorf("can not generate key for alert instance due to failure to encode labels: %w", err)
+		return "", "", fmt.Errorf("could not generate key for alert instance due to failure to encode labels: %w", err)
 	}
 
 	h := sha1.New()

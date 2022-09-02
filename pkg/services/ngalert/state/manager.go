@@ -391,8 +391,8 @@ func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved
 		}
 		instances = append(instances, fields)
 	}
-	err := st.instanceStore.SaveAlertInstances(ctx, instances...)
-	if err != nil {
+
+	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
 		for _, inst := range instances {
 			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
 		}

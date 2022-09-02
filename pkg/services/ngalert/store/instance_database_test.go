@@ -58,16 +58,16 @@ func TestAlertInstanceBulkWrite(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	orgIDs := []int64{1, 2, 3, 4, 5}
-	count := 20_003
-	instances := make([]models.AlertInstance, 0, len(orgIDs)+count)
-	keys := make([]models.AlertInstanceKey, 0, len(orgIDs)+count)
+	counts := []int{20_000, 200, 503, 0, 1257}
+	instances := []models.AlertInstance{}
+	keys := []models.AlertInstanceKey{}
 
-	for _, id := range orgIDs {
+	for i, id := range orgIDs {
 		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, id)
 
 		// Create some instances to write down and then delete.
-		for i := 0; i < count; i++ {
-			labels := models.InstanceLabels{"test": fmt.Sprint(i)}
+		for j := 0; j < counts[i]; j++ {
+			labels := models.InstanceLabels{"test": fmt.Sprint(j)}
 			_, labelsHash, _ := labels.StringAndHash()
 			instance := models.AlertInstance{
 				AlertInstanceKey: models.AlertInstanceKey{
@@ -89,13 +89,13 @@ func TestAlertInstanceBulkWrite(t *testing.T) {
 	t.Log("Finished database write")
 
 	// List our instances. Make sure we have the right count.
-	for _, id := range orgIDs {
+	for i, id := range orgIDs {
 		q := &models.ListAlertInstancesQuery{
 			RuleOrgID: id,
 		}
 		err = dbstore.ListAlertInstances(ctx, q)
 		require.NoError(t, err)
-		require.Equal(t, count, len(q.Result), "Org %v: Expected %v instances but got %v", id, count, len(q.Result))
+		require.Equal(t, counts[i], len(q.Result), "Org %v: Expected %v instances but got %v", id, counts[i], len(q.Result))
 	}
 	t.Log("Finished database read")
 
