@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/grafana/grafana/pkg/build/gcloud"
 	"github.com/urfave/cli/v2"
-	"log"
 )
 
 func BuildDocker(c *cli.Context) error {

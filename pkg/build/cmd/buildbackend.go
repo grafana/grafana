@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"log"
 
 	"github.com/grafana/grafana/pkg/build/compilers"
@@ -10,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/build/errutil"
 	"github.com/grafana/grafana/pkg/build/grafana"
 	"github.com/grafana/grafana/pkg/build/syncutil"
+	"github.com/urfave/cli/v2"
 )
 
 func BuildBackend(ctx *cli.Context) error {

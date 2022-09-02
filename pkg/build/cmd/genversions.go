@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/droneutil"
+	"github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v2"
 )
 
 func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
@@ -54,7 +55,7 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 	}
 
 	if version == "" {
-		version, err = generateVersionFromBuildID(version)
+		version, err = generateVersionFromBuildID()
 		if err != nil {
 			return config.Metadata{}, err
 		}
@@ -71,18 +72,18 @@ func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 		CurrentCommit:  currentCommit,
 	}
 
-	fmt.Printf("building Grafana version: %s, release mode: %+v", metadata.GrafanaVersion, metadata.ReleaseMode)
+	log.Info().Msgf("building Grafana version: %s, release mode: %+v", metadata.GrafanaVersion, metadata.ReleaseMode)
 
 	return metadata, nil
 }
 
-func generateVersionFromBuildID(version string) (string, error) {
+func generateVersionFromBuildID() (string, error) {
 	buildID, ok := os.LookupEnv("DRONE_BUILD_NUMBER")
 	if !ok {
 		return "", fmt.Errorf("unable to get DRONE_BUILD_NUMBER environmental variable")
 	}
 	var err error
-	version, err = config.GetGrafanaVersion(buildID, ".")
+	version, err := config.GetGrafanaVersion(buildID, ".")
 	if err != nil {
 		return "", err
 	}
