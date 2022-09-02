@@ -54,12 +54,13 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 
 	m.log.Info("Plugin registered", "pluginID", p.ID)
 	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
 	}
 
 	p.Logger().Debug("Successfully started backend plugin process")
-	m.mu.Unlock()
 	return nil
 }
 

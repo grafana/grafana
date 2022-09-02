@@ -31,6 +31,9 @@ In [Grafana Enterprise]({{< relref "../../enterprise/" >}}), you can also use se
 
 > **Note:** Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
 
+{{< vimeo 742056367 >}}
+<br>
+
 ## Service account tokens
 
 A service account token is a generated random string that acts as an alternative to a password when authenticating with Grafana's HTTP API.

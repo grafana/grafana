@@ -16,6 +16,7 @@ type Metadata struct {
 	GrafanaVersion string      `json:"version,omitempty"`
 	ReleaseMode    ReleaseMode `json:"releaseMode,omitempty"`
 	GrabplVersion  string      `json:"grabplVersion,omitempty"`
+	CurrentCommit  string      `json:"currentCommit,omitempty"`
 }
 
 type ReleaseMode struct {
@@ -169,4 +170,12 @@ func CheckSemverSuffix() (ReleaseMode, error) {
 		fmt.Printf("DRONE_SEMVER_PRERELEASE is custom string, release event with %s suffix\n", tagSuffix)
 		return ReleaseMode{Mode: TagMode}, nil
 	}
+}
+
+func GetDroneCommit() (string, error) {
+	commit := strings.TrimSpace(os.Getenv("DRONE_COMMIT"))
+	if commit == "" {
+		return "", fmt.Errorf("the environment variable DRONE_COMMIT is missing")
+	}
+	return commit, nil
 }

@@ -2,27 +2,25 @@ package loginattemptimpl
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	loginattempt "github.com/grafana/grafana/pkg/services/login_attempt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 )
 
 type Service struct {
-	// TODO remove sqlstore
-	sqlStore *sqlstore.SQLStore
+	store store
 }
 
-func ProvideService(
-	ss *sqlstore.SQLStore,
-) loginattempt.Service {
+func ProvideService(db db.DB) loginattempt.Service {
 	return &Service{
-		sqlStore: ss,
+		store: &xormStore{db: db, now: time.Now},
 	}
 }
 
 func (s *Service) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
-	err := s.sqlStore.CreateLoginAttempt(ctx, cmd)
+	err := s.store.CreateLoginAttempt(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -30,7 +28,7 @@ func (s *Service) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLogi
 }
 
 func (s *Service) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
-	err := s.sqlStore.DeleteOldLoginAttempts(ctx, cmd)
+	err := s.store.DeleteOldLoginAttempts(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -38,7 +36,7 @@ func (s *Service) DeleteOldLoginAttempts(ctx context.Context, cmd *models.Delete
 }
 
 func (s *Service) GetUserLoginAttemptCount(ctx context.Context, cmd *models.GetUserLoginAttemptCountQuery) error {
-	err := s.sqlStore.GetUserLoginAttemptCount(ctx, cmd)
+	err := s.store.GetUserLoginAttemptCount(ctx, cmd)
 	if err != nil {
 		return err
 	}
