@@ -445,6 +445,7 @@ export function prepareTimelineFields(
           changed = true;
       }
     }
+
     if (isTimeseries && fields.length > 1) {
       hasTimeseries = true;
       if (changed) {
@@ -559,19 +560,45 @@ function allNonTimeFields(frames: DataFrame[]): Field[] {
   return fields;
 }
 
+export function findPreviousStateIndex(field: Field, datapointIdx: number) {
+  let start;
+  let leftPointer = datapointIdx;
+
+  if (leftPointer < 0) {
+    return 0;
+  }
+
+  const startValue = field.values.get(datapointIdx);
+
+  while (start === undefined) {
+    if (leftPointer < 0) {
+      return 0;
+    }
+    const leftValue = field.values.get(leftPointer);
+
+    if (leftValue === undefined || leftValue === startValue) {
+      leftPointer--;
+    } else {
+      start = leftPointer;
+    }
+  }
+
+  return start;
+}
+
 export function findNextStateIndex(field: Field, datapointIdx: number) {
   let end;
-  let rightPointer = datapointIdx + 1;
+  let rightPointer = datapointIdx;
 
   if (rightPointer >= field.values.length) {
-    return null;
+    return field.values.length - 1;
   }
 
   const startValue = field.values.get(datapointIdx);
 
   while (end === undefined) {
     if (rightPointer >= field.values.length) {
-      return null;
+      return field.values.length - 1;
     }
     const rightValue = field.values.get(rightPointer);
 

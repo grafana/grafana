@@ -124,11 +124,12 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
             datapointIdx={datapointIdx}
             timeZone={timeZone}
             onAnnotationAdd={onAnnotationAdd}
+            mergeValues={options.mergeValues ?? false}
           />
         </>
       );
     },
-    [timeZone, frames, shouldDisplayCloseButton]
+    [timeZone, frames, shouldDisplayCloseButton, options.mergeValues]
   );
 
   if (!frames || warn) {

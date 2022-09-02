@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { MenuItem, SeriesTableRow, useTheme2 } from '@grafana/ui';
 
-import { findNextStateIndex, fmtDuration } from './utils';
+import { findNextStateIndex, findPreviousStateIndex, fmtDuration } from './utils';
 
 interface StateTimelineTooltipProps {
   data: DataFrame[];
@@ -20,6 +20,7 @@ interface StateTimelineTooltipProps {
   datapointIdx: number;
   timeZone: TimeZone;
   onAnnotationAdd?: () => void;
+  mergeValues: boolean;
 }
 
 export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
@@ -29,6 +30,7 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
   datapointIdx,
   timeZone,
   onAnnotationAdd,
+  mergeValues,
 }) => {
   const theme = useTheme2();
 
@@ -74,13 +76,33 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
     nextStateTs = xField.values.get(nextStateIdx!);
   }
 
-  const stateTs = xField.values.get(datapointIdx!);
+  let stateTs = xField.values.get(datapointIdx!);
+  if (mergeValues) {
+    const previousStateIdx = findPreviousStateIndex(field, datapointIdx!);
+    if (previousStateIdx >= 0) {
+      stateTs = xField.values.get(previousStateIdx!);
+    }
+  }
 
   let toFragment = null;
   let durationFragment = null;
+  let fromFragment = (
+    <>
+      From <strong>{xFieldFmt(xField.values.get(datapointIdx!)).text}</strong>
+    </>
+  );
 
   if (nextStateTs) {
     const duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
+
+    if (mergeValues) {
+      fromFragment = (
+        <>
+          From <strong>{xFieldFmt(stateTs).text}</strong>
+        </>
+      );
+    }
+
     durationFragment = (
       <>
         <br />
@@ -100,7 +122,7 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
         {fieldDisplayName}
         <br />
         <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
-        From <strong>{xFieldFmt(xField.values.get(datapointIdx!)).text}</strong>
+        {fromFragment}
         {toFragment}
         {durationFragment}
       </div>
