@@ -29,7 +29,7 @@ func EndToEndTests(c *cli.Context) error {
 	var err error
 	for i := 0; i < tries; i++ {
 		log.Printf("Running e2e test suite attempt #%d", i+1)
-		//gosec:nolint
+		//nolint:gosec
 		cmd := exec.Command("./e2e/run-suite", suite)
 		cmd.Env = env
 		cmd.Stdout = os.Stdout
