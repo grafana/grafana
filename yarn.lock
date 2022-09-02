@@ -8574,7 +8574,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/dragscroll@npm:^1.2.1":
+"@scena/dragscroll@npm:^1.2.0, @scena/dragscroll@npm:^1.2.1":
   version: 1.2.1
   resolution: "@scena/dragscroll@npm:1.2.1"
   dependencies:
@@ -21108,7 +21108,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.13.0":
+"gesto@npm:^1.12.2, gesto@npm:^1.13.0":
   version: 1.13.0
   resolution: "gesto@npm:1.13.0"
   dependencies:
@@ -21833,7 +21833,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-inlinesvg: 3.0.0
     react-loadable: 5.5.0
-    react-moveable: 0.33.0
+    react-moveable: 0.38.4
     react-popper: 2.3.0
     react-popper-tooltip: 4.4.2
     react-redux: 7.2.6
@@ -31920,7 +31920,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.33.0, react-moveable@npm:~0.33.0":
+"react-moveable@npm:0.38.4":
+  version: 0.38.4
+  resolution: "react-moveable@npm:0.38.4"
+  dependencies:
+    "@daybrush/utils": ^1.7.1
+    "@egjs/agent": ^2.2.1
+    "@egjs/children-differ": ^1.0.1
+    "@scena/dragscroll": ^1.2.0
+    "@scena/event-emitter": ^1.0.5
+    "@scena/matrix": ^1.1.1
+    css-to-mat: ^1.0.3
+    framework-utils: ^1.1.0
+    gesto: ^1.12.2
+    overlap-area: ^1.1.0
+    react-css-styled: ^1.0.3
+  checksum: 0d96f151a7b1c7ec8fed8e0f46cda8c48ab5553964bf5333ce647d5f14d27efdc6203ad5888b2143448dc33e389f1ec440eb8b515166716fa8423f6f2224a5a4
+  languageName: node
+  linkType: hard
+
+"react-moveable@npm:~0.33.0":
   version: 0.33.0
   resolution: "react-moveable@npm:0.33.0"
   dependencies:
