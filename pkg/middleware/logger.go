@@ -70,6 +70,10 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 					logParams = append(logParams, "db_call_count", log.TotalDBCallCount(ctx.Req.Context()))
 				}
 
+				if handler, exist := routeOperationName(ctx.Req); exist {
+					logParams = append(logParams, "handler", handler)
+				}
+
 				traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
 				if traceID != "" {
 					logParams = append(logParams, "traceID", traceID)
