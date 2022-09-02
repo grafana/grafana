@@ -11,6 +11,7 @@ import {
   SelectableValue,
   dateTimeFormat,
   getValueFormat,
+  FeatureState,
   formattedValueToString,
 } from '@grafana/data';
 import { getTemplateSrv, locationService } from '@grafana/runtime';
@@ -26,15 +27,15 @@ import {
   Button,
   Spinner,
   Alert,
+  FeatureBadge,
   Select,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { PanelModel } from 'app/features/dashboard/state';
+import { pendingNewDashboard } from 'app/features/dashboard/state/initDashboard';
 import { InspectTab } from 'app/features/inspector/types';
-
-import { getTimeSrv } from '../../services/TimeSrv';
-import { PanelModel } from '../../state';
-import { pendingNewDashboard } from '../../state/initDashboard';
 
 import { Randomize } from './randomizer';
 import { getGithubMarkdown, getDebugDashboard } from './utils';
@@ -133,6 +134,13 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
       onClose={onClose}
       expandable
       scrollableContent
+      subtitle={
+        <div>
+          <p>
+            <FeatureBadge featureState={FeatureState.alpha} />
+          </p>
+        </div>
+      }
       tabs={
         <TabsBar>
           {tabs.map((t, index) => {
