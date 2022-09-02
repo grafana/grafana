@@ -116,7 +116,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   return (
     <Drawer
       title={`Debug: ${panelTitle}`}
-      width="80%"
+      width="50%"
       onClose={onClose}
       expandable
       scrollableContent
