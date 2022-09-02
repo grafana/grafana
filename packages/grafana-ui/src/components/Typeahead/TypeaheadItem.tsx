@@ -13,7 +13,7 @@ import { PartialHighlighter } from './PartialHighlighter';
 interface Props {
   isSelected: boolean;
   item: CompletionItem;
-  style: any;
+  style: React.CSSProperties;
   prefix?: string;
 
   onClickItem?: (event: React.MouseEvent) => void;
