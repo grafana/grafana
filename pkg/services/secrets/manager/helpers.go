@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -37,10 +38,14 @@ func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.
 	require.NoError(tb, err)
 
 	cfg := &setting.Cfg{Raw: raw}
-
 	settings := &setting.OSSImpl{Cfg: cfg}
 
-	encryption := ossencryption.ProvideService()
+	encProvider := encryptionprovider.Provider{}
+	usageStats := &usagestats.UsageStatsMock{}
+
+	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+	require.NoError(tb, err)
+
 	secretsService, err := ProvideSecretsService(
 		store,
 		osskmsproviders.ProvideService(encryption, settings, features),

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
-import React, { Context } from 'react';
+import React, { Context, PureComponent } from 'react';
 import { Value, Editor as CoreEditor } from 'slate';
 import Plain from 'slate-plain-serializer';
 
@@ -66,7 +66,7 @@ export interface QueryFieldState {
  * This component can only process strings. Internally it uses Slate Value.
  * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
  */
-export class UnThemedQueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
+export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFieldState> {
   plugins: Plugin[];
   runOnChangeDebounced: Function;
   lastExecutedValue: Value | null = null;

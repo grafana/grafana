@@ -20,6 +20,7 @@ import { PromVisualQuery } from '../types';
 
 import { MetricSelect } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
+import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 
 export interface Props {
   query: PromVisualQuery;
@@ -115,7 +116,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           stepNumber={1}
           title={<RawQuery query={`${query.metric} ${promQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
         >
-          Fetch all series matching metric name and label filters.
+          {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
       )}
       <OperationsEditorRow>

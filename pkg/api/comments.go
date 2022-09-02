@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/comments"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -16,7 +17,7 @@ func (hs *HTTPServer) commentsGet(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	items, err := hs.commentsService.Get(c.Req.Context(), c.OrgId, c.SignedInUser, cmd)
+	items, err := hs.commentsService.Get(c.Req.Context(), c.OrgID, c.SignedInUser, cmd)
 	if err != nil {
 		if errors.Is(err, comments.ErrPermissionDenied) {
 			return response.Error(http.StatusForbidden, "permission denied", err)
@@ -33,10 +34,10 @@ func (hs *HTTPServer) commentsCreate(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if c.SignedInUser.UserId == 0 && !c.SignedInUser.HasRole(models.ROLE_ADMIN) {
+	if c.SignedInUser.UserID == 0 && !c.SignedInUser.HasRole(org.RoleAdmin) {
 		return response.Error(http.StatusForbidden, "admin role required", nil)
 	}
-	comment, err := hs.commentsService.Create(c.Req.Context(), c.OrgId, c.SignedInUser, cmd)
+	comment, err := hs.commentsService.Create(c.Req.Context(), c.OrgID, c.SignedInUser, cmd)
 	if err != nil {
 		if errors.Is(err, comments.ErrPermissionDenied) {
 			return response.Error(http.StatusForbidden, "permission denied", err)

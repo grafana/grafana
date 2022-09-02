@@ -1,3 +1,5 @@
+import { TypedVariableModel } from '@grafana/data';
+
 import { DashboardState, StoreState } from '../../../types';
 import { DashboardModel, PanelModel } from '../../dashboard/state';
 import { initialState } from '../../dashboard/state/reducers';
@@ -5,7 +7,6 @@ import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
 import { constantBuilder, customBuilder } from '../shared/testing/builders';
-import { VariableModel } from '../types';
 import { ExtendedUrlQueryMap } from '../utils';
 
 import { templateVarsChangedInUrl } from './actions';
@@ -16,7 +17,10 @@ const dashboardModel = new DashboardModel({});
 
 variableAdapters.setInit(() => [createCustomVariableAdapter(), createConstantVariableAdapter()]);
 
-async function getTestContext(urlQueryMap: ExtendedUrlQueryMap = {}, variable: VariableModel | undefined = undefined) {
+async function getTestContext(
+  urlQueryMap: ExtendedUrlQueryMap = {},
+  variable: TypedVariableModel | undefined = undefined
+) {
   jest.clearAllMocks();
 
   const key = 'key';

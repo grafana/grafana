@@ -7,9 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +23,7 @@ func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
 	t.Run("create service account", func(t *testing.T) {
 		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := int64(1)
-		serviceAccountRole := models.ROLE_ADMIN
+		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
 		saForm := serviceaccounts.CreateServiceAccountForm{
 			Name:       serviceAccountName,
@@ -42,7 +45,7 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 	t.Run("create service account", func(t *testing.T) {
 		serviceAccountName := "new Service Account"
 		serviceAccountOrgId := orgQuery.Result.Id
-		serviceAccountRole := models.ROLE_ADMIN
+		serviceAccountRole := org.RoleAdmin
 		isDisabled := true
 		saForm := serviceaccounts.CreateServiceAccountForm{
 			Name:       serviceAccountName,
@@ -105,8 +108,9 @@ func TestStore_DeleteServiceAccount(t *testing.T) {
 func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreImpl) {
 	t.Helper()
 	db := sqlstore.InitTestDB(t)
+	apiKeyService := apikeyimpl.ProvideService(db, db.Cfg)
 	kvStore := kvstore.ProvideService(db)
-	return db, ProvideServiceAccountsStore(db, kvStore)
+	return db, ProvideServiceAccountsStore(db, apiKeyService, kvStore)
 }
 
 func TestStore_RetrieveServiceAccount(t *testing.T) {
@@ -151,7 +155,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 	}{
 		{
 			desc:        "api key should be migrated to service account token",
-			key:         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
+			key:         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
 			expectedErr: nil,
 		},
 	}
@@ -171,7 +175,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					key.OrgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},
@@ -181,7 +185,10 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 				saMigrated := serviceAccounts.ServiceAccounts[0]
 				require.Equal(t, string(key.Role), saMigrated.Role)
 
-				tokens, err := store.ListTokens(context.Background(), key.OrgId, saMigrated.Id)
+				tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
+					OrgID:            &key.OrgId,
+					ServiceAccountID: &saMigrated.Id,
+				})
 				require.NoError(t, err)
 				require.Len(t, tokens, 1)
 			}
@@ -200,9 +207,9 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 		{
 			desc: "api keys should be migrated to service account tokens within provided org",
 			keys: []tests.TestApiKey{
-				{Name: "test1", Role: models.ROLE_EDITOR, Key: "secret1", OrgId: 1},
-				{Name: "test2", Role: models.ROLE_EDITOR, Key: "secret2", OrgId: 1},
-				{Name: "test3", Role: models.ROLE_EDITOR, Key: "secret3", OrgId: 2},
+				{Name: "test1", Role: org.RoleEditor, Key: "secret1", OrgId: 1},
+				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 1},
+				{Name: "test3", Role: org.RoleEditor, Key: "secret3", OrgId: 2},
 			},
 			orgId:                  1,
 			expectedServiceAccouts: 2,
@@ -211,8 +218,8 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 		{
 			desc: "api keys from another orgs shouldn't be migrated",
 			keys: []tests.TestApiKey{
-				{Name: "test1", Role: models.ROLE_EDITOR, Key: "secret1", OrgId: 2},
-				{Name: "test2", Role: models.ROLE_EDITOR, Key: "secret2", OrgId: 2},
+				{Name: "test1", Role: org.RoleEditor, Key: "secret1", OrgId: 2},
+				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 2},
 			},
 			orgId:                  1,
 			expectedServiceAccouts: 0,
@@ -221,8 +228,8 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 		{
 			desc: "expired api keys should be migrated",
 			keys: []tests.TestApiKey{
-				{Name: "test1", Role: models.ROLE_EDITOR, Key: "secret1", OrgId: 1},
-				{Name: "test2", Role: models.ROLE_EDITOR, Key: "secret2", OrgId: 1, IsExpired: true},
+				{Name: "test1", Role: org.RoleEditor, Key: "secret1", OrgId: 1},
+				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 1, IsExpired: true},
 			},
 			orgId:                  1,
 			expectedServiceAccouts: 2,
@@ -249,7 +256,7 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), c.orgId, "", "all", 1, 50, &models.SignedInUser{UserId: 101, OrgId: c.orgId, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), c.orgId, "", "all", 1, 50, &user.SignedInUser{UserID: 101, OrgID: c.orgId, Permissions: map[int64]map[string][]string{
 					c.orgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},
@@ -260,7 +267,10 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 					saMigrated := serviceAccounts.ServiceAccounts[0]
 					require.Equal(t, string(c.keys[0].Role), saMigrated.Role)
 
-					tokens, err := store.ListTokens(context.Background(), c.orgId, saMigrated.Id)
+					tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
+						OrgID:            &c.orgId,
+						ServiceAccountID: &saMigrated.Id,
+					})
 					require.NoError(t, err)
 					require.Len(t, tokens, 1)
 				}
@@ -278,12 +288,12 @@ func TestStore_RevertApiKey(t *testing.T) {
 	}{
 		{
 			desc:        "service account token should be reverted to api key",
-			key:         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
+			key:         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
 			expectedErr: nil,
 		},
 		{
 			desc:                        "should fail reverting to api key when the token is assigned to a different service account",
-			key:                         tests.TestApiKey{Name: "Test1", Role: models.ROLE_EDITOR, OrgId: 1},
+			key:                         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
 			forceMismatchServiceAccount: true,
 			expectedErr:                 ErrServiceAccountAndTokenMismatch,
 		},
@@ -306,7 +316,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 			if c.forceMismatchServiceAccount {
 				saId = rand.Int63()
 			} else {
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					key.OrgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},
@@ -322,7 +332,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &models.SignedInUser{UserId: 1, OrgId: 1, Permissions: map[int64]map[string][]string{
+				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), key.OrgId, "", "all", 1, 50, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 					key.OrgId: {
 						"serviceaccounts:read": {"serviceaccounts:id:*"},
 					},
@@ -331,7 +341,8 @@ func TestStore_RevertApiKey(t *testing.T) {
 				// Service account should be deleted
 				require.Equal(t, int64(0), serviceAccounts.TotalCount)
 
-				apiKeys := store.sqlStore.GetAllAPIKeys(context.Background(), 1)
+				apiKeys, err := store.apiKeyService.GetAllAPIKeys(context.Background(), 1)
+				require.NoError(t, err)
 				require.Len(t, apiKeys, 1)
 				apiKey := apiKeys[0]
 				require.Equal(t, c.key.Name, apiKey.Name)

@@ -21,6 +21,8 @@ type PublicDashboardStoreImpl struct {
 	dialect  migrator.Dialect
 }
 
+var LogPrefix = "publicdashboards.store"
+
 // Gives us a compile time error if our database does not adhere to contract of
 // the interface
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
@@ -29,7 +31,7 @@ var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 func ProvideStore(sqlStore *sqlstore.SQLStore) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
 		sqlStore: sqlStore,
-		log:      log.New("publicdashboards.store"),
+		log:      log.New(LogPrefix),
 		dialect:  sqlStore.Dialect,
 	}
 }
@@ -111,6 +113,31 @@ func (d *PublicDashboardStoreImpl) GenerateNewPublicDashboardUid(ctx context.Con
 	return uid, nil
 }
 
+// Retrieves public dashboard configuration by Uid
+func (d *PublicDashboardStoreImpl) GetPublicDashboardByUid(ctx context.Context, uid string) (*PublicDashboard, error) {
+	if uid == "" {
+		return nil, nil
+	}
+
+	var found bool
+	pdRes := &PublicDashboard{Uid: uid}
+	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		found, err = sess.Get(pdRes)
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !found {
+		return nil, nil
+	}
+
+	return pdRes, err
+}
+
 // Retrieves public dashboard configuration
 func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
 	if dashboardUid == "" {
@@ -136,7 +163,11 @@ func (d *PublicDashboardStoreImpl) GetPublicDashboardConfig(ctx context.Context,
 }
 
 // Persists public dashboard configuration
-func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) (*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
+	if cmd.PublicDashboard.DashboardUid == "" {
+		return dashboards.ErrDashboardIdentifierNotSet
+	}
+
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
 		if err != nil {
@@ -146,11 +177,7 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &cmd.PublicDashboard, nil
+	return err
 }
 
 // updates existing public dashboard configuration
@@ -184,6 +211,24 @@ func (d *PublicDashboardStoreImpl) PublicDashboardEnabled(ctx context.Context, d
 		sql := "SELECT COUNT(*) FROM dashboard_public WHERE dashboard_uid=? AND is_enabled=true"
 
 		result, err := dbSession.SQL(sql, dashboardUid).Count()
+		if err != nil {
+			return err
+		}
+
+		hasPublicDashboard = result > 0
+
+		return err
+	})
+
+	return hasPublicDashboard, err
+}
+
+func (d *PublicDashboardStoreImpl) AccessTokenExists(ctx context.Context, accessToken string) (bool, error) {
+	hasPublicDashboard := false
+	err := d.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		sql := "SELECT COUNT(*) FROM dashboard_public WHERE access_token=? AND is_enabled=true"
+
+		result, err := dbSession.SQL(sql, accessToken).Count()
 		if err != nil {
 			return err
 		}

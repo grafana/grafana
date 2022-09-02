@@ -58,7 +58,7 @@ const AnnotationValue: FC<Props> = ({ annotationKey, value }) => {
 
 export const getStyles = (theme: GrafanaTheme) => ({
   well: css`
-    word-break: break-all;
+    word-break: break-word;
   `,
   link: css`
     word-break: break-all;

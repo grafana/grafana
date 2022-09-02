@@ -3,9 +3,9 @@ package cloudmonitoring
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net/url"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -479,7 +479,7 @@ func loadTestFile(path string) (cloudMonitoringResponse, error) {
 
 	// Can ignore gosec warning G304 here since it's a test path
 	// nolint:gosec
-	jsonBody, err := ioutil.ReadFile(path)
+	jsonBody, err := os.ReadFile(path)
 	if err != nil {
 		return data, err
 	}

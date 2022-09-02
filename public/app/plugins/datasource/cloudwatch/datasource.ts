@@ -474,6 +474,13 @@ export class CloudWatchDatasource
     return logGroupNames;
   }
 
+  async describeAllLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeAllLogGroups', [params]));
+
+    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
+    return logGroupNames;
+  }
+
   async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
     const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
 
@@ -663,9 +670,7 @@ export class CloudWatchDatasource
             }
           }
         }
-        // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
-        //  if you select different than default region in editor you will get results for autocomplete from wrong
-        //  region.
+
         if (anyQuery.region) {
           anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
           anyQuery.region = this.getActualRegion(anyQuery.region);

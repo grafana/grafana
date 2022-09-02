@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { DashboardRoutes } from 'app/types';
+import { DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
@@ -24,14 +24,14 @@ jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
 interface ScenarioContext {
   dashboard?: DashboardModel | null;
   secondaryDashboard?: DashboardModel | null;
-  setDashboard: (overrides?: any, metaOverrides?: any) => void;
-  setSecondaryDashboard: (overrides?: any, metaOverrides?: any) => void;
+  setDashboard: (overrides?: any, metaOverrides?: Partial<DashboardMeta>) => void;
+  setSecondaryDashboard: (overrides?: any, metaOverrides?: Partial<DashboardMeta>) => void;
   mount: (propOverrides?: Partial<Props>) => void;
   rerender: (propOverrides?: Partial<Props>) => void;
   setup: (fn: () => void) => void;
 }
 
-function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel {
+function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',
@@ -59,10 +59,10 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       setup: (fn) => {
         setupFn = fn;
       },
-      setDashboard: (overrides?: any, metaOverrides?: any) => {
+      setDashboard: (overrides?: any, metaOverrides?: Partial<DashboardMeta>) => {
         ctx.dashboard = getTestDashboard(overrides, metaOverrides);
       },
-      setSecondaryDashboard: (overrides?: any, metaOverrides?: any) => {
+      setSecondaryDashboard: (overrides?: any, metaOverrides?: Partial<DashboardMeta>) => {
         ctx.secondaryDashboard = getTestDashboard(overrides, metaOverrides);
       },
       mount: (propOverrides?: Partial<Props>) => {
