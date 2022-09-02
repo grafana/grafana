@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -78,7 +79,51 @@ const (
 	annotationQuery = "annotationQuery"
 	logAction       = "logAction"
 	timeSeriesQuery = "timeSeriesQuery"
+	namespace       = "grafana"
 )
+
+// var (
+// 	metricsQueryCounter = promauto.NewCounterVec(
+// 		prometheus.CounterOpts{
+// 			Namespace: namespace,
+// 			Subsystem: "cludwatchds",
+// 			Name:      "cloudwatch_metrics_queries_total",
+// 		},
+// 		[]string{"mode", "type"},
+// 	)
+// 	logsQueryCounter = promauto.NewCounterVec(
+// 		prometheus.CounterOpts{
+// 			Namespace: namespace,
+// 			Subsystem: "cludwatchds",
+// 			Name:      "cloudwatch_logs_queries_total",
+// 		},
+// 		[]string{"sub_type"},
+// 	)
+// 	annotationQueryCounter = promauto.NewCounterVec(
+// 		prometheus.CounterOpts{
+// 			Namespace: namespace,
+// 			Subsystem: "cludwatchds",
+// 			Name:      "cloudwatch_annotation_queries_total",
+// 		},
+// 		[]string{"api"},
+// 	)
+// 	resourceQueryCounter = promauto.NewCounterVec(
+// 		prometheus.CounterOpts{
+// 			Namespace: namespace,
+// 			Subsystem: "cludwatchds",
+// 			Name:      "cloudwatch_resource_queries_total",
+// 		},
+// 		[]string{"path"},
+// 	)
+// 	cloudwatchQueriesFailuresCounter = promauto.NewCounterVec(
+// 		prometheus.CounterOpts{
+// 			Namespace: namespace,
+// 			Subsystem: "cludwatchds",
+// 			Name:      "cloudwatch_queries_failures_total",
+// 		},
+// 		[]string{"query_type"},
+// 	)
+// )
 
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
@@ -371,6 +416,10 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 		fallthrough
 	default:
 		result, err = e.executeTimeSeriesQuery(ctx, req)
+	}
+
+	if err != nil {
+		metrics.MCloudwatchQueriesFailuresTotal.WithLabelValues(model.QueryType).Inc()
 	}
 
 	return result, err

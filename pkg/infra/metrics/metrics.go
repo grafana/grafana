@@ -104,6 +104,21 @@ var (
 
 	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
 	MPublicDashboardRequestCount prometheus.Counter
+
+	// MCloudWatchMetricsQueryTotal is a metric counter for the total number of CloudWatch metrics queries
+	MCloudWatchMetricsQueryTotal *prometheus.CounterVec
+
+	// MCloudWatchLogsQueryTotal is a metric counter for the total number of CloudWatch logs queries
+	MCloudWatchLogsQueryTotal *prometheus.CounterVec
+
+	// MCloudWatchAnnotationQueryTotal is a metric counter for the total number of CloudWatch annotation queries
+	MCloudWatchAnnotationQueryTotal *prometheus.CounterVec
+
+	// MCloudWatchResourceQueryTOtal is a metric counter for the total number of CloudWatch resource requests
+	MCloudWatchResourceQueryTOtal *prometheus.CounterVec
+
+	// MCloudwatchQueriesFailuresTotal is a metric counter for the total number of CloudWatch query failures
+	MCloudwatchQueriesFailuresTotal *prometheus.CounterVec
 )
 
 // Timers
@@ -387,6 +402,49 @@ func init() {
 		[]string{"status", "type"},
 	)
 
+	MAlertingResultState = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name:      "alerting_result_total",
+		Help:      "alert execution result counter",
+		Namespace: ExporterName,
+	}, []string{"state"})
+
+	MCloudWatchMetricsQueryTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: ExporterName,
+			Name:      "cloudwatch_metrics_queries_total",
+		},
+		[]string{"mode", "type"},
+	)
+
+	MCloudWatchLogsQueryTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: ExporterName,
+			Name:      "cloudwatch_logs_queries_total",
+		},
+		[]string{"sub_type"},
+	)
+	MCloudWatchAnnotationQueryTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: ExporterName,
+			Name:      "cloudwatch_annotation_queries_total",
+		},
+		[]string{"api"},
+	)
+	MCloudWatchResourceQueryTOtal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: ExporterName,
+			Name:      "cloudwatch_resource_queries_total",
+		},
+		[]string{"path"},
+	)
+	MCloudwatchQueriesFailuresTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: ExporterName,
+			Name:      "cloudwatch_queries_failures_total",
+		},
+		[]string{"query_type"},
+	)
+
 	MRenderingQueue = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "rendering_queue_size",
 		Help:      "size of rendering queue",
@@ -664,5 +722,10 @@ func initMetricVars() {
 		StatsTotalDataKeys,
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,
+		MCloudWatchMetricsQueryTotal,
+		MCloudWatchLogsQueryTotal,
+		MCloudWatchAnnotationQueryTotal,
+		MCloudWatchResourceQueryTOtal,
+		MCloudwatchQueriesFailuresTotal,
 	)
 }

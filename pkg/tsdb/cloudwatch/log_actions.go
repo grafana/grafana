@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -118,6 +119,8 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model LogQuer
 	if model.Region != "" {
 		region = model.Region
 	}
+
+	metrics.MCloudWatchLogsQueryTotal.WithLabelValues(model.SubType).Inc()
 
 	logsClient, err := e.getCWLogsClient(pluginCtx, region)
 	if err != nil {

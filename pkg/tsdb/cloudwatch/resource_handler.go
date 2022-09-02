@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
@@ -27,7 +28,9 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 type handleFn func(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error)
 
 func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *http.Request) {
+
 	return func(rw http.ResponseWriter, req *http.Request) {
+		metrics.MCloudWatchResourceQueryTOtal.WithLabelValues(req.URL.Path).Inc()
 		ctx := req.Context()
 		pluginContext := httpadapter.PluginConfigFromContext(ctx)
 		err := req.ParseForm()

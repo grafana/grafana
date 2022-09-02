@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
 type annotationEvent struct {
@@ -50,6 +51,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 
 	var alarmNames []*string
 	if model.PrefixMatching {
+		metrics.MCloudWatchAnnotationQueryTotal.WithLabelValues(model.Region, "DescribeAlarmsInput").Inc()
 		params := &cloudwatch.DescribeAlarmsInput{
 			MaxRecords:      aws.Int64(100),
 			ActionPrefix:    aws.String(actionPrefix),
@@ -64,7 +66,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 		if model.Region == "" || model.Namespace == "" || model.MetricName == "" || statistic == "" {
 			return result, errors.New("invalid annotations query")
 		}
-
+		metrics.MCloudWatchAnnotationQueryTotal.WithLabelValues(model.Region, "DescribeAlarmsForMetricInput").Inc()
 		var qd []*cloudwatch.Dimension
 		for k, v := range model.Dimensions {
 			if vv, ok := v.([]interface{}); ok {

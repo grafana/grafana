@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -88,6 +89,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		dataResponse := backend.DataResponse{
 			Error: fmt.Errorf("metric request error: %q", err),
 		}
+		metrics.MCloudwatchQueriesFailuresTotal.WithLabelValues(timeSeriesQuery).Inc()
 		resultChan <- &responseWrapper{
 			DataResponse: &dataResponse,
 		}

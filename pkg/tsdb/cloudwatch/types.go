@@ -41,12 +41,34 @@ const (
 	MetricQueryTypeQuery
 )
 
+func (queryType metricQueryType) String() string {
+	switch queryType {
+	case MetricQueryTypeSearch:
+		return "search"
+	case MetricQueryTypeQuery:
+		return "query"
+	}
+
+	return ""
+}
+
 type metricEditorMode uint32
 
 const (
 	MetricEditorModeBuilder metricEditorMode = iota
 	MetricEditorModeRaw
 )
+
+func (editorMode metricEditorMode) String() string {
+	switch editorMode {
+	case MetricEditorModeBuilder:
+		return "builder"
+	case MetricEditorModeRaw:
+		return "code"
+	}
+
+	return ""
+}
 
 type gmdApiMode uint32
 

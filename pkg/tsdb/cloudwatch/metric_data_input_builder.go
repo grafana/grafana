@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -29,6 +30,7 @@ func (e *cloudWatchExecutor) buildMetricDataInput(startTime time.Time, endTime t
 		if err != nil {
 			return nil, &queryError{err, query.RefId}
 		}
+		metrics.MCloudWatchMetricsQueryTotal.WithLabelValues(query.MetricEditorMode.String(), query.MetricQueryType.String()).Inc()
 		metricDataInput.MetricDataQueries = append(metricDataInput.MetricDataQueries, metricDataQuery)
 	}
 
