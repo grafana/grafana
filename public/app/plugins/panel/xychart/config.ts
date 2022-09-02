@@ -32,7 +32,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addRadio({
           path: 'point',
           name: 'Points',
-          category: undefined,
           defaultValue: cfg.point,
           settings: {
             options: graphFieldOptions.showPoints,
@@ -41,7 +40,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addSliderInput({
           path: 'pointSize.fixed',
           name: 'Size',
-          category: undefined,
           defaultValue: cfg.pointSize?.fixed,
           settings: {
             min: 1,
@@ -53,7 +51,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addRadio({
           path: 'line',
           name: 'Lines',
-          category: undefined,
           defaultValue: cfg.line,
           settings: {
             options: [
@@ -66,7 +63,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
           id: 'lineStyle',
           path: 'lineStyle',
           name: 'Line style',
-          category: undefined,
           showIf: (c) => c.line !== ScatterLineMode.None,
           editor: LineStyleEditor,
           override: LineStyleEditor,
@@ -76,7 +72,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
-          category: undefined,
           defaultValue: cfg.lineWidth,
           settings: {
             min: 0,

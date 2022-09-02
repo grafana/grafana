@@ -184,6 +184,7 @@ function getScatterSeries(
 
     label: VisibilityMode.Never,
     labelValue: () => '',
+    show: !frame.fields[yIndex].config.custom.hideFrom?.viz,
 
     hints: {
       pointSize: pointSizeHints!,
@@ -641,6 +642,7 @@ const prepConfig = (
       scaleKey: '', // facets' scales used (above)
       lineColor: lineColor as string,
       fillColor: alpha(pointColor, 0.5),
+      show: !field.config.custom.hideFrom?.viz,
     });
   });
 

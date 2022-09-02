@@ -156,6 +156,7 @@ function fmt(field: Field, val: number): string {
 const getStyles = (theme: GrafanaTheme2) => ({
   infoWrap: css`
     padding: 8px;
+    width: 100%;
     th {
       font-weight: ${theme.typography.fontWeightMedium};
       padding: ${theme.spacing(0.25, 2)};

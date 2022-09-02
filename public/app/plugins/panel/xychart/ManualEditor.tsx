@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import React, { FC, useState } from 'react';
 
 import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
-import { Button, IconButton, Label, useStyles } from '@grafana/ui';
+import { Button, Field, IconButton, useStyles } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { LayerName } from 'app/core/components/Layers/LayerName';
-import { ColorDimensionConfig, ScaleDimensionConfig } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
 import { XYChartOptions, ScatterSeriesConfig, defaultScatterConfig } from './models.gen';
@@ -18,55 +17,11 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
   const [selected, setSelected] = useState<number>(-1);
   const style = useStyles(getStyles);
 
-  const onXFieldChange = (x: string | undefined, index: number) => {
+  const onFieldChange = (val: any | undefined, index: number, field: string) => {
     onChange(
       value.map((obj, i) => {
         if (i === index) {
-          return { ...obj, x };
-        }
-        return obj;
-      })
-    );
-  };
-
-  const onYFieldChange = (y: string | undefined, index: number) => {
-    onChange(
-      value.map((obj, i) => {
-        if (i === index) {
-          return { ...obj, y };
-        }
-        return obj;
-      })
-    );
-  };
-
-  const onPointColorChange = (pointColor: ColorDimensionConfig | undefined, index: number) => {
-    onChange(
-      value.map((obj, i) => {
-        if (i === index) {
-          return { ...obj, pointColor };
-        }
-        return obj;
-      })
-    );
-  };
-
-  const onPointSizeChange = (pointSize: ScaleDimensionConfig | undefined, index: number) => {
-    onChange(
-      value.map((obj, i) => {
-        if (i === index) {
-          return { ...obj, pointSize };
-        }
-        return obj;
-      })
-    );
-  };
-
-  const onNameChange = (name: string, index: number) => {
-    onChange(
-      value.map((obj, i) => {
-        if (i === index) {
-          return { ...obj, name };
+          return { ...obj, [field]: val };
         }
         return obj;
       })
@@ -99,63 +54,65 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
 
   return (
     <>
-      <Button icon="plus" size="sm" variant="secondary" onClick={createNewSeries}>
+      <Button icon="plus" size="sm" variant="secondary" onClick={createNewSeries} className={style.marginBot}>
         Add series
       </Button>
-      <br />
-      <br />
 
-      {options.series.map((series, index) => {
-        return (
-          <div key={`series/${index}`} className={getRowStyle(index)} onMouseDown={() => setSelected(index)}>
-            <LayerName name={series.name ?? `Series ${index + 1}`} onChange={(v) => onNameChange(v, index)} />
+      <div className={style.marginBot}>
+        {options.series.map((series, index) => {
+          return (
+            <div key={`series/${index}`} className={getRowStyle(index)} onMouseDown={() => setSelected(index)}>
+              <LayerName
+                name={series.name ?? `Series ${index + 1}`}
+                onChange={(v) => onFieldChange(v, index, 'name')}
+              />
 
-            <IconButton
-              name="trash-alt"
-              title={'remove'}
-              className={cx(style.actionIcon)}
-              onClick={() => onSeriesDelete(index)}
-            />
-          </div>
-        );
-      })}
-      <br />
+              <IconButton
+                name="trash-alt"
+                title={'remove'}
+                className={cx(style.actionIcon)}
+                onClick={() => onSeriesDelete(index)}
+              />
+            </div>
+          );
+        })}
+      </div>
 
       {selected >= 0 && options.series[selected] && (
         <>
           <div key={`series/${selected}`}>
-            <Label>X Field</Label>
-            <FieldNamePicker
-              value={options.series[selected].x ?? ''}
-              context={context}
-              onChange={(field) => onXFieldChange(field, selected)}
-              item={{} as any}
-            />
-            <br />
-            <Label>Y Field</Label>
-            <FieldNamePicker
-              value={options.series[selected].y ?? ''}
-              context={context}
-              onChange={(field) => onYFieldChange(field, selected)}
-              item={{} as any}
-            />
-            <br />
-            <Label>Point color</Label>
-            <ColorDimensionEditor
-              value={options.series[selected].pointColor!}
-              context={context}
-              onChange={(field) => onPointColorChange(field, selected)}
-              item={{} as any}
-            />
-            <br />
-            <Label>Point size</Label>
-            <ScaleDimensionEditor
-              value={options.series[selected].pointSize!}
-              context={context}
-              onChange={(field) => onPointSizeChange(field, selected)}
-              item={{ settings: { min: 1, max: 50 } } as any}
-            />
-            <br />
+            <Field label={'X Field'}>
+              <FieldNamePicker
+                value={options.series[selected].x ?? ''}
+                context={context}
+                onChange={(field) => onFieldChange(field, selected, 'x')}
+                item={{} as any}
+              />
+            </Field>
+            <Field label={'Y Field'}>
+              <FieldNamePicker
+                value={options.series[selected].y ?? ''}
+                context={context}
+                onChange={(field) => onFieldChange(field, selected, 'y')}
+                item={{} as any}
+              />
+            </Field>
+            <Field label={'Point color'}>
+              <ColorDimensionEditor
+                value={options.series[selected].pointColor!}
+                context={context}
+                onChange={(field) => onFieldChange(field, selected, 'pointColor')}
+                item={{} as any}
+              />
+            </Field>
+            <Field label={'Point size'}>
+              <ScaleDimensionEditor
+                value={options.series[selected].pointSize!}
+                context={context}
+                onChange={(field) => onFieldChange(field, selected, 'pointSize')}
+                item={{ settings: { min: 1, max: 50 } } as any}
+              />
+            </Field>
           </div>
         </>
       )}
@@ -164,6 +121,9 @@ export const ManualEditor: FC<StandardEditorProps<ScatterSeriesConfig[], any, XY
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  marginBot: css`
+    margin-bottom: 20px;
+  `,
   row: css`
     padding: ${theme.spacing.xs} ${theme.spacing.sm};
     border-radius: ${theme.border.radius.sm};

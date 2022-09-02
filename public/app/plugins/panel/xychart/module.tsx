@@ -25,7 +25,7 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
       .addCustomEditor({
         id: 'xyPlotConfig',
         path: 'dims',
-        name: 'Data',
+        name: '',
         editor: AutoEditor,
         showIf: (cfg) => cfg.mode === 'auto',
       })

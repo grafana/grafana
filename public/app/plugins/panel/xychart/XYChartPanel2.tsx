@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
@@ -164,6 +165,8 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
             });
           };
 
+          item.disabled = !(s.show ?? true);
+
           items.push(item);
         }
       }
@@ -173,9 +176,18 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
       return null;
     }
 
+    const legendStyle = {
+      flexStart: css`
+        div {
+          justify-content: flex-start !important;
+        }
+      `,
+    };
+
     return (
       <VizLayout.Legend placement={props.options.legend.placement} width={props.options.legend.width}>
         <VizLegend
+          className={legendStyle.flexStart}
           placement={props.options.legend.placement}
           items={items}
           displayMode={props.options.legend.displayMode}
@@ -196,12 +208,7 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     <>
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          // <pre style={{ width: vizWidth, height: vizHeight, border: '1px solid green', margin: '0px' }}>
-          //   {JSON.stringify(scatterData, null, 2)}
-          // </pre>
-          <UPlotChart config={builder} data={facets!} width={vizWidth} height={vizHeight} timeRange={props.timeRange}>
-            {/*children ? children(config, alignedFrame) : null*/}
-          </UPlotChart>
+          <UPlotChart config={builder} data={facets!} width={vizWidth} height={vizHeight} timeRange={props.timeRange} />
         )}
       </VizLayout>
       <Portal>
