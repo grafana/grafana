@@ -15,7 +15,7 @@ export class TagValue extends React.Component<Props, any> {
     this.onClick = this.onClick.bind(this);
   }
 
-  onClick(event: React.SyntheticEvent<HTMLDivElement>) {
+  onClick(event: React.MouseEvent<HTMLDivElement>) {
     this.props.onRemove(this.props.value, event);
   }
 
