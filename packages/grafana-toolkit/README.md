@@ -174,7 +174,7 @@ com/grafana/grafana/blob/main/scripts/webpack/webpack.common.js#L49-L58).
 We use `@monaco-editor/react` package with loader-config https://github.com/suren-atoyan/monaco-react#loader-config
 By default, monaco files are being downloaded from CDN. We use the bundled version.
 Initialization: https://github.com/grafana/grafana/blob/main/scripts/webpack/webpack.common.js#L49-L58t
-We suggest to use the budled version to prevent unwanted issues related to version mismatch.
+We suggest to use the bundled version to prevent unwanted issues related to version mismatch.
 
 ### How can I customize Webpack rules or plugins?
 
