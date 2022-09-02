@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	smp "github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,19 +23,39 @@ var (
 	errPluginNotInstalled     = errors.New("remote secret managements plugin disabled because there is no installed plugin of type `secretsmanager`")
 )
 
-// secretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
-type secretsKVStorePlugin struct {
+// SecretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
+type SecretsKVStorePlugin struct {
+	sync.Mutex
 	log                            log.Logger
 	secretsPlugin                  smp.SecretsManagerPlugin
 	secretsService                 secrets.Service
 	kvstore                        *kvstore.NamespacedKVStore
 	backwardsCompatibilityDisabled bool
-	fallback                       SecretsKVStore
+	fallbackEnabled                bool
+	fallbackStore                  SecretsKVStore
+}
+
+func NewPluginSecretsKVStore(
+	secretsPlugin smp.SecretsManagerPlugin,
+	secretsService secrets.Service,
+	kvstore *kvstore.NamespacedKVStore,
+	features featuremgmt.FeatureToggles,
+	fallback SecretsKVStore,
+	logger log.Logger,
+) *SecretsKVStorePlugin {
+	return &SecretsKVStorePlugin{
+		secretsPlugin:                  secretsPlugin,
+		secretsService:                 secretsService,
+		log:                            logger,
+		kvstore:                        kvstore,
+		backwardsCompatibilityDisabled: features.IsEnabled(featuremgmt.FlagDisableSecretsCompatibility),
+		fallbackStore:                  fallback,
+	}
 }
 
 // Get an item from the store
 // If it is the first time a secret has been retrieved and backwards compatibility is disabled, mark plugin startup errors fatal
-func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
+func (kv *SecretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	req := &smp.GetSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
@@ -42,15 +63,20 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 			Type:      typ,
 		},
 	}
+
 	res, err := kv.secretsPlugin.GetSecret(ctx, req)
-	if err != nil {
-		return "", false, err
-	} else if res.UserFriendlyError != "" {
+	if res.UserFriendlyError != "" {
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
 	if res.Exists {
-		updateFatalFlag(ctx, *kv)
+		updateFatalFlag(ctx, kv)
+	}
+
+	if kv.fallbackEnabled {
+		if err != nil || res.UserFriendlyError != "" || !res.Exists {
+			res.DecryptedValue, res.Exists, err = kv.fallbackStore.Get(ctx, orgId, namespace, typ)
+		}
 	}
 
 	return res.DecryptedValue, res.Exists, err
@@ -58,7 +84,7 @@ func (kv *secretsKVStorePlugin) Get(ctx context.Context, orgId int64, namespace 
 
 // Set an item in the store
 // If it is the first time a secret has been set and backwards compatibility is disabled, mark plugin startup errors fatal
-func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
+func (kv *SecretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
 	req := &smp.SetSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
@@ -73,13 +99,13 @@ func (kv *secretsKVStorePlugin) Set(ctx context.Context, orgId int64, namespace 
 		err = wrapUserFriendlySecretError(res.UserFriendlyError)
 	}
 
-	updateFatalFlag(ctx, *kv)
+	updateFatalFlag(ctx, kv)
 
 	return err
 }
 
 // Del deletes an item from the store.
-func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
+func (kv *SecretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace string, typ string) error {
 	req := &smp.DeleteSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
@@ -98,7 +124,7 @@ func (kv *secretsKVStorePlugin) Del(ctx context.Context, orgId int64, namespace 
 
 // Keys get all keys for a given namespace. To query for all
 // organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
-func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
+func (kv *SecretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace string, typ string) ([]Key, error) {
 	req := &smp.ListSecretsRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
@@ -119,7 +145,7 @@ func (kv *secretsKVStorePlugin) Keys(ctx context.Context, orgId int64, namespace
 }
 
 // Rename an item in the store
-func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
+func (kv *SecretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespace string, typ string, newNamespace string) error {
 	req := &smp.RenameSecretRequest{
 		KeyDescriptor: &smp.Key{
 			OrgId:     orgId,
@@ -137,7 +163,7 @@ func (kv *secretsKVStorePlugin) Rename(ctx context.Context, orgId int64, namespa
 	return err
 }
 
-func (kv *secretsKVStorePlugin) GetAll(ctx context.Context) ([]Item, error) {
+func (kv *SecretsKVStorePlugin) GetAll(ctx context.Context) ([]Item, error) {
 	req := &smp.GetAllSecretsRequest{}
 
 	res, err := kv.secretsPlugin.GetAllSecrets(ctx, req)
@@ -150,13 +176,17 @@ func (kv *secretsKVStorePlugin) GetAll(ctx context.Context) ([]Item, error) {
 	return parseItems(res.Items), err
 }
 
-func (kv *secretsKVStorePlugin) Fallback() SecretsKVStore {
-	return kv.fallback
+func (kv *SecretsKVStorePlugin) Fallback() SecretsKVStore {
+	return kv.fallbackStore
 }
 
-func (kv *secretsKVStorePlugin) SetFallback(store SecretsKVStore) error {
-	kv.fallback = store
-	return nil
+func (kv *SecretsKVStorePlugin) WithFallbackEnabled(fn func() error) error {
+	kv.Lock()
+	defer kv.Unlock()
+	kv.fallbackEnabled = true
+	err := fn()
+	kv.fallbackEnabled = false
+	return err
 }
 
 func parseKeys(keys []*smp.Key) []Key {
@@ -181,7 +211,7 @@ func parseItems(items []*smp.Item) []Item {
 	return newItems
 }
 
-func updateFatalFlag(ctx context.Context, skv secretsKVStorePlugin) {
+func updateFatalFlag(ctx context.Context, skv *SecretsKVStorePlugin) {
 	// This function makes the most sense in here because it handles all possible scenarios:
 	//   - User changed backwards compatibility flag, so we have to migrate secrets either to or from the plugin (get or set)
 	//   - Migration is on, so we migrate secrets to the plugin (set)
@@ -246,4 +276,9 @@ func StartAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) 
 		return nil, err
 	}
 	return mg.SecretsManager(ctx).SecretsManager, nil
+}
+
+func ResetPlugin() {
+	fatalFlagOnce = sync.Once{}
+	startupOnce = sync.Once{}
 }
