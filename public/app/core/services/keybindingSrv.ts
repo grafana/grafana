@@ -154,7 +154,7 @@ export class KeybindingSrv {
   bind(keyArg: string | string[], fn: () => void) {
     Mousetrap.bind(
       keyArg,
-      (evt: any) => {
+      (evt) => {
         evt.preventDefault();
         evt.stopPropagation();
         evt.returnValue = false;
@@ -167,7 +167,7 @@ export class KeybindingSrv {
   bindGlobal(keyArg: string, fn: () => void) {
     Mousetrap.bindGlobal(
       keyArg,
-      (evt: any) => {
+      (evt) => {
         evt.preventDefault();
         evt.stopPropagation();
         evt.returnValue = false;

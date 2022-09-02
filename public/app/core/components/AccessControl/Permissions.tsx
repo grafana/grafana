@@ -26,6 +26,7 @@ type Type = 'users' | 'teams' | 'builtInRoles';
 export type Props = {
   title?: string;
   buttonLabel?: string;
+  emptyLabel?: string;
   addPermissionTitle?: string;
   resource: string;
   resourceId: ResourceId;
@@ -35,6 +36,7 @@ export type Props = {
 export const Permissions = ({
   title = 'Permissions',
   buttonLabel = 'Add a permission',
+  emptyLabel = 'There are no permissions',
   resource,
   resourceId,
   canSetPermissions,
@@ -145,6 +147,15 @@ export const Permissions = ({
             onCancel={() => setIsAdding(false)}
           />
         </SlideDown>
+        {items.length === 0 && (
+          <table className="filter-table gf-form-group">
+            <tbody>
+              <tr>
+                <th>{emptyLabel}</th>
+              </tr>
+            </tbody>
+          </table>
+        )}
         <PermissionList
           title="Role"
           items={builtInRoles}

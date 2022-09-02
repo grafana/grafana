@@ -1,25 +1,38 @@
+import { css } from '@emotion/css';
 import { defaults } from 'lodash';
 import React from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { TempoDatasource, TempoQuery } from '../datasource';
 import { defaultQuery, MyDataSourceOptions } from '../types';
 
+import { TempoQueryBuilderOptions } from './TempoQueryBuilderOptions';
 import { TraceQLEditor } from './TraceQLEditor';
 
 type Props = QueryEditorProps<TempoDatasource, TempoQuery, MyDataSourceOptions>;
 
 export function QueryEditor(props: Props) {
-  function onEditorChange(value: string) {
-    props.onChange({ ...props.query, query: value });
-  }
+  const styles = useStyles2(getStyles);
+  const query = defaults(props.query, defaultQuery);
 
-  let query = defaults(props.query, defaultQuery);
+  const onEditorChange = (value: string) => {
+    props.onChange({ ...query, query: value });
+  };
 
   return (
-    <div className="gf-form">
+    <>
       <TraceQLEditor value={query.query} onChange={onEditorChange} datasource={props.datasource} />
-    </div>
+      <div className={styles.optionsContainer}>
+        <TempoQueryBuilderOptions query={query} onChange={props.onChange} />
+      </div>
+    </>
   );
 }
+
+const getStyles = () => ({
+  optionsContainer: css`
+    margin-top: 10px;
+  `,
+});
