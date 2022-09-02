@@ -126,7 +126,7 @@ func setupTestMigratorServiceWithDeletionError(
 	kvstore kvstore.KVStore,
 ) *MigrateToPluginService {
 	t.Helper()
-	secretskvs.ResetPlugin(t)
+	t.Cleanup(secretskvs.ResetPlugin)
 	cfg := secretskvs.SetupTestConfig(t)
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	manager := secretskvs.NewFakeSecretsPluginManager(t, false)

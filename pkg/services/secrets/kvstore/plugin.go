@@ -274,3 +274,8 @@ func StartAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) 
 	}
 	return mg.SecretsManager().SecretsManager, nil
 }
+
+func ResetPlugin() {
+	fatalFlagOnce = sync.Once{}
+	startupOnce = sync.Once{}
+}

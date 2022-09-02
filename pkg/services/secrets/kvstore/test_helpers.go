@@ -274,9 +274,7 @@ func SetupFatalCrashTest(
 	features := NewFakeFeatureToggles(t, isBackwardsCompatDisabled)
 	manager := NewFakeSecretsPluginManager(t, shouldFailOnStart)
 	svc, err := ProvideService(sqlStore, secretService, manager, kvstore, features, cfg)
-	t.Cleanup(func() {
-		fatalFlagOnce = sync.Once{}
-	})
+	t.Cleanup(ResetPlugin)
 	return fatalCrashTestFields{
 		SecretsKVStore: svc,
 		PluginManager:  manager,
@@ -301,14 +299,6 @@ func SetupTestConfig(t *testing.T) *setting.Cfg {
 	raw, err := ini.Load([]byte(rawCfg))
 	require.NoError(t, err)
 	return &setting.Cfg{Raw: raw}
-}
-
-func ResetPlugin(t *testing.T) {
-	t.Helper()
-	t.Cleanup(func() {
-		fatalFlagOnce = sync.Once{}
-		startupOnce = sync.Once{}
-	})
 }
 
 func ReplaceFallback(t *testing.T, kv SecretsKVStore, fb SecretsKVStore) error {
