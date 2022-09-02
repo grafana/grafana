@@ -104,8 +104,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     itemDisabled: css`
       cursor: default;
 
+      &,
       &:hover {
-        background: ${theme.colors.background.secondary};
+        background: ${theme.colors.action.disabledBackground};
       }
     `,
     current: css`
@@ -114,7 +115,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.action.selected};
     `,
     disabled: css`
-      opacity: 0.2;
+      opacity: ${theme.colors.action.disabledOpacity};
       filter: grayscale(1);
       cursor: default;
       pointer-events: none;
