@@ -109,7 +109,7 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
         refId: 'A',
         datasource: {
           type: 'testdata',
-          uid: 'nVPrVUQGk',
+          uid: '${testdata}',
         },
         rawFrameContent,
         scenarioId: 'raw_frame',
@@ -138,7 +138,7 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       title: 'Annotations',
       datasource: {
         type: 'testdata',
-        uid: 'nVPrVUQGk',
+        uid: '${testdata}',
       },
       targets: [
         {
@@ -283,4 +283,23 @@ const embeddedDataTemplate: any = {
     },
   ],
   schemaVersion: 37,
+  templating: {
+    list: [
+      {
+        current: {
+          selected: true,
+          text: 'gdev-testdata',
+          value: 'gdev-testdata',
+        },
+        hide: 0,
+        includeAll: false,
+        multi: false,
+        name: 'testdata',
+        options: [],
+        query: 'testdata',
+        skipUrlSync: false,
+        type: 'datasource',
+      },
+    ],
+  },
 };
