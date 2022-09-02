@@ -2,14 +2,16 @@ package entity
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"reflect"
 
 	"github.com/gogo/status"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/entity"
 	"github.com/grafana/grafana/pkg/api/routing"
+	cmRegistry "github.com/grafana/grafana/pkg/framework/coremodel/registry"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/entity/kind"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -33,13 +35,14 @@ type StandardEntityStoreServer struct {
 	kinds  entity.KindRegistry
 	search searchV2.SearchService
 	store  store.StorageService
+	log    log.Logger
 }
 
-func ProvideService(search searchV2.SearchService, store store.StorageService) EntityStore {
+func ProvideService(search searchV2.SearchService, store store.StorageService, base *cmRegistry.Base) EntityStore {
 	k, err := entity.NewKindRegistry(
 		// Core types
 		//----------------------
-		&kind.DashboardKind{},
+		kind.NewCoremodelKind(base.Dashboard(), "-dash.json"),
 
 		// Images
 		//----------------------
@@ -84,6 +87,7 @@ func ProvideService(search searchV2.SearchService, store store.StorageService) E
 		kinds:  k,
 		search: search,
 		store:  store,
+		log:    log.New("standard-entity-store-server"),
 	}
 	return srv
 }
@@ -97,7 +101,8 @@ func (s *StandardEntityStoreServer) GetEntity(ctx context.Context, req *entity.G
 
 	path := req.Path
 	kind := s.kinds.GetFromSuffix(path)
-	backend.Logger.Debug("GetEntity: ", "path", path)
+	s.log.Info("Get entity request received", "path", path, "inferredKindId", kind.Info().ID)
+
 	// if kind == nil {
 	// 	kind = entity.FolderKind
 	// 	path = filepath.Join(path, "__folder.json")
@@ -160,8 +165,36 @@ func (s *StandardEntityStoreServer) ListFolder(ctx context.Context, req *entity.
 
 func (s *StandardEntityStoreServer) SaveEntity(ctx context.Context, req *entity.SaveEntityRequest) (*entity.EntityMessage, error) {
 	user := ctx.Value(TempSignedInUserKey).(*user.SignedInUser)
-	fmt.Printf("TODO: %v/%v\n", user, req)
-	return nil, status.Errorf(codes.Unimplemented, "method SaveEntity not implemented")
+
+	kind := s.kinds.GetFromSuffix(req.Path)
+	s.log.Info("Save entity request received", "path", req.Path, "inferredKindId", kind.Info().ID)
+
+	normalized := kind.Normalize(req.Payload, false)
+	if !normalized.Valid {
+		s.log.Error("Failed to normalize the entity", "path", req.Path, "inferredKindId", kind.Info().ID, "details", normalized.Details, "info", normalized.Info)
+		return nil, errors.New("TODO")
+	} else {
+		s.log.Info("Entity kind validation success", "path", req.Path, "inferredKindId", kind.Info().ID)
+	}
+
+	err := s.store.Upload(ctx, user, &store.UploadRequest{
+		Contents:              normalized.Result,
+		Path:                  req.Path,
+		EntityType:            store.EntityTypeDashboard,
+		OverwriteExistingFile: false,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return s.GetEntity(ctx, &entity.GetEntityRequest{
+		Path:            req.Path,
+		Version:         "",
+		WithStorageMeta: false,
+		WithPayload:     false,
+		WithACL:         false,
+		WithPRs:         false,
+	})
 }
 
 func (s *StandardEntityStoreServer) DeleteEntity(ctx context.Context, req *entity.DeleteEntityRequest) (*entity.DeleteResponse, error) {

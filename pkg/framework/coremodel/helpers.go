@@ -9,6 +9,7 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
+	"github.com/grafana/thema"
 	"github.com/grafana/thema/kernel"
 	tload "github.com/grafana/thema/load"
 
@@ -121,10 +122,15 @@ func Mux(cm Interface, opts ...MuxOption) kernel.InputKernel {
 		opt(c)
 	}
 
+	toVersion := cm.CurrentSchema().Version()
+	if c.version != nil {
+		toVersion = *c.version
+	}
+
 	cfg := kernel.InputKernelConfig{
 		Typ:     cm.GoType(),
 		Lineage: cm.Lineage(),
-		To:      cm.CurrentSchema().Version(),
+		To:      toVersion,
 	}
 
 	switch c.decodetyp {
@@ -163,6 +169,13 @@ type muxOption func(c *muxConfig)
 type muxConfig struct {
 	filename  string
 	decodetyp string
+	version   *thema.SyntacticVersion
+}
+
+func Version(version thema.SyntacticVersion) MuxOption {
+	return func(c *muxConfig) {
+		c.version = &version
+	}
 }
 
 // YAML indicates that the resulting Mux should look for YAML in input bytes,
