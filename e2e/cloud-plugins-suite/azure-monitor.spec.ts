@@ -7,8 +7,10 @@ import {
 } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/types';
 
 import EXAMPLE_DASHBOARD from './example-dashboards/azure-monitor.json';
+import { selectors } from '../../public/app/plugins/datasource/grafana-azure-monitor-datasource/e2e/selectors';
 
 const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
+const e2eSelectors = e2e.getSelectors(selectors.components);
 
 type AzureMonitorConfig = {
   secureJsonData: AzureDataSourceSecureJsonData;
@@ -27,11 +29,11 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
   e2e.flows.addDataSource({
     type: 'Azure Monitor',
     form: () => {
-      e2e().get('[aria-label="Azure Cloud"]').type('Azure').type('{enter}'),
-        e2e().get('[aria-label="Tenant ID"]').type(datasource.jsonData.tenantId),
-        e2e().get('[aria-label="Client ID"]').type(datasource.jsonData.clientId),
-        e2e().get('[aria-label="Client Secret"]').type(datasource.secureJsonData.clientSecret),
-        e2e().get('[aria-label="Load Subscriptions"]').click().wait('@subscriptions');
+      e2eSelectors.configEditor.azureCloud.input().find('input').type('Azure').type('{enter}'),
+        e2eSelectors.configEditor.tenantID.input().find('input').type(datasource.jsonData.tenantId),
+        e2eSelectors.configEditor.clientID.input().find('input').type(datasource.jsonData.clientId),
+        e2eSelectors.configEditor.clientSecret.input().find('input').type(datasource.secureJsonData.clientSecret),
+        e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
   });
