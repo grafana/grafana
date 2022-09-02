@@ -225,12 +225,12 @@ func SetPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.Namespaced
 	return kvstore.Set(ctx, QuitOnPluginStartupFailureKey, "true")
 }
 
-func EvaluateRemoteSecretsPlugin(mg plugins.SecretsPluginManager, cfg *setting.Cfg) error {
+func EvaluateRemoteSecretsPlugin(ctx context.Context, mg plugins.SecretsPluginManager, cfg *setting.Cfg) error {
 	usePlugin := cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool()
 	if !usePlugin {
 		return errPluginDisabledByConfig
 	}
-	pluginInstalled := mg.SecretsManager() != nil
+	pluginInstalled := mg.SecretsManager(ctx) != nil
 	if !pluginInstalled {
 		return errPluginNotInstalled
 	}
@@ -240,10 +240,10 @@ func EvaluateRemoteSecretsPlugin(mg plugins.SecretsPluginManager, cfg *setting.C
 func StartAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) (smp.SecretsManagerPlugin, error) {
 	var err error
 	startupOnce.Do(func() {
-		err = mg.SecretsManager().Start(ctx)
+		err = mg.SecretsManager(ctx).Start(ctx)
 	})
 	if err != nil {
 		return nil, err
 	}
-	return mg.SecretsManager().SecretsManager, nil
+	return mg.SecretsManager(ctx).SecretsManager, nil
 }

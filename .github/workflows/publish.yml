@@ -30,8 +30,7 @@ jobs:
         key: yarn-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
             yarn-
-    - run: yarn install --immutable
-    - run: ./scripts/ci-reference-docs-build.sh
+    - run: yarn install --immutable    
     - name: publish-to-git
       uses: ./.github/actions/website-sync
       id: publish

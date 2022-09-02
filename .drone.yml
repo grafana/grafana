@@ -651,17 +651,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend-packages
-  image: grafana/build-container:1.5.9
-  name: build-frontend-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
@@ -743,17 +735,9 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend-packages
 - commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend-packages
-  image: grafana/build-container:1.5.9
-  name: build-frontend-docs
-- commands:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  depends_on:
-  - build-frontend-docs
   image: grafana/docs-base:latest
   name: build-docs-website
 - commands:
@@ -1520,6 +1504,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe gen-version --build-id $$env:DRONE_BUILD_NUMBER
   - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-downloads/oss/main/
@@ -5108,6 +5093,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 40c8c66094bd5928aff25edef47082ff5686a0ca8c57e7d08f76eb5857103e72
+hmac: 54f9d4c1b212da26968eb3c35278ad82bc9d204ca0f6f99eb990df1b9950516b
 
 ...

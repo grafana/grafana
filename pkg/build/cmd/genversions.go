@@ -81,16 +81,18 @@ func GenerateVersions(c *cli.Context) error {
 	}
 
 	const distDir = "dist"
-	if err := os.RemoveAll(distDir); err != nil {
-		return err
-	}
-	if err := os.Mkdir(distDir, 0750); err != nil {
-		return err
-	}
+	if _, err := os.Stat(distDir); os.IsNotExist(err) {
+		if err := os.RemoveAll(distDir); err != nil {
+			return err
+		}
+		if err := os.Mkdir(distDir, 0750); err != nil {
+			return err
+		}
 
-	// nolint:gosec
-	if err := os.WriteFile(filepath.Join(distDir, "version.json"), jsonMetadata, 0664); err != nil {
-		return err
+		// nolint:gosec
+		if err := os.WriteFile(filepath.Join(distDir, "version.json"), jsonMetadata, 0664); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -30,10 +30,15 @@ import {
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
 
+let mockObservable: () => Observable<any>;
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+    getBackendSrv: () => ({
+      fetch: mockObservable,
+      _request: mockObservable,
+    }),
   };
 });
 
@@ -342,6 +347,24 @@ describe('Tempo data source', () => {
     });
     const lokiDS4 = ds4.getLokiSearchDS();
     expect(lokiDS4).toBe(undefined);
+  });
+
+  describe('test the testDatasource function', () => {
+    it('should return a success msg if response.ok is true', async () => {
+      mockObservable = () => of({ ok: true });
+      const ds = new TempoDatasource(defaultSettings);
+      const response = await ds.testDatasource();
+      expect(response.status).toBe('success');
+    });
+  });
+
+  describe('test the metadataRequest function', () => {
+    it('should return the last value from the observed stream', async () => {
+      mockObservable = () => of('321', '123', '456');
+      const ds = new TempoDatasource(defaultSettings);
+      const response = await ds.metadataRequest('/api/search/tags');
+      expect(response).toBe('456');
+    });
   });
 });
 
