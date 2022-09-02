@@ -91,8 +91,12 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 
 // SaveAlertInstances saves all the provided alert instances to the store in a single transaction.
 func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertInstance) error {
-	// SQLite has a limit of 999 variables per write. We use 9 per row, so we split up our
-	// writes into separate upsert statements.
+	// The function starts a single transaction and batches writes into
+	// statements with `maxRows` instances per statements. This makes for a
+	// fairly efficient transcation without creating statements that are too long
+	// for some databases to process. For example, SQLite has a limit of 999
+	// variables per write.
+
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		keyNames := []string{"rule_org_id", "rule_uid", "labels_hash"}
 		fieldNames := []string{
@@ -103,7 +107,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 		maxRows := 20
 		maxArgs := maxRows * fieldsPerRow
 
-		// Prepare the statement to bind each argument to.
+		// Prepare a statement for the maximum batch size.
 		bigUpsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
 			"alert_instance", keyNames, fieldNames, maxRows)
 		if err != nil {
@@ -115,6 +119,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 			return err
 		}
 
+		// Generate batches of `maxRows` and write the statements when full.
 		args := make([]interface{}, 0, maxArgs)
 		for _, alertInstance := range cmd {
 			if len(args) >= maxArgs {
@@ -139,6 +144,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 				alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 		}
 
+		// Write the final batch of up to maxRows in size.
 		if len(args) > 0 && len(args)%fieldsPerRow == 0 {
 			upsertSQL, err := st.SQLStore.Dialect.UpsertMultipleSQL(
 				"alert_instance", keyNames, fieldNames, len(args)/fieldsPerRow)
@@ -223,21 +229,20 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 	rowData := data{
 		0, "", make([]interface{}, 0, maxRows),
 	}
-	placeholderArray := strings.Builder{}
-	placeholderArray.WriteString("(")
+	placeholdersBuilder := strings.Builder{}
+	placeholdersBuilder.WriteString("(")
 
-	execQuery := func(rd data, s *sqlstore.DBSession) error {
+	execQuery := func(s *sqlstore.DBSession, rd data, placeholders string) error {
 		if len(rd.labelHashes) == 0 {
 			return nil
 		}
 
-		hashPlaceHolders := placeholderArray.String()
-		hashPlaceHolders = strings.TrimRight(hashPlaceHolders, ", ")
-		hashPlaceHolders = hashPlaceHolders + ")"
+		placeholders = strings.TrimRight(placeholders, ", ")
+		placeholders = placeholders + ")"
 
 		queryString := fmt.Sprintf(
 			"DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash IN %s;",
-			hashPlaceHolders,
+			placeholders,
 		)
 
 		execArgs := make([]interface{}, 0, 3+len(rd.labelHashes))
@@ -253,11 +258,13 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		counter := 0
+
+		// Create batches of up to 200 items and execute a new delete statement for each batch.
 		for _, k := range keys {
 			counter++
 			// When a rule ID changes or we hit 200 hashes, issue a statement.
 			if rowData.ruleOrgID != k.RuleOrgID || rowData.ruleUID != k.RuleUID || len(rowData.labelHashes) >= 200 {
-				err := execQuery(rowData, sess)
+				err := execQuery(sess, rowData, placeholdersBuilder.String())
 				if err != nil {
 					return err
 				}
@@ -266,18 +273,18 @@ func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.Alert
 				rowData.ruleOrgID = k.RuleOrgID
 				rowData.ruleUID = k.RuleUID
 				rowData.labelHashes = rowData.labelHashes[:0]
-				placeholderArray.Reset()
-				placeholderArray.WriteString("(")
+				placeholdersBuilder.Reset()
+				placeholdersBuilder.WriteString("(")
 			}
 
 			// Accumulate new values.
 			rowData.labelHashes = append(rowData.labelHashes, k.LabelsHash)
-			placeholderArray.WriteString("?, ")
+			placeholdersBuilder.WriteString("?, ")
 		}
 
 		// Delete any remaining rows.
 		if len(rowData.labelHashes) != 0 {
-			err := execQuery(rowData, sess)
+			err := execQuery(sess, rowData, placeholdersBuilder.String())
 			if err != nil {
 				return err
 			}

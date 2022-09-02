@@ -71,7 +71,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 			DashboardUID:    dashUID,
 			PanelID:         panelID,
 			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
-			RuleGroupIndex:  rand.Int(),
+			RuleGroupIndex:  rand.Intn(1500),
 			NoDataState:     randNoDataState(),
 			ExecErrState:    randErrState(),
 			For:             forInterval,
