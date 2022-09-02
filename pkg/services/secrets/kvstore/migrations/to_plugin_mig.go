@@ -66,16 +66,18 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 			logger.Warn("unable to determine whether plugin startup failures are fatal - continuing migration anyway.")
 		}
 
-		// get all secrets in the fallback store
-		allSec, err := fallbackStore.GetAll(ctx)
-		if err != nil {
-			return nil
-		}
-		totalSec := len(allSec)
-		logger.Debug(fmt.Sprintf("Total amount of secrets to migrate: %d", totalSec))
-
+		var allSec []secretskvs.Item
+		var totalSec int
 		// during migration we need to have fallback enabled while we move secrets to plugin
 		err = pluginStore.WithFallbackEnabled(func() error {
+			// get all secrets in the fallback store
+			allSec, err = fallbackStore.GetAll(ctx)
+			if err != nil {
+				return nil
+			}
+			totalSec := len(allSec)
+			logger.Debug(fmt.Sprintf("Total amount of secrets to migrate: %d", totalSec))
+
 			// We just set it again as the current secret store should be the plugin secret
 			for i, sec := range allSec {
 				logger.Debug(fmt.Sprintf("Migrating secret %d of %d", i+1, totalSec), "current", i+1, "secretCount", totalSec)
