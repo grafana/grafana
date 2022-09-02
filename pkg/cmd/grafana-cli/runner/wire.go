@@ -102,7 +102,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsDatabase "github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -317,10 +316,6 @@ var wireSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
-	secretsMigrations.ProvideDataSourceMigrationService,
-	secretsMigrations.ProvideMigrateToPluginService,
-	secretsMigrations.ProvideSecretMigrationService,
-	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
 	ngmetrics.ProvideServiceForTest,
 	wire.Bind(new(sqlstore.TeamStore), new(*sqlstore.SQLStore)),
