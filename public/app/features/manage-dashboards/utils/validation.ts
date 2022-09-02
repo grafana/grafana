@@ -4,8 +4,29 @@ import { validationSrv } from '../services/ValidationSrv';
 
 export const validateDashboardJson = (json: string) => {
   try {
-    JSON.parse(json);
-    return true;
+    let dashboard = JSON.parse(json);
+    // If dashboard.tags provided && is Array
+    if (dashboard.tags && Array.isArray(dashboard.tags)) {
+      // Check dashboard.tags in Array for only Strings
+      let cont = true;
+      dashboard.tags.forEach((tag: string) => {
+        if (cont === true && typeof tag !== 'string') {
+          cont = false;
+        }
+      });
+      // Continue to import dashboard if Tags in correct format
+      if (cont) {
+        return true;
+      } else {
+        return 'error: tags expected Array of Strings';
+      }
+      // If dashboard.tags && not Array
+    } else if (dashboard.tags && !Array.isArray(dashboard.tags)) {
+      return 'error: tags expected Array';
+      // Else generic JSON test passes and no Tags provided, then import dashboard
+    } else {
+      return true;
+    }
   } catch (error) {
     return 'Not valid JSON';
   }
