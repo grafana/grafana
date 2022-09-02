@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
@@ -43,10 +44,10 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	secretMigrationService secretsMigrations.SecretMigrationService, userService user.Service,
+	secretMigrationService secretsMigrations.SecretMigrationService, userService user.Service, loginAttemptService loginattempt.Service,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, secretMigrationService, userService)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, secretMigrationService, userService, loginAttemptService)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
-	secretMigrationService secretsMigrations.SecretMigrationService, userService user.Service,
+	secretMigrationService secretsMigrations.SecretMigrationService, userService user.Service, loginAttemptService loginattempt.Service,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -82,6 +83,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		backgroundServices:     backgroundServiceProvider.GetServices(),
 		secretMigrationService: secretMigrationService,
 		userService:            userService,
+		loginAttemptService:    loginAttemptService,
 	}
 
 	return s, nil
@@ -110,6 +112,7 @@ type Server struct {
 	provisioningService    provisioning.ProvisioningService
 	secretMigrationService secretsMigrations.SecretMigrationService
 	userService            user.Service
+	loginAttemptService    loginattempt.Service
 }
 
 // init initializes the server and its services.
@@ -127,7 +130,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login, s.userService)
+	login.ProvideService(s.HTTPServer.SQLStore, s.HTTPServer.Login, s.loginAttemptService, s.userService)
 	social.ProvideService(s.cfg)
 
 	if err := s.roleRegistry.RegisterFixedRoles(s.context); err != nil {

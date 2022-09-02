@@ -156,6 +156,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "exploreMixedDatasource",
+			Description:  "Enable mixed datasource in Explore",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,

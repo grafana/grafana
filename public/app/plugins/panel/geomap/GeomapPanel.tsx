@@ -371,8 +371,8 @@ export class GeomapPanel extends Component<Props, State> {
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
     const { hoverPayload } = this;
-    hoverPayload.pageX = mouse.offsetX;
-    hoverPayload.pageY = mouse.offsetY;
+    hoverPayload.pageX = mouse.pageX;
+    hoverPayload.pageY = mouse.pageY;
     hoverPayload.point = {
       lat: hover[1],
       lon: hover[0],
@@ -436,7 +436,7 @@ export class GeomapPanel extends Component<Props, State> {
       });
     }
 
-    const found = layers.length ? true : false;
+    const found = Boolean(layers.length);
     this.mapDiv!.style.cursor = found ? 'pointer' : 'auto';
     return found;
   };
