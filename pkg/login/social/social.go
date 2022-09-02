@@ -185,6 +185,8 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		if name == "generic_oauth" {
 			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
 				SocialBase:                      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				isGrafanaAdminAttributePath:     sec.Key("is_grafana_admin_attribute_path").String(),
+				isGrafanaAdminAttributeEncoding: sec.Key("is_grafana_admin_attribute_encoding").String(),
 				apiUrl:                          info.ApiUrl,
 				teamsUrl:                        info.TeamsUrl,
 				emailAttributeName:              info.EmailAttributeName,
@@ -228,19 +230,24 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 }
 
 type BasicUserInfo struct {
-	Id       string
-	Name     string
-	Email    string
-	Login    string
-	Company  string
-	Role     string
-	OrgRoles map[string]string
-	Groups   []string
+	Id             string
+	Name           string
+	Email          string
+	Login          string
+	Company        string
+	Role           string
+	OrgRoles       map[string]string
+	Groups         []string
+	IsGrafanaAdmin *bool
 }
 
 func (b *BasicUserInfo) String() string {
-	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Company: %s, Role: %s, Groups: %v, OrgRoles: %v",
-		b.Id, b.Name, b.Email, b.Login, b.Company, b.Role, b.Groups, b.OrgRoles)
+	if b.IsGrafanaAdmin == nil {
+		return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Company: %s, Role: %s, IsGrafanaAdmin: nil, Groups: %v, OrgRoles: %v",
+			b.Id, b.Name, b.Email, b.Login, b.Company, b.Role, b.Groups, b.OrgRoles)
+	}
+	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Company: %s, Role: %s, IsGrafanaAdmin: %t, Groups: %v, OrgRoles: %v",
+		b.Id, b.Name, b.Email, b.Login, b.Company, b.Role, *b.IsGrafanaAdmin, b.Groups, b.OrgRoles)
 }
 
 type SocialConnector interface {

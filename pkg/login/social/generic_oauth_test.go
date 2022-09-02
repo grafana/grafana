@@ -173,6 +173,80 @@ func TestSearchJSONForGroups(t *testing.T) {
 	})
 }
 
+func TestSearchJSONForIsGrafanaAdmin(t *testing.T) {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: newLogger("generic_oauth_test", "debug"),
+			},
+		}
+
+		boolTrue := true
+
+		tests := []struct {
+			Name                        string
+			UserInfoJSONResponse        []byte
+			IsGrafanaAdminAttributePath string
+			ExpectedResult              string
+			ExpectedResultBool          *bool
+			ExpectedError               string
+		}{
+			{
+				Name:                        "Given an invalid user info JSON response",
+				UserInfoJSONResponse:        []byte("{"),
+				IsGrafanaAdminAttributePath: "attributes.is_grafana_admin",
+				ExpectedResult:              "",
+				ExpectedError:               "failed to unmarshal user info JSON response: unexpected end of JSON input",
+			},
+			{
+				Name:                        "Given an empty user info JSON response and empty JMES path",
+				UserInfoJSONResponse:        []byte{},
+				IsGrafanaAdminAttributePath: "",
+				ExpectedResult:              "",
+				ExpectedError:               "no attribute path specified",
+			},
+			{
+				Name:                        "Given an empty user info JSON response and valid JMES path",
+				UserInfoJSONResponse:        []byte{},
+				IsGrafanaAdminAttributePath: "attributes.is_grafana_admin",
+				ExpectedResult:              "",
+				ExpectedError:               "empty user info JSON response provided",
+			},
+			{
+				Name: "Given a simple user info JSON response and valid JMES path",
+				UserInfoJSONResponse: []byte(`{
+	"attributes": {
+		"is_grafana_admin": true
+	}
+}`),
+				IsGrafanaAdminAttributePath: "attributes.is_grafana_admin",
+				ExpectedResultBool:          &boolTrue,
+			},
+		}
+
+		for _, test := range tests {
+			provider.isGrafanaAdminAttributePath = test.IsGrafanaAdminAttributePath
+			t.Run(test.Name, func(t *testing.T) {
+				actualResult, err := provider.searchJSONForAttr(test.IsGrafanaAdminAttributePath, test.UserInfoJSONResponse)
+				if test.ExpectedError == "" {
+					require.NoError(t, err, "Testing case %q", test.Name)
+				} else {
+					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+				}
+				if test.ExpectedResultBool == nil {
+					require.Equal(t, test.ExpectedResult, actualResult)
+				} else {
+					b, ok := actualResult.(bool)
+					if !ok {
+						require.NoError(t, fmt.Errorf("Object not bool: %v", actualResult), "Testing case %q", test.Name)
+					}
+					require.Equal(t, test.ExpectedResultBool, &b)
+				}
+			})
+		}
+	})
+}
+
 func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{

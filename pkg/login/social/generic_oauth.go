@@ -20,21 +20,23 @@ import (
 
 type SocialGenericOAuth struct {
 	*SocialBase
-	allowedOrganizations      []string
-	apiUrl                    string
-	teamsUrl                  string
-	emailAttributeName        string
-	emailAttributePath        string
-	loginAttributePath        string
-	nameAttributePath         string
-	roleAttributePath         string
-	roleAttributeStrict       bool
-	orgRolesAttributePath     string
-	orgRolesAttributeEncoding string
-	groupsAttributePath       string
-	idTokenAttributeName      string
-	teamIdsAttributePath      string
-	teamIds                   []string
+	isGrafanaAdminAttributePath     string
+	isGrafanaAdminAttributeEncoding string
+	allowedOrganizations            []string
+	apiUrl                          string
+	teamsUrl                        string
+	emailAttributeName              string
+	emailAttributePath              string
+	loginAttributePath              string
+	nameAttributePath               string
+	roleAttributePath               string
+	roleAttributeStrict             bool
+	orgRolesAttributePath           string
+	orgRolesAttributeEncoding       string
+	groupsAttributePath             string
+	idTokenAttributeName            string
+	teamIdsAttributePath            string
+	teamIds                         []string
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -116,6 +118,16 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 		if userInfo.Name == "" {
 			userInfo.Name = s.extractUserName(data)
+		}
+
+		if s.isGrafanaAdminAttributePath != "" {
+			s.log.Debug("Setting user info isGrafanaAdmin from attribute path", "isGrafanaAdmin", s.isGrafanaAdminAttributePath)
+			isGrafanaAdmin, err := s.extractIsGrafanaAdmin(data)
+			if err != nil {
+				s.log.Warn("Failed to extract IsGrafanaAdmin", "err", err)
+			} else {
+				userInfo.IsGrafanaAdmin = isGrafanaAdmin
+			}
 		}
 
 		if userInfo.Login == "" {
@@ -380,6 +392,42 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 		return "", err
 	}
 	return role, nil
+}
+
+func (s *SocialGenericOAuth) extractIsGrafanaAdmin(data *UserInfoJson) (*bool, error) {
+	if s.isGrafanaAdminAttributePath == "" {
+		return nil, nil
+	}
+
+	var isAdmin bool
+
+	if s.isGrafanaAdminAttributeEncoding == "base64" {
+		data, err := s.searchJSONForStringAttr(s.isGrafanaAdminAttributePath, data.rawJSON)
+		if err != nil {
+			return nil, err
+		}
+
+		b64, err := base64.RawURLEncoding.DecodeString(data)
+		if err != nil {
+			return nil, fmt.Errorf("extractAdmin: innerJSON in response was not base64: %v", b64)
+		}
+		if err := json.Unmarshal([]byte(b64), &isAdmin); err != nil {
+			return nil, err
+		}
+	} else {
+		data, err := s.searchJSONForAttr(s.isGrafanaAdminAttributePath, data.rawJSON)
+		if err != nil {
+			return nil, err
+		}
+		b, ok := data.(bool)
+		if !ok {
+			return nil, fmt.Errorf("extractAdmin: innerJSON was not bool: %v", data)
+		}
+
+		isAdmin = b
+	}
+
+	return &isAdmin, nil
 }
 
 func (s *SocialGenericOAuth) extractOrgRoles(data *UserInfoJson) (map[string]string, error) {
