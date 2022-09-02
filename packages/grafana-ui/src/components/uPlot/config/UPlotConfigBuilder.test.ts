@@ -37,9 +37,21 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "focus": Object {
+            "alpha": 1,
+          },
           "hooks": Object {},
+          "legend": Object {
+            "show": false,
+          },
           "mode": 1,
-          "padding": undefined,
+          "ms": 1,
+          "padding": Array [
+            [Function],
+            [Function],
+            [Function],
+            [Function],
+          ],
           "scales": Object {},
           "select": undefined,
           "series": Array [
@@ -88,9 +100,21 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "focus": Object {
+            "alpha": 1,
+          },
           "hooks": Object {},
+          "legend": Object {
+            "show": false,
+          },
           "mode": 1,
-          "padding": undefined,
+          "ms": 1,
+          "padding": Array [
+            [Function],
+            [Function],
+            [Function],
+            [Function],
+          ],
           "scales": Object {
             "scale-x": Object {
               "auto": false,
@@ -168,9 +192,21 @@ describe('UPlotConfigBuilder', () => {
                 "width": [Function],
               },
             },
+            "focus": Object {
+              "alpha": 1,
+            },
             "hooks": Object {},
+            "legend": Object {
+              "show": false,
+            },
             "mode": 1,
-            "padding": undefined,
+            "ms": 1,
+            "padding": Array [
+              [Function],
+              [Function],
+              [Function],
+              [Function],
+            ],
             "scales": Object {
               "scale-y": Object {
                 "auto": true,
@@ -221,9 +257,21 @@ describe('UPlotConfigBuilder', () => {
                   "width": [Function],
                 },
               },
+              "focus": Object {
+                "alpha": 1,
+              },
               "hooks": Object {},
+              "legend": Object {
+                "show": false,
+              },
               "mode": 1,
-              "padding": undefined,
+              "ms": 1,
+              "padding": Array [
+                [Function],
+                [Function],
+                [Function],
+                [Function],
+              ],
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
@@ -275,9 +323,21 @@ describe('UPlotConfigBuilder', () => {
                   "width": [Function],
                 },
               },
+              "focus": Object {
+                "alpha": 1,
+              },
               "hooks": Object {},
+              "legend": Object {
+                "show": false,
+              },
               "mode": 1,
-              "padding": undefined,
+              "ms": 1,
+              "padding": Array [
+                [Function],
+                [Function],
+                [Function],
+                [Function],
+              ],
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
@@ -394,9 +454,21 @@ describe('UPlotConfigBuilder', () => {
             "width": [Function],
           },
         },
+        "focus": Object {
+          "alpha": 1,
+        },
         "hooks": Object {},
+        "legend": Object {
+          "show": false,
+        },
         "mode": 1,
-        "padding": undefined,
+        "ms": 1,
+        "padding": Array [
+          [Function],
+          [Function],
+          [Function],
+          [Function],
+        ],
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -513,9 +585,21 @@ describe('UPlotConfigBuilder', () => {
             "width": [Function],
           },
         },
+        "focus": Object {
+          "alpha": 1,
+        },
         "hooks": Object {},
+        "legend": Object {
+          "show": false,
+        },
         "mode": 1,
-        "padding": undefined,
+        "ms": 1,
+        "padding": Array [
+          [Function],
+          [Function],
+          [Function],
+          [Function],
+        ],
         "scales": Object {},
         "select": undefined,
         "series": Array [
@@ -628,9 +712,21 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "focus": Object {
+            "alpha": 1,
+          },
           "hooks": Object {},
+          "legend": Object {
+            "show": false,
+          },
           "mode": 1,
-          "padding": undefined,
+          "ms": 1,
+          "padding": Array [
+            [Function],
+            [Function],
+            [Function],
+            [Function],
+          ],
           "scales": Object {},
           "select": undefined,
           "series": Array [
