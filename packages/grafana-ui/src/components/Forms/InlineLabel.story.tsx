@@ -11,6 +11,9 @@ const meta: ComponentMeta<typeof InlineLabel> = {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['as'],
+    },
   },
   argTypes: {
     children: {
@@ -21,17 +24,6 @@ const meta: ComponentMeta<typeof InlineLabel> = {
     },
     width: {
       control: 'text',
-    },
-    transparent: {
-      control: 'boolean',
-    },
-    interactive: {
-      control: 'boolean',
-    },
-    as: {
-      table: {
-        disable: true,
-      },
     },
   },
 };
@@ -44,14 +36,11 @@ Basic.args = {
   tooltip: undefined,
   transparent: false,
   interactive: false,
-  as: 'label',
 };
 
-Basic.argTypes = {
-  tooltip: {
-    table: {
-      disable: true,
-    },
+Basic.parameters = {
+  controls: {
+    exclude: ['as', 'tooltip', 'interactive'],
   },
 };
 
