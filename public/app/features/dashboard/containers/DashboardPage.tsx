@@ -1,3 +1,4 @@
+import { FocusScope } from '@react-aria/focus';
 import classnames from 'classnames';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -406,7 +407,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-        {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
+        {editPanel && (
+          <FocusScope contain autoFocus restoreFocus>
+            <section>
+              <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />
+            </section>
+          </FocusScope>
+        )}
         {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
       </Page>
     );

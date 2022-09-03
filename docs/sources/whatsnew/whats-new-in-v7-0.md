@@ -95,7 +95,7 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-Learn more about this feature in [Field overrides]({{< relref "../panels/override-field-values/about-field-overrides/" >}}).
+Learn more about this feature in [Field overrides]({{< relref "../panels/configure-overrides/" >}}).
 
 ## Inspect panels and export data to CSV
 
@@ -190,7 +190,7 @@ It was released as a beta feature in Grafana 6.7. The feedback has been really p
 
 ## Time zone support
 
-You can now override the [time zone]({{< relref "../dashboards/time-range-controls/#dashboard-time-settings" >}}) used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
+You can now override the [time zone]({{< relref "../dashboards/manage-dashboards/#dashboard-time-settings" >}}) used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
 
 ## Alerting and deep linking for Azure Log Analytics
 

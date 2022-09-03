@@ -226,6 +226,7 @@ trigger:
     - go.sum
     - go.mod
     - public/app/plugins/**/plugin.json
+    - devenv/**
 type: docker
 volumes:
 - host:
@@ -3584,6 +3585,9 @@ steps:
   - ./bin/grabpl artifacts-page
   depends_on:
   - grabpl
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
   image: grafana/build-container:1.5.9
   name: artifacts-page
 trigger:
@@ -5018,6 +5022,6 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 kind: signature
-hmac: 1ca37da2d5a2ca7290349339aaa494e24e51e27699dca658813d99abc55ee63c
+hmac: a03ea93b638a318e1465d1d24d1a52337f473e90e7cc1ac7d6762f42472986a4
 
 ...
