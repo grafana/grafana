@@ -6,37 +6,31 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { QueryField, QueryFieldProps } from './QueryField';
 
-const disabledControl = {
-  table: {
-    disable: true,
-  },
-};
-
 const meta: ComponentMeta<typeof QueryField> = {
   title: 'Data Source/QueryField',
   component: QueryField,
   decorators: [withCenteredStory],
-  argTypes: {
-    onTypeahead: disabledControl,
-    onChange: disabledControl,
-    onBlur: disabledControl,
-    onClick: disabledControl,
-    onRunQuery: disabledControl,
-    onRichValueChange: disabledControl,
-    onWillApplySuggestion: disabledControl,
-    portalOrigin: disabledControl,
-    additionalPlugins: disabledControl,
-    cleanText: disabledControl,
-    syntax: disabledControl,
-    syntaxLoaded: disabledControl,
-    placeholder: {
-      control: 'text',
+  parameters: {
+    controls: {
+      exclude: [
+        'onTypeahead',
+        'onChange',
+        'onBlur',
+        'onClick',
+        'onRunQuery',
+        'onRichValueChange',
+        'onWillApplySuggestion',
+        'portalOrigin',
+        'additionalPlugins',
+        'cleanText',
+        'syntax',
+        'syntaxLoaded',
+      ],
     },
+  },
+  argTypes: {
     query: {
       control: 'text',
-    },
-    disabled: {
-      control: 'boolean',
     },
   },
 };
