@@ -214,16 +214,18 @@ export class ShareLink extends PureComponent<Props, State> {
             bottomSpacing={0}
           >
             <Trans id="share-modal.link.render-instructions">
+              {/* @PERCONA */}
+              {/* We modified this text and link */}
               To render a panel image, you must install the&nbsp;
               <a
-                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                href="https://www.percona.com/doc/percona-monitoring-and-management/2.x/how-to/render-dashboard-images.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="external-link"
               >
-                Grafana image renderer plugin
+                Image Renderer plugin
               </a>
-              . Please contact your Grafana administrator to install the plugin.
+              . Please contact your PMM administrator to install the plugin.
             </Trans>
           </Alert>
         )}
