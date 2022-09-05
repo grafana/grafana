@@ -196,7 +196,7 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     );
   };
 
-  if (error || !builder) {
+  if (error || !builder || !facets) {
     return (
       <div className="panel-empty">
         <p>{error}</p>
@@ -208,7 +208,7 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
     <>
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets!} width={vizWidth} height={vizHeight} timeRange={props.timeRange} />
+          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight} timeRange={props.timeRange} />
         )}
       </VizLayout>
       <Portal>

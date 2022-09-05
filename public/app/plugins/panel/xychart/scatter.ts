@@ -677,7 +677,7 @@ const prepConfig = (
  * from?  is this where we would support that?  -- need the previous values
  */
 export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: number): FacetedData {
-  if (info.error) {
+  if (info.error || !data.length) {
     return [null];
   }
   return [
