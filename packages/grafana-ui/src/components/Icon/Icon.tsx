@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
+export { toIconName } from '../../types/icon';
 
 import { cacheInitialized, initIconCache, iconRoot } from './iconBundle';
 import { getIconSubDir, getSvgSize } from './utils';

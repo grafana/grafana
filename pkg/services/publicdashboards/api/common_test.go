@@ -43,7 +43,6 @@ type Server struct {
 func setupTestServer(
 	t *testing.T,
 	cfg *setting.Cfg,
-	qs *query.Service,
 	features *featuremgmt.FeatureManager,
 	service publicdashboards.Service,
 	db *sqlstore.SQLStore,
@@ -85,7 +84,7 @@ func setupTestServer(
 
 	// build api, this will mount the routes at the same time if
 	// featuremgmt.FlagPublicDashboard is enabled
-	ProvideApi(service, rr, ac, qs, features)
+	ProvideApi(service, rr, ac, features)
 
 	// connect routes to mux
 	rr.Register(m.Router)

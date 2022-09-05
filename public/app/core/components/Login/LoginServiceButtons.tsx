@@ -3,7 +3,7 @@ import { pickBy } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme, GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
-import { Icon, IconName, LinkButton, useStyles, useTheme2, VerticalGroup } from '@grafana/ui';
+import { Icon, IconName, LinkButton, toIconName, useStyles, useTheme2, VerticalGroup } from '@grafana/ui';
 import config from 'app/core/config';
 
 export interface LoginService {
@@ -63,13 +63,13 @@ const loginServices: () => LoginServices = () => {
       bgColor: '#2f2f2f',
       enabled: oauthEnabled && Boolean(config.oauth.okta),
       name: config.oauth?.okta?.name || 'Okta',
-      icon: (config.oauth?.okta?.icon as IconName) || 'okta',
+      icon: (config.oauth?.okta?.icon && toIconName(config.oauth.okta.icon)) || 'okta',
     },
     oauth: {
       bgColor: '#262628',
       enabled: oauthEnabled && Boolean(config.oauth.generic_oauth),
       name: config.oauth?.generic_oauth?.name || 'OAuth',
-      icon: (config.oauth?.generic_oauth?.icon as IconName) || 'signin',
+      icon: (config.oauth?.generic_oauth?.icon && toIconName(config.oauth?.generic_oauth?.icon)) || 'signin',
       hrefName: 'generic_oauth',
     },
   };
