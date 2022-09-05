@@ -36,7 +36,7 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
     };
   }
 
-  readCSV: any = debounce(() => {
+  readCSV = debounce(() => {
     const { config } = this.props;
     const { text } = this.state;
 
@@ -60,7 +60,7 @@ export class UnThemedTableInputCSV extends PureComponent<Props, State> {
     }
   }
 
-  onTextChange = (event: any) => {
+  onTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({ text: event.target.value });
   };
 
