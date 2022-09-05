@@ -91,6 +91,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           "type": "datasource",
         },
         "name": "",
+        "readOnly": false,
         "type": "",
         "uid": "",
         "url": "myloggingurl",

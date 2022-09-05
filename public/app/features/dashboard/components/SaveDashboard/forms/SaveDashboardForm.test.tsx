@@ -119,4 +119,33 @@ describe('SaveDashboardAsForm', () => {
       });
     });
   });
+  describe('saved message draft rendered', () => {
+    it('renders saved message draft if it was filled before', () => {
+      render(
+        <SaveDashboardForm
+          dashboard={new DashboardModel({})}
+          onCancel={() => {}}
+          onSuccess={() => {}}
+          onSubmit={async () => {
+            return {};
+          }}
+          saveModel={{
+            clone: new DashboardModel({}),
+            diff: {},
+            diffCount: 0,
+            hasChanges: true,
+          }}
+          options={{ message: 'Saved draft' }}
+          onOptionsChange={(opts: SaveDashboardOptions) => {
+            return;
+          }}
+        />
+      );
+
+      const messageTextArea = screen.getByLabelText('message');
+
+      expect(messageTextArea).toBeInTheDocument();
+      expect(messageTextArea).toHaveTextContent('Saved draft');
+    });
+  });
 });

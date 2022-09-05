@@ -113,7 +113,8 @@ export class SearchSrv {
     // create folder index
     for (const hit of results) {
       if (hit.type === 'dash-folder') {
-        sections[hit.id] = {
+        // FIXME: Use hit.uid instead
+        sections[hit.id!] = {
           id: hit.id,
           uid: hit.uid,
           title: hit.title,
