@@ -45,9 +45,9 @@ const loadLogsVolumeEnabled = (): boolean => {
   // we default to `enabled=true`
   if (data === 'false') {
     return false;
-  } else {
-    return true;
   }
+
+  return true;
 };
 
 /**
