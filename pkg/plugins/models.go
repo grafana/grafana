@@ -97,8 +97,8 @@ type Includes struct {
 }
 
 func (e Includes) DashboardURLPath() string {
-	if len(e.UID) == 0 {
-		return "/d/" + e.Slug
+	if e.Type != "dashboard" || len(e.UID) == 0 {
+		return ""
 	}
 	return "/d/" + e.UID
 }
