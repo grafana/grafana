@@ -91,7 +91,13 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentMigrations(mg)
 		}
 	}
-	accesscontrol.AddManagedFolderAlertActionsMigration(mg)
+
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+			accesscontrol.AddManagedFolderAlertActionsMigration(mg)
+			accesscontrol.AddAdminOnlyMigration(mg)
+		}
+	}
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
