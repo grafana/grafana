@@ -6967,8 +6967,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "49"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "50"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "51"],
-      [0, 0, 0, "Do not use any type assertions.", "52"],
-      [0, 0, 0, "Do not use any type assertions.", "53"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "52"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "53"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "54"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "55"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "56"],
@@ -6977,10 +6977,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "59"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "60"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "61"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "62"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "63"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "64"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "65"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "62"]
     ],
     "public/app/plugins/datasource/graphite/datasource_integration.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
