@@ -2,13 +2,12 @@ import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { locationUtil, NavModel, NavModelItem, TimeRange } from '@grafana/data';
+import { locationUtil, NavModel, NavModelItem, TimeRange, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLayoutType } from 'app/core/components/Page/types';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -353,7 +352,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         <Page
           navModel={sectionNav}
           pageNav={pageNav}
-          layout={PageLayoutType.Dashboard}
+          layout={PageLayoutType.Canvas}
           toolbar={toolbar}
           className={cx(viewPanel && 'panel-in-fullscreen', queryParams.editview && 'dashboard-content--hidden')}
           scrollRef={this.setScrollRef}
