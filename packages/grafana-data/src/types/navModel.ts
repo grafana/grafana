@@ -14,6 +14,8 @@ export interface NavLinkDTO {
   divider?: boolean;
   hideFromMenu?: boolean;
   hideFromTabs?: boolean;
+  showIconInNavbar?: boolean;
+  roundIcon?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;
@@ -30,7 +32,6 @@ export interface NavModelItem extends NavLinkDTO {
   highlightText?: string;
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
-  showIconInNavbar?: boolean;
   hideFromBreadcrumbs?: boolean;
 }
 
