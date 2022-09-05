@@ -24,6 +24,17 @@ export default function CheatSheet() {
           to see an example of a valid JSON file.
         </li>
       </ul>
+      <p>
+        More information about Jaeger can be found{' '}
+        <a
+          href="https://grafana.com/docs/grafana/latest/datasources/jaeger"
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: 'blue' }}
+        >
+          here.
+        </a>
+      </p>
     </>
   );
 }
