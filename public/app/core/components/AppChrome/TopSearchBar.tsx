@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavSection } from '@grafana/data';
-import { Dropdown, FilterInput, Icon, Tooltip, useStyles2, IconName } from '@grafana/ui';
+import { Dropdown, FilterInput, Icon, Tooltip, useStyles2, toIconName } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { StoreState } from 'app/types';
 
@@ -32,6 +32,7 @@ export function TopSearchBar() {
 
   const profileNode = configItems.find((item) => item.id === 'profile');
   const signInNode = configItems.find((item) => item.id === 'signin');
+  const signInIconName = signInNode?.icon && toIconName(signInNode.icon);
 
   return (
     <div className={styles.container}>
@@ -57,7 +58,7 @@ export function TopSearchBar() {
         {signInNode && (
           <Tooltip placement="bottom" content="Sign in">
             <a className={styles.actionItem} href={signInNode.url} target={signInNode.target}>
-              <Icon name={signInNode.icon} size="lg" />
+              {signInIconName && <Icon name={signInIconName} size="lg" />}
             </a>
           </Tooltip>
         )}
