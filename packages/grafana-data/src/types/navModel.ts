@@ -66,3 +66,8 @@ export interface NavModelBreadcrumb {
 }
 
 export type NavIndex = { [s: string]: NavModelItem };
+
+export enum PageLayoutType {
+  Standard,
+  Canvas,
+}

@@ -104,7 +104,7 @@ export const addTooltipSupport = ({
   }
 
   config.addHook('setLegend', (u) => {
-    if (!isToolTipOpen.current) {
+    if (!isToolTipOpen.current && !tooltipInterpolator) {
       setFocusedPointIdx(u.legend.idx!);
     }
     if (u.cursor.idxs != null) {
