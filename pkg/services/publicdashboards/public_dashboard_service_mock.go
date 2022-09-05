@@ -6,10 +6,10 @@ import (
 	context "context"
 	testing "testing"
 
-	mock "github.com/stretchr/testify/mock"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	models "github.com/grafana/grafana/pkg/models"
 	publicdashboardsmodels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	mock "github.com/stretchr/testify/mock"
 
 	user "github.com/grafana/grafana/pkg/services/user"
 )
