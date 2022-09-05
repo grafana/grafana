@@ -1,6 +1,7 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 
+import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
@@ -12,6 +13,7 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/data-connect
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getLiveRoutes } from 'app/features/live/pages/routes';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
+import AppRootPage from 'app/features/plugins/components/AppRootPage';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { ServiceAccountPage } from 'app/features/serviceaccounts/ServiceAccountPage';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
@@ -20,9 +22,33 @@ import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamic
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
 
+import { pluginHasRootPage } from './utils';
+
 export const extraRoutes: RouteDescriptor[] = [];
 
 export function getAppRoutes(): RouteDescriptor[] {
+  const topnavRoutes: RouteDescriptor[] = config.featureToggles.topnav
+    ? [
+        {
+          path: '/apps',
+          component: () => <NavLandingPage navId="apps" />,
+        },
+        {
+          path: '/a/:pluginId',
+          exact: true,
+          component: (props) => {
+            const hasRoot = pluginHasRootPage(props.match.params.pluginId, config.bootData.navTree);
+            const hasQueryParams = Object.keys(props.queryParams).length > 0;
+            return hasRoot || hasQueryParams ? (
+              <AppRootPage {...props} />
+            ) : (
+              <NavLandingPage navId={`plugin-page-${props.match.params.pluginId}`} />
+            );
+          },
+        },
+      ]
+    : [];
+
   return [
     {
       path: '/',
@@ -179,6 +205,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
     },
+    ...topnavRoutes,
     {
       path: '/a/:pluginId/',
       exact: false,
@@ -272,8 +299,7 @@ export function getAppRoutes(): RouteDescriptor[] {
 
     {
       path: '/admin',
-      // eslint-disable-next-line react/display-name
-      component: () => <Redirect to="/admin/users" />,
+      component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
     },
     {
       path: '/admin/settings',
