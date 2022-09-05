@@ -433,12 +433,6 @@ func updateTeamMember(sess *DBSession, orgID, teamID, userID int64, permission m
 
 	if permission != models.PERMISSION_ADMIN {
 		permission = 0 // make sure we don't get invalid permission levels in store
-
-		// protect the last team admin
-		_, err := isLastAdmin(sess, orgID, teamID, userID)
-		if err != nil {
-			return err
-		}
 	}
 
 	member.Permission = permission
@@ -464,11 +458,6 @@ func removeTeamMember(sess *DBSession, cmd *models.RemoveTeamMemberCommand) erro
 		return err
 	}
 
-	_, err := isLastAdmin(sess, cmd.OrgId, cmd.TeamId, cmd.UserId)
-	if err != nil {
-		return err
-	}
-
 	var rawSQL = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
 	res, err := sess.Exec(rawSQL, cmd.OrgId, cmd.TeamId, cmd.UserId)
 	if err != nil {
@@ -480,29 +469,6 @@ func removeTeamMember(sess *DBSession, cmd *models.RemoveTeamMemberCommand) erro
 	}
 
 	return err
-}
-
-func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool, error) {
-	rawSQL := "SELECT user_id FROM team_member WHERE org_id=? and team_id=? and permission=?"
-	userIds := []*int64{}
-	err := sess.SQL(rawSQL, orgId, teamId, models.PERMISSION_ADMIN).Find(&userIds)
-	if err != nil {
-		return false, err
-	}
-
-	isAdmin := false
-	for _, adminId := range userIds {
-		if userId == *adminId {
-			isAdmin = true
-			break
-		}
-	}
-
-	if isAdmin && len(userIds) == 1 {
-		return true, models.ErrLastTeamAdmin
-	}
-
-	return false, err
 }
 
 // GetUserTeamMemberships return a list of memberships to teams granted to a user
