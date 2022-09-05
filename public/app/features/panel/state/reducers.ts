@@ -40,6 +40,7 @@ const panelsSlice = createSlice({
       }
     },
     setPanelInstanceState: (state, action: PayloadAction<SetPanelInstanceStatePayload>) => {
+      console.log('setPanelInstanceState', action.payload);
       state[action.payload.key].instanceState = action.payload.value;
     },
     setPanelAngularComponent: (state, action: PayloadAction<SetPanelAngularComponentPayload>) => {

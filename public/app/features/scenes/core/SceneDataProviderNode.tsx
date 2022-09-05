@@ -1,27 +1,24 @@
 import { cloneDeep } from 'lodash';
-import React from 'react';
-// import { PanelData } from '@grafana/data';
 import { Unsubscribable } from 'rxjs/internal/types';
 
 import { DataQueryExtended, SceneQueryRunner } from '../querying/SceneQueryRunner';
 
 import { SceneDataObject, SceneObjectBase } from './SceneObjectBase';
-import { SceneTimeRange } from './SceneTimeRange';
-import { SceneDataState, SceneLayoutState, SceneObject, SceneObjectStatePlain } from './types';
+import { SceneDataState, SceneObject, SceneParametrizedState, SceneTimeRangeState } from './types';
 
 type SceneDataProviderInputParams = {
-  timeRange: SceneTimeRange;
+  timeRange: SceneObject<SceneTimeRangeState>;
 } & {
   [key: string]: SceneObject;
 };
 
-export interface SceneDataProviderNodeState extends SceneObjectStatePlain, SceneLayoutState, SceneDataState {
+export interface SceneDataProviderNodeState
+  extends SceneDataState,
+    SceneParametrizedState<SceneDataProviderInputParams> {
   queries: DataQueryExtended[];
-  inputParams: SceneDataProviderInputParams;
 }
 
 export class SceneDataProviderNode extends SceneDataObject<SceneDataProviderNodeState> {
-  static Component = SceneDataProviderRenderer;
   private runner: SceneQueryRunner = new SceneQueryRunner({ queries: [] });
   private querySub?: Unsubscribable;
   private staticQueries: DataQueryExtended[] = [];
@@ -35,7 +32,6 @@ export class SceneDataProviderNode extends SceneDataObject<SceneDataProviderNode
 
       for (let prop in query) {
         if (Object.prototype.hasOwnProperty.call(query, prop)) {
-          console.log(prop, query[prop]);
           if (query[prop] instanceof SceneObjectBase) {
             const node = query[prop];
             console.log('updating', prop, node.state.value);
@@ -60,7 +56,7 @@ export class SceneDataProviderNode extends SceneDataObject<SceneDataProviderNode
     this.subs.add(
       timeRange.subscribe({
         next: (timeRange) => {
-          this.runner.runWithTimeRange(timeRange.range).then((data) => {
+          this.runner.runWithTimeRange(timeRange.range!).then((data) => {
             if (!data) {
               return;
             }
@@ -91,7 +87,7 @@ export class SceneDataProviderNode extends SceneDataObject<SceneDataProviderNode
           next: (value) => {
             this.staticQueries = this.buildStaticQueries();
             this.runner.updateQueries(this.staticQueries);
-            this.runner.runWithTimeRange(timeRange.state.range).then((data) => {
+            this.runner.runWithTimeRange(timeRange.state.range!).then((data) => {
               if (!data) {
                 return;
               }
@@ -113,7 +109,7 @@ export class SceneDataProviderNode extends SceneDataObject<SceneDataProviderNode
     }
 
     if (!this.state.$data) {
-      this.runner.runWithTimeRange(timeRange.state.range).then((data) => {
+      this.runner.runWithTimeRange(timeRange.state.range!).then((data) => {
         if (!data) {
           return;
         }
@@ -136,20 +132,4 @@ export class SceneDataProviderNode extends SceneDataObject<SceneDataProviderNode
       this.querySub = undefined;
     }
   }
-
-  // getData(): SceneObject<SceneDataState> {
-  //   if (!this.isActive) {
-  //     this.activate();
-  //   }
-
-  //   return this;
-  // }
-
-  getTimeRange(): SceneTimeRange {
-    return this.state.inputParams.timeRange;
-  }
-}
-
-function SceneDataProviderRenderer() {
-  return <></>;
 }

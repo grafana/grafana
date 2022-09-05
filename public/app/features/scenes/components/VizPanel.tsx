@@ -5,17 +5,25 @@ import { AbsoluteTimeRange, FieldConfigSource, toUtc } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { Field, PanelChrome, Input } from '@grafana/ui';
 
-import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneComponentProps, SceneLayoutChildState } from '../core/types';
+import { SceneDataObject, SceneObjectBase } from '../core/SceneObjectBase';
+import { SceneComponentProps, SceneLayoutChildState, SceneParametrizedState } from '../core/types';
+import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
 
-export interface VizPanelState extends SceneLayoutChildState {
+export type SceneVizPanelInputParams<TData extends SceneDataObject<any> = SceneDataObject<any>> = {
+  data: TData;
+};
+export interface VizPanelState<T extends SceneDataObject<any> = SceneDataObject<any>>
+  extends SceneLayoutChildState,
+    SceneParametrizedState<SceneVizPanelInputParams<T>> {
   title?: string;
   pluginId: string;
   options?: object;
   fieldConfig?: FieldConfigSource;
 }
 
-export class VizPanel extends SceneObjectBase<VizPanelState> {
+export class VizPanel<T extends SceneDataObject<any> = SceneDataProviderNode> extends SceneObjectBase<
+  VizPanelState<T>
+> {
   static Component = ScenePanelRenderer;
   static Editor = VizPanelEditor;
 
@@ -37,6 +45,8 @@ export class VizPanel extends SceneObjectBase<VizPanelState> {
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, pluginId, options, fieldConfig } = model.useState();
   const { $data } = model.getData().useState();
+  // const { inputParams } = model.useState();
+  // const { $data } = inputParams.data.useState();
 
   return (
     <AutoSizer>

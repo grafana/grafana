@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
@@ -6,13 +6,11 @@ import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { PageLayoutType } from 'app/core/components/Page/types';
 
-import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
 import { SceneObjectBase } from '../core/SceneObjectBase';
-import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneComponentProps, SceneObjectStatePlain, SceneObject } from '../core/types';
 import { UrlSyncManager } from '../services/UrlSyncManager';
 
-import { SceneFlexChild } from './SceneFlexLayout';
+import { SceneInspectGraph } from './SceneInspectGraph';
 
 interface SceneState extends SceneObjectStatePlain {
   title: string;
@@ -39,6 +37,7 @@ export class Scene extends SceneObjectBase<SceneState> {
 function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   const { title, children, actions = [], isEditing, $editor } = model.useState();
 
+  const [isInspecting, setIsInspecting] = useState(false);
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if ($editor) {
@@ -51,6 +50,14 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
     );
   }
 
+  toolbarActions.push(
+    <ToolbarButton
+      icon="bug"
+      variant={isInspecting ? 'primary' : 'default'}
+      onClick={() => setIsInspecting(!isInspecting)}
+    />
+  );
+
   const pageToolbar = config.featureToggles.topnav ? (
     <AppChromeUpdate pageNav={{ text: title }} actions={toolbarActions} />
   ) : (
@@ -62,34 +69,16 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
       <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
         {renderNodes(children, Boolean(isEditing))}
         {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}
+
+        {/* simple dev */}
+        {isInspecting && <SceneInspectGraph model={model} onClose={() => setIsInspecting(false)} />}
       </div>
     </Page>
   );
 }
 
-export function isDataProviderNode(node: SceneObject): node is SceneDataProviderNode {
-  return node instanceof SceneDataProviderNode;
-}
-
-export function isFlexChildNode(node: SceneObject): node is SceneFlexChild {
-  return node instanceof SceneFlexChild;
-}
-
-export function isTimeRangeNode(node: SceneObject): node is SceneTimeRange {
-  return node instanceof SceneTimeRange;
-}
-
 export function renderNodes(nodes: SceneObject[], isEditing: boolean): React.ReactNode {
   return nodes.map((node) => {
-    if (isDataProviderNode(node)) {
-      return (
-        <>
-          <node.Component key={node.state.key} model={node} isEditing={isEditing} />
-          {renderNodes(node.state.children, isEditing)}
-        </>
-      );
-    }
-
     return <node.Component key={node.state.key} model={node} />;
   });
 }

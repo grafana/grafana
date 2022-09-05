@@ -13,6 +13,22 @@ export function getNestedScene(): Scene {
     range: getDefaultTimeRange(),
   });
 
+  const dataProviderNode = new SceneDataProviderNode({
+    inputParams: {
+      timeRange: timeRangeNode,
+    },
+    queries: [
+      {
+        refId: 'A',
+        datasource: {
+          uid: 'gdev-testdata',
+          type: 'testdata',
+        },
+        scenarioId: 'random_walk',
+      },
+    ],
+  });
+
   const scene = new Scene({
     title: 'Nested Scene demo',
     $editor: new SceneEditManager({}),
@@ -26,38 +42,23 @@ export function getNestedScene(): Scene {
           }),
           new SceneFlexChild({
             children: [
-              new SceneDataProviderNode({
-                queries: [
-                  {
-                    refId: 'A',
-                    datasource: {
-                      uid: 'gdev-testdata',
-                      type: 'testdata',
-                    },
-                    scenarioId: 'random_walk',
-                  },
-                ],
-                inputParams: { timeRange: timeRangeNode },
+              new SceneFlexLayout({
+                direction: 'column',
                 children: [
-                  new SceneFlexLayout({
-                    direction: 'column',
+                  new SceneFlexChild({
                     children: [
-                      new SceneFlexChild({
-                        children: [
-                          new VizPanel({
-                            key: '3',
-                            pluginId: 'timeseries',
-                            title: 'Panel 3',
-                          }),
-                        ],
+                      new VizPanel({
+                        inputParams: {
+                          data: dataProviderNode,
+                        },
+                        key: '3',
+                        pluginId: 'timeseries',
+                        title: 'Panel 3',
                       }),
-                      // new SceneFlexChild({
-                      //   children: [
-                      getInnerScene('Inner scene'),
-                      //   ],
-                      // }),
                     ],
                   }),
+
+                  getInnerScene('Inner scene'),
                 ],
               }),
             ],
@@ -75,6 +76,22 @@ export function getInnerScene(title: string) {
     range: getDefaultTimeRange(),
   });
 
+  const dataProviderNode = new SceneDataProviderNode({
+    inputParams: {
+      timeRange: timeRangeNode,
+    },
+    queries: [
+      {
+        refId: 'A',
+        datasource: {
+          uid: 'gdev-testdata',
+          type: 'testdata',
+        },
+        scenarioId: 'random_walk_table',
+      },
+    ],
+  });
+
   const scene = new NestedScene({
     title: title,
     canCollapse: true,
@@ -82,39 +99,30 @@ export function getInnerScene(title: string) {
     isCollapsed: false,
     actions: [timeRangeNode],
     children: [
-      new SceneDataProviderNode({
-        inputParams: { timeRange: timeRangeNode },
-        queries: [
-          {
-            refId: 'A',
-            datasource: {
-              uid: 'gdev-testdata',
-              type: 'testdata',
-            },
-            scenarioId: 'random_walk_table',
-          },
-        ],
+      new SceneFlexLayout({
+        direction: 'row',
         children: [
-          new SceneFlexLayout({
-            direction: 'row',
+          new SceneFlexChild({
             children: [
-              new SceneFlexChild({
-                children: [
-                  new VizPanel({
-                    key: '3',
-                    pluginId: 'timeseries',
-                    title: 'Data',
-                  }),
-                ],
+              new VizPanel({
+                inputParams: {
+                  data: dataProviderNode,
+                },
+                key: '3',
+                pluginId: 'timeseries',
+                title: 'Data',
               }),
-              new SceneFlexChild({
-                children: [
-                  new VizPanel({
-                    key: '3',
-                    pluginId: 'timeseries',
-                    title: 'Data',
-                  }),
-                ],
+            ],
+          }),
+          new SceneFlexChild({
+            children: [
+              new VizPanel({
+                inputParams: {
+                  data: dataProviderNode,
+                },
+                key: '3',
+                pluginId: 'timeseries',
+                title: 'Data',
               }),
             ],
           }),

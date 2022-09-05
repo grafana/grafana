@@ -41,6 +41,10 @@ export interface SceneDataState extends SceneObjectStatePlain {
   $data?: PanelData;
 }
 
+export interface SceneParametrizedState<T extends Record<string, SceneObject<any>>> extends SceneObjectStatePlain {
+  inputParams: T;
+}
+
 export interface SceneObject<TState extends SceneObjectState = SceneObjectState> extends Subscribable<TState> {
   /** The current state */
   state: TState;
@@ -99,9 +103,10 @@ export interface SceneEditor extends SceneObject<SceneEditorState> {
 }
 
 export interface SceneTimeRangeState extends SceneObjectStatePlain {
-  range: TimeRange;
+  range?: TimeRange;
 }
-export interface SceneTimeRange extends SceneObject<SceneTimeRangeState> {
+
+export interface SceneTimeRangeNode extends SceneObject<SceneTimeRangeState> {
   onTimeRangeChange(timeRange: TimeRange): void;
   onIntervalChanged(interval: string): void;
   onRefresh(): void;

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Observer, Subject, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { EventBusSrv } from '@grafana/data';
+import { EventBusSrv, TimeRange, UrlQueryMap } from '@grafana/data';
 import { useForceUpdate } from '@grafana/ui';
 
 import { SceneComponentWrapper } from './SceneComponentWrapper';
@@ -12,13 +12,16 @@ import {
   SceneObject,
   SceneComponent,
   SceneEditor,
-  SceneTimeRange,
   isSceneObject,
   SceneObjectState,
   SceneLayoutChild,
+  SceneTimeRangeState,
+  SceneObjectWithUrlSync,
 } from './types';
 
 export abstract class SceneObjectBase<TState extends SceneObjectState = {}> implements SceneObject<TState> {
+  // keeps keys of all scene objects that are referencing this object
+  _refCounter = new Set<string>();
   subject = new Subject<TState>();
   state: TState;
   parent?: SceneObjectBase<SceneObjectState>;
@@ -99,19 +102,37 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   activate() {
     this.isActive = true;
 
-    // const { $data } = this.state;
-    // if ($data && !$data.isActive) {
-    //   $data.activate();
-    // }
+    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
+      console.log('activating', this);
+      const params = (this.state as any).inputParams;
+      for (const param in params) {
+        if (isSceneObject(params[param]) && !params[param].isActive) {
+          if (!params[param].isActive) {
+            console.log('activating', params[param]);
+            params[param].activate();
+          }
+        }
+        params[param]._refCounter.add(this.state.key);
+      }
+    }
   }
 
   deactivate(): void {
     this.isActive = false;
 
-    // const { $data } = this.state;
-    // if ($data && $data.isActive) {
-    //   $data.deactivate();
-    // }
+    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
+      const params = (this.state as any).inputParams;
+
+      for (const param in params) {
+        if (isSceneObject(params[param]) && params[param].isActive) {
+          if (params[param]._refCounter.size === 1) {
+            console.log('deactivating', params[param]);
+            params[param].deactivate();
+          }
+          params[param]._refCounter.delete(this.state.key);
+        }
+      }
+    }
 
     this.subs.unsubscribe();
     this.subs = new Subscription();
@@ -125,7 +146,20 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
   /**
    * Will walk up the scene object graph to the closest $timeRange scene object
    */
-  getTimeRange(): SceneTimeRange {
+  getTimeRange(): SceneObject<SceneTimeRangeState> {
+    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
+      const params = (this.state as any).inputParams;
+
+      for (const param in params) {
+        if (isSceneObject(params[param]) && params[param].isActive) {
+          const range = params[param].getTimeRange();
+          if (range) {
+            return range;
+          }
+        }
+      }
+    }
+
     if (this.parent) {
       return this.parent.getTimeRange();
     }
@@ -137,6 +171,18 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Will walk up the scene object graph to the closest $data scene object
    */
   getData(): SceneObject<SceneDataState> {
+    if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
+      const params = (this.state as any).inputParams;
+      for (const param in params) {
+        if (isSceneObject(params[param])) {
+          const range = params[param].getData();
+          if (range) {
+            return range;
+          }
+        }
+      }
+    }
+
     if (this.parent) {
       return this.parent.getData();
     }
@@ -187,6 +233,8 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
     return new (this.constructor as any)(clonedState);
   }
+
+  // abstract toJSON(): object;
 }
 
 /**
@@ -207,12 +255,46 @@ function useSceneObjectState<TState>(model: SceneObjectBase<TState>): TState {
 /**
  * This class needs to be extended by any scene object that can provide data to other objects
  */
-export class SceneDataObject<TState extends SceneDataState = {}> extends SceneObjectBase<TState> {
+export class SceneDataObject<TState extends SceneDataState = SceneDataState> extends SceneObjectBase<TState> {
   getData(): SceneObject<SceneDataState> {
-    if (!this.isActive) {
-      this.activate();
-    }
-
     return this;
+  }
+}
+
+/**
+ * This class needs to be extended by any scene object that can provide data to other objects
+ */
+export class SceneTimeRangeObject<TState extends SceneTimeRangeState = SceneTimeRangeState>
+  extends SceneObjectBase<TState>
+  implements SceneObjectWithUrlSync
+{
+  getTimeRange(): SceneObject<SceneTimeRangeState> {
+    return this;
+  }
+
+  onTimeRangeChange = (range: TimeRange) => {
+    this.setState({ range });
+  };
+
+  onRefresh = () => {
+    // TODO re-eval time range
+    this.setState({ ...this.state });
+  };
+
+  onIntervalChanged = (_: string) => {};
+
+  /** These url sync functions are only placeholders for something more sophisticated  */
+  getUrlState() {
+    if (this.state.range) {
+      return null;
+    }
+    return {
+      from: this.state.range!.raw.from,
+      to: this.state.range!.raw.to,
+    } as any;
+  }
+
+  updateFromUrl(values: UrlQueryMap) {
+    // TODO
   }
 }
