@@ -35,14 +35,7 @@ const renderHeader = (): React.ReactNode => {
 };
 
 export const Basic: ComponentStory<typeof ContextMenu> = (args: ContextMenuProps) => {
-  return (
-    <ContextMenu
-      {...args}
-      onClose={() => action('onClose')('closed menu')}
-      renderMenuItems={renderMenuItems}
-      renderHeader={renderHeader}
-    />
-  );
+  return <ContextMenu {...args} onClose={() => action('onClose')('closed menu')} renderHeader={renderHeader} />;
 };
 
 export const WithState: ComponentStory<typeof WithContextMenu> = (args: WithContextMenuProps) => {
