@@ -24,7 +24,6 @@ const (
 )
 
 func TestGetMetadata(t *testing.T) {
-
 	tcs := []struct {
 		envMap     map[string]string
 		expVersion string

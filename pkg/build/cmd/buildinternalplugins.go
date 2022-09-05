@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"log"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
 	"github.com/grafana/grafana/pkg/build/plugins"
 	"github.com/grafana/grafana/pkg/build/syncutil"
 	"github.com/urfave/cli/v2"
-	"log"
 )
 
 func BuildInternalPlugins(c *cli.Context) error {
