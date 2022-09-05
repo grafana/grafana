@@ -125,42 +125,52 @@ export const keyValueSuggestions: SuggestionDefinition[] = [
 export const snippetsSuggestions: SuggestionDefinition[] = [
   {
     label: 'alertsloop',
+    documentation: 'Renders a loop through alerts',
     kind: languages.CompletionItemKind.Snippet,
     insertText: alertsLoopSnippet,
     insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
   },
   {
-    label: { label: 'alertdetails', detail: '(Alert)' },
+    label: {
+      label: 'alertdetails',
+      detail: '(Alert)',
+    },
+    documentation: 'Renders all the information available about the alert',
     kind: languages.CompletionItemKind.Snippet,
     insertText: alertDetailsSnippet,
     insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
   },
   {
     label: 'grouplabelsloop',
+    documentation: 'Renders a loop through group labels',
     kind: languages.CompletionItemKind.Snippet,
     insertText: groupLabelsLoopSnippet,
     insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
   },
   {
     label: 'commonlabelsloop',
+    documentation: 'Renders a loop through common labels',
     kind: languages.CompletionItemKind.Snippet,
     insertText: commonLabelsLoopSnippet,
     insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
   },
   {
     label: 'commonannotationsloop',
+    documentation: 'Renders a loop through common annotations',
     kind: languages.CompletionItemKind.Snippet,
     insertText: commonAnnotationsLoopSnippet,
     insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
   },
   {
     label: { label: 'labelsloop', detail: '(Alert)' },
+    documentation: 'Renders a loop through labels',
     kind: languages.CompletionItemKind.Snippet,
     insertText: labelsLoopSnippet,
     insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,
   },
   {
     label: { label: 'annotationsloop', detail: '(Alert)' },
+    documentation: 'Renders a loop through annotations',
     kind: languages.CompletionItemKind.Snippet,
     insertText: annotationsLoopSnippet,
     insertTextRules: CompletionItemInsertTextRule.InsertAsSnippet,

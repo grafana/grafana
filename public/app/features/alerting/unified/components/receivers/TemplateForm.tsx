@@ -15,6 +15,7 @@ import { makeAMLink } from '../../utils/misc';
 import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
+import { TemplateDataDocs } from './TemplateDataDocs';
 import { TemplateEditor } from './TemplateEditor';
 import { snippetsSuggestions } from './editor/templateDataSuggestions';
 
@@ -122,40 +123,45 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
           />
         </Field>
         <TemplatingGuideline />
-        <Field label="Content" error={errors?.content?.message} invalid={!!errors.content?.message} required>
-          <div className={styles.editWrapper}>
-            <AutoSizer>
-              {({ width, height }) => (
-                <TemplateEditor
-                  value={getValues('content')}
-                  width={width}
-                  height={height}
-                  onBlur={(value) => setValue('content', value)}
-                />
+        <div className={styles.contentContainer}>
+          <div>
+            <Field label="Content" error={errors?.content?.message} invalid={!!errors.content?.message} required>
+              <div className={styles.editWrapper}>
+                <AutoSizer>
+                  {({ width, height }) => (
+                    <TemplateEditor
+                      value={getValues('content')}
+                      width={width}
+                      height={height}
+                      onBlur={(value) => setValue('content', value)}
+                    />
+                  )}
+                </AutoSizer>
+              </div>
+            </Field>
+            <div className={styles.buttons}>
+              {loading && (
+                <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                  Saving...
+                </Button>
               )}
-            </AutoSizer>
+              {!loading && (
+                <Button type="submit" variant="primary">
+                  Save template
+                </Button>
+              )}
+              <LinkButton
+                disabled={loading}
+                href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+                variant="secondary"
+                type="button"
+                fill="outline"
+              >
+                Cancel
+              </LinkButton>
+            </div>
           </div>
-        </Field>
-        <div className={styles.buttons}>
-          {loading && (
-            <Button disabled={true} icon="fa fa-spinner" variant="primary">
-              Saving...
-            </Button>
-          )}
-          {!loading && (
-            <Button type="submit" variant="primary">
-              Save template
-            </Button>
-          )}
-          <LinkButton
-            disabled={loading}
-            href={makeAMLink('alerting/notifications', alertManagerSourceName)}
-            variant="secondary"
-            type="button"
-            fill="outline"
-          >
-            Cancel
-          </LinkButton>
+          <TemplateDataDocs />
         </div>
       </FieldSet>
     </form>
@@ -195,18 +201,16 @@ function TemplatingGuideline() {
           rel="noreferrer"
           className={styles.externalLink}
         >
-          here.
+          in the docs
         </a>
-      </div>
-      <div>
-        Examples about how to create a custom template message are available{' '}
+        , together with{' '}
         <a
           href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating/example-template/"
           target="_blank"
           rel="noreferrer"
           className={styles.externalLink}
         >
-          here.
+          templating examples.
         </a>
       </div>
       <div>
@@ -220,6 +224,16 @@ function TemplatingGuideline() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  contentContainer: css`
+    display: flex;
+    gap: ${theme.spacing(2)};
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    ${theme.breakpoints.up('xxl')} {
+      flex-wrap: nowrap;
+    }
+  `,
   code: css`
     color: ${theme.colors.text.link};
   `,
