@@ -1,31 +1,22 @@
 // Libraries
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import * as H from 'history';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { createHtmlPortalNode, InPortal, OutPortal } from 'react-reverse-portal';
 import { createSelector } from 'reselect';
 
-import {
-  AppEvents,
-  AppPlugin,
-  AppPluginMeta,
-  KeyValue,
-  NavIndex,
-  NavModel,
-  NavModelItem,
-  PluginType,
-} from '@grafana/data';
+import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/angular/services/nav_model_srv';
 import { Page } from 'app/core/components/Page/Page';
+import { PageProps } from 'app/core/components/Page/types';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { appEvents } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, useSelector } from 'app/types';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
+import { buildPluginSectionNav } from '../utils';
 
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 
@@ -62,12 +53,12 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 
   if (!plugin || match.params.pluginId !== plugin.meta.id) {
-    return <Page navId="apps">{loading && <PageLoader />}</Page>;
+    return <Page {...getLoadingPageProps()}>{loading && <PageLoader />}</Page>;
   }
 
   if (!plugin.root) {
     return (
-      <Page navId="apps">
+      <Page navModel={getWarningNav('Plugin load error')}>
         <div>No root app page component found</div>;
       </Page>
     );
@@ -105,41 +96,6 @@ export function AppRootPage({ match, queryParams, location }: Props) {
   );
 }
 
-function buildPluginSectionNav(location: H.Location, pluginNav: NavModel | null, navIndex: NavIndex) {
-  // When topnav is disabled we only just show pluginNav like before
-  if (!config.featureToggles.topnav) {
-    return pluginNav;
-  }
-
-  const originalSection = getNavModel(navIndex, 'apps').main;
-  const section = { ...originalSection };
-
-  const currentUrl = config.appSubUrl + location.pathname + location.search;
-  let activePage: NavModelItem | undefined;
-
-  // Set active page
-  section.children = (section?.children ?? []).map((child) => {
-    if (child.children) {
-      return {
-        ...child,
-        children: child.children.map((pluginPage) => {
-          if (currentUrl.startsWith(pluginPage.url ?? '')) {
-            activePage = {
-              ...pluginPage,
-              active: true,
-            };
-            return activePage;
-          }
-          return pluginPage;
-        }),
-      };
-    }
-    return child;
-  });
-
-  return { main: section, node: activePage ?? section };
-}
-
 const stateSlice = createSlice({
   name: 'prom-builder-container',
   initialState: initialState,
@@ -148,10 +104,33 @@ const stateSlice = createSlice({
       Object.assign(state, action.payload);
     },
     changeNav: (state, action: PayloadAction<NavModel>) => {
-      state.pluginNav = action.payload;
+      let pluginNav = action.payload;
+      // This is to hide the double breadcrumbs the old nav model can cause
+      if (pluginNav && pluginNav.node.children) {
+        pluginNav = {
+          ...pluginNav,
+          node: {
+            ...pluginNav.main,
+            hideFromBreadcrumbs: true,
+          },
+        };
+      }
+      state.pluginNav = pluginNav;
     },
   },
 });
+
+function getLoadingPageProps(): Partial<PageProps> {
+  if (config.featureToggles.topnav) {
+    return { navId: 'apps' };
+  }
+
+  const loading = { text: 'Loading plugin' };
+
+  return {
+    navModel: { main: loading, node: loading },
+  };
+}
 
 async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
   try {
