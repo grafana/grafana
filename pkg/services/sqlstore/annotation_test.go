@@ -3,6 +3,7 @@ package sqlstore_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -25,7 +26,8 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t)
-	repo := sqlstore.NewSQLAnnotationRepo(sql)
+	var maximumTagsLength int64 = 60
+	repo := sqlstore.NewSQLAnnotationRepo(sql, maximumTagsLength)
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -143,6 +145,18 @@ func TestIntegrationAnnotations(t *testing.T) {
 			assert.GreaterOrEqual(t, items[0].Updated, int64(0))
 			assert.Equal(t, items[0].Updated, items[0].Created)
 		})
+
+		badAnnotation := &annotations.Item{
+			OrgId:  1,
+			UserId: 1,
+			Text:   "rollback",
+			Type:   "",
+			Epoch:  17,
+			Tags:   []string{strings.Repeat("a", int(maximumTagsLength+1))},
+		}
+		err = repo.Save(badAnnotation)
+		require.Error(t, err)
+		require.ErrorIs(t, err, annotations.ErrBaseBadRequest)
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
 			items, err := repo.Find(context.Background(), &annotations.ItemQuery{
@@ -390,7 +404,8 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sql := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	repo := sqlstore.NewSQLAnnotationRepo(sql)
+	var maximumTagsLength int64 = 60
+	repo := sqlstore.NewSQLAnnotationRepo(sql, maximumTagsLength)
 	dashboardStore := dashboardstore.ProvideDashboardStore(sql, featuremgmt.WithFeatures())
 
 	testDashboard1 := models.SaveDashboardCommand{

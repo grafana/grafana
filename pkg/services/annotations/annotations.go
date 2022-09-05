@@ -7,10 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
 	ErrTimerangeMissing = errors.New("missing timerange")
+	ErrBaseBadRequest   = errutil.NewBase(errutil.StatusBadRequest, "annotations.bad-request")
 )
 
 type Repository interface {

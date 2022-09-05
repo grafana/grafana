@@ -34,11 +34,12 @@ func validateTimeRange(item *annotations.Item) error {
 }
 
 type SQLAnnotationRepo struct {
-	sql *SQLStore
+	sql               *SQLStore
+	maximumTagsLength int64
 }
 
-func NewSQLAnnotationRepo(sql *SQLStore) SQLAnnotationRepo {
-	return SQLAnnotationRepo{sql: sql}
+func NewSQLAnnotationRepo(sql *SQLStore, maximumTagsLength int64) SQLAnnotationRepo {
+	return SQLAnnotationRepo{sql: sql, maximumTagsLength: maximumTagsLength}
 }
 
 func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
@@ -50,7 +51,7 @@ func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
 		}
-		if err := validateTimeRange(item); err != nil {
+		if err := r.validateItem(item); err != nil {
 			return err
 		}
 
@@ -101,10 +102,6 @@ func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) 
 			existing.EpochEnd = item.EpochEnd
 		}
 
-		if err := validateTimeRange(existing); err != nil {
-			return err
-		}
-
 		if item.Tags != nil {
 			tags, err := EnsureTagsExist(sess, models.ParseTagPairs(item.Tags))
 			if err != nil {
@@ -121,6 +118,10 @@ func (r *SQLAnnotationRepo) Update(ctx context.Context, item *annotations.Item) 
 		}
 
 		existing.Tags = item.Tags
+
+		if err := r.validateItem(existing); err != nil {
+			return err
+		}
 
 		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "epoch_end", "updated", "tags").Update(existing)
 		return err
@@ -373,4 +374,23 @@ func (r *SQLAnnotationRepo) FindTags(ctx context.Context, query *annotations.Tag
 	}
 
 	return annotations.FindTagsResult{Tags: tags}, nil
+}
+
+func (r *SQLAnnotationRepo) validateItem(item *annotations.Item) error {
+	if err := validateTimeRange(item); err != nil {
+		return err
+	}
+
+	if err := r.validateTagsLength(item); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *SQLAnnotationRepo) validateTagsLength(item *annotations.Item) error {
+	tagsStr := fmt.Sprintf("%v", item.Tags)
+	if len(tagsStr) > int(r.maximumTagsLength) {
+		return annotations.ErrBaseBadRequest.Errorf("tags length exceeds the maximum allowed: modify the configuration to increase it")
+	}
+	return nil
 }
