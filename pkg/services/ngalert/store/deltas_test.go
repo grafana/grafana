@@ -16,7 +16,7 @@ import (
 )
 
 func TestCalculateChanges(t *testing.T) {
-	orgId := rand.Int63()
+	orgId := int64(rand.Int31())
 
 	t.Run("detects alerts that need to be added", func(t *testing.T) {
 		fakeStore := NewFakeRuleStore(t)
@@ -101,8 +101,8 @@ func TestCalculateChanges(t *testing.T) {
 			r := models.CopyRule(rule)
 
 			// Ignore difference in the following fields as submitted models do not have them set
-			r.ID = rand.Int63()
-			r.Version = rand.Int63()
+			r.ID = int64(rand.Int31())
+			r.Version = int64(rand.Int31())
 			r.Updated = r.Updated.Add(1 * time.Minute)
 
 			submitted = append(submitted, r)

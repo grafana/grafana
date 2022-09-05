@@ -108,7 +108,7 @@ function hexToHsl(color: string) {
   return tinycolor(color).toHsl();
 }
 
-function hslToHex(color: any) {
+function hslToHex(color: tinycolor.ColorFormats.HSLA) {
   return tinycolor(color).toHexString();
 }
 

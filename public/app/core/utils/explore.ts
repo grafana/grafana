@@ -7,6 +7,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
+  DataSourceRef,
   dateMath,
   DateTime,
   DefaultTimeZone,
@@ -24,7 +25,7 @@ import {
   toUtc,
   urlUtil,
 } from '@grafana/data';
-import { DataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -69,9 +70,12 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
    */
   let exploreTargets: DataQuery[] = panel.targets.map((t) => omit(t, 'legendFormat'));
   let url: string | undefined;
-
-  // Mixed datasources need to choose only one datasource
-  if (exploreDatasource.meta?.id === 'mixed' && exploreTargets) {
+  // if the mixed datasource is not enabled for explore, choose only one datasource
+  if (
+    config.featureToggles.exploreMixedDatasource === false &&
+    exploreDatasource.meta?.id === 'mixed' &&
+    exploreTargets
+  ) {
     // Find first explore datasource among targets
     for (const t of exploreTargets) {
       const datasource = await datasourceSrv.get(t.datasource || undefined);
@@ -99,7 +103,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.getRef() })),
+        queries: exploreTargets,
       };
     }
 
@@ -254,8 +258,34 @@ export function generateKey(index = 0): string {
   return `Q-${uuidv4()}-${index}`;
 }
 
-export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
-  return { refId: getNextRefIdChar(queries), key: generateKey(index) };
+export async function generateEmptyQuery(
+  queries: DataQuery[],
+  index = 0,
+  dataSourceOverride?: DataSourceRef
+): Promise<DataQuery> {
+  let datasourceInstance: DataSourceApi | undefined;
+  let datasourceRef: DataSourceRef | null | undefined;
+  let defaultQuery: Partial<DataQuery> | undefined;
+
+  // datasource override is if we have switched datasources with no carry-over - we want to create a new query with a datasource we define
+  if (dataSourceOverride) {
+    datasourceRef = dataSourceOverride;
+  } else if (queries.length > 0 && queries[queries.length - 1].datasource) {
+    // otherwise use last queries' datasource
+    datasourceRef = queries[queries.length - 1].datasource;
+  } else {
+    // if neither exists, use the default datasource
+    datasourceInstance = await getDataSourceSrv().get();
+    defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
+    datasourceRef = datasourceInstance.getRef();
+  }
+
+  if (!datasourceInstance) {
+    datasourceInstance = await getDataSourceSrv().get(datasourceRef);
+    defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
+  }
+
+  return { refId: getNextRefIdChar(queries), key: generateKey(index), datasource: datasourceRef, ...defaultQuery };
 }
 
 export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {
@@ -265,10 +295,24 @@ export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: D
   return { ...target, refId, key };
 };
 
+export const queryDatasourceDetails = (queries: DataQuery[]) => {
+  const allUIDs = queries.map((query) => query.datasource?.uid);
+  return {
+    allHaveDatasource: allUIDs.length === queries.length,
+    noneHaveDatasource: allUIDs.length === 0,
+    allDatasourceSame: allUIDs.every((val, i, arr) => val === arr[0]),
+  };
+};
+
 /**
  * Ensure at least one target exists and that targets have the necessary keys
+ *
+ * This will return an empty array if there are no datasources, as Explore is not usable in that state
  */
-export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
+export async function ensureQueries(
+  queries?: DataQuery[],
+  newQueryDataSourceOverride?: DataSourceRef
+): Promise<DataQuery[]> {
   if (queries && typeof queries === 'object' && queries.length > 0) {
     const allQueries = [];
     for (let index = 0; index < queries.length; index++) {
@@ -287,7 +331,16 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
     }
     return allQueries;
   }
-  return [{ ...generateEmptyQuery(queries ?? []) }];
+  try {
+    // if a datasource override get its ref, otherwise get the default datasource
+    const emptyQueryRef = newQueryDataSourceOverride ?? (await getDataSourceSrv().get()).getRef();
+    const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, emptyQueryRef);
+    return [emptyQuery];
+  } catch {
+    // if there are no datasources, return an empty array because we will not allow use of explore
+    // this will occur on init of explore with no datasources defined
+    return [];
+  }
 }
 
 /**
@@ -344,9 +397,9 @@ export function clearHistory(datasourceId: string) {
   store.delete(historyKey);
 }
 
-export const getQueryKeys = (queries: DataQuery[], datasourceInstance?: DataSourceApi | null): string[] => {
+export const getQueryKeys = (queries: DataQuery[]): string[] => {
   const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
-    const primaryKey = datasourceInstance && datasourceInstance.name ? datasourceInstance.name : query.key;
+    const primaryKey = query.datasource?.uid || query.key;
     return newQueryKeys.concat(`${primaryKey}-${index}`);
   }, []);
 

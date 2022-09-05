@@ -253,6 +253,15 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
+/**
+ * Global access to support importing a dashboard from elsewhere in the application.
+ * Alternativly this could be in redux, but given the size (potentially LARGE) and how
+ * infrequently it will be used, a simple global object seems reasonable.
+ */
+export const pendingNewDashboard = {
+  dashboard: undefined,
+};
+
 export function getNewDashboardModelData(urlFolderId?: string, panelType?: string): any {
   const data = {
     meta: {
@@ -262,7 +271,7 @@ export function getNewDashboardModelData(urlFolderId?: string, panelType?: strin
       isNew: true,
       folderId: 0,
     },
-    dashboard: {
+    dashboard: pendingNewDashboard.dashboard ?? {
       title: 'New dashboard',
       panels: [
         {
@@ -273,6 +282,7 @@ export function getNewDashboardModelData(urlFolderId?: string, panelType?: strin
       ],
     },
   };
+  pendingNewDashboard.dashboard = undefined;
 
   if (urlFolderId) {
     data.meta.folderId = parseInt(urlFolderId, 10);

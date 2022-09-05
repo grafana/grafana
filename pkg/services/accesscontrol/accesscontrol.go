@@ -12,33 +12,28 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type Options struct {
-	ReloadCache bool
-}
-
 type AccessControl interface {
-	registry.ProvidesUsageStats
-
 	// Evaluate evaluates access to the given resources.
 	Evaluate(ctx context.Context, user *user.SignedInUser, evaluator Evaluator) (bool, error)
-
-	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
-
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
-
-	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
-	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-	DeclareFixedRoles(...RoleRegistration) error
-
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
-	RegisterScopeAttributeResolver(scopePrefix string, resolver ScopeAttributeResolver)
+	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
+	//IsDisabled returns if access control is enabled or not
+	IsDisabled() bool
+}
 
+type Service interface {
+	registry.ProvidesUsageStats
+	// GetUserPermissions returns user permissions with only action and scope fields set.
+	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
 	// If orgID is set to 0 remove permissions from all orgs
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
+	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
+	DeclareFixedRoles(registrations ...RoleRegistration) error
+	//IsDisabled returns if access control is enabled or not
+	IsDisabled() bool
 }
 
 type RoleRegistry interface {
@@ -46,7 +41,11 @@ type RoleRegistry interface {
 	RegisterFixedRoles(ctx context.Context) error
 }
 
-type PermissionsStore interface {
+type Options struct {
+	ReloadCache bool
+}
+
+type Store interface {
 	// GetUserPermissions returns user permissions with only action and scope fields set.
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]Permission, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
@@ -92,10 +91,6 @@ type User struct {
 	ID         int64
 	IsExternal bool
 }
-
-// Metadata contains user accesses for a given resource
-// Ex: map[string]bool{"create":true, "delete": true}
-type Metadata map[string]bool
 
 // HasGlobalAccess checks user access with globally assigned permissions only
 func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
@@ -185,66 +180,6 @@ func ValidateScope(scope string) bool {
 	return !strings.ContainsAny(prefix, "*?")
 }
 
-func addActionToMetadata(allMetadata map[string]Metadata, action, id string) map[string]Metadata {
-	metadata, initialized := allMetadata[id]
-	if !initialized {
-		metadata = Metadata{action: true}
-	} else {
-		metadata[action] = true
-	}
-	allMetadata[id] = metadata
-	return allMetadata
-}
-
-// GetResourcesMetadata returns a map of accesscontrol metadata, listing for each resource, users available actions
-func GetResourcesMetadata(ctx context.Context, permissions map[string][]string, prefix string, resourceIDs map[string]bool) map[string]Metadata {
-	rootPrefix, attributePrefix, ok := extractPrefixes(prefix)
-	if !ok {
-		return map[string]Metadata{}
-	}
-
-	allScope := GetResourceAllScope(strings.TrimSuffix(rootPrefix, ":"))
-	allAttributeScope := Scope(strings.TrimSuffix(attributePrefix, ":"), "*")
-
-	// index of the attribute in the scope
-	attributeIndex := len(attributePrefix)
-
-	// Loop through permissions once
-	result := map[string]Metadata{}
-
-	for action, scopes := range permissions {
-		for _, scope := range scopes {
-			if scope == "*" || scope == allScope || scope == allAttributeScope {
-				// Add global action to all resources
-				for id := range resourceIDs {
-					result = addActionToMetadata(result, action, id)
-				}
-			} else {
-				if len(scope) > attributeIndex && strings.HasPrefix(scope, attributePrefix) && resourceIDs[scope[attributeIndex:]] {
-					// Add action to a specific resource
-					result = addActionToMetadata(result, action, scope[attributeIndex:])
-				}
-			}
-		}
-	}
-
-	return result
-}
-
-// MergeMeta will merge actions matching prefix of second metadata into first
-func MergeMeta(prefix string, first Metadata, second Metadata) Metadata {
-	if first == nil {
-		first = Metadata{}
-	}
-
-	for key := range second {
-		if strings.HasPrefix(key, prefix) {
-			first[key] = true
-		}
-	}
-	return first
-}
-
 func ManagedUserRoleName(userID int64) string {
 	return fmt.Sprintf("managed:users:%d:permissions", userID)
 }
@@ -255,16 +190,6 @@ func ManagedTeamRoleName(teamID int64) string {
 
 func ManagedBuiltInRoleName(builtInRole string) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
-}
-
-func extractPrefixes(prefix string) (string, string, bool) {
-	parts := strings.Split(strings.TrimSuffix(prefix, ":"), ":")
-	if len(parts) != 2 {
-		return "", "", false
-	}
-	rootPrefix := parts[0] + ":"
-	attributePrefix := rootPrefix + parts[1] + ":"
-	return rootPrefix, attributePrefix, true
 }
 
 func IsDisabled(cfg *setting.Cfg) bool {
