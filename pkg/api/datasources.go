@@ -74,7 +74,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetDataSourceById(c *models.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
+		return response.Error(http.StatusBadRequest, "id is invalid", nil)
 	}
 	query := models.GetDataSourceQuery{
 		Id:    id,
@@ -435,7 +435,7 @@ func (hs *HTTPServer) GetDataSourceIdByName(c *models.ReqContext) response.Respo
 func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	datasourceID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
+		c.JsonApiErr(http.StatusBadRequest, "id is invalid", nil)
 		return
 	}
 	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
@@ -494,7 +494,7 @@ func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Response {
 	datasourceID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
+		return response.Error(http.StatusBadRequest, "id is invalid", nil)
 	}
 
 	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipCache)
