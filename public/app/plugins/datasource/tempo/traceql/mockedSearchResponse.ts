@@ -28,6 +28,14 @@ export const mockedSearchResponse = (): SearchResponse => {
       spanSets: [],
     };
 
+    const spanAttributes = [];
+    for (let k = 0; k < Math.random() * 2; k++) {
+      const newAttr = Math.floor(Math.random() * attributes.length);
+      if (newAttr !== attr) {
+        spanAttributes.push(attributes[newAttr]);
+      }
+    }
+
     const spans: Span[] = [];
     for (let j = 0; j < Math.random() * 3 + 3; j++) {
       spans.push({
@@ -37,6 +45,7 @@ export const mockedSearchResponse = (): SearchResponse => {
         startTimeUnixNano: startTime,
         endTimeUnixNano: startTime + Math.random() * 10000000,
         kind: SpanKind.INTERNAL,
+        attributes: spanAttributes,
       });
     }
     t.spanSets!.push({ spans, attributes: [attributes[attr]] });

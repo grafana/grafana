@@ -18,7 +18,7 @@ import {
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
-import { Span, Spanset, TraceSearchMetadata } from './types';
+import { Span, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame,
@@ -692,10 +692,13 @@ export function createTableFrameFromTraceQlQuery(
   const traceData = data
     .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
     .reduce((list: TraceTableData[], t) => {
-      list.push(transformToTraceData(t));
-      t.spanSets?.forEach((spanSet) =>
-        spanSet.spans.forEach((span) => list.push(transformSpanToTraceData(span, spanSet)))
-      );
+      const firstSpanSet = t.spanSets?.[0];
+      const trace: TraceTableData = transformToTraceData(t);
+      trace.attributes = firstSpanSet?.attributes
+        .map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`))
+        .join(', ');
+      list.push(trace);
+      firstSpanSet?.spans.forEach((span) => list.push(transformSpanToTraceData(span)));
       return list;
     }, []);
 
@@ -715,7 +718,7 @@ interface TraceTableData {
   duration: number;
 }
 
-function transformSpanToTraceData(data: Span, spanSet: Spanset): TraceTableData {
+function transformSpanToTraceData(data: Span): TraceTableData {
   const traceStartTime = data.startTimeUnixNano / 1000000;
   const traceEndTime = data.endTimeUnixNano / 1000000;
 
@@ -732,7 +735,7 @@ function transformSpanToTraceData(data: Span, spanSet: Spanset): TraceTableData 
     traceID: undefined,
     traceName: data.name,
     spanID: data.spanId,
-    attributes: spanSet.attributes?.map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`)).join(', '),
+    attributes: data.attributes?.map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`)).join(', '),
     startTime,
     duration: traceEndTime - traceStartTime,
   };
