@@ -77,17 +77,18 @@ describe('AppRootPage', () => {
     setEchoSrv(new Echo());
   });
 
+  const pluginMeta = getMockPlugin({
+    id: 'my-awesome-plugin',
+    type: PluginType.app,
+    enabled: true,
+  });
+
   it('should not mount plugin twice if nav is changed', async () => {
     // reproduces https://github.com/grafana/grafana/pull/28105
-
-    getPluginSettingsMock.mockResolvedValue(
-      getMockPlugin({
-        type: PluginType.app,
-        enabled: true,
-      })
-    );
+    getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
     plugin.root = RootComponent;
 
     importAppPluginMock.mockResolvedValue(plugin);
@@ -102,12 +103,7 @@ describe('AppRootPage', () => {
   });
 
   it('should not render component if not at plugin path', async () => {
-    getPluginSettingsMock.mockResolvedValue(
-      getMockPlugin({
-        type: PluginType.app,
-        enabled: true,
-      })
-    );
+    getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     class RootComponent extends Component<AppRootProps> {
       static timesRendered = 0;
@@ -118,6 +114,7 @@ describe('AppRootPage', () => {
     }
 
     const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
     plugin.root = RootComponent;
 
     importAppPluginMock.mockResolvedValue(plugin);
@@ -127,18 +124,18 @@ describe('AppRootPage', () => {
     expect(await screen.findByText('my great component')).toBeVisible();
 
     // renders the first time
-    expect(RootComponent.timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(2);
 
     await act(async () => {
       locationService.push('/foo');
     });
 
-    expect(RootComponent.timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(2);
 
     await act(async () => {
       locationService.push('/a/my-awesome-plugin');
     });
 
-    expect(RootComponent.timesRendered).toEqual(2);
+    expect(RootComponent.timesRendered).toEqual(4);
   });
 });
