@@ -133,62 +133,102 @@ export function getKeyValueSuggestions(monaco: Monaco): SuggestionDefinition[] {
   ];
 }
 
+export const snippets = {
+  alerts: {
+    label: 'alertsloop',
+    description: 'Renders a loop through alerts',
+    snippet: alertsLoopSnippet,
+  },
+  alertDetails: {
+    label: 'alertdetails',
+    description: 'Renders all the information available about the alert',
+    snippet: alertDetailsSnippet,
+  },
+  groupLabels: {
+    label: 'grouplabelsloop',
+    description: 'Renders a loop through group labels',
+    snippet: groupLabelsLoopSnippet,
+  },
+  commonLabels: {
+    label: 'commonlabelsloop',
+    description: 'Renders a loop through common labels',
+    snippet: commonLabelsLoopSnippet,
+  },
+  commonAnnotations: {
+    label: 'commonannotationsloop',
+    description: 'Renders a loop through common annotations',
+    snippet: commonAnnotationsLoopSnippet,
+  },
+  labels: {
+    label: 'labelsloop',
+    description: 'Renders a loop through labels',
+    snippet: labelsLoopSnippet,
+  },
+  annotations: {
+    label: 'annotationsloop',
+    description: 'Renders a loop through annotations',
+    snippet: annotationsLoopSnippet,
+  },
+};
+
 // Snippets
 export function getSnippetsSuggestions(monaco: Monaco): SuggestionDefinition[] {
   const snippetKind = monaco.languages.CompletionItemKind.Snippet;
   const snippetInsertRule = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
 
+  const { alerts, alertDetails, groupLabels, commonLabels, commonAnnotations, labels, annotations } = snippets;
+
   return [
     {
-      label: 'alertsloop',
-      documentation: 'Renders a loop through alerts',
+      label: alerts.label,
+      documentation: alerts.description,
       kind: snippetKind,
-      insertText: alertsLoopSnippet,
+      insertText: alerts.snippet,
       insertTextRules: snippetInsertRule,
     },
     {
       label: {
-        label: 'alertdetails',
+        label: alertDetails.label,
         detail: '(Alert)',
       },
-      documentation: 'Renders all the information available about the alert',
+      documentation: alertDetails.description,
       kind: snippetKind,
-      insertText: alertDetailsSnippet,
+      insertText: alertDetails.snippet,
       insertTextRules: snippetInsertRule,
     },
     {
-      label: 'grouplabelsloop',
-      documentation: 'Renders a loop through group labels',
+      label: groupLabels.label,
+      documentation: groupLabels.description,
       kind: snippetKind,
-      insertText: groupLabelsLoopSnippet,
+      insertText: groupLabels.snippet,
       insertTextRules: snippetInsertRule,
     },
     {
-      label: 'commonlabelsloop',
-      documentation: 'Renders a loop through common labels',
+      label: commonLabels.label,
+      documentation: commonLabels.description,
       kind: snippetKind,
-      insertText: commonLabelsLoopSnippet,
+      insertText: commonLabels.snippet,
       insertTextRules: snippetInsertRule,
     },
     {
-      label: 'commonannotationsloop',
-      documentation: 'Renders a loop through common annotations',
+      label: commonAnnotations.label,
+      documentation: commonAnnotations.description,
       kind: snippetKind,
-      insertText: commonAnnotationsLoopSnippet,
+      insertText: commonAnnotations.snippet,
       insertTextRules: snippetInsertRule,
     },
     {
-      label: { label: 'labelsloop', detail: '(Alert)' },
-      documentation: 'Renders a loop through labels',
+      label: { label: labels.label, detail: '(Alert)' },
+      documentation: labels.description,
       kind: snippetKind,
-      insertText: labelsLoopSnippet,
+      insertText: labels.snippet,
       insertTextRules: snippetInsertRule,
     },
     {
-      label: { label: 'annotationsloop', detail: '(Alert)' },
-      documentation: 'Renders a loop through annotations',
+      label: { label: annotations.label, detail: '(Alert)' },
+      documentation: annotations.description,
       kind: snippetKind,
-      insertText: annotationsLoopSnippet,
+      insertText: annotations.snippet,
       insertTextRules: snippetInsertRule,
     },
   ];

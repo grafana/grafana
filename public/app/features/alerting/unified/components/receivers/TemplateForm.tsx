@@ -17,7 +17,7 @@ import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { TemplateDataDocs } from './TemplateDataDocs';
 import { TemplateEditor } from './TemplateEditor';
-import { getSnippetsSuggestions } from './editor/templateDataSuggestions';
+import { snippets } from './editor/templateDataSuggestions';
 
 interface Values {
   name: string;
@@ -216,7 +216,9 @@ function TemplatingGuideline() {
       <div>
         To make templating easier we provide a few snippets to speed up your workflow.{' '}
         <div className={styles.code}>
-          {getSnippetsSuggestions.map((s) => (typeof s.label === 'string' ? s.label : s.label.label)).join(', ')}
+          {Object.values(snippets)
+            .map((s) => s.label)
+            .join(', ')}
         </div>
       </div>
     </Alert>
