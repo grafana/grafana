@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -15,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -22,11 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-)
-
-const (
-	headerName  = "httpHeaderName"
-	headerValue = "httpHeaderValue"
 )
 
 func ProvideService(
@@ -147,7 +142,7 @@ func (s *Service) handleQueryData(ctx context.Context, user *models.SignedInUser
 		}
 	}
 
-	for k, v := range customHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData) {
+	for k, v := range service.GetCustomHeaders(ds.JsonData, instanceSettings.DecryptedSecureJSONData, s.cfg) {
 		req.Headers[k] = v
 	}
 
@@ -174,26 +169,6 @@ type parsedRequest struct {
 	hasExpression bool
 	parsedQueries []parsedQuery
 	httpRequest   *http.Request
-}
-
-func customHeaders(jsonData *simplejson.Json, decryptedJsonData map[string]string) map[string]string {
-	if jsonData == nil {
-		return nil
-	}
-
-	data := jsonData.MustMap()
-
-	headers := map[string]string{}
-	for k := range data {
-		if strings.HasPrefix(k, headerName) {
-			if header, ok := data[k].(string); ok {
-				valueKey := strings.ReplaceAll(k, headerName, headerValue)
-				headers[header] = decryptedJsonData[valueKey]
-			}
-		}
-	}
-
-	return headers
 }
 
 func (s *Service) parseMetricRequest(ctx context.Context, user *models.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {

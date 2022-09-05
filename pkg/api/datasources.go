@@ -8,16 +8,19 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -242,6 +245,26 @@ func validateURL(cmdType string, url string) response.Response {
 	return nil
 }
 
+// validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
+// This is done to prevent data source proxy from being used to circumvent auth proxy.
+// For more context take a look at CVE-2022-35957
+func validateJSONData(jsonData *simplejson.Json, cfg *setting.Cfg) error {
+	if jsonData == nil || !cfg.AuthProxyEnabled {
+		return nil
+	}
+
+	for key, value := range jsonData.MustMap() {
+		if strings.HasPrefix(key, "httpHeaderName") {
+			header := fmt.Sprint(value)
+			if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
+				datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
+				return errors.New("validation error, invalid header name specified")
+			}
+		}
+	}
+	return nil
+}
+
 // POST /api/datasources/
 func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 	cmd := models.AddDataSourceCommand{}
@@ -256,6 +279,9 @@ func (hs *HTTPServer) AddDataSource(c *models.ReqContext) response.Response {
 		if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 			return resp
 		}
+	}
+	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
 
 	if err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd); err != nil {
@@ -290,6 +316,9 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *models.ReqContext) response.Respon
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
 	}
+	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
+	}
 
 	ds, err := hs.getRawDataSourceById(c.Req.Context(), cmd.Id, cmd.OrgId)
 	if err != nil {
@@ -311,6 +340,9 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *models.ReqContext) response.Respo
 	cmd.OrgId = c.OrgId
 	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
 		return resp
+	}
+	if err := validateJSONData(cmd.JsonData, hs.Cfg); err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
 	}
 
 	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.OrgId)
