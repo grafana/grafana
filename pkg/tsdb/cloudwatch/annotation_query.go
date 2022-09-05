@@ -51,7 +51,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 
 	var alarmNames []*string
 	if model.PrefixMatching {
-		metrics.MCloudWatchAnnotationQueryTotal.WithLabelValues(model.Region, "DescribeAlarmsInput").Inc()
+		metrics.MCloudWatchAnnotationQueryTotal.WithLabelValues("DescribeAlarmsInput").Inc()
 		params := &cloudwatch.DescribeAlarmsInput{
 			MaxRecords:      aws.Int64(100),
 			ActionPrefix:    aws.String(actionPrefix),
@@ -66,7 +66,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginCont
 		if model.Region == "" || model.Namespace == "" || model.MetricName == "" || statistic == "" {
 			return result, errors.New("invalid annotations query")
 		}
-		metrics.MCloudWatchAnnotationQueryTotal.WithLabelValues(model.Region, "DescribeAlarmsForMetricInput").Inc()
+		metrics.MCloudWatchAnnotationQueryTotal.WithLabelValues("DescribeAlarmsForMetricInput").Inc()
 		var qd []*cloudwatch.Dimension
 		for k, v := range model.Dimensions {
 			if vv, ok := v.([]interface{}); ok {

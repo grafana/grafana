@@ -79,51 +79,7 @@ const (
 	annotationQuery = "annotationQuery"
 	logAction       = "logAction"
 	timeSeriesQuery = "timeSeriesQuery"
-	namespace       = "grafana"
 )
-
-// var (
-// 	metricsQueryCounter = promauto.NewCounterVec(
-// 		prometheus.CounterOpts{
-// 			Namespace: namespace,
-// 			Subsystem: "cludwatchds",
-// 			Name:      "cloudwatch_metrics_queries_total",
-// 		},
-// 		[]string{"mode", "type"},
-// 	)
-// 	logsQueryCounter = promauto.NewCounterVec(
-// 		prometheus.CounterOpts{
-// 			Namespace: namespace,
-// 			Subsystem: "cludwatchds",
-// 			Name:      "cloudwatch_logs_queries_total",
-// 		},
-// 		[]string{"sub_type"},
-// 	)
-// 	annotationQueryCounter = promauto.NewCounterVec(
-// 		prometheus.CounterOpts{
-// 			Namespace: namespace,
-// 			Subsystem: "cludwatchds",
-// 			Name:      "cloudwatch_annotation_queries_total",
-// 		},
-// 		[]string{"api"},
-// 	)
-// 	resourceQueryCounter = promauto.NewCounterVec(
-// 		prometheus.CounterOpts{
-// 			Namespace: namespace,
-// 			Subsystem: "cludwatchds",
-// 			Name:      "cloudwatch_resource_queries_total",
-// 		},
-// 		[]string{"path"},
-// 	)
-// 	cloudwatchQueriesFailuresCounter = promauto.NewCounterVec(
-// 		prometheus.CounterOpts{
-// 			Namespace: namespace,
-// 			Subsystem: "cludwatchds",
-// 			Name:      "cloudwatch_queries_failures_total",
-// 		},
-// 		[]string{"query_type"},
-// 	)
-// )
 
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
