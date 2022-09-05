@@ -740,7 +740,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
   if (setLogsVolumeEnabledAction.match(action)) {
     const { enabled } = action.payload;
-    if (state.logsVolumeDataSubscription) {
+    if (!enabled && state.logsVolumeDataSubscription) {
       state.logsVolumeDataSubscription.unsubscribe();
     }
     return {
