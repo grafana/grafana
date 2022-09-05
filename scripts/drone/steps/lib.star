@@ -714,7 +714,7 @@ def grafana_server_step(edition, port=3001):
 
 
 def e2e_tests_step(suite, edition, port=3001, tries=None):
-    cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
+    cmd = './bin/build e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {

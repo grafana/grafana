@@ -1,10 +1,10 @@
 import React from 'react';
 
+import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PageToolbar, ToolbarButton } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLayoutType } from 'app/core/components/Page/types';
 
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneComponentProps, SceneObjectStatePlain, SceneObject } from '../core/types';
@@ -54,7 +54,7 @@ function SceneRenderer({ model }: SceneComponentProps<Scene>) {
   );
 
   return (
-    <Page navId="scenes" layout={PageLayoutType.Dashboard} toolbar={pageToolbar}>
+    <Page navId="scenes" layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
       <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
         <layout.Component model={layout} isEditing={isEditing} />
         {$editor && <$editor.Component model={$editor} isEditing={isEditing} />}

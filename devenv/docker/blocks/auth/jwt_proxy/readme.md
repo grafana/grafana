@@ -15,7 +15,6 @@ signout_redirect_url = http://env.grafana.local:8088/oauth2/sign_out
 
 [auth.jwt]
 enabled = true
-enable_login_token = true
 header_name = X-Forwarded-Access-Token
 username_claim = login
 email_claim = email
