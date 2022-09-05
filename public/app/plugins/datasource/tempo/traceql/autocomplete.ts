@@ -83,6 +83,18 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
   }
 
+  private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
+    let tagValues: Array<SelectableValue<string>> = [];
+
+    if (this.cachedValues.hasOwnProperty(tagName)) {
+      tagValues = this.cachedValues[tagName];
+    } else {
+      tagValues = await this.languageProvider.getOptions(tagName);
+      this.cachedValues[tagName] = tagValues;
+    }
+    return tagValues;
+  }
+
   /**
    * Get suggestion based on the situation we are in like whether we should suggest tag names or values.
    * @param situation
@@ -116,15 +128,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         }));
       case 'SPANSET_IN_VALUE':
         const tagName = this.overrideTagName(situation.tagName);
-        let tagValues: Array<SelectableValue<string>> = [];
-
-        if (this.cachedValues.hasOwnProperty(tagName)) {
-          tagValues = this.cachedValues[tagName];
-        } else {
-          tagValues = await this.languageProvider.getOptions(tagName);
-          this.cachedValues[tagName] = tagValues;
-        }
-
+        const tagValues = await this.getTagValues(tagName);
         const items: Completion[] = [];
         tagValues.forEach((val) => {
           if (val?.label) {
