@@ -494,6 +494,11 @@ export class DashboardModel implements TimeModel {
     for (const panel of this.panels) {
       panel.configRev = 0;
     }
+
+    if (this.panelInEdit) {
+      this.panelInEdit.hasSavedPanelEditChange = this.panelInEdit.configRev > 0;
+      this.panelInEdit.configRev = 0;
+    }
   }
 
   hasUnsavedChanges() {

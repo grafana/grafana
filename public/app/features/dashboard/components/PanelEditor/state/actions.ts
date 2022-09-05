@@ -111,13 +111,12 @@ export function exitPanelEditor(): ThunkResult<void> {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
     const panel = getPanel();
-    const sourcePanel = getSourcePanel();
 
     if (dashboard) {
       dashboard.exitPanelEditor();
     }
 
-    if (hasPanelChangedInPanelEdit(sourcePanel, panel) && !shouldDiscardChanges) {
+    if (hasPanelChangedInPanelEdit(panel) && !shouldDiscardChanges) {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
@@ -141,6 +140,11 @@ export function exitPanelEditor(): ThunkResult<void> {
       setTimeout(() => {
         sourcePanel.getQueryRunner().useLastResultFrom(panel.getQueryRunner());
         sourcePanel.render();
+
+        // If all changes where saved then reset configRev after applying changes
+        if (panel.hasSavedPanelEditChange && !panel.hasChanged) {
+          sourcePanel.configRev = 0;
+        }
       }, 20);
     }
 
@@ -149,11 +153,8 @@ export function exitPanelEditor(): ThunkResult<void> {
   };
 }
 
-function hasPanelChangedInPanelEdit(sourcePanel: PanelModel, panel: PanelModel) {
-  const libPanelReplaced = panel.libraryPanel?.uid !== sourcePanel.libraryPanel?.uid;
-  const libPanelUpdated = panel.libraryPanel?.version !== sourcePanel.libraryPanel?.version;
-
-  return panel.hasChanged || libPanelReplaced || libPanelUpdated || panel.isAngularPlugin();
+function hasPanelChangedInPanelEdit(panel: PanelModel) {
+  return panel.hasChanged || panel.hasSavedPanelEditChange || panel.isAngularPlugin();
 }
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {
