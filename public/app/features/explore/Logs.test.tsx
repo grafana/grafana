@@ -19,7 +19,7 @@ describe('Logs', () => {
         exploreId={ExploreId.left}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
-        onToggleLogsVolume={() => null}
+        onSetLogsVolumeEnabled={() => null}
         logsVolumeData={undefined}
         loadLogsVolumeData={() => undefined}
         logRows={rows}

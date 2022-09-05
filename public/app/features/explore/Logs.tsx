@@ -64,7 +64,7 @@ interface Props extends Themeable2 {
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
-  onToggleLogsVolume: (enabled: boolean) => void;
+  onSetLogsVolumeEnabled: (enabled: boolean) => void;
   loadLogsVolumeData: (exploreId: ExploreId) => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
@@ -292,7 +292,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       logsVolumeEnabled,
       logsVolumeData,
       loadLogsVolumeData,
-      onToggleLogsVolume,
+      onSetLogsVolumeEnabled,
       loading = false,
       loadingState,
       onClickFilterLabel,
@@ -336,7 +336,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={onToggleLogsVolume}>
+        <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={onSetLogsVolumeEnabled}>
           {logsVolumeEnabled && (
             <LogsVolumePanel
               absoluteRange={absoluteRange}

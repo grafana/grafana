@@ -129,7 +129,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logsMeta={logsMeta}
             logsSeries={logsSeries}
             logsVolumeEnabled={this.props.logsVolumeEnabled}
-            onToggleLogsVolume={(enabled) => this.props.toggleLogsVolume(exploreId, enabled)}
+            onSetLogsVolumeEnabled={(enabled) => this.props.toggleLogsVolume(exploreId, enabled)}
             logsVolumeData={logsVolumeData}
             logsQueries={logsQueries}
             width={width}
