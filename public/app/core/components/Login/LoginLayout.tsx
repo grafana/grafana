@@ -23,7 +23,7 @@ export interface LoginLayoutProps {
 export const LoginLayout: FC<LoginLayoutProps> = ({ children, branding }) => {
   const loginStyles = useStyles2(getLoginStyles);
   const [startAnim, setStartAnim] = useState(false);
-  const subTitle = branding?.loginSubtitle || Branding.GetLoginSubTitle();
+  const subTitle = branding?.loginSubtitle ?? Branding.GetLoginSubTitle();
   const loginTitle = branding?.loginTitle || Branding.LoginTitle;
   const loginBoxBackground = branding?.loginBoxBackground || Branding.LoginBoxBackground();
   const loginLogo = branding?.loginLogo;
