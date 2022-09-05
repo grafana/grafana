@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -62,7 +61,7 @@ func setupTestServer(
 	}
 
 	var err error
-	acService, err := ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), rr)
+	acService, err := acimpl.ProvideService(cfg, database.ProvideService(db), rr)
 	require.NoError(t, err)
 	ac := acimpl.ProvideAccessControl(cfg, acService)
 
