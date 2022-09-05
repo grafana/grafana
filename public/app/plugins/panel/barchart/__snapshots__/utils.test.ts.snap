@@ -78,6 +78,9 @@ Object {
     "x": false,
     "y": false,
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {
     "draw": Array [
       [Function],
@@ -89,8 +92,17 @@ Object {
       [Function],
     ],
   },
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -217,6 +229,9 @@ Object {
     "x": false,
     "y": false,
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {
     "draw": Array [
       [Function],
@@ -228,8 +243,17 @@ Object {
       [Function],
     ],
   },
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -356,6 +380,9 @@ Object {
     "x": false,
     "y": false,
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {
     "draw": Array [
       [Function],
@@ -367,8 +394,17 @@ Object {
       [Function],
     ],
   },
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -495,6 +531,9 @@ Object {
     "x": false,
     "y": false,
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {
     "draw": Array [
       [Function],
@@ -506,8 +545,17 @@ Object {
       [Function],
     ],
   },
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -634,6 +682,9 @@ Object {
     "x": false,
     "y": false,
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {
     "draw": Array [
       [Function],
@@ -645,8 +696,17 @@ Object {
       [Function],
     ],
   },
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -773,6 +833,9 @@ Object {
     "x": false,
     "y": false,
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {
     "draw": Array [
       [Function],
@@ -784,8 +847,17 @@ Object {
       [Function],
     ],
   },
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -912,6 +984,9 @@ Object {
     "x": false,
     "y": false,
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {
     "draw": Array [
       [Function],
@@ -923,8 +998,17 @@ Object {
       [Function],
     ],
   },
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "m/s": Object {
       "auto": true,
@@ -1051,6 +1135,9 @@ Object {
     "x": false,
     "y": false,
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {
     "draw": Array [
       [Function],
@@ -1062,8 +1149,17 @@ Object {
       [Function],
     ],
   },
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "m/s": Object {
       "auto": true,

@@ -17,6 +17,8 @@ import (
 )
 
 var _ plugins.Manager = (*PluginManager)(nil)
+var _ plugins.RendererManager = (*PluginManager)(nil)
+var _ plugins.SecretsPluginManager = (*PluginManager)(nil)
 
 type PluginManager struct {
 	cfg            *plugins.Cfg
@@ -172,6 +174,24 @@ func (m *PluginManager) Remove(ctx context.Context, pluginID string) error {
 	return m.pluginStorage.Remove(ctx, plugin.ID)
 }
 
+func (m *PluginManager) Renderer(ctx context.Context) *plugins.Plugin {
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
+		if p.IsRenderer() && !p.IsDecommissioned() {
+			return p
+		}
+	}
+	return nil
+}
+
+func (m *PluginManager) SecretsManager(ctx context.Context) *plugins.Plugin {
+	for _, p := range m.pluginRegistry.Plugins(ctx) {
+		if p.IsSecretsManager() && !p.IsDecommissioned() {
+			return p
+		}
+	}
+	return nil
+}
+
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (m *PluginManager) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
 	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
@@ -211,6 +231,11 @@ func (m *PluginManager) registerAndStart(ctx context.Context, p *plugins.Plugin)
 	if err := m.pluginRegistry.Add(ctx, p); err != nil {
 		return err
 	}
+
+	if !p.IsCorePlugin() {
+		m.log.Info("Plugin registered", "pluginID", p.ID)
+	}
+
 	return m.processManager.Start(ctx, p.ID)
 }
 
