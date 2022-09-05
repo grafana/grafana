@@ -29,20 +29,8 @@ const meta: ComponentMeta<typeof IconButton> = {
     ariaLabel: 'sample aria-label content',
   },
   argTypes: {
-    name: {
-      control: 'select',
-    },
-    size: {
-      control: 'select',
-    },
-    iconType: {
-      control: 'radio',
-    },
-    tooltipPlacement: {
-      control: 'select',
-    },
-    variant: {
-      control: 'radio',
+    tooltip: {
+      control: 'text'
     },
   },
 };
