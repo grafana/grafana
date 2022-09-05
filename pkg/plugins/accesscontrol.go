@@ -8,8 +8,8 @@ import (
 
 const (
 	// Plugins actions
-	ActionInstall       = "plugins:install"
-	ActionSettingsWrite = "plugins.settings:write"
+	ActionInstall = "plugins:install"
+	ActionWrite   = "plugins:write"
 
 	// App Plugins actions
 	ActionAppAccess = "plugins.app:access"
@@ -18,7 +18,7 @@ const (
 var (
 	ScopeProvider = ac.NewScopeProvider("plugins")
 	// Protects access to the Configuration > Plugins page
-	AdminAccessEvaluator = ac.EvalAny(ac.EvalPermission(ActionSettingsWrite), ac.EvalPermission(ActionInstall))
+	AdminAccessEvaluator = ac.EvalAny(ac.EvalPermission(ActionWrite), ac.EvalPermission(ActionInstall))
 )
 
 func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
@@ -41,7 +41,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 			Description: "Enable and disable plugins and edit plugins' settings",
 			Group:       "Plugins",
 			Permissions: []ac.Permission{
-				{Action: ActionSettingsWrite, Scope: ScopeProvider.GetResourceAllScope()},
+				{Action: ActionWrite, Scope: ScopeProvider.GetResourceAllScope()},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},

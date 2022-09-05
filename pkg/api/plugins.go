@@ -70,7 +70,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		// Should be able to list this installed plugin:
 		//  * anyone that can edit its settings
 		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(ac.ReqOrgOrGrafanaAdmin,
-			ac.EvalPermission(plugins.ActionSettingsWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
+			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
 
