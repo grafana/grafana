@@ -59,8 +59,7 @@ func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 		Grants: []string{ac.RoleGrafanaAdmin},
 	}
 
-	// Remove possibility to install plugins if `plugin_admin_enable` is false
-	if !cfg.PluginAdminEnabled {
+	if !cfg.PluginAdminEnabled || cfg.PluginAdminExternalManageEnabled {
 		PluginsMaintainer.Grants = []string{}
 	}
 
