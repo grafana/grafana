@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { isFetchError, locationService } from '@grafana/runtime';
+import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   HorizontalGroup,
   InlineSwitch,
@@ -16,8 +16,10 @@ import {
   stylesFactory,
   Themeable2,
   ToolbarButton,
+  ToolbarButtonRow,
   withTheme2,
 } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 import { PageLayoutType } from 'app/core/components/Page/types';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
@@ -436,19 +438,31 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.setState({ showSaveLibraryPanelModal: false });
   };
 
+  renderToolbar() {
+    if (config.featureToggles.topnav) {
+      const pageNav = { text: 'Edit panel', parentItem: this.props.pageNav };
+      return (
+        <AppChromeUpdate
+          pageNav={pageNav}
+          actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>}
+        />
+      );
+    }
+
+    return (
+      <PageToolbar title={this.props.dashboard.title} section="Edit Panel" onGoBack={this.onGoBackToDashboard}>
+        {this.renderEditorActions()}
+      </PageToolbar>
+    );
+  }
+
   render() {
-    const { dashboard, initDone, updatePanelEditorUIState, uiState, theme, sectionNav, pageNav } = this.props;
+    const { initDone, updatePanelEditorUIState, uiState, theme, sectionNav, pageNav } = this.props;
     const styles = getStyles(theme, this.props);
 
     if (!initDone) {
       return null;
     }
-
-    const toolbar = (
-      <PageToolbar title={dashboard.title} section="Edit Panel" onGoBack={this.onGoBackToDashboard}>
-        {this.renderEditorActions()}
-      </PageToolbar>
-    );
 
     return (
       <Page
@@ -456,7 +470,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         pageNav={pageNav}
         aria-label={selectors.components.PanelEditor.General.content}
         layout={PageLayoutType.Dashboard}
-        toolbar={toolbar}
+        toolbar={this.renderToolbar()}
       >
         <div className={styles.verticalSplitPanesWrapper}>
           <SplitPaneWrapper
