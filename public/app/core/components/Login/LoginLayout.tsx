@@ -4,9 +4,8 @@ import React, { FC, useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, styleMixins } from '@grafana/ui';
 
-// TODO remove
-import { BrandingSettingsDTO } from '../../../extensions/custom-branding/types';
 import { Branding } from '../Branding/Branding';
+import { BrandingSettings } from '../Branding/types';
 import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
@@ -18,7 +17,7 @@ export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true })
 };
 
 export interface LoginLayoutProps {
-  branding?: BrandingSettingsDTO;
+  branding?: BrandingSettings;
 }
 
 export const LoginLayout: FC<LoginLayoutProps> = ({ children, branding }) => {
