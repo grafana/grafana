@@ -7764,7 +7764,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/api@npm:1.1.0, @opentelemetry/api@npm:^1.0.0, @opentelemetry/api@npm:^1.1.0":
+"@opentelemetry/api@npm:1.2.0":
+  version: 1.2.0
+  resolution: "@opentelemetry/api@npm:1.2.0"
+  checksum: 764efa81bf939200a8e80520a4735b23038abafc60c80420b007ae2bbb7ad843d806894414e95d974c2ef1b81d4ae8a3106804e1af7b5090240cfeb2467db099
+  languageName: node
+  linkType: hard
+
+"@opentelemetry/api@npm:^1.0.0, @opentelemetry/api@npm:^1.1.0":
   version: 1.1.0
   resolution: "@opentelemetry/api@npm:1.1.0"
   checksum: 8be8e8dd20a473639a9bb9b4185b8984f537f86e49829ba1d4c4e909f4480309cb22696b7eb7122882878dac0b5f4ce799d66ed72248568bafed085d6269e1bc
@@ -21909,7 +21916,7 @@ __metadata:
     "@lingui/core": 3.14.0
     "@lingui/macro": 3.14.0
     "@lingui/react": 3.14.0
-    "@opentelemetry/api": 1.1.0
+    "@opentelemetry/api": 1.2.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.6.0
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.7
