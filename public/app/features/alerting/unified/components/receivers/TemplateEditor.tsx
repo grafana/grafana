@@ -9,7 +9,7 @@ import React, { FC, useEffect, useRef } from 'react';
 import { CodeEditor } from '@grafana/ui';
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
 
-import { GoTemplateAutocompleteProvider } from './editor/autocomplete';
+import { registerGoTemplateAutocomplete } from './editor/autocomplete';
 import goTemplateLanguageDefinition, { GO_TEMPLATE_LANGUAGE_ID } from './editor/definition';
 import { registerLanguage } from './editor/register';
 
@@ -42,16 +42,12 @@ const TemplateEditor: FC<TemplateEditorProps> = (props) => {
   return (
     <CodeEditor
       showLineNumbers={true}
-      // getSuggestions={getSuggestions}
       showMiniMap={false}
       {...props}
       onEditorDidMount={onEditorDidMount}
       onBeforeEditorMount={(monaco) => {
         registerLanguage(monaco, goTemplateLanguageDefinition);
-        disposeSuggestions.current = monaco.languages.registerCompletionItemProvider(
-          'go-template',
-          GoTemplateAutocompleteProvider
-        );
+        disposeSuggestions.current = registerGoTemplateAutocomplete(monaco);
       }}
       language={GO_TEMPLATE_LANGUAGE_ID}
     />

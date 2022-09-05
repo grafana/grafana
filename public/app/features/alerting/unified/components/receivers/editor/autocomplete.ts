@@ -1,46 +1,52 @@
 import { concat } from 'lodash';
-import { editor, IRange, languages, Position } from 'monaco-editor';
+import type { languages, editor, Position, IRange, IDisposable } from 'monaco-editor/esm/vs/editor/editor.api';
 
-import { alertManagerSuggestions } from './alertManagerSuggestions';
+import type { Monaco } from '@grafana/ui';
+
+import { getAlertManagerSuggestions } from './alertManagerSuggestions';
 import { SuggestionDefinition } from './suggestionDefinition';
 import {
-  alertsSuggestions,
-  alertSuggestions,
-  globalSuggestions,
-  keyValueSuggestions,
-  snippetsSuggestions,
+  getAlertsSuggestions,
+  getAlertSuggestions,
+  getGlobalSuggestions,
+  getKeyValueSuggestions,
+  getSnippetsSuggestions,
 } from './templateDataSuggestions';
 
-export const GoTemplateAutocompleteProvider: languages.CompletionItemProvider = {
-  triggerCharacters: ['.'],
-  provideCompletionItems(model, position, context): languages.ProviderResult<languages.CompletionList> {
-    const word = model.getWordUntilPosition(position);
-    const range = {
-      startLineNumber: position.lineNumber,
-      endLineNumber: position.lineNumber,
-      startColumn: word.startColumn,
-      endColumn: word.endColumn,
-    };
+export function registerGoTemplateAutocomplete(monaco: Monaco): IDisposable {
+  const goTemplateAutocompleteProvider: languages.CompletionItemProvider = {
+    triggerCharacters: ['.'],
+    provideCompletionItems(model, position, context): languages.ProviderResult<languages.CompletionList> {
+      const word = model.getWordUntilPosition(position);
+      const range = {
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn,
+      };
 
-    const builder = new CompletionBuilder(range);
+      const completionProvider = new CompletionProvider(monaco, range);
 
-    const insideExpression = isInsideGoExpression(model, position);
-    if (!insideExpression) {
-      return builder.getSnippetsSuggestions();
-    }
+      const insideExpression = isInsideGoExpression(model, position);
+      if (!insideExpression) {
+        return completionProvider.getSnippetsSuggestions();
+      }
 
-    if (context.triggerKind === languages.CompletionTriggerKind.Invoke && !context.triggerCharacter) {
-      return builder.getFunctionsSuggestions();
-    }
+      if (context.triggerKind === monaco.languages.CompletionTriggerKind.Invoke && !context.triggerCharacter) {
+        return completionProvider.getFunctionsSuggestions();
+      }
 
-    const wordBeforeDot = model.getWordUntilPosition({
-      lineNumber: position.lineNumber,
-      column: position.column - 1,
-    });
+      const wordBeforeDot = model.getWordUntilPosition({
+        lineNumber: position.lineNumber,
+        column: position.column - 1,
+      });
 
-    return builder.getTemplateDataSuggestions(wordBeforeDot.word);
-  },
-};
+      return completionProvider.getTemplateDataSuggestions(wordBeforeDot.word);
+    },
+  };
+
+  return monaco.languages.registerCompletionItemProvider('go-template', goTemplateAutocompleteProvider);
+}
 
 function isInsideGoExpression(model: editor.ITextModel, position: Position) {
   const searchRange = {
@@ -56,29 +62,29 @@ function isInsideGoExpression(model: editor.ITextModel, position: Position) {
   return matches.some((match) => match.range.containsPosition(position));
 }
 
-export class CompletionBuilder {
-  constructor(private readonly range: IRange) {}
+export class CompletionProvider {
+  constructor(private readonly monaco: Monaco, private readonly range: IRange) {}
 
   getSnippetsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
-    return this.getCompletionsFromDefinitions(snippetsSuggestions);
+    return this.getCompletionsFromDefinitions(getSnippetsSuggestions(this.monaco));
   };
 
   getFunctionsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
-    return this.getCompletionsFromDefinitions(alertManagerSuggestions);
+    return this.getCompletionsFromDefinitions(getAlertManagerSuggestions(this.monaco));
   };
 
   getTemplateDataSuggestions = (wordContext: string): languages.ProviderResult<languages.CompletionList> => {
     switch (wordContext) {
       case '':
-        return this.getCompletionsFromDefinitions(globalSuggestions, alertSuggestions);
+        return this.getCompletionsFromDefinitions(getGlobalSuggestions(this.monaco), getAlertSuggestions(this.monaco));
       case 'Alerts':
-        return this.getCompletionsFromDefinitions(alertsSuggestions);
+        return this.getCompletionsFromDefinitions(getAlertsSuggestions(this.monaco));
       case 'GroupLabels':
       case 'CommonLabels':
       case 'CommonAnnotations':
       case 'Labels':
       case 'Annotations':
-        return this.getCompletionsFromDefinitions(keyValueSuggestions);
+        return this.getCompletionsFromDefinitions(getKeyValueSuggestions(this.monaco));
       default:
         return { suggestions: [] };
     }
