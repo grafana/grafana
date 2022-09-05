@@ -378,9 +378,9 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	// TODO correct this check
 	pluginAccess := func(rc *models.ReqContext) bool {
-		return rc.OrgRole == org.RoleAdmin || hs.Cfg.PluginAdminEnabled && ac.ReqGrafanaAdmin(c)
+		return rc.OrgRole == org.RoleAdmin ||
+			hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled && rc.IsGrafanaAdmin
 	}
 	if hasAccess(pluginAccess, plugins.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
