@@ -51,6 +51,7 @@ import {
   transformTraceList,
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
+  createTableFrameFromTraceQlQuery,
 } from './resultTransformer';
 import { mockedSearchResponse } from './traceql/mockedSearchResponse';
 
@@ -218,7 +219,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
         subQueries.push(
           of({
-            data: [createTableFrameFromSearch(mockedSearchResponse().traces, this.instanceSettings)],
+            data: [createTableFrameFromTraceQlQuery(mockedSearchResponse().traces, this.instanceSettings)],
           })
         );
       } catch (error) {

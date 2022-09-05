@@ -1,4 +1,4 @@
-import { DataSourceJsonData } from '@grafana/data/src';
+import { DataSourceJsonData, KeyValue } from '@grafana/data/src';
 
 import { TempoQuery } from './datasource';
 
@@ -12,6 +12,7 @@ export type TraceSearchMetadata = {
   rootTraceName: string;
   startTimeUnixNano: string;
   durationMs: number;
+  spanSets?: Spanset[];
 };
 
 export type SearchMetrics = {
@@ -21,6 +22,34 @@ export type SearchMetrics = {
   skippedBlocks?: number;
   skippedTraces?: number;
   totalBlockBytes?: number;
+  spanSets?: Spanset[];
+};
+
+export enum SpanKind {
+  UNSPECIFIED,
+  INTERNAL,
+  SERVER,
+  CLIENT,
+  PRODUCER,
+  CONSUMER,
+}
+
+export type Span = {
+  traceId: string;
+  spanId: string;
+  traceState?: string;
+  parentSpanId?: string;
+  name: string;
+  kind: SpanKind;
+  startTimeUnixNano: number;
+  endTimeUnixNano: number;
+  attributes?: KeyValue[];
+  dropped_attributes_count?: number;
+};
+
+export type Spanset = {
+  attributes: KeyValue[];
+  spans: Span[];
 };
 
 export type SearchResponse = {

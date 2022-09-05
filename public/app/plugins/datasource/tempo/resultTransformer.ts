@@ -18,7 +18,7 @@ import {
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
-import { TraceSearchMetadata } from './types';
+import { Span, Spanset, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame,
@@ -623,6 +623,118 @@ function transformToTraceData(data: TraceSearchMetadata) {
     startTime: startTime,
     duration: data.durationMs,
     traceName,
+  };
+}
+
+export function createTableFrameFromTraceQlQuery(
+  data: TraceSearchMetadata[],
+  instanceSettings: DataSourceInstanceSettings
+) {
+  const frame = new MutableDataFrame({
+    fields: [
+      {
+        name: 'traceID',
+        type: FieldType.string,
+        config: {
+          unit: 'string',
+          displayNameFromDS: 'Trace ID',
+          links: [
+            {
+              title: 'Trace: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: '${__value.raw}',
+                  queryType: 'traceId',
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        name: 'spanID',
+        type: FieldType.string,
+        config: {
+          unit: 'string',
+          displayNameFromDS: 'Span ID',
+          links: [
+            {
+              title: 'Span: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  query: '${__value.raw}',
+                  queryType: 'spanId',
+                },
+              },
+            },
+          ],
+        },
+      },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
+      { name: 'attributes', type: FieldType.string, config: { displayNameFromDS: 'Attributes' } },
+      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
+      { name: 'duration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+    ],
+    meta: {
+      preferredVisualisationType: 'table',
+    },
+  });
+  if (!data?.length) {
+    return frame;
+  }
+  // Show the most recent traces
+  const traceData = data
+    .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
+    .reduce((list: TraceTableData[], t) => {
+      list.push(transformToTraceData(t));
+      t.spanSets?.forEach((spanSet) =>
+        spanSet.spans.forEach((span) => list.push(transformSpanToTraceData(span, spanSet)))
+      );
+      return list;
+    }, []);
+
+  for (const trace of traceData) {
+    frame.add(trace);
+  }
+
+  return frame;
+}
+
+interface TraceTableData {
+  traceID?: string;
+  traceName: string;
+  spanID?: string;
+  attributes?: string;
+  startTime: string;
+  duration: number;
+}
+
+function transformSpanToTraceData(data: Span, spanSet: Spanset): TraceTableData {
+  const traceStartTime = data.startTimeUnixNano / 1000000;
+  const traceEndTime = data.endTimeUnixNano / 1000000;
+
+  let startTime = dateTimeFormat(traceStartTime);
+
+  if (Math.abs(differenceInHours(new Date(traceStartTime), Date.now())) <= 1) {
+    startTime = formatDistance(new Date(traceStartTime), Date.now(), {
+      addSuffix: true,
+      includeSeconds: true,
+    });
+  }
+
+  return {
+    traceID: undefined,
+    traceName: data.name,
+    spanID: data.spanId,
+    attributes: spanSet.attributes?.map((atr) => Object.keys(atr).map((key) => `${key} = ${atr[key]}`)).join(', '),
+    startTime,
+    duration: traceEndTime - traceStartTime,
   };
 }
 
