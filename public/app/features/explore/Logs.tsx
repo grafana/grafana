@@ -336,14 +336,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <Collapse
-          label="Logs volume"
-          collapsible
-          isOpen={logsVolumeEnabled}
-          onToggle={(isOpen) => {
-            onToggleLogsVolume(isOpen);
-          }}
-        >
+        <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={onToggleLogsVolume}>
           {logsVolumeEnabled && (
             <LogsVolumePanel
               absoluteRange={absoluteRange}
