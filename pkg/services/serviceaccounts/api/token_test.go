@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -71,7 +71,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			desc: "should be ok to create serviceaccount token with scope all permissions",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
@@ -83,7 +83,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			desc: "serviceaccount token should match SA orgID and SA provided in parameters even if specified in body",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
@@ -95,7 +95,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			desc: "should be ok to create serviceaccount token with scope id permissions",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -107,7 +107,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			desc: "should be forbidden to create serviceaccount token if wrong scoped",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:2"}}, nil
 				},
 				false,
@@ -189,7 +189,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			keyName: "Test1",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -201,7 +201,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			keyName: "Test2",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: serviceaccounts.ScopeAll}}, nil
 				},
 				false,
@@ -213,7 +213,7 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 			keyName: "Test3",
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:10"}}, nil
 				},
 				false,
@@ -259,10 +259,10 @@ func TestServiceAccountsAPI_DeleteToken(t *testing.T) {
 
 type saStoreMockTokens struct {
 	serviceaccounts.Store
-	saAPIKeys []*apikey.APIKey
+	saAPIKeys []apikey.APIKey
 }
 
-func (s *saStoreMockTokens) ListTokens(ctx context.Context, orgID, saID int64) ([]*apikey.APIKey, error) {
+func (s *saStoreMockTokens) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return s.saAPIKeys, nil
 }
 
@@ -273,7 +273,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 
 	type testCreateSAToken struct {
 		desc                      string
-		tokens                    []*apikey.APIKey
+		tokens                    []apikey.APIKey
 		expectedHasExpired        bool
 		expectedResponseBodyField string
 		expectedCode              int
@@ -287,7 +287,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 	testCases := []testCreateSAToken{
 		{
 			desc: "should be able to list serviceaccount with no expiration date",
-			tokens: []*apikey.APIKey{{
+			tokens: []apikey.APIKey{{
 				Id:               1,
 				OrgId:            1,
 				ServiceAccountId: &saId,
@@ -296,7 +296,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 			}},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -307,7 +307,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		},
 		{
 			desc: "should be able to list serviceaccount with secondsUntilExpiration",
-			tokens: []*apikey.APIKey{{
+			tokens: []apikey.APIKey{{
 				Id:               1,
 				OrgId:            1,
 				ServiceAccountId: &saId,
@@ -316,7 +316,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 			}},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,
@@ -327,7 +327,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 		},
 		{
 			desc: "should be able to list serviceaccount with expired token",
-			tokens: []*apikey.APIKey{{
+			tokens: []apikey.APIKey{{
 				Id:               1,
 				OrgId:            1,
 				ServiceAccountId: &saId,
@@ -336,7 +336,7 @@ func TestServiceAccountsAPI_ListTokens(t *testing.T) {
 			}},
 			acmock: tests.SetupMockAccesscontrol(
 				t,
-				func(c context.Context, siu *models.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
 					return []accesscontrol.Permission{{Action: serviceaccounts.ActionRead, Scope: "serviceaccounts:id:1"}}, nil
 				},
 				false,

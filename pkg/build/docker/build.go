@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -20,7 +19,7 @@ func verifyArchive(archive string) error {
 	log.Printf("Verifying checksum of %q", archive)
 
 	//nolint:gosec
-	shaB, err := ioutil.ReadFile(archive + ".sha256")
+	shaB, err := os.ReadFile(archive + ".sha256")
 	if err != nil {
 		return err
 	}

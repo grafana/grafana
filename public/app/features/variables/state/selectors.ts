@@ -1,6 +1,6 @@
 import memoizeOne from 'memoize-one';
 
-import { TypedVariableModel, VariableWithMultiSupport, VariableWithOptions } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 
 import { getState } from '../../../store/store';
 import { StoreState } from '../../../types';
@@ -8,10 +8,6 @@ import { toStateKey } from '../utils';
 
 import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { KeyedVariableIdentifier, VariablesState } from './types';
-
-// TODO: this is just a temporary type until we remove generics from getInstanceState in a later PR
-// we need to it satisfy the constraint of callers who specify VariableWithOptions or VariableWithMultiSupport
-type GenericVariableModel = TypedVariableModel | VariableWithOptions | VariableWithMultiSupport;
 
 export function getVariable(
   identifier: KeyedVariableIdentifier,
@@ -123,10 +119,6 @@ export function getVariableWithName(name: string, state: StoreState = getState()
   return getVariable({ id: name, rootStateKey: lastKey, type: 'query' }, state, false);
 }
 
-// TODO: remove the generic and type assertion in a later PR
-export function getInstanceState<Model extends GenericVariableModel = GenericVariableModel>(
-  state: VariablesState,
-  id: string
-) {
-  return state[id] as Model;
+export function getInstanceState(state: VariablesState, id: string) {
+  return state[id];
 }

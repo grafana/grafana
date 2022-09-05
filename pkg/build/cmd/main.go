@@ -11,7 +11,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
-
+	app.Before = GenerateVersions
 	app.Commands = cli.Commands{
 		{
 			Name:      "build-backend",
@@ -21,6 +21,39 @@ func main() {
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&variantsFlag,
+				&editionFlag,
+				&buildIDFlag,
+			},
+		},
+		{
+			Name:   "e2e-tests",
+			Usage:  "Run Grafana e2e tests",
+			Action: EndToEndTests,
+			Flags: []cli.Flag{
+				&triesFlag,
+				&cli.IntFlag{
+					Name:  "port",
+					Value: 3001,
+					Usage: "Specify the server port",
+				},
+				&cli.StringFlag{
+					Name:  "suite",
+					Usage: "Specify the end-to-end tests suite to be used",
+				},
+				&cli.StringFlag{
+					Name:  "host",
+					Value: "grafana-server",
+					Usage: "Specify the server host",
+				},
+			},
+		},
+		{
+			Name:      "build-frontend",
+			Usage:     "Build front-end artifacts",
+			ArgsUsage: "[version]",
+			Action:    ArgCountWrapper(1, BuildFrontend),
+			Flags: []cli.Flag{
+				&jobsFlag,
 				&editionFlag,
 				&buildIDFlag,
 			},

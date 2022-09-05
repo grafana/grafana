@@ -50,6 +50,15 @@ export interface GridPos {
   static?: boolean;
 }
 
+type RunPanelQueryOptions = {
+  /** @deprecate */
+  dashboardId: number;
+  dashboardUID: string;
+  dashboardTimezone: string;
+  timeData: TimeOverrideResult;
+  width: number;
+  publicDashboardAccessToken?: string;
+};
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   isViewing: true,
@@ -323,18 +332,20 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
   }
 
-  runAllPanelQueries(
-    dashboardId: number,
-    dashboardTimezone: string,
-    timeData: TimeOverrideResult,
-    width: number,
-    publicDashboardAccessToken?: string
-  ) {
+  runAllPanelQueries({
+    dashboardId,
+    dashboardUID,
+    dashboardTimezone,
+    timeData,
+    width,
+    publicDashboardAccessToken,
+  }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardId: dashboardId,
+      dashboardUID: dashboardUID,
       publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
@@ -533,6 +544,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     const clone = new PanelModel(sourceModel);
     clone.isEditing = true;
+    clone.plugin = this.plugin;
 
     const sourceQueryRunner = this.getQueryRunner();
 

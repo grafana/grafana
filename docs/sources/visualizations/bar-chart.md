@@ -21,7 +21,7 @@ This panel visualization allows you to graph categorical data.
 
 ## Supported data formats
 
-Only one data frame is supported and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+Only one data frame is supported and it must have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
 
 Example:
 
@@ -107,6 +107,8 @@ Gradient color is generated based on the hue of the line color.
 
 Choose which of the [standard calculations]({{< relref "../panels/calculation-types/" >}}) to show in the legend. You can have more than one.
 
+For more information about the legend, refer to [Configure a legend](../configure-legend/).
+
 ## Text size
 
 Enter a **Value** to change the size of the text on your bar chart.
@@ -137,7 +139,7 @@ Display all Y-axes on the right side.
 
 Hide all axes.
 
-To selectively hide axes, [add an override]({{< relref "../panels/override-field-values/add-a-field-override/" >}}) targeting specific fields.
+To selectively hide axes, [Add a field override]({{< relref "../panels/configure-overrides#add-a-field-override" >}}) that targets specific fields.
 
 ### Label
 

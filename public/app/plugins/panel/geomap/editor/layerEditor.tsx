@@ -27,13 +27,12 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         return { ...parent, options: opts.state.options, instanceState: opts.state };
       },
       getValue: (path: string) => lodashGet(opts.state.options, path),
-      onChange: (path: string, value: any) => {
+      onChange: (path: string, value: string) => {
         const { state } = opts;
         const { options } = state;
         if (path === 'type' && value) {
           const layer = geomapLayerRegistry.getIfExists(value);
           if (layer) {
-            console.log('Change layer type:', value, state);
             const opts = {
               ...options, // keep current shared options
               type: layer.id,
@@ -55,7 +54,6 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
     }),
     build: (builder, context) => {
       if (!opts.state) {
-        console.log('MISSING LAYER!!!', opts);
         return;
       }
 

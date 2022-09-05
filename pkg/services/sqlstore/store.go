@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -22,24 +22,15 @@ type Store interface {
 	GetOrgByName(name string) (*models.Org, error)
 	CreateOrg(ctx context.Context, cmd *models.CreateOrgCommand) error
 	CreateOrgWithMember(name string, userID int64) (models.Org, error)
-	UpdateOrg(ctx context.Context, cmd *models.UpdateOrgCommand) error
 	UpdateOrgAddress(ctx context.Context, cmd *models.UpdateOrgAddressCommand) error
 	DeleteOrg(ctx context.Context, cmd *models.DeleteOrgCommand) error
 	GetOrgById(context.Context, *models.GetOrgByIdQuery) error
 	GetOrgByNameHandler(ctx context.Context, query *models.GetOrgByNameQuery) error
-	CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error
-	GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error
-	DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error
 	CreateUser(ctx context.Context, cmd user.CreateUserCommand) (*user.User, error)
 	SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error
 	GetUserProfile(ctx context.Context, query *models.GetUserProfileQuery) error
 	GetUserOrgList(ctx context.Context, query *models.GetUserOrgListQuery) error
-	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
 	GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error
-	SearchUsers(ctx context.Context, query *models.SearchUsersQuery) error
-	DisableUser(ctx context.Context, cmd *models.DisableUserCommand) error
-	BatchDisableUsers(ctx context.Context, cmd *models.BatchDisableUsersCommand) error
-	DeleteUser(ctx context.Context, cmd *models.DeleteUserCommand) error
 	UpdateUserPermissions(userID int64, isAdmin bool) error
 	SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelpFlagCommand) error
 	CreateTeam(name, email string, orgID int64) (models.Team, error)
@@ -70,13 +61,6 @@ type Store interface {
 	GetOrgUsers(ctx context.Context, query *models.GetOrgUsersQuery) error
 	SearchOrgUsers(ctx context.Context, query *models.SearchOrgUsersQuery) error
 	RemoveOrgUser(ctx context.Context, cmd *models.RemoveOrgUserCommand) error
-	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
-	GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error
-	GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error
-	GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error
-	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
-	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error
-	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error
 	Migrate(bool) error
 	Sync() error
 	Reset() error
@@ -90,4 +74,5 @@ type Store interface {
 	GetDBHealthQuery(ctx context.Context, query *models.GetDBHealthQuery) error
 	SearchOrgs(ctx context.Context, query *models.SearchOrgsQuery) error
 	IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error
+	GetSqlxSession() *session.SessionDB
 }

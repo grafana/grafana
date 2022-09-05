@@ -29,7 +29,7 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
-	folders, err := hs.folderService.GetFolders(c.Req.Context(), c.SignedInUser, c.OrgId, c.QueryInt64("limit"), c.QueryInt64("page"))
+	folders, err := hs.folderService.GetFolders(c.Req.Context(), c.SignedInUser, c.OrgID, c.QueryInt64("limit"), c.QueryInt64("page"))
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -46,7 +46,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 		})
 	}
 
-	metadata := hs.getMultiAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, uids)
+	metadata := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, uids)
 	if len(metadata) > 0 {
 		for i := range result {
 			result[i].AccessControl = metadata[result[i].Uid]
@@ -67,12 +67,12 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
-	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"])
+	folder, err := hs.folderService.GetFolderByUID(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
 }
 
@@ -93,12 +93,12 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgId)
+	folder, err := hs.folderService.GetFolderByID(c.Req.Context(), c.SignedInUser, id, c.OrgID)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
 }
 
@@ -118,12 +118,12 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	folder, err := hs.folderService.CreateFolder(c.Req.Context(), c.SignedInUser, c.OrgId, cmd.Title, cmd.Uid)
+	folder, err := hs.folderService.CreateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, cmd.Title, cmd.Uid)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), folder.Id, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, folder))
 }
 
@@ -144,11 +144,11 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	err := hs.folderService.UpdateFolder(c.Req.Context(), c.SignedInUser, c.OrgId, web.Params(c.Req)[":uid"], &cmd)
+	err := hs.folderService.UpdateFolder(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"], &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgId, c.SignedInUser)
+	g := guardian.New(c.Req.Context(), cmd.Result.Id, c.OrgID, c.SignedInUser)
 	return response.JSON(http.StatusOK, hs.toFolderDto(c, g, cmd.Result))
 }
 
@@ -175,7 +175,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	f, err := hs.folderService.DeleteFolder(c.Req.Context(), c.SignedInUser, c.OrgId, uid, c.QueryBool("forceDeleteRules"))
+	f, err := hs.folderService.DeleteFolder(c.Req.Context(), c.SignedInUser, c.OrgID, uid, c.QueryBool("forceDeleteRules"))
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -217,7 +217,7 @@ func (hs *HTTPServer) toFolderDto(c *models.ReqContext, g guardian.DashboardGuar
 		UpdatedBy:     updater,
 		Updated:       folder.Updated,
 		Version:       folder.Version,
-		AccessControl: hs.getAccessControlMetadata(c, c.OrgId, dashboards.ScopeFoldersPrefix, folder.Uid),
+		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.Uid),
 	}
 }
 

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,8 +14,15 @@ import (
 
 type Metadata struct {
 	GrafanaVersion string      `json:"version,omitempty"`
-	ReleaseMode    VersionMode `json:"releaseMode,omitempty"`
+	ReleaseMode    ReleaseMode `json:"releaseMode,omitempty"`
 	GrabplVersion  string      `json:"grabplVersion,omitempty"`
+	CurrentCommit  string      `json:"currentCommit,omitempty"`
+}
+
+type ReleaseMode struct {
+	Mode   VersionMode `json:"mode,omitempty"`
+	IsBeta bool        `json:"isBeta,omitempty"`
+	IsTest bool        `json:"isTest,omitempty"`
 }
 
 type PluginSignature struct {
@@ -42,13 +48,17 @@ type Version struct {
 	StorybookSrcDir           string          `json:"storybookSrcDir,omitempty"`
 }
 
+func (md *Metadata) GetReleaseMode() (ReleaseMode, error) {
+	return md.ReleaseMode, nil
+}
+
 // Versions is a map of versions. Each key of the Versions map is an event that uses the the config as the value for that key.
 // For example, the 'pull_request' key will have data in it that might cause Grafana to be built differently in a pull request,
 // than the way it will be built in 'main'
 type VersionMap map[VersionMode]Version
 
 // GetMetadata attempts to read the JSON file located at 'path' and decode it as a Metadata{} type.
-// If the provided path deos not exist, then an error is not returned. Instead, an empty metadata is returned with no error.
+// If the provided path does not exist, then an error is not returned. Instead, an empty metadata is returned with no error.
 func GetMetadata(path string) (*Metadata, error) {
 	if _, err := os.Stat(path); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -103,7 +113,7 @@ func shortenBuildID(buildID string) string {
 func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 	pkgJSONPath := filepath.Join(grafanaDir, "package.json")
 	//nolint:gosec
-	pkgJSONB, err := ioutil.ReadFile(pkgJSONPath)
+	pkgJSONB, err := os.ReadFile(pkgJSONPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read %q: %w", pkgJSONPath, err)
 	}
@@ -131,6 +141,7 @@ func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 
 func CheckDroneTargetBranch() (VersionMode, error) {
 	reRlsBranch := regexp.MustCompile(`^v\d+\.\d+\.x$`)
+	rePRCheckBranch := regexp.MustCompile(`^pr-check-\d+`)
 	target := os.Getenv("DRONE_TARGET_BRANCH")
 	if target == "" {
 		return "", fmt.Errorf("failed to get DRONE_TARGET_BRANCH environmental variable")
@@ -140,24 +151,36 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 	if reRlsBranch.MatchString(target) {
 		return ReleaseBranchMode, nil
 	}
-	return "", fmt.Errorf("unrecognized target branch: %s", target)
+	if rePRCheckBranch.MatchString(target) {
+		return PullRequestMode, nil
+	}
+	fmt.Printf("unrecognized target branch: %s, defaulting to %s", target, PullRequestMode)
+	return PullRequestMode, nil
 }
 
-func CheckSemverSuffix() (VersionMode, error) {
+func CheckSemverSuffix() (ReleaseMode, error) {
 	reBetaRls := regexp.MustCompile(`beta.*`)
 	reTestRls := regexp.MustCompile(`test.*`)
 	tagSuffix, ok := os.LookupEnv("DRONE_SEMVER_PRERELEASE")
 	if !ok || tagSuffix == "" {
 		fmt.Println("DRONE_SEMVER_PRERELEASE doesn't exist for a tag, this is a release event...")
-		return ReleaseMode, nil
+		return ReleaseMode{Mode: TagMode}, nil
 	}
 	switch {
 	case reBetaRls.MatchString(tagSuffix):
-		return BetaReleaseMode, nil
+		return ReleaseMode{Mode: TagMode, IsBeta: true}, nil
 	case reTestRls.MatchString(tagSuffix):
-		return TestReleaseMode, nil
+		return ReleaseMode{Mode: TagMode, IsTest: true}, nil
 	default:
 		fmt.Printf("DRONE_SEMVER_PRERELEASE is custom string, release event with %s suffix\n", tagSuffix)
-		return ReleaseMode, nil
+		return ReleaseMode{Mode: TagMode}, nil
 	}
+}
+
+func GetDroneCommit() (string, error) {
+	commit := strings.TrimSpace(os.Getenv("DRONE_COMMIT"))
+	if commit == "" {
+		return "", fmt.Errorf("the environment variable DRONE_COMMIT is missing")
+	}
+	return commit, nil
 }

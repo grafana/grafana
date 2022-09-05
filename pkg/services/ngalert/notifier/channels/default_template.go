@@ -1,7 +1,6 @@
 package channels
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -43,13 +42,13 @@ Labels:
 Annotations:
 {{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
 {{ end }}
-{{ if gt (len .GeneratorURL) 0 }}Source: {{ .GeneratorURL }}
+{{ if gt (len .GeneratorURL) 0 }}Source: [{{ .GeneratorURL }}]({{ .GeneratorURL }})
 
-{{ end }}{{ if gt (len .SilenceURL) 0 }}Silence: {{ .SilenceURL }}
+{{ end }}{{ if gt (len .SilenceURL) 0 }}Silence: [{{ .SilenceURL }}]({{ .SilenceURL }})
 
-{{ end }}{{ if gt (len .DashboardURL) 0 }}Dashboard: {{ .DashboardURL }}
+{{ end }}{{ if gt (len .DashboardURL) 0 }}Dashboard: [{{ .DashboardURL }}]({{ .DashboardURL }})
 
-{{ end }}{{ if gt (len .PanelURL) 0 }}Panel: {{ .PanelURL }}
+{{ end }}{{ if gt (len .PanelURL) 0 }}Panel: [{{ .PanelURL }}]({{ .PanelURL }})
 
 {{ end }}
 {{ end }}{{ end }}
@@ -92,7 +91,7 @@ Labels:
 `
 
 func templateForTests(t *testing.T) *template.Template {
-	f, err := ioutil.TempFile("/tmp", "template")
+	f, err := os.CreateTemp("/tmp", "template")
 	require.NoError(t, err)
 	defer func(f *os.File) {
 		_ = f.Close()

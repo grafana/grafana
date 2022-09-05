@@ -153,7 +153,7 @@ function hasPanelChangedInPanelEdit(sourcePanel: PanelModel, panel: PanelModel) 
   const libPanelReplaced = panel.libraryPanel?.uid !== sourcePanel.libraryPanel?.uid;
   const libPanelUpdated = panel.libraryPanel?.version !== sourcePanel.libraryPanel?.version;
 
-  return panel.hasChanged || libPanelReplaced || libPanelUpdated;
+  return panel.hasChanged || libPanelReplaced || libPanelUpdated || panel.isAngularPlugin();
 }
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {

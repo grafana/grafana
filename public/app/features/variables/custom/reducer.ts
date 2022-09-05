@@ -21,7 +21,11 @@ export const customVariableSlice = createSlice({
   initialState: initialVariablesState,
   reducers: {
     createCustomOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.id);
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (instanceState.type !== 'custom') {
+        return;
+      }
+
       const { includeAll, query } = instanceState;
 
       const match = query.match(/(?:\\,|[^,])+/g) ?? [];
