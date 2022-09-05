@@ -196,3 +196,8 @@ func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInf
 func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	return s.authInfoStore.GetExternalUserInfoByLogin(ctx, query)
 }
+
+func (s *Implementation) Run(ctx context.Context) error {
+	s.logger.Debug("Started AuthInfo Metrics collection service")
+	return s.authInfoStore.RunMetricsCollection(ctx)
+}

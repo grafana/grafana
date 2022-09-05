@@ -2,9 +2,8 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, Select } from '@grafana/ui';
+import { Button, EditorRows, Select } from '@grafana/ui';
 
 import { QUERY_TYPES, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';

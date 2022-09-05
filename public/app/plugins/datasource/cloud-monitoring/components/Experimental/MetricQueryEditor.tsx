@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
+import { EditorRows } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../../datasource';
 import { getAlignmentPickerData } from '../../functions';
@@ -18,9 +18,7 @@ import {
 } from '../../types';
 
 import { MQLQueryEditor } from './../MQLQueryEditor';
-import { AliasBy } from './AliasBy';
 import { GraphPeriod } from './GraphPeriod';
-import { Project } from './Project';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
 
 export interface Props {
@@ -107,16 +105,6 @@ function Editor({
 
   return (
     <EditorRows>
-      <Project
-        refId={refId}
-        templateVariableOptions={variableOptionGroup.options}
-        projectName={projectName}
-        datasource={datasource}
-        onChange={(projectName) => {
-          onChange({ ...query, projectName });
-        }}
-      />
-
       {editorMode === EditorMode.Visual && (
         <VisualMetricQueryEditor
           refId={refId}
@@ -145,14 +133,6 @@ function Editor({
           />
         </>
       )}
-
-      <AliasBy
-        refId={refId}
-        value={query.aliasBy}
-        onChange={(aliasBy) => {
-          onChange({ ...query, aliasBy });
-        }}
-      />
     </EditorRows>
   );
 }

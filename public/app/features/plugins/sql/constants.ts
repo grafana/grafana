@@ -1,4 +1,4 @@
-import { OperatorType } from '@grafana/experimental';
+import { OperatorType } from './types';
 
 export const AGGREGATE_FNS = [
   {

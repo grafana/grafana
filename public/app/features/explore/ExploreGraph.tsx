@@ -173,7 +173,12 @@ export function ExploreGraph({
         options={
           {
             tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
-            legend: { displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] },
+            legend: {
+              displayMode: LegendDisplayMode.List,
+              showLegend: true,
+              placement: 'bottom',
+              calcs: [],
+            },
           } as TimeSeriesOptions
         }
       />

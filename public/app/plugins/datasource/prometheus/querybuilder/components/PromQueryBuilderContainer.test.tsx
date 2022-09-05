@@ -55,6 +55,7 @@ function setup(queryOverrides: Partial<PromQuery> = {}) {
     },
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
+    showExplain: false,
   };
 
   const { container } = render(<PromQueryBuilderContainer {...props} />);

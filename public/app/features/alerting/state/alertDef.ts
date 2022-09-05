@@ -1,5 +1,6 @@
 import { isArray, reduce } from 'lodash';
 
+import { IconName } from '@grafana/ui';
 import { QueryPartDef, QueryPart } from 'app/features/alerting/state/query_part';
 
 const alertQueryDef = new QueryPartDef({
@@ -87,7 +88,13 @@ function normalizeAlertState(state: string) {
   return state.toLowerCase().replace(/_/g, '').split(' ')[0];
 }
 
-function getStateDisplayModel(state: string) {
+interface AlertStateDisplayModel {
+  text: string;
+  iconClass: IconName;
+  stateClass: string;
+}
+
+function getStateDisplayModel(state: string): AlertStateDisplayModel {
   const normalizedState = normalizeAlertState(state);
 
   switch (normalizedState) {

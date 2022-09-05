@@ -3,7 +3,6 @@ package util
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -84,17 +83,22 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 		}
 		return walk(path, info2, path2, symlinkPathsFollowed, walkFn)
 	} else if info.IsDir() {
-		list, err := ioutil.ReadDir(path)
+		list, err := os.ReadDir(path)
 		if err != nil {
 			return walkFn(resolvedPath, info, err)
 		}
 		var subFiles = make([]subFile, 0)
-		for _, fileInfo := range list {
-			path2 := filepath.Join(path, fileInfo.Name())
+		for _, file := range list {
+			path2 := filepath.Join(path, file.Name())
 			var resolvedPath2 string
 			if resolvedPath != "" {
-				resolvedPath2 = filepath.Join(resolvedPath, fileInfo.Name())
+				resolvedPath2 = filepath.Join(resolvedPath, file.Name())
 			}
+			fileInfo, err := file.Info()
+			if err != nil {
+				return fmt.Errorf("unable to read file info: %v, path: %v", file.Name(), path2)
+			}
+
 			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
 		}
 

@@ -93,7 +93,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             width={longWidth}
             name="database"
             value={options.database || ''}
-            placeholder="datbase name"
+            placeholder="database name"
             onChange={onDSOptionChanged('database')}
           ></Input>
         </InlineField>

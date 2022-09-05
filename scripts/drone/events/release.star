@@ -3,7 +3,6 @@ load(
     'disable_tests',
     'clone_enterprise_step',
     'download_grabpl_step',
-    'gen_version_step',
     'yarn_install_step',
     'wire_install_step',
     'init_enterprise_step',
@@ -37,12 +36,15 @@ load(
     'benchmark_ldap_step',
     'store_storybook_step',
     'upload_packages_step',
-    'store_packages_step',
+    'publish_packages_step',
+    'publish_grafanacom_step',
     'upload_cdn_step',
     'verify_gen_cue_step',
     'publish_images_step',
+    'publish_linux_packages_step',
     'trigger_oss',
-    'artifacts_page_step'
+    'artifacts_page_step',
+    'compile_build_cmd',
 )
 
 load(
@@ -59,12 +61,13 @@ load(
     'failure_template',
     'drone_change_template',
 )
+
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
 def store_npm_packages_step():
     return {
         'name': 'store-npm-packages',
-        'image': publish_image,
+        'image': build_image,
         'depends_on': [
             'build-frontend-packages',
         ],
@@ -84,6 +87,7 @@ def retrieve_npm_packages_step():
         'depends_on': [
             'yarn-install',
         ],
+        'failure': 'ignore',
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
@@ -100,6 +104,7 @@ def release_npm_packages_step():
         'depends_on': [
             'retrieve-npm-packages',
         ],
+        'failure': 'ignore',
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
@@ -158,10 +163,10 @@ def get_steps(edition, ver_mode):
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
-        gen_version_step(ver_mode),
         verify_gen_cue_step(edition),
         wire_install_step(),
         yarn_install_step(),
+        compile_build_cmd(),
     ]
 
     test_steps = []
@@ -302,9 +307,10 @@ def get_enterprise_pipelines(trigger, ver_mode):
         download_grabpl_step(),
         identify_runner_step(),
         clone_enterprise_step(ver_mode),
-        init_enterprise_step(ver_mode)
+        init_enterprise_step(ver_mode),
+        compile_build_cmd(edition),
     ]
-    for step in [wire_install_step(), yarn_install_step(), gen_version_step(ver_mode), verify_gen_cue_step(edition)]:
+    for step in [wire_install_step(), yarn_install_step(), verify_gen_cue_step(edition)]:
         step.update(deps_on_clone_enterprise_step)
         init_steps.extend([step])
 
@@ -363,17 +369,6 @@ def publish_artifacts_step(mode):
         'depends_on': ['grabpl'],
     }
 
-def publish_packages_step(edition):
-    return {
-        'name': 'publish-packages-{}'.format(edition),
-        'image': publish_image,
-        'environment': {
-            'GCP_KEY': from_secret('gcp_key'),
-        },
-        'commands': ['./bin/grabpl store-packages {}'.format(edition)],
-        'depends_on': ['grabpl'],
-    }
-
 def publish_artifacts_pipelines(mode):
     trigger = {
         'event': ['promote'],
@@ -395,14 +390,16 @@ def publish_packages_pipeline():
     }
     oss_steps = [
         download_grabpl_step(),
-        gen_version_step(ver_mode='release'),
-        store_packages_step(edition='oss', ver_mode='release'),
+        publish_packages_step(edition='oss', ver_mode='release'),
+        publish_grafanacom_step(edition='oss', ver_mode='release'),
+        publish_linux_packages_step(edition='oss'),
     ]
 
     enterprise_steps = [
         download_grabpl_step(),
-        gen_version_step(ver_mode='release'),
-        store_packages_step(edition='enterprise', ver_mode='release'),
+        publish_packages_step(edition='enterprise', ver_mode='release'),
+        publish_grafanacom_step(edition='enterprise', ver_mode='release'),
+        publish_linux_packages_step(edition='enterprise'),
     ]
     deps = [
         'publish-artifacts-public',

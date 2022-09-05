@@ -15,6 +15,10 @@ You can configure Grafana to accept a JWT token provided in the HTTP header. The
 - JSON Web Key Set (JWKS) in a local file
 - JWKS provided by the configured JWKS endpoint
 
+This method of authentication is useful for integrating with other systems that
+use JWKS but can't directly integrate with Grafana or if you want to use pass-through
+authentication in an app embedding Grafana.
+
 ## Enable JWT
 
 To use JWT authentication:
@@ -52,6 +56,46 @@ email_claim = sub
 ```
 
 If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth ID". The `name` claim is used as the user's full name if it is present.
+
+## Iframe Embedding
+
+If you want to embed Grafana in an iframe while maintaning user identity and role checks,
+you can use JWT authentication to authenticate the iframe.
+
+> **Note**: for scenarios where verifying viewer identity is not required,
+> [public dashboards]({{< relref "../../../dashboards/dashboard-public" >}}) embedding should be used.
+
+In this scenario, you will need to configure Grafana to accept a JWT
+provided in the HTTP header and a reverse proxy should rewrite requests to the
+Grafana instance to include the JWT in the request's headers.
+
+> **Note**: for embedding to work `allow_embedding` must be enabled in the [security section]({{< relref "../../configure-grafana#allow_embedding" >}}).
+
+In a scenario where it is not possible to rewrite the request headers you
+can use URL login instead.
+
+### URL login
+
+`url_login` allows grafana to search for a JWT in the URL query parameter
+`auth_token` and use it as the authentication token.
+
+> **Warning**: this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
+> using HTTP over TLS.
+
+```ini
+# [auth.jwt]
+# ...
+url_login = true # enable JWT authentication in the URL
+```
+
+An example of an URL for accessing grafana with JWT URL authentication is:
+
+```
+http://env.grafana.local/d/RciOKLR4z/board-identifier?orgId=1&kiosk&auth_token=eyJhbxxxxxxxxxxxxx
+```
+
+A sample repository using this authentication method is available
+at [grafana-iframe-oauth-sample](https://github.com/grafana/grafana-iframe-oauth-sample).
 
 ## Signature verification
 

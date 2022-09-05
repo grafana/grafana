@@ -55,7 +55,6 @@ export const ServiceAccountsListPageUnconnected = ({
   serviceAccounts,
   isLoading,
   roleOptions,
-  builtInRoles,
   query,
   serviceAccountStateFilter,
   apiKeysMigrated,
@@ -219,7 +218,7 @@ export const ServiceAccountsListPageUnconnected = ({
           <RadioButtonGroup
             options={[
               { label: 'All', value: ServiceAccountStateFilter.All },
-              { label: 'With expiring tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
+              { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
               { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
             ]}
             onChange={onStateFilterChange}
@@ -268,7 +267,6 @@ export const ServiceAccountsListPageUnconnected = ({
                     <ServiceAccountListItem
                       serviceAccount={serviceAccount}
                       key={serviceAccount.id}
-                      builtInRoles={builtInRoles}
                       roleOptions={roleOptions}
                       onRoleChange={onRoleChange}
                       onRemoveButtonClick={onRemoveButtonClick}

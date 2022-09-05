@@ -9,7 +9,7 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageCompletionProvider } from '@grafana/experimental';
+import { CompletionItemKind, LanguageCompletionProvider } from '@grafana/experimental';
 
 import { QueryWithDefaults } from './defaults';
 import {
@@ -47,6 +47,11 @@ export interface SQLOptions extends SQLConnectionLimits, DataSourceJsonData {
 export enum QueryFormat {
   Timeseries = 'time_series',
   Table = 'table',
+}
+
+export enum EditorMode {
+  Builder = 'builder',
+  Code = 'code',
 }
 
 export interface SQLQuery extends DataQuery {
@@ -174,3 +179,18 @@ export interface MetaDefinition {
   completion?: string;
   kind: CompletionItemKind;
 }
+
+export {
+  CompletionItemKind,
+  LanguageCompletionProvider,
+  LinkedToken,
+  ColumnDefinition,
+  CompletionItemPriority,
+  StatementPlacementProvider,
+  SuggestionKindProvider,
+  TableDefinition,
+  TokenType,
+  OperatorType,
+  StatementPosition,
+  PositionContext,
+} from '@grafana/experimental';

@@ -4,16 +4,17 @@ import React, { FC, useCallback, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { StyleEditor } from '../layers/data/StyleEditor';
 import { DEFAULT_STYLE_RULE } from '../layers/data/geojsonLayer';
 import { defaultStyleConfig, StyleConfig } from '../style/types';
 import { ComparisonOperation, FeatureStyleConfig } from '../types';
 import { getUniqueFeatureValues, LayerContentInfo } from '../utils/getFeatures';
 import { getSelectionInfo } from '../utils/selection';
+
+import { StyleEditor } from './StyleEditor';
 
 export interface StyleRuleEditorSettings {
   features: Observable<FeatureLike[]>;
@@ -29,7 +30,7 @@ const comparators = [
   { label: '<=', value: ComparisonOperation.LTE },
 ];
 
-export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, any, StyleRuleEditorSettings>> = (
+export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, unknown, StyleRuleEditorSettings>> = (
   props
 ) => {
   const { value, onChange, item, context } = props;
@@ -198,7 +199,7 @@ export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, an
                 simpleFixedValues: true,
                 layerInfo,
               },
-            } as any
+            } as StandardEditorsRegistryItem
           }
         />
       </div>

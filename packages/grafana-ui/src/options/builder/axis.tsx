@@ -20,6 +20,8 @@ export function addAxisConfig(
   hideScale?: boolean
 ) {
   const category = ['Axis'];
+
+  // options for axis appearance
   builder
     .addRadio({
       path: 'axisPlacement',
@@ -51,24 +53,6 @@ export function addAxisConfig(
       },
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     })
-    .addNumberInput({
-      path: 'axisSoftMin',
-      name: 'Soft min',
-      defaultValue: defaultConfig.axisSoftMin,
-      category,
-      settings: {
-        placeholder: 'See: Standard options > Min',
-      },
-    })
-    .addNumberInput({
-      path: 'axisSoftMax',
-      name: 'Soft max',
-      defaultValue: defaultConfig.axisSoftMax,
-      category,
-      settings: {
-        placeholder: 'See: Standard options > Max',
-      },
-    })
     .addRadio({
       path: 'axisGridShow',
       name: 'Show grid lines',
@@ -95,8 +79,9 @@ export function addAxisConfig(
       },
     });
 
-  if (!hideScale) {
-    builder.addCustomEditor<void, ScaleDistributionConfig>({
+  // options for scale range
+  builder
+    .addCustomEditor<void, ScaleDistributionConfig>({
       id: 'scaleDistribution',
       path: 'scaleDistribution',
       name: 'Scale',
@@ -106,8 +91,32 @@ export function addAxisConfig(
       defaultValue: { type: ScaleDistribution.Linear },
       shouldApply: (f) => f.type === FieldType.number,
       process: identityOverrideProcessor,
+    })
+    .addBooleanSwitch({
+      path: 'axisCenteredZero',
+      name: 'Centered zero',
+      category,
+      defaultValue: false,
+      showIf: (c) => c.scaleDistribution?.type !== ScaleDistribution.Log,
+    })
+    .addNumberInput({
+      path: 'axisSoftMin',
+      name: 'Soft min',
+      defaultValue: defaultConfig.axisSoftMin,
+      category,
+      settings: {
+        placeholder: 'See: Standard options > Min',
+      },
+    })
+    .addNumberInput({
+      path: 'axisSoftMax',
+      name: 'Soft max',
+      defaultValue: defaultConfig.axisSoftMax,
+      category,
+      settings: {
+        placeholder: 'See: Standard options > Max',
+      },
     });
-  }
 }
 
 const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [

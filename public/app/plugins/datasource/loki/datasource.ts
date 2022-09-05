@@ -44,17 +44,25 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
-import { addLabelToQuery, addNoPipelineErrorToQuery, addParserToQuery } from './addToQuery';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
+import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
+import {
+  addLabelFormatToQuery,
+  addLabelToQuery,
+  addNoPipelineErrorToQuery,
+  addParserToQuery,
+  removeCommentsFromQuery,
+} from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { LokiOptions, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { LokiVariableSupport } from './variables';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -101,6 +109,7 @@ export class LokiDatasource
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
+    this.variables = new LokiVariableSupport(this);
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
@@ -119,11 +128,12 @@ export class LokiDatasource
 
     const logsVolumeRequest = cloneDeep(request);
     logsVolumeRequest.targets = logsVolumeRequest.targets.filter(isQuerySuitable).map((target) => {
+      const query = removeCommentsFromQuery(target.expr);
       return {
         ...target,
         instant: false,
         volumeQuery: true,
-        expr: `sum by (level) (count_over_time(${target.expr}[$__interval]))`,
+        expr: `sum by (level) (count_over_time(${query}[$__interval]))`,
       };
     });
 
@@ -152,7 +162,15 @@ export class LokiDatasource
         ...fixedRequest,
         targets: streamQueries,
       };
-      return merge(...streamQueries.map((q) => doLokiChannelStream(q, this, streamRequest)));
+      return merge(
+        ...streamQueries.map((q) =>
+          doLokiChannelStream(
+            this.applyTemplateVariables(q, request.scopedVars),
+            this, // the datasource
+            streamRequest
+          )
+        )
+      );
     }
 
     if (fixedRequest.liveStreaming) {
@@ -296,9 +314,6 @@ export class LokiDatasource
   }
 
   async processMetricFindQuery(query: string) {
-    const labelNamesRegex = /^label_names\(\)\s*$/;
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
-
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
       return await this.labelNamesQuery();
@@ -358,7 +373,7 @@ export class LokiDatasource
       expr: query.expr,
       queryType: LokiQueryType.Range,
       refId: 'log-samples',
-      maxLines: 50,
+      maxLines: 10,
     };
 
     // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
@@ -415,6 +430,15 @@ export class LokiDatasource
       }
       case 'ADD_NO_PIPELINE_ERROR': {
         expression = addNoPipelineErrorToQuery(expression);
+        break;
+      }
+      case 'ADD_LEVEL_LABEL_FORMAT': {
+        if (action.options?.originalLabel && action.options?.renameTo) {
+          expression = addLabelFormatToQuery(expression, {
+            renameTo: action.options.renameTo,
+            originalLabel: action.options.originalLabel,
+          });
+        }
         break;
       }
       default:
@@ -544,11 +568,11 @@ export class LokiDatasource
             // and any other that were logged in the same ns but before the row. Right now these rows will be lost
             // because the are before but came it he response that should return only rows after.
             from: timestamp,
-            // convert to ns, we loose some precision here but it is not that important at the far points of the context
+            // convert to ns, we lose some precision here but it is not that important at the far points of the context
             to: toUtc(row.timeEpochMs + contextTimeBuffer),
           }
         : {
-            // convert to ns, we loose some precision here but it is not that important at the far points of the context
+            // convert to ns, we lose some precision here but it is not that important at the far points of the context
             from: toUtc(row.timeEpochMs - contextTimeBuffer),
             to: timestamp,
           };

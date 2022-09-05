@@ -43,6 +43,17 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 	}, middleware.ReqSignedIn)
 }
 
+// swagger:route POST /dashboards/import dashboards importDashboard
+//
+// Import dashboard.
+//
+// Responses:
+// 200: importDashboardResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 412: preconditionFailedError
+// 422: unprocessableEntityError
+// 500: internalServerError
 func (api *ImportDashboardAPI) ImportDashboard(c *models.ReqContext) response.Response {
 	req := dashboardimport.ImportDashboardRequest{}
 	if err := web.Bind(c.Req, &req); err != nil {
@@ -79,4 +90,17 @@ type quotaServiceFunc func(c *models.ReqContext, target string) (bool, error)
 
 func (fn quotaServiceFunc) QuotaReached(c *models.ReqContext, target string) (bool, error) {
 	return fn(c, target)
+}
+
+// swagger:parameters importDashboard
+type ImportDashboardParams struct {
+	// in:body
+	// required:true
+	Body dashboardimport.ImportDashboardRequest
+}
+
+// swagger:response importDashboardResponse
+type ImportDashboardResponse struct {
+	// in: body
+	Body dashboardimport.ImportDashboardResponse `json:"body"`
 }

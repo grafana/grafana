@@ -1,8 +1,7 @@
 import React, { ChangeEvent } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
-import { EditorField, EditorHeader, EditorRow, InlineSelect, Space, EditorSwitch } from '@grafana/experimental';
-import { Alert, Input } from '@grafana/ui';
+import { Alert, EditorField, EditorHeader, EditorRow, EditorSwitch, InlineSelect, Input, Space } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
 import { isCloudWatchAnnotationQuery } from '../guards';

@@ -3,8 +3,7 @@ import { saveAs } from 'file-saver';
 import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, ClipboardButton, HorizontalGroup, stylesFactory, TextArea, useTheme } from '@grafana/ui';
+import { Button, ClipboardButton, HorizontalGroup, Stack, stylesFactory, TextArea, useTheme } from '@grafana/ui';
 
 import { SaveDashboardFormProps } from '../types';
 

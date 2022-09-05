@@ -2,7 +2,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 
@@ -12,7 +12,7 @@ import { Page as NewPage } from '../PageNew/Page';
 
 import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
-import { PageLayoutType, PageType } from './types';
+import { PageType } from './types';
 import { usePageNav } from './usePageNav';
 import { usePageTitle } from './usePageTitle';
 
@@ -25,18 +25,18 @@ export const OldPage: PageType = ({
   toolbar,
   scrollRef,
   scrollTop,
-  layout = PageLayoutType.Default,
+  layout = PageLayoutType.Standard,
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
 
   usePageTitle(navModel, pageNav);
 
-  const pageHeaderNav = getPageHeaderNav(navModel, pageNav);
+  const pageHeaderNav = pageNav ?? navModel?.main;
 
   return (
     <div className={cx(styles.wrapper, className)}>
-      {layout === PageLayoutType.Default && (
+      {layout === PageLayoutType.Standard && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className="page-scrollbar-content">
             {pageHeaderNav && <PageHeader navItem={pageHeaderNav} />}
@@ -45,7 +45,7 @@ export const OldPage: PageType = ({
           </div>
         </CustomScrollbar>
       )}
-      {layout === PageLayoutType.Dashboard && (
+      {layout === PageLayoutType.Canvas && (
         <>
           {toolbar}
           <div className={styles.scrollWrapper}>
@@ -58,14 +58,6 @@ export const OldPage: PageType = ({
     </div>
   );
 };
-
-function getPageHeaderNav(navModel?: NavModel, pageNav?: NavModelItem): NavModelItem | undefined {
-  if (pageNav?.children && pageNav.children.length > 0) {
-    return pageNav;
-  }
-
-  return navModel?.main;
-}
 
 OldPage.Header = PageHeader;
 OldPage.Contents = PageContents;

@@ -2,13 +2,13 @@ package ldap
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"github.com/BurntSushi/toml"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -62,7 +62,7 @@ type GroupToOrgRole struct {
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
 
-	OrgRole models.RoleType `toml:"org_role"`
+	OrgRole org.RoleType `toml:"org_role"`
 }
 
 // logger for all LDAP stuff
@@ -123,7 +123,7 @@ func readConfig(configFile string) (*Config, error) {
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `filename` comes from grafana configuration file
-	fileBytes, err := ioutil.ReadFile(configFile)
+	fileBytes, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Failed to load LDAP config file", err)
 	}

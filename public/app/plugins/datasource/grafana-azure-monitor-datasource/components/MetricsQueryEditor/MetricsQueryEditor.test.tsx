@@ -16,6 +16,15 @@ import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 
 import MetricsQueryEditor from './MetricsQueryEditor';
 
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
+    },
+  }),
+}));
+
 const variableOptionGroup = {
   label: 'Template variables',
   options: [],
@@ -66,7 +75,10 @@ describe('MetricsQueryEditor', () => {
   it('should change resource when a resource is selected in the ResourcePicker', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
-    delete query?.azureMonitor?.resourceUri;
+    delete query?.subscription;
+    delete query?.azureMonitor?.resourceGroup;
+    delete query?.azureMonitor?.resourceName;
+    delete query?.azureMonitor?.metricNamespace;
     const onChange = jest.fn();
 
     render(
@@ -105,68 +117,11 @@ describe('MetricsQueryEditor', () => {
     expect(onChange).toBeCalledTimes(1);
     expect(onChange).toBeCalledWith(
       expect.objectContaining({
+        subscription: 'def-456',
         azureMonitor: expect.objectContaining({
-          resourceUri:
-            '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/web-server',
-        }),
-      })
-    );
-  });
-
-  it('should reset metric namespace, metric name, and aggregation fields after selecting a new resource when a valid query has already been set', async () => {
-    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
-    const query = createMockQuery();
-    const onChange = jest.fn();
-
-    render(
-      <MetricsQueryEditor
-        data={mockPanelData}
-        query={query}
-        datasource={mockDatasource}
-        variableOptionGroup={variableOptionGroup}
-        onChange={onChange}
-        setError={() => {}}
-      />
-    );
-
-    const resourcePickerButton = await screen.findByRole('button', { name: /grafana/ });
-
-    expect(screen.getByText('Microsoft.Compute/virtualMachines')).toBeInTheDocument();
-    expect(screen.getByText('Metric A')).toBeInTheDocument();
-    expect(screen.getByText('Average')).toBeInTheDocument();
-
-    expect(resourcePickerButton).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Expand Primary Subscription' })).not.toBeInTheDocument();
-    resourcePickerButton.click();
-
-    const subscriptionButton = await screen.findByRole('button', { name: 'Expand Dev Subscription' });
-    expect(subscriptionButton).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Expand Development 3' })).not.toBeInTheDocument();
-    subscriptionButton.click();
-
-    const resourceGroupButton = await screen.findByRole('button', { name: 'Expand Development 3' });
-    expect(resourceGroupButton).toBeInTheDocument();
-    expect(screen.queryByLabelText('db-server')).not.toBeInTheDocument();
-    resourceGroupButton.click();
-
-    const checkbox = await screen.findByLabelText('db-server');
-    expect(checkbox).toBeInTheDocument();
-    expect(checkbox).not.toBeChecked();
-    await userEvent.click(checkbox);
-    expect(checkbox).toBeChecked();
-    await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
-
-    expect(onChange).toBeCalledTimes(1);
-    expect(onChange).toBeCalledWith(
-      expect.objectContaining({
-        azureMonitor: expect.objectContaining({
-          resourceUri:
-            '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server',
-          metricNamespace: undefined,
-          metricName: undefined,
-          aggregation: undefined,
-          timeGrain: '',
-          dimensionFilters: [],
+          metricNamespace: 'microsoft.compute/virtualmachines',
+          resourceGroup: 'dev-3',
+          resourceName: 'web-server',
         }),
       })
     );

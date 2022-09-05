@@ -20,18 +20,18 @@ import (
 func TestNotificationService(t *testing.T) {
 	testRule := &Rule{Name: "Test", Message: "Something is bad"}
 	store := &AlertStoreMock{}
-	evalCtx := NewEvalContext(context.Background(), testRule, &validations.OSSPluginRequestValidator{}, store, nil)
+	evalCtx := NewEvalContext(context.Background(), testRule, &validations.OSSPluginRequestValidator{}, store, nil, nil)
 
 	testRuleTemplated := &Rule{Name: "Test latency ${quantile}", Message: "Something is bad on instance ${instance}"}
 
-	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store, nil)
+	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store, nil, nil)
 	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
 		Tags: map[string]string{
 			"instance": "localhost:3000",
 			"quantile": "0.99",
 		},
 	}}
-	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store, nil)
+	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{}, store, nil, nil)
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification",
 		evalCtx, true, func(sc *scenarioContext) {
@@ -243,7 +243,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 		scenarioCtx.rendererAvailable = true
 
 		renderService := &testRenderService{
-			isAvailableProvider: func() bool {
+			isAvailableProvider: func(ctx context.Context) bool {
 				return scenarioCtx.rendererAvailable
 			},
 			renderProvider: func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
@@ -334,7 +334,7 @@ func (n *testNotifier) GetFrequency() time.Duration {
 var _ Notifier = &testNotifier{}
 
 type testRenderService struct {
-	isAvailableProvider      func() bool
+	isAvailableProvider      func(ctx context.Context) bool
 	renderProvider           func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
 	renderErrorImageProvider func(error error) (*rendering.RenderResult, error)
 }
@@ -343,13 +343,13 @@ func (s *testRenderService) SanitizeSVG(ctx context.Context, req *rendering.Sani
 	return &rendering.SanitizeSVGResponse{Sanitized: req.Content}, nil
 }
 
-func (s *testRenderService) HasCapability(feature rendering.CapabilityName) (rendering.CapabilitySupportRequestResult, error) {
+func (s *testRenderService) HasCapability(_ context.Context, feature rendering.CapabilityName) (rendering.CapabilitySupportRequestResult, error) {
 	return rendering.CapabilitySupportRequestResult{}, nil
 }
 
-func (s *testRenderService) IsAvailable() bool {
+func (s *testRenderService) IsAvailable(ctx context.Context) bool {
 	if s.isAvailableProvider != nil {
-		return s.isAvailableProvider()
+		return s.isAvailableProvider(ctx)
 	}
 
 	return true

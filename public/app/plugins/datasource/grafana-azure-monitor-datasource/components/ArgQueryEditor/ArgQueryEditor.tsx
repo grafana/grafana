@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
@@ -35,7 +35,7 @@ const ArgQueryEditor: React.FC<ArgQueryEditorProps> = ({
     }
 
     fetchedRef.current = true;
-    datasource.azureMonitorDatasource
+    datasource
       .getSubscriptions()
       .then((results) => {
         const fetchedSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));

@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue, DataFrame, PanelData, Labels } from '@grafana/data';
-import { AccessoryButton, EditorList } from '@grafana/experimental';
-import { Select, HorizontalGroup, MultiSelect } from '@grafana/ui';
+import { Select, HorizontalGroup, MultiSelect, EditorList, AccessoryButton } from '@grafana/ui';
 
 import { AzureMetricDimension, AzureMonitorOption, AzureMonitorQuery, AzureQueryEditorFieldProps } from '../../types';
 import { Field } from '../Field';

@@ -4,15 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 )
 
 // WebhookNotifier is responsible for sending
@@ -20,8 +22,6 @@ import (
 type WebhookNotifier struct {
 	*Base
 	URL        string
-	User       string
-	Password   string
 	HTTPMethod string
 	MaxAlerts  int
 	log        log.Logger
@@ -29,15 +29,26 @@ type WebhookNotifier struct {
 	images     ImageStore
 	tmpl       *template.Template
 	orgID      int64
+
+	User     string
+	Password string
+
+	AuthorizationScheme      string
+	AuthorizationCredentials string
 }
 
 type WebhookConfig struct {
 	*NotificationChannelConfig
 	URL        string
-	User       string
-	Password   string
 	HTTPMethod string
 	MaxAlerts  int
+
+	// Authorization Header.
+	AuthorizationScheme      string
+	AuthorizationCredentials string
+	// HTTP Basic Authentication.
+	User     string
+	Password string
 }
 
 func WebHookFactory(fc FactoryConfig) (NotificationChannel, error) {
@@ -56,11 +67,23 @@ func NewWebHookConfig(config *NotificationChannelConfig, decryptFunc GetDecrypte
 	if url == "" {
 		return nil, errors.New("could not find url property in settings")
 	}
+
+	user := config.Settings.Get("username").MustString()
+	password := decryptFunc(context.Background(), config.SecureSettings, "password", config.Settings.Get("password").MustString())
+	authorizationScheme := config.Settings.Get("authorization_scheme").MustString("Bearer")
+	authorizationCredentials := decryptFunc(context.Background(), config.SecureSettings, "authorization_credentials", config.Settings.Get("authorization_credentials").MustString())
+
+	if user != "" && password != "" && authorizationScheme != "" && authorizationCredentials != "" {
+		return nil, errors.New("both HTTP Basic Authentication and Authorization Header are set, only 1 is permitted")
+	}
+
 	return &WebhookConfig{
 		NotificationChannelConfig: config,
 		URL:                       url,
-		User:                      config.Settings.Get("username").MustString(),
-		Password:                  decryptFunc(context.Background(), config.SecureSettings, "password", config.Settings.Get("password").MustString()),
+		User:                      user,
+		Password:                  password,
+		AuthorizationScheme:       authorizationScheme,
+		AuthorizationCredentials:  authorizationCredentials,
 		HTTPMethod:                config.Settings.Get("httpMethod").MustString("POST"),
 		MaxAlerts:                 config.Settings.Get("maxAlerts").MustInt(0),
 	}, nil
@@ -77,16 +100,18 @@ func NewWebHookNotifier(config *WebhookConfig, ns notifications.WebhookSender, i
 			DisableResolveMessage: config.DisableResolveMessage,
 			Settings:              config.Settings,
 		}),
-		orgID:      config.OrgID,
-		URL:        config.URL,
-		User:       config.User,
-		Password:   config.Password,
-		HTTPMethod: config.HTTPMethod,
-		MaxAlerts:  config.MaxAlerts,
-		log:        log.New("alerting.notifier.webhook"),
-		ns:         ns,
-		images:     images,
-		tmpl:       t,
+		orgID:                    config.OrgID,
+		URL:                      config.URL,
+		User:                     config.User,
+		Password:                 config.Password,
+		AuthorizationScheme:      config.AuthorizationScheme,
+		AuthorizationCredentials: config.AuthorizationCredentials,
+		HTTPMethod:               config.HTTPMethod,
+		MaxAlerts:                config.MaxAlerts,
+		log:                      log.New("alerting.notifier.webhook"),
+		ns:                       ns,
+		images:                   images,
+		tmpl:                     t,
 	}
 }
 
@@ -152,12 +177,18 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		return false, err
 	}
 
+	headers := make(map[string]string)
+	if wn.AuthorizationScheme != "" && wn.AuthorizationCredentials != "" {
+		headers["Authorization"] = fmt.Sprintf("%s %s", wn.AuthorizationScheme, wn.AuthorizationCredentials)
+	}
+
 	cmd := &models.SendWebhookSync{
 		Url:        wn.URL,
 		User:       wn.User,
 		Password:   wn.Password,
 		Body:       string(body),
 		HttpMethod: wn.HTTPMethod,
+		HttpHeader: headers,
 	}
 
 	if err := wn.ns.SendWebhookSync(ctx, cmd); err != nil {

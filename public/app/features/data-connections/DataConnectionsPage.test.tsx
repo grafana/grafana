@@ -4,11 +4,15 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
+import { getMockDataSources } from 'app/features/datasources/__mocks__';
+import * as api from 'app/features/datasources/api';
 import { configureStore } from 'app/store/configureStore';
 
 import DataConnectionsPage from './DataConnectionsPage';
 import { navIndex } from './__mocks__/store.navIndex.mock';
 import { ROUTE_BASE_ID, ROUTES } from './constants';
+
+jest.mock('app/features/datasources/api');
 
 const renderPage = (path = `/${ROUTE_BASE_ID}`): RenderResult => {
   // @ts-ignore
@@ -25,6 +29,12 @@ const renderPage = (path = `/${ROUTE_BASE_ID}`): RenderResult => {
 };
 
 describe('Data Connections Page', () => {
+  const mockDatasources = getMockDataSources(3);
+
+  beforeEach(() => {
+    (api.getDataSources as jest.Mock) = jest.fn().mockResolvedValue(mockDatasources);
+  });
+
   test('shows all the four tabs', async () => {
     renderPage();
 
@@ -37,7 +47,8 @@ describe('Data Connections Page', () => {
   test('shows the "Data sources" tab by default', async () => {
     renderPage();
 
-    expect(await screen.findByText('The list of data sources is under development.')).toBeVisible();
+    expect(await screen.findByRole('link', { name: /add data source/i })).toBeVisible();
+    expect(await screen.findByText(mockDatasources[0].name)).toBeVisible();
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {

@@ -9,7 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,13 +38,13 @@ type CurrentUser struct {
 	OrgCount                   int                `json:"orgCount"`
 	OrgId                      int64              `json:"orgId"`
 	OrgName                    string             `json:"orgName"`
-	OrgRole                    models.RoleType    `json:"orgRole"`
+	OrgRole                    org.RoleType       `json:"orgRole"`
 	IsGrafanaAdmin             bool               `json:"isGrafanaAdmin"`
 	GravatarUrl                string             `json:"gravatarUrl"`
 	Timezone                   string             `json:"timezone"`
 	WeekStart                  string             `json:"weekStart"`
 	Locale                     string             `json:"locale"`
-	HelpFlags1                 models.HelpFlags1  `json:"helpFlags1"`
+	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
 }
@@ -120,7 +121,7 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 	return GetGravatarUrl(text)
 }
 
-func IsHiddenUser(userLogin string, signedInUser *models.SignedInUser, cfg *setting.Cfg) bool {
+func IsHiddenUser(userLogin string, signedInUser *user.SignedInUser, cfg *setting.Cfg) bool {
 	if userLogin == "" || signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
 		return false
 	}

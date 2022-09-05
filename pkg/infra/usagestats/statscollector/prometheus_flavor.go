@@ -3,7 +3,7 @@ package statscollector
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -107,7 +107,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.D
 		return "unknown", nil
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		s.log.Error("Failed to read Prometheus build info", "error", err)
 		return "", err

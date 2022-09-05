@@ -3,6 +3,8 @@ package models
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
@@ -52,7 +54,7 @@ type DeleteTeamCommand struct {
 type GetTeamByIdQuery struct {
 	OrgId        int64
 	Id           int64
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
 	Result       *TeamDTO
 	UserIdFilter int64
@@ -65,7 +67,7 @@ type GetTeamsByUserQuery struct {
 	OrgId        int64
 	UserId       int64      `json:"userId"`
 	Result       []*TeamDTO `json:"teams"`
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 }
 
 type SearchTeamsQuery struct {
@@ -75,7 +77,7 @@ type SearchTeamsQuery struct {
 	Page         int
 	OrgId        int64
 	UserIdFilter int64
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
 
 	Result SearchTeamQueryResult
@@ -100,6 +102,6 @@ type SearchTeamQueryResult struct {
 }
 
 type IsAdminOfTeamsQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser *user.SignedInUser
 	Result       bool
 }

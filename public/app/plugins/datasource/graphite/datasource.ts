@@ -1,17 +1,18 @@
 import { each, indexOf, isArray, isString, map as _map } from 'lodash';
-import { lastValueFrom, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  AbstractQuery,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
-  AbstractQuery,
-  AbstractLabelOperator,
-  AbstractLabelMatcher,
+  dateTime,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
@@ -25,15 +26,20 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
+import { AnnotationEditor } from './components/AnnotationsEditor';
+import { convertToGraphiteQueryObject } from './components/helpers';
 import gfunc, { FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
+import { prepareAnnotation } from './migrations';
 // Types
 import {
   GraphiteLokiMapping,
   GraphiteMetricLokiMatcher,
   GraphiteOptions,
   GraphiteQuery,
+  GraphiteQueryRequest,
   GraphiteQueryImportConfiguration,
+  GraphiteQueryType,
   GraphiteType,
   MetricTankRequestMeta,
 } from './types';
@@ -74,6 +80,7 @@ export class GraphiteDatasource
   funcDefs: FuncDefs | null = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
+  requestCounter = 100;
   private readonly metricMappings: GraphiteLokiMapping[];
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
@@ -93,6 +100,10 @@ export class GraphiteDatasource
     this.funcDefs = null;
     this.funcDefsPromise = null;
     this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    this.annotations = {
+      QueryEditor: AnnotationEditor,
+      prepareAnnotation,
+    };
   }
 
   getQueryOptionsInfo() {
@@ -178,11 +189,29 @@ export class GraphiteDatasource
   }
 
   query(options: DataQueryRequest<GraphiteQuery>): Observable<DataQueryResponse> {
+    if (options.targets.some((target: GraphiteQuery) => target.fromAnnotations)) {
+      const streams: Array<Observable<DataQueryResponse>> = [];
+
+      for (const target of options.targets) {
+        streams.push(
+          new Observable((subscriber) => {
+            this.annotationEvents(options.range, target)
+              .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+              .catch((ex) => subscriber.error(new Error(ex)))
+              .finally(() => subscriber.complete());
+          })
+        );
+      }
+
+      return merge(...streams);
+    }
+
+    // handle the queries here
     const graphOptions = {
       from: this.translateTime(options.range.from, false, options.timezone),
       until: this.translateTime(options.range.to, true, options.timezone),
       targets: options.targets,
-      format: (options as any).format,
+      format: (options as GraphiteQueryRequest).format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
       maxDataPoints: options.maxDataPoints,
     };
@@ -326,13 +355,13 @@ export class GraphiteDatasource
     return expandedQueries;
   }
 
-  annotationQuery(options: any) {
-    // Graphite metric as annotation
-    if (options.annotation.target) {
-      const target = this.templateSrv.replace(options.annotation.target, {}, 'glob');
+  annotationEvents(range: any, target: any) {
+    if (target.target) {
+      // Graphite query as target as annotation
+      const targetAnnotation = this.templateSrv.replace(target.target, {}, 'glob');
       const graphiteQuery = {
-        range: options.range,
-        targets: [{ target: target }],
+        range: range,
+        targets: [{ target: targetAnnotation }],
         format: 'json',
         maxDataPoints: 100,
       } as unknown as DataQueryRequest<GraphiteQuery>;
@@ -354,7 +383,7 @@ export class GraphiteDatasource
                 }
 
                 list.push({
-                  annotation: options.annotation,
+                  annotation: target,
                   time,
                   title: target.name,
                 });
@@ -366,9 +395,9 @@ export class GraphiteDatasource
         )
       );
     } else {
-      // Graphite event as annotation
-      const tags = this.templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.range, tags: tags }).then((results: any) => {
+      // Graphite event/tag as annotation
+      const tags = this.templateSrv.replace(target.tags?.join(' '));
+      return this.events({ range: range, tags: tags }).then((results: any) => {
         const list = [];
         if (!isArray(results.data)) {
           console.error(`Unable to get annotations from ${results.url}.`);
@@ -383,7 +412,7 @@ export class GraphiteDatasource
           }
 
           list.push({
-            annotation: options.annotation,
+            annotation: target,
             time: e.when * 1000,
             title: e.what,
             tags: tags,
@@ -452,8 +481,15 @@ export class GraphiteDatasource
     return date.unix();
   }
 
-  metricFindQuery(query: string, optionalOptions?: any): Promise<MetricFindValue[]> {
+  metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options: any = optionalOptions || {};
+
+    const queryObject = convertToGraphiteQueryObject(findQuery);
+    if (queryObject.queryType === GraphiteQueryType.Value) {
+      return this.requestMetricRender(queryObject, options);
+    }
+
+    let query = queryObject.target ?? '';
 
     // First attempt to check for tag-related functions (using empty wildcard for interpolation)
     let interpolatedQuery = this.templateSrv.replace(
@@ -494,11 +530,52 @@ export class GraphiteDatasource
       };
     }
 
-    if (useExpand) {
+    if (useExpand || queryObject.queryType === GraphiteQueryType.MetricName) {
       return this.requestMetricExpand(interpolatedQuery, options.requestId, range);
     } else {
       return this.requestMetricFind(interpolatedQuery, options.requestId, range);
     }
+  }
+
+  /**
+   * Search for metrics matching giving pattern using /metrics/render endpoint.
+   * It will return all possible values and parse them based on queryType.
+   * For example:
+   *
+   * queryType: GraphiteQueryType.Value
+   * query: groupByNode(movingAverage(apps.country.IE.counters.requests.count, 10), 2, 'sum')
+   * result: 239.4, 233.4, 230.8, 230.4, 233.9, 238, 239.8, 236.8, 235.8
+   */
+  private async requestMetricRender(queryObject: GraphiteQuery, options: any): Promise<MetricFindValue[]> {
+    const requestId: string = options.requestId ?? `Q${this.requestCounter++}`;
+    const range: TimeRange = options.range ?? {
+      from: dateTime().subtract(6, 'hour'),
+      to: dateTime(),
+      raw: {
+        from: 'now - 6h',
+        to: 'now',
+      },
+    };
+    const queryReq: DataQueryRequest<GraphiteQuery> = {
+      app: 'graphite-variable-editor',
+      interval: '1s',
+      intervalMs: 10000,
+      startTime: Date.now(),
+      targets: [{ ...queryObject }],
+      timezone: 'browser',
+      scopedVars: {},
+      requestId,
+      range,
+    };
+    const data = await lastValueFrom(this.query(queryReq));
+    const result: MetricFindValue[] = data.data[0].fields[1].values
+      .filter((f?: number) => !!f)
+      .map((v: number) => ({
+        text: v.toString(),
+        value: v,
+        expandable: false,
+      }));
+    return Promise.resolve(result);
   }
 
   /**

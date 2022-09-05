@@ -20,7 +20,8 @@ import teamsReducers from 'app/features/teams/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
 
-import { CleanUp, cleanUpAction } from '../actions/cleanUp';
+import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
+import { cleanUpAction } from '../actions/cleanUp';
 
 const rootReducers = {
   ...sharedReducers,
@@ -42,6 +43,7 @@ const rootReducers = {
   ...panelsReducers,
   ...templatingReducers,
   plugins: pluginsReducer,
+  [alertingApi.reducerPath]: alertingApi.reducer,
 };
 
 const addedReducers = {};
@@ -61,33 +63,9 @@ export const createRootReducer = () => {
       return appReducer(state, action);
     }
 
-    const { stateSelector } = action.payload as CleanUp<any>;
-    const stateSlice = stateSelector(state);
-    recursiveCleanState(state, stateSlice);
+    const { cleanupAction } = action.payload;
+    cleanupAction(state);
 
     return appReducer(state, action);
   };
-};
-
-export const recursiveCleanState = (state: any, stateSlice: any): boolean => {
-  for (const stateKey in state) {
-    if (!state.hasOwnProperty(stateKey)) {
-      continue;
-    }
-
-    const slice = state[stateKey];
-    if (slice === stateSlice) {
-      state[stateKey] = undefined;
-      return true;
-    }
-
-    if (typeof slice === 'object') {
-      const cleaned = recursiveCleanState(slice, stateSlice);
-      if (cleaned) {
-        return true;
-      }
-    }
-  }
-
-  return false;
 };

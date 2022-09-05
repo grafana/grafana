@@ -1,9 +1,14 @@
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { LanguageCompletionProvider } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
 import { AGGREGATE_FNS } from 'app/features/plugins/sql/constants';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { DB, ResponseParser, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
+import {
+  DB,
+  LanguageCompletionProvider,
+  ResponseParser,
+  SQLQuery,
+  SQLSelectableValue,
+} from 'app/features/plugins/sql/types';
 
 import { getSchema, showDatabases, showTables } from './MSSqlMetaQuery';
 import { MSSqlQueryModel } from './MSSqlQueryModel';
@@ -14,8 +19,8 @@ import { MssqlOptions } from './types';
 
 export class MssqlDatasource extends SqlDatasource {
   completionProvider: LanguageCompletionProvider | undefined = undefined;
-  constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>, templateSrv?: TemplateSrv) {
-    super(instanceSettings, templateSrv);
+  constructor(instanceSettings: DataSourceInstanceSettings<MssqlOptions>) {
+    super(instanceSettings);
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): MSSqlQueryModel {

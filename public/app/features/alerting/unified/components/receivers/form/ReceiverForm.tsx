@@ -13,6 +13,7 @@ import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray'
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
+import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
@@ -27,7 +28,8 @@ interface Props<R extends ChannelValues> {
   takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   commonSettingsComponent: CommonSettingsComponentType;
   initialValues?: ReceiverFormValues<R>;
-  readOnly: boolean;
+  isEditable: boolean;
+  isTestable?: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -40,7 +42,8 @@ export function ReceiverForm<R extends ChannelValues>({
   onTestChannel,
   takenReceiverNames,
   commonSettingsComponent,
-  readOnly,
+  isEditable,
+  isTestable,
 }: Props<R>): JSX.Element {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -60,7 +63,7 @@ export function ReceiverForm<R extends ChannelValues>({
     defaultValues: JSON.parse(JSON.stringify(defaultValues)),
   });
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   const { loading } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
@@ -101,11 +104,11 @@ export function ReceiverForm<R extends ChannelValues>({
       )}
       <form onSubmit={handleSubmit(submitCallback, onInvalid)}>
         <h4 className={styles.heading}>
-          {readOnly ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
+          {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
         </h4>
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
           <Input
-            readOnly={readOnly}
+            readOnly={!isEditable}
             id="name"
             {...register('name', {
               required: 'Name is required',
@@ -143,12 +146,13 @@ export function ReceiverForm<R extends ChannelValues>({
               secureFields={initialItem?.secureFields}
               errors={errors?.items?.[index] as FieldErrors<R>}
               commonSettingsComponent={commonSettingsComponent}
-              readOnly={readOnly}
+              isEditable={isEditable}
+              isTestable={isTestable}
             />
           );
         })}
         <>
-          {!readOnly && (
+          {isEditable && (
             <Button
               type="button"
               icon="plus"
@@ -159,7 +163,7 @@ export function ReceiverForm<R extends ChannelValues>({
             </Button>
           )}
           <div className={styles.buttons}>
-            {!readOnly && (
+            {isEditable && (
               <>
                 {loading && (
                   <Button disabled={true} icon="fa fa-spinner" variant="primary">

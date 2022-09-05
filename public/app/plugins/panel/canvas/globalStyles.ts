@@ -10,19 +10,32 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
     ,
     .rc-tree {
       margin: 0;
+      margin-bottom: 15px;
       border: 1px solid transparent;
 
       &-focused:not(&-active-focused) {
         border-color: cyan;
       }
 
+      .rc-tree-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+      }
+
       .rc-tree-treenode {
         margin: 0;
-        padding: 5px;
+        padding: 1px;
         line-height: 24px;
         white-space: nowrap;
         list-style: none;
         outline: 0;
+
+        display: flex;
+        margin-bottom: 3px;
+        cursor: pointer;
+
         .draggable {
           color: #333;
           -moz-user-select: none;
@@ -34,14 +47,6 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           // -webkit-user-drag: element;
         }
 
-        &:hover {
-          background-color: ${theme.colors.background.secondary};
-        }
-
-        &.dragging {
-          background: rgba(100, 100, 255, 0.1);
-        }
-
         &.drop-container {
           > .draggable::after {
             position: absolute;
@@ -49,15 +54,14 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             right: 0;
             bottom: 0;
             left: 0;
-            box-shadow: inset 0 0 0 2px red;
+            box-shadow: inset 0 0 0 2px blue;
             content: '';
           }
           & ~ .rc-tree-treenode {
-            border-left: 2px solid chocolate;
+            border-left: 2px solid ${theme.v1.colors.formInputBorder};
           }
         }
         &.drop-target {
-          border: 1px solid ${theme.colors.border.strong};
           & ~ .rc-tree-treenode {
             border-left: none;
           }
@@ -80,10 +84,26 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           padding: 0;
           text-decoration: none;
           vertical-align: top;
-          cursor: pointer;
+          cursor: grab;
+          flex-grow: 1;
+          display: flex;
+
+          border: 1px solid ${theme.v1.colors.formInputBorder};
+          border-radius: ${theme.v1.border.radius.sm};
+          background: ${theme.v1.colors.bg2};
+          min-height: ${theme.v1.spacing.formInputHeight}px;
+
+          &:hover {
+            border: 1px solid ${theme.v1.colors.formInputBorderHover};
+          }
+
+          &.rc-tree-node-selected {
+            border: 1px solid ${theme.v1.colors.formInputBorderActive};
+            opacity: 1;
+          }
         }
+
         span {
-          &.rc-tree-switcher,
           &.rc-tree-checkbox,
           &.rc-tree-iconEle {
             display: inline-block;
@@ -92,6 +112,21 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             margin-right: 2px;
             line-height: 16px;
             vertical-align: -0.125em;
+            background-color: transparent;
+            background-repeat: no-repeat;
+            background-attachment: scroll;
+            border: 0 none;
+            outline: none;
+            cursor: pointer;
+
+            &.rc-tree-icon__customize {
+              background-image: none;
+            }
+          }
+          &.rc-tree-switcher {
+            display: flex;
+            align-items: center;
+            width: 16px;
             background-color: transparent;
             background-repeat: no-repeat;
             background-attachment: scroll;

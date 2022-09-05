@@ -1,9 +1,10 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { CollapsableSection } from './CollapsableSection';
 import mdx from './CollapsableSection.mdx';
 
-export default {
+const meta: ComponentMeta<typeof CollapsableSection> = {
   title: 'Layout/CollapsableSection',
   component: CollapsableSection,
   parameters: {
@@ -20,3 +21,5 @@ export const simple = () => {
     </CollapsableSection>
   );
 };
+
+export default meta;

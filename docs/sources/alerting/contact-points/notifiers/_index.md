@@ -10,13 +10,13 @@ keywords:
   - guide
   - contact point
   - templating
-title: List of notifiers
+title: List of contact point types
 weight: 130
 ---
 
-# List of supported notifiers
+# List of supported contact point types
 
-The following table lists the notifiers (contact point types) supported by Grafana.
+The following table lists the contact point types supported by Grafana.
 
 | Name                                             | Type                      | Grafana Alertmanager | Other Alertmanagers                                                                                      |
 | ------------------------------------------------ | ------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------- |

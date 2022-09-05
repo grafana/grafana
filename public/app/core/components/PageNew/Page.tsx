@@ -2,13 +2,12 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
-// Components
-import { appChromeService } from '../AppChrome/AppChromeService';
 import { Footer } from '../Footer/Footer';
-import { PageLayoutType, PageType } from '../Page/types';
+import { PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
 import { usePageTitle } from '../Page/usePageTitle';
 
@@ -24,13 +23,14 @@ export const Page: PageType = ({
   subTitle,
   children,
   className,
-  layout = PageLayoutType.Default,
+  layout = PageLayoutType.Standard,
   toolbar,
   scrollTop,
   scrollRef,
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
+  const { chrome } = useGrafana();
 
   usePageTitle(navModel, pageNav);
 
@@ -38,16 +38,16 @@ export const Page: PageType = ({
 
   useEffect(() => {
     if (navModel) {
-      appChromeService.update({
+      chrome.update({
         sectionNav: navModel.node,
-        ...(pageNav && { pageNav }),
+        pageNav: pageNav,
       });
     }
-  }, [navModel, pageNav]);
+  }, [navModel, pageNav, chrome]);
 
   return (
     <div className={cx(styles.wrapper, className)}>
-      {layout === PageLayoutType.Default && (
+      {layout === PageLayoutType.Standard && (
         <div className={styles.panes}>
           {navModel && navModel.main.children && <SectionNav model={navModel} />}
           <div className={styles.pageContent}>
@@ -62,7 +62,7 @@ export const Page: PageType = ({
           </div>
         </div>
       )}
-      {layout === PageLayoutType.Dashboard && (
+      {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
           <div className={styles.dashboardContent}>
             {toolbar}
@@ -74,9 +74,12 @@ export const Page: PageType = ({
   );
 };
 
+const OldNavOnly = () => null;
+OldNavOnly.displayName = 'OldNavOnly';
+
 Page.Header = PageHeader;
 Page.Contents = PageContents;
-Page.OldNavOnly = () => null;
+Page.OldNavOnly = OldNavOnly;
 
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark

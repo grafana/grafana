@@ -11,7 +11,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 import VariableEditor from './components/VariableEditor/VariableEditor';
 import DataSource from './datasource';
-import { migrateStringQueriesToObjectQueries } from './grafanaTemplateVariableFns';
+import { migrateQuery } from './grafanaTemplateVariableFns';
 import { AzureMonitorQuery, AzureQueryType } from './types';
 import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 import messageFromError from './utils/messageFromError';
@@ -27,7 +27,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
 
   query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const promisedResults = async () => {
-      const queryObj = await migrateStringQueriesToObjectQueries(request.targets[0], { datasource: this.datasource });
+      const queryObj = await migrateQuery(request.targets[0], { datasource: this.datasource });
 
       try {
         switch (queryObj.queryType) {
@@ -91,7 +91,10 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
             }
           default:
             request.targets[0] = queryObj;
-            return lastValueFrom(this.datasource.query(request));
+            const queryResp = await lastValueFrom(this.datasource.query(request));
+            return {
+              data: queryResp.data,
+            };
         }
       } catch (err) {
         return { data: [], error: new Error(messageFromError(err)) };
@@ -101,6 +104,7 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
     return from(promisedResults());
   }
 
+  // Deprecated
   callGrafanaTemplateVariableFn(query: GrafanaTemplateVariableQuery): Promise<MetricFindValue[]> | null {
     if (query.kind === 'SubscriptionsQuery') {
       return this.datasource.getSubscriptions();
@@ -110,18 +114,11 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
       return this.datasource.getResourceGroups(this.replaceVariable(query.subscription));
     }
 
-    if (query.kind === 'MetricDefinitionsQuery') {
-      return this.datasource.getMetricDefinitions(
-        this.replaceVariable(query.subscription),
-        this.replaceVariable(query.resourceGroup)
-      );
-    }
-
     if (query.kind === 'ResourceNamesQuery') {
       return this.datasource.getResourceNames(
         this.replaceVariable(query.subscription),
         this.replaceVariable(query.resourceGroup),
-        this.replaceVariable(query.metricDefinition)
+        this.replaceVariable(query.metricNamespace)
       );
     }
 
