@@ -9,6 +9,6 @@ export function pluginHasRootPage(pluginId: string, navTree: NavLinkDTO[]): bool
     navTree
       .find((navLink) => navLink.id === 'apps')
       ?.children?.find((app) => app.id === `plugin-page-${pluginId}`)
-      ?.children?.some((page) => page.url?.endsWith(`/a/${pluginId}/`))
+      ?.children?.some((page) => page.url?.endsWith(`/a/${pluginId}`))
   );
 }
