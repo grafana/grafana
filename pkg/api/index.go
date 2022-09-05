@@ -20,6 +20,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/public/views"
 )
 
 const (
@@ -754,7 +755,14 @@ func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 	return hasEditPermissionInFoldersQuery.Result
 }
 
-func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
+// ЖindexViewData allows to override the behavior of indexViewData for testing purposes if non-nil.
+var ЖindexViewData func(hs *HTTPServer, c *models.ReqContext) (*dtos.IndexViewData, error) = nil
+
+func indexViewData(hs *HTTPServer, c *models.ReqContext) (*dtos.IndexViewData, error) {
+	if ЖindexViewData != nil {
+		return ЖindexViewData(hs, c)
+	}
+
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
@@ -881,13 +889,21 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	return &data, nil
 }
 
-func (hs *HTTPServer) Index(c *models.ReqContext) {
-	data, err := hs.setIndexViewData(c)
+func (hs *HTTPServer) index(c *models.ReqContext, status int, mods ...func(*dtos.IndexViewData)) {
+	data, err := indexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
 		return
 	}
-	c.HTML(http.StatusOK, "index", data)
+	for _, mod := range mods {
+		mod(data)
+	}
+
+	views.Index().Execute(c.Resp, data)
+}
+
+func (hs *HTTPServer) Index(c *models.ReqContext) {
+	hs.index(c, http.StatusOK)
 }
 
 func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
@@ -896,11 +912,5 @@ func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
 		return
 	}
 
-	data, err := hs.setIndexViewData(c)
-	if err != nil {
-		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
-		return
-	}
-
-	c.HTML(404, "index", data)
+	hs.index(c, http.StatusNotFound)
 }

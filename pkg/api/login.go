@@ -28,12 +28,6 @@ const (
 	loginErrorCookieName = "login_error"
 )
 
-var setIndexViewData = (*HTTPServer).setIndexViewData
-
-var getViewIndex = func() string {
-	return viewIndex
-}
-
 func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	to, err := url.Parse(redirectTo)
 	if err != nil {
@@ -78,16 +72,10 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
-	viewData, err := setIndexViewData(hs, c)
-	if err != nil {
-		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
-		return
-	}
-
 	urlParams := c.Req.URL.Query()
 	if _, disableAutoLogin := urlParams["disableAutoLogin"]; disableAutoLogin {
 		hs.log.Debug("Auto login manually disabled")
-		c.HTML(http.StatusOK, getViewIndex(), viewData)
+		hs.index(c, http.StatusOK)
 		return
 	}
 
@@ -100,9 +88,11 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		}
 	}
 
-	viewData.Settings["oauth"] = enabledOAuths
-	viewData.Settings["samlEnabled"] = hs.samlEnabled()
-	viewData.Settings["samlName"] = hs.samlName()
+	mod := func(data *dtos.IndexViewData) {
+		data.Settings["oauth"] = enabledOAuths
+		data.Settings["samlEnabled"] = hs.samlEnabled()
+		data.Settings["samlName"] = hs.samlName()
+	}
 
 	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
@@ -110,8 +100,10 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		// and the view should return immediately before attempting
 		// to login again via OAuth and enter to a redirect loop
 		cookies.DeleteCookie(c.Resp, loginErrorCookieName, hs.CookieOptionsFromCfg)
-		viewData.Settings["loginError"] = loginError
-		c.HTML(http.StatusOK, getViewIndex(), viewData)
+		errMod := func(data *dtos.IndexViewData) {
+			data.Settings["loginError"] = loginError
+		}
+		hs.index(c, http.StatusOK, mod, errMod)
 		return
 	}
 
@@ -146,7 +138,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	c.HTML(http.StatusOK, getViewIndex(), viewData)
+	hs.index(c, http.StatusOK, mod)
 }
 
 func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {

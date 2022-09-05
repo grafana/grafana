@@ -34,28 +34,17 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func fakeSetIndexViewData(t *testing.T) {
-	origSetIndexViewData := setIndexViewData
+func fakeIndexViewData(t *testing.T) {
 	t.Cleanup(func() {
-		setIndexViewData = origSetIndexViewData
+		ЖindexViewData = nil
 	})
-	setIndexViewData = func(*HTTPServer, *models.ReqContext) (*dtos.IndexViewData, error) {
+	ЖindexViewData = func(*HTTPServer, *models.ReqContext) (*dtos.IndexViewData, error) {
 		data := &dtos.IndexViewData{
 			User:     &dtos.CurrentUser{},
 			Settings: map[string]interface{}{},
 			NavTree:  []*dtos.NavLink{},
 		}
 		return data, nil
-	}
-}
-
-func fakeViewIndex(t *testing.T) {
-	origGetViewIndex := getViewIndex
-	t.Cleanup(func() {
-		getViewIndex = origGetViewIndex
-	})
-	getViewIndex = func() string {
-		return "index-template"
 	}
 }
 
@@ -88,9 +77,7 @@ var oAuthInfos = map[string]*social.OAuthInfo{
 }
 
 func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
-	fakeSetIndexViewData(t)
-
-	fakeViewIndex(t)
+	fakeIndexViewData(t)
 
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
@@ -139,8 +126,8 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 }
 
 func TestLoginViewRedirect(t *testing.T) {
-	fakeSetIndexViewData(t)
-	fakeViewIndex(t)
+	fakeIndexViewData(t)
+	// fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
 	hs := &HTTPServer{
@@ -313,9 +300,8 @@ func TestLoginViewRedirect(t *testing.T) {
 }
 
 func TestLoginPostRedirect(t *testing.T) {
-	fakeSetIndexViewData(t)
+	fakeIndexViewData(t)
 
-	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		log:              log.NewNopLogger(),
@@ -469,7 +455,7 @@ func TestLoginPostRedirect(t *testing.T) {
 }
 
 func TestLoginOAuthRedirect(t *testing.T) {
-	fakeSetIndexViewData(t)
+	fakeIndexViewData(t)
 
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
@@ -506,9 +492,8 @@ func TestLoginOAuthRedirect(t *testing.T) {
 }
 
 func TestLoginInternal(t *testing.T) {
-	fakeSetIndexViewData(t)
+	fakeIndexViewData(t)
 
-	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
@@ -555,7 +540,7 @@ func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
 }
 
 func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioContext {
-	fakeSetIndexViewData(t)
+	fakeIndexViewData(t)
 
 	sc := setupScenarioContext(t, "/login")
 	sc.cfg.LoginCookieName = "grafana_session"

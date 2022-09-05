@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -348,7 +347,6 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
-
 	hs.applyRoutes()
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
@@ -564,7 +562,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
-	m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
+	// m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
 
 	// These endpoints are used for monitoring the Grafana instance
 	// and should not be redirected or rejected.
