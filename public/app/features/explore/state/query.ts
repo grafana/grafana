@@ -108,8 +108,8 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
   'explore/queryStoreSubscription'
 );
 
-const toggleLogsVolumeAction = createAction<{ exploreId: ExploreId; enabled: boolean }>(
-  'explore/toggleLogsVolumeAction'
+const setLogsVolumeEnabledAction = createAction<{ exploreId: ExploreId; enabled: boolean }>(
+  'explore/setLogsVolumeEnabledAction'
 );
 
 export interface StoreLogsVolumeDataProvider {
@@ -632,9 +632,9 @@ export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
-export function toggleLogsVolume(exploreId: ExploreId, enabled: boolean): ThunkResult<void> {
+export function setLogsVolumeEnabled(exploreId: ExploreId, enabled: boolean): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(toggleLogsVolumeAction({ exploreId, enabled }));
+    dispatch(setLogsVolumeEnabledAction({ exploreId, enabled }));
     storeLogsVolumeEnabled(enabled);
     if (enabled) {
       dispatch(loadLogsVolumeData(exploreId));
@@ -738,7 +738,7 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (toggleLogsVolumeAction.match(action)) {
+  if (setLogsVolumeEnabledAction.match(action)) {
     const { enabled } = action.payload;
     if (state.logsVolumeDataSubscription) {
       state.logsVolumeDataSubscription.unsubscribe();

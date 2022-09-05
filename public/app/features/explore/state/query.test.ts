@@ -35,7 +35,7 @@ import {
   scanStartAction,
   scanStopAction,
   storeLogsVolumeDataProviderAction,
-  toggleLogsVolume,
+  setLogsVolumeEnabled,
 } from './query';
 import { makeExplorePaneState } from './utils';
 
@@ -445,7 +445,7 @@ describe('reducer', () => {
 
     it('do not load logsVolume data when disabled', async () => {
       // turn logsvolume off
-      dispatch(toggleLogsVolume(ExploreId.left, false));
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
       expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(false);
 
       // verify that if we run a query, it will not do logsvolume, but the Provider will still be set
@@ -457,14 +457,14 @@ describe('reducer', () => {
 
     it('load logsVolume data when it gets enabled', async () => {
       // first it is disabled
-      dispatch(toggleLogsVolume(ExploreId.left, false));
+      dispatch(setLogsVolumeEnabled(ExploreId.left, false));
 
       // runQueries sets up the logsVolume query, but does not run it
       await dispatch(runQueries(ExploreId.left));
       expect(getState().explore[ExploreId.left].logsVolumeDataProvider).toBeDefined();
 
       // we turn logsvolume on
-      await dispatch(toggleLogsVolume(ExploreId.left, true));
+      await dispatch(setLogsVolumeEnabled(ExploreId.left, true));
 
       // verify it was turned on
       expect(getState().explore[ExploreId.left].logsVolumeEnabled).toBe(true);

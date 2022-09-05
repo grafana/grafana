@@ -18,7 +18,7 @@ import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { splitOpen } from './state/main';
-import { addResultsToCache, clearCache, loadLogsVolumeData, toggleLogsVolume } from './state/query';
+import { addResultsToCache, clearCache, loadLogsVolumeData, setLogsVolumeEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
@@ -129,7 +129,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logsMeta={logsMeta}
             logsSeries={logsSeries}
             logsVolumeEnabled={this.props.logsVolumeEnabled}
-            onSetLogsVolumeEnabled={(enabled) => this.props.toggleLogsVolume(exploreId, enabled)}
+            onSetLogsVolumeEnabled={(enabled) => this.props.setLogsVolumeEnabled(exploreId, enabled)}
             logsVolumeData={logsVolumeData}
             logsQueries={logsQueries}
             width={width}
@@ -204,7 +204,7 @@ const mapDispatchToProps = {
   addResultsToCache,
   clearCache,
   loadLogsVolumeData,
-  toggleLogsVolume,
+  setLogsVolumeEnabled,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
