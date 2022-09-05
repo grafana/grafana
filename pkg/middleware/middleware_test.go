@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/public/views"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -116,7 +117,7 @@ func TestMiddlewareContext(t *testing.T) {
 				NavTree:  []*dtos.NavLink{},
 			}
 			t.Log("Calling HTML", "data", data)
-			c.HTML(http.StatusOK, "index-template", data)
+			web.Template(c.Resp, http.StatusOK, views.Index(), data)
 			t.Log("Returned HTML with code 200")
 		}
 		sc.fakeReq("GET", "/").exec()

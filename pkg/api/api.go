@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/public/views"
 )
 
 var plog = log.New("api")
@@ -188,8 +189,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
 	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
-		r.Get("/swagger-ui", swaggerUI)
-		r.Get("/openapi3", openapi3)
+		r.Get("/swagger-ui", views.Swagger)
+		r.Get("/openapi3", views.OpenAPI3)
 	}
 
 	// authed api

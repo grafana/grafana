@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/public/views"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -46,7 +47,7 @@ func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err er
 		}
 	}
 
-	ctx.HTML(status, cfg.ErrTemplateName, data)
+	web.Template(ctx.Resp, status, views.Error(), data)
 }
 
 func (ctx *ReqContext) IsApiRequest() bool {

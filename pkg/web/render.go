@@ -16,6 +16,7 @@
 package web
 
 import (
+	"encoding/json"
 	"html/template"
 	"io/fs"
 	"net/http"
@@ -69,4 +70,25 @@ func compileTemplates(filesystem fs.FS, leftDelim, rightDelim string) (*template
 		return err
 	})
 	return t, err
+}
+
+func Template(w http.ResponseWriter, status int, t *template.Template, data interface{}) {
+	SetContentType(w, TextHTML)
+	w.WriteHeader(status)
+	if err := t.Execute(w, data); err != nil {
+		panic("web.Template: " + err.Error())
+	}
+}
+
+func JSON(w http.ResponseWriter, status int, data interface{}) {
+	SetContentType(w, AppJSON)
+	w.WriteHeader(status)
+
+	enc := json.NewEncoder(w)
+	if Env != PROD {
+		enc.SetIndent("", "  ")
+	}
+	if err := enc.Encode(data); err != nil {
+		panic("web.JSON: " + err.Error())
+	}
 }

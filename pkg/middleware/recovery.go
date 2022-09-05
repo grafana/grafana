@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/public/views"
 )
 
 var (
@@ -163,7 +164,9 @@ func Recovery(cfg *setting.Cfg) web.Middleware {
 
 						ctx.JSON(500, resp)
 					} else {
-						ctx.HTML(500, cfg.ErrTemplateName, data)
+						ctx.Resp.WriteHeader(500)
+						web.SetContentType(ctx.Resp, web.TextHTML)
+						views.Error().Execute(ctx.Resp, data)
 					}
 				}
 			}()

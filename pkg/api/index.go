@@ -20,6 +20,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/public/views"
 )
 
@@ -899,7 +900,7 @@ func (hs *HTTPServer) index(c *models.ReqContext, status int, mods ...func(*dtos
 		mod(data)
 	}
 
-	views.Index().Execute(c.Resp, data)
+	web.Template(c.Resp, http.StatusOK, views.Index(), data)
 }
 
 func (hs *HTTPServer) Index(c *models.ReqContext) {

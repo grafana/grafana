@@ -15,7 +15,6 @@
 package web
 
 import (
-	"encoding/json"
 	"html/template"
 	"net"
 	"net/http"
@@ -79,31 +78,9 @@ func (ctx *Context) RemoteAddr() string {
 	return addr
 }
 
-const (
-	headerContentType = "Content-Type"
-	contentTypeJSON   = "application/json; charset=UTF-8"
-	contentTypeHTML   = "text/html; charset=UTF-8"
-)
-
-// HTML renders the HTML with default template set.
-func (ctx *Context) HTML(status int, name string, data interface{}) {
-	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
-	ctx.Resp.WriteHeader(status)
-	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
-		panic("Context.HTML:" + err.Error())
-	}
-}
-
+// Deprecated: use web.JSON instead
 func (ctx *Context) JSON(status int, data interface{}) {
-	ctx.Resp.Header().Set(headerContentType, contentTypeJSON)
-	ctx.Resp.WriteHeader(status)
-	enc := json.NewEncoder(ctx.Resp)
-	if Env != PROD {
-		enc.SetIndent("", "  ")
-	}
-	if err := enc.Encode(data); err != nil {
-		panic("Context.JSON: " + err.Error())
-	}
+	JSON(ctx.Resp, status, data)
 }
 
 // Redirect sends a redirect response
@@ -125,7 +102,7 @@ func (ctx *Context) parseForm() {
 		return
 	}
 
-	contentType := ctx.Req.Header.Get(headerContentType)
+	contentType := ctx.Req.Header.Get(HeaderContentType)
 	if (ctx.Req.Method == "POST" || ctx.Req.Method == "PUT") &&
 		len(contentType) > 0 && strings.Contains(contentType, "multipart/form-data") {
 		_ = ctx.Req.ParseMultipartForm(MaxMemory)

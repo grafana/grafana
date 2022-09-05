@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -21,6 +23,10 @@ var (
 	//go:embed *.html
 	html embed.FS
 )
+
+type Dynamic struct {
+	*template.Template
+}
 
 func Index() *template.Template {
 	return parse("index")
@@ -51,6 +57,8 @@ const (
 )
 
 func (s Static) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	web.SetContentType(w, web.TextHTML)
+
 	data, err := html.Open(string(s))
 	if err != nil {
 		panic(err)
