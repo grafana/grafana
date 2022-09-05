@@ -158,7 +158,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   valueList: css`
     margin-right: ${theme.spacing.sm};
-    max-width: 900px;
     resize: horizontal;
   `,
   valueListWrapper: css`
