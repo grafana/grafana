@@ -11,7 +11,7 @@ export function formatString(str: string): string {
 /*
  * Determines if a value is an object
  */
-export function isObject(value: any): boolean {
+export function isObject(value: unknown): boolean {
   const type = typeof value;
   return !!value && type === 'object';
 }

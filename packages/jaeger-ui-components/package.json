@@ -47,7 +47,7 @@
     "lru-memoize": "^1.1.0",
     "memoize-one": "6.0.0",
     "moment": "2.29.4",
-    "moment-timezone": "0.5.34",
+    "moment-timezone": "0.5.35",
     "prop-types": "15.8.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",

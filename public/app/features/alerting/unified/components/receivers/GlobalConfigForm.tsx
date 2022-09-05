@@ -14,6 +14,7 @@ import { globalConfigOptions } from '../../utils/cloud-alertmanager-notifier-typ
 import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { omitEmptyValues } from '../../utils/receiver-form';
+import { initialAsyncRequestState } from '../../utils/redux';
 
 import { OptionField } from './form/fields/OptionField';
 
@@ -30,7 +31,9 @@ const defaultValues: FormValues = {
 
 export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) => {
   const dispatch = useDispatch();
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
+
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
   const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
   const styles = useStyles2(getStyles);

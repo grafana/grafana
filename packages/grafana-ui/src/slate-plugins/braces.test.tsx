@@ -5,12 +5,6 @@ import { Editor } from 'slate-react';
 
 import { BracesPlugin } from './braces';
 
-declare global {
-  interface Window {
-    KeyboardEvent: any;
-  }
-}
-
 describe('braces', () => {
   const handler = BracesPlugin().onKeyDown!;
   const nextMock = () => {};
