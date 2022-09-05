@@ -562,8 +562,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
-	// m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
-
 	// These endpoints are used for monitoring the Grafana instance
 	// and should not be redirected or rejected.
 	m.Use(hs.healthzHandler)

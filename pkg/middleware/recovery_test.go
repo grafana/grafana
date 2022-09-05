@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
@@ -48,21 +46,15 @@ func panicHandler(c *models.ReqContext) {
 func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
-		cfg.ErrTemplateName = "error-template"
 		sc := &scenarioContext{
 			t:   t,
 			url: url,
 			cfg: cfg,
 		}
 
-		viewsPath, err := filepath.Abs("../../public/views")
-		require.NoError(t, err)
-
 		sc.m = web.New()
 		sc.m.UseMiddleware(Recovery(cfg))
-
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
 		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
 		sc.remoteCacheService = remotecache.NewFakeStore(t)

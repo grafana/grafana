@@ -32,7 +32,6 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 		cfg := setting.NewCfg()
 
 		m := web.New()
-		m.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
 		m.Use(getContextHandler(t, cfg, nil, nil, nil, nil).Middleware)
 		m.Get("/foo", RateLimit(rps, burst, func() time.Time { return currentTime }), defaultHandler)
 

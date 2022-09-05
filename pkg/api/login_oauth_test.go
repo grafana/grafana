@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"path/filepath"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -43,11 +42,6 @@ func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
 
 	m := web.New()
 	m.Use(getContextHandler(t, cfg).Middleware)
-	viewPath, err := filepath.Abs("../../public/views")
-	require.NoError(t, err)
-
-	m.UseMiddleware(web.Renderer(viewPath, "[[", "]]"))
-
 	m.Get("/login/:name", hs.OAuthLogin)
 	return m
 }

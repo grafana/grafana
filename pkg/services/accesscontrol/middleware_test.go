@@ -60,7 +60,6 @@ func TestMiddleware(t *testing.T) {
 			}
 
 			server := web.New()
-			server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
 
 			server.Use(contextProvider())
 			server.Use(accesscontrol.Middleware(test.ac)(fallback, test.evaluator))
