@@ -309,7 +309,7 @@ func (s *Service) httpClientOptions(ds *models.DataSource) (*sdkhttpclient.Optio
 	}
 	opts := &sdkhttpclient.Options{
 		Timeouts: timeouts,
-		Headers:  s.getCustomHeaders(ds.JsonData, s.DecryptedValues(ds)),
+		Headers:  GetCustomHeaders(ds.JsonData, s.DecryptedValues(ds), s.cfg),
 		Labels: map[string]string{
 			"datasource_name": ds.Name,
 			"datasource_uid":  ds.Uid,
@@ -438,16 +438,17 @@ func (s *Service) getTimeout(ds *models.DataSource) time.Duration {
 	return time.Duration(timeout) * time.Second
 }
 
-// getCustomHeaders returns a map with all the to be set headers
+// GetCustomHeaders returns a map with all the to be set headers
 // The map key represents the HeaderName and the value represents this header's value
-func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues map[string]string) map[string]string {
+func GetCustomHeaders(jsonData *simplejson.Json, decryptedValues map[string]string, cfg *setting.Cfg) map[string]string {
 	headers := make(map[string]string)
 	if jsonData == nil {
 		return headers
 	}
 
-	index := 1
+	index := 0
 	for {
+		index++
 		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
 		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
 
@@ -457,10 +458,16 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 			break
 		}
 
+		// skip a header with name that corresponds to auth proxy header's name
+		// to make sure that data source proxy isn't used to circumvent auth proxy.
+		// For more context take a look at CVE-2022-35957
+		if cfg.AuthProxyEnabled && http.CanonicalHeaderKey(key) == http.CanonicalHeaderKey(cfg.AuthProxyHeaderName) {
+			continue
+		}
+
 		if val, ok := decryptedValues[headerValueSuffix]; ok {
 			headers[key] = val
 		}
-		index++
 	}
 
 	return headers

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -64,7 +65,7 @@ func setup() *testContext {
 		dataSourceCache:        dc,
 		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
-		queryService:           query.ProvideService(nil, dc, nil, rv, sc, pc, tc),
+		queryService:           query.ProvideService(setting.NewCfg(), dc, nil, rv, sc, pc, tc),
 	}
 }
 
