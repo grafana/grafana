@@ -130,6 +130,7 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 
 	for _, tc := range tcs {
 		sc := setupHTTPServerWithCfg(t, true, &setting.Cfg{
+			RBACEnabled:                      true,
 			PluginAdminEnabled:               tc.pluginAdminEnabled,
 			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
 		setInitCtxSignedInViewer(sc.initCtx)
