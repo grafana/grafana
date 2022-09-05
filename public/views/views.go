@@ -37,7 +37,7 @@ func Error() *template.Template {
 }
 
 func parse(name string) *template.Template {
-	src, err := html.ReadFile(name + "html")
+	src, err := html.ReadFile(name + ".html")
 	if err != nil {
 		src = fallback[name]
 	}
@@ -59,7 +59,7 @@ const (
 func (s Static) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	web.SetContentType(w, web.TextHTML)
 
-	data, err := html.Open(string(s))
+	data, err := html.Open(string(s) + ".html")
 	if err != nil {
 		panic(err)
 	}
