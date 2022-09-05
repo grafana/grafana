@@ -14,10 +14,10 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:2976628669": [
       [0, 26, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/braces.test.tsx:2468965098": [
+    "packages/grafana-ui/src/slate-plugins/braces.test.tsx:823049948": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/clear.test.tsx:483574591": [
+    "packages/grafana-ui/src/slate-plugins/clear.test.tsx:3927593033": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
     "packages/grafana-ui/src/slate-plugins/runner.test.tsx:1123710822": [

@@ -15,7 +15,7 @@ describe('clear', () => {
       key: 'k',
       ctrlKey: true,
     });
-    handler(event, editor.instance() as any, () => {});
+    handler(event as any, editor.instance(), () => {});
     expect(Plain.serialize(editor.instance().value)).toEqual('');
   });
 
@@ -26,7 +26,7 @@ describe('clear', () => {
       key: 'k',
       ctrlKey: true,
     });
-    handler(event, editor.instance() as any, () => {});
+    handler(event as any, editor.instance(), () => {});
     expect(Plain.serialize(editor.instance().value)).toEqual('');
   });
 
@@ -37,7 +37,8 @@ describe('clear', () => {
       key: 'k',
       ctrlKey: true,
     });
-    handler(event, editor.instance().moveForward(4) as any, () => {});
+    editor.instance().moveForward(4);
+    handler(event as any, editor.instance(), () => {});
     expect(Plain.serialize(editor.instance().value)).toEqual('foo ');
   });
 });
