@@ -1,23 +1,35 @@
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import React from 'react';
 
-import { toUtc } from '@grafana/data';
+import { EventBusSrv, TimeRange, toUtc } from '@grafana/data';
+import { setBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { ContextSrv } from 'app/core/services/context_srv';
 
-import { LokiDatasource } from '../datasource';
+import { createLokiDatasource } from '../mocks';
 import { LokiQuery } from '../types';
 
 import { LokiQueryEditor } from './LokiQueryEditor';
 
-const createMockRequestRange = (from: string, to: string) => {
+const createMockRequestRange = (from: string, to: string): TimeRange => {
   return {
     from: toUtc(from, 'YYYY-MM-DD'),
     to: toUtc(to, 'YYYY-MM-DD'),
+    raw: {
+      from: toUtc(from, 'YYYY-MM-DD'),
+      to: toUtc(to, 'YYYY-MM-DD'),
+    },
   };
 };
 
 const setup = (propOverrides?: object) => {
-  const datasourceMock: unknown = {};
-  const datasource: LokiDatasource = datasourceMock as LokiDatasource;
+  const mockTemplateSrv: TemplateSrv = {
+    getVariables: jest.fn(),
+    replace: jest.fn(),
+    containsTemplate: jest.fn(),
+    updateTimeRange: jest.fn(),
+  };
+  const datasource = createLokiDatasource(mockTemplateSrv);
   const onRunQuery = jest.fn();
   const onChange = jest.fn();
 
@@ -29,7 +41,7 @@ const setup = (propOverrides?: object) => {
 
   const range = createMockRequestRange('2020-01-01', '2020-01-02');
 
-  const props: any = {
+  const props = {
     datasource,
     onChange,
     onRunQuery,
@@ -39,26 +51,22 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<LokiQueryEditor {...props} />);
-  const instance = wrapper.instance();
-
-  return {
-    instance,
-    wrapper,
-  };
+  render(<LokiQueryEditor {...props} />);
 };
 
-describe('Render LokiQueryEditor with legend', () => {
-  it('should render', () => {
-    const { wrapper } = setup();
-    expect(wrapper).toMatchSnapshot();
+beforeAll(() => {
+  const mockedBackendSrv = new BackendSrv({
+    fromFetch: jest.fn(),
+    appEvents: new EventBusSrv(),
+    contextSrv: new ContextSrv(),
+    logout: jest.fn(),
   });
 
-  it('should update timerange', () => {
-    const { wrapper } = setup();
-    wrapper.setProps({
-      range: createMockRequestRange('2019-01-01', '2020-01-02'),
-    });
-    expect(wrapper).toMatchSnapshot();
+  setBackendSrv(mockedBackendSrv);
+});
+
+describe('LokiQueryEditor', () => {
+  it('should render without throwing', () => {
+    expect(() => setup()).not.toThrow();
   });
 });
