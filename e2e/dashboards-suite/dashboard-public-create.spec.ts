@@ -84,7 +84,7 @@ e2e.scenario({
   itName: 'Disable a public dashboard',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: false,
+  skipScenario: true,
   scenario: () => {
     // Opening a dashboard without template variables
     e2e().intercept('/api/ds/query').as('query');

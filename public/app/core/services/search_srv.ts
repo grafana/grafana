@@ -4,7 +4,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
 import { SECTION_STORAGE_KEY } from 'app/features/search/constants';
-import { DashboardSection, DashboardSearchItemType, DashboardSearchHit, SearchLayout } from 'app/features/search/types';
+import {
+  DashboardSection,
+  DashboardSearchItemType,
+  DashboardSearchItem,
+  SearchLayout,
+} from 'app/features/search/types';
 import { hasFilters } from 'app/features/search/utils';
 
 import { backendSrv } from './backend_srv';
@@ -30,16 +35,22 @@ export class SearchSrv {
     });
   }
 
-  private queryForRecentDashboards(): Promise<DashboardSearchHit[]> {
-    const dashIds: number[] = take(impressionSrv.getDashboardOpened(), 30);
-    if (dashIds.length === 0) {
-      return Promise.resolve([]);
-    }
+  private queryForRecentDashboards(): Promise<DashboardSearchItem[]> {
+    return new Promise((resolve) => {
+      impressionSrv.getDashboardOpened().then((uids) => {
+        const dashUIDs: string[] = take(uids, 30);
+        if (dashUIDs.length === 0) {
+          return resolve([]);
+        }
 
-    return backendSrv.search({ dashboardIds: dashIds }).then((result) => {
-      return dashIds
-        .map((orderId) => result.find((result) => result.id === orderId))
-        .filter((hit) => hit && !hit.isStarred) as DashboardSearchHit[];
+        backendSrv.search({ dashboardUIDs: dashUIDs }).then((result) => {
+          return resolve(
+            dashUIDs
+              .map((orderId) => result.find((result) => result.uid === orderId))
+              .filter((hit) => hit && !hit.isStarred) as DashboardSearchItem[]
+          );
+        });
+      });
     });
   }
 
@@ -99,7 +110,7 @@ export class SearchSrv {
     });
   }
 
-  private handleSearchResult(sections: Sections, results: DashboardSearchHit[]): any {
+  private handleSearchResult(sections: Sections, results: DashboardSearchItem[]): any {
     if (results.length === 0) {
       return sections;
     }
@@ -107,8 +118,7 @@ export class SearchSrv {
     // create folder index
     for (const hit of results) {
       if (hit.type === 'dash-folder') {
-        sections[hit.id] = {
-          id: hit.id,
+        sections[hit.uid!] = {
           uid: hit.uid,
           title: hit.title,
           expanded: false,
@@ -126,11 +136,10 @@ export class SearchSrv {
         continue;
       }
 
-      let section = sections[hit.folderId || 0];
+      let section = sections[hit.folderUid || 0];
       if (!section) {
-        if (hit.folderId) {
+        if (hit.folderUid) {
           section = {
-            id: hit.folderId,
             uid: hit.folderUid,
             title: hit.folderTitle,
             url: hit.folderUrl,
@@ -141,7 +150,7 @@ export class SearchSrv {
           };
         } else {
           section = {
-            id: 0,
+            uid: '',
             title: 'General',
             items: [],
             icon: 'folder-open',
@@ -150,7 +159,7 @@ export class SearchSrv {
           };
         }
         // add section
-        sections[hit.folderId || 0] = section;
+        sections[hit.folderUid || 0] = section;
       }
 
       section.expanded = true;

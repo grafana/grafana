@@ -127,27 +127,41 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		d.logger.Debug("alertmanagers found in the configuration", "alertmanagers", cfg.Alertmanagers)
+		// Avoid logging sensitive data
+		var redactedAMs []string
+		for _, am := range cfg.Alertmanagers {
+			parsedAM, err := url.Parse(am)
+			if err != nil {
+				d.logger.Error("failed to parse alertmanager string",
+					"org", cfg.OrgID,
+					"err", err)
+				continue
+			}
+			redactedAMs = append(redactedAMs, parsedAM.Redacted())
+		}
+
+		d.logger.Debug("alertmanagers found in the configuration", "alertmanagers", redactedAMs)
 
 		// We have a running sender, check if we need to apply a new config.
+		amHash := cfg.AsSHA256()
 		if ok {
-			if d.externalAlertmanagersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
-				d.logger.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+			if d.externalAlertmanagersCfgHash[cfg.OrgID] == amHash {
+				d.logger.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 				continue
 			}
 
-			d.logger.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+			d.logger.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 			err := existing.ApplyConfig(cfg)
 			if err != nil {
 				d.logger.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
 				continue
 			}
-			d.externalAlertmanagersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+			d.externalAlertmanagersCfgHash[cfg.OrgID] = amHash
 			continue
 		}
 
 		// No sender and have Alertmanager(s) to send to - start a new one.
-		d.logger.Info("creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
+		d.logger.Info("creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
 		s, err := NewExternalAlertmanagerSender()
 		if err != nil {
 			d.logger.Error("unable to start the sender", "err", err, "org", cfg.OrgID)
@@ -163,7 +177,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		d.externalAlertmanagersCfgHash[cfg.OrgID] = cfg.AsSHA256()
+		d.externalAlertmanagersCfgHash[cfg.OrgID] = amHash
 	}
 
 	sendersToStop := map[int64]*ExternalAlertmanager{}

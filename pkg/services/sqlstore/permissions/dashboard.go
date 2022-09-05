@@ -6,12 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type DashboardPermissionFilter struct {
-	OrgRole         models.RoleType
+	OrgRole         org.RoleType
 	Dialect         migrator.Dialect
 	UserId          int64
 	OrgId           int64
@@ -19,13 +21,13 @@ type DashboardPermissionFilter struct {
 }
 
 func (d DashboardPermissionFilter) Where() (string, []interface{}) {
-	if d.OrgRole == models.ROLE_ADMIN {
+	if d.OrgRole == org.RoleAdmin {
 		return "", nil
 	}
 
 	okRoles := []interface{}{d.OrgRole}
-	if d.OrgRole == models.ROLE_EDITOR {
-		okRoles = append(okRoles, models.ROLE_VIEWER)
+	if d.OrgRole == org.RoleEditor {
+		okRoles = append(okRoles, org.RoleViewer)
 	}
 
 	falseStr := d.Dialect.BooleanStr(false)
@@ -78,13 +80,13 @@ func (d DashboardPermissionFilter) Where() (string, []interface{}) {
 }
 
 type AccessControlDashboardPermissionFilter struct {
-	User             *models.SignedInUser
+	User             *user.SignedInUser
 	dashboardActions []string
 	folderActions    []string
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the models.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *models.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
 	needEdit := permissionLevel > models.PERMISSION_VIEW
 	folderActions := []string{dashboards.ActionFoldersRead}
 	var dashboardActions []string

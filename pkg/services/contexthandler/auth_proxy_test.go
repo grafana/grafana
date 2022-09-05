@@ -52,7 +52,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
 	require.True(t, authEnabled)
 
-	require.Equal(t, userID, ctx.SignedInUser.UserId)
+	require.Equal(t, userID, ctx.SignedInUser.UserID)
 	require.True(t, ctx.IsSignedIn)
 
 	i, err := svc.RemoteCache.Get(context.Background(), key)
@@ -99,9 +99,9 @@ func (f *FakeGetSignUserStore) GetSignedInUser(ctx context.Context, query *model
 		return user.ErrUserNotFound
 	}
 
-	query.Result = &models.SignedInUser{
-		UserId: userID,
-		OrgId:  orgID,
+	query.Result = &user.SignedInUser{
+		UserID: userID,
+		OrgID:  orgID,
 	}
 	return nil
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +30,7 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 			Path:  cmd.Path,
 		}
 		service := &fakeShortURLService{
-			createShortURLFunc: func(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error) {
+			createShortURLFunc: func(ctx context.Context, user *user.SignedInUser, path string) (*models.ShortUrl, error) {
 				return createResp, nil
 			},
 		}
@@ -64,7 +65,7 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: testOrgID, UserID: testUserID}
 
 			return hs.createShortURL(c)
 		})
@@ -76,14 +77,14 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 }
 
 type fakeShortURLService struct {
-	createShortURLFunc func(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error)
+	createShortURLFunc func(ctx context.Context, user *user.SignedInUser, path string) (*models.ShortUrl, error)
 }
 
-func (s *fakeShortURLService) GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error) {
+func (s *fakeShortURLService) GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*models.ShortUrl, error) {
 	return nil, nil
 }
 
-func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error) {
+func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *user.SignedInUser, path string) (*models.ShortUrl, error) {
 	if s.createShortURLFunc != nil {
 		return s.createShortURLFunc(ctx, user, path)
 	}

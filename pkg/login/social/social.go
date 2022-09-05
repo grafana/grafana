@@ -5,8 +5,8 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"context"
@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -311,10 +311,10 @@ type groupStruct struct {
 	Groups []string `json:"groups"`
 }
 
-func (s *SocialBase) extractRole(rawJSON []byte, groups []string) (models.RoleType, error) {
+func (s *SocialBase) extractRole(rawJSON []byte, groups []string) (org.RoleType, error) {
 	if s.roleAttributePath == "" {
 		if s.autoAssignOrgRole != "" {
-			return models.RoleType(s.autoAssignOrgRole), nil
+			return org.RoleType(s.autoAssignOrgRole), nil
 		}
 
 		return "", nil
@@ -322,13 +322,13 @@ func (s *SocialBase) extractRole(rawJSON []byte, groups []string) (models.RoleTy
 
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
 	if err == nil && role != "" {
-		return models.RoleType(role), nil
+		return org.RoleType(role), nil
 	}
 
 	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
 		if role, err := s.searchJSONForStringAttr(
 			s.roleAttributePath, groupBytes); err == nil && role != "" {
-			return models.RoleType(role), nil
+			return org.RoleType(role), nil
 		}
 	}
 
@@ -388,7 +388,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	}
 
 	if info.TlsClientCa != "" {
-		caCert, err := ioutil.ReadFile(info.TlsClientCa)
+		caCert, err := os.ReadFile(info.TlsClientCa)
 		if err != nil {
 			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCa: %w", err)

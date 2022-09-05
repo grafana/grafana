@@ -1,5 +1,5 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
-import { EMPTY, from, merge, Observable, of, throwError } from 'rxjs';
+import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
@@ -45,6 +45,7 @@ import {
   errorRateMetric,
   defaultTableFilter,
 } from './graphTransform';
+import TempoLanguageProvider from './language_provider';
 import {
   transformTrace,
   transformTraceList,
@@ -53,7 +54,7 @@ import {
 } from './resultTransformer';
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
+export type TempoQueryType = 'traceql' | 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -76,7 +77,7 @@ export interface TempoQuery extends DataQuery {
   query: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
-  search: string;
+  search?: string;
   queryType: TempoQueryType;
   serviceName?: string;
   spanName?: string;
@@ -90,7 +91,7 @@ interface SearchQueryParams {
   minDuration?: string;
   maxDuration?: string;
   limit?: number;
-  tags: string;
+  tags?: string;
   start?: number;
   end?: number;
 }
@@ -111,6 +112,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   };
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
+  languageProvider: TempoLanguageProvider;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -122,6 +124,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     this.search = instanceSettings.jsonData.search;
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.lokiSearch = instanceSettings.jsonData.lokiSearch;
+    this.languageProvider = new TempoLanguageProvider(this);
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -333,7 +336,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async metadataRequest(url: string, params = {}) {
-    return await this._request(url, params, { method: 'GET', hideFromInspector: true }).toPromise();
+    return await lastValueFrom(this._request(url, params, { method: 'GET', hideFromInspector: true }));
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -350,7 +353,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-    const response = await getBackendSrv().fetch<any>(options).toPromise();
+    const response = await lastValueFrom(getBackendSrv().fetch<any>(options));
 
     if (response?.ok) {
       return { status: 'success', message: 'Data source is working' };
@@ -417,16 +420,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     return searchQuery;
-  }
-
-  async getServiceGraphLabels() {
-    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
-    return ds.getTagKeys!();
-  }
-
-  async getServiceGraphLabelValues(key: string) {
-    const ds = await getDatasourceSrv().get(this.serviceMap!.datasourceUid);
-    return ds.getTagValues!({ key });
   }
 
   // Get linked loki search datasource. Fall back to legacy loki search/trace to logs config
