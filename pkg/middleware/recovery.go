@@ -19,8 +19,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"runtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -54,7 +54,7 @@ func stack(skip int) []byte {
 			// We can ignore the gosec G304 warning on this one because `file`
 			// comes from the runtime.Caller() function.
 			// nolint:gosec
-			data, err := ioutil.ReadFile(file)
+			data, err := os.ReadFile(file)
 			if err != nil {
 				continue
 			}

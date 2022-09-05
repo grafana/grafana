@@ -7,6 +7,8 @@ import (
 )
 
 type fakePluginManager struct {
+	plugins.Manager
+
 	plugins map[string]fakePlugin
 }
 
@@ -15,7 +17,7 @@ type fakePlugin struct {
 	version  string
 }
 
-func (pm *fakePluginManager) Add(_ context.Context, pluginID, version string) error {
+func (pm *fakePluginManager) Add(_ context.Context, pluginID, version string, _ plugins.CompatOpts) error {
 	pm.plugins[pluginID] = fakePlugin{
 		pluginID: pluginID,
 		version:  version,
@@ -57,7 +59,7 @@ type fakeRendererManager struct {
 	plugins.RendererManager
 }
 
-func (ps *fakeRendererManager) Renderer() *plugins.Plugin {
+func (ps *fakeRendererManager) Renderer(_ context.Context) *plugins.Plugin {
 	return nil
 }
 

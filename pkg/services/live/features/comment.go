@@ -33,7 +33,7 @@ func (h *CommentHandler) OnSubscribe(ctx context.Context, user *user.SignedInUse
 	}
 	objectType := parts[0]
 	objectID := parts[1]
-	ok, err := h.permissionChecker.CheckReadPermissions(ctx, user.OrgId, user, objectType, objectID)
+	ok, err := h.permissionChecker.CheckReadPermissions(ctx, user.OrgID, user, objectType, objectID)
 	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}

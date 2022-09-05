@@ -27,9 +27,18 @@ var routeOperationNameKey = contextKey{}
 // Implements routing.RegisterNamedMiddleware.
 func ProvideRouteOperationName(name string) web.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-		ctx := context.WithValue(c.Req.Context(), routeOperationNameKey, name)
-		c.Req = c.Req.WithContext(ctx)
+		c.Req = addRouteNameToContext(c.Req, name)
 	}
+}
+
+func addRouteNameToContext(req *http.Request, operationName string) *http.Request {
+	// don't set route name if it's set
+	if _, exists := routeOperationName(req); exists {
+		return req
+	}
+
+	ctx := context.WithValue(req.Context(), routeOperationNameKey, operationName)
+	return req.WithContext(ctx)
 }
 
 var unnamedHandlers = []struct {
@@ -72,7 +81,7 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			rw := web.Rw(w, req)
 
 			wireContext := otel.GetTextMapPropagator().Extract(req.Context(), propagation.HeaderCarrier(req.Header))
-			ctx, span := tracer.Start(req.Context(), fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
+			ctx, span := tracer.Start(wireContext, fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path), trace.WithLinks(trace.LinkFromContext(wireContext)))
 
 			req = req.WithContext(ctx)
 			next.ServeHTTP(w, req)

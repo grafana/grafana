@@ -1,10 +1,12 @@
 package accesscontrol
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 	"strconv"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -27,8 +29,8 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 }
 
 func authorize(c *models.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
-	injected, err := evaluator.MutateScopes(c.Req.Context(), ScopeInjector(ScopeParams{
-		OrgID:     c.OrgId,
+	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
+		OrgID:     c.OrgID,
 		URLParams: web.Params(c.Req),
 	}))
 	if err != nil {
@@ -50,7 +52,7 @@ func deny(c *models.ReqContext, evaluator Evaluator, err error) {
 	} else {
 		c.Logger.Info(
 			"Access denied",
-			"userID", c.UserId,
+			"userID", c.UserID,
 			"accessErrorID", id,
 			"permissions", evaluator.GoString(),
 		)
@@ -92,7 +94,7 @@ func newID() string {
 
 type OrgIDGetter func(c *models.ReqContext) (int64, error)
 type userCache interface {
-	GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error
+	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
 func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handler, OrgIDGetter, Evaluator) web.Handler {
@@ -110,18 +112,19 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 				return
 			}
 			if orgID == GlobalOrgID {
-				userCopy.OrgId = orgID
+				userCopy.OrgID = orgID
 				userCopy.OrgName = ""
 				userCopy.OrgRole = ""
 			} else {
-				query := models.GetSignedInUserQuery{UserId: c.UserId, OrgId: orgID}
-				if err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query); err != nil {
+				query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: orgID}
+				queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
+				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 					return
 				}
-				userCopy.OrgId = query.Result.OrgId
-				userCopy.OrgName = query.Result.OrgName
-				userCopy.OrgRole = query.Result.OrgRole
+				userCopy.OrgID = queryResult.OrgID
+				userCopy.OrgName = queryResult.OrgName
+				userCopy.OrgRole = queryResult.OrgRole
 			}
 
 			authorize(c, ac, &userCopy, evaluator)
@@ -147,13 +150,13 @@ func UseGlobalOrg(c *models.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
 }
 
-func LoadPermissionsMiddleware(ac AccessControl) web.Handler {
+func LoadPermissionsMiddleware(service Service) web.Handler {
 	return func(c *models.ReqContext) {
-		if ac.IsDisabled() {
+		if service.IsDisabled() {
 			return
 		}
 
-		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser,
+		permissions, err := service.GetUserPermissions(c.Req.Context(), c.SignedInUser,
 			Options{ReloadCache: false})
 		if err != nil {
 			c.JsonApiErr(http.StatusForbidden, "", err)
@@ -163,6 +166,27 @@ func LoadPermissionsMiddleware(ac AccessControl) web.Handler {
 		if c.SignedInUser.Permissions == nil {
 			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 		}
-		c.SignedInUser.Permissions[c.OrgId] = GroupScopesByAction(permissions)
+		c.SignedInUser.Permissions[c.OrgID] = GroupScopesByAction(permissions)
+	}
+}
+
+// scopeParams holds the parameters used to fill in scope templates
+type scopeParams struct {
+	OrgID     int64
+	URLParams map[string]string
+}
+
+// scopeInjector inject request params into the templated scopes. e.g. "settings:" + eval.Parameters(":id")
+func scopeInjector(params scopeParams) ScopeAttributeMutator {
+	return func(_ context.Context, scope string) ([]string, error) {
+		tmpl, err := template.New("scope").Parse(scope)
+		if err != nil {
+			return nil, err
+		}
+		var buf bytes.Buffer
+		if err = tmpl.Execute(&buf, params); err != nil {
+			return nil, err
+		}
+		return []string{buf.String()}, nil
 	}
 }

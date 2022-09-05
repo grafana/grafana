@@ -3,8 +3,8 @@ package plugins
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -22,7 +22,7 @@ func Build(ctx context.Context, grafanaDir string, p syncutil.WorkerPool, g *err
 	log.Printf("Building plugins in %q...", grafanaDir)
 
 	root := filepath.Join(grafanaDir, "plugins-bundled", "internal")
-	fis, err := ioutil.ReadDir(root)
+	fis, err := os.ReadDir(root)
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,7 @@ weight: 80
 
 # RBAC permissions, actions, and scopes
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
 
@@ -135,7 +135,7 @@ The following list contains role-based access control actions.
 | `users:create`                       | n/a                                                                                     | Create a user.                                                                                                                                                                                   |
 | `users:delete`                       | `global.users:*` <br> `global.users:id:*`                                               | Delete a user.                                                                                                                                                                                   |
 | `users:disable`                      | `global.users:*` <br> `global.users:id:*`                                               | Disable a user.                                                                                                                                                                                  |
-| `users:enable`                       | `globa.users:*` <br> `global.users:id:*`                                                | Enable a user.                                                                                                                                                                                   |
+| `users:enable`                       | `global.users:*` <br> `global.users:id:*`                                               | Enable a user.                                                                                                                                                                                   |
 | `users:logout`                       | `global.users:*` <br> `global.users:id:*`                                               | Sign out a user.                                                                                                                                                                                 |
 | `users:read`                         | `global.users:*`                                                                        | Read or search user profiles.                                                                                                                                                                    |
 | `users:write`                        | `global.users:*` <br> `global.users:id:*`                                               | Update a user’s profile.                                                                                                                                                                         |

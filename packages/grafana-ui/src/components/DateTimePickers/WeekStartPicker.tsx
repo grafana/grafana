@@ -22,7 +22,7 @@ const weekStarts: Array<SelectableValue<string>> = [
   { value: 'monday', label: 'Monday' },
 ];
 
-export const WeekStartPicker: React.FC<Props> = (props) => {
+export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
 
   const onChangeWeekStart = useCallback(

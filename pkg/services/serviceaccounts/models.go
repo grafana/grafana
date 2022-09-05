@@ -64,6 +64,11 @@ type ServiceAccountDTO struct {
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
+type GetSATokensQuery struct {
+	OrgID            *int64 // optional filtering by org ID
+	ServiceAccountID *int64 // optional filtering by service account ID
+}
+
 type AddServiceAccountTokenCommand struct {
 	Name          string         `json:"name" binding:"Required"`
 	OrgId         int64          `json:"-"`
@@ -120,3 +125,8 @@ const (
 	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
 	FilterIncludeAll        ServiceAccountFilter = "all"
 )
+
+type Stats struct {
+	ServiceAccounts int64 `xorm:"serviceaccounts"`
+	Tokens          int64 `xorm:"serviceaccount_tokens"`
+}

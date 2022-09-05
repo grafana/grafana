@@ -56,7 +56,7 @@ type StandardSearchService struct {
 	cfg  *setting.Cfg
 	sql  *sqlstore.SQLStore
 	auth FutureAuthService // eventually injected from elsewhere
-	ac   accesscontrol.AccessControl
+	ac   accesscontrol.Service
 
 	logger         log.Logger
 	dashboardIndex *searchIndex
@@ -64,7 +64,11 @@ type StandardSearchService struct {
 	reIndexCh      chan struct{}
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.AccessControl) SearchService {
+func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSearchReadyResponse {
+	return s.dashboardIndex.isInitialized(ctx, orgId)
+}
+
+func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService, ac accesscontrol.Service) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -132,7 +136,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		}
 
 		usr = &user.SignedInUser{
-			OrgId:       orga.Id,
+			OrgID:       orga.Id,
 			OrgName:     orga.Name,
 			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
 			IsAnonymous: true,

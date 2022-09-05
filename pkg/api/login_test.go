@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -61,7 +60,7 @@ func fakeViewIndex(t *testing.T) {
 }
 
 func getBody(resp *httptest.ResponseRecorder) (string, error) {
-	responseData, err := ioutil.ReadAll(resp.Body)
+	responseData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -155,7 +154,7 @@ func TestLoginViewRedirect(t *testing.T) {
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
-			UserId: 10,
+			UserID: 10,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -572,7 +571,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
-			UserId: 10,
+			UserID: 10,
 		}
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)

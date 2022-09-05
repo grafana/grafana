@@ -21,7 +21,7 @@ func BuildDocker(c *cli.Context) error {
 	}
 
 	useUbuntu := c.Bool("ubuntu")
-	verMode, err := config.GetVersion(metadata.ReleaseMode)
+	verMode, err := config.GetVersion(metadata.ReleaseMode.Mode)
 	if err != nil {
 		return err
 	}

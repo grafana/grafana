@@ -9,13 +9,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationUserStarsDataAccess(t *testing.T) {
+type getStore func(*sqlstore.SQLStore) store
+
+func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Testing User Stars Data Access", func(t *testing.T) {
 		ss := sqlstore.InitTestDB(t)
-		starStore := sqlStore{db: ss}
+		starStore := fn(ss)
 
 		t.Run("Given saved star", func(t *testing.T) {
 			cmd := star.StarDashboardCommand{
@@ -25,14 +27,14 @@ func TestIntegrationUserStarsDataAccess(t *testing.T) {
 			err := starStore.Insert(context.Background(), &cmd)
 			require.NoError(t, err)
 
-			t.Run("IsStarredByUser should return true when starred", func(t *testing.T) {
+			t.Run("Get should return true when starred", func(t *testing.T) {
 				query := star.IsStarredByUserQuery{UserID: 12, DashboardID: 10}
 				isStarred, err := starStore.Get(context.Background(), &query)
 				require.NoError(t, err)
 				require.True(t, isStarred)
 			})
 
-			t.Run("IsStarredByUser should return false when not starred", func(t *testing.T) {
+			t.Run("Get should return false when not starred", func(t *testing.T) {
 				query := star.IsStarredByUserQuery{UserID: 12, DashboardID: 12}
 				isStarred, err := starStore.Get(context.Background(), &query)
 				require.NoError(t, err)
@@ -57,9 +59,33 @@ func TestIntegrationUserStarsDataAccess(t *testing.T) {
 			})
 		})
 
-		t.Run("delete by user", func(t *testing.T) {
-			err := starStore.DeleteByUser(context.Background(), 1)
+		t.Run("DeleteByUser should remove the star for user", func(t *testing.T) {
+			star1 := star.StarDashboardCommand{
+				DashboardID: 10,
+				UserID:      12,
+			}
+			err := starStore.Insert(context.Background(), &star1)
 			require.NoError(t, err)
+			star2 := star.StarDashboardCommand{
+				DashboardID: 11,
+				UserID:      12,
+			}
+			err = starStore.Insert(context.Background(), &star2)
+			require.NoError(t, err)
+			star3 := star.StarDashboardCommand{
+				DashboardID: 11,
+				UserID:      11,
+			}
+			err = starStore.Insert(context.Background(), &star3)
+			require.NoError(t, err)
+			err = starStore.DeleteByUser(context.Background(), 12)
+			require.NoError(t, err)
+			res, err := starStore.List(context.Background(), &star.GetUserStarsQuery{UserID: 12})
+			require.NoError(t, err)
+			require.Equal(t, 0, len(res.UserStars))
+			res, err = starStore.List(context.Background(), &star.GetUserStarsQuery{UserID: 11})
+			require.NoError(t, err)
+			require.Equal(t, 1, len(res.UserStars))
 		})
 	})
 }

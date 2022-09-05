@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -20,37 +19,37 @@ type Store interface {
 	SetUserResourcePermission(
 		ctx context.Context, orgID int64,
 		user accesscontrol.User,
-		cmd types.SetResourcePermissionCommand,
-		hook types.UserResourceHookFunc,
+		cmd SetResourcePermissionCommand,
+		hook UserResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetTeamResourcePermission sets permission for managed team role on a resource
 	SetTeamResourcePermission(
 		ctx context.Context, orgID, teamID int64,
-		cmd types.SetResourcePermissionCommand,
-		hook types.TeamResourceHookFunc,
+		cmd SetResourcePermissionCommand,
+		hook TeamResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	// SetBuiltInResourcePermission sets permissions for managed builtin role on a resource
 	SetBuiltInResourcePermission(
 		ctx context.Context, orgID int64, builtinRole string,
-		cmd types.SetResourcePermissionCommand,
-		hook types.BuiltinResourceHookFunc,
+		cmd SetResourcePermissionCommand,
+		hook BuiltinResourceHookFunc,
 	) (*accesscontrol.ResourcePermission, error)
 
 	SetResourcePermissions(
 		ctx context.Context, orgID int64,
-		commands []types.SetResourcePermissionsCommand,
-		hooks types.ResourceHooks,
+		commands []SetResourcePermissionsCommand,
+		hooks ResourceHooks,
 	) ([]accesscontrol.ResourcePermission, error)
 
 	// GetResourcePermissions will return all permission for supplied resource id
-	GetResourcePermissions(ctx context.Context, orgID int64, query types.GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error)
+	GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error)
 }
 
 func New(
 	options Options, cfg *setting.Cfg, router routing.RouteRegister, license models.Licensing,
-	ac accesscontrol.AccessControl, store Store, sqlStore *sqlstore.SQLStore,
+	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
 ) (*Service, error) {
 	var permissions []string
 	actionSet := make(map[string]struct{})
@@ -74,12 +73,13 @@ func New(
 	s := &Service{
 		ac:          ac,
 		cfg:         cfg,
-		store:       store,
+		store:       NewStore(sqlStore),
 		options:     options,
 		license:     license,
 		permissions: permissions,
 		actions:     actions,
 		sqlStore:    sqlStore,
+		service:     service,
 	}
 
 	s.api = newApi(ac, router, s)
@@ -97,6 +97,7 @@ func New(
 type Service struct {
 	cfg     *setting.Cfg
 	ac      accesscontrol.AccessControl
+	service accesscontrol.Service
 	store   Store
 	api     *api
 	license models.Licensing
@@ -111,13 +112,13 @@ func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, r
 	var inheritedScopes []string
 	if s.options.InheritedScopesSolver != nil {
 		var err error
-		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgId, resourceID)
+		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgID, resourceID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return s.store.GetResourcePermissions(ctx, user.OrgId, types.GetResourcePermissionsQuery{
+	return s.store.GetResourcePermissions(ctx, user.OrgID, GetResourcePermissionsQuery{
 		User:              user,
 		Actions:           s.actions,
 		Resource:          s.options.Resource,
@@ -142,7 +143,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
-	return s.store.SetUserResourcePermission(ctx, orgID, user, types.SetResourcePermissionCommand{
+	return s.store.SetUserResourcePermission(ctx, orgID, user, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.options.Resource,
@@ -165,7 +166,7 @@ func (s *Service) SetTeamPermission(ctx context.Context, orgID, teamID int64, re
 		return nil, err
 	}
 
-	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, types.SetResourcePermissionCommand{
+	return s.store.SetTeamResourcePermission(ctx, orgID, teamID, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.options.Resource,
@@ -188,7 +189,7 @@ func (s *Service) SetBuiltInRolePermission(ctx context.Context, orgID int64, bui
 		return nil, err
 	}
 
-	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, types.SetResourcePermissionCommand{
+	return s.store.SetBuiltInResourcePermission(ctx, orgID, builtInRole, SetResourcePermissionCommand{
 		Actions:           actions,
 		Permission:        permission,
 		Resource:          s.options.Resource,
@@ -205,7 +206,7 @@ func (s *Service) SetPermissions(
 		return nil, err
 	}
 
-	dbCommands := make([]types.SetResourcePermissionsCommand, 0, len(commands))
+	dbCommands := make([]SetResourcePermissionsCommand, 0, len(commands))
 	for _, cmd := range commands {
 		if cmd.UserID != 0 {
 			if err := s.validateUser(ctx, orgID, cmd.UserID); err != nil {
@@ -226,11 +227,11 @@ func (s *Service) SetPermissions(
 			return nil, err
 		}
 
-		dbCommands = append(dbCommands, types.SetResourcePermissionsCommand{
+		dbCommands = append(dbCommands, SetResourcePermissionsCommand{
 			User:        accesscontrol.User{ID: cmd.UserID},
 			TeamID:      cmd.TeamID,
 			BuiltinRole: cmd.BuiltinRole,
-			SetResourcePermissionCommand: types.SetResourcePermissionCommand{
+			SetResourcePermissionCommand: SetResourcePermissionCommand{
 				Actions:           actions,
 				Resource:          s.options.Resource,
 				ResourceID:        resourceID,
@@ -240,7 +241,7 @@ func (s *Service) SetPermissions(
 		})
 	}
 
-	return s.store.SetResourcePermissions(ctx, orgID, dbCommands, types.ResourceHooks{
+	return s.store.SetResourcePermissions(ctx, orgID, dbCommands, ResourceHooks{
 		User:        s.options.OnSetUser,
 		Team:        s.options.OnSetTeam,
 		BuiltInRole: s.options.OnSetBuiltInRole,
@@ -335,5 +336,5 @@ func (s *Service) declareFixedRoles() error {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return s.ac.DeclareFixedRoles(readerRole, writerRole)
+	return s.service.DeclareFixedRoles(readerRole, writerRole)
 }

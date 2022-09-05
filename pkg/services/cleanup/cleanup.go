@@ -3,7 +3,7 @@ package cleanup
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path"
 	"time"
@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -23,7 +24,8 @@ import (
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
 	shortURLService shorturls.Service, sqlstore *sqlstore.SQLStore, queryHistoryService queryhistory.Service,
-	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService) *CleanUpService {
+	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
+	loginAttemptService loginattempt.Service) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		ServerLockService:         serverLockService,
@@ -34,6 +36,7 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 		dashboardVersionService:   dashboardVersionService,
 		dashboardSnapshotService:  dashSnapSvc,
 		deleteExpiredImageService: deleteExpiredImageService,
+		loginAttemptService:       loginAttemptService,
 	}
 	return s
 }
@@ -48,6 +51,7 @@ type CleanUpService struct {
 	dashboardVersionService   dashver.Service
 	dashboardSnapshotService  dashboardsnapshots.Service
 	deleteExpiredImageService *image.DeleteExpiredService
+	loginAttemptService       loginattempt.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {
@@ -107,17 +111,23 @@ func (srv *CleanUpService) cleanUpTmpFolder(folder string) {
 		return
 	}
 
-	files, err := ioutil.ReadDir(folder)
+	files, err := os.ReadDir(folder)
 	if err != nil {
 		srv.log.Error("Problem reading dir", "folder", folder, "error", err)
 		return
 	}
 
-	var toDelete []os.FileInfo
+	var toDelete []fs.DirEntry
 	var now = time.Now()
 
 	for _, file := range files {
-		if srv.shouldCleanupTempFile(file.ModTime(), now) {
+		info, err := file.Info()
+		if err != nil {
+			srv.log.Error("Problem reading file", "folder", folder, "file", file, "error", err)
+			continue
+		}
+
+		if srv.shouldCleanupTempFile(info.ModTime(), now) {
 			toDelete = append(toDelete, file)
 		}
 	}
@@ -178,7 +188,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts(ctx context.Context) {
 	cmd := models.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
-	if err := srv.store.DeleteOldLoginAttempts(ctx, &cmd); err != nil {
+	if err := srv.loginAttemptService.DeleteOldLoginAttempts(ctx, &cmd); err != nil {
 		srv.log.Error("Problem deleting expired login attempts", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)

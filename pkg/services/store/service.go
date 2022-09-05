@@ -16,7 +16,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -41,8 +41,8 @@ const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
 
 var (
-	SystemBrandingReader = &user.SignedInUser{OrgId: ac.GlobalOrgID}
-	SystemBrandingAdmin  = &user.SignedInUser{OrgId: ac.GlobalOrgID}
+	SystemBrandingReader = &user.SignedInUser{OrgID: ac.GlobalOrgID}
+	SystemBrandingAdmin  = &user.SignedInUser{OrgID: ac.GlobalOrgID}
 )
 
 const MAX_UPLOAD_SIZE = 1 * 1024 * 1024 // 3MB
@@ -83,7 +83,7 @@ type StorageService interface {
 }
 
 type standardStorageService struct {
-	sql          *sqlstore.SQLStore
+	sql          db.DB
 	tree         *nestedTree
 	cfg          *GlobalStorageConfig
 	authService  storageAuthService
@@ -91,7 +91,7 @@ type standardStorageService struct {
 }
 
 func ProvideService(
-	sql *sqlstore.SQLStore,
+	sql db.DB,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	quotaService quota.Service,
@@ -242,7 +242,7 @@ func createSystemBrandingPathFilter() filestorage.PathFilter {
 }
 
 func newStandardStorageService(
-	sql *sqlstore.SQLStore,
+	sql db.DB,
 	globalRoots []storageRuntime,
 	initializeOrgStorages func(orgId int64) []storageRuntime,
 	authService storageAuthService,
@@ -273,7 +273,7 @@ func getOrgId(user *user.SignedInUser) int64 {
 		return ac.GlobalOrgID
 	}
 
-	return user.OrgId
+	return user.OrgID
 }
 
 func (s *standardStorageService) List(ctx context.Context, user *user.SignedInUser, path string) (*StorageListFrame, error) {
@@ -334,7 +334,7 @@ func (s *standardStorageService) Upload(ctx context.Context, user *user.SignedIn
 	grafanaStorageLogger.Info("uploading a file", "path", req.Path)
 
 	if !req.OverwriteExistingFile {
-		file, err := root.Store().Get(ctx, storagePath)
+		file, _, err := root.Store().Get(ctx, storagePath, &filestorage.GetFileOptions{WithContents: false})
 		if err != nil {
 			grafanaStorageLogger.Error("failed while checking file existence", "err", err, "path", req.Path)
 			return ErrUploadInternalError
@@ -488,7 +488,7 @@ func (s *standardStorageService) getWorkflowOptions(ctx context.Context, user *u
 	}
 
 	scope, _ := splitFirstSegment(path)
-	root, _ := s.tree.getRoot(user.OrgId, scope)
+	root, _ := s.tree.getRoot(user.OrgID, scope)
 	if root == nil {
 		return options, fmt.Errorf("can not read")
 	}

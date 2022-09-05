@@ -308,13 +308,13 @@ func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID in
 
 	builder := NewSqlBuilder(sqlStore.Cfg)
 	signedInUser := &user.SignedInUser{
-		UserId: 9999999999,
+		UserID: 9999999999,
 	}
 
 	if search.OrgId == 0 {
-		signedInUser.OrgId = 1
+		signedInUser.OrgID = 1
 	} else {
-		signedInUser.OrgId = search.OrgId
+		signedInUser.OrgID = search.OrgId
 	}
 
 	if len(string(search.UsersOrgRole)) > 0 {
@@ -323,7 +323,7 @@ func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID in
 		signedInUser.OrgRole = org.RoleViewer
 	}
 	if search.UserFromACL {
-		signedInUser.UserId = aclUserID
+		signedInUser.UserID = aclUserID
 	}
 
 	var res []*dashboardResponse

@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -21,12 +22,14 @@ func ProvideService(
 	userService user.Service,
 	quotaService quota.Service,
 	authInfoService login.AuthInfoService,
+	accessControl accesscontrol.Service,
 ) *Implementation {
 	s := &Implementation{
 		SQLStore:        sqlStore,
 		userService:     userService,
 		QuotaService:    quotaService,
 		AuthInfoService: authInfoService,
+		accessControl:   accessControl,
 	}
 	return s
 }
@@ -37,6 +40,7 @@ type Implementation struct {
 	AuthInfoService login.AuthInfoService
 	QuotaService    quota.Service
 	TeamSync        login.TeamSyncFunc
+	accessControl   accesscontrol.Service
 }
 
 // CreateUser creates inserts a new one.
@@ -126,9 +130,9 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 		if extUser.AuthModule == login.LDAPAuthModule && usr.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if errDisableUser := ls.SQLStore.DisableUser(ctx,
-				&models.DisableUserCommand{
-					UserId: cmd.Result.ID, IsDisabled: false}); errDisableUser != nil {
+			if errDisableUser := ls.userService.Disable(ctx,
+				&user.DisableUserCommand{
+					UserID: cmd.Result.ID, IsDisabled: false}); errDisableUser != nil {
 				return errDisableUser
 			}
 		}
@@ -176,12 +180,12 @@ func (ls *Implementation) DisableExternalUser(ctx context.Context, username stri
 	)
 
 	// Mark user as disabled in grafana db
-	disableUserCmd := &models.DisableUserCommand{
-		UserId:     userQuery.Result.UserId,
+	disableUserCmd := &user.DisableUserCommand{
+		UserID:     userQuery.Result.UserId,
 		IsDisabled: true,
 	}
 
-	if err := ls.SQLStore.DisableUser(ctx, disableUserCmd); err != nil {
+	if err := ls.userService.Disable(ctx, disableUserCmd); err != nil {
 		logger.Debug(
 			"Error disabling external user",
 			"user",
@@ -254,8 +258,8 @@ func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, e
 	return ls.AuthInfoService.UpdateAuthInfo(ctx, updateCmd)
 }
 
-func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
-	logger.Debug("Syncing organization roles", "id", user.ID, "extOrgRoles", extUser.OrgRoles)
+func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
+	logger.Debug("Syncing organization roles", "id", usr.ID, "extOrgRoles", extUser.OrgRoles)
 
 	// don't sync org roles if none is specified
 	if len(extUser.OrgRoles) == 0 {
@@ -263,7 +267,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 		return nil
 	}
 
-	orgsQuery := &models.GetUserOrgListQuery{UserId: user.ID}
+	orgsQuery := &models.GetUserOrgListQuery{UserId: usr.ID}
 	if err := ls.SQLStore.GetUserOrgList(ctx, orgsQuery); err != nil {
 		return err
 	}
@@ -280,7 +284,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 			deleteOrgIds = append(deleteOrgIds, org.OrgId)
 		} else if extRole != org.Role {
 			// update role
-			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.ID, Role: extRole}
+			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: usr.ID, Role: extRole}
 			if err := ls.SQLStore.UpdateOrgUser(ctx, cmd); err != nil {
 				return err
 			}
@@ -294,7 +298,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 		}
 
 		// add role
-		cmd := &models.AddOrgUserCommand{UserId: user.ID, Role: orgRole, OrgId: orgId}
+		cmd := &models.AddOrgUserCommand{UserId: usr.ID, Role: orgRole, OrgId: orgId}
 		err := ls.SQLStore.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
 			return err
@@ -304,12 +308,15 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 	// delete any removed org roles
 	for _, orgId := range deleteOrgIds {
 		logger.Debug("Removing user's organization membership as part of syncing with OAuth login",
-			"userId", user.ID, "orgId", orgId)
-		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.ID}
+			"userId", usr.ID, "orgId", orgId)
+		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: usr.ID}
 		if err := ls.SQLStore.RemoveOrgUser(ctx, cmd); err != nil {
 			if errors.Is(err, models.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserId, "orgId", cmd.OrgId)
 				continue
+			}
+			if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserId); err != nil {
+				logger.Warn("failed to delete permissions for user", "userID", cmd.UserId, "orgID", orgId)
 			}
 
 			return err
@@ -317,15 +324,15 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, user *user.User, ext
 	}
 
 	// update user's default org if needed
-	if _, ok := extUser.OrgRoles[user.OrgID]; !ok {
+	if _, ok := extUser.OrgRoles[usr.OrgID]; !ok {
 		for orgId := range extUser.OrgRoles {
-			user.OrgID = orgId
+			usr.OrgID = orgId
 			break
 		}
 
 		return ls.SQLStore.SetUsingOrg(ctx, &models.SetUsingOrgCommand{
-			UserId: user.ID,
-			OrgId:  user.OrgID,
+			UserId: usr.ID,
+			OrgId:  usr.OrgID,
 		})
 	}
 

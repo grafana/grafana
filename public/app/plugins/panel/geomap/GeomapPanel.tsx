@@ -35,6 +35,7 @@ import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { GeomapTooltip } from './GeomapTooltip';
 import { DebugOverlay } from './components/DebugOverlay';
 import { MeasureOverlay } from './components/MeasureOverlay';
+import { MeasureVectorLayer } from './components/MeasureVectorLayer';
 import { GeomapHoverPayload, GeomapLayerHover } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig, MARKERS_LAYER_ID } from './layers/data/markersLayer';
@@ -100,28 +101,6 @@ export class GeomapPanel extends Component<Props, State> {
 
   componentDidMount() {
     this.panelContext = this.context as PanelContext;
-    // TODO: Clean this approach up / potentially support multiple marker layers?
-    // See https://github.com/grafana/grafana/issues/51185 for more details.
-    setTimeout(() => {
-      for (const layer of this.layers) {
-        if (layer.options.type === MARKERS_LAYER_ID) {
-          const colorField = layer.options.config.style.color.field;
-          const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === colorField);
-          // initialize (not override) Standard Options min/max value with color field calc min/max
-          if (colorFieldData) {
-            this.props.onFieldConfigChange({
-              ...this.props.fieldConfig,
-              defaults: {
-                min: colorFieldData.state?.calcs?.min,
-                max: colorFieldData.state?.calcs?.max,
-                ...this.props.fieldConfig.defaults,
-              },
-            });
-            break;
-          }
-        }
-      }
-    }, 50);
   }
 
   componentWillUnmount() {
@@ -168,6 +147,12 @@ export class GeomapPanel extends Component<Props, State> {
   private doOptionsUpdate(selected: number) {
     const { options, onOptionsChange } = this.props;
     const layers = this.layers;
+    this.map?.getLayers().forEach((l) => {
+      if (l instanceof MeasureVectorLayer) {
+        this.map?.removeLayer(l);
+        this.map?.addLayer(l);
+      }
+    });
     onOptionsChange({
       ...options,
       basemap: layers[0].options,
@@ -249,6 +234,7 @@ export class GeomapPanel extends Component<Props, State> {
       });
     },
     reorder: (startIndex: number, endIndex: number) => {
+      // TODO look into reorder with respect to measure layer
       const result = Array.from(this.layers);
       const [removed] = result.splice(startIndex, 1);
       result.splice(endIndex, 0, removed);
@@ -276,31 +262,6 @@ export class GeomapPanel extends Component<Props, State> {
 
     if (options.controls !== oldOptions.controls) {
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
-    }
-
-    // TODO: Clean this approach up / potentially support multiple marker layers?
-    // See https://github.com/grafana/grafana/issues/51185 for more details.
-    for (const layer of options.layers) {
-      if (layer.type === MARKERS_LAYER_ID) {
-        const oldLayer = this.props.options.layers.find((lyr) => lyr.name === layer.name);
-        const newLayerColorField = layer.config.style.color.field;
-        const oldLayerColorField = oldLayer?.config.style.color.field;
-        if (layer.config.style.color.field && newLayerColorField !== oldLayerColorField) {
-          const colorFieldData = this.props.data.series[0].fields.find((field) => field.name === newLayerColorField);
-          if (colorFieldData) {
-            // override Standard Options min/max value with color field calc min/max
-            this.props.onFieldConfigChange({
-              ...this.props.fieldConfig,
-              defaults: {
-                ...this.props.fieldConfig.defaults,
-                min: colorFieldData.state?.calcs?.min,
-                max: colorFieldData.state?.calcs?.max,
-              },
-            });
-            break;
-          }
-        }
-      }
     }
   }
 
@@ -413,13 +374,13 @@ export class GeomapPanel extends Component<Props, State> {
     if (!this.map || this.state.ttipOpen) {
       return false;
     }
-    const mouse = evt.originalEvent as any;
+    const mouse = evt.originalEvent as MouseEvent;
     const pixel = this.map.getEventPixel(mouse);
     const hover = toLonLat(this.map.getCoordinateFromPixel(pixel));
 
     const { hoverPayload } = this;
-    hoverPayload.pageX = mouse.offsetX;
-    hoverPayload.pageY = mouse.offsetY;
+    hoverPayload.pageX = mouse.pageX;
+    hoverPayload.pageY = mouse.pageY;
     hoverPayload.point = {
       lat: hover[1],
       lon: hover[0],
@@ -483,7 +444,7 @@ export class GeomapPanel extends Component<Props, State> {
       });
     }
 
-    const found = layers.length ? true : false;
+    const found = Boolean(layers.length);
     this.mapDiv!.style.cursor = found ? 'pointer' : 'auto';
     return found;
   };
@@ -513,7 +474,6 @@ export class GeomapPanel extends Component<Props, State> {
       } else if (this.byName.has(newOptions.name)) {
         return false;
       }
-      console.log('Layer name changed', uid, '>>>', newOptions.name);
       this.byName.delete(uid);
 
       uid = newOptions.name;
@@ -579,7 +539,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     const UID = options.name;
-    const state: MapLayerState<any> = {
+    const state: MapLayerState<unknown> = {
       // UID, // unique name when added to the map (it may change and will need special handling)
       isBasemap,
       options,
@@ -603,7 +563,7 @@ export class GeomapPanel extends Component<Props, State> {
     return state;
   }
 
-  applyLayerFilter(handler: MapLayerHandler<any>, options: MapLayerOptions<any>): void {
+  applyLayerFilter(handler: MapLayerHandler<unknown>, options: MapLayerOptions<unknown>): void {
     if (handler.update) {
       let panelData = this.props.data;
       if (options.filterData) {
@@ -654,7 +614,7 @@ export class GeomapPanel extends Component<Props, State> {
             });
           }
         } else {
-          console.log('TODO, view requires special handling', v);
+          // TODO: view requires special handling
         }
       } else {
         coord = [v.lon ?? 0, v.lat ?? 0];
