@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -40,11 +39,10 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	coreFilter := c.Query("core")
 
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	canListNonCorePlugins := c.IsGrafanaAdmin || c.OrgRole == org.RoleAdmin ||
-		hasAccess(ac.ReqOrgOrGrafanaAdmin, ac.EvalAny(
-			ac.EvalPermission(datasources.ActionCreate),
-			ac.EvalPermission(plugins.ActionInstall),
-		))
+	canListNonCorePlugins := hasAccess(plugins.LegacyAdminAccessEvaluator(hs.Cfg), ac.EvalAny(
+		ac.EvalPermission(datasources.ActionCreate),
+		ac.EvalPermission(plugins.ActionInstall),
+	))
 
 	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
 	if err != nil {
@@ -71,7 +69,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		//  * anyone that can install a plugin
 		// Should be able to list this installed plugin:
 		//  * anyone that can edit its settings
-		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(ac.ReqOrgOrGrafanaAdmin,
+		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(plugins.LegacyAdminAccessEvaluator(hs.Cfg),
 			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}

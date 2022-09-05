@@ -142,10 +142,6 @@ var ReqViewer = func(c *models.ReqContext) bool {
 	return c.OrgRole.Includes(org.RoleViewer)
 }
 
-var ReqOrgOrGrafanaAdmin = func(c *models.ReqContext) bool {
-	return c.OrgRole == org.RoleAdmin || c.IsGrafanaAdmin
-}
-
 var ReqOrgAdmin = func(c *models.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin
 }

@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,6 +21,14 @@ var (
 	// Protects access to the Configuration > Plugins page
 	AdminAccessEvaluator = ac.EvalAny(ac.EvalPermission(ActionWrite), ac.EvalPermission(ActionInstall))
 )
+
+func LegacyAdminAccessEvaluator(cfg *setting.Cfg) func(rc *models.ReqContext) bool {
+	// Legacy handler that protects access to the Configuration > Plugins page
+	return func(rc *models.ReqContext) bool {
+		return rc.OrgRole == org.RoleAdmin ||
+			cfg.PluginAdminEnabled && !cfg.PluginAdminExternalManageEnabled && rc.IsGrafanaAdmin
+	}
+}
 
 func DeclareRBACRoles(service ac.Service, cfg *setting.Cfg) error {
 	AppPluginsReader := ac.RoleRegistration{
