@@ -50,7 +50,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
     return `ColorPickerPopover__tab ${activePicker === tabName && 'ColorPickerPopover__tab--active'}`;
   };
 
-  handleChange = (color: any) => {
+  handleChange = (color: string) => {
     const { onChange, enableNamedColors, theme } = this.props;
     if (enableNamedColors) {
       return onChange(color);

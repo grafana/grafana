@@ -185,7 +185,10 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 				saMigrated := serviceAccounts.ServiceAccounts[0]
 				require.Equal(t, string(key.Role), saMigrated.Role)
 
-				tokens, err := store.ListTokens(context.Background(), key.OrgId, saMigrated.Id)
+				tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
+					OrgID:            &key.OrgId,
+					ServiceAccountID: &saMigrated.Id,
+				})
 				require.NoError(t, err)
 				require.Len(t, tokens, 1)
 			}
@@ -264,7 +267,10 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 					saMigrated := serviceAccounts.ServiceAccounts[0]
 					require.Equal(t, string(c.keys[0].Role), saMigrated.Role)
 
-					tokens, err := store.ListTokens(context.Background(), c.orgId, saMigrated.Id)
+					tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
+						OrgID:            &c.orgId,
+						ServiceAccountID: &saMigrated.Id,
+					})
 					require.NoError(t, err)
 					require.Len(t, tokens, 1)
 				}
@@ -335,7 +341,8 @@ func TestStore_RevertApiKey(t *testing.T) {
 				// Service account should be deleted
 				require.Equal(t, int64(0), serviceAccounts.TotalCount)
 
-				apiKeys := store.apiKeyService.GetAllAPIKeys(context.Background(), 1)
+				apiKeys, err := store.apiKeyService.GetAllAPIKeys(context.Background(), 1)
+				require.NoError(t, err)
 				require.Len(t, apiKeys, 1)
 				apiKey := apiKeys[0]
 				require.Equal(t, c.key.Name, apiKey.Name)

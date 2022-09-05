@@ -32,7 +32,7 @@ type Service struct {
 	teamMemberService  teamguardian.TeamGuardian
 	userAuthService    userauth.Service
 	quotaService       quota.Service
-	accessControlStore accesscontrol.AccessControl
+	accessControlStore accesscontrol.Service
 	// TODO remove sqlstore
 	sqlStore *sqlstore.SQLStore
 
@@ -48,7 +48,7 @@ func ProvideService(
 	teamMemberService teamguardian.TeamGuardian,
 	userAuthService userauth.Service,
 	quotaService quota.Service,
-	accessControlStore accesscontrol.AccessControl,
+	accessControlStore accesscontrol.Service,
 	cfg *setting.Cfg,
 	ss *sqlstore.SQLStore,
 ) user.Service {
@@ -223,7 +223,7 @@ func (s *Service) Delete(ctx context.Context, cmd *user.DeleteUserCommand) error
 		return nil
 	})
 	g.Go(func() error {
-		if err := s.accessControlStore.DeleteUserPermissions(ctx, cmd.UserID); err != nil {
+		if err := s.accessControlStore.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
@@ -409,4 +409,32 @@ func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlag
 		HelpFlags1: cmd.HelpFlags1,
 	}
 	return s.sqlStore.SetUserHelpFlag(ctx, c)
+}
+
+//  TODO: remove wrapper around sqlstore
+func (s *Service) GetUserProfile(ctx context.Context, query *user.GetUserProfileQuery) (user.UserProfileDTO, error) {
+	q := &models.GetUserProfileQuery{
+		UserId: query.UserID,
+	}
+	err := s.sqlStore.GetUserProfile(ctx, q)
+	if err != nil {
+		return user.UserProfileDTO{}, err
+	}
+	result := user.UserProfileDTO{
+		ID:             q.Result.Id,
+		Email:          q.Result.Email,
+		Name:           q.Result.Name,
+		Login:          q.Result.Login,
+		Theme:          q.Result.Theme,
+		OrgID:          q.Result.OrgId,
+		IsGrafanaAdmin: q.Result.IsGrafanaAdmin,
+		IsDisabled:     q.Result.IsDisabled,
+		IsExternal:     q.Result.IsExternal,
+		AuthLabels:     q.Result.AuthLabels,
+		UpdatedAt:      q.Result.UpdatedAt,
+		CreatedAt:      q.Result.CreatedAt,
+		AvatarUrl:      q.Result.AvatarUrl,
+		AccessControl:  q.Result.AccessControl,
+	}
+	return result, nil
 }

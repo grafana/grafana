@@ -24,8 +24,6 @@ import (
 	"context"
 	"net/http"
 	"strings"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const _VERSION = "1.3.4.0805"
@@ -147,10 +145,8 @@ func mwFromHandler(handler Handler) Middleware {
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
 	c := &Context{
-		mws:    m.mws,
-		Router: m.Router,
-		Resp:   NewResponseWriter(req.Method, rw),
-		logger: log.New("macaron.context"),
+		mws:  m.mws,
+		Resp: NewResponseWriter(req.Method, rw),
 	}
 
 	c.Req = req.WithContext(context.WithValue(req.Context(), macaronContextKey{}, c))

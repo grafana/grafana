@@ -250,7 +250,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		QuotaService:       &quotaimpl.Service{Cfg: cfg},
 		RouteRegister:      routing.NewRouteRegister(),
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService: searchusers.ProvideUsersService(store, filters.ProvideOSSSearchUserFilter()),
+		searchUsersService: searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		ldapGroups:         ldap.ProvideGroupsService(),
 	}
 
@@ -284,6 +284,8 @@ type accessControlScenarioContext struct {
 
 	// acmock is an accesscontrol mock used to fake users rights.
 	acmock *accesscontrolmock.Mock
+
+	usermock *usertest.FakeUserService
 
 	// db is a test database initialized with InitTestDB
 	db sqlstore.Store
@@ -341,16 +343,19 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	}
 }
 
-func setupHTTPServer(t *testing.T, useFakeAccessControl bool) accessControlScenarioContext {
-	return setupHTTPServerWithCfg(t, useFakeAccessControl, setting.NewCfg())
+func setupHTTPServer(t *testing.T, useFakeAccessControl bool, options ...APITestServerOption) accessControlScenarioContext {
+	return setupHTTPServerWithCfg(t, useFakeAccessControl, setting.NewCfg(), options...)
 }
 
-func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg) accessControlScenarioContext {
+func setupHTTPServerWithCfg(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, options ...APITestServerOption) accessControlScenarioContext {
 	db := sqlstore.InitTestDB(t, sqlstore.InitTestDBOpt{})
-	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, featuremgmt.WithFeatures())
+	return setupHTTPServerWithCfgDb(t, useFakeAccessControl, cfg, db, db, featuremgmt.WithFeatures(), options...)
 }
 
-func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore, store sqlstore.Store, features *featuremgmt.FeatureManager) accessControlScenarioContext {
+func setupHTTPServerWithCfgDb(
+	t *testing.T, useFakeAccessControl bool, cfg *setting.Cfg, db *sqlstore.SQLStore,
+	store sqlstore.Store, features *featuremgmt.FeatureManager, options ...APITestServerOption,
+) accessControlScenarioContext {
 	t.Helper()
 
 	db.Cfg.RBACEnabled = cfg.RBACEnabled
@@ -361,6 +366,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 
 	var acmock *accesscontrolmock.Mock
 	var ac accesscontrol.AccessControl
+	var acService accesscontrol.Service
 
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
@@ -369,13 +375,15 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 			acmock = acmock.WithDisabled()
 		}
 		ac = acmock
+		acService = acmock
 	} else {
 		var err error
-		ac, err = ossaccesscontrol.ProvideService(features, cfg, database.ProvideService(db), routeRegister)
+		acService, err = ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), routeRegister)
 		require.NoError(t, err)
+		ac = ossaccesscontrol.ProvideAccessControl(cfg, acService)
 	}
 
-	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, database.ProvideService(db), license)
+	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService)
 	require.NoError(t, err)
 
 	// Create minimal HTTP Server
@@ -390,8 +398,9 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		SQLStore:               store,
 		License:                &licensing.OSSLicensingService{},
 		AccessControl:          ac,
+		accesscontrolService:   acService,
 		teamPermissionsService: teamPermissionService,
-		searchUsersService:     searchusers.ProvideUsersService(db, filters.ProvideOSSSearchUserFilter()),
+		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, nil, features,
 			accesscontrolmock.NewMockedPermissionsService(), accesscontrolmock.NewMockedPermissionsService(), ac,
@@ -400,8 +409,12 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		userService:       userMock,
 	}
 
+	for _, o := range options {
+		o(hs)
+	}
+
 	require.NoError(t, hs.declareFixedRoles())
-	require.NoError(t, hs.AccessControl.(accesscontrol.RoleRegistry).RegisterFixedRoles(context.Background()))
+	require.NoError(t, hs.accesscontrolService.(accesscontrol.RoleRegistry).RegisterFixedRoles(context.Background()))
 
 	// Instantiate a new Server
 	m := web.New()
@@ -414,7 +427,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
 
-	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.AccessControl))
+	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 
 	// Register all routes
 	hs.registerRoutes()
@@ -428,6 +441,7 @@ func setupHTTPServerWithCfgDb(t *testing.T, useFakeAccessControl bool, cfg *sett
 		db:              db,
 		cfg:             cfg,
 		dashboardsStore: dashboardsStore,
+		usermock:        userMock,
 	}
 }
 

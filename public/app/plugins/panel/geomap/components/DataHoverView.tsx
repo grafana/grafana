@@ -34,7 +34,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: 
     return null;
   }
 
-  const displayValues: Array<[string, any, string]> = [];
+  const displayValues: Array<[string, unknown, string]> = [];
   const links: Array<LinkModel<Field>> = [];
   const linkLookup = new Set<string>();
 
@@ -61,7 +61,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode }: 
   return (
     <table className={styles.infoWrap}>
       <tbody>
-        {(mode === TooltipDisplayMode.Multi || mode === null) &&
+        {(mode === TooltipDisplayMode.Multi || mode == null) &&
           displayValues.map((v, i) => (
             <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
               <th>{v[0]}:</th>

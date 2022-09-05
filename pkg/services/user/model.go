@@ -135,6 +135,27 @@ type UserSearchHitDTO struct {
 	AuthModule    AuthModuleConversion `json:"-"`
 }
 
+type GetUserProfileQuery struct {
+	UserID int64
+}
+
+type UserProfileDTO struct {
+	ID             int64           `json:"id"`
+	Email          string          `json:"email"`
+	Name           string          `json:"name"`
+	Login          string          `json:"login"`
+	Theme          string          `json:"theme"`
+	OrgID          int64           `json:"orgId,omitempty"`
+	IsGrafanaAdmin bool            `json:"isGrafanaAdmin"`
+	IsDisabled     bool            `json:"isDisabled"`
+	IsExternal     bool            `json:"isExternal"`
+	AuthLabels     []string        `json:"authLabels"`
+	UpdatedAt      time.Time       `json:"updatedAt"`
+	CreatedAt      time.Time       `json:"createdAt"`
+	AvatarUrl      string          `json:"avatarUrl"`
+	AccessControl  map[string]bool `json:"accessControl,omitempty"`
+}
+
 // implement Conversion interface to define custom field mapping (xorm feature)
 type AuthModuleConversion []string
 

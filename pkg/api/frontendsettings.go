@@ -88,7 +88,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(hs.secretsPluginManager, hs.Cfg) == nil
+	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":                   defaultDS,
@@ -112,7 +112,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
 		"azureAuthEnabled":                    setting.AzureAuthEnabled,
 		"rbacEnabled":                         hs.Cfg.RBACEnabled,
-		"rbacBuiltInRoleAssignmentEnabled":    hs.Cfg.RBACBuiltInRoleAssignmentEnabled,
 		"exploreEnabled":                      setting.ExploreEnabled,
 		"helpEnabled":                         setting.HelpEnabled,
 		"profileEnabled":                      setting.ProfileEnabled,
@@ -155,7 +154,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
 		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
-		"rendererAvailable":                hs.RenderService.IsAvailable(),
+		"rendererAvailable":                hs.RenderService.IsAvailable(c.Req.Context()),
 		"rendererVersion":                  hs.RenderService.Version(),
 		"secretsManagerPluginEnabled":      secretsManagerPluginEnabled,
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
@@ -237,6 +236,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins Enab
 			URL:       url,
 			IsDefault: ds.IsDefault,
 			Access:    string(ds.Access),
+			ReadOnly:  ds.ReadOnly,
 		}
 
 		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)

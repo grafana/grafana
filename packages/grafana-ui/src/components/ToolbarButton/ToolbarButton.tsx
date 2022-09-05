@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
+import { IconName, toIconName } from '../../types/icon';
 import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -62,13 +62,12 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     const styles = useStyles2(getStyles);
 
     const buttonStyles = cx(
-      'toolbar-button',
       {
         [styles.button]: true,
         [styles.buttonFullWidth]: fullWidth,
         [styles.narrow]: narrow,
       },
-      (styles as any)[variant],
+      styles[variant],
       className
     );
 
@@ -116,8 +115,10 @@ function renderIcon(icon: IconName | React.ReactNode) {
     return null;
   }
 
-  if (isString(icon)) {
-    return <Icon name={icon as IconName} size={'lg'} />;
+  const iconName = isString(icon) && toIconName(icon);
+
+  if (iconName) {
+    return <Icon name={iconName} size="lg" />;
   }
 
   return icon;
@@ -140,7 +141,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   const defaultTopNav = css`
     color: ${theme.colors.text.secondary};
     background-color: transparent;
-    border: none;
+    border-color: transparent;
 
     &:hover {
       color: ${theme.colors.text.primary};

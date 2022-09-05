@@ -238,6 +238,7 @@ type Cfg struct {
 	CSVsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
+	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
 
 	// Security
@@ -451,9 +452,8 @@ type Cfg struct {
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
-	// Undocumented option as a backup in case removing builtin-role assignment
-	// fails
-	RBACBuiltInRoleAssignmentEnabled bool
+	// Enable Permission validation during role creation and provisioning
+	RBACPermissionValidationEnabled bool
 }
 
 type CommandLineArgs struct {
@@ -1356,7 +1356,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
 	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
-	cfg.RBACBuiltInRoleAssignmentEnabled = rbac.Key("builtin_role_assignment_enabled").MustBool(false)
+	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
@@ -1412,6 +1412,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	renderSec := iniFile.Section("rendering")
 	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
+	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
 
 	if cfg.RendererCallbackUrl == "" {
 		cfg.RendererCallbackUrl = AppUrl

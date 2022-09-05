@@ -16,10 +16,11 @@ export interface Props {
 export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange }: Props) {
   const ds = getDataSourceSrv()?.getInstanceSettings(dataSourceName);
   const hasAlertingEnabled = Boolean(ds?.meta?.alerting ?? false);
+  const isAlertManagerDatasource = ds?.type === 'alertmanager';
 
   return (
     <>
-      <AlertingEnabled enabled={hasAlertingEnabled} />
+      {<AlertingEnabled enabled={hasAlertingEnabled || isAlertManagerDatasource} />}
       <div className="gf-form-group" aria-label="Datasource settings page basic settings">
         <div className="gf-form-inline">
           {/* Name */}

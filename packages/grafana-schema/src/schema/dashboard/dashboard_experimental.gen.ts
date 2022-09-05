@@ -251,6 +251,7 @@ interface Dashboard {
     enable: boolean;
     hidden: boolean;
     refresh_intervals: string[];
+    time_options: string[];
   };
   timezone?: ('browser' | 'utc' | '');
   title?: string;

@@ -37,7 +37,7 @@ Panel data source query options:
 
 - **Time shift -** The time shift function is another way to override the time range for individual panels. It only works with relative time ranges and allows you to adjust the time range.
 
-  For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../dashboards/time-range-controls/" >}}).
+  For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}).
 
 - **Cache timeout -** (This field is only visible if available in your data source.) If your time series store has a query cache, then this option can override the default cache timeout. Specified as a numeric value in seconds.
 
