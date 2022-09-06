@@ -15,6 +15,7 @@ import (
 )
 
 func TestMiddlewareJWTAuth(t *testing.T) {
+	const myEmail = "vladimir@example.com"
 	const id int64 = 12
 	const orgID int64 = 2
 
@@ -72,7 +73,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	}, configure, configureUsernameClaim)
 
 	middlewareScenario(t, "Valid token with valid email claim", func(t *testing.T, sc *scenarioContext) {
-		myEmail := "vladimir@example.com"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
@@ -93,7 +93,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	}, configure, configureEmailClaim)
 
 	middlewareScenario(t, "Valid token with no user and auto_sign_up disabled", func(t *testing.T, sc *scenarioContext) {
-		myEmail := "vladimir@example.com"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
@@ -112,7 +111,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	}, configure, configureEmailClaim)
 
 	middlewareScenario(t, "Valid token with no user and auto_sign_up enabled", func(t *testing.T, sc *scenarioContext) {
-		myEmail := "vladimir@example.com"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
@@ -166,7 +164,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	}, configure, configureEmailClaim)
 
 	middlewareScenario(t, "Valid token with role", func(t *testing.T, sc *scenarioContext) {
-		myEmail := "vladimir@example.com"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
@@ -185,7 +182,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	}, configure, configureAutoSignUp, configureRole)
 
 	middlewareScenario(t, "Valid token with invalid role", func(t *testing.T, sc *scenarioContext) {
-		myEmail := "vladimir@example.com"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
@@ -204,7 +200,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	}, configure, configureAutoSignUp, configureRole)
 
 	middlewareScenario(t, "Valid token with invalid role in strict mode", func(t *testing.T, sc *scenarioContext) {
-		myEmail := "vladimir@example.com"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
@@ -222,7 +217,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	}, configure, configureAutoSignUp, configureRole, configureRoleStrict)
 
 	middlewareScenario(t, "Valid token with grafana admin role not allowed", func(t *testing.T, sc *scenarioContext) {
-		myEmail := "vladimir@example.com"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
@@ -242,7 +236,6 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	}, configure, configureAutoSignUp, configureRole)
 
 	middlewareScenario(t, "Valid token with grafana admin role allowed", func(t *testing.T, sc *scenarioContext) {
-		myEmail := "vladimir@example.com"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
