@@ -71,6 +71,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
+		// FIXME: while we don't have permissions for listing plugins we need this complex check:
 		// When using access control, should be able to list non-core plugins:
 		//  * anyone that can create a data source
 		//  * anyone that can install a plugin
