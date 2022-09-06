@@ -5036,35 +5036,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/slate-react@npm:0.22.10-grafana":
-  version: 0.22.10-grafana
-  resolution: "@grafana/slate-react@npm:0.22.10-grafana"
-  dependencies:
-    debug: ^3.1.0
-    get-window: ^1.1.1
-    is-window: ^1.0.2
-    lodash: ^4.1.1
-    memoize-one: ^4.0.0
-    prop-types: ^15.5.8
-    react-immutable-proptypes: ^2.1.0
-    selection-is-backward: ^1.0.0
-    slate-base64-serializer: ^0.2.111
-    slate-dev-environment: ^0.2.2
-    slate-hotkeys: ^0.2.9
-    slate-plain-serializer: ^0.7.10
-    slate-prop-types: ^0.5.41
-    slate-react-placeholder: ^0.2.8
-    tiny-invariant: ^1.0.1
-    tiny-warning: ^0.0.3
-  peerDependencies:
-    immutable: ">=3.8.1 || >4.0.0-rc"
-    react: ">=16.6.0"
-    react-dom: ">=16.6.0"
-    slate: ">=0.47.0"
-  checksum: 3417c53d9d0d2f46d3624037b1094a6786019c52e84d4ed3a91fbac232e67805cb299c3a6af7a1b8fd98cc2c60455103dd1d87eb6e7dd95df3b96b72f94cedd5
-  languageName: node
-  linkType: hard
-
 "@grafana/toolkit@9.2.0-pre, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
@@ -5177,7 +5148,6 @@ __metadata:
     "@grafana/data": 9.2.0-pre
     "@grafana/e2e-selectors": 9.2.0-pre
     "@grafana/schema": 9.2.0-pre
-    "@grafana/slate-react": 0.22.10-grafana
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.4.5
@@ -5217,7 +5187,6 @@ __metadata:
     "@types/d3": 7.4.0
     "@types/enzyme": 3.10.12
     "@types/enzyme-adapter-react-16": 1.0.6
-    "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.7
     "@types/jest": 28.1.6
@@ -5237,8 +5206,9 @@ __metadata:
     "@types/react-test-renderer": 17.0.1
     "@types/react-transition-group": 4.4.5
     "@types/react-window": 1.8.5
-    "@types/slate": 0.47.2
+    "@types/slate": 0.47.9
     "@types/slate-plain-serializer": 0.7.2
+    "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
@@ -5306,8 +5276,9 @@ __metadata:
     rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.5.6
     sass-loader: 13.0.2
-    slate: 0.47.8
-    slate-plain-serializer: 0.7.10
+    slate: 0.47.9
+    slate-plain-serializer: 0.7.11
+    slate-react: 0.22.10
     storybook-dark-mode: 1.1.0
     style-loader: 3.3.1
     terser-webpack-plugin: 5.3.3
@@ -5463,7 +5434,6 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/classnames": ^2.2.7
     "@types/deep-freeze": ^0.1.1
-    "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/hoist-non-react-statics": ^3.3.1
     "@types/jest": 28.1.6
     "@types/lodash": 4.14.182
@@ -5471,6 +5441,7 @@ __metadata:
     "@types/react": 17.0.42
     "@types/react-icons": 2.2.7
     "@types/reselect": 2.2.0
+    "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
     chance: ^1.0.10
@@ -11198,17 +11169,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/grafana__slate-react@npm:@types/slate-react@0.22.5":
-  version: 0.22.5
-  resolution: "@types/slate-react@npm:0.22.5"
-  dependencies:
-    "@types/react": "*"
-    "@types/slate": "*"
-    immutable: ^3.8.2
-  checksum: afc83c7f47d19cc6776a8b4c14eb3894b18db2410e8274058133ed53d78ee82976f1318a707597ddc7277b1b857a4baf97b152687679f4e9757bb8c662508164
-  languageName: node
-  linkType: hard
-
 "@types/hast@npm:^2.0.0":
   version: 2.3.4
   resolution: "@types/hast@npm:2.3.4"
@@ -12143,13 +12103,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/slate@npm:0.47.2":
-  version: 0.47.2
-  resolution: "@types/slate@npm:0.47.2"
+"@types/slate-react@npm:0.22.9":
+  version: 0.22.9
+  resolution: "@types/slate-react@npm:0.22.9"
+  dependencies:
+    "@types/react": "*"
+    "@types/slate": "*"
+    immutable: ^3.8.2
+  checksum: d74812f6bf651c508afb2a4fae4ae919cba992ec920ac017d1bf73b1b469959145793a716d5d114b93d1082683ab7378b5cb5b68f0ff01a6d121c8ddbbb8e2e1
+  languageName: node
+  linkType: hard
+
+"@types/slate@npm:0.47.9":
+  version: 0.47.9
+  resolution: "@types/slate@npm:0.47.9"
   dependencies:
     "@types/react": "*"
     immutable: ^3.8.2
-  checksum: c92350f1ef366b5907356a7f3b7bd41dda548dc1002cc2bd79f6b0ff1356d3189c124a54b363ddbe22cbdeb2a75f9d1b67d4f5b2a1bb6b89b714ecf7cf0c49c2
+  checksum: ce88a5c6f502fbfe9a299983766d2eb67e4fbe2f746178b2ef31330b1392b62eca96d8618753ca2af3e858b6aa4ada91a64a3dfc4e70c60785f172c240e06a45
   languageName: node
   linkType: hard
 
@@ -21755,7 +21726,6 @@ __metadata:
     "@grafana/lezer-logql": 0.0.18
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
-    "@grafana/slate-react": 0.22.10-grafana
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
@@ -21813,7 +21783,6 @@ __metadata:
     "@types/eslint": 8.4.5
     "@types/file-saver": 2.0.5
     "@types/google.analytics": ^0.0.42
-    "@types/grafana__slate-react": "npm:@types/slate-react@0.22.5"
     "@types/history": 4.7.11
     "@types/hoist-non-react-statics": 3.3.1
     "@types/jest": 28.1.6
@@ -21849,8 +21818,9 @@ __metadata:
     "@types/redux-mock-store": 1.0.3
     "@types/reselect": 2.2.0
     "@types/semver": 7.3.10
-    "@types/slate": 0.47.2
+    "@types/slate": 0.47.9
     "@types/slate-plain-serializer": 0.7.2
+    "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
@@ -22015,8 +21985,9 @@ __metadata:
     selecto: 1.19.1
     semver: 7.3.7
     sinon: 14.0.0
-    slate: 0.47.8
-    slate-plain-serializer: 0.7.10
+    slate: 0.47.9
+    slate-plain-serializer: 0.7.11
+    slate-react: 0.22.10
     sql-formatter-plus: ^1.3.6
     style-loader: 3.3.1
     stylelint: 14.9.1
@@ -34352,7 +34323,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-base64-serializer@npm:^0.2.111":
+"slate-base64-serializer@npm:^0.2.112":
   version: 0.2.115
   resolution: "slate-base64-serializer@npm:0.2.115"
   dependencies:
@@ -34363,12 +34334,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-dev-environment@npm:^0.2.2":
+"slate-dev-environment@npm:0.2.5":
   version: 0.2.5
   resolution: "slate-dev-environment@npm:0.2.5"
   dependencies:
     is-in-browser: ^1.1.3
   checksum: 3a94d855a5c50f650f38c93741700d1e840eb923c79a3b1e01a5e7ca347944662099dc5773521c84ee939cb156ccc27af7e39ecb79d3d9e2ddfcfe3ead312073
+  languageName: node
+  linkType: hard
+
+"slate-dev-environment@patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::locator=grafana%40workspace%3A.":
+  version: 0.2.5
+  resolution: "slate-dev-environment@patch:slate-dev-environment@npm%3A0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::version=0.2.5&hash=13521e&locator=grafana%40workspace%3A."
+  dependencies:
+    is-in-browser: ^1.1.3
+  checksum: 1be7514ac0b10b0232f3c19e02bf5f9211850e119a235743fd46ab2f182c8b892dc58edf40130308d85d14f755b348b86ab2daea757e8ee0beb74746f653fc03
   languageName: node
   linkType: hard
 
@@ -34382,17 +34362,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-plain-serializer@npm:0.7.10":
-  version: 0.7.10
-  resolution: "slate-plain-serializer@npm:0.7.10"
+"slate-plain-serializer@npm:0.7.11":
+  version: 0.7.11
+  resolution: "slate-plain-serializer@npm:0.7.11"
   peerDependencies:
     immutable: ">=3.8.1"
     slate: ">=0.46.0"
-  checksum: 0fe3f736cbc48c4b9cf7cf5ec03d9cc51c0f3320e46841de4aef50767a2ef14952660e0e2e5dfe1696e7d5c952408d95144543a9a9a86973e893de840782cd2e
+  checksum: b8d2989562a140c4c6cada381483aa2f419c3532ebb4ed51abfa5df8128dfd8f3d845ca324d737e3711343d651a95804f91aaa1d2cdd8e96cd9602c747781a5b
   languageName: node
   linkType: hard
 
-"slate-plain-serializer@npm:^0.7.10":
+"slate-plain-serializer@npm:^0.7.11":
   version: 0.7.13
   resolution: "slate-plain-serializer@npm:0.7.13"
   peerDependencies:
@@ -34402,7 +34382,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-prop-types@npm:^0.5.41":
+"slate-prop-types@npm:^0.5.42":
   version: 0.5.44
   resolution: "slate-prop-types@npm:0.5.44"
   peerDependencies:
@@ -34412,7 +34392,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-react-placeholder@npm:^0.2.8":
+"slate-react-placeholder@npm:^0.2.9":
   version: 0.2.9
   resolution: "slate-react-placeholder@npm:0.2.9"
   peerDependencies:
@@ -34423,9 +34403,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate@npm:0.47.8":
-  version: 0.47.8
-  resolution: "slate@npm:0.47.8"
+"slate-react@npm:0.22.10":
+  version: 0.22.10
+  resolution: "slate-react@npm:0.22.10"
+  dependencies:
+    debug: ^3.1.0
+    get-window: ^1.1.1
+    is-window: ^1.0.2
+    lodash: ^4.1.1
+    memoize-one: ^4.0.0
+    prop-types: ^15.5.8
+    react-immutable-proptypes: ^2.1.0
+    selection-is-backward: ^1.0.0
+    slate-base64-serializer: ^0.2.112
+    slate-dev-environment: ^0.2.2
+    slate-hotkeys: ^0.2.9
+    slate-plain-serializer: ^0.7.11
+    slate-prop-types: ^0.5.42
+    slate-react-placeholder: ^0.2.9
+    tiny-invariant: ^1.0.1
+    tiny-warning: ^0.0.3
+  peerDependencies:
+    immutable: ">=3.8.1 || >4.0.0-rc"
+    react: ">=16.6.0"
+    react-dom: ">=16.6.0"
+    slate: ">=0.47.0"
+  checksum: 1ecddaf0f635205249680961d7e772cf25a60179b39ca69a34f874b2797e3c122ef405921fa2787ea0c559af48d1d79f10d7e169749f0f084c6bf366aeffdfc8
+  languageName: node
+  linkType: hard
+
+"slate@npm:0.47.9":
+  version: 0.47.9
+  resolution: "slate@npm:0.47.9"
   dependencies:
     debug: ^3.1.0
     direction: ^0.1.5
@@ -34437,7 +34446,7 @@ __metadata:
     type-of: ^2.0.1
   peerDependencies:
     immutable: ">=3.8.1 || >4.0.0-rc"
-  checksum: 6d3541abe1a727f498e0835118b98efd1a8ea2cfa9bb1b3fe9f77faf42b4afce4259e765b60bd5b8c2bd34686d5f9bcfb80b9a8807c54fee1e496a92bad563d6
+  checksum: a128d1eaa4c203dbb13d197d69758341df485e42e52aea1739d05939b16df42633949f116ae9b75b95b647ec39b18867ca5c8a05dbe97eeb15cf31bc8d2edc7f
   languageName: node
   linkType: hard
 

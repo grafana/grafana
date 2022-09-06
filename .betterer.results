@@ -11,19 +11,19 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/components/Logs/LogRowContextProvider.test.tsx:3786619094": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:375894800": [
+    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:2976628669": [
+      [0, 26, 13, "RegExp match", "2409514259"]
+    ],
+    "packages/grafana-ui/src/slate-plugins/braces.test.tsx:823049948": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/braces.test.tsx:4104231341": [
+    "packages/grafana-ui/src/slate-plugins/clear.test.tsx:3927593033": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/clear.test.tsx:1085648664": [
+    "packages/grafana-ui/src/slate-plugins/runner.test.tsx:1123710822": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/grafana-ui/src/slate-plugins/runner.test.tsx:446043290": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:3654981205": [
+    "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:2682912140": [
       [0, 18, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/Scrubber.test.js:4256741694": [
@@ -1296,8 +1296,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/components/DataLinks/SelectionReference.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1856,41 +1855,15 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/slate-plugins/braces.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "packages/grafana-ui/src/slate-plugins/clear.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "packages/grafana-ui/src/slate-plugins/clear.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/slate-plugins/clipboard.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"]
-    ],
-    "packages/grafana-ui/src/slate-plugins/indentation.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-ui/src/slate-plugins/newline.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "packages/grafana-ui/src/slate-plugins/runner.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/grafana-ui/src/slate-plugins/runner.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "packages/grafana-ui/src/slate-plugins/selection_shortcuts.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "packages/grafana-ui/src/slate-plugins/slate-prism/index.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1913,8 +1886,7 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/slate-plugins/suggestions.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "packages/grafana-ui/src/themes/ThemeContext.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
