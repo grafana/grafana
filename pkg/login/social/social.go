@@ -12,6 +12,8 @@ import (
 	"context"
 
 	"golang.org/x/oauth2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -325,25 +327,27 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.R
 
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
 	if err == nil && role != "" {
-		if role == RoleGrafanaAdmin {
-			return org.RoleAdmin, true
-		}
-
-		return org.RoleType(role), false
+		return getRoleFromSearch(role)
 	}
 
 	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
-		if role, err := s.searchJSONForStringAttr(
-			s.roleAttributePath, groupBytes); err == nil && role != "" {
-			if role == RoleGrafanaAdmin {
-				return org.RoleAdmin, true
-			}
-
-			return org.RoleType(role), false
+		role, err := s.searchJSONForStringAttr(s.roleAttributePath, groupBytes)
+		if err == nil && role != "" {
+			return getRoleFromSearch(role)
 		}
 	}
 
 	return "", false
+}
+
+// match grafana admin role and translate to org role and bool.
+// treat the JSON search result to ensure correct casing.
+func getRoleFromSearch(role string) (org.RoleType, bool) {
+	if strings.EqualFold(role, RoleGrafanaAdmin) {
+		return org.RoleAdmin, true
+	}
+
+	return org.RoleType(cases.Title(language.Und).String(role)), false
 }
 
 // GetOAuthProviders returns available oauth providers and if they're enabled or not
