@@ -42,7 +42,7 @@ interface State extends OverlayProps {
 
 export class GeomapPanel extends Component<Props, State> {
   static contextType = PanelContextRoot;
-  panelContext: PanelContext = {} as PanelContext;
+  panelContext: PanelContext | undefined = undefined;
   private subs = new Subscription();
 
   globalCSS = getGlobalStyles(config.theme2);
@@ -70,8 +70,7 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   componentDidMount() {
-    // eslint-disable-next-line
-    this.panelContext = this.context as PanelContext;
+    this.panelContext = this.context;
   }
 
   componentWillUnmount() {
