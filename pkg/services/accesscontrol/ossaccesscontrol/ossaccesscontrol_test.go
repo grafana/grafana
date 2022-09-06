@@ -44,10 +44,11 @@ func extractRawPermissionsHelper(perms []accesscontrol.Permission) []accesscontr
 }
 
 type evaluatingPermissionsTestCase struct {
-	desc       string
-	user       userTestCase
-	endpoints  []endpointTestCase
-	evalResult bool
+	desc        string
+	user        userTestCase
+	endpoints   []endpointTestCase
+	evalResult  bool
+	expectedErr error
 }
 
 type userTestCase struct {
@@ -85,7 +86,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 			endpoints: []endpointTestCase{
 				{evaluator: accesscontrol.EvalPermission(accesscontrol.ActionUsersCreate, accesscontrol.ScopeGlobalUsersAll)},
 			},
-			evalResult: false,
+			evalResult:  false,
+			expectedErr: accesscontrol.ErrResolverNotFound,
 		},
 	}
 	for _, tc := range testCases {
@@ -109,7 +111,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 
 			for _, endpoint := range tc.endpoints {
 				result, err := ac.Evaluate(context.Background(), user, endpoint.evaluator)
-				require.NoError(t, err)
+				assert.ErrorIs(t, err, tc.expectedErr)
 				assert.Equal(t, tc.evalResult, result)
 			}
 		})
