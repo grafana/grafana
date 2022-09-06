@@ -378,6 +378,7 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
+	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
 	if plugins.ReqCanAdminPlugins(hs.Cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(hs.Cfg), plugins.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
