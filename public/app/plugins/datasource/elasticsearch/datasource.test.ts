@@ -17,9 +17,10 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { BackendSrvRequest, FetchResponse, TemplateSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
 
@@ -121,7 +122,6 @@ function getTestContext({
     getAdhocFilters: () => [],
   } as unknown as TemplateSrv;
 
-  // @ts-expect-error
   const ds = createElasticDatasource(settings, templateSrv);
 
   return { timeSrv, ds, fetchMock };
