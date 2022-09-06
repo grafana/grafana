@@ -232,7 +232,7 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 		doc.AddField(bluge.NewTextField(documentFieldName_ngram, name).WithAnalyzer(ngramIndexAnalyzer))
 
 		// Don't add a field for empty names
-		sortStr := strings.Trim(strings.ToUpper(name), " ")
+		sortStr := formatForNameSortField(name)
 		if len(sortStr) > 0 {
 			doc.AddField(bluge.NewKeywordField(documentFieldName_sort, sortStr).Sortable())
 		}
@@ -435,22 +435,10 @@ func doSearchQuery(
 			fullQuery.AddShould(bluge.NewMatchAllQuery())
 		}
 	} else {
-		// The actual se
-		bq := bluge.NewBooleanQuery().
-			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldName).SetBoost(6)).
-			AddShould(bluge.NewMatchQuery(q.Query).SetField(documentFieldDescription).SetBoost(3)).
-			AddShould(bluge.NewMatchQuery(q.Query).
-				SetField(documentFieldName_ngram).
-				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
-				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
-
-		if len(q.Query) > 4 {
-			bq.AddShould(bluge.NewFuzzyQuery(q.Query).SetField(documentFieldName)).SetBoost(1.5)
-		}
-		if len(q.Query) > ngramEdgeFilterMaxLength && !strings.Contains(q.Query, " ") {
-			bq.AddShould(bluge.NewPrefixQuery(strings.ToLower(q.Query)).SetField(documentFieldName)).SetBoost(6)
-		}
-		fullQuery.AddMust(bq)
+		fullQuery.AddMust(
+			NewSubstringQuery(formatForNameSortField(q.Query)).
+				SetField(documentFieldName_sort),
+		)
 	}
 
 	limit := 50 // default view
@@ -662,6 +650,10 @@ func doSearchQuery(
 	}
 
 	return response
+}
+
+func formatForNameSortField(name string) string {
+	return strings.Trim(strings.ToUpper(name), " ")
 }
 
 func getLocationLookupInfo(ctx context.Context, reader *bluge.Reader, uids map[string]bool) map[string]locationItem {
