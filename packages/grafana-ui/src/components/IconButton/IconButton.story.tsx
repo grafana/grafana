@@ -30,7 +30,7 @@ const meta: ComponentMeta<typeof IconButton> = {
   },
   argTypes: {
     tooltip: {
-      control: 'text'
+      control: 'text',
     },
   },
 };
