@@ -43,9 +43,9 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	//  * anyone that can create a data source
 	//  * anyone that can install a plugin
 	// Fallback to only letting admins list non-core plugins
-	isOrgAdmin := ac.ReqHasRole(org.RoleAdmin)
+	reqOrgAdmin := ac.ReqHasRole(org.RoleAdmin)
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	canListNonCorePlugins := isOrgAdmin(c) || hasAccess(isOrgAdmin, ac.EvalAny(
+	canListNonCorePlugins := reqOrgAdmin(c) || hasAccess(reqOrgAdmin, ac.EvalAny(
 		ac.EvalPermission(datasources.ActionCreate),
 		ac.EvalPermission(plugins.ActionInstall),
 	))
@@ -75,7 +75,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		//  * anyone that can install a plugin
 		// Should be able to list this installed plugin:
 		//  * anyone that can edit its settings
-		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(isOrgAdmin,
+		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(reqOrgAdmin,
 			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
