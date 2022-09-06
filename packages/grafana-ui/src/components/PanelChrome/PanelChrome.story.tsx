@@ -1,4 +1,4 @@
-import { ComponentMeta } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import { merge } from 'lodash';
 import React, { CSSProperties, useState } from 'react';
 import { useInterval } from 'react-use';
@@ -14,6 +14,9 @@ const meta: ComponentMeta<typeof PanelChrome> = {
   component: PanelChrome,
   decorators: [withCenteredStory],
   parameters: {
+    controls: {
+      exclude: ['children'],
+    },
     docs: {},
   },
 };
@@ -103,6 +106,36 @@ export const Examples = () => {
       </HorizontalGroup>
     </div>
   );
+};
+
+export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => <PanelChrome {...args} />;
+
+const LoadingIcon = <PanelChrome.LoadingIndicator loading onCancel={() => {}} />;
+const ErrorIcon = <PanelChrome.ErrorIndicator error="Error text" onClick={() => {}} />;
+
+const leftItems = { LoadingIcon, ErrorIcon };
+
+Basic.argTypes = {
+  leftItems: {
+    options: Object.keys(leftItems),
+    mapping: leftItems,
+    control: {
+      type: 'select',
+      labels: {
+        LoadingIcon: 'With loading icon',
+        ErrorIcon: 'With error icon',
+      },
+    },
+  },
+};
+
+Basic.args = {
+  width: 400,
+  height: 200,
+  title: 'Title text',
+  children: (width: number, height: number) => (
+    <div style={{ height, width, background: '#22252b' }}>Description text</div>
+  ),
 };
 
 export default meta;
