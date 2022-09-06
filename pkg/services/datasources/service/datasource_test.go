@@ -520,6 +520,84 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, configuredOpts.SigV4)
 		require.Equal(t, "es", configuredOpts.SigV4.Service)
 	})
+
+	t.Run("Should not add a header with key that corresponds to auth proxies key name", func(t *testing.T) {
+		provider := httpclient.NewProvider()
+
+		cfg.AuthProxyEnabled = true
+		cfg.AuthProxyHeaderName = "X-AUTH-PROXY-HEADER"
+
+		allowedHeaderName := "X-ALLOWED-HEADER"
+		allowedHeaderValue := "X-ALLOWED-HEADER_value"
+		jsonData := simplejson.New()
+		jsonData.Set("httpHeaderName1", allowedHeaderName)
+		jsonData.Set("httpHeaderName2", cfg.AuthProxyHeaderName)
+
+		ds := datasources.DataSource{
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: jsonData,
+		}
+
+		secretsStore := kvstore.SetupTestService(t)
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
+
+		secureJsonData, err := json.Marshal(map[string]string{
+			"httpHeaderValue1": allowedHeaderValue,
+			"httpHeaderValue2": "admin",
+		})
+		require.NoError(t, err)
+
+		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretType, string(secureJsonData))
+		require.NoError(t, err)
+
+		headers := dsService.getCustomHeaders(jsonData, map[string]string{"httpHeaderValue2": "admin", "httpHeaderValue1": "X-ALLOWED-HEADER_value"})
+		require.Equal(t, "", headers[cfg.AuthProxyHeaderName], "header with auth proxy header name should have been stripped")
+		require.Equal(t, allowedHeaderValue, headers[allowedHeaderName], "other headers should stay intact")
+
+		// 1. Start HTTP test server which checks the request headers
+		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get(cfg.AuthProxyHeaderName) != "" {
+				w.WriteHeader(http.StatusInternalServerError)
+				_, err := w.Write([]byte("Did not expect the header to be set"))
+				require.NoError(t, err)
+				return
+			}
+
+			if r.Header.Get(allowedHeaderName) != allowedHeaderValue {
+				w.WriteHeader(http.StatusInternalServerError)
+				_, err := w.Write([]byte("Expected the allowed header to be set"))
+				require.NoError(t, err)
+				return
+			}
+
+			w.WriteHeader(200)
+			_, err := w.Write([]byte("Ok"))
+			require.NoError(t, err)
+		}))
+		defer backend.Close()
+
+		// 2. Get HTTP transport from datasource which uses the test server as backend
+		ds.Url = backend.URL
+		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
+		require.NoError(t, err)
+		require.NotNil(t, rt)
+
+		// 3. Send test request which should not have a header with name that matches auth proxy header
+		req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
+		res, err := rt.RoundTrip(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := res.Body.Close()
+			require.NoError(t, err)
+		})
+		body, err := ioutil.ReadAll(res.Body)
+		require.NoError(t, err)
+		bodyStr := string(body)
+		require.Equal(t, "Ok", bodyStr)
+	})
 }
 
 func TestService_getTimeout(t *testing.T) {
