@@ -129,12 +129,12 @@ export const Components = {
     toggleTableView: 'toggle-table-view',
 
     // [Geomap] Map controls
-    toggleShowZoom: 'controls.showZoom.toggle',
-    toggleMouseWheelZoom: 'controls.mouseWheelZoom.toggle',
-    toggleShowAttribution: 'controls.showAttribution.toggle',
-    toggleShowScale: 'controls.showScale.toggle',
-    toggleShowMeasure: 'controls.showMeasure.toggle',
-    toggleShowDebug: 'controls.showDebug.toggle',
+    toggleShowZoom: 'controls.showZoom',
+    toggleMouseWheelZoom: 'controls.mouseWheelZoom',
+    toggleShowAttribution: 'controls.showAttribution',
+    toggleShowScale: 'controls.showScale',
+    toggleShowMeasure: 'controls.showMeasure',
+    toggleShowDebug: 'controls.showDebug',
     measureButton: 'show measure tools',
   },
   PanelInspector: {
