@@ -13,7 +13,7 @@ const meta: ComponentMeta<typeof InlineField> = {
   component: InlineField,
   argTypes: {
     label: { control: { type: 'text' } },
-    labelWidth: { control: { type: 'number', min: 12 } },
+    labelWidth: { control: { type: 'number' } },
     tooltip: { control: { type: 'text' } },
     error: { control: { type: 'text' } },
   },
