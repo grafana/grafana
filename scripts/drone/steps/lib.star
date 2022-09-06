@@ -415,12 +415,12 @@ def build_frontend_package_step(edition, ver_mode):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend-packages --jobs 8 ' + \
+            './bin/build build-frontend-packages --jobs 8 ' + \
             '--edition {} ${{DRONE_TAG}}'.format(edition),
         ]
     else:
         cmds = [
-            './bin/grabpl build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
+            './bin/build build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
             '--build-id {}'.format(build_no),
         ]
 
@@ -434,19 +434,6 @@ def build_frontend_package_step(edition, ver_mode):
             'yarn-install',
         ],
         'commands': cmds,
-    }
-
-
-def build_frontend_docs_step(edition):
-    return {
-        'name': 'build-frontend-docs',
-        'image': build_image,
-        'depends_on': [
-            'build-frontend-packages'
-        ],
-        'commands': [
-            './scripts/ci-reference-docs-lint.sh ci',
-        ]
     }
 
 
@@ -727,7 +714,7 @@ def grafana_server_step(edition, port=3001):
 
 
 def e2e_tests_step(suite, edition, port=3001, tries=None):
-    cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
+    cmd = './bin/build e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {
@@ -751,9 +738,6 @@ def build_docs_website_step():
         'name': 'build-docs-website',
         # Use latest revision here, since we want to catch if it breaks
         'image': 'grafana/docs-base:latest',
-        'depends_on': [
-            'build-frontend-docs',
-        ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
             'cp -r docs/sources/* /hugo/content/docs/grafana/latest/',

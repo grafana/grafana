@@ -6,7 +6,7 @@
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: password
     volumes:
-      - ./docker/blocks/oauth/cloak.sql:/docker-entrypoint-initdb.d/cloak.sql
+      - ./docker/blocks/auth/oauth/cloak.sql:/docker-entrypoint-initdb.d/cloak.sql
     restart: unless-stopped
   
   oauthkeycloak:

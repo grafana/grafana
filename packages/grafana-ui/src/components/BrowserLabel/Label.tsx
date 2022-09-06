@@ -1,6 +1,5 @@
 import { cx, css } from '@emotion/css';
 import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';

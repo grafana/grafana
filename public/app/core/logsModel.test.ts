@@ -212,7 +212,7 @@ describe('filterLogLevels()', () => {
   });
 });
 
-const emptyLogsModel: any = {
+const emptyLogsModel = {
   hasUniqueLabels: false,
   rows: [],
   meta: [],

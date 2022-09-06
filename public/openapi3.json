@@ -14,6 +14,25 @@
         },
         "description": "AcceptedResponse"
       },
+      "addPermissionResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "permissionId": {
+                  "format": "int64",
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "adminCreateUserResponse": {
         "content": {
           "application/json": {
@@ -90,6 +109,20 @@
           }
         },
         "description": "ConflictError"
+      },
+      "contentResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "format": "uint8",
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
       },
       "createCorrelationResponse": {
         "content": {
@@ -201,6 +234,35 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Playlist"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "createReportResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "id": {
+                  "format": "int64",
+                  "type": "integer"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "createRoleResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RoleDTO"
             }
           }
         },
@@ -450,6 +512,16 @@
         },
         "description": "(empty)"
       },
+      "getAccessControlStatusResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Status"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getAlertNotificationChannelResponse": {
         "content": {
           "application/json": {
@@ -509,6 +581,29 @@
         },
         "description": "(empty)"
       },
+      "getAllPermissionseResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DataSourcePermissionsDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getAllRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/RoleDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getAnnotationByIDResponse": {
         "content": {
           "application/json": {
@@ -542,11 +637,60 @@
         },
         "description": "(empty)"
       },
+      "getCorrelationResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Correlation"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getCorrelationsBySourceUIDResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/Correlation"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getCorrelationsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/Correlation"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getCurrentOrgResponse": {
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/OrgDetailsDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getCustomPermissionsReportResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/CustomPermissionsRecordDTO"
+              },
+              "type": "array"
             }
           }
         },
@@ -696,6 +840,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/LibraryElementSearchResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getLicenseTokenResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Token"
             }
           }
         },
@@ -869,6 +1023,49 @@
         },
         "description": "(empty)"
       },
+      "getReportResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ConfigDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getReportSettingsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SettingsDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getReportsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/ConfigDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getRoleResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RoleDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getSharingOptionsResponse": {
         "content": {
           "application/json": {
@@ -916,11 +1113,37 @@
         },
         "description": "(empty)"
       },
+      "getStatusResponse": {
+        "description": "(empty)"
+      },
+      "getSyncStatusResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ActiveSyncStatusDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getTeamByIDResponse": {
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/TeamDTO"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "getTeamGroupsApiResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/TeamGroupDTO"
+              },
+              "type": "array"
             }
           }
         },
@@ -1016,6 +1239,48 @@
           }
         },
         "description": "InternalServerError is a general error indicating something went wrong internally."
+      },
+      "listBuiltinRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/components/schemas/RoleDTO"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "listRecordingRulesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/RecordingRuleJSON"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "listRolesResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/RoleDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
       },
       "listSortOptionsResponse": {
         "content": {
@@ -1213,6 +1478,9 @@
         },
         "description": "(empty)"
       },
+      "postRenewLicenseTokenResponse": {
+        "description": "(empty)"
+      },
       "preconditionFailedError": {
         "content": {
           "application/json": {
@@ -1228,6 +1496,36 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/QueryDataResponse"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "recordingRuleResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RecordingRuleJSON"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "recordingRuleWriteTargetResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PrometheusRemoteWriteTargetJSON"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "refreshLicenseStatsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ActiveUserStats"
             }
           }
         },
@@ -1419,23 +1717,59 @@
       "Ack": {
         "type": "object"
       },
-      "AddApiKeyCommand": {
-        "description": "COMMANDS",
+      "ActiveSyncStatusDTO": {
+        "description": "ActiveSyncStatusDTO holds the information for LDAP background Sync",
         "properties": {
-          "name": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "nextSync": {
+            "format": "date-time",
             "type": "string"
           },
-          "role": {
+          "prevSync": {
+            "$ref": "#/components/schemas/SyncResult"
+          },
+          "schedule": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ActiveUserStats": {
+        "properties": {
+          "active_admins_and_editors": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "active_users": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "active_viewers": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AddBuiltInRoleCommand": {
+        "properties": {
+          "builtInRole": {
             "enum": [
               "Viewer",
-              "Editor",
-              "Admin"
+              " Editor",
+              " Admin",
+              " Grafana Admin"
             ],
             "type": "string"
           },
-          "secondsToLive": {
-            "format": "int64",
-            "type": "integer"
+          "global": {
+            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to create organization local assignment. Refer to the Built-in role assignments for more information.",
+            "type": "boolean"
+          },
+          "roleUid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -1546,6 +1880,25 @@
         },
         "type": "object"
       },
+      "AddPermissionDTO": {
+        "properties": {
+          "builtinRole": {
+            "type": "string"
+          },
+          "permission": {
+            "$ref": "#/components/schemas/DsPermissionType"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "AddServiceAccountTokenCommand": {
         "properties": {
           "name": {
@@ -1563,6 +1916,25 @@
           "userId": {
             "format": "int64",
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AddTeamRoleCommand": {
+        "properties": {
+          "roleUid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AddUserRoleCommand": {
+        "properties": {
+          "global": {
+            "type": "boolean"
+          },
+          "roleUid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -1972,95 +2344,6 @@
         ],
         "type": "object"
       },
-      "AlertRule": {
-        "properties": {
-          "Annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "Condition": {
-            "type": "string"
-          },
-          "DashboardUID": {
-            "type": "string"
-          },
-          "Data": {
-            "items": {
-              "$ref": "#/components/schemas/AlertQuery"
-            },
-            "type": "array"
-          },
-          "ExecErrState": {
-            "enum": [
-              "Alerting",
-              "Error",
-              "OK"
-            ],
-            "type": "string"
-          },
-          "For": {
-            "$ref": "#/components/schemas/Duration"
-          },
-          "ID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "IntervalSeconds": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Labels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
-          },
-          "NamespaceUID": {
-            "type": "string"
-          },
-          "NoDataState": {
-            "enum": [
-              "Alerting",
-              "NoData",
-              "OK"
-            ],
-            "type": "string"
-          },
-          "OrgID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "PanelID": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "RuleGroup": {
-            "type": "string"
-          },
-          "RuleGroupIndex": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Title": {
-            "type": "string"
-          },
-          "UID": {
-            "type": "string"
-          },
-          "Updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "Version": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "title": "AlertRule is the model for alert rules in unified alerting.",
-        "type": "object"
-      },
       "AlertRuleGroup": {
         "properties": {
           "folderUid": {
@@ -2072,7 +2355,7 @@
           },
           "rules": {
             "items": {
-              "$ref": "#/components/schemas/AlertRule"
+              "$ref": "#/components/schemas/ProvisionedAlertRule"
             },
             "type": "array"
           },
@@ -2342,6 +2625,26 @@
         "title": "BasicAuth contains basic HTTP authentication credentials.",
         "type": "object"
       },
+      "BrandingOptionsDTO": {
+        "properties": {
+          "emailFooterLink": {
+            "type": "string"
+          },
+          "emailFooterMode": {
+            "type": "string"
+          },
+          "emailFooterText": {
+            "type": "string"
+          },
+          "emailLogoUrl": {
+            "type": "string"
+          },
+          "reportLogoUrl": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CalculateDiffTarget": {
         "properties": {
           "dashboardId": {
@@ -2402,6 +2705,84 @@
           }
         },
         "title": "Config is the top-level configuration for Alertmanager's config files.",
+        "type": "object"
+      },
+      "ConfigDTO": {
+        "description": "ConfigDTO is model representation in transfer",
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardName": {
+            "type": "string"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "dashboards": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardDTO"
+            },
+            "type": "array"
+          },
+          "enableCsv": {
+            "type": "boolean"
+          },
+          "enableDashboardUrl": {
+            "type": "boolean"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/Type"
+            },
+            "type": "array"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ReportOptionsDTO"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "recipients": {
+            "type": "string"
+          },
+          "replyTo": {
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleDTO"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "templateVars": {
+            "type": "object"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
         "type": "object"
       },
       "ContactPoints": {
@@ -2593,6 +2974,60 @@
         },
         "type": "object"
       },
+      "CreateOrUpdateConfigCmd": {
+        "properties": {
+          "dashboardId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dashboardUid": {
+            "type": "string"
+          },
+          "dashboards": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardDTO"
+            },
+            "type": "array"
+          },
+          "enableCsv": {
+            "type": "boolean"
+          },
+          "enableDashboardUrl": {
+            "type": "boolean"
+          },
+          "formats": {
+            "items": {
+              "$ref": "#/components/schemas/Type"
+            },
+            "type": "array"
+          },
+          "message": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options": {
+            "$ref": "#/components/schemas/ReportOptionsDTO"
+          },
+          "recipients": {
+            "type": "string"
+          },
+          "replyTo": {
+            "type": "string"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/ScheduleDTO"
+          },
+          "state": {
+            "$ref": "#/components/schemas/State"
+          },
+          "templateVars": {
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "CreateOrgCommand": {
         "properties": {
           "name": {
@@ -2635,6 +3070,42 @@
         ],
         "type": "object"
       },
+      "CreateRoleForm": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "global": {
+            "type": "boolean"
+          },
+          "group": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "type": "array"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "CreateServiceAccountForm": {
         "properties": {
           "isDisabled": {
@@ -2664,6 +3135,53 @@
           },
           "name": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CustomPermissionsRecordDTO": {
+        "properties": {
+          "customPermissions": {
+            "type": "string"
+          },
+          "granteeName": {
+            "type": "string"
+          },
+          "granteeType": {
+            "type": "string"
+          },
+          "granteeUrl": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isFolder": {
+            "type": "boolean"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgRole": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "usersCount": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -2771,6 +3289,20 @@
         },
         "type": "object"
       },
+      "DashboardDTO": {
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/DashboardReportDTO"
+          },
+          "reportVariables": {
+            "type": "object"
+          },
+          "timeRange": {
+            "$ref": "#/components/schemas/TimeRangeDTO"
+          }
+        },
+        "type": "object"
+      },
       "DashboardFullWithMeta": {
         "properties": {
           "dashboard": {
@@ -2853,6 +3385,9 @@
           "publicDashboardEnabled": {
             "type": "boolean"
           },
+          "publicDashboardUid": {
+            "type": "string"
+          },
           "slug": {
             "type": "string"
           },
@@ -2879,6 +3414,21 @@
       "DashboardRedirect": {
         "properties": {
           "redirectUri": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DashboardReportDTO": {
+        "properties": {
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           }
         },
@@ -3003,6 +3553,7 @@
             "type": "string"
           },
           "createdBy": {
+            "description": "Since we get created by with left join user table, this can be null technically,\nbut in reality it will always be set, when database is not corrupted.",
             "type": "string"
           },
           "dashboardId": {
@@ -3231,6 +3782,83 @@
         },
         "type": "object"
       },
+      "DataSourcePermissionRuleDTO": {
+        "properties": {
+          "builtInRole": {
+            "type": "string"
+          },
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "datasourceId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "isManaged": {
+            "type": "boolean"
+          },
+          "permission": {
+            "$ref": "#/components/schemas/DsPermissionType"
+          },
+          "permissionName": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "teamAvatarUrl": {
+            "type": "string"
+          },
+          "teamEmail": {
+            "type": "string"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAvatarUrl": {
+            "type": "string"
+          },
+          "userEmail": {
+            "type": "string"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userLogin": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DataSourcePermissionsDTO": {
+        "properties": {
+          "datasourceId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/DataSourcePermissionRuleDTO"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "DataTopic": {
         "title": "DataTopic is used to identify which topic the frame should be assigned to.",
         "type": "string"
@@ -3258,6 +3886,14 @@
         "properties": {
           "message": {
             "example": "Correlation deleted",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "DeleteTokenCommand": {
+        "properties": {
+          "instance": {
             "type": "string"
           }
         },
@@ -3504,6 +4140,18 @@
           },
           "wechat_configs": {
             "$ref": "#/components/schemas/WechatConfig"
+          }
+        },
+        "type": "object"
+      },
+      "FailedUser": {
+        "description": "FailedUser holds the information of an user that failed",
+        "properties": {
+          "Error": {
+            "type": "string"
+          },
+          "Login": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -3934,6 +4582,12 @@
             },
             "type": "array"
           },
+          "telegram_configs": {
+            "items": {
+              "$ref": "#/components/schemas/TelegramConfig"
+            },
+            "type": "array"
+          },
           "victorops_configs": {
             "items": {
               "$ref": "#/components/schemas/VictorOpsConfig"
@@ -4233,6 +4887,9 @@
           },
           "smtp_smarthost": {
             "$ref": "#/components/schemas/HostPort"
+          },
+          "telegram_api_url": {
+            "$ref": "#/components/schemas/URL"
           },
           "victorops_api_key": {
             "$ref": "#/components/schemas/Secret"
@@ -5352,6 +6009,9 @@
           "email": {
             "type": "string"
           },
+          "isDisabled": {
+            "type": "boolean"
+          },
           "lastSeenAt": {
             "format": "date-time",
             "type": "string"
@@ -5600,6 +6260,26 @@
             "type": "boolean"
           }
         },
+        "type": "object"
+      },
+      "Permission": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "title": "Permission is the model for access control permissions.",
         "type": "object"
       },
       "PermissionDenied": {
@@ -5870,6 +6550,12 @@
             },
             "type": "array"
           },
+          "telegram_configs": {
+            "items": {
+              "$ref": "#/components/schemas/TelegramConfig"
+            },
+            "type": "array"
+          },
           "victorops_configs": {
             "items": {
               "$ref": "#/components/schemas/VictorOpsConfig"
@@ -6071,6 +6757,20 @@
             "type": "string"
           },
           "weekStart": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PrometheusRemoteWriteTargetJSON": {
+        "properties": {
+          "data_source_uid": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "remote_write_path": {
             "type": "string"
           }
         },
@@ -6529,6 +7229,12 @@
             },
             "type": "array"
           },
+          "telegram_configs": {
+            "items": {
+              "$ref": "#/components/schemas/TelegramConfig"
+            },
+            "type": "array"
+          },
           "victorops_configs": {
             "items": {
               "$ref": "#/components/schemas/VictorOpsConfig"
@@ -6551,6 +7257,53 @@
         "title": "Receiver configuration provides configuration on how to contact a receiver.",
         "type": "object"
       },
+      "RecordingRuleJSON": {
+        "description": "RecordingRuleJSON is the external representation of a recording rule",
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "count": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dest_data_source_uid": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "interval": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "prom_name": {
+            "type": "string"
+          },
+          "queries": {
+            "items": {
+              "additionalProperties": {
+                "type": "object"
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "range": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "target_ref_id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Regexp": {
         "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
         "title": "Regexp is the representation of a compiled regular expression.",
@@ -6564,6 +7317,41 @@
           },
           "to": {
             "$ref": "#/components/schemas/Duration"
+          }
+        },
+        "type": "object"
+      },
+      "ReportEmailDTO": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "emails": {
+            "description": "Comma-separated list of emails to which to send the report to.",
+            "type": "string"
+          },
+          "id": {
+            "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+            "format": "int64",
+            "type": "string"
+          },
+          "useEmailsFromReport": {
+            "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ReportOptionsDTO": {
+        "properties": {
+          "layout": {
+            "type": "string"
+          },
+          "orientation": {
+            "type": "string"
+          },
+          "timeRange": {
+            "$ref": "#/components/schemas/TimeRangeDTO"
           }
         },
         "type": "object"
@@ -6596,6 +7384,50 @@
       "RevokeAuthTokenCmd": {
         "properties": {
           "authTokenId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "RoleDTO": {
+        "properties": {
+          "created": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "delegatable": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "type": "array"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "updated": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
             "format": "int64",
             "type": "integer"
           }
@@ -6882,6 +7714,49 @@
         },
         "type": "object"
       },
+      "ScheduleDTO": {
+        "properties": {
+          "day": {
+            "type": "string"
+          },
+          "dayOfMonth": {
+            "type": "string"
+          },
+          "endDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "frequency": {
+            "type": "string"
+          },
+          "hour": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "intervalAmount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "intervalFrequency": {
+            "type": "string"
+          },
+          "minute": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "startDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "workdaysOnly": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "SearchServiceAccountsResult": {
         "description": "swagger: model",
         "properties": {
@@ -7073,12 +7948,49 @@
         },
         "type": "object"
       },
+      "SetUserRolesCommand": {
+        "properties": {
+          "global": {
+            "type": "boolean"
+          },
+          "includeHidden": {
+            "type": "boolean"
+          },
+          "roleUids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SettingsBag": {
         "additionalProperties": {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
+        },
+        "type": "object"
+      },
+      "SettingsDTO": {
+        "properties": {
+          "branding": {
+            "$ref": "#/components/schemas/BrandingOptionsDTO"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userId": {
+            "format": "int64",
+            "type": "integer"
+          }
         },
         "type": "object"
       },
@@ -7253,6 +8165,17 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
+      "State": {
+        "type": "string"
+      },
+      "Status": {
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "Success": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
@@ -7262,6 +8185,39 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "SyncResult": {
+        "properties": {
+          "Elapsed": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "FailedUsers": {
+            "items": {
+              "$ref": "#/components/schemas/FailedUser"
+            },
+            "type": "array"
+          },
+          "MissingUserIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "Started": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "UpdatedUserIds": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "title": "SyncResult holds the result of a sync with LDAP. This gives us information on which users were updated and how.",
         "type": "object"
       },
       "TLSConfig": {
@@ -7338,6 +8294,30 @@
         },
         "type": "object"
       },
+      "TeamGroupDTO": {
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "teamId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "TeamGroupMapping": {
+        "properties": {
+          "groupId": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "TeamMemberDTO": {
         "properties": {
           "auth_module": {
@@ -7377,6 +8357,37 @@
             "type": "integer"
           }
         },
+        "type": "object"
+      },
+      "TelegramConfig": {
+        "properties": {
+          "api_url": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "chat": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "disable_notifications": {
+            "type": "boolean"
+          },
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "message": {
+            "type": "string"
+          },
+          "parse_mode": {
+            "type": "string"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "token": {
+            "$ref": "#/components/schemas/Secret"
+          }
+        },
+        "title": "TelegramConfig configures notifications via Telegram.",
         "type": "object"
       },
       "TempUserDTO": {
@@ -7621,6 +8632,104 @@
         "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
         "type": "object"
       },
+      "TimeRangeDTO": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Token": {
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "company": {
+            "type": "string"
+          },
+          "details_url": {
+            "type": "string"
+          },
+          "exp": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "iat": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "included_users": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "iss": {
+            "type": "string"
+          },
+          "jti": {
+            "type": "string"
+          },
+          "lexp": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lic_exp_warn_days": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "lid": {
+            "type": "string"
+          },
+          "limit_by": {
+            "type": "string"
+          },
+          "max_concurrent_user_sessions": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "nbf": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "prod": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TokenStatus"
+          },
+          "sub": {
+            "type": "string"
+          },
+          "tok_exp_warn_days": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "trial": {
+            "type": "boolean"
+          },
+          "trial_exp": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "update_days": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "usage_billing": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "TokenDTO": {
         "properties": {
           "created": {
@@ -7642,6 +8751,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "isRevoked": {
+            "example": false,
+            "type": "boolean"
+          },
           "lastUsedAt": {
             "example": "2022-03-23T10:31:02Z",
             "format": "date-time",
@@ -7658,6 +8771,10 @@
           }
         },
         "type": "object"
+      },
+      "TokenStatus": {
+        "format": "int64",
+        "type": "integer"
       },
       "TrimDashboardCommand": {
         "properties": {
@@ -7680,6 +8797,9 @@
           }
         },
         "type": "object"
+      },
+      "Type": {
+        "type": "string"
       },
       "URL": {
         "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
@@ -8039,6 +9159,39 @@
           },
           "weekStart": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateRoleCommand": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "global": {
+            "type": "boolean"
+          },
+          "group": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/Permission"
+            },
+            "type": "array"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -8642,7 +9795,6 @@
         "$ref": "#/components/schemas/Duration"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -8753,7 +9905,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -8864,7 +10015,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -8902,6 +10052,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "name": {
             "description": "name",
@@ -9030,6 +10181,598 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/access-control/roles": {
+      "get": {
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:list` and scope `roles:*`.",
+        "operationId": "listRoles",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "delegatable",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listRolesResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get all roles.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
+        "operationId": "createRole",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleForm"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/createRoleResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create a new custom role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/access-control/roles/{roleUID}": {
+      "delete": {
+        "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
+        "operationId": "deleteCustomRole",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "force",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "global",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "path",
+            "name": "roleUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Delete a custom role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      },
+      "get": {
+        "description": "Get a role for the given UID.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
+        "operationId": "getRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roleUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getRoleResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      },
+      "put": {
+        "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
+        "operationId": "updateRoleWithPermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roleUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getRoleResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update a custom role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/access-control/status": {
+      "get": {
+        "description": "Returns an indicator to check if fine-grained access control is enabled or not.\n\nYou need to have a permission with action `status:accesscontrol` and scope `services:accesscontrol`.",
+        "operationId": "getAccessControlStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getAccessControlStatusResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get status.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/access-control/teams/{teamId}/roles": {
+      "get": {
+        "description": "You need to have a permission with action `teams.roles:list` and scope `teams:id:\u003cteam ID\u003e`.",
+        "operationId": "listTeamRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get team roles.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.",
+        "operationId": "addTeamRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTeamRoleCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Add team role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      },
+      "put": {
+        "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.",
+        "operationId": "setTeamRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update team role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/access-control/teams/{teamId}/roles/{roleUID}": {
+      "delete": {
+        "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.",
+        "operationId": "removeTeamRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roleUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove team role.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/access-control/users/{userId}/roles": {
+      "get": {
+        "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:list` and scope `users:id:\u003cuser ID\u003e`.",
+        "operationId": "listUserRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getAllRolesResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "List roles assigned to a user.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "operationId": "addUserRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserRoleCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Add a user role assignment.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      },
+      "put": {
+        "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "operationId": "setUserRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetUserRolesCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Set user role assignments.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/access-control/users/{userId}/roles/{roleUID}": {
+      "delete": {
+        "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
+        "operationId": "removeUserRole",
+        "parameters": [
+          {
+            "description": "A flag indicating if the assignment is global or not. If set to false, the default org ID of the authenticated user will be used from the request to remove assignment.",
+            "in": "query",
+            "name": "global",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "path",
+            "name": "roleUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove a user role assignment.",
+        "tags": [
+          "access_control",
+          "enterprise"
+        ]
+      }
+    },
+    "/admin/ldap-sync-status": {
+      "get": {
+        "description": "You need to have a permission with action `ldap.status:read`.",
+        "operationId": "getSyncStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getSyncStatusResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Returns the current state of the LDAP background sync integration",
+        "tags": [
+          "ldap_debug"
+        ]
+      }
+    },
     "/admin/ldap/reload": {
       "post": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `ldap.config:reload`.",
@@ -9203,6 +10946,27 @@
         "summary": "Pause/unpause all (legacy) alerts.",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/admin/provisioning/access-control/reload": {
+      "post": {
+        "operationId": "adminProvisioningReloadAccessControl",
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/acceptedResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          }
+        },
+        "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
+        "tags": [
+          "access_control_provisioning",
+          "enterprise"
         ]
       }
     },
@@ -11296,7 +13060,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AlertRuleGroupMetadata"
+                "$ref": "#/components/schemas/AlertRuleGroup"
               }
             }
           },
@@ -11307,11 +13071,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AlertRuleGroupMetadata"
+                  "$ref": "#/components/schemas/AlertRuleGroup"
                 }
               }
             },
-            "description": "AlertRuleGroupMetadata"
+            "description": "AlertRuleGroup"
           },
           "400": {
             "content": {
@@ -12656,6 +14420,29 @@
         ]
       }
     },
+    "/datasources/correlations": {
+      "get": {
+        "operationId": "getCorrelations",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getCorrelationsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Gets all correlations.",
+        "tags": [
+          "correlations"
+        ]
+      }
+    },
     "/datasources/id/{name}": {
       "get": {
         "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).",
@@ -13071,6 +14858,37 @@
       }
     },
     "/datasources/uid/{sourceUID}/correlations": {
+      "get": {
+        "operationId": "getCorrelationsBySourceUID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getCorrelationsBySourceUIDResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Gets all correlations originating from the given data source.",
+        "tags": [
+          "correlations"
+        ]
+      },
       "post": {
         "operationId": "createCorrelation",
         "parameters": [
@@ -13121,6 +14939,45 @@
       }
     },
     "/datasources/uid/{sourceUID}/correlations/{correlationUID}": {
+      "get": {
+        "operationId": "getCorrelation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sourceUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "correlationUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getCorrelationResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Gets a correlation.",
+        "tags": [
+          "correlations"
+        ]
+      },
       "patch": {
         "operationId": "updateCorrelation",
         "parameters": [
@@ -13419,6 +15276,236 @@
         "summary": "Fetch data source resources.",
         "tags": [
           "datasources"
+        ]
+      }
+    },
+    "/datasources/{datasourceId}/disable-permissions": {
+      "post": {
+        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "operationId": "disablePermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "datasourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/createOrUpdateDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Disable permissions for a data source.",
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{datasourceId}/enable-permissions": {
+      "post": {
+        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "operationId": "enablePermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "datasourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/createOrUpdateDatasourceResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Enable permissions for a data source.",
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{datasourceId}/permissions": {
+      "get": {
+        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "operationId": "getAllPermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "datasourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getAllPermissionseResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get permissions for a data source.",
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "operationId": "addPermission",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "userId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "teamId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "builtinRole",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "permission",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "datasourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/addPermissionResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Add permissions for a data source.",
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
+        ]
+      }
+    },
+    "/datasources/{datasourceId}/permissions/{permissionId}": {
+      "delete": {
+        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "operationId": "deletePermissions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "datasourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "permissionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          }
+        },
+        "summary": "Remove permission for a data source.",
+        "tags": [
+          "datasource_permissions",
+          "enterprise"
         ]
       }
     },
@@ -14332,6 +16419,216 @@
         "summary": "Get library element connections.",
         "tags": [
           "library_elements"
+        ]
+      }
+    },
+    "/licensing/check": {
+      "get": {
+        "operationId": "getStatus",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getStatusResponse"
+          }
+        },
+        "summary": "Check license availability.",
+        "tags": [
+          "licensing",
+          "enterprise"
+        ]
+      }
+    },
+    "/licensing/custom-permissions": {
+      "get": {
+        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "operationId": "getCustomPermissionsReport",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getCustomPermissionsReportResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get custom permissions report.",
+        "tags": [
+          "licensing",
+          "enterprise"
+        ]
+      }
+    },
+    "/licensing/custom-permissions-csv": {
+      "get": {
+        "description": "You need to have a permission with action `licensing.reports:read`.",
+        "operationId": "getCustomPermissionsCSV",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getCustomPermissionsReportResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get custom permissions report in CSV format.",
+        "tags": [
+          "licensing",
+          "enterprise"
+        ]
+      }
+    },
+    "/licensing/refresh-stats": {
+      "get": {
+        "description": "You need to have a permission with action `licensing:read`.",
+        "operationId": "refreshLicenseStats",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/refreshLicenseStatsResponse"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Refresh license stats.",
+        "tags": [
+          "licensing",
+          "enterprise"
+        ]
+      }
+    },
+    "/licensing/token": {
+      "delete": {
+        "description": "Removes the license stored in the Grafana database. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:delete`.",
+        "operationId": "deleteLicenseToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteTokenCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/acceptedResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove license from database.",
+        "tags": [
+          "licensing",
+          "enterprise"
+        ]
+      },
+      "get": {
+        "description": "You need to have a permission with action `licensing:read`.",
+        "operationId": "getLicenseToken",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getLicenseTokenResponse"
+          }
+        },
+        "summary": "Get license token.",
+        "tags": [
+          "licensing",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "You need to have a permission with action `licensing:update`.",
+        "operationId": "postLicenseToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteTokenCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getLicenseTokenResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          }
+        },
+        "summary": "Create license token.",
+        "tags": [
+          "licensing",
+          "enterprise"
+        ]
+      }
+    },
+    "/licensing/token/renew": {
+      "post": {
+        "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
+        "operationId": "postRenewLicenseToken",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/postRenewLicenseTokenResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          }
+        },
+        "summary": "Manually force license refresh.",
+        "tags": [
+          "licensing",
+          "enterprise"
+        ]
+      }
+    },
+    "/logout/saml": {
+      "get": {
+        "operationId": "getSAMLLogout",
+        "responses": {
+          "302": {
+            "description": "(empty)"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "GetLogout initiates single logout process.",
+        "tags": [
+          "saml",
+          "enterprise"
         ]
       }
     },
@@ -15970,6 +18267,864 @@
         ]
       }
     },
+    "/recording-rules": {
+      "get": {
+        "description": "Lists all rules in the database: active or deleted",
+        "operationId": "listRecordingRules",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listRecordingRulesResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "Create a recording rule that is then registered and started",
+        "operationId": "createRecordingRule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordingRuleJSON"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/recordingRuleResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ]
+      },
+      "put": {
+        "description": "Update the active status of a rule",
+        "operationId": "updateRecordingRule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordingRuleJSON"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/recordingRuleResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ]
+      }
+    },
+    "/recording-rules/test": {
+      "post": {
+        "operationId": "testCreateRecordingRule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordingRuleJSON"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Test a recording rule.",
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ]
+      }
+    },
+    "/recording-rules/writer": {
+      "delete": {
+        "operationId": "deleteRecordingRuleWriteTarget",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Delete the remote write target.",
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ]
+      },
+      "get": {
+        "description": "Return the prometheus remote write target",
+        "operationId": "getRecordingRuleWriteTarget",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/recordingRuleWriteTargetResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "It returns a 422 if there is not an existing prometheus data source configured",
+        "operationId": "createRecordingRuleWriteTarget",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrometheusRemoteWriteTargetJSON"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/recordingRuleWriteTargetResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessableEntityError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create a remote write target.",
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ]
+      }
+    },
+    "/recording-rules/{recordingRuleID}": {
+      "delete": {
+        "operationId": "deleteRecordingRule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "recordingRuleID",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Delete removes the rule from the registry and stops it.",
+        "tags": [
+          "recording_rules",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
+        "operationId": "getReports",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getReportsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "List reports.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports.admin:create`.",
+        "operationId": "createReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/createReportResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Create a report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports/email": {
+      "post": {
+        "description": "Generate and send a report. This API waits for the report to be generated before returning. We recommend that you set the client’s timeout to at least 60 seconds. Available to org admins only and with a valid license.\n\nOnly available in Grafana Enterprise v7.0+.\nThis API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.\n\nYou need to have a permission with action `reports:send`.",
+        "operationId": "sendReport",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportEmailDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Send a report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports/render/pdf/{dashboardID}": {
+      "get": {
+        "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
+        "operationId": "renderReportPDF",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "DashboardID",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dashboardID",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "variables",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "orientation",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "layout",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Render report for dashboard.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports/render/pdfs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "operationId": "renderReportPDFs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dashboardID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "orientation",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "layout",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/contentResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Render report for multiple dashboards.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports/settings": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:read`x.",
+        "operationId": "getReportSettings",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getReportSettingsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get settings.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.settings:write`xx.",
+        "operationId": "saveReportSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsDTO"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Save settings.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports/test-email": {
+      "post": {
+        "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports:send`.",
+        "operationId": "sendTestEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Send test report via email.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/reports/{id}": {
+      "delete": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "operationId": "deleteReport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Delete a report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      },
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "operationId": "getReport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getReportResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get a report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      },
+      "put": {
+        "description": "Available to org admins only and with a valid or expired license\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "operationId": "updateReport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrUpdateConfigCmd"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Update a report.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ]
+      }
+    },
+    "/saml/acs": {
+      "post": {
+        "operationId": "postACS",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "RelayState",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "(empty)"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "It performs assertion Consumer Service (ACS).",
+        "tags": [
+          "saml",
+          "enterprise"
+        ]
+      }
+    },
+    "/saml/metadata": {
+      "get": {
+        "operationId": "getMetadata",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/contentResponse"
+          }
+        },
+        "summary": "It exposes the SP (Grafana's) metadata for the IdP's consumption.",
+        "tags": [
+          "saml",
+          "enterprise"
+        ]
+      }
+    },
+    "/saml/slo": {
+      "get": {
+        "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
+        "operationId": "getSLO",
+        "responses": {
+          "302": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "It performs Single Logout (SLO) callback.",
+        "tags": [
+          "saml",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
+        "operationId": "postSLO",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "SAMLRequest",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "SAMLResponse",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "It performs Single Logout (SLO) callback.",
+        "tags": [
+          "saml",
+          "enterprise"
+        ]
+      }
+    },
     "/search": {
       "get": {
         "operationId": "search",
@@ -16160,7 +19315,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Create service account",
+        "summary": "# Create service account",
         "tags": [
           "service_accounts"
         ]
@@ -16226,7 +19381,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Search service accounts with paging",
+        "summary": "# Search service accounts with paging",
         "tags": [
           "service_accounts"
         ]
@@ -16264,7 +19419,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Delete service account",
+        "summary": "# Delete service account",
         "tags": [
           "service_accounts"
         ]
@@ -16303,7 +19458,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get single serviceaccount by Id",
+        "summary": "# Get single serviceaccount by Id",
         "tags": [
           "service_accounts"
         ]
@@ -16352,7 +19507,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Update service account",
+        "summary": "# Update service account",
         "tags": [
           "service_accounts"
         ]
@@ -16390,7 +19545,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "Get service account tokens",
+        "summary": "# Get service account tokens",
         "tags": [
           "service_accounts"
         ]
@@ -16442,7 +19597,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "CreateNewToken adds a token to a service account",
+        "summary": "# CreateNewToken adds a token to a service account",
         "tags": [
           "service_accounts"
         ]
@@ -16492,7 +19647,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "DeleteToken deletes service account tokens",
+        "summary": "# DeleteToken deletes service account tokens",
         "tags": [
           "service_accounts"
         ]
@@ -16744,6 +19899,146 @@
         "summary": "Team Search With Paging.",
         "tags": [
           "teams"
+        ]
+      }
+    },
+    "/teams/{teamId}/groups": {
+      "get": {
+        "operationId": "getTeamGroupsApi",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getTeamGroupsApiResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Get External Groups.",
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ]
+      },
+      "post": {
+        "operationId": "addTeamGroupApi",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamGroupMapping"
+              }
+            }
+          },
+          "required": true,
+          "x-originalParamName": "body"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Add External Group.",
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ]
+      }
+    },
+    "/teams/{teamId}/groups/{groupId}": {
+      "delete": {
+        "operationId": "removeTeamGroupApi",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove External Group.",
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
         ]
       }
     },
