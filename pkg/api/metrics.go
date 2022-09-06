@@ -35,7 +35,7 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
 	}
 
-	return response.Err(err)
+	return response.ErrOrFallback(http.StatusInternalServerError, "Query data error", err)
 }
 
 // QueryMetricsV2 returns query metrics.
