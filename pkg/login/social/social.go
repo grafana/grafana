@@ -93,7 +93,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			TlsClientCa:             sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:           sec.Key("tls_skip_verify_insecure").MustBool(),
 			UsePKCE:                 sec.Key("use_pkce").MustBool(),
-			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(),
+			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(false),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
