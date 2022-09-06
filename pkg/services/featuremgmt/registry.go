@@ -327,5 +327,9 @@ var (
 			Description: "Use double quote to escape keyword in Mysql query",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+		},
 	}
 )
