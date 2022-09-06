@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import React, { Component } from 'react';
+import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -8,6 +9,7 @@ import { locationService, setEchoSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
+import { configureStore } from 'app/store/configureStore';
 
 import { getMockPlugin } from '../__mocks__/pluginMocks';
 import { getPluginSettings } from '../pluginSettings';
@@ -63,14 +65,17 @@ class RootComponent extends Component<AppRootProps> {
 }
 
 function renderUnderRouter() {
+  const store = configureStore();
   const route = { component: AppRootPage };
   locationService.push('/a/my-awesome-plugin');
 
   render(
     <Router history={locationService.getHistory()}>
-      <GrafanaContext.Provider value={getGrafanaContextMock()}>
-        <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
-      </GrafanaContext.Provider>
+      <Provider store={store}>
+        <GrafanaContext.Provider value={getGrafanaContextMock()}>
+          <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+        </GrafanaContext.Provider>
+      </Provider>
     </Router>
   );
 }

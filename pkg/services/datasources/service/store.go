@@ -36,8 +36,8 @@ type SqlStore struct {
 	logger log.Logger
 }
 
-func CreateStore(db sqlstore.Store) *SqlStore {
-	return &SqlStore{db: db}
+func CreateStore(db sqlstore.Store, logger log.Logger) *SqlStore {
+	return &SqlStore{db: db, logger: logger}
 }
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as

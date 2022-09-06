@@ -1,26 +1,24 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
+import { cloneDeep } from 'lodash';
 
 import { NavIndex, NavModel, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = config.bootData.navTree as NavModelItem[];
+  const rootNodes = cloneDeep(config.bootData.navTree as NavModelItem[]);
   buildNavIndex(navIndex, rootNodes);
   return navIndex;
 }
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   for (const node of children) {
-    const newNode = {
-      ...node,
-      parentItem: parentItem,
-    };
+    node.parentItem = parentItem;
 
-    navIndex[node.id!] = newNode;
+    navIndex[node.id!] = node;
 
     if (node.children) {
-      buildNavIndex(navIndex, node.children, newNode);
+      buildNavIndex(navIndex, node.children, node);
     }
   }
 

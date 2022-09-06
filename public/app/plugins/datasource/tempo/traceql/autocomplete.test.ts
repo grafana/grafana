@@ -1,8 +1,9 @@
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data/src';
 import { monacoTypes } from '@grafana/ui';
 
-import { TempoDatasource, TempoJsonData } from '../datasource';
+import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { TempoJsonData } from '../types';
 
 import { CompletionProvider } from './autocomplete';
 

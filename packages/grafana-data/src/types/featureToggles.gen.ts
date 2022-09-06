@@ -65,4 +65,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   customBranding?: boolean;
   traceqlEditor?: boolean;
+  redshiftAsyncQueryDataSupport?: boolean;
+  athenaAsyncQueryDataSupport?: boolean;
 }
