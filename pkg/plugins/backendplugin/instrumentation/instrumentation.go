@@ -49,7 +49,7 @@ func instrumentPluginRequest(ctx context.Context, cfg *setting.Cfg, pluginCtx *b
 	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatasourceLogger) {
 		logParams := []interface{}{
 			"status", status,
-			"duration", elapsed / time.Second,
+			"duration", elapsed,
 			"plugin_id", pluginCtx.PluginID,
 			"endpoint", endpoint,
 		}
@@ -65,7 +65,7 @@ func instrumentPluginRequest(ctx context.Context, cfg *setting.Cfg, pluginCtx *b
 			logParams = append(logParams, "ds_type", pluginCtx.DataSourceInstanceSettings.Type)
 		}
 
-		logger.Info("Plugin Request Completed", logParams)
+		logger.Info("Plugin Request Completed", logParams...)
 	}
 
 	return err
