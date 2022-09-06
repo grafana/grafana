@@ -114,25 +114,35 @@ func (b wrapper) removeRoot(path string) string {
 	return Join(Delimiter, strings.TrimPrefix(path, b.rootFolder))
 }
 
-func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
+func (b wrapper) getOptionsWithDefaults(options *GetFileOptions) *GetFileOptions {
+	if options == nil {
+		return &GetFileOptions{WithContents: true}
+	}
+
+	return options
+}
+
+func (b wrapper) Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error) {
 	if err := b.validatePath(path); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	rootedPath := b.addRoot(path)
 	if !b.filter.IsAllowed(rootedPath) {
-		return nil, nil
+		return nil, false, nil
 	}
+
+	optionsWithDefaults := b.getOptionsWithDefaults(options)
 
 	if b.rootFolder == rootedPath {
-		return nil, nil
+		return nil, false, nil
 	}
 
-	file, err := b.wrapped.Get(ctx, rootedPath)
+	file, _, err := b.wrapped.Get(ctx, rootedPath, optionsWithDefaults)
 	if file != nil {
 		file.FullPath = b.removeRoot(file.FullPath)
 	}
-	return file, err
+	return file, file != nil, err
 }
 
 func (b wrapper) Delete(ctx context.Context, path string) error {
@@ -323,7 +333,11 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 
 	go func() {
 		if options.WithFiles {
-			if f, err := b.Get(fileRetrievalCtx, folderPath); err == nil {
+			var getOptions *GetFileOptions
+			if options.WithContents {
+				getOptions = &GetFileOptions{WithContents: true}
+			}
+			if f, _, err := b.Get(fileRetrievalCtx, folderPath, getOptions); err == nil {
 				fileChan <- f
 				return
 			}

@@ -11,14 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -27,7 +24,6 @@ type Api struct {
 	PublicDashboardService publicdashboards.Service
 	RouteRegister          routing.RouteRegister
 	AccessControl          accesscontrol.AccessControl
-	QueryDataService       *query.Service
 	Features               *featuremgmt.FeatureManager
 }
 
@@ -35,14 +31,12 @@ func ProvideApi(
 	pd publicdashboards.Service,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
-	qds *query.Service,
 	features *featuremgmt.FeatureManager,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
 		RouteRegister:          rr,
 		AccessControl:          ac,
-		QueryDataService:       qds,
 		Features:               features,
 	}
 
@@ -57,18 +51,25 @@ func ProvideApi(
 //Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.AccessControl)
-	reqSignedIn := middleware.ReqSignedIn
 
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
 	// circular dependency
 
+	// public endpoints
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
 
 	// Create/Update Public Dashboard
-	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.GetPublicDashboardConfig))
-	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.SavePublicDashboardConfig))
+	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
+
+	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config",
+		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
+		routing.Wrap(api.GetPublicDashboardConfig))
+
+	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config",
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardPublicWrite, uidScope)),
+		routing.Wrap(api.SavePublicDashboardConfig))
 }
 
 // Gets public dashboard
@@ -78,7 +79,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 
 	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboard(
 		c.Req.Context(),
-		web.Params(c.Req)[":accessToken"],
+		accessToken,
 	)
 
 	if err != nil {
@@ -98,7 +99,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		Version:                    dash.Version,
 		IsFolder:                   false,
 		FolderId:                   dash.FolderId,
-		PublicDashboardAccessToken: accessToken,
+		PublicDashboardAccessToken: pubdash.AccessToken,
 		PublicDashboardUID:         pubdash.Uid,
 	}
 
@@ -120,23 +121,28 @@ func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response
 // Sets public dashboard configuration for dashboard
 // POST /api/dashboards/uid/:uid/public-config
 func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Response {
+	// exit if we don't have a valid dashboardUid
+	dashboardUid := web.Params(c.Req)[":uid"]
+	if dashboardUid == "" || !util.IsValidShortUID(dashboardUid) {
+		handleDashboardErr(http.StatusBadRequest, "no dashboardUid", dashboards.ErrDashboardIdentifierNotSet)
+	}
+
 	pubdash := &PublicDashboard{}
 	if err := web.Bind(c.Req, pubdash); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	// Always set the org id to the current auth session orgId
+	// Always set the orgID and userID from the session
 	pubdash.OrgId = c.OrgID
-
 	dto := SavePublicDashboardConfigDTO{
-		OrgId:           c.OrgID,
-		DashboardUid:    web.Params(c.Req)[":uid"],
 		UserId:          c.UserID,
+		OrgId:           c.OrgID,
+		DashboardUid:    dashboardUid,
 		PublicDashboard: pubdash,
 	}
 
 	// Save the public dashboard
-	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), &dto)
+	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return handleDashboardErr(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)
 	}
@@ -152,35 +158,16 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "invalid panel ID", err)
 	}
 
-	// Get the dashboard
-	pubdash, dashboard, err := api.PublicDashboardService.GetPublicDashboard(c.Req.Context(), web.Params(c.Req)[":accessToken"])
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not fetch dashboard", err)
+	reqDTO := &PublicDashboardQueryDTO{}
+	if err = web.Bind(c.Req, reqDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	// Build the request data objecct
-	reqDTO, err := api.PublicDashboardService.BuildPublicDashboardMetricRequest(
-		c.Req.Context(),
-		dashboard,
-		pubdash,
-		panelId,
-	)
+	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, web.Params(c.Req)[":accessToken"])
 	if err != nil {
-		return handleDashboardErr(http.StatusInternalServerError, "Failed to get queries for public dashboard", err)
+		return handlePublicDashboardErr(err)
 	}
 
-	// Build anonymous user for the request
-	anonymousUser, err := api.PublicDashboardService.BuildAnonymousUser(c.Req.Context(), dashboard)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "could not create anonymous user", err)
-	}
-
-	// Make the request
-	resp, err := api.QueryDataService.QueryDataMultipleSources(c.Req.Context(), anonymousUser, c.SkipCache, reqDTO, true)
-
-	if err != nil {
-		return handleQueryMetricsError(err)
-	}
 	return toJsonStreamingResponse(api.Features, resp)
 }
 
@@ -204,24 +191,8 @@ func handleDashboardErr(defaultCode int, defaultMsg string, err error) response.
 	return response.Error(defaultCode, defaultMsg, err)
 }
 
-// Copied from pkg/api/metrics.go
-func handleQueryMetricsError(err error) *response.NormalResponse {
-	if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
-		return response.Error(http.StatusForbidden, "Access denied to data source", err)
-	}
-	if errors.Is(err, datasources.ErrDataSourceNotFound) {
-		return response.Error(http.StatusNotFound, "Data source not found", err)
-	}
-	var badQuery *query.ErrBadQuery
-	if errors.As(err, &badQuery) {
-		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
-	}
-
-	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
-	}
-
-	return response.Error(http.StatusInternalServerError, "Query data error", err)
+func handlePublicDashboardErr(err error) response.Response {
+	return handleDashboardErr(http.StatusInternalServerError, "Unexpected Error", err)
 }
 
 // Copied from pkg/api/metrics.go
