@@ -192,6 +192,9 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 
 func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
 	metricReq, err := pd.GetMetricRequest(ctx, accessToken, panelId, queryDto)
+	if err != nil {
+		return nil, err
+	}
 
 	_, dashboard, err := pd.GetPublicDashboard(ctx, accessToken)
 	if err != nil {
