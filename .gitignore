@@ -119,6 +119,7 @@ pkg/cmd/grafana-server/__debug_bin
 
 /scripts/build/release_publisher/release_publisher
 *.patch
+!.yarn/patches/*.patch
 
 # Ignoring frontend packages specifics
 /packages/**/dist
