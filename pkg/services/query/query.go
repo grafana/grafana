@@ -117,7 +117,7 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 
 	for _, pq := range parsedReq.parsedQueries {
 		if pq.datasource == nil {
-			return nil, NewErrBadQuery(fmt.Sprintf("query mising datasource info: %s", pq.query.RefID))
+			return nil, badQueryErr(fmt.Sprintf("query mising datasource info: %s", pq.query.RefID))
 		}
 
 		exprReq.Queries = append(exprReq.Queries, expr.Query{
@@ -211,7 +211,7 @@ type parsedRequest struct {
 
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
-		return nil, NewErrBadQuery("no queries found")
+		return nil, badQueryErr("no queries found")
 	}
 
 	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
@@ -228,7 +228,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			return nil, err
 		}
 		if ds == nil {
-			return nil, NewErrBadQuery("invalid data source ID")
+			return nil, badQueryErr("invalid data source ID")
 		}
 
 		datasourcesByUid[ds.Uid] = ds
@@ -262,7 +262,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 	if !req.hasExpression {
 		if len(datasourcesByUid) > 1 {
 			// We do not (yet) support mixed query type
-			return nil, NewErrBadQuery("all queries must use the same datasource")
+			return nil, badQueryErr("all queries must use the same datasource")
 		}
 	}
 
@@ -314,7 +314,7 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedI
 		return ds, nil
 	}
 
-	return nil, NewErrBadQuery("missing data source ID/UID")
+	return nil, badQueryErr("missing data source ID/UID")
 }
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {

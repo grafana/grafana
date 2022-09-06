@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 
 	"github.com/centrifugal/centrifuge"
@@ -598,9 +599,13 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusForbidden), Message: http.StatusText(http.StatusForbidden)}
 		}
-		var badQuery *query.ErrBadQuery
-		if errors.As(err, &badQuery) {
-			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: http.StatusText(http.StatusBadRequest)}
+		grafanaErr := &errutil.Error{}
+		if errors.As(err, grafanaErr) {
+			status := http.StatusBadRequest
+			if grafanaErr.Reason != nil {
+				status = grafanaErr.Reason.Status().HTTPStatus()
+			}
+			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(status), Message: http.StatusText(status)}
 		}
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
 	}

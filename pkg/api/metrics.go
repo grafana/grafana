@@ -12,8 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/query"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -28,11 +26,6 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
 	if errors.As(err, &secretsPlugin) {
 		return response.Error(http.StatusInternalServerError, fmt.Sprint("Secrets Plugin error: ", err.Error()), err)
-	}
-
-	var badQuery query.ErrBadQuery
-	if errors.As(err, &badQuery) {
-		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, "Query data error", err)
