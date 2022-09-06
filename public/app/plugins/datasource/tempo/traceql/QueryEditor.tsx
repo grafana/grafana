@@ -5,8 +5,8 @@ import React from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { TempoDatasource, TempoQuery } from '../datasource';
-import { defaultQuery, MyDataSourceOptions } from '../types';
+import { TempoDatasource } from '../datasource';
+import { defaultQuery, MyDataSourceOptions, TempoQuery } from '../types';
 
 import { TempoQueryBuilderOptions } from './TempoQueryBuilderOptions';
 import { TraceQLEditor } from './TraceQLEditor';
