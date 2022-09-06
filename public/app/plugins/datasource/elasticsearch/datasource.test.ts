@@ -108,9 +108,7 @@ function getTestContext({
   } as TimeSrv;
 
   const settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = { url: ELASTICSEARCH_MOCK_URL };
-  if (jsonData) {
-    settings.jsonData = jsonData as ElasticsearchOptions;
-  }
+  settings.jsonData = jsonData as ElasticsearchOptions;
 
   const templateSrv = {
     replace: (text?: string) => {
