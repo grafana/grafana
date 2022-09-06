@@ -38,12 +38,8 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    const { changeDatasource, datasourceRef } = this.props;
-    changeDatasource(this.props.exploreId, dsSettings.uid, { importQueries: true });
-    reportInteraction('grafana_explore_ds_picker_ds_change', {
-      newDsType: dsSettings.type,
-      oldDsType: datasourceRef.type,
-    });
+    const { changeDatasource, exploreId } = this.props;
+    changeDatasource(exploreId, dsSettings.uid, { importQueries: true });
   };
 
   onRunQuery = (loading = false) => {
