@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -32,8 +33,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
+	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -96,8 +98,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password" //nolint:goconst
 
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
 		require.NoError(t, err)
 
@@ -249,8 +252,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		})
 		setting.SecretKey = "password"
 
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		key, err := secretsService.Encrypt(context.Background(), []byte("123"), secrets.WithoutScope())
 		require.NoError(t, err)
 
@@ -348,8 +352,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ds := &datasources.DataSource{Url: "htttp://graphite:8080", Type: datasources.DS_GRAPHITE}
 		ctx := &models.ReqContext{}
 
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{BuildVersion: "5.3.0"}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -374,8 +379,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -399,8 +405,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -428,8 +435,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		ctx := &models.ReqContext{}
 		var pluginRoutes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, pluginRoutes, ctx, "", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -452,8 +460,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 		ctx := &models.ReqContext{}
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -502,8 +511,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		}
 
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &mockAuthToken, dsService, tracer)
 		require.NoError(t, err)
@@ -556,8 +566,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying data source proxy should handle authentication", func(t *testing.T) {
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
 		tests := []*testCase{
 			createAuthTest(t, secretsStore, datasources.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
@@ -637,8 +648,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
 		ctx, ds := setUp(t)
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -656,8 +668,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			},
 		})
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -671,8 +684,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 	t.Run("When response should set Content-Security-Policy header", func(t *testing.T) {
 		ctx, ds := setUp(t)
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -694,8 +708,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			},
 		})
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/render", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -720,8 +735,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -745,8 +761,9 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 		ctx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
 		var routes []*plugins.Route
-		secretsStore := kvstore.SetupTestService(t)
-		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		sqlStore := sqlstore.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 		proxy, err := NewDataSourceProxy(ds, routes, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
 		require.NoError(t, err)
@@ -770,8 +787,9 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 	cfg := &setting.Cfg{}
 	tracer := tracing.InitializeTracerForTest()
 	var routes []*plugins.Route
-	secretsStore := kvstore.SetupTestService(t)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 	_, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 	require.Error(t, err)
@@ -791,8 +809,9 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
-	secretsStore := kvstore.SetupTestService(t)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 	_, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 
@@ -834,8 +853,9 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 			}
 
 			var routes []*plugins.Route
-			secretsStore := kvstore.SetupTestService(t)
-			secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+			sqlStore := sqlstore.InitTestDB(t)
+			secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+			secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 			dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 			p, err := NewDataSourceProxy(&ds, routes, &ctx, "api/method", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 			if tc.err == nil {
@@ -861,8 +881,9 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *sett
 	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
-	secretsStore := kvstore.SetupTestService(t)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 	proxy, err := NewDataSourceProxy(ds, routes, ctx, "", cfg, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 	require.NoError(t, err)
@@ -916,7 +937,7 @@ const (
 	authCheckHeader = "header"
 )
 
-func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType string, url string, authType string, authCheck string) *testCase {
+func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType string, url string, authType string, authCheck string) *testCase {
 	// Basic user:password
 	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
@@ -975,7 +996,7 @@ func createAuthTest(t *testing.T, secretsStore kvstore.SecretsKVStore, dsType st
 	return test
 }
 
-func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
+func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
 	ctx := &models.ReqContext{}
 	tracer := tracing.InitializeTracerForTest()
 
@@ -1021,8 +1042,9 @@ func Test_PathCheck(t *testing.T) {
 		return ctx, req
 	}
 	ctx, _ := setUp()
-	secretsStore := kvstore.SetupTestService(t)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	sqlStore := sqlstore.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	dsService := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
 	proxy, err := NewDataSourceProxy(&datasources.DataSource{}, routes, ctx, "b", &setting.Cfg{}, httpclient.NewProvider(), &oauthtoken.Service{}, dsService, tracer)
 	require.NoError(t, err)

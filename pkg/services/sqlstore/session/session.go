@@ -48,6 +48,8 @@ func (gs *SessionDB) Beginx() (*SessionTx, error) {
 }
 
 func (gs *SessionDB) WithTransaction(ctx context.Context, callback func(*SessionTx) error) error {
+	// Instead of begin a transaction, we need to check the transaction in context, if it exists,
+	// we can reuse it.
 	tx, err := gs.Beginx()
 	if err != nil {
 		return err

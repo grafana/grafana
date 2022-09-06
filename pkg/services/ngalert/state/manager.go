@@ -73,7 +73,7 @@ func (st *Manager) Close(ctx context.Context) {
 
 func (st *Manager) Warm(ctx context.Context) {
 	st.log.Info("warming cache for startup")
-	st.ResetCache()
+	st.ResetAllStates()
 
 	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
 	if err != nil {
@@ -149,20 +149,30 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetCache is used to ensure a clean cache on startup.
-func (st *Manager) ResetCache() {
+// ResetAllStates is used to ensure a clean cache on startup.
+func (st *Manager) ResetAllStates() {
 	st.cache.reset()
 }
 
-// RemoveByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
-	st.cache.removeByRuleUID(orgID, ruleUID)
+// ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
+	logger := st.log.New(ruleKey.LogContext()...)
+	logger.Debug("resetting state of the rule")
+	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
+	if len(states) > 0 {
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+		if err != nil {
+			logger.Error("failed to delete states that belong to a rule from database", ruleKey.LogContext()...)
+		}
+	}
+	logger.Info("rules state was reset", "deleted_states", len(states))
+	return states
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []*State {
-	logger := st.log.New(alertRule.GetKey().LogContext())
+	logger := st.log.New(alertRule.GetKey().LogContext()...)
 	logger.Debug("state manager processing evaluation results", "resultCount", len(results))
 	var states []*State
 	processedResults := make(map[string]*State, len(results))
@@ -171,15 +181,13 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 		processedResults[s.CacheId] = s
 	}
-	st.staleResultsHandler(ctx, evaluatedAt, alertRule, processedResults)
+
+	st.cleanupStaleResults(ctx, evaluatedAt, alertRule, processedResults)
 	if len(states) > 0 {
 		logger.Debug("saving new states to the database", "count", len(states))
-		for _, state := range states {
-			if err := st.saveState(ctx, state); err != nil {
-				logger.Error("failed to save alert state", "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error())
-			}
-		}
+		_, _ = st.saveAlertStates(ctx, states...)
 	}
+
 	return states
 }
 
@@ -313,34 +321,86 @@ func (st *Manager) flushState(ctx context.Context) {
 	st.log.Info("flushing the state")
 	st.cache.mtxStates.Lock()
 	defer st.cache.mtxStates.Unlock()
+
 	totalStates, errorsCnt := 0, 0
+	stateBatchSize := 512 // 4KiB, 8 bytes per pointer
+	var stateSlice []*State = make([]*State, 0, stateBatchSize)
+
+	writeBatch := func() {
+		if len(stateSlice) > 0 {
+			savedCount, failedCount := st.saveAlertStates(ctx, stateSlice...)
+			errorsCnt += failedCount
+			totalStates += savedCount
+			stateSlice = stateSlice[:0]
+		}
+	}
+
 	for _, orgStates := range st.cache.states {
 		for _, ruleStates := range orgStates {
+			// Flush the state batch if we would go over the batch size when adding the next loop.
+			if len(ruleStates)+len(stateSlice) > stateBatchSize {
+				writeBatch()
+			}
+
 			for _, state := range ruleStates {
-				err := st.saveState(ctx, state)
-				totalStates++
-				if err != nil {
-					st.log.Error("failed to save alert state", append(state.GetRuleKey().LogContext(), "labels", state.Labels.String(), "state", state.State.String(), "err", err.Error()))
-					errorsCnt++
-				}
+				// Take everything for a single rule, even if it exceeds the batch
+				// size. We'd like to flush everything for one rule as a unit.
+				stateSlice = append(stateSlice, state)
 			}
 		}
 	}
+
+	writeBatch()
+
 	st.log.Info("the state has been flushed", "total_instances", totalStates, "errors", errorsCnt, "took", st.clock.Since(t))
 }
 
-func (st *Manager) saveState(ctx context.Context, s *State) error {
-	cmd := ngModels.SaveAlertInstanceCommand{
-		RuleOrgID:         s.OrgID,
-		RuleUID:           s.AlertRuleUID,
-		Labels:            ngModels.InstanceLabels(s.Labels),
-		State:             ngModels.InstanceStateType(s.State.String()),
-		StateReason:       s.StateReason,
-		LastEvalTime:      s.LastEvaluationTime,
-		CurrentStateSince: s.StartsAt,
-		CurrentStateEnd:   s.EndsAt,
+// TODO: Is the `State` type necessary? Should it embed the instance?
+func (st *Manager) saveAlertStates(ctx context.Context, states ...*State) (saved, failed int) {
+	st.log.Debug("saving alert states", "count", len(states))
+	instances := make([]ngModels.AlertInstance, 0, len(states))
+
+	type debugInfo struct {
+		OrgID  int64
+		Uid    string
+		State  string
+		Labels string
 	}
-	return st.instanceStore.SaveAlertInstance(ctx, &cmd)
+	debug := make([]debugInfo, 0)
+
+	for _, s := range states {
+		labels := ngModels.InstanceLabels(s.Labels)
+		_, hash, err := labels.StringAndHash()
+		if err != nil {
+			debug = append(debug, debugInfo{s.OrgID, s.AlertRuleUID, s.State.String(), s.Labels.String()})
+			st.log.Error("failed to save alert instance with invalid labels", "orgID", s.OrgID, "ruleUID", s.AlertRuleUID, "err", err)
+			continue
+		}
+		fields := ngModels.AlertInstance{
+			AlertInstanceKey: ngModels.AlertInstanceKey{
+				RuleOrgID:  s.OrgID,
+				RuleUID:    s.AlertRuleUID,
+				LabelsHash: hash,
+			},
+			Labels:            ngModels.InstanceLabels(s.Labels),
+			CurrentState:      ngModels.InstanceStateType(s.State.String()),
+			CurrentReason:     s.StateReason,
+			LastEvalTime:      s.LastEvaluationTime,
+			CurrentStateSince: s.StartsAt,
+			CurrentStateEnd:   s.EndsAt,
+		}
+		instances = append(instances, fields)
+	}
+
+	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
+		for _, inst := range instances {
+			debug = append(debug, debugInfo{inst.RuleOrgID, inst.RuleUID, string(inst.CurrentState), data.Labels(inst.Labels).String()})
+		}
+		st.log.Error("failed to save alert states", "states", debug, "err", err)
+		return 0, len(debug)
+	}
+
+	return len(instances), len(debug)
 }
 
 // TODO: why wouldn't you allow other types like NoData or Error?
@@ -416,11 +476,18 @@ func (st *Manager) annotateState(ctx context.Context, alertRule *ngModels.AlertR
 	}
 }
 
-func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, states map[string]*State) {
+func (st *Manager) cleanupStaleResults(
+	ctx context.Context,
+	evaluatedAt time.Time,
+	alertRule *ngModels.AlertRule,
+	newStates map[string]*State,
+) {
 	allStates := st.GetStatesForRuleUID(alertRule.OrgID, alertRule.UID)
+	toDelete := make([]ngModels.AlertInstanceKey, 0)
+
 	for _, s := range allStates {
-		_, ok := states[s.CacheId]
-		if !ok && isItStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
+		// Is the cached state in our recently processed results? If not, is it stale?
+		if _, ok := newStates[s.CacheId]; !ok && stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds) {
 			st.log.Debug("removing stale state entry", "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
 			st.cache.deleteEntry(s.OrgID, s.AlertRuleUID, s.CacheId)
 			ilbs := ngModels.InstanceLabels(s.Labels)
@@ -429,9 +496,7 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 				st.log.Error("unable to get labelsHash", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID)
 			}
 
-			if err = st.instanceStore.DeleteAlertInstance(ctx, s.OrgID, s.AlertRuleUID, labelsHash); err != nil {
-				st.log.Error("unable to delete stale instance from database", "err", err.Error(), "orgID", s.OrgID, "alertRuleUID", s.AlertRuleUID, "cacheID", s.CacheId)
-			}
+			toDelete = append(toDelete, ngModels.AlertInstanceKey{RuleOrgID: s.OrgID, RuleUID: s.AlertRuleUID, LabelsHash: labelsHash})
 
 			if s.State == eval.Alerting {
 				st.annotateState(ctx, alertRule, s.Labels, evaluatedAt,
@@ -440,9 +505,14 @@ func (st *Manager) staleResultsHandler(ctx context.Context, evaluatedAt time.Tim
 			}
 		}
 	}
+
+	if err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...); err != nil {
+		st.log.Error("unable to delete stale instances from database", "err", err.Error(),
+			"orgID", alertRule.OrgID, "alertRuleUID", alertRule.UID, "count", len(toDelete))
+	}
 }
 
-func isItStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
+func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
 }
 
