@@ -61,10 +61,10 @@ Grafana Enterprise adds the following features:
 - [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) to control access with role-based permissions.
 - [Data source permissions]({{< relref "../administration/data-source-management/" >}}) to restrict query access to specific teams and users.
 - [Data source query caching]({{< relref "query-caching/" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
-- [Reporting]({{< relref "reporting/" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
-- [Export dashboard as PDF]({{< relref "export-pdf/" >}})
+- [Reporting]({{< relref "../panels/create-reports/" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
+- [Export dashboard as PDF]({{< relref "../panels/create-reports/#export-dashboard-as-pdf" >}})
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding/" >}}) to customize Grafana from the brand and logo to the footer links.
-- [Usage insights]({{< relref "usage-insights/" >}}) to understand how your Grafana instance is used.
+- [Usage insights]({{< relref "../dashboards/assess-dashboard-usage/" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "../setup-grafana/configure-security/configure-database-encryption/integrate-with-hashicorp-vault/" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "../setup-grafana/configure-security/audit-grafana/" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "../setup-grafana/configure-security/configure-request-security/" >}}) makes it possible to restrict outgoing requests from the Grafana server.

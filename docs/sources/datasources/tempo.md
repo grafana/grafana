@@ -15,7 +15,7 @@ weight: 1400
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/" >}}).
+Grafana ships with built-in support for Tempo, a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Add data source
 
@@ -33,6 +33,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 ### Trace to logs
 
 > **Note:** This feature is available in Grafana 7.4+.
+> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration/" >}}). Select target data source (at this moment limited to Loki or Splunk \[logs\] data sources) and select which tags will be used in the logs query.
 
@@ -49,6 +50,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 ### Trace to metrics
 
 > **Note:** This feature is behind the `traceToMetrics` feature toggle.
+> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 To configure trace to metrics, select the target Prometheus data source and create any desired linked queries.
 
@@ -182,7 +184,7 @@ A service graph is a visual representation of the relationships between services
 
 To display the service graph:
 
-- [Configure the Grafana Agent](https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/#quickstart) or [Tempo/GET](https://grafana.com/docs/tempo/latest/server_side_metrics/service_graphs/#tempo) to generate service graph data
+- [Configure Grafana Agent](https://grafana.com/docs/tempo/latest/grafana-agent/service-graphs/#quickstart), or [Tempo or GET](https://grafana.com/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate service graph data
 - Link a Prometheus data source in the Tempo data source settings.
 - Navigate to [Explore]({{< relref "../explore/" >}}).
 - Select the Tempo data source.
@@ -206,7 +208,7 @@ Click on the service to see a context menu with additional links for quick navig
 
 The Application Performance Management (APM) table lets you view several APM metrics out of the box.
 The APM table is part of the APM dashboard.
-For more information, refer to the [APM dashboard documentation](https://grafana.com/docs/tempo/next/metrics-generator/app-performance-mgmt/).
+For more information, refer to the [APM dashboard documentation](https://grafana.com/docs/tempo/latest/metrics-generator/app-performance-mgmt/).
 
 To display the APM table:
 

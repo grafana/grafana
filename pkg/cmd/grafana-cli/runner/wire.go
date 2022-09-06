@@ -34,10 +34,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	processManager "github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	managerStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -72,6 +78,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -171,14 +178,21 @@ var wireSet = wire.NewSet(
 	uss.ProvideService,
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	repo.ProvideService,
+	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.Client), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.Store), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.DashboardFileStore), new(*manager.PluginManager)),
-	wire.Bind(new(plugins.StaticRouteResolver), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.RendererManager), new(*manager.PluginManager)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*manager.PluginManager)),
+	client.ProvideService,
+	wire.Bind(new(plugins.Client), new(*client.Service)),
+	managerStore.ProvideService,
+	wire.Bind(new(plugins.Store), new(*managerStore.Service)),
+	wire.Bind(new(plugins.StaticRouteResolver), new(*managerStore.Service)),
+	pluginDashboards.ProvideFileStoreManager,
+	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
+	processManager.ProvideService,
+	wire.Bind(new(processManager.Service), new(*processManager.Manager)),
 	coreplugin.ProvideCoreRegistry,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
@@ -207,6 +221,7 @@ var wireSet = wire.NewSet(
 	authinfodatabase.ProvideAuthInfoStore,
 	loginpkg.ProvideService,
 	wire.Bind(new(loginpkg.Authenticator), new(*loginpkg.AuthenticatorService)),
+	loginattemptimpl.ProvideService,
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
@@ -303,8 +318,8 @@ var wireSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
-	datasourceservice.ProvideDataSourceMigrationService,
-	secretsStore.ProvidePluginSecretMigrationService,
+	secretsMigrations.ProvideDataSourceMigrationService,
+	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideSecretMigrationService,
 	wire.Bind(new(secretsMigrations.SecretMigrationService), new(*secretsMigrations.SecretMigrationServiceImpl)),
 	userauthimpl.ProvideService,
@@ -320,6 +335,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
+	acimpl.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/server/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -51,9 +52,9 @@ var wireExtsSet = wire.NewSet(
 	auth.ProvideUserAuthTokenService,
 	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
 	wire.Bind(new(models.UserTokenBackgroundService), new(*auth.UserAuthTokenService)),
-	ossaccesscontrol.ProvideService,
-	wire.Bind(new(accesscontrol.RoleRegistry), new(*ossaccesscontrol.OSSAccessControlService)),
-	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.OSSAccessControlService)),
+	acimpl.ProvideService,
+	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
+	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
 	thumbs.ProvideCrawlerAuthSetupService,
 	wire.Bind(new(thumbs.CrawlerAuthSetupService), new(*thumbs.OSSCrawlerAuthSetupService)),
 	validations.ProvideValidator,
@@ -75,7 +76,7 @@ var wireExtsSet = wire.NewSet(
 	provider.ProvideService,
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	acdb.ProvideService,
-	wire.Bind(new(accesscontrol.PermissionsStore), new(*acdb.AccessControlStore)),
+	wire.Bind(new(accesscontrol.Store), new(*acdb.AccessControlStore)),
 	ldap.ProvideGroupsService,
 	wire.Bind(new(ldap.Groups), new(*ldap.OSSGroups)),
 	permissions.ProvideDatasourcePermissionsService,

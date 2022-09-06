@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
+import { BootData } from '@grafana/data';
 import { BackendSrv, setEchoSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -44,7 +45,7 @@ jest.mock('app/core/core', () => {
 });
 
 describe('SharePublic', () => {
-  let originalBootData: any;
+  let originalBootData: BootData;
 
   beforeAll(() => {
     setEchoSrv(new Echo());

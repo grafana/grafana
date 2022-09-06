@@ -38,6 +38,10 @@ type ExtractedLineage struct {
 	// code from not-yet-canonical coremodels should include appropriate caveats in
 	// documentation and possibly be hidden from external public API surface areas.
 	IsCanonical bool
+
+	// Indicates whether the coremodel represents an API type, and should therefore
+	// be included in API client code generation.
+	IsAPIType bool
 }
 
 // ExtractLineage loads a Grafana Thema lineage from the filesystem.
@@ -100,6 +104,7 @@ func ExtractLineage(path string, lib thema.Library) (*ExtractedLineage, error) {
 		return ec, err
 	}
 	ec.IsCanonical = isCanonical(ec.Lineage.Name())
+	ec.IsAPIType = isAPIType(ec.Lineage.Name())
 	return ec, nil
 }
 
@@ -122,9 +127,18 @@ func isCanonical(name string) bool {
 	return canonicalCoremodels[name]
 }
 
+func isAPIType(name string) bool {
+	return !nonAPITypes[name]
+}
+
 // FIXME specifying coremodel canonicality DOES NOT belong here - it should be part of the coremodel declaration.
 var canonicalCoremodels = map[string]bool{
 	"dashboard": false,
+}
+
+// FIXME this also needs to be moved into coremodel metadata
+var nonAPITypes = map[string]bool{
+	"pluginmeta": true,
 }
 
 // GenerateGoCoremodel generates a standard Go model struct and coremodel

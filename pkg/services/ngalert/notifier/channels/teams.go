@@ -69,10 +69,10 @@ type AdaptiveCardsAttachment struct {
 // AdapativeCard repesents an Adaptive Card.
 // https://adaptivecards.io/explorer/AdaptiveCard.html
 type AdaptiveCard struct {
-	Body    []AdaptiveCardItem `json:"body"`
-	Schema  string             `json:"$schema"`
-	Type    string             `json:"type"`
-	Version string             `json:"version"`
+	Body    []AdaptiveCardItem
+	Schema  string
+	Type    string
+	Version string
 }
 
 // NewAdaptiveCard returns a prepared Adaptive Card.
@@ -83,6 +83,22 @@ func NewAdaptiveCard() AdaptiveCard {
 		Type:    "AdaptiveCard",
 		Version: "1.4",
 	}
+}
+
+func (c *AdaptiveCard) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Body    []AdaptiveCardItem     `json:"body"`
+		Schema  string                 `json:"$schema"`
+		Type    string                 `json:"type"`
+		Version string                 `json:"version"`
+		MsTeams map[string]interface{} `json:"msTeams,omitempty"`
+	}{
+		Body:    c.Body,
+		Schema:  c.Schema,
+		Type:    c.Type,
+		Version: c.Version,
+		MsTeams: map[string]interface{}{"width": "Full"},
+	})
 }
 
 // AppendItem appends an item, such as text or an image, to the Adaptive Card.

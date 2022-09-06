@@ -5,7 +5,6 @@
 package cuectx
 
 import (
-	"io"
 	"io/fs"
 	"path/filepath"
 	"testing/fstest"
@@ -53,12 +52,9 @@ func JSONtoCUE(path string, b []byte) (cue.Value, error) {
 // lineage.cue file must be the sole contents of the provided fs.FS.
 //
 // More details on underlying behavior can be found in the docs for github.com/grafana/thema/load.InstancesWithThema.
-func LoadGrafanaInstancesWithThema(
-	path string,
-	cueFS fs.FS,
-	lib thema.Library,
-	opts ...thema.BindOption,
-) (thema.Lineage, error) {
+//
+// TODO this approach is complicated and confusing, refactor to something understandable
+func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
 	prefix := filepath.FromSlash(path)
 	fs, err := prefixWithGrafanaCUE(prefix, cueFS)
 	if err != nil {
@@ -104,13 +100,7 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 			return nil
 		}
 
-		f, err := inputfs.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close() // nolint: errcheck
-
-		b, err := io.ReadAll(f)
+		b, err := fs.ReadFile(inputfs, path)
 		if err != nil {
 			return err
 		}
