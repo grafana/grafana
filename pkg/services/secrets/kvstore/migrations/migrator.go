@@ -38,7 +38,7 @@ func ProvideSecretMigrationProvider(
 	dataSourceSecretMigrationService *DataSourceSecretMigrationService,
 	migrateToPluginService *MigrateToPluginService,
 	migrateFromPluginService *MigrateFromPluginService,
-) SecretMigrationProvider {
+) *SecretMigrationProviderImpl {
 	services := make([]SecretMigrationService, 0)
 	services = append(services, dataSourceSecretMigrationService)
 	// Plugin migration should always be last; should either migrate to or from, not both

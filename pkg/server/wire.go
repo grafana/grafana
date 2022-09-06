@@ -335,6 +335,7 @@ var wireBasicSet = wire.NewSet(
 	secretsMigrations.ProvideMigrateToPluginService,
 	secretsMigrations.ProvideMigrateFromPluginService,
 	secretsMigrations.ProvideSecretMigrationProvider,
+	wire.Bind(new(secretsMigrations.SecretMigrationProvider), new(*secretsMigrations.SecretMigrationProviderImpl)),
 	userauthimpl.ProvideService,
 	acimpl.ProvideAccessControl,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
