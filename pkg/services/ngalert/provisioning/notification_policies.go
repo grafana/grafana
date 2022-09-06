@@ -191,5 +191,5 @@ func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitio
 	}
 
 	nps.log.Error("Grafana Alerting has been configured with a default configuration that is internally inconsistent! The default configuration's notification policy must have a corresponding receiver.")
-	return fmt.Errorf("Grafana Alerting has been configured with a default configuration that is internally inconsistent! The default configuration's notification policy must have a corresponding receiver.")
+	return fmt.Errorf("inconsistent default configuration")
 }
