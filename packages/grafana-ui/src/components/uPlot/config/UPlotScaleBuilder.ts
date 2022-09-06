@@ -98,7 +98,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         return minMax;
       }
 
-      if (scale.distr === 1 || scale.distr === 2) {
+      if (scale.distr === 1 || scale.distr === 2 || scale.distr === 4) {
         if (centeredZero) {
           let absMin = Math.abs(dataMin!);
           let absMax = Math.abs(dataMax!);
