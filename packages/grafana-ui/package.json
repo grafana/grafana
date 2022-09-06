@@ -55,7 +55,7 @@
     "@react-aria/dialog": "3.3.1",
     "@react-aria/focus": "3.8.0",
     "@react-aria/menu": "3.6.1",
-    "@react-aria/overlays": "3.9.1",
+    "@react-aria/overlays": "3.10.1",
     "@react-aria/utils": "3.13.1",
     "@react-stately/menu": "3.3.1",
     "@sentry/browser": "6.19.7",
