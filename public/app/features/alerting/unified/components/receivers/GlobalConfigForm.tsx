@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
@@ -36,7 +34,6 @@ export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) 
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
   const readOnly = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
-  const styles = useStyles2(getStyles);
 
   const formAPI = useForm<FormValues>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
@@ -74,7 +71,6 @@ export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) 
   return (
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmitCallback)}>
-        <h4 className={styles.heading}>Global config</h4>
         {error && (
           <Alert severity="error" title="Error saving receiver">
             {error.message || String(error)}
@@ -116,9 +112,3 @@ export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) 
     </FormProvider>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  heading: css`
-    margin: ${theme.spacing(4, 0)};
-  `,
-});
