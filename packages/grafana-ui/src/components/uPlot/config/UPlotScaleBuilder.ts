@@ -17,6 +17,7 @@ export interface ScaleProps {
   orientation: ScaleOrientation;
   direction: ScaleDirection;
   log?: number;
+  linearThreshold?: number;
   centeredZero?: boolean;
   decimals?: DecimalCount;
 }
@@ -41,15 +42,21 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       centeredZero,
       decimals,
     } = this.props;
+
+    const distr = this.props.distribution;
+
     const distribution = !isTime
       ? {
           distr:
-            this.props.distribution === ScaleDistribution.Log
+            distr === ScaleDistribution.Symlog
+              ? 4
+              : distr === ScaleDistribution.Log
               ? 3
-              : this.props.distribution === ScaleDistribution.Ordinal
+              : distr === ScaleDistribution.Ordinal
               ? 2
               : 1,
-          log: this.props.distribution === ScaleDistribution.Log ? this.props.log || 2 : undefined,
+          log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? this.props.log ?? 2 : undefined,
+          asinh: distr === ScaleDistribution.Symlog ? this.props.linearThreshold ?? 1 : undefined,
         }
       : {};
 
@@ -104,6 +111,9 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
       } else if (scale.distr === 3) {
         minMax = uPlot.rangeLog(dataMin!, dataMax!, scale.log ?? 10, true);
+      } else if (scale.distr === 4) {
+        // TODO: fix fullMags: true (https://github.com/leeoniya/uPlot/issues/749)
+        minMax = uPlot.rangeAsinh(dataMin!, dataMax!, scale.log ?? 10, false);
       }
 
       if (decimals === 0) {

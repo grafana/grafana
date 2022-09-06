@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
-import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup } from '../../index';
+import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup, Input } from '../../index';
 
 /**
  * @alpha
@@ -128,6 +128,10 @@ const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
     label: 'Logarithmic',
     value: ScaleDistribution.Log,
   },
+  {
+    label: 'Symlog',
+    value: ScaleDistribution.Symlog,
+  },
 ];
 
 const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
@@ -159,7 +163,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
           });
         }}
       />
-      {type === ScaleDistribution.Log && (
+      {(type === ScaleDistribution.Log || type === ScaleDistribution.Symlog) && (
         <Select
           options={LOG_DISTRIBUTION_OPTIONS}
           value={value.log || 2}
@@ -169,6 +173,19 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
             onChange({
               ...value,
               log: v.value!,
+            });
+          }}
+        />
+      )}
+      {type === ScaleDistribution.Symlog && (
+        <Input
+          placeholder="Linear threshold"
+          value={value.linearThreshold}
+          width={12}
+          onChange={(v) => {
+            onChange({
+              ...value,
+              linearThreshold: Number(v.currentTarget.value),
             });
           }}
         />
