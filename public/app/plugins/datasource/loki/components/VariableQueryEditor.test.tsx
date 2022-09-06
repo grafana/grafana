@@ -10,9 +10,11 @@ import { LokiVariableQueryType } from '../types';
 
 import { LokiVariableQueryEditor, Props } from './VariableQueryEditor';
 
-let props: Props;
+const refId = 'LokiVariableQueryEditor-VariableQuery';
 
 describe('LokiVariableQueryEditor', () => {
+  let props: Props;
+
   beforeEach(() => {
     props = {
       datasource: createLokiDatasource({} as unknown as TemplateSrv),
@@ -29,18 +31,17 @@ describe('LokiVariableQueryEditor', () => {
 
   test('Allows to create a Label names variable', async () => {
     const onChange = jest.fn();
-
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
 
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label names');
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
 
     expect(onChange).toHaveBeenCalledWith({
-      type: LokiVariableQueryType.LabelNames,
+      type: LokiVariableQueryType.LabelValues,
       label: '',
       stream: '',
-      refId: 'LokiVariableQueryEditor-VariableQuery',
+      refId,
     });
   });
 
@@ -54,7 +55,6 @@ describe('LokiVariableQueryEditor', () => {
         text: 'luna',
       },
     ]);
-
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
@@ -71,15 +71,33 @@ describe('LokiVariableQueryEditor', () => {
       type: LokiVariableQueryType.LabelValues,
       label: 'luna',
       stream: 'stream',
-      refId: 'LokiVariableQueryEditor-VariableQuery',
+      refId,
     });
   });
 
   test('Migrates legacy string queries to LokiVariableQuery instances', async () => {
     const query = 'label_values(log stream selector, label_selector)';
-
     // @ts-expect-error
     render(<LokiVariableQueryEditor {...props} onChange={() => {}} query={query} />);
+
+    await waitFor(() => expect(screen.getByText('Label values')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('label_selector')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByDisplayValue('log stream selector')).toBeInTheDocument());
+  });
+
+  test('Receives a query instance and assigns its values when editing', async () => {
+    render(
+      <LokiVariableQueryEditor
+        {...props}
+        onChange={() => {}}
+        query={{
+          type: LokiVariableQueryType.LabelValues,
+          label: 'label_selector',
+          stream: 'log stream selector',
+          refId,
+        }}
+      />
+    );
 
     await waitFor(() => expect(screen.getByText('Label values')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('label_selector')).toBeInTheDocument());
