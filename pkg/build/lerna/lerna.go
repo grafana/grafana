@@ -3,7 +3,7 @@ package lerna
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -28,6 +28,7 @@ func BuildFrontendPackages(version string, mode config.Edition, grafanaDir strin
 }
 
 func bumpLernaVersion(version string, grafanaDir string) error {
+	//nolint:gosec
 	cmd := exec.Command("yarn", "run", "lerna", "version", version, "--exact", "--no-git-tag-version", "--no-push", "--force-publish", "-y")
 	cmd.Dir = grafanaDir
 	if output, err := cmd.CombinedOutput(); err != nil {
@@ -39,7 +40,8 @@ func bumpLernaVersion(version string, grafanaDir string) error {
 
 func GetLernaVersion(grafanaDir string) (string, error) {
 	lernaJSONPath := filepath.Join(grafanaDir, "lerna.json")
-	lernaJSONB, err := ioutil.ReadFile(lernaJSONPath)
+	//nolint:gosec
+	lernaJSONB, err := os.ReadFile(lernaJSONPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to read %q: %w", lernaJSONPath, err)
 	}
