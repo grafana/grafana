@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -378,9 +379,9 @@ func setupHTTPServerWithCfgDb(
 		acService = acmock
 	} else {
 		var err error
-		acService, err = ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), routeRegister)
+		acService, err = acimpl.ProvideService(cfg, database.ProvideService(db), routeRegister)
 		require.NoError(t, err)
-		ac = ossaccesscontrol.ProvideAccessControl(cfg, acService)
+		ac = acimpl.ProvideAccessControl(cfg, acService)
 	}
 
 	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService)

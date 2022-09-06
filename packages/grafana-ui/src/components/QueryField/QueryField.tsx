@@ -2,12 +2,12 @@ import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
 import React, { Context, PureComponent } from 'react';
-import { Value, Editor as CoreEditor } from 'slate';
+import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
+import { Editor, Plugin } from 'slate-react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Editor, Plugin } from '@grafana/slate-react';
 
 import {
   makeValue,
@@ -42,7 +42,7 @@ export interface QueryFieldProps extends Themeable2 {
   onBlur?: () => void;
   onChange?: (value: string) => void;
   onRichValueChange?: (value: Value) => void;
-  onClick?: (event: Event, editor: CoreEditor, next: () => any) => any;
+  onClick?: (event: Event | React.MouseEvent, editor: Editor, next: () => any) => any;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   placeholder?: string;
@@ -67,7 +67,7 @@ export interface QueryFieldState {
  * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
  */
 export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFieldState> {
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
   runOnChangeDebounced: Function;
   lastExecutedValue: Value | null = null;
   mounted = false;
@@ -185,7 +185,7 @@ export class UnThemedQueryField extends PureComponent<QueryFieldProps, QueryFiel
   /**
    * We need to handle blur events here mainly because of dashboard panels which expect to have query executed on blur.
    */
-  handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
+  handleBlur = (_: React.FocusEvent | undefined, editor: Editor, next: Function) => {
     const { onBlur } = this.props;
 
     if (onBlur) {
