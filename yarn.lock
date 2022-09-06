@@ -5233,7 +5233,7 @@ __metadata:
     "@popperjs/core": 2.11.5
     "@react-aria/button": 3.6.1
     "@react-aria/dialog": 3.3.1
-    "@react-aria/focus": 3.6.1
+    "@react-aria/focus": 3.8.0
     "@react-aria/menu": 3.6.1
     "@react-aria/overlays": 3.9.1
     "@react-aria/utils": 3.13.1
@@ -8239,22 +8239,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/focus@npm:3.6.1":
-  version: 3.6.1
-  resolution: "@react-aria/focus@npm:3.6.1"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-aria/interactions": ^3.9.1
-    "@react-aria/utils": ^3.13.1
-    "@react-types/shared": ^3.13.1
-    clsx: ^1.1.1
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: ca273afec9c21dc65d5d51ca93e979b89ee924a75d5a9e355dea1574f5db729d72e90437197c855ad45ea8bbacf227e8b4dc1bc2e74016427c5cdabe82e3017b
-  languageName: node
-  linkType: hard
-
-"@react-aria/focus@npm:^3.8.0":
+"@react-aria/focus@npm:3.8.0, @react-aria/focus@npm:^3.8.0":
   version: 3.8.0
   resolution: "@react-aria/focus@npm:3.8.0"
   dependencies:
@@ -21925,7 +21910,7 @@ __metadata:
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1
     "@react-aria/button": 3.6.1
     "@react-aria/dialog": 3.3.1
-    "@react-aria/focus": 3.6.1
+    "@react-aria/focus": 3.8.0
     "@react-aria/interactions": 3.9.1
     "@react-aria/menu": 3.6.1
     "@react-aria/overlays": 3.9.1
