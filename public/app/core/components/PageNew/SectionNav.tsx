@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { NavModel, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Icon, VerticalTab, toIconName } from '@grafana/ui';
+import { useStyles2, Icon, VerticalTab, toIconName, CustomScrollbar } from '@grafana/ui';
 
 export interface Props {
   model: NavModel;
@@ -23,34 +23,36 @@ export function SectionNav(props: Props) {
         {main.img && <img className={styles.sectionImg} src={main.img} alt={`logo of ${main.text}`} />}
         {props.model.main.text}
       </h2>
-      <div className={styles.items} role="tablist">
-        {directChildren.map((child, index) => {
-          return (
-            !child.hideFromTabs &&
-            !child.children && (
-              <VerticalTab label={child.text} active={child.active} key={`${child.url}-${index}`} href={child.url} />
-            )
-          );
-        })}
-        {nestedItems.map((child) => (
-          <>
-            <div className={styles.subSection}>{child.text}</div>
-            {child.children!.map((child, index) => {
-              return (
-                !child.hideFromTabs &&
-                !child.children && (
-                  <VerticalTab
-                    label={child.text}
-                    active={child.active}
-                    key={`${child.url}-${index}`}
-                    href={child.url}
-                  />
-                )
-              );
-            })}
-          </>
-        ))}
-      </div>
+      <CustomScrollbar>
+        <div className={styles.items} role="tablist">
+          {directChildren.map((child, index) => {
+            return (
+              !child.hideFromTabs &&
+              !child.children && (
+                <VerticalTab label={child.text} active={child.active} key={`${child.url}-${index}`} href={child.url} />
+              )
+            );
+          })}
+          {nestedItems.map((child) => (
+            <>
+              <div className={styles.subSection}>{child.text}</div>
+              {child.children!.map((child, index) => {
+                return (
+                  !child.hideFromTabs &&
+                  !child.children && (
+                    <VerticalTab
+                      label={child.text}
+                      active={child.active}
+                      key={`${child.url}-${index}`}
+                      href={child.url}
+                    />
+                  )
+                );
+              })}
+            </>
+          ))}
+        </div>
+      </CustomScrollbar>
     </nav>
   );
 }

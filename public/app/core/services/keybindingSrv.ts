@@ -80,9 +80,11 @@ export class KeybindingSrv {
   }
 
   toggleNav() {
-    window.location.href = locationUtil.getUrlForPartial(locationService.getLocation(), {
-      '__feature.topnav': (!config.featureToggles.topnav).toString(),
-    });
+    window.location.href =
+      config.appSubUrl +
+      locationUtil.getUrlForPartial(locationService.getLocation(), {
+        '__feature.topnav': (!config.featureToggles.topnav).toString(),
+      });
   }
 
   private openSearch() {

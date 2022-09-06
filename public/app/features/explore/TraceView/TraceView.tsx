@@ -29,7 +29,7 @@ import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSett
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { TempoQuery } from 'app/plugins/datasource/tempo/datasource';
+import { TempoQuery } from 'app/plugins/datasource/tempo/types';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
