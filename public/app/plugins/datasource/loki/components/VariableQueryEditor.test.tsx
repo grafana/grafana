@@ -75,6 +75,36 @@ describe('LokiVariableQueryEditor', () => {
     });
   });
 
+  test('Allows to create a Label values variable with custom label', async () => {
+    const onChange = jest.fn();
+    jest.spyOn(props.datasource, 'labelNamesQuery').mockResolvedValue([
+      {
+        text: 'moon',
+      },
+      {
+        text: 'luna',
+      },
+    ]);
+    render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
+
+    expect(onChange).not.toHaveBeenCalled();
+
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
+    await userEvent.type(screen.getByLabelText('Label'), 'sol{enter}');
+    await userEvent.type(screen.getByLabelText('Stream selector'), 'stream');
+
+    await waitFor(() => expect(screen.getByDisplayValue('stream')).toBeInTheDocument());
+
+    await userEvent.click(document.body);
+
+    expect(onChange).toHaveBeenCalledWith({
+      type: LokiVariableQueryType.LabelValues,
+      label: 'sol',
+      stream: 'stream',
+      refId,
+    });
+  });
+
   test('Migrates legacy string queries to LokiVariableQuery instances', async () => {
     const query = 'label_values(log stream selector, label_selector)';
     // @ts-expect-error

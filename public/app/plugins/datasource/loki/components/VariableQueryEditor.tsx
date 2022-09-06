@@ -95,6 +95,7 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               value={label}
               options={labelOptions}
               width={16}
+              allowCustomValue
             />
           </InlineField>
           <InlineField label="Stream selector" labelWidth={20}>
