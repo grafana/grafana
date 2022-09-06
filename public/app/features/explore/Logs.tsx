@@ -91,16 +91,6 @@ interface State {
   forceEscape: boolean;
 }
 
-// We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
-const styleOverridesForStickyNavigation = css`
-  & > div {
-    overflow: visible;
-    & > div {
-      overflow: visible;
-    }
-  }
-`;
-
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
   cancelFlippingTimer?: number;
@@ -336,7 +326,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={onSetLogsVolumeEnabled}>
+        <Collapse label="Volume" collapsible isOpen={logsVolumeEnabled} onToggle={onSetLogsVolumeEnabled}>
           {logsVolumeEnabled && (
             <LogsVolumePanel
               absoluteRange={absoluteRange}
@@ -359,146 +349,144 @@ class UnthemedLogs extends PureComponent<Props, State> {
             />
           )}
         </Collapse>
-        <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
-          <div className={styles.logOptions} ref={this.topLogsRef}>
-            <InlineFieldRow>
-              <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={showTime}
-                  onChange={this.onChangeTime}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`show-time_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={showLabels}
-                  onChange={this.onChangeLabels}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`unique-labels_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={wrapLogMessage}
-                  onChange={this.onChangeWrapLogMessage}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`wrap-lines_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={prettifyLogMessage}
-                  onChange={this.onChangePrettifyLogMessage}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`prettify_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
-                <RadioButtonGroup
-                  options={Object.values(LogsDedupStrategy).map((dedupType) => ({
-                    label: capitalize(dedupType),
-                    value: dedupType,
-                    description: LogsDedupDescription[dedupType],
-                  }))}
-                  value={dedupStrategy}
-                  onChange={this.onChangeDedup}
-                  className={styles.radioButtons}
-                />
-              </InlineField>
-            </InlineFieldRow>
-            <div>
-              <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
-                <RadioButtonGroup
-                  disabled={isFlipping}
-                  options={[
-                    {
-                      label: 'Newest first',
-                      value: LogsSortOrder.Descending,
-                      description: 'Show results newest to oldest',
-                    },
-                    {
-                      label: 'Oldest first',
-                      value: LogsSortOrder.Ascending,
-                      description: 'Show results oldest to newest',
-                    },
-                  ]}
-                  value={logsSortOrder}
-                  onChange={this.onChangeLogsSortOrder}
-                  className={styles.radioButtons}
-                />
-              </InlineField>
-            </div>
-          </div>
-          <LogsMetaRow
-            logRows={logRows}
-            meta={logsMeta || []}
-            dedupStrategy={dedupStrategy}
-            dedupCount={dedupCount}
-            hasUnescapedContent={hasUnescapedContent}
-            forceEscape={forceEscape}
-            showDetectedFields={showDetectedFields}
-            onEscapeNewlines={this.onEscapeNewlines}
-            clearDetectedFields={this.clearDetectedFields}
-          />
-          <div className={styles.logsSection}>
-            <div className={styles.logRows} data-testid="logRows">
-              <LogRows
-                logRows={logRows}
-                deduplicatedRows={dedupedRows}
-                dedupStrategy={dedupStrategy}
-                getRowContext={this.props.getRowContext}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                showContextToggle={showContextToggle}
-                showLabels={showLabels}
-                showTime={showTime}
-                enableLogDetails={true}
-                forceEscape={forceEscape}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                showDetectedFields={showDetectedFields}
-                onClickShowDetectedField={this.showDetectedField}
-                onClickHideDetectedField={this.hideDetectedField}
+        <div className={styles.logOptions} ref={this.topLogsRef}>
+          <InlineFieldRow>
+            <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={showTime}
+                onChange={this.onChangeTime}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id={`show-time_${exploreId}`}
               />
-            </div>
-            <LogsNavigation
-              logsSortOrder={logsSortOrder}
-              visibleRange={navigationRange ?? absoluteRange}
-              absoluteRange={absoluteRange}
+            </InlineField>
+            <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={showLabels}
+                onChange={this.onChangeLabels}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id={`unique-labels_${exploreId}`}
+              />
+            </InlineField>
+            <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={wrapLogMessage}
+                onChange={this.onChangeWrapLogMessage}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id={`wrap-lines_${exploreId}`}
+              />
+            </InlineField>
+            <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
+              <InlineSwitch
+                value={prettifyLogMessage}
+                onChange={this.onChangePrettifyLogMessage}
+                className={styles.horizontalInlineSwitch}
+                transparent
+                id={`prettify_${exploreId}`}
+              />
+            </InlineField>
+            <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
+              <RadioButtonGroup
+                options={Object.values(LogsDedupStrategy).map((dedupType) => ({
+                  label: capitalize(dedupType),
+                  value: dedupType,
+                  description: LogsDedupDescription[dedupType],
+                }))}
+                value={dedupStrategy}
+                onChange={this.onChangeDedup}
+                className={styles.radioButtons}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <div>
+            <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
+              <RadioButtonGroup
+                disabled={isFlipping}
+                options={[
+                  {
+                    label: 'Newest first',
+                    value: LogsSortOrder.Descending,
+                    description: 'Show results newest to oldest',
+                  },
+                  {
+                    label: 'Oldest first',
+                    value: LogsSortOrder.Ascending,
+                    description: 'Show results oldest to newest',
+                  },
+                ]}
+                value={logsSortOrder}
+                onChange={this.onChangeLogsSortOrder}
+                className={styles.radioButtons}
+              />
+            </InlineField>
+          </div>
+        </div>
+        <LogsMetaRow
+          logRows={logRows}
+          meta={logsMeta || []}
+          dedupStrategy={dedupStrategy}
+          dedupCount={dedupCount}
+          hasUnescapedContent={hasUnescapedContent}
+          forceEscape={forceEscape}
+          showDetectedFields={showDetectedFields}
+          onEscapeNewlines={this.onEscapeNewlines}
+          clearDetectedFields={this.clearDetectedFields}
+        />
+        <div className={styles.logsSection}>
+          <div className={styles.logRows} data-testid="logRows">
+            <LogRows
+              logRows={logRows}
+              deduplicatedRows={dedupedRows}
+              dedupStrategy={dedupStrategy}
+              getRowContext={this.props.getRowContext}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              showContextToggle={showContextToggle}
+              showLabels={showLabels}
+              showTime={showTime}
+              enableLogDetails={true}
+              forceEscape={forceEscape}
+              wrapLogMessage={wrapLogMessage}
+              prettifyLogMessage={prettifyLogMessage}
               timeZone={timeZone}
-              onChangeTime={onChangeTime}
-              loading={loading}
-              queries={logsQueries ?? []}
-              scrollToTopLogs={this.scrollToTopLogs}
-              addResultsToCache={addResultsToCache}
-              clearCache={clearCache}
+              getFieldLinks={getFieldLinks}
+              logsSortOrder={logsSortOrder}
+              showDetectedFields={showDetectedFields}
+              onClickShowDetectedField={this.showDetectedField}
+              onClickHideDetectedField={this.hideDetectedField}
             />
           </div>
-          {!loading && !hasData && !scanning && (
-            <div className={styles.noData}>
-              No logs found.
-              <Button size="xs" fill="text" onClick={this.onClickScan}>
-                Scan for older logs
-              </Button>
-            </div>
-          )}
-          {scanning && (
-            <div className={styles.noData}>
-              <span>{scanText}</span>
-              <Button size="xs" fill="text" onClick={this.onClickStopScan}>
-                Stop scan
-              </Button>
-            </div>
-          )}
-        </Collapse>
+          <LogsNavigation
+            logsSortOrder={logsSortOrder}
+            visibleRange={navigationRange ?? absoluteRange}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onChangeTime={onChangeTime}
+            loading={loading}
+            queries={logsQueries ?? []}
+            scrollToTopLogs={this.scrollToTopLogs}
+            addResultsToCache={addResultsToCache}
+            clearCache={clearCache}
+          />
+        </div>
+        {!loading && !hasData && !scanning && (
+          <div className={styles.noData}>
+            No logs found.
+            <Button size="xs" fill="text" onClick={this.onClickScan}>
+              Scan for older logs
+            </Button>
+          </div>
+        )}
+        {scanning && (
+          <div className={styles.noData}>
+            <span>{scanText}</span>
+            <Button size="xs" fill="text" onClick={this.onClickStopScan}>
+              Stop scan
+            </Button>
+          </div>
+        )}
       </>
     );
   }
