@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.50-go1.17.12'
+grabpl_version = 'v2.9.50-go1.17.12-1'
 build_image = 'grafana/build-container:1.5.8'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
@@ -363,7 +363,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': [
-            './bin/grabpl upload-cdn --edition {} --src-bucket "{}"{}'.format(edition, bucket, src_dir),
+            './bin/grabpl upload-cdn --edition {}'.format(edition),
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
@@ -967,12 +967,12 @@ def upload_packages_step(edition, ver_mode, trigger=None):
 
     if ver_mode == 'release':
         packages_bucket = '$${{PRERELEASE_BUCKET}}/artifacts/downloads{}'.format(enterprise2_suffix(edition))
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket {}'.format(edition, packages_bucket)
+        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
     elif edition == 'enterprise2':
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads-enterprise2'.format(
+        cmd = './bin/grabpl upload-packages --edition {}'.format(
             edition)
     else:
-        cmd = './bin/grabpl upload-packages --edition {} --packages-bucket grafana-downloads'.format(edition)
+        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
 
     deps = []
     if edition in 'enterprise2' or not end_to_end_tests_deps(edition):
