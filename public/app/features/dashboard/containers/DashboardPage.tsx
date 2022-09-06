@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -53,6 +52,7 @@ export type DashboardPageRouteSearchParams = {
   from?: string;
   to?: string;
   refresh?: string;
+  kiosk?: string | true;
 };
 
 export const mapStateToProps = (state: StoreState) => ({
