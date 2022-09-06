@@ -255,7 +255,7 @@ func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID str
 
 func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definitions.ProvisionedAlertRule) response.Response {
 	upstreamModel, err := ar.UpstreamModel()
-	upstreamModel.OrgID = c.OrgID
+	upstreamModel.OrgID = c.OrgId
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -282,7 +282,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
-	updated.OrgID = c.OrgID
+	updated.OrgID = c.OrgId
 	updated.UID = UID
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
