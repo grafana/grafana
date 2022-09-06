@@ -26,8 +26,6 @@ type SocialGenericOAuth struct {
 	emailAttributePath   string
 	loginAttributePath   string
 	nameAttributePath    string
-	roleAttributePath    string
-	roleAttributeStrict  bool
 	groupsAttributePath  string
 	idTokenAttributeName string
 	teamIdsAttributePath string

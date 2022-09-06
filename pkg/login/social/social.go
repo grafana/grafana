@@ -175,11 +175,9 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:          newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
-				apiUrl:              info.ApiUrl,
-				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
-				roleAttributePath:   info.RoleAttributePath,
-				roleAttributeStrict: info.RoleAttributeStrict,
+				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				apiUrl:        info.ApiUrl,
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 
@@ -192,8 +190,6 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
 				nameAttributePath:    sec.Key("name_attribute_path").String(),
-				roleAttributePath:    info.RoleAttributePath,
-				roleAttributeStrict:  info.RoleAttributeStrict,
 				groupsAttributePath:  info.GroupsAttributePath,
 				loginAttributePath:   sec.Key("login_attribute_path").String(),
 				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
