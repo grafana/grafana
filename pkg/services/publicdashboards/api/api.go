@@ -51,18 +51,25 @@ func ProvideApi(
 //Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.AccessControl)
-	reqSignedIn := middleware.ReqSignedIn
 
 	// Anonymous access to public dashboard route is configured in pkg/api/api.go
 	// because it is deeply dependent on the HTTPServer.Index() method and would result in a
 	// circular dependency
 
+	// public endpoints
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.GetPublicDashboard))
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
 
 	// Create/Update Public Dashboard
-	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.GetPublicDashboardConfig))
-	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config", auth(reqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(api.SavePublicDashboardConfig))
+	uidScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
+
+	api.RouteRegister.Get("/api/dashboards/uid/:uid/public-config",
+		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
+		routing.Wrap(api.GetPublicDashboardConfig))
+
+	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config",
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardPublicWrite, uidScope)),
+		routing.Wrap(api.SavePublicDashboardConfig))
 }
 
 // Gets public dashboard
@@ -72,7 +79,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 
 	pubdash, dash, err := api.PublicDashboardService.GetPublicDashboard(
 		c.Req.Context(),
-		web.Params(c.Req)[":accessToken"],
+		accessToken,
 	)
 
 	if err != nil {
@@ -92,7 +99,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 		Version:                    dash.Version,
 		IsFolder:                   false,
 		FolderId:                   dash.FolderId,
-		PublicDashboardAccessToken: accessToken,
+		PublicDashboardAccessToken: pubdash.AccessToken,
 		PublicDashboardUID:         pubdash.Uid,
 	}
 

@@ -295,13 +295,13 @@ export const importQueries = (
 
     let importedQueries = queries;
     // If going to mixed, keep queries with source datasource
-    if (targetDataSource.name === MIXED_DATASOURCE_NAME) {
+    if (targetDataSource.uid === MIXED_DATASOURCE_NAME) {
       importedQueries = queries.map((query) => {
         return { ...query, datasource: sourceDataSource.getRef() };
       });
     }
     // If going from mixed, see what queries you keep by their individual datasources
-    else if (sourceDataSource.name === MIXED_DATASOURCE_NAME) {
+    else if (sourceDataSource.uid === MIXED_DATASOURCE_NAME) {
       const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
       const groupedImportableQueries = await Promise.all(
         Object.keys(groupedQueries).map(async (key: string) => {
@@ -325,10 +325,18 @@ export const importQueries = (
     let nextQueries = await ensureQueries(importedQueries, targetDataSource.getRef());
 
     if (singleQueryChangeRef !== undefined) {
+      // if the query import didn't return a result, there was no ability to import between datasources. Create an empty query for the datasource
+      if (importedQueries.length === 0) {
+        const dsQuery = await generateEmptyQuery([], undefined, targetDataSource.getRef());
+        importedQueries = [dsQuery];
+      }
+
       // capture the single imported query, and copy the original set
-      const changedQuery = { ...nextQueries[0] };
-      nextQueries = [...queries];
       const updatedQueryIdx = queries.findIndex((query) => query.refId === singleQueryChangeRef);
+      // for single query change, all areas that generate refId do not know about other queries, so just copy the existing refID to the new query
+      const changedQuery = { ...nextQueries[0], refId: queries[updatedQueryIdx].refId };
+      nextQueries = [...queries];
+
       // replace the changed query
       nextQueries[updatedQueryIdx] = changedQuery;
     }
