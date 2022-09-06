@@ -37,7 +37,7 @@ export const mockedSearchResponse = (): SearchResponse => {
     }
 
     const spans: Span[] = [];
-    for (let j = 0; j < Math.random() * 3 + 3; j++) {
+    for (let j = 0; j < Math.random() * 3 + 1; j++) {
       spans.push({
         traceId: t.traceID,
         spanId: uuidv4().replace(/-/, '').substring(0, 16),

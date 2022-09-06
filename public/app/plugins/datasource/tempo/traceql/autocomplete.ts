@@ -260,8 +260,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   /**
    * Figure out where is the cursor and what kind of suggestions are appropriate.
-   * As currently TraceQL handles just a simple {foo="bar", baz="zyx"} kind of values we can do with simple regex to figure
-   * out where we are with the cursor.
    * @param text
    * @param offset
    */
