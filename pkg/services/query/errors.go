@@ -1,6 +1,10 @@
 package query
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+)
 
 // ErrBadQuery returned whenever request is malformed and must contain a message
 // suitable to return in API response.
@@ -15,3 +19,7 @@ func NewErrBadQuery(msg string) *ErrBadQuery {
 func (e ErrBadQuery) Error() string {
 	return fmt.Sprintf("bad query: %s", e.Message)
 }
+
+var (
+	ErrQueryMissingDatasource = errutil.NewBase(errutil.StatusBadRequest, "query.missingDatasource").MustTemplate("Query missing datasource info: {{ .Public.")
+)
