@@ -43,7 +43,6 @@ type Server struct {
 func setupTestServer(
 	t *testing.T,
 	cfg *setting.Cfg,
-	qs *query.Service,
 	features *featuremgmt.FeatureManager,
 	service publicdashboards.Service,
 	db *sqlstore.SQLStore,
@@ -62,8 +61,9 @@ func setupTestServer(
 	}
 
 	var err error
-	ac, err := ossaccesscontrol.ProvideService(features, cfg, database.ProvideService(db), rr)
+	acService, err := ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), rr)
 	require.NoError(t, err)
+	ac := ossaccesscontrol.ProvideAccessControl(cfg, acService)
 
 	// build mux
 	m := web.New()
@@ -84,7 +84,7 @@ func setupTestServer(
 
 	// build api, this will mount the routes at the same time if
 	// featuremgmt.FlagPublicDashboard is enabled
-	ProvideApi(service, rr, ac, qs, features)
+	ProvideApi(service, rr, ac, features)
 
 	// connect routes to mux
 	rr.Register(m.Router)
@@ -139,7 +139,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	)
 }
 
-//copied from pkg/api/metrics_test.go
+// copied from pkg/api/metrics_test.go
 type fakePluginRequestValidator struct {
 	err error
 }

@@ -515,7 +515,7 @@ func createInvalidAlertRuleGroup() definitions.AlertRuleGroup {
 	return definitions.AlertRuleGroup{
 		Title:    "invalid",
 		Interval: 10,
-		Rules:    []models.AlertRule{{}},
+		Rules:    []definitions.ProvisionedAlertRule{{}},
 	}
 }
 

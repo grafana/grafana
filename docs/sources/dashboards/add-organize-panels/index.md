@@ -36,7 +36,7 @@ This section describes the areas of the Grafana panel editor.
    - **Table view:** Convert any visualization to a table so that you can see the data. Table views are useful for troubleshooting.
    - **Fill:** The visualization preview fills the available space. If you change the width of the side pane or height of the bottom pane the visualization changes to fill the available space.
    - **Actual:** The visualization preview will have the exact size as the size on the dashboard. If not enough space is available, the visualization will scale down preserving the aspect ratio.
-   - **Time range controls:** For more information, refer to [Time range controls]({{< relref "time-range-controls/" >}}).
+   - **Time range controls:** For more information, refer to [Time range controls]({{< relref "../manage-dashboards/#configure-dashboard-time-range-controls" >}}).
 
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
@@ -102,9 +102,9 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
 
-   - [Format data using value mapping]({{< relref "../../panels/format-data/about-value-mapping/" >}})
+   - [Configure value mappings]({{< relref "../../panels/configure-value-mappings" >}})
    - [Visualization-specific options]({{< relref "../../visualizations/" >}})
-   - [Override field values]({{< relref "../../panels/override-field-values/about-field-overrides/" >}})
+   - [Override field values]({{< relref "../../panels/configure-overrides/" >}})
    - [Configure thresholds]({{< relref "../../panels/configure-thresholds/" >}})
    - [Configure standard options]({{< relref "../../panels/configure-standard-options/" >}})
 

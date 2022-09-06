@@ -44,7 +44,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		const password = "MyPass"
 		const orgID int64 = 2
 
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: id}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: id}
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
@@ -61,9 +61,9 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		encoded, err := util.EncodePassword(password, salt)
 		require.NoError(t, err)
 
-		sc.mockSQLStore.ExpectedUser = &user.User{Password: encoded, ID: id, Salt: salt}
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{UserID: id}
-		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, sc.userService)
+		sc.userService.ExpectedUser = &user.User{Password: encoded, ID: id, Salt: salt}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id}
+		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, nil, sc.userService)
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
@@ -74,7 +74,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {
-		sc.mockSQLStore.ExpectedError = user.ErrUserNotFound
+		sc.userService.ExpectedError = user.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("user", "password")
 		sc.exec()
@@ -87,7 +87,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	}, configure)
 
 	middlewareScenario(t, "Should return error if user & password do not match", func(t *testing.T, sc *scenarioContext) {
-		sc.mockSQLStore.ExpectedError = user.ErrUserNotFound
+		sc.userService.ExpectedError = user.ErrUserNotFound
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("killa", "gorilla")
 		sc.exec()

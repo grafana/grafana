@@ -12,13 +12,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with: 
+      with:
         path: './pr'
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16.16.0
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
       run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
-    
+
     - name: Restore yarn cache
       uses: actions/cache@v2
       id: yarn-cache
@@ -27,7 +30,7 @@ jobs:
         key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
         restore-keys: |
           yarn-cache-folder-
-      
+
     - name: Install dependencies
       run: yarn install --immutable
 
@@ -35,7 +38,7 @@ jobs:
       run: yarn packages:build
 
     - name: Pack packages
-      run: yarn packages:pack --out ./%s.tgz 
+      run: yarn packages:pack --out ./%s.tgz
 
     - name: Zip built tarballed packages
       run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
@@ -55,14 +58,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with: 
+      with:
         path: './base'
         ref: ${{ github.event.pull_request.base.ref }}
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 16.16.0
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
       run: echo "::set-output name=dir::$(yarn config get cacheFolder)"
-    
+
     - name: Restore yarn cache
       uses: actions/cache@v2
       id: yarn-cache
@@ -71,7 +78,7 @@ jobs:
         key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
         restore-keys: |
           yarn-cache-folder-
-      
+
     - name: Install dependencies
       run: yarn install --immutable
 
@@ -109,7 +116,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: buildBase
-      
+
       - name: Unzip artifact from pr
         run: unzip -j pr_built_packages.zip -d ./pr && rm pr_built_packages.zip
 
@@ -126,7 +133,7 @@ jobs:
 
       - name: Detect breaking changes
         id: breaking-changes
-        run: ./scripts/check-breaking-changes.sh 
+        run: ./scripts/check-breaking-changes.sh
         env:
           FORCE_COLOR: 3
           GITHUB_JOB_LINK: ${{ steps.job.outputs.link }}
@@ -141,7 +148,7 @@ jobs:
         with:
           name: levitate
           path: levitate/
-        
+
       - name: Exit
         run: exit ${{ steps.breaking-changes.outputs.is_breaking }}
         shell: bash

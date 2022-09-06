@@ -47,6 +47,8 @@ export const RangeSlider: FunctionComponent<RangeSliderProps> = ({
         onAfterChange={onAfterChange}
         vertical={!isHorizontal}
         reverse={reverse}
+        // TODO: The following is a temporary work around for making content after the slider accessible and it will be removed when fixing the slider in public/app/features/explore/RichHistory/RichHistoryQueriesTab.tsx.
+        tabIndex={[0, 1]}
       />
     </div>
   );

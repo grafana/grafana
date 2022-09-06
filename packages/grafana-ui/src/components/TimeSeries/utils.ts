@@ -222,6 +222,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
+          range: customConfig.stacking?.mode === StackingMode.Percent ? [0, 1] : undefined,
         },
         field
       )
@@ -272,7 +273,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
-            show: customConfig.hideFrom?.viz === false,
             ...axisColorOpts,
           },
           field

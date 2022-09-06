@@ -16,7 +16,7 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
 }
 
-export const Service: React.FC<Props> = ({ refId, query, templateVariableOptions, onChange, datasource }) => {
+export const Service = ({ refId, query, templateVariableOptions, onChange, datasource }: Props) => {
   const [services, setServices] = useState<Array<SelectableValue<string>>>([]);
   const { projectName } = query;
 

@@ -86,8 +86,7 @@ func TestContext_RemoteAddr(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := &Context{
-				Req:    tt.fields.Req,
-				logger: tt.fields.logger,
+				Req: tt.fields.Req,
 			}
 			if got := ctx.RemoteAddr(); got != tt.want {
 				t.Errorf("RemoteAddr() = %v, want %v", got, tt.want)
