@@ -3,7 +3,7 @@ import React from 'react';
 import { AutoSizeInput, EditorField, EditorRow } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
-import { TempoQuery } from '../datasource';
+import { TempoQuery } from '../types';
 
 interface Props {
   onChange: (value: TempoQuery) => void;

@@ -213,6 +213,52 @@ func TestPluginManager_Run(t *testing.T) {
 	})
 }
 
+func TestManager_Renderer(t *testing.T) {
+	t.Run("Renderer returns a single (non-decommissioned) renderer plugin", func(t *testing.T) {
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.App}}
+
+		reg := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+			},
+		}
+
+		pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{},
+			&fakes.FakePluginStorage{}, &fakes.FakeProcessManager{})
+
+		r := pm.Renderer(context.Background())
+		require.Equal(t, p1, r)
+	})
+}
+
+func TestManager_SecretsManager(t *testing.T) {
+	t.Run("Renderer returns a single (non-decommissioned) secrets manager plugin", func(t *testing.T) {
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.SecretsManager}}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.DataSource}}
+
+		reg := &fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+			},
+		}
+
+		pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{},
+			&fakes.FakePluginStorage{}, &fakes.FakeProcessManager{})
+
+		r := pm.SecretsManager(context.Background())
+		require.Equal(t, p3, r)
+	})
+}
+
 func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) *plugins.Plugin {
 	t.Helper()
 

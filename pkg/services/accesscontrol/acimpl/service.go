@@ -1,4 +1,4 @@
-package ossaccesscontrol
+package acimpl
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -58,7 +59,7 @@ func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
 }
 
 var actionsToFetch = append(
-	TeamAdminActions, append(DashboardAdminActions, FolderAdminActions...)...,
+	ossaccesscontrol.TeamAdminActions, append(ossaccesscontrol.DashboardAdminActions, ossaccesscontrol.FolderAdminActions...)...,
 )
 
 // GetUserPermissions returns user permissions based on built-in roles

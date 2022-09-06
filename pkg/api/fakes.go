@@ -59,7 +59,7 @@ type fakeRendererManager struct {
 	plugins.RendererManager
 }
 
-func (ps *fakeRendererManager) Renderer() *plugins.Plugin {
+func (ps *fakeRendererManager) Renderer(_ context.Context) *plugins.Plugin {
 	return nil
 }
 
