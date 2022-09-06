@@ -27,7 +27,6 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
-      // setQuery(query);
       onChange(mapToValue(query));
     },
     [onChange, mapToValue]
