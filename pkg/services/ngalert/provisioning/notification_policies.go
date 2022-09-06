@@ -132,7 +132,10 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, err
 	}
 	revision.cfg.AlertmanagerConfig.Config.Route = route
-	nps.ensureDefaultReceiverExists(revision.cfg, defaultCfg)
+	err = nps.ensureDefaultReceiverExists(revision.cfg, defaultCfg)
+	if err != nil {
+		return definitions.Route{}, err
+	}
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
@@ -171,22 +174,22 @@ func (nps *NotificationPolicyService) receiversToMap(records []*definitions.Post
 	return receivers, nil
 }
 
-func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitions.PostableUserConfig, defaultCfg *definitions.PostableUserConfig) {
+func (nps *NotificationPolicyService) ensureDefaultReceiverExists(cfg *definitions.PostableUserConfig, defaultCfg *definitions.PostableUserConfig) error {
 	defaultRcv := cfg.AlertmanagerConfig.Route.Receiver
 
 	for _, rcv := range cfg.AlertmanagerConfig.Receivers {
 		if rcv.Name == defaultRcv {
-			return
+			return nil
 		}
 	}
 
 	for _, rcv := range defaultCfg.AlertmanagerConfig.Receivers {
 		if rcv.Name == defaultRcv {
 			cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, rcv)
-			return
+			return nil
 		}
 	}
 
 	nps.log.Error("Grafana Alerting has been configured with a default configuration that is internally inconsistent! The default configuration's notification policy must have a corresponding receiver.")
-	panic("inconsistent default config")
+	return fmt.Errorf("Grafana Alerting has been configured with a default configuration that is internally inconsistent! The default configuration's notification policy must have a corresponding receiver.")
 }
