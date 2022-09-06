@@ -8,7 +8,7 @@ import {
   getFieldDisplayName,
   GrafanaTheme2,
 } from '@grafana/data';
-import { IconButton, Label, Select, useStyles2 } from '@grafana/ui';
+import { Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { getXYDimensions, isGraphable } from './dims';
 import { XYDimensionConfig, XYChartOptions } from './models.gen';
@@ -19,7 +19,7 @@ interface XYInfo {
   yFields: Array<SelectableValue<boolean>>;
 }
 
-export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChartOptions>> = ({
+export const AutoEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChartOptions>> = ({
   value,
   onChange,
   context,
@@ -89,54 +89,55 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, XYChar
 
   return (
     <div>
-      <Select
-        options={frameNames}
-        value={frameNames.find((v) => v.value === value?.frame) ?? frameNames[0]}
-        onChange={(v) => {
-          onChange({
-            ...value,
-            frame: v.value!,
-          });
-        }}
-      />
-      <br />
-      <Label>X Field</Label>
-      <Select
-        options={info.numberFields}
-        value={info.xAxis}
-        onChange={(v) => {
-          onChange({
-            ...value,
-            x: v.value,
-          });
-        }}
-      />
-      <br />
-      <Label>Y Fields</Label>
-      <div>
-        {info.yFields.map((v) => (
-          <div key={v.label} className={styles.row}>
-            <IconButton
-              name={v.value ? 'eye-slash' : 'eye'}
-              onClick={() => {
-                const exclude: string[] = value?.exclude ? [...value.exclude] : [];
-                let idx = exclude.indexOf(v.label!);
-                if (idx < 0) {
-                  exclude.push(v.label!);
-                } else {
-                  exclude.splice(idx, 1);
-                }
-                onChange({
-                  ...value,
-                  exclude,
-                });
-              }}
-            />
-            {v.label}
-          </div>
-        ))}
-      </div>
-      <br /> <br />
+      <Field label={'Data'}>
+        <Select
+          options={frameNames}
+          value={frameNames.find((v) => v.value === value?.frame) ?? frameNames[0]}
+          onChange={(v) => {
+            onChange({
+              ...value,
+              frame: v.value!,
+            });
+          }}
+        />
+      </Field>
+      <Field label={'X Field'}>
+        <Select
+          options={info.numberFields}
+          value={info.xAxis}
+          onChange={(v) => {
+            onChange({
+              ...value,
+              x: v.value,
+            });
+          }}
+        />
+      </Field>
+      <Field label={'Y Fields'}>
+        <div>
+          {info.yFields.map((v) => (
+            <div key={v.label} className={styles.row}>
+              <IconButton
+                name={v.value ? 'eye-slash' : 'eye'}
+                onClick={() => {
+                  const exclude: string[] = value?.exclude ? [...value.exclude] : [];
+                  let idx = exclude.indexOf(v.label!);
+                  if (idx < 0) {
+                    exclude.push(v.label!);
+                  } else {
+                    exclude.splice(idx, 1);
+                  }
+                  onChange({
+                    ...value,
+                    exclude,
+                  });
+                }}
+              />
+              {v.label}
+            </div>
+          ))}
+        </div>
+      </Field>
     </div>
   );
 };

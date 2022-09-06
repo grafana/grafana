@@ -282,6 +282,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 	}
 
 	pluginFilePath := filepath.Join(absPluginDir, rel)
+
 	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
 	// use this with a prefix of the plugin's directory, which is set during plugin loading
 	// nolint:gosec

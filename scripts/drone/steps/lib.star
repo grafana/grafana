@@ -437,19 +437,6 @@ def build_frontend_package_step(edition, ver_mode):
     }
 
 
-def build_frontend_docs_step(edition):
-    return {
-        'name': 'build-frontend-docs',
-        'image': build_image,
-        'depends_on': [
-            'build-frontend-packages'
-        ],
-        'commands': [
-            './scripts/ci-reference-docs-lint.sh ci',
-        ]
-    }
-
-
 def build_plugins_step(edition, ver_mode):
     if ver_mode!='pr':
         env = {
@@ -727,7 +714,7 @@ def grafana_server_step(edition, port=3001):
 
 
 def e2e_tests_step(suite, edition, port=3001, tries=None):
-    cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
+    cmd = './bin/build e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {
@@ -751,9 +738,6 @@ def build_docs_website_step():
         'name': 'build-docs-website',
         # Use latest revision here, since we want to catch if it breaks
         'image': 'grafana/docs-base:latest',
-        'depends_on': [
-            'build-frontend-docs',
-        ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
             'cp -r docs/sources/* /hugo/content/docs/grafana/latest/',
