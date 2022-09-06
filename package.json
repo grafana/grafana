@@ -273,7 +273,7 @@
     "@prometheus-io/lezer-promql": "^0.37.0-rc.1",
     "@react-aria/button": "3.6.1",
     "@react-aria/dialog": "3.3.1",
-    "@react-aria/focus": "3.6.1",
+    "@react-aria/focus": "3.8.0",
     "@react-aria/interactions": "3.9.1",
     "@react-aria/menu": "3.6.1",
     "@react-aria/overlays": "3.9.1",
