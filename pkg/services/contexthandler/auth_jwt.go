@@ -73,9 +73,23 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		ctx.JsonApiErr(http.StatusForbidden, InvalidRole, nil)
 		return true
 	}
-	extUser.OrgRoles[orgId] = role
-	if h.Cfg.JWTAuthAllowAssignGrafanaAdmin {
-		extUser.IsGrafanaAdmin = &grafanaAdmin
+
+	if role.IsValid() {
+		var orgID int64
+		if h.Cfg.AutoAssignOrg && h.Cfg.AutoAssignOrgId > 0 {
+			orgID = int64(h.Cfg.AutoAssignOrgId)
+			ctx.Logger.Debug("The user has a role assignment and organization membership is auto-assigned",
+				"role", role, "orgId", orgID)
+		} else {
+			orgID = int64(1)
+			ctx.Logger.Debug("The user has a role assignment and organization membership is not auto-assigned",
+				"role", role, "orgId", orgID)
+		}
+
+		extUser.OrgRoles[orgID] = role
+		if h.Cfg.JWTAuthAllowAssignGrafanaAdmin {
+			extUser.IsGrafanaAdmin = &grafanaAdmin
+		}
 	}
 
 	if query.Login == "" && query.Email == "" {
