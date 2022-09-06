@@ -174,12 +174,17 @@ func (a *State) resultNoData(alertRule *models.AlertRule, result eval.Result) {
 }
 
 func (a *State) NeedsSending(resendDelay time.Duration) bool {
-	if a.State == eval.Pending || a.State == eval.Normal && !a.Resolved {
+	if a.State == eval.Pending {
+		// We do not send notifications for pending states
 		return false
+	} else if a.State == eval.Normal {
+		// We should send a notification if the state is Normal because it was resolved
+		return a.Resolved
+	} else {
+		// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay
+		nextSent := a.LastSentAt.Add(resendDelay)
+		return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 	}
-	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
-	nextSent := a.LastSentAt.Add(resendDelay)
-	return nextSent.Before(a.LastEvaluationTime) || nextSent.Equal(a.LastEvaluationTime)
 }
 
 func (a *State) Equals(b *State) bool {
