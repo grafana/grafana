@@ -14,6 +14,7 @@
 
 import memoizeOne from 'memoize-one';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { colors } from '@grafana/ui';
 
 // TS needs the precise return type
@@ -38,7 +39,7 @@ class ColorGenerator {
     this.cache = new Map();
   }
 
-  _getColorIndex(key: string): number {
+  _getColorIndex(key: string, theme: GrafanaTheme2): number {
     let i = this.cache.get(key);
     if (i == null) {
       const hash = this.hashCode(key.toLowerCase());
@@ -66,8 +67,8 @@ class ColorGenerator {
    * If the key has been used already, it will
    * use the same color.
    */
-  getColorByKey(key: string) {
-    const i = this._getColorIndex(key);
+  getColorByKey(key: string, theme: GrafanaTheme2) {
+    const i = this._getColorIndex(key, theme);
     return this.colorsHex[i];
   }
 
@@ -76,8 +77,8 @@ class ColorGenerator {
    * it with a color if the key is not recognized.
    * @returns {number[]} An array of three ints [0, 255] representing a color.
    */
-  getRgbColorByKey(key: string): [number, number, number] {
-    const i = this._getColorIndex(key);
+  getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
+    const i = this._getColorIndex(key, theme);
     return this.colorsRgb[i];
   }
 
@@ -94,10 +95,10 @@ export function clear() {
   getGenerator([]);
 }
 
-export function getColorByKey(key: string) {
-  return getGenerator(colors).getColorByKey(key);
+export function getColorByKey(key: string, theme: GrafanaTheme2) {
+  return getGenerator(colors).getColorByKey(key, theme);
 }
 
-export function getRgbColorByKey(key: string): [number, number, number] {
-  return getGenerator(colors).getRgbColorByKey(key);
+export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
+  return getGenerator(colors).getRgbColorByKey(key, theme);
 }
