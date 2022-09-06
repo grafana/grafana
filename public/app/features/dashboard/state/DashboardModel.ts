@@ -496,6 +496,7 @@ export class DashboardModel implements TimeModel {
     }
 
     if (this.panelInEdit) {
+      // Remember that we have a saved a change in panel editor so we apply it when leaving panel edit
       this.panelInEdit.hasSavedPanelEditChange = this.panelInEdit.configRev > 0;
       this.panelInEdit.configRev = 0;
     }
