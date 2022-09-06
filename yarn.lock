@@ -5232,7 +5232,7 @@ __metadata:
     "@monaco-editor/react": 4.4.5
     "@popperjs/core": 2.11.5
     "@react-aria/button": 3.6.1
-    "@react-aria/dialog": 3.2.1
+    "@react-aria/dialog": 3.3.1
     "@react-aria/focus": 3.6.1
     "@react-aria/menu": 3.6.1
     "@react-aria/overlays": 3.9.1
@@ -8223,22 +8223,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-aria/dialog@npm:3.2.1":
-  version: 3.2.1
-  resolution: "@react-aria/dialog@npm:3.2.1"
+"@react-aria/dialog@npm:3.3.1":
+  version: 3.3.1
+  resolution: "@react-aria/dialog@npm:3.3.1"
   dependencies:
     "@babel/runtime": ^7.6.2
-    "@react-aria/focus": ^3.6.1
-    "@react-aria/utils": ^3.13.1
-    "@react-stately/overlays": ^3.3.1
-    "@react-types/dialog": ^3.4.1
+    "@react-aria/focus": ^3.8.0
+    "@react-aria/utils": ^3.13.3
+    "@react-stately/overlays": ^3.4.1
+    "@react-types/dialog": ^3.4.3
+    "@react-types/shared": ^3.14.1
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 09be3c3a315a7de5afd7c63afb4116420feb3ec5c27a45786f51069071b23b5849bba361934f07f573ea00c6f8c5bd965095bfe235ea991b5ed52ff0d4adca30
+  checksum: ba924f07a7974b0f9a90902c8b2a41490536194e38b53dc069b4ba275c4a557f4aa4ab87e22e2b1f69d8aa8ef42ede142bf45273bf3e55ff9a38cd687d0ee235
   languageName: node
   linkType: hard
 
-"@react-aria/focus@npm:3.6.1, @react-aria/focus@npm:^3.6.1":
+"@react-aria/focus@npm:3.6.1":
   version: 3.6.1
   resolution: "@react-aria/focus@npm:3.6.1"
   dependencies:
@@ -8701,15 +8702,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/dialog@npm:^3.4.1":
-  version: 3.4.1
-  resolution: "@react-types/dialog@npm:3.4.1"
+"@react-types/dialog@npm:^3.4.3":
+  version: 3.4.3
+  resolution: "@react-types/dialog@npm:3.4.3"
   dependencies:
-    "@react-types/overlays": ^3.6.1
-    "@react-types/shared": ^3.13.1
+    "@react-types/overlays": ^3.6.3
+    "@react-types/shared": ^3.14.1
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: fcd4a7cad671a2702df703a514fb1ff6b75d857aa8d6ead8649539daed35dd44a6abc8dafd131e5325b1cbc7511b5521e2a0cdbc005a9e6e04a25500ac3cb9bc
+  checksum: 96946e273cfb81d0d536e6f4077e8a1ca19a5a9cb3ae2e26e0993f15650726584574dffc1af1374f4ab16e8940d82e275d44f8d54719da72b6584ff85867197b
   languageName: node
   linkType: hard
 
@@ -21923,7 +21924,7 @@ __metadata:
     "@popperjs/core": 2.11.5
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1
     "@react-aria/button": 3.6.1
-    "@react-aria/dialog": 3.2.1
+    "@react-aria/dialog": 3.3.1
     "@react-aria/focus": 3.6.1
     "@react-aria/interactions": 3.9.1
     "@react-aria/menu": 3.6.1
