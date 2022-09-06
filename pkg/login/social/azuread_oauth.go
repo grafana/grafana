@@ -94,7 +94,6 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		Name:           claims.Name,
 		Email:          email,
 		Login:          email,
-		Company:        "",
 		Role:           string(role),
 		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
