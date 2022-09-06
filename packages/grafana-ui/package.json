@@ -53,7 +53,7 @@
     "@popperjs/core": "2.11.5",
     "@react-aria/button": "3.6.1",
     "@react-aria/dialog": "3.3.1",
-    "@react-aria/focus": "3.6.1",
+    "@react-aria/focus": "3.8.0",
     "@react-aria/menu": "3.6.1",
     "@react-aria/overlays": "3.9.1",
     "@react-aria/utils": "3.13.1",
