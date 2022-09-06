@@ -251,25 +251,18 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, len(q2.Result), 0)
 			})
 
-			t.Run("Should never remove the last admin of a team", func(t *testing.T) {
+			t.Run("Should have empty teams", func(t *testing.T) {
 				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 				require.NoError(t, err)
 
-				t.Run("A user should not be able to remove the last admin", func(t *testing.T) {
-					err = sqlStore.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
-					require.Equal(t, err, models.ErrLastTeamAdmin)
-				})
-
-				t.Run("A user should be able to remove an admin if there are other admins", func(t *testing.T) {
-					err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
-					require.NoError(t, err)
-					err = sqlStore.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[1]})
-					require.NoError(t, err)
-				})
-
-				t.Run("A user should not be able to remove the admin permission for the last admin", func(t *testing.T) {
+				t.Run("A user should be able to remove the admin permission for the last admin", func(t *testing.T) {
 					err = sqlStore.UpdateTeamMember(context.Background(), &models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: 0})
-					require.Error(t, err, models.ErrLastTeamAdmin)
+					require.NoError(t, err)
+				})
+
+				t.Run("A user should be able to remove the last member", func(t *testing.T) {
+					err = sqlStore.RemoveTeamMember(context.Background(), &models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
+					require.NoError(t, err)
 				})
 
 				t.Run("A user should be able to remove the admin permission if there are other admins", func(t *testing.T) {

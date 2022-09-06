@@ -83,9 +83,21 @@ Object {
       ],
     },
   },
+  "focus": Object {
+    "alpha": 1,
+  },
   "hooks": Object {},
+  "legend": Object {
+    "show": false,
+  },
   "mode": 1,
-  "padding": undefined,
+  "ms": 1,
+  "padding": Array [
+    [Function],
+    [Function],
+    [Function],
+    [Function],
+  ],
   "scales": Object {
     "__fixed/na-na/na-na/auto/linear/na": Object {
       "auto": true,
