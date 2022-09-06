@@ -101,21 +101,22 @@ export const getScriptValue = (metric: MetricAggregationWithInlineScript) =>
  */
 export const coerceESVersion = (version: string | number | undefined): string => {
   if (typeof version === 'string') {
-    return valid(version) || '5.0.0';
+    return valid(version) || '8.0.0';
   }
 
   switch (version) {
     case 2:
       return '2.0.0';
+    case 5:
+      return '5.0.0';
     case 56:
       return '5.6.0';
     case 60:
       return '6.0.0';
     case 70:
       return '7.0.0';
-    case 5:
     default:
-      return '5.0.0';
+      return '8.0.0';
   }
 };
 
