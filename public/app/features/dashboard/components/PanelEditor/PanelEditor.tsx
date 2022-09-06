@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { isFetchError, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   HorizontalGroup,
   InlineSwitch,
@@ -31,12 +31,6 @@ import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events'
 import { notifyApp } from '../../../../core/actions';
 import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
-import { getLibraryPanelConnectedDashboards } from '../../../library-panels/state/api';
-import {
-  createPanelLibraryErrorNotification,
-  createPanelLibrarySuccessNotification,
-  saveAndRefreshLibraryPanel,
-} from '../../../library-panels/utils';
 import { getVariablesByKey } from '../../../variables/state/selectors';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 import { DashboardModel, PanelModel } from '../../state';
@@ -151,22 +145,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   onSaveLibraryPanel = async () => {
     if (!isPanelModelLibraryPanel(this.props.panel)) {
       // New library panel, no need to display modal
-      return;
-    }
-
-    const connectedDashboards = await getLibraryPanelConnectedDashboards(this.props.panel.libraryPanel.uid);
-    if (
-      connectedDashboards.length === 0 ||
-      (connectedDashboards.length === 1 && connectedDashboards.includes(this.props.dashboard.id))
-    ) {
-      try {
-        await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
-        this.props.notifyApp(createPanelLibrarySuccessNotification('Library panel saved'));
-      } catch (err) {
-        if (isFetchError(err)) {
-          this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
-        }
-      }
       return;
     }
 
