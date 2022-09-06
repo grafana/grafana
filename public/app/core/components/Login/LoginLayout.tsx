@@ -17,6 +17,7 @@ export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true })
 };
 
 export interface LoginLayoutProps {
+  /** Custom branding settings that can be used e.g. for previewing the Login page changes */
   branding?: BrandingSettings;
 }
 
@@ -44,7 +45,7 @@ export const LoginLayout: FC<LoginLayoutProps> = ({ children, branding }) => {
         </div>
         <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
-      <Footer />
+      <Footer customLinks={branding?.footerLinks} />
     </Branding.LoginBackground>
   );
 };
