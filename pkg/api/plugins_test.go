@@ -360,12 +360,12 @@ func TestDataSourceQueryError(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			err:            backendplugin.ErrPluginUnavailable.Errorf("plugin is not available"),
+			err:            backendplugin.ErrPluginUnavailable,
 			expectedStatus: errutil.StatusInternal.HTTPStatus(),
 			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
 		},
 		{
-			err:            backendplugin.ErrMethodNotImplemented.Errorf("method is not implemented"),
+			err:            backendplugin.ErrMethodNotImplemented,
 			expectedStatus: errutil.StatusNotImplemented.HTTPStatus(),
 			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
 		},
