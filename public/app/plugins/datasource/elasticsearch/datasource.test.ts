@@ -77,7 +77,7 @@ interface TestContext {
   from?: string;
   jsonData?: Partial<ElasticsearchOptions>;
   database?: string;
-  fetchImplementation?: (options: BackendSrvRequest) => Observable<FetchResponse>;
+  fetchMockImplementation?: (options: BackendSrvRequest) => Observable<FetchResponse>;
 }
 
 interface Data {
@@ -89,12 +89,12 @@ function getTestContext({
   from = 'now-5m',
   jsonData,
   database = '[test-]YYYY.MM.DD',
-  fetchImplementation = undefined,
+  fetchMockImplementation = undefined,
 }: TestContext = {}) {
   const defaultMock = (options: BackendSrvRequest) => of(createFetchResponse(data));
 
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
-  fetchMock.mockImplementation(fetchImplementation ?? defaultMock);
+  fetchMock.mockImplementation(fetchMockImplementation ?? defaultMock);
 
   const timeSrv = {
     time: { from, to: 'now' },
@@ -432,7 +432,7 @@ describe('ElasticDatasource', () => {
       };
 
       const { ds } = getTestContext({
-        fetchImplementation: () => throwError(response),
+        fetchMockImplementation: () => throwError(response),
         from: undefined,
         jsonData: { esVersion: '7.10.0' },
       });
@@ -502,7 +502,7 @@ describe('ElasticDatasource', () => {
       const { ds, timeSrv, fetchMock } = getTestContext({
         from: 'now-2w',
         jsonData: { interval: 'Daily', esVersion: '7.10.0' },
-        fetchImplementation: (options) => {
+        fetchMockImplementation: (options) => {
           if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
             return of(createFetchResponse(basicResponse));
           }
@@ -523,7 +523,7 @@ describe('ElasticDatasource', () => {
       const { ds, timeSrv, fetchMock } = getTestContext({
         from: 'now-2w',
         jsonData: { interval: 'Daily', esVersion: '7.10.0' },
-        fetchImplementation: (options) => {
+        fetchMockImplementation: (options) => {
           return throwError({ status: 404 });
         },
       });
