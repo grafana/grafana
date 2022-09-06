@@ -37,7 +37,7 @@ const TemplateEditor: FC<TemplateEditorProps> = (props) => {
     return () => {
       disposeSuggestions.current?.dispose();
     };
-  });
+  }, []);
 
   return (
     <CodeEditor
