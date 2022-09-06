@@ -116,7 +116,7 @@ export enum AccessControlAction {
   ActionAPIKeysDelete = 'apikeys:delete',
 
   PluginsInstall = 'plugins:install',
-  PluginsSettingsWrite = 'plugins.settings:write',
+  PluginsWrite = 'plugins:write',
 }
 
 export interface Role {

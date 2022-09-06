@@ -24,7 +24,7 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, defaultTabs: Plugin
 
   const [tabs, defaultTab] = useMemo(() => {
     const canConfigurePlugins =
-      plugin && contextSrv.hasAccessInMetadata(AccessControlAction.PluginsSettingsWrite, plugin, isOrgAdmin());
+      plugin && contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin());
     const tabs: PluginDetailsTab[] = [...defaultTabs];
     let defaultTab;
     if (isPublished) {

@@ -22,7 +22,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   }
 
   // Enforce RBAC
-  if (!contextSrv.hasAccessInMetadata(AccessControlAction.PluginsSettingsWrite, plugin, isOrgAdmin())) {
+  if (!contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin())) {
     return null;
   }
 
