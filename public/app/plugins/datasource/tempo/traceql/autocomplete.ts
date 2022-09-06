@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import TempoLanguageProvider from '../language_provider';
@@ -29,6 +30,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
   private tags: { [tag: string]: Set<string> } = {};
+  private cachedValues: { [key: string]: Array<SelectableValue<string>> } = {};
 
   provideCompletionItems(
     model: monacoTypes.editor.ITextModel,
@@ -72,6 +74,27 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     tags.forEach((t) => (this.tags[t] = new Set<string>()));
   }
 
+  private overrideTagName(tagName: string): string {
+    switch (tagName) {
+      case 'status':
+        return 'status.code';
+      default:
+        return tagName;
+    }
+  }
+
+  private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
+    let tagValues: Array<SelectableValue<string>> = [];
+
+    if (this.cachedValues.hasOwnProperty(tagName)) {
+      tagValues = this.cachedValues[tagName];
+    } else {
+      tagValues = await this.languageProvider.getOptions(tagName);
+      this.cachedValues[tagName] = tagValues;
+    }
+    return tagValues;
+  }
+
   /**
    * Get suggestion based on the situation we are in like whether we should suggest tag names or values.
    * @param situation
@@ -104,19 +127,19 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR' as CompletionType,
         }));
       case 'SPANSET_IN_VALUE':
-        return await this.languageProvider.getOptions(situation.tagName).then((res) => {
-          const items: Completion[] = [];
-          res.forEach((val) => {
-            if (val?.label) {
-              items.push({
-                label: val.label,
-                insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
-                type: 'TAG_VALUE',
-              });
-            }
-          });
-          return items;
+        const tagName = this.overrideTagName(situation.tagName);
+        const tagValues = await this.getTagValues(tagName);
+        const items: Completion[] = [];
+        tagValues.forEach((val) => {
+          if (val?.label) {
+            items.push({
+              label: val.label,
+              insertText: situation.betweenQuotes ? val.label : `"${val.label}"`,
+              type: 'TAG_VALUE',
+            });
+          }
         });
+        return items;
       case 'SPANSET_AFTER_VALUE':
         return CompletionProvider.logicalOps.concat('}').map((key) => ({
           label: key,

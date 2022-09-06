@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert } from '@grafana/ui';
+import { useStyles2, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert, toIconName } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -178,7 +178,7 @@ export default function StoragePage(props: Props) {
     return (
       <div className={styles.wrapper}>
         <HorizontalGroup width="100%" justify="space-between" spacing={'md'} height={25}>
-          <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={navModel.node.icon as IconName} />
+          <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={toIconName(navModel.node.icon ?? '')} />
           <HorizontalGroup>
             {canViewDashboard && (
               <LinkButton icon="dashboard" href={`g/${path}`}>
