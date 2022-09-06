@@ -16,6 +16,15 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
   if (!node) {
     return null;
   }
+  const onNavigate = (item: NavModelItem) => {
+    const { url, target, onClick } = item;
+    onClick?.();
+
+    if (url) {
+      window.open(url, target);
+    }
+  };
+
   return (
     <Menu>
       <MenuItem url={node.url} label={node.text} className={styles.header} />
@@ -23,13 +32,19 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
         const translationKey = item.id && menuItemTranslations[item.id];
         const itemText = translationKey ? i18n._(translationKey) : item.text;
 
-        return item.url ? (
+        return !item.target && item.url?.startsWith('/') ? (
           <MenuItem url={item.url} label={itemText} key={item.id} />
         ) : (
-          <MenuItem onClick={item.onClick} label={itemText} key={item.id} />
+          <MenuItem onClick={() => onNavigate(item)} label={itemText} key={item.id} />
         );
       })}
-      {node.subTitle && <div className={styles.subtitle}>{node.subTitle}</div>}
+      {node.subTitle && (
+        // Stopping the propagation of the event when clicking the subTitle so the menu
+        // does not close
+        <div onClick={(e) => e.stopPropagation()} className={styles.subtitle}>
+          {node.subTitle}
+        </div>
+      )}
     </Menu>
   );
 }
