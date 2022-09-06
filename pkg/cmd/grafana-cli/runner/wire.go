@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -334,8 +335,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
-	ossaccesscontrol.ProvideAccessControl,
-	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.AccessControl)),
+	acimpl.ProvideAccessControl,
+	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {
