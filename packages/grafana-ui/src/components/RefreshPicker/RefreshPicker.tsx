@@ -129,6 +129,7 @@ export class RefreshPicker extends PureComponent<Props> {
             options={options}
             onChange={this.onChangeSelect as any}
             variant={variant}
+            title="Set auto refresh interval"
             data-testid={selectors.components.RefreshPicker.intervalButtonV2}
             aria-label={ariaLabel}
           />
