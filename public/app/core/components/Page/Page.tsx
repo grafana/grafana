@@ -26,6 +26,7 @@ export const OldPage: PageType = ({
   scrollRef,
   scrollTop,
   layout = PageLayoutType.Standard,
+  subTitle,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
