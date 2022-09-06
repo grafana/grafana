@@ -54,7 +54,7 @@ func (hs *HTTPServer) AdminRollbackSecrets(c *models.ReqContext) response.Respon
 // To migrate to the plugin, it must be installed and configured
 // so as not to lose access to migrated secrets
 func (hs *HTTPServer) AdminMigrateSecretsToPlugin(c *models.ReqContext) response.Response {
-	if skv.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) != nil {
+	if skv.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg, true) != nil {
 		hs.log.Warn("Received secrets plugin migration request while plugin is not available")
 		return response.Respond(http.StatusBadRequest, "Secrets plugin is not available")
 	}

@@ -19,8 +19,9 @@ import (
 var (
 	fatalFlagOnce             sync.Once
 	startupOnce               sync.Once
-	errPluginDisabledByConfig = errors.New("remote secret managements plugin disabled because the property `secrets.use_plugin` is not set to `true`")
-	errPluginNotInstalled     = errors.New("remote secret managements plugin disabled because there is no installed plugin of type `secretsmanager`")
+	errPluginDisabledByConfig = errors.New("remote secret management plugin disabled because the property `secrets.use_plugin` is not set to `true`")
+	errPluginNotInstalled     = errors.New("remote secret management plugin disabled because there is no installed plugin of type `secretsmanager`")
+	errPluginExited           = errors.New("remote secret management plugin has exited")
 )
 
 // SecretsKVStorePlugin provides a key/value store backed by the Grafana plugin gRPC interface
@@ -255,7 +256,7 @@ func SetPluginStartupErrorFatal(ctx context.Context, kvstore *kvstore.Namespaced
 	return kvstore.Set(ctx, QuitOnPluginStartupFailureKey, "true")
 }
 
-func EvaluateRemoteSecretsPlugin(ctx context.Context, mg plugins.SecretsPluginManager, cfg *setting.Cfg) error {
+func EvaluateRemoteSecretsPlugin(ctx context.Context, mg plugins.SecretsPluginManager, cfg *setting.Cfg, hasStarted bool) error {
 	usePlugin := cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool()
 	if !usePlugin {
 		return errPluginDisabledByConfig
@@ -263,6 +264,10 @@ func EvaluateRemoteSecretsPlugin(ctx context.Context, mg plugins.SecretsPluginMa
 	pluginInstalled := mg.SecretsManager(ctx) != nil
 	if !pluginInstalled {
 		return errPluginNotInstalled
+	}
+	pluginStarted := mg.SecretsManager(ctx).SecretsManager != nil
+	if hasStarted && !pluginStarted {
+		return errPluginExited
 	}
 	return nil
 }
