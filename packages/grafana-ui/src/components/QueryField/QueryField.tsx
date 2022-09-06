@@ -42,7 +42,7 @@ export interface QueryFieldProps extends Themeable2 {
   onBlur?: () => void;
   onChange?: (value: string) => void;
   onRichValueChange?: (value: Value) => void;
-  onClick?: (event: React.MouseEvent, editor: Editor, next: () => any) => any;
+  onClick?: (event: Event | React.MouseEvent, editor: Editor, next: () => any) => any;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   placeholder?: string;
