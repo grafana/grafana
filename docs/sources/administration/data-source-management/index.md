@@ -3,7 +3,8 @@ aliases:
   - /docs/grafana/latest/datasources/add-a-data-source/
   - /docs/grafana/latest/features/datasources/add-a-data-source/
   - /docs/grafana/latest/enterprise/datasource_permissions/
-  - /docs/sources/permissions/datasource_permissions/
+  - /docs/grafana/latest/permissions/datasource_permissions/
+  - /docs/grafana/latest/administration/data-source-management/
 title: Data source management
 description: Data source management information for Grafana administrators
 weight: 100

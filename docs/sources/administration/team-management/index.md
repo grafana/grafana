@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana/latest/manage-users/add-or-remove-user-from-team/
   - /docs/grafana/latest/manage-users/create-or-remove-team/
   - /docs/grafana/latest/manage-users/manage-teams/
+  - /docs/grafana/latest/administration/team-management/
 title: Team management
 weight: 400
 ---

@@ -5158,7 +5158,7 @@ __metadata:
     "@react-aria/menu": 3.6.1
     "@react-aria/overlays": 3.10.1
     "@react-aria/utils": 3.13.1
-    "@react-stately/menu": 3.3.1
+    "@react-stately/menu": 3.4.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
     "@storybook/addon-a11y": 6.4.21
@@ -8341,22 +8341,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-stately/menu@npm:3.3.1":
-  version: 3.3.1
-  resolution: "@react-stately/menu@npm:3.3.1"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-stately/overlays": ^3.3.1
-    "@react-stately/utils": ^3.5.0
-    "@react-types/menu": ^3.6.1
-    "@react-types/shared": ^3.13.1
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 15c4935207483f3b323295989eb50898cfd906372b9d4638fb61ee847c2b4d355758bd9a21b02127f006f82bcbe03e29bb570fd8e81bbc68853bb47a105b2f49
-  languageName: node
-  linkType: hard
-
-"@react-stately/menu@npm:^3.4.1":
+"@react-stately/menu@npm:3.4.1, @react-stately/menu@npm:^3.4.1":
   version: 3.4.1
   resolution: "@react-stately/menu@npm:3.4.1"
   dependencies:
@@ -8368,19 +8353,6 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
   checksum: a944d6e3a3caf400ffc52738ee8d586db6c6846d0ecc009de4bbedc88202f63d6bbddbd3d577f730f98f28404b077676af4c307f4ba09314c79cf56087a5aa8c
-  languageName: node
-  linkType: hard
-
-"@react-stately/overlays@npm:^3.3.1":
-  version: 3.3.1
-  resolution: "@react-stately/overlays@npm:3.3.1"
-  dependencies:
-    "@babel/runtime": ^7.6.2
-    "@react-stately/utils": ^3.5.0
-    "@react-types/overlays": ^3.6.1
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 62c329eaaf2d4d62d307b38357568804e1f432a4dca0d471324411e4b70a7c40c897814871d986a6107c958fcffd469599fa4c9322ac8248374a12b3f5123998
   languageName: node
   linkType: hard
 
@@ -8536,7 +8508,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/menu@npm:3.6.1, @react-types/menu@npm:^3.6.1":
+"@react-types/menu@npm:3.6.1":
   version: 3.6.1
   resolution: "@react-types/menu@npm:3.6.1"
   dependencies:
@@ -21752,7 +21724,7 @@ __metadata:
     "@react-aria/overlays": 3.10.1
     "@react-aria/utils": 3.13.1
     "@react-stately/collections": 3.4.1
-    "@react-stately/menu": 3.3.1
+    "@react-stately/menu": 3.4.1
     "@react-stately/tree": 3.3.1
     "@react-types/button": 3.5.1
     "@react-types/menu": 3.6.1
