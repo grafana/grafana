@@ -98,7 +98,7 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               allowCustomValue
             />
           </InlineField>
-          <InlineField label="Stream selector" labelWidth={20}>
+          <InlineField label="Stream selector" labelWidth={20} tooltip={<div>Optional</div>}>
             <Input
               type="text"
               aria-label="Stream selector"
