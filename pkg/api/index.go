@@ -378,7 +378,7 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	if hasAccess(plugins.LegacyAdminAccessEvaluator(hs.Cfg), plugins.AdminAccessEvaluator) {
+	if hasAccess(plugins.ReqCanAdminPlugins(hs.Cfg), plugins.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",

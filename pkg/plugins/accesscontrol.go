@@ -22,11 +22,10 @@ var (
 	AdminAccessEvaluator = ac.EvalAny(ac.EvalPermission(ActionWrite), ac.EvalPermission(ActionInstall))
 )
 
-func LegacyAdminAccessEvaluator(cfg *setting.Cfg) func(rc *models.ReqContext) bool {
+func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *models.ReqContext) bool {
 	// Legacy handler that protects access to the Configuration > Plugins page
 	return func(rc *models.ReqContext) bool {
-		return rc.OrgRole == org.RoleAdmin ||
-			cfg.PluginAdminEnabled && !cfg.PluginAdminExternalManageEnabled && rc.IsGrafanaAdmin
+		return rc.OrgRole == org.RoleAdmin || cfg.PluginAdminEnabled && rc.IsGrafanaAdmin
 	}
 }
 
