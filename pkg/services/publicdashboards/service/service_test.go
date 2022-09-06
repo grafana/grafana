@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/user"
 
 	"github.com/google/uuid"
@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
-	database "github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -360,7 +360,7 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{})
-	from, to := getTimeRangeFromDashboard(t, publicDashboard)
+	from, to := internal.GetTimeRangeFromDashboard(t, publicDashboard.Data)
 
 	service := &PublicDashboardServiceImpl{
 		log:                log.New("test.logger"),
@@ -461,20 +461,6 @@ func TestBuildMetricRequest(t *testing.T) {
 
 		require.ErrorContains(t, err, "Panel not found")
 	})
-}
-
-// Gets time range from dashboard in unix milliseconds
-func getTimeRangeFromDashboard(t *testing.T, publicDashboard *models.Dashboard) (string, string) {
-	to := publicDashboard.Data.GetPath("time", "to").MustString()
-	from := publicDashboard.Data.GetPath("time", "from").MustString()
-	toTime, err := time.Parse("2006-01-02T15:04:05.000Z", to)
-	require.NoError(t, err)
-	fromTime, err := time.Parse("2006-01-02T15:04:05.000Z", from)
-	require.NoError(t, err)
-	toUnixMilli := strconv.FormatInt(toTime.UnixMilli(), 10)
-	fromUnixMilli := strconv.FormatInt(fromTime.UnixMilli(), 10)
-
-	return fromUnixMilli, toUnixMilli
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
