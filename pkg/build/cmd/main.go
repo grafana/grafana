@@ -30,6 +30,12 @@ func main() {
 			Usage:     "Build front-end packages",
 			ArgsUsage: "[version]",
 			Action:    BuildFrontendPackages,
+			Flags: []cli.Flag{
+				&jobsFlag,
+				&editionFlag,
+				&buildIDFlag,
+				&noInstallDepsFlag,
+			},
 		},
 		{
 			Name:   "e2e-tests",
