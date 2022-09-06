@@ -308,7 +308,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -643,7 +643,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: lint-docs
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -727,7 +727,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: lint-docs
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -1049,7 +1049,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -1743,7 +1743,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
   - yarn-install
   environment:
@@ -2367,7 +2367,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
+  - ./bin/build build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
   - yarn-install
   environment:
@@ -3712,7 +3712,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -4282,8 +4282,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise --build-id
-    ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -5093,6 +5092,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: fb770c3cc5bd204e3aceae01d35997818ee210efb54c8ccbe37a410773f1ce73
+hmac: 2689da88c9d55f8949f4f9a26a850661fdec1ecf8f5da5c3713bde4ca481b8dd
 
 ...

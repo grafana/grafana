@@ -38,6 +38,7 @@ export interface AxisProps {
   timeZone?: TimeZone;
   color?: uPlot.Axis.Stroke;
   border?: uPlot.Axis.Border;
+  decimals?: DecimalCount;
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
@@ -119,6 +120,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       size,
       color,
       border,
+      decimals,
     } = this.props;
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
@@ -127,6 +129,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     if (isBooleanUnit(scaleKey)) {
       splits = [0, 1];
+    }
+
+    if (decimals === 0) {
+      filter = (u, splits) => splits.map((v) => (Number.isInteger(v) ? v : null));
     }
 
     let config: Axis = {
