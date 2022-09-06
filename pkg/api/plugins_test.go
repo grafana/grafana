@@ -3,14 +3,21 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/query"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,6 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -341,4 +351,86 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	return backend.NewQueryDataResponse(), nil
+}
+
+func TestDataSourceQueryError(t *testing.T) {
+	tcs := []struct {
+		err            error
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			err:            backendplugin.ErrPluginUnavailable.Errorf("plugin is not available"),
+			expectedStatus: errutil.StatusInternal.HTTPStatus(),
+			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
+		},
+		{
+			err:            backendplugin.ErrMethodNotImplemented.Errorf("method is not implemented"),
+			expectedStatus: errutil.StatusNotImplemented.HTTPStatus(),
+			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
+		},
+		{
+			err:            errors.New("surprise surprise"),
+			expectedStatus: errutil.StatusInternal.HTTPStatus(),
+			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":500,"traceID":""}`,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.err), func(t *testing.T) {
+			p := &plugins.Plugin{
+				JSONData: plugins.JSONData{
+					ID: "grafana",
+				},
+			}
+			p.RegisterClient(&fakePluginBackend{
+				qdr: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+					return nil, tc.err
+				},
+			})
+			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				r := registry.NewInMemory()
+				err := r.Add(context.Background(), p)
+				require.NoError(t, err)
+				hs.queryDataService = query.ProvideService(
+					nil,
+					nil,
+					nil,
+					&fakePluginRequestValidator{},
+					&fakeDatasources.FakeDataSourceService{},
+					pluginClient.ProvideService(r),
+					&fakeOAuthTokenService{},
+				)
+				hs.QuotaService = quotatest.NewQuotaServiceFake()
+			})
+			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
+			resp, err := srv.SendJSON(req)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.expectedStatus, resp.StatusCode)
+			require.Equal(t, tc.expectedStatus, resp.StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedBody, string(body))
+		})
+	}
+}
+
+type fakePluginBackend struct {
+	qdr backend.QueryDataHandlerFunc
+
+	backendplugin.Plugin
+}
+
+func (f *fakePluginBackend) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if f.qdr != nil {
+		return f.qdr(ctx, req)
+	}
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (f *fakePluginBackend) IsDecommissioned() bool {
+	return false
 }

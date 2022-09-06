@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -36,11 +35,7 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 		return response.Error(http.StatusBadRequest, util.Capitalize(badQuery.Message), err)
 	}
 
-	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
-	}
-
-	return response.Error(http.StatusInternalServerError, "Query data error", err)
+	return response.Err(err)
 }
 
 // QueryMetricsV2 returns query metrics.

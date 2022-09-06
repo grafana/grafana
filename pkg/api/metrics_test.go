@@ -26,19 +26,19 @@ import (
 )
 
 var queryDatasourceInput = `{
-"from": "",
-		"to": "",
-		"queries": [
-			{
-				"datasource": {
-					"type": "datasource",
-					"uid": "grafana"
-				},
-				"queryType": "randomWalk",
-				"refId": "A"
-			}
-		]
-	}`
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"datasource": {
+				"type": "datasource",
+				"uid": "grafana"
+			},
+			"queryType": "randomWalk",
+			"refId": "A"
+		}
+	]
+}`
 
 type fakePluginRequestValidator struct {
 	err error
