@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Node, Plugin } from 'slate';
+import { Editor } from 'slate-react';
 
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import { BracesPlugin, LegacyForms, QueryField, SlatePrism, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
@@ -48,7 +49,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     hint: undefined,
   };
 
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
 
   constructor(props: CloudWatchLogsQueryFieldProps, context: React.Context<any>) {
     super(props, context);

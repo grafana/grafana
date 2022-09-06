@@ -13,10 +13,10 @@ import * as rxjs from 'rxjs';
 import * as rxjsOperators from 'rxjs/operators';
 import slate from 'slate';
 import slatePlain from 'slate-plain-serializer';
+import slateReact from 'slate-react';
 
 import * as grafanaData from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
-import slateReact from '@grafana/slate-react';
 import * as grafanaUIraw from '@grafana/ui';
 import TableModel from 'app/core/TableModel';
 import config from 'app/core/config';
@@ -85,7 +85,7 @@ exposeToPlugin('react-router-dom', reactRouter);
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('@grafana/slate-react', slateReact);
+exposeToPlugin('slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
