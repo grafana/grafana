@@ -35,28 +35,10 @@ class ColorGenerator {
   cache: Map<string, number>;
 
   constructor(colorsHex: string[], theme: GrafanaTheme2) {
-    const filteredColors = this.filterColors(colorsHex, theme);
+    const filteredColors = getFilteredColors(colorsHex, theme);
     this.colorsHex = filteredColors;
     this.colorsRgb = filteredColors.map(strToRgb);
     this.cache = new Map();
-  }
-
-  filterColors(colorsHex: string[], theme: GrafanaTheme2) {
-    // Remove red as a span color because it looks like an error
-    const redIndex = colorsHex.indexOf('E24D42');
-    if (redIndex > -1) {
-      colorsHex.splice(redIndex, 1);
-    }
-
-    // Only add colors that have a contrast ratio >= 3 for the current theme
-    let filteredColorsHex = [];
-    for (let color of colorsHex) {
-      if (tinycolor.readability(theme.colors.background.primary, color) >= 3) {
-        filteredColorsHex.push(color);
-      }
-    }
-
-    return filteredColorsHex;
   }
 
   _getColorIndex(key: string): number {
@@ -120,4 +102,22 @@ export function getColorByKey(key: string, theme: GrafanaTheme2) {
 
 export function getRgbColorByKey(key: string, theme: GrafanaTheme2): [number, number, number] {
   return getGenerator(colors, theme).getRgbColorByKey(key);
+}
+
+export function getFilteredColors(colorsHex: string[], theme: GrafanaTheme2) {
+  // Remove red as a span color because it looks like an error
+  const redIndex = colorsHex.indexOf('#E24D42');
+  if (redIndex > -1) {
+    colorsHex.splice(redIndex, 1);
+  }
+
+  // Only add colors that have a contrast ratio >= 3 for the current theme
+  let filteredColors = [];
+  for (const color of colorsHex) {
+    if (tinycolor.readability(theme.colors.background.primary, color) >= 3) {
+      filteredColors.push(color);
+    }
+  }
+
+  return filteredColors;
 }
