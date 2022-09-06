@@ -70,6 +70,12 @@ export const Page: PageType = ({
           </div>
         </CustomScrollbar>
       )}
+      {layout === PageLayoutType.Custom && (
+        <>
+          {toolbar}
+          {children}
+        </>
+      )}
     </div>
   );
 };

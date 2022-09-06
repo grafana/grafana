@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Subscription } from 'rxjs';
 
-import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
@@ -13,6 +13,7 @@ import {
   ModalsController,
   PageToolbar,
   RadioButtonGroup,
+  Stack,
   stylesFactory,
   Themeable2,
   ToolbarButton,
@@ -21,7 +22,6 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { PageLayoutType } from 'app/core/components/Page/types';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { appEvents } from 'app/core/core';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
@@ -321,7 +321,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
           {this.renderTemplateVariables(styles)}
-          <HorizontalGroup>
+          <Stack gap={1}>
             <InlineSwitch
               label="Table view"
               showLabel={true}
@@ -331,9 +331,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               aria-label={selectors.components.PanelEditor.toggleTableView}
             />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
-            <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
+            <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} isOnCanvas={true} />
             {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
-          </HorizontalGroup>
+          </Stack>
         </HorizontalGroup>
       </div>
     );
@@ -469,27 +469,29 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         navModel={sectionNav}
         pageNav={pageNav}
         aria-label={selectors.components.PanelEditor.General.content}
-        layout={PageLayoutType.Dashboard}
+        layout={PageLayoutType.Custom}
         toolbar={this.renderToolbar()}
       >
-        <div className={styles.verticalSplitPanesWrapper}>
-          <SplitPaneWrapper
-            leftPaneComponents={this.renderPanelAndEditor(styles)}
-            rightPaneComponents={this.renderOptionsPane()}
-            uiState={uiState}
-            updateUiState={updatePanelEditorUIState}
-            rightPaneVisible={uiState.isPanelOptionsVisible}
-          />
+        <div className={styles.wrapper}>
+          <div className={styles.verticalSplitPanesWrapper}>
+            <SplitPaneWrapper
+              leftPaneComponents={this.renderPanelAndEditor(styles)}
+              rightPaneComponents={this.renderOptionsPane()}
+              uiState={uiState}
+              updateUiState={updatePanelEditorUIState}
+              rightPaneVisible={uiState.isPanelOptionsVisible}
+            />
+          </div>
+          {this.state.showSaveLibraryPanelModal && (
+            <SaveLibraryPanelModal
+              panel={this.props.panel as PanelModelWithLibraryPanel}
+              folderId={this.props.dashboard.meta.folderId as number}
+              onConfirm={this.onConfirmAndDismissLibarayPanelModel}
+              onDiscard={this.onDiscard}
+              onDismiss={this.onConfirmAndDismissLibarayPanelModel}
+            />
+          )}
         </div>
-        {this.state.showSaveLibraryPanelModal && (
-          <SaveLibraryPanelModal
-            panel={this.props.panel as PanelModelWithLibraryPanel}
-            folderId={this.props.dashboard.meta.folderId as number}
-            onConfirm={this.onConfirmAndDismissLibarayPanelModel}
-            onDiscard={this.onDiscard}
-            onDismiss={this.onConfirmAndDismissLibarayPanelModel}
-          />
-        )}
       </Page>
     );
   }
@@ -505,13 +507,13 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, props: Props) => {
   const paneSpacing = theme.spacing(2);
 
   return {
-    wrapper: css`
-      width: 100%;
-      height: 100%;
-      background: ${theme.colors.background.canvas};
-      display: flex;
-      flex-direction: column;
-    `,
+    wrapper: css({
+      width: '100%',
+      flexGrow: 1,
+      minHeight: 0,
+      display: 'flex',
+      paddingTop: config.featureToggles.topnav ? theme.spacing(2) : 0,
+    }),
     verticalSplitPanesWrapper: css`
       display: flex;
       flex-direction: column;

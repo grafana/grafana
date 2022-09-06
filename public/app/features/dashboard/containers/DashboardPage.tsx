@@ -1,4 +1,4 @@
-import { cx } from '@emotion/css';
+import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -347,6 +347,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       </header>
     );
 
+    const pageClassName = classNames({
+      'panel-in-fullscreen': viewPanel,
+      'dashboard-content--hidden': queryParams.editview || editPanel,
+    });
+
     return (
       <>
         <Page
@@ -354,10 +359,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           pageNav={pageNav}
           layout={PageLayoutType.Canvas}
           toolbar={toolbar}
-          className={cx(
-            viewPanel && 'panel-in-fullscreen',
-            (queryParams.editview || editPanel) && 'dashboard-content--hidden'
-          )}
+          className={pageClassName}
           scrollRef={this.setScrollRef}
           scrollTop={updateScrollTop}
         >

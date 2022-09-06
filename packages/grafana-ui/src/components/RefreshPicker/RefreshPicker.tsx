@@ -23,6 +23,7 @@ export interface Props {
   noIntervalPicker?: boolean;
   width?: string;
   primary?: boolean;
+  isOnCanvas?: boolean;
   // These props are used to translate the component
   offOptionLabelMsg?: string;
   offOptionAriaLabelMsg?: string;
@@ -59,13 +60,16 @@ export class RefreshPicker extends PureComponent<Props> {
     if (this.props.isLive) {
       return 'primary';
     }
+
     if (this.props.isLoading) {
       return 'destructive';
     }
+
     if (this.props.primary) {
       return 'primary';
     }
-    return 'default';
+
+    return this.props.isOnCanvas ? 'canvas' : 'default';
   }
 
   render() {
