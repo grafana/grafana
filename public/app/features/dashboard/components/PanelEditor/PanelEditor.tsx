@@ -8,6 +8,7 @@ import { FieldConfigSource, GrafanaTheme2, NavModel, NavModelItem, PageLayoutTyp
 import { selectors } from '@grafana/e2e-selectors';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
+  Button,
   HorizontalGroup,
   InlineSwitch,
   ModalsController,
@@ -62,6 +63,7 @@ interface OwnProps {
   sourcePanel: PanelModel;
   sectionNav: NavModel;
   pageNav: NavModelItem;
+  className?: string;
   tab?: string;
 }
 
@@ -137,12 +139,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   onDiscard = () => {
     this.props.discardPanelChanges();
     this.onBack();
-  };
-
-  onOpenDashboardSettings = () => {
-    locationService.partial({
-      editview: 'settings',
-    });
   };
 
   onSaveDashboard = () => {
@@ -340,38 +336,48 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderEditorActions() {
+    const size = config.featureToggles.topnav ? 'sm' : 'md';
     let editorActions = [
-      <ToolbarButton
-        icon="cog"
-        onClick={this.onOpenDashboardSettings}
-        tooltip="Open dashboard settings"
-        key="settings"
-      />,
-      <ToolbarButton onClick={this.onDiscard} tooltip="Undo all changes" key="discard">
+      <Button
+        onClick={this.onDiscard}
+        title="Undo all changes"
+        key="discard"
+        size={size}
+        variant="destructive"
+        fill="outline"
+      >
         Discard
-      </ToolbarButton>,
+      </Button>,
       this.props.panel.libraryPanel ? (
-        <ToolbarButton
+        <Button
           onClick={this.onSaveLibraryPanel}
           variant="primary"
-          tooltip="Apply changes and save library panel"
+          size={size}
+          title="Apply changes and save library panel"
           key="save-panel"
         >
           Save library panel
-        </ToolbarButton>
+        </Button>
       ) : (
-        <ToolbarButton onClick={this.onSaveDashboard} tooltip="Apply changes and save dashboard" key="save">
+        <Button
+          onClick={this.onSaveDashboard}
+          title="Apply changes and save dashboard"
+          key="save"
+          size={size}
+          variant="secondary"
+        >
           Save
-        </ToolbarButton>
+        </Button>
       ),
-      <ToolbarButton
+      <Button
         onClick={this.onBack}
         variant="primary"
-        tooltip="Apply changes and go back to dashboard"
+        title="Apply changes and go back to dashboard"
         key="apply"
+        size={size}
       >
         Apply
-      </ToolbarButton>,
+      </Button>,
     ];
 
     if (this.props.panel.libraryPanel) {
@@ -457,7 +463,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { initDone, updatePanelEditorUIState, uiState, theme, sectionNav, pageNav } = this.props;
+    const { initDone, updatePanelEditorUIState, uiState, theme, sectionNav, pageNav, className } = this.props;
     const styles = getStyles(theme, this.props);
 
     if (!initDone) {
@@ -471,6 +477,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         aria-label={selectors.components.PanelEditor.General.content}
         layout={PageLayoutType.Custom}
         toolbar={this.renderToolbar()}
+        className={className}
       >
         <div className={styles.wrapper}>
           <div className={styles.verticalSplitPanesWrapper}>

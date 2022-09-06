@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -347,9 +348,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       </header>
     );
 
-    const pageClassName = classNames({
-      'panel-in-fullscreen': viewPanel,
-      'dashboard-content--hidden': queryParams.editview || editPanel,
+    const pageClassName = cx({
+      'panel-in-fullscreen': Boolean(viewPanel),
+      'page-hidden': Boolean(queryParams.editview || editPanel),
     });
 
     return (
