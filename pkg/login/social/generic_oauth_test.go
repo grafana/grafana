@@ -402,7 +402,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				},
 				RoleAttributePath: "role",
 				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "FromResponse",
+				ExpectedRole:      "Fromresponse",
 			},
 			{
 				Name: "Given a valid id_token, a valid advanced JMESPath role path, derive the role",
