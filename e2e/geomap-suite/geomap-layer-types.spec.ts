@@ -13,14 +13,12 @@ e2e.scenario({
     cy.get('[data-testid="layer-drag-drop-list"]').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').should('be.visible');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('markers');
-    e2e().wait(500);
 
     // Heatmap
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('Heatmap{enter}');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('heatmap');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Data').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
 
     // GeoJSON
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('GeoJSON{enter}');
@@ -28,7 +26,6 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Data').should('not.exist');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers GeoJSON URL').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
 
     // Open Street Map
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('Open Street Map{enter}');
@@ -36,7 +33,6 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Data').should('not.exist');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers GeoJSON URL').should('not.exist');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
 
     // CARTO basemap
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('CARTO basemap{enter}');
@@ -44,16 +40,12 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Show labels').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Theme').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
 
     // ArcGIS MapServer
-    e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type')
-      .type('ArcGIS MapServer{enter}')
-      .wait(500);
+    e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('ArcGIS MapServer{enter}');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('esri-xyz');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Server instance').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
 
     // XYZ Tile layer
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('XYZ Tile layer{enter}');
@@ -61,7 +53,6 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers URL template').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Attribution').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
   },
 });
 
@@ -82,7 +73,6 @@ e2e.scenario({
     cy.get('[data-testid="layer-drag-drop-list"]').contains('last-point-tracker');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Data').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
 
     // Dynamic GeoJSON (Alpha)
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('Dynamic GeoJSON{enter}');
@@ -91,7 +81,6 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers GeoJSON URL').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers ID Field').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
 
     // Night / Day (Alpha)
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('Night / Day{enter}');
@@ -101,7 +90,6 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Night region color').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Display sun').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
 
     // Route (Alpha)
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Layer type').type('Route{enter}');
@@ -111,6 +99,5 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Style').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Line width').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-    e2e().wait(500);
   },
 });
