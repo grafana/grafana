@@ -15,6 +15,13 @@ trigger_oss = {
         'grafana/grafana',
     ]
 }
+trigger_storybook = {
+    'paths': {
+        'include': [
+            'packages/grafana-ui/**',
+        ],
+    }
+}
 
 
 def slack_step(channel, template, secret):
@@ -247,7 +254,7 @@ def build_storybook_step(edition, ver_mode):
             'yarn storybook:build',
             './bin/grabpl verify-storybook',
         ],
-        ## 'when': trigger_storybook,
+        'when': trigger_storybook,
     }
 
 
@@ -275,9 +282,19 @@ def store_storybook_step(edition, ver_mode, trigger=None):
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket)
         },
         'commands': commands,
+        'when': trigger_storybook,
     }
     if trigger and ver_mode in ("release-branch", "main"):
-        step = dict(step, when=trigger)
+        # no dict merge operation available, https://github.com/harness/drone-cli/pull/220
+        when_cond = {
+            'repo': ['grafana/grafana',],
+            'paths': {
+                'include': [
+                    'packages/grafana-ui/**',
+                ],
+            }
+        }
+        step = dict(step, when=when_cond)
     return step
 
 

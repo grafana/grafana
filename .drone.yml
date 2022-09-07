@@ -424,6 +424,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.9
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -1174,6 +1178,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.9
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -1210,6 +1218,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: store-storybook
   when:
+    paths:
+      include:
+      - packages/grafana-ui/**
     repo:
     - grafana/grafana
 - commands:
@@ -1901,6 +1912,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.9
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl upload-cdn --edition oss
   depends_on:
@@ -1944,6 +1959,10 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: store-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
   depends_on:
@@ -3870,6 +3889,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.9
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl upload-cdn --edition oss
   depends_on:
@@ -5092,6 +5115,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 2689da88c9d55f8949f4f9a26a850661fdec1ecf8f5da5c3713bde4ca481b8dd
+hmac: 8c812cebfce6e0c9aabaa4d85da9fda2f13eeedae60406a3a196c7488c4cdd6c
 
 ...
