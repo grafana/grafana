@@ -135,7 +135,7 @@
     "@types/logfmt": "^1.2.1",
     "@types/mousetrap": "1.6.9",
     "@types/node": "16.11.45",
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@2.1.2",
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@2.3.0",
     "@types/papaparse": "5.3.2",
     "@types/pluralize": "^0.0.29",
     "@types/prismjs": "1.26.0",
