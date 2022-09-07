@@ -317,17 +317,20 @@ type Cfg struct {
 	OAuthCookieMaxAge int
 
 	// JWT Auth
-	JWTAuthEnabled       bool
-	JWTAuthHeaderName    string
-	JWTAuthURLLogin      bool
-	JWTAuthEmailClaim    string
-	JWTAuthUsernameClaim string
-	JWTAuthExpectClaims  string
-	JWTAuthJWKSetURL     string
-	JWTAuthCacheTTL      time.Duration
-	JWTAuthKeyFile       string
-	JWTAuthJWKSetFile    string
-	JWTAuthAutoSignUp    bool
+	JWTAuthEnabled                 bool
+	JWTAuthHeaderName              string
+	JWTAuthURLLogin                bool
+	JWTAuthEmailClaim              string
+	JWTAuthUsernameClaim           string
+	JWTAuthExpectClaims            string
+	JWTAuthJWKSetURL               string
+	JWTAuthCacheTTL                time.Duration
+	JWTAuthKeyFile                 string
+	JWTAuthJWKSetFile              string
+	JWTAuthAutoSignUp              bool
+	JWTAuthRoleAttributePath       string
+	JWTAuthRoleAttributeStrict     bool
+	JWTAuthAllowAssignGrafanaAdmin bool
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -1322,6 +1325,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
 	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
 	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
+	cfg.JWTAuthRoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")
+	cfg.JWTAuthRoleAttributeStrict = authJWT.Key("role_attribute_strict").MustBool(false)
+	cfg.JWTAuthAllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
 
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
