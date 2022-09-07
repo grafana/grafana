@@ -293,6 +293,7 @@ type Cfg struct {
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
+	AdminEmail                   string
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -1254,6 +1255,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 	cfg.AdminUser = valueAsString(security, "admin_user", "")
 	cfg.AdminPassword = valueAsString(security, "admin_password", "")
+	cfg.AdminEmail = valueAsString(security, "admin_email", fmt.Sprintf("%s@localhost", cfg.AdminUser))
 
 	return nil
 }
