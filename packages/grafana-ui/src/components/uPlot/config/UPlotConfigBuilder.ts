@@ -14,7 +14,7 @@ import {
 import { AxisPlacement } from '@grafana/schema';
 
 import { FacetedData, PlotConfig, PlotTooltipInterpolator } from '../types';
-import { getStackingBands, pluginLog, StackingGroup } from '../utils';
+import { DEFAULT_PLOT_CONFIG, getStackingBands, pluginLog, StackingGroup } from '../utils';
 
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
@@ -191,6 +191,7 @@ export class UPlotConfigBuilder {
 
   getConfig() {
     const config: PlotConfig = {
+      ...DEFAULT_PLOT_CONFIG,
       mode: this.mode,
       series: [
         this.mode === 2
@@ -238,7 +239,10 @@ export class UPlotConfigBuilder {
     );
 
     config.tzDate = this.tzDate;
-    config.padding = this.padding;
+
+    if (Array.isArray(this.padding)) {
+      config.padding = this.padding;
+    }
 
     if (this.stackingGroups.length) {
       this.stackingGroups.forEach((group) => {

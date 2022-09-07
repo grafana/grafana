@@ -96,7 +96,7 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 	logger.Debug("Shutting down secrets plugin now that migration is complete")
 	// if `use_plugin` wasn't set, stop the plugin after migration
 	if !s.cfg.SectionWithEnvOverrides("secrets").Key("use_plugin").MustBool(false) {
-		err := s.manager.SecretsManager().Stop(ctx)
+		err := s.manager.SecretsManager(ctx).Stop(ctx)
 		if err != nil {
 			// Log a warning but don't throw an error
 			logger.Error("Error stopping secrets plugin after migration", "error", err.Error())

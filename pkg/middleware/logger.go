@@ -20,9 +20,11 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -31,6 +33,9 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
+
+			// we have to init the context with the counter here to update the request
+			r = r.WithContext(log.InitCounter(r.Context()))
 
 			rw := web.Rw(w, r)
 			next.ServeHTTP(rw, r)
@@ -59,6 +64,14 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 					"duration", duration,
 					"size", rw.Size(),
 					"referer", SanitizeURL(ctx, r.Referer()),
+				}
+
+				if cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
+					logParams = append(logParams, "db_call_count", log.TotalDBCallCount(ctx.Req.Context()))
+				}
+
+				if handler, exist := routeOperationName(ctx.Req); exist {
+					logParams = append(logParams, "handler", handler)
 				}
 
 				traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
