@@ -132,6 +132,11 @@ describe('AnnoListPanel', () => {
       expect(screen.getByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
     });
 
+    it("renders annotation item's html content", async () => {
+      await setupTestContext({ results: [{ ...defaultResult, text: '<a href="">test link </a> ' }] });
+      expect(screen.getByRole('link')).toBeInTheDocument();
+    });
+
     describe('and login property is missing in annotation', () => {
       it('then it renders the annotations correctly', async () => {
         await setupTestContext({ results: [{ ...defaultResult, login: undefined }] });

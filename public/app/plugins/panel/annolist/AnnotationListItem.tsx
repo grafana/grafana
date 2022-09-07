@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { FC, MouseEvent } from 'react';
 
-import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
+import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps, textUtil } from '@grafana/data';
 import { Card, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelOptions } from './models.gen';
@@ -24,7 +24,7 @@ export const AnnotationListItem: FC<Props> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const { showUser, showTags, showTime } = options;
-  const { text, login, email, avatarUrl, tags, time, timeEnd } = annotation;
+  const { text = '', login, email, avatarUrl, tags, time, timeEnd } = annotation;
   const onItemClick = () => {
     onClick(annotation);
   };
@@ -38,7 +38,13 @@ export const AnnotationListItem: FC<Props> = ({
   return (
     <Card className={styles.card} onClick={onItemClick}>
       <Card.Heading>
-        <span>{text}</span>
+        <span
+          className={styles.heading}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text) }}
+        />
       </Card.Heading>
       {showTimeStamp && (
         <Card.Description className={styles.timestamp}>
@@ -117,6 +123,16 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(1),
       margin: theme.spacing(0.5),
       width: 'inherit',
+    }),
+    heading: css({
+      a: {
+        zIndex: 1,
+        position: 'relative',
+        color: theme.colors.text.link,
+        '&:hover': {
+          textDecoration: 'underline',
+        },
+      },
     }),
     meta: css({
       margin: 0,
