@@ -191,12 +191,12 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 }
 
 func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	metricReq, err := pd.GetMetricRequest(ctx, accessToken, panelId, queryDto)
+	publicDashboard, dashboard, err := pd.GetPublicDashboard(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
 
-	_, dashboard, err := pd.GetPublicDashboard(ctx, accessToken)
+	metricReq, err := pd.GetMetricRequest(ctx, dashboard, publicDashboard, panelId, queryDto)
 	if err != nil {
 		return nil, err
 	}
@@ -209,14 +209,9 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	return pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
 }
 
-func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, accessToken string, panelId int64, queryDto PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, queryDto PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	if err := validation.ValidateQueryPublicDashboardRequest(queryDto); err != nil {
 		return dtos.MetricRequest{}, ErrPublicDashboardBadRequest
-	}
-
-	publicDashboard, dashboard, err := pd.GetPublicDashboard(ctx, accessToken)
-	if err != nil {
-		return dtos.MetricRequest{}, err
 	}
 
 	metricReqDTO, err := pd.buildMetricRequest(
