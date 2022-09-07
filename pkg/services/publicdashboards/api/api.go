@@ -68,7 +68,7 @@ func (api *Api) RegisterAPIEndpoints() {
 		routing.Wrap(api.GetPublicDashboardConfig))
 
 	api.RouteRegister.Post("/api/dashboards/uid/:uid/public-config",
-		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardPublicWrite, uidScope)),
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.SavePublicDashboardConfig))
 }
 
