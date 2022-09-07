@@ -243,7 +243,6 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
                 <Button onClick={doImportDashboard} variant="secondary">
                   Preview
                 </Button>
-                &nbsp;Requires <a href="/plugins/testdata">Testdata DB</a> to be installed
               </div>
             </>
           </Field>

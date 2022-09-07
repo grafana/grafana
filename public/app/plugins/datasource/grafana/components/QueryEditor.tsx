@@ -344,6 +344,10 @@ export class QueryEditor extends PureComponent<Props, State> {
     );
   }
 
+  renderSnapshotQuery() {
+    return <div>TODO... show table</div>;
+  }
+
   onSearchChange = (search: SearchQuery) => {
     const { query, onChange, onRunQuery } = this.props;
 
@@ -362,6 +366,18 @@ export class QueryEditor extends PureComponent<Props, State> {
 
     const { queryType } = query;
 
+    // Only show "snapshot" when it already exists
+    let queryTypes = this.queryTypes;
+    if (queryType === GrafanaQueryType.Snapshot) {
+      queryTypes = [
+        ...this.queryTypes,
+        {
+          label: 'Snapshot',
+          value: queryType,
+        },
+      ];
+    }
+
     return (
       <>
         {queryType === GrafanaQueryType.Search && (
@@ -373,14 +389,15 @@ export class QueryEditor extends PureComponent<Props, State> {
         <InlineFieldRow>
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
-              options={this.queryTypes}
-              value={this.queryTypes.find((v) => v.value === queryType) || this.queryTypes[0]}
+              options={queryTypes}
+              value={queryTypes.find((v) => v.value === queryType) || queryTypes[0]}
               onChange={this.onQueryTypeChange}
             />
           </InlineField>
         </InlineFieldRow>
         {queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
         {queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
+        {queryType === GrafanaQueryType.Snapshot && this.renderSnapshotQuery()}
         {queryType === GrafanaQueryType.Search && (
           <SearchEditor value={query.search ?? {}} onChange={this.onSearchChange} />
         )}
