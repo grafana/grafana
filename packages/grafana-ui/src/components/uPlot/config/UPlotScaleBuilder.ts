@@ -107,13 +107,16 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
           dataMax = max;
         }
 
-        // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
-        minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
+        if (scale.distr === 4) {
+          // TODO: switch to `, true)` after updating uPlot to 1.6.23+
+          // see https://github.com/leeoniya/uPlot/issues/749
+          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, scale.log ?? 10, false);
+        } else {
+          // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
+          minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
+        }
       } else if (scale.distr === 3) {
         minMax = uPlot.rangeLog(dataMin!, dataMax!, scale.log ?? 10, true);
-      } else if (scale.distr === 4) {
-        // TODO: fix fullMags: true (https://github.com/leeoniya/uPlot/issues/749)
-        minMax = uPlot.rangeAsinh(dataMin!, dataMax!, scale.log ?? 10, false);
       }
 
       if (decimals === 0) {
