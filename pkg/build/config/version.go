@@ -16,6 +16,7 @@ type Metadata struct {
 	GrafanaVersion string      `json:"version,omitempty"`
 	ReleaseMode    ReleaseMode `json:"releaseMode,omitempty"`
 	GrabplVersion  string      `json:"grabplVersion,omitempty"`
+	CurrentCommit  string      `json:"currentCommit,omitempty"`
 }
 
 type ReleaseMode struct {
@@ -99,15 +100,6 @@ func GetVersion(mode VersionMode) (*Version, error) {
 	return nil, fmt.Errorf("mode '%s' not found in version list", mode)
 }
 
-func shortenBuildID(buildID string) string {
-	buildID = strings.ReplaceAll(buildID, "-", "")
-	if len(buildID) < 9 {
-		return buildID
-	}
-
-	return buildID[0:8]
-}
-
 // GetGrafanaVersion gets the Grafana version from the package.json
 func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 	pkgJSONPath := filepath.Join(grafanaDir, "package.json")
@@ -140,6 +132,7 @@ func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 
 func CheckDroneTargetBranch() (VersionMode, error) {
 	reRlsBranch := regexp.MustCompile(`^v\d+\.\d+\.x$`)
+	rePRCheckBranch := regexp.MustCompile(`^pr-check-\d+`)
 	target := os.Getenv("DRONE_TARGET_BRANCH")
 	if target == "" {
 		return "", fmt.Errorf("failed to get DRONE_TARGET_BRANCH environmental variable")
@@ -149,7 +142,11 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 	if reRlsBranch.MatchString(target) {
 		return ReleaseBranchMode, nil
 	}
-	return "", fmt.Errorf("unrecognized target branch: %s", target)
+	if rePRCheckBranch.MatchString(target) {
+		return PullRequestMode, nil
+	}
+	fmt.Printf("unrecognized target branch: %s, defaulting to %s", target, PullRequestMode)
+	return PullRequestMode, nil
 }
 
 func CheckSemverSuffix() (ReleaseMode, error) {
@@ -169,4 +166,21 @@ func CheckSemverSuffix() (ReleaseMode, error) {
 		fmt.Printf("DRONE_SEMVER_PRERELEASE is custom string, release event with %s suffix\n", tagSuffix)
 		return ReleaseMode{Mode: TagMode}, nil
 	}
+}
+
+func GetDroneCommit() (string, error) {
+	commit := strings.TrimSpace(os.Getenv("DRONE_COMMIT"))
+	if commit == "" {
+		return "", fmt.Errorf("the environment variable DRONE_COMMIT is missing")
+	}
+	return commit, nil
+}
+
+func shortenBuildID(buildID string) string {
+	buildID = strings.ReplaceAll(buildID, "-", "")
+	if len(buildID) < 9 {
+		return buildID
+	}
+
+	return buildID[0:8]
 }

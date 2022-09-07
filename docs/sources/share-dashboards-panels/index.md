@@ -42,7 +42,7 @@ You must have an authorized viewer permission to see an image rendered by a dire
 
 The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
-\*> Note:\*\* As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
+> **Note:** As of Grafana 8.0, anonymous access permission is not available in Grafana Cloud.
 
 When you share a panel or dashboard as a snapshot, a snapshot (which is a panel or dashboard at the moment you take the snapshot) is publicly available on the web. Anyone with a link to it can access it. Because snapshots do not require any authorization to view, Grafana removes information related to the account it came from, as well as any sensitive data from the snapshot.
 
@@ -87,7 +87,9 @@ If you created a snapshot by mistake, click **Delete snapshot** to remove the sn
 
 ### Dashboard export
 
-Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/export-import/" >}}).
+Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/manage-dashboards/#export-and-import-dashboards" >}}).
+
+Export and import dashboards
 
 ![Export](/static/img/docs/sharing/share-dashboard-export-7-3.png)
 

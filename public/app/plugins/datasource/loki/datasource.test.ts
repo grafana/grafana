@@ -24,6 +24,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 import { LokiDatasource } from './datasource';
 import { createMetadataRequest, createLokiDatasource } from './mocks';
 import { LokiOptions, LokiQuery, LokiQueryType } from './types';
+import { LokiVariableSupport } from './variables';
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
@@ -820,6 +821,14 @@ describe('applyTemplateVariables', () => {
     const spy = jest.spyOn(ds, 'addAdHocFilters');
     ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
     expect(spy).toHaveBeenCalledWith('{test}');
+  });
+});
+
+describe('Variable support', () => {
+  it('has Loki variable support', () => {
+    const ds = createLokiDatasource(templateSrvStub);
+
+    expect(ds.variables).toBeInstanceOf(LokiVariableSupport);
   });
 });
 
