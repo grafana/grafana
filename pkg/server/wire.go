@@ -119,6 +119,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/star/starhttp"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
@@ -320,7 +321,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
 	wire.Bind(new(star.StoreService), new(*starimpl.Service)),
-	wire.Bind(new(star.HTTPService), new(*starimpl.Service)),
+	starhttp.ProvideService,
+	wire.Bind(new(star.HTTPService), new(*starhttp.Service)),
 	playlistimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,

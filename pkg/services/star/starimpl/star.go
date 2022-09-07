@@ -10,8 +10,7 @@ import (
 )
 
 type Service struct {
-	store            store
-	dashboardService dashboards.DashboardService
+	store store
 }
 
 func ProvideService(db db.DB, cfg *setting.Cfg, dashboardService dashboards.DashboardService) *Service {
@@ -24,8 +23,7 @@ func ProvideService(db db.DB, cfg *setting.Cfg, dashboardService dashboards.Dash
 		}
 	}
 	return &Service{
-		store:            s,
-		dashboardService: dashboardService,
+		store: s,
 	}
 }
 

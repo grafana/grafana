@@ -254,7 +254,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
 		searchUsersService: searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		ldapGroups:         ldap.ProvideGroupsService(),
-		starHTTPService:    startest.NewStarServiceFake(),
+		starHTTPService:    startest.NewStarHTTPServiceFake(),
 	}
 
 	sc := setupScenarioContext(t, url)
@@ -343,7 +343,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		Features:        features,
 		License:         &licensing.OSSLicensingService{},
 		AccessControl:   accesscontrolmock.New().WithDisabled(),
-		starHTTPService: startest.NewStarServiceFake(),
+		starHTTPService: startest.NewStarHTTPServiceFake(),
 	}
 }
 
@@ -411,7 +411,7 @@ func setupHTTPServerWithCfgDb(
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userMock,
-		starHTTPService:   startest.NewStarServiceFake(),
+		starHTTPService:   startest.NewStarHTTPServiceFake(),
 	}
 
 	for _, o := range options {
@@ -482,7 +482,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 		AccessControl:      accesscontrolmock.New().WithDisabled(),
 		Features:           featuremgmt.WithFeatures(),
 		searchUsersService: &searchusers.OSSService{},
-		starHTTPService:    startest.NewStarServiceFake(),
+		starHTTPService:    startest.NewStarHTTPServiceFake(),
 	}
 
 	for _, opt := range opts {

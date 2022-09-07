@@ -22,7 +22,7 @@ import (
 func TestUserService(t *testing.T) {
 	userStore := newUserStoreFake()
 	orgService := orgtest.NewOrgServiceFake()
-	starService := startest.NewStarServiceFake()
+	starService := startest.NewStarStoreServiceFake()
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	preferenceService := preftest.NewPreferenceServiceFake()
 	teamMemberService := manager.NewTeamGuardianMock()

@@ -1,4 +1,4 @@
-package starimpl
+package starhttp
 
 import (
 	"net/http"
@@ -6,16 +6,29 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+type Service struct {
+	storeService     star.StoreService
+	dashboardService dashboards.DashboardService
+}
+
+func ProvideService(storeService star.StoreService, dashboardService dashboards.DashboardService) *Service {
+	return &Service{
+		storeService:     storeService,
+		dashboardService: dashboardService,
+	}
+}
 
 func (s *Service) GetStars(c *models.ReqContext) response.Response {
 	query := star.GetUserStarsQuery{
 		UserID: c.SignedInUser.UserID,
 	}
 
-	iuserstars, err := s.GetByUser(c.Req.Context(), &query)
+	iuserstars, err := s.storeService.GetByUser(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(500, "Failed to get user stars", err)
 	}
@@ -59,7 +72,7 @@ func (s *Service) StarDashboard(c *models.ReqContext) response.Response {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := s.Add(c.Req.Context(), &cmd); err != nil {
+	if err := s.storeService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to star dashboard", err)
 	}
 
@@ -89,7 +102,7 @@ func (s *Service) UnstarDashboard(c *models.ReqContext) response.Response {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := s.Delete(c.Req.Context(), &cmd); err != nil {
+	if err := s.storeService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to unstar dashboard", err)
 	}
 
