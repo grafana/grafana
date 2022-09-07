@@ -79,10 +79,10 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with bearer in authorization header", func(t *testing.T, sc *scenarioContext) {
 		myUsername := "vladimir"
-		jwtToken := "some.jwt.token"
+		myToken := "some.jwt.token"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
-			verifiedToken = jwtToken
+			verifiedToken = myToken
 			return models.JWTClaims{
 				"sub":          myUsername,
 				"foo-username": myUsername,
@@ -90,8 +90,8 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		}
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id, OrgID: orgID, Login: myUsername}
 
-		sc.fakeReq("GET", "/").withJWTAuthHeader("Bearer " + jwtToken).exec()
-		assert.Equal(t, verifiedToken, jwtToken)
+		sc.fakeReq("GET", "/").withJWTAuthHeader("Bearer " + myToken).exec()
+		assert.Equal(t, verifiedToken, myToken)
 		assert.Equal(t, 200, sc.resp.Code)
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgID)
