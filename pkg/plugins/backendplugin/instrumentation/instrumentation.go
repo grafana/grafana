@@ -50,7 +50,7 @@ func instrumentPluginRequest(ctx context.Context, cfg *setting.Cfg, pluginCtx *b
 		logParams := []interface{}{
 			"status", status,
 			"duration", elapsed,
-			"plugin_id", pluginCtx.PluginID,
+			"pluginId", pluginCtx.PluginID,
 			"endpoint", endpoint,
 		}
 
@@ -60,8 +60,8 @@ func instrumentPluginRequest(ctx context.Context, cfg *setting.Cfg, pluginCtx *b
 		}
 
 		if pluginCtx.DataSourceInstanceSettings != nil {
-			logParams = append(logParams, "ds_name", pluginCtx.DataSourceInstanceSettings.Name)
-			logParams = append(logParams, "ds_uid", pluginCtx.DataSourceInstanceSettings.UID)
+			logParams = append(logParams, "dsName", pluginCtx.DataSourceInstanceSettings.Name)
+			logParams = append(logParams, "dsUID", pluginCtx.DataSourceInstanceSettings.UID)
 		}
 
 		logger.Info("Plugin Request Completed", logParams...)
