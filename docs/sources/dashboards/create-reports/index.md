@@ -39,7 +39,7 @@ When [RBAC]({{< relref "../../administration/roles-and-permissions/access-contro
 
 ## Create or update a report
 
-Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}).
+Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}).
 
 1. Click on the Reports icon in the side navigation menu.
 
