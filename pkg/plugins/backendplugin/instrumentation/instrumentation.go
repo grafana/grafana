@@ -62,7 +62,6 @@ func instrumentPluginRequest(ctx context.Context, cfg *setting.Cfg, pluginCtx *b
 		if pluginCtx.DataSourceInstanceSettings != nil {
 			logParams = append(logParams, "ds_name", pluginCtx.DataSourceInstanceSettings.Name)
 			logParams = append(logParams, "ds_uid", pluginCtx.DataSourceInstanceSettings.UID)
-			logParams = append(logParams, "ds_type", pluginCtx.DataSourceInstanceSettings.Type)
 		}
 
 		logger.Info("Plugin Request Completed", logParams...)
