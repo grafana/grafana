@@ -25,18 +25,20 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
   const [controlledVisible, setControlledVisible] = React.useState(show);
 
   useEffect(() => {
-    const handleKeyDown = (enterKey: KeyboardEvent) => {
-      if (enterKey.key === 'Escape') {
-        setControlledVisible(false);
-      } else {
-        setControlledVisible(show);
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [show]);
+    if (controlledVisible !== false) {
+      const handleKeyDown = (enterKey: KeyboardEvent) => {
+        if (enterKey.key === 'Escape') {
+          setControlledVisible(false);
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    } else {
+      return;
+    }
+  }, [controlledVisible]);
 
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
     visible: controlledVisible,
@@ -46,6 +48,7 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
     delayShow: 150,
     offset: [0, 8],
     trigger: ['hover', 'focus'],
+    onVisibleChange: setControlledVisible,
   });
 
   const styles = useStyles2(getStyles);
