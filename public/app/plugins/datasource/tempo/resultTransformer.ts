@@ -659,7 +659,7 @@ export function createTableFrameFromTraceQlQuery(
         type: FieldType.string,
         config: {
           unit: 'string',
-          displayNameFromDS: 'Span ID',
+          displayNameFromDS: 'Span',
           links: [
             {
               title: 'Span: ${__value.raw}',
