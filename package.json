@@ -291,7 +291,7 @@
     "@visx/gradient": "2.10.0",
     "@visx/group": "2.10.0",
     "@visx/scale": "2.2.2",
-    "@visx/shape": "2.11.1",
+    "@visx/shape": "2.12.2",
     "@visx/tooltip": "2.10.0",
     "@welldone-software/why-did-you-render": "7.0.1",
     "angular": "1.8.3",
