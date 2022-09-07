@@ -11,13 +11,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/e2e/storage"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHTTPLoggerMiddleware(t *testing.T) {
 	t.Run("Should return middleware name", func(t *testing.T) {
-		mw := HTTPLoggerMiddleware(setting.PluginSettings{})
+		mw := HTTPLoggerMiddleware(config.PluginSettings{})
 		middlewareName, ok := mw.(httpclient.MiddlewareName)
 		require.True(t, ok)
 		require.Equal(t, HTTPLoggerMiddlewareName, middlewareName.MiddlewareName())
@@ -27,7 +27,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 		tempPath := path.Join(os.TempDir(), fmt.Sprintf("http_logger_test_%d.har", time.Now().UnixMilli()))
 		ctx := &testContext{}
 		finalRoundTripper := ctx.createRoundTripper("finalrt")
-		mw := HTTPLoggerMiddleware(setting.PluginSettings{"example-datasource": {"har_log_enabled": "false", "har_log_path": tempPath}})
+		mw := HTTPLoggerMiddleware(config.PluginSettings{"example-datasource": {"har_log_enabled": "false", "har_log_path": tempPath}})
 		rt := mw.CreateMiddleware(httpclient.Options{Labels: map[string]string{"datasource_type": "example-datasource"}}, finalRoundTripper)
 		require.NotNil(t, rt)
 
@@ -52,7 +52,7 @@ func TestHTTPLoggerMiddleware(t *testing.T) {
 		}()
 		ctx := &testContext{}
 		finalRoundTripper := ctx.createRoundTripper("finalrt")
-		mw := HTTPLoggerMiddleware(setting.PluginSettings{"example-datasource": {"har_log_enabled": "true", "har_log_path": f.Name()}})
+		mw := HTTPLoggerMiddleware(config.PluginSettings{"example-datasource": {"har_log_enabled": "true", "har_log_path": f.Name()}})
 		rt := mw.CreateMiddleware(httpclient.Options{Labels: map[string]string{"datasource_type": "example-datasource"}}, finalRoundTripper)
 		require.NotNil(t, rt)
 

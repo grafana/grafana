@@ -260,10 +260,10 @@ type Cfg struct {
 	CSPTemplate           string
 	AngularSupportEnabled bool
 
-	TempDataLifetime                 time.Duration
-	PluginsEnableAlpha               bool
-	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
+	TempDataLifetime         time.Duration
+	PluginsEnableAlpha       bool
+	PluginsAppsSkipVerifyTLS bool
+	//PluginSettings                   PluginSettings
 	PluginsAllowUnsigned             []string
 	PluginCatalogURL                 string
 	PluginCatalogHiddenPlugins       []string
