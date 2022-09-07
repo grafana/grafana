@@ -286,7 +286,7 @@
     "@sentry/utils": "6.19.7",
     "@types/rc-tree": "^3.0.0",
     "@types/react-resizable": "3.0.2",
-    "@types/webpack-env": "^1.17.0",
+    "@types/webpack-env": "1.18.0",
     "@visx/event": "2.6.0",
     "@visx/gradient": "2.10.0",
     "@visx/group": "2.10.0",
