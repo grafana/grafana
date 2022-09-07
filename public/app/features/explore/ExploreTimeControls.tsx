@@ -46,11 +46,10 @@ export class ExploreTimeControls extends Component<Props> {
       to: adjustedTo,
     });
 
-    if (typeof adjustedFrom === 'string' && adjustedFrom.startsWith('now-')) {
-      reportInteraction('grafana_explore_time_picker_time_range', {
-        selectedTimeRange: adjustedFrom,
-      });
-    }
+    reportInteraction('grafana_explore_time_picker_time_range', {
+      timeRangeFrom: adjustedFrom,
+      timeRangeTo: adjustedTo,
+    });
   };
 
   onZoom = () => {
