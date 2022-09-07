@@ -113,6 +113,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
@@ -309,6 +310,8 @@ var wireSet = wire.NewSet(
 	ossaccesscontrol.ProvideDashboardPermissions,
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
+	wire.Bind(new(star.StoreService), new(*starimpl.Service)),
+	wire.Bind(new(star.HTTPService), new(*starimpl.Service)),
 	playlistimpl.ProvideService,
 	dashverimpl.ProvideService,
 	publicdashboardsService.ProvideService,

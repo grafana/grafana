@@ -177,7 +177,8 @@ type HTTPServer struct {
 	dashboardPermissionsService  accesscontrol.DashboardPermissionsService
 	dashboardVersionService      dashver.Service
 	PublicDashboardsApi          *publicdashboardsApi.Api
-	starService                  star.Service
+	starStoreService             star.StoreService
+	starHTTPService              star.HTTPService
 	Coremodels                   *registry.Base
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
@@ -222,7 +223,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
+	starStoreService star.StoreService, starHTTPService star.HTTPService, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator *spm.SecretMigrationServiceImpl, secretsStore secretsKV.SecretsKVStore,
@@ -311,7 +312,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		folderPermissionsService:     folderPermissionsService,
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
-		starService:                  starService,
+		starStoreService:             starStoreService,
+		starHTTPService:              starHTTPService,
 		Coremodels:                   coremodels,
 		playlistService:              playlistService,
 		apiKeyService:                apiKeyService,

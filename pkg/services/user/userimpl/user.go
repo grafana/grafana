@@ -26,7 +26,7 @@ import (
 type Service struct {
 	store              store
 	orgService         org.Service
-	starService        star.Service
+	starService        star.StoreService
 	dashboardService   dashboards.DashboardService
 	preferenceService  pref.Service
 	teamMemberService  teamguardian.TeamGuardian
@@ -42,7 +42,7 @@ type Service struct {
 func ProvideService(
 	db db.DB,
 	orgService org.Service,
-	starService star.Service,
+	starService star.StoreService,
 	dashboardService dashboards.DashboardService,
 	preferenceService pref.Service,
 	teamMemberService teamguardian.TeamGuardian,
