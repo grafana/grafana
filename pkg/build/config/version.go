@@ -100,15 +100,6 @@ func GetVersion(mode VersionMode) (*Version, error) {
 	return nil, fmt.Errorf("mode '%s' not found in version list", mode)
 }
 
-func shortenBuildID(buildID string) string {
-	buildID = strings.ReplaceAll(buildID, "-", "")
-	if len(buildID) < 9 {
-		return buildID
-	}
-
-	return buildID[0:8]
-}
-
 // GetGrafanaVersion gets the Grafana version from the package.json
 func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 	pkgJSONPath := filepath.Join(grafanaDir, "package.json")
@@ -183,4 +174,13 @@ func GetDroneCommit() (string, error) {
 		return "", fmt.Errorf("the environment variable DRONE_COMMIT is missing")
 	}
 	return commit, nil
+}
+
+func shortenBuildID(buildID string) string {
+	buildID = strings.ReplaceAll(buildID, "-", "")
+	if len(buildID) < 9 {
+		return buildID
+	}
+
+	return buildID[0:8]
 }

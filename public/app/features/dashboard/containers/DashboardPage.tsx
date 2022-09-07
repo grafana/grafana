@@ -8,6 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
+import { config } from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -425,7 +426,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
       pageNav.parentItem = pageNav.parentItem;
     }
   } else {
-    sectionNav = getNavModel(props.navIndex, 'dashboards');
+    sectionNav = getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards');
   }
 
   if (state.pageNav === pageNav && state.sectionNav === sectionNav) {

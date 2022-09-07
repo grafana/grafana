@@ -5,6 +5,7 @@ aliases:
   - /docs/grafana/latest/administration/view-server/view-server-settings/
   - /docs/grafana/latest/admin/view-server-stats/
   - /docs/grafana/latest/administration/view-server/view-server-stats/
+  - /docs/grafana/latest/administration/stats-and-license/
 description: How to view server settings in the Grafana UI
 keywords:
   - grafana

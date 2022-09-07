@@ -6,6 +6,7 @@ aliases:
   - /docs/grafana/latest/administration/preferences/change-grafana-timezone/
   - /docs/grafana/latest/administration/change-home-dashboard/
   - /docs/grafana/latest/administration/preferences/change-home-dashboard/
+  - /docs/grafana/latest/administration/organization-preferences/
 title: Organization preferences
 weight: 500
 ---
