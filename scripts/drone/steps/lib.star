@@ -11,11 +11,9 @@ wix_image = 'grafana/ci-wix:0.1.1'
 
 disable_tests = False
 trigger_oss = {
-    'when': {
-        'repo': [
-            'grafana/grafana',
-        ]
-    }
+    'repo': [
+        'grafana/grafana',
+    ]
 }
 
 
@@ -249,6 +247,7 @@ def build_storybook_step(edition, ver_mode):
             'yarn storybook:build',
             './bin/grabpl verify-storybook',
         ],
+        ## 'when': trigger_storybook,
     }
 
 
@@ -278,7 +277,7 @@ def store_storybook_step(edition, ver_mode, trigger=None):
         'commands': commands,
     }
     if trigger and ver_mode in ("release-branch", "main"):
-        step.update(trigger)
+        step = dict(step, when=trigger)
     return step
 
 
@@ -345,7 +344,7 @@ def upload_cdn_step(edition, ver_mode, trigger=None):
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
-        step.update(trigger)
+        step = dict(step, when=trigger)
     return step
 
 
@@ -596,7 +595,7 @@ def frontend_metrics_step(edition, trigger=None):
         ],
     }
     if trigger:
-        step.update(trigger)
+        step = dict(step, when=trigger)
     return step
 
 
@@ -824,7 +823,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger=None):
         }],
     }
     if trigger and ver_mode in ("release-branch", "main"):
-        step.update(trigger)
+        step = dict(step, when=trigger)
 
     return step
 
@@ -921,7 +920,7 @@ def release_canary_npm_packages_step(edition, trigger=None):
         ],
     }
     if trigger:
-        step.update(trigger)
+        step = dict(step, when=trigger)
     return step
 
 
@@ -954,7 +953,7 @@ def upload_packages_step(edition, ver_mode, trigger=None):
         'commands': ['./bin/grabpl upload-packages --edition {}'.format(edition),],
     }
     if trigger and ver_mode in ("release-branch", "main"):
-        step.update(trigger)
+        step = dict(step, when=trigger)
     return step
 
 
