@@ -37,11 +37,11 @@ var ngramIndexAnalyzer = &analysis.Analyzer{
 	},
 }
 
-//var ngramQueryAnalyzer = &analysis.Analyzer{
-//	CharFilters: []analysis.CharFilter{&punctuationCharFilter{}},
-//	Tokenizer:   tokenizer.NewWhitespaceTokenizer(),
-//	TokenFilters: []analysis.TokenFilter{
-//		token.NewCamelCaseFilter(),
-//		token.NewLowerCaseFilter(),
-//	},
-//}
+var ngramQueryAnalyzer = &analysis.Analyzer{
+	CharFilters: []analysis.CharFilter{&punctuationCharFilter{}},
+	Tokenizer:   tokenizer.NewWhitespaceTokenizer(),
+	TokenFilters: []analysis.TokenFilter{
+		token.NewCamelCaseFilter(),
+		token.NewLowerCaseFilter(),
+	},
+}

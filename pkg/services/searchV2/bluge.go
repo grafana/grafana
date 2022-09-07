@@ -24,7 +24,6 @@ const (
 	documentFieldName        = "name"
 	documentFieldName_sort   = "name_sort"
 	documentFieldName_ngram  = "name_ngram"
-	documentFieldDescription = "description"
 	documentFieldLocation    = "location" // parent path
 	documentFieldPanelType   = "panel_type"
 	documentFieldTransformer = "transformer"
@@ -237,9 +236,6 @@ func newSearchDocument(uid string, name string, descr string, url string) *bluge
 			doc.AddField(bluge.NewKeywordField(documentFieldName_sort, sortStr).Sortable())
 		}
 	}
-	if descr != "" {
-		doc.AddField(bluge.NewTextField(documentFieldDescription, descr).SearchTermPositions())
-	}
 	if url != "" {
 		doc.AddField(bluge.NewKeywordField(documentFieldURL, url).StoreValue())
 	}
@@ -435,10 +431,18 @@ func doSearchQuery(
 			fullQuery.AddShould(bluge.NewMatchAllQuery())
 		}
 	} else {
-		fullQuery.AddMust(
-			NewSubstringQuery(formatForNameSortField(q.Query)).
-				SetField(documentFieldName_sort),
-		)
+		bq := bluge.NewBooleanQuery()
+
+		bq.AddShould(NewSubstringQuery(formatForNameSortField(q.Query)).
+			SetField(documentFieldName_sort).
+			SetBoost(6))
+
+		bq.AddShould(bluge.NewMatchQuery(q.Query).
+			SetField(documentFieldName_ngram).
+			SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
+			SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
+
+		fullQuery.AddMust(bq)
 	}
 
 	limit := 50 // default view

@@ -3,13 +3,13 @@
 //  Frame[0] 
 //  Name: ordering frame
 //  Dimensions: 2 Fields by 1 Rows
-//  +------------------+--------------------+
-//  | Name: name       | Name: score        |
-//  | Labels:          | Labels:            |
-//  | Type: []string   | Type: []float64    |
-//  +------------------+--------------------+
-//  | Prometheus Stats | 2.1035219254309325 |
-//  +------------------+--------------------+
+//  +------------------+-------------------+
+//  | Name: name       | Name: score       |
+//  | Labels:          | Labels:           |
+//  | Type: []string   | Type: []float64   |
+//  +------------------+-------------------+
+//  | Prometheus Stats | 7.621131552585596 |
+//  +------------------+-------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -41,7 +41,7 @@
             "Prometheus Stats"
           ],
           [
-            2.1035219254309325
+            7.621131552585596
           ]
         ]
       }

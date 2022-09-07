@@ -1,21 +1,22 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
-//
+//  
 //  Frame[0] {
 //      "type": "search-results",
 //      "custom": {
-//          "count": 0
+//          "count": 1
 //      }
 //  }
 //  Name: Query results
-//  Dimensions: 8 Fields by 0 Rows
+//  Dimensions: 8 Fields by 1 Rows
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid            | Name: location |
 //  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
 //  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
+//  | dashboard      | 1              | heat-torkel    |                  | /pfix/d/1/     | null                     | []                      |                |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//
-//
+//  
+//  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
   "frames": [
@@ -25,7 +26,7 @@
         "meta": {
           "type": "search-results",
           "custom": {
-            "count": 0
+            "count": 1
           }
         },
         "fields": [
@@ -98,14 +99,30 @@
       },
       "data": {
         "values": [
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          []
+          [
+            "dashboard"
+          ],
+          [
+            "1"
+          ],
+          [
+            "heat-torkel"
+          ],
+          [
+            ""
+          ],
+          [
+            "/pfix/d/1/"
+          ],
+          [
+            null
+          ],
+          [
+            []
+          ],
+          [
+            ""
+          ]
         ]
       }
     }
