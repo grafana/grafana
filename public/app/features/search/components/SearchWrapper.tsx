@@ -15,16 +15,7 @@ export const SearchWrapper: FC = memo(() => {
 
   const closeSearch = () => {
     if (isOpen) {
-      const newParams = {
-        search: null,
-        folder: null,
-        ...defaultQueryParams,
-      };
-      // When closing the search modal, we don't want to remove the query
-      if (isTopnav) {
-        newParams.query = params.get('query');
-      }
-      updateUrlParams(newParams);
+      updateUrlParams({ search: null, folder: null, ...defaultQueryParams });
     }
   };
 

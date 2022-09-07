@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useDebounce } from 'react-use';
@@ -43,14 +43,12 @@ export function TopSearchBar() {
     () => {
       if (searchValue) {
         onOpenSearch();
+        setSearchValue('');
       }
     },
     300,
     [searchValue]
   );
-  useEffect(() => {
-    setSearchValue(queryParams.query ?? '');
-  }, [queryParams.query]);
 
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
@@ -71,6 +69,7 @@ export function TopSearchBar() {
       </div>
       <div className={styles.searchWrapper}>
         <FilterInput
+          onClick={onOpenSearch}
           placeholder="Search Grafana"
           value={searchValue}
           onChange={onSearchChange}

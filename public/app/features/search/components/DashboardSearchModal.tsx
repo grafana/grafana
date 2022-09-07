@@ -27,6 +27,7 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
   const animStyles = useStyles2((theme) => getAnimStyles(theme, ANIMATION_DURATION));
   const { query, onQueryChange } = useSearchQuery({});
   const ref = useRef<HTMLDivElement>(null);
+  const [animationComplete, setAnimationComplete] = useState(false);
 
   const { overlayProps, underlayProps } = useOverlay({ isOpen, onClose: onCloseSearch }, ref);
 
@@ -52,9 +53,15 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
       <CSSTransition appear in timeout={ANIMATION_DURATION} classNames={animStyles.underlay}>
         <div onClick={onCloseSearch} className={styles.underlay} {...underlayProps} />
       </CSSTransition>
-      <CSSTransition appear in timeout={ANIMATION_DURATION} classNames={animStyles.overlay}>
+      <CSSTransition
+        onEntered={() => setAnimationComplete(true)}
+        appear
+        in
+        timeout={ANIMATION_DURATION}
+        classNames={animStyles.overlay}
+      >
         <div ref={ref} className={styles.overlay} {...overlayProps} {...dialogProps}>
-          <FocusScope contain autoFocus>
+          <FocusScope contain autoFocus restoreFocus>
             <div className={styles.searchField}>
               <div>
                 <input
@@ -74,18 +81,20 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
                 <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
               </div>
             </div>
-            <div className={styles.search}>
-              <SearchView
-                onQueryTextChange={(newQueryText) => {
-                  setInputValue(newQueryText);
-                }}
-                showManage={false}
-                queryText={query.query}
-                includePanels={includePanels!}
-                setIncludePanels={setIncludePanels}
-                keyboardEvents={keyboardEvents}
-              />
-            </div>
+            {animationComplete && (
+              <div className={styles.search}>
+                <SearchView
+                  onQueryTextChange={(newQueryText) => {
+                    setInputValue(newQueryText);
+                  }}
+                  showManage={false}
+                  queryText={query.query}
+                  includePanels={includePanels!}
+                  setIncludePanels={setIncludePanels}
+                  keyboardEvents={keyboardEvents}
+                />
+              </div>
+            )}
           </FocusScope>
         </div>
       </CSSTransition>
@@ -100,32 +109,48 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   };
 
   const underlayTransition = {
-    ...commonTransition,
-    transitionProperty: 'opacity',
+    [theme.breakpoints.up('md')]: {
+      ...commonTransition,
+      transitionProperty: 'opacity',
+    },
   };
 
   const underlayClosed = {
-    opacity: 0,
+    [theme.breakpoints.up('md')]: {
+      opacity: 0,
+    },
   };
 
   const underlayOpen = {
-    opacity: 1,
+    [theme.breakpoints.up('md')]: {
+      opacity: 1,
+    },
   };
 
   const overlayTransition = {
-    ...commonTransition,
-    transitionProperty: 'height, width',
-    overflow: 'hidden',
+    [theme.breakpoints.up('md')]: {
+      ...commonTransition,
+      transitionProperty: 'height, width',
+      overflow: 'hidden',
+    },
   };
 
   const overlayClosed = {
-    height: '32px',
-    width: '50%',
+    height: '100%',
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      height: '32px',
+      width: '50%',
+    },
   };
 
   const overlayOpen = {
-    height: '90%',
-    width: '75%',
+    height: '100%',
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      height: '90%',
+      width: '75%',
+    },
   };
 
   return {
@@ -158,7 +183,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     overlay: css`
       background: ${theme.colors.background.canvas};
       border: 1px solid ${theme.components.panel.borderColor};
-      border-radius: ${theme.shape.borderRadius(4)};
       display: flex;
       flex-direction: column;
       max-width: 1400px;
@@ -169,6 +193,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.modal};
 
       ${theme.breakpoints.up('md')} {
+        border-radius: ${theme.shape.borderRadius(4)};
         box-shadow: ${theme.shadows.z3};
         left: 0;
         margin: ${theme.spacing(0.5, 'auto', 0)};
