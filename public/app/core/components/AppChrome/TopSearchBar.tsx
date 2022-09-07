@@ -1,14 +1,18 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, NavSection } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Dropdown, FilterInput, Icon, Tooltip, useStyles2, toIconName } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { StoreState } from 'app/types';
 
+import { useSearchQuery } from '../../../features/search/hooks/useSearchQuery';
+import { parseRouteParams } from '../../../features/search/utils';
 import { enrichConfigItems, enrichWithInteractionTracking } from '../NavBar/utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 
@@ -18,12 +22,36 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const location = useLocation();
+  const queryParams = parseRouteParams(locationService.getSearchObject());
   const navBarTree = useSelector((state: StoreState) => state.navBarTree);
   const navTree = cloneDeep(navBarTree);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
+
+  const { onQueryChange } = useSearchQuery({});
+  const [searchValue, setSearchValue] = useState<string>(queryParams.query ?? '');
+  const onOpenSearch = () => {
+    locationService.partial({ search: 'open' });
+  };
+  const onSearchChange = (newValue: string) => {
+    setSearchValue(newValue);
+    onQueryChange(newValue);
+  };
+  useDebounce(
+    () => {
+      if (searchValue) {
+        onOpenSearch();
+      }
+    },
+    300,
+    [searchValue]
+  );
+  useEffect(() => {
+    setSearchValue(queryParams.query ?? '');
+  }, [queryParams.query]);
+
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
@@ -42,7 +70,12 @@ export function TopSearchBar() {
         </a>
       </div>
       <div className={styles.searchWrapper}>
-        <FilterInput placeholder="Search grafana" value={''} onChange={() => {}} className={styles.searchInput} />
+        <FilterInput
+          placeholder="Search Grafana"
+          value={searchValue}
+          onChange={onSearchChange}
+          className={styles.searchInput}
+        />
       </div>
       <div className={styles.actions}>
         <Tooltip placement="bottom" content="Help menu (todo)">

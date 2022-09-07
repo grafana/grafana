@@ -1,22 +1,40 @@
 import React, { FC, memo } from 'react';
 
+import { config } from '@grafana/runtime';
 import { useUrlParams } from 'app/core/navigation/hooks';
 
 import { defaultQueryParams } from '../reducers/searchQueryReducer';
 
 import { DashboardSearch } from './DashboardSearch';
+import { DashboardSearchModal } from './DashboardSearchModal';
 
 export const SearchWrapper: FC = memo(() => {
   const [params, updateUrlParams] = useUrlParams();
   const isOpen = params.get('search') === 'open';
+  const isTopnav = config.featureToggles.topnav;
 
   const closeSearch = () => {
     if (isOpen) {
-      updateUrlParams({ search: null, folder: null, ...defaultQueryParams });
+      const newParams = {
+        search: null,
+        folder: null,
+        ...defaultQueryParams,
+      };
+      // When closing the search modal, we don't want to remove the query
+      if (isTopnav) {
+        newParams.query = params.get('query');
+      }
+      updateUrlParams(newParams);
     }
   };
 
-  return isOpen ? <DashboardSearch onCloseSearch={closeSearch} /> : null;
+  return isOpen ? (
+    isTopnav ? (
+      <DashboardSearchModal isOpen={isOpen} onCloseSearch={closeSearch} />
+    ) : (
+      <DashboardSearch onCloseSearch={closeSearch} />
+    )
+  ) : null;
 });
 
 SearchWrapper.displayName = 'SearchWrapper';
