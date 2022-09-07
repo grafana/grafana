@@ -114,14 +114,14 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)
 	r.Get("/live/cloud", reqGrafanaAdmin, hs.Index)
 
-	r.Get("/plugins", reqSignedIn, hs.Index)
-	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
-	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
-	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
+	pluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
+	r.Get("/plugins", authorize(plugins.ReqCanAdminPlugins(hs.Cfg), plugins.AdminAccessEvaluator(hs.Cfg)), hs.Index)
+	r.Get("/plugins/:id/", authorize(plugins.ReqCanAdminPlugins(hs.Cfg), ac.EvalPermission(plugins.ActionRead, pluginIDScope)), hs.Index)
+	r.Get("/plugins/:id/edit", authorize(plugins.ReqCanAdminPlugins(hs.Cfg), ac.EvalPermission(plugins.ActionRead, pluginIDScope)), hs.Index) // deprecated
+	r.Get("/plugins/:id/page/:page", authorize(plugins.ReqCanAdminPlugins(hs.Cfg), ac.EvalPermission(plugins.ActionRead, pluginIDScope)), hs.Index)
 	// App Root Page
-	appPluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":id"))
-	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
-	r.Get("/a/:id", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, appPluginIDScope)), hs.Index)
+	r.Get("/a/:id/*", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.Index)
+	r.Get("/a/:id", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
@@ -358,8 +358,8 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		pluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":pluginId"))
-		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
-		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID)) // RBAC check performed in handler for App Plugins
+		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList)) // RBAC check performed in handler
+		apiRoute.Get("/plugins/:pluginId/settings", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionRead, pluginIDScope)), routing.Wrap(hs.GetPluginSettingByID))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))
 		apiRoute.Get("/plugins/:pluginId/health", routing.Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", authorize(reqSignedIn, ac.EvalPermission(plugins.ActionAppAccess, pluginIDScope)), hs.CallResource)
@@ -370,8 +370,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.InstallPlugin))
-				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.UninstallPlugin))
+				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, plugins.InstallEvaluator(ac.Parameter(":pluginId"))), routing.Wrap(hs.InstallPlugin))
+				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, plugins.InstallEvaluator(ac.Parameter(":pluginId"))), routing.Wrap(hs.UninstallPlugin))
 			})
 		}
 
@@ -640,6 +640,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
 
 	// grafana.net proxy
+	r.Get("/api/gnet/plugins/", reqSignedIn, hs.ListGnetPlugins)
 	r.Any("/api/gnet/*", reqSignedIn, hs.ProxyGnetRequest)
 
 	// Gravatar service

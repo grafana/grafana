@@ -23,8 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -39,17 +37,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	// "1" => filter out non-core plugins
 	coreFilter := c.Query("core")
 
-	// FIXME: while we don't have permissions for listing plugins we need this complex check:
-	// When using access control, should be able to list non-core plugins:
-	//  * anyone that can create a data source
-	//  * anyone that can install a plugin
-	// Fallback to only letting admins list non-core plugins
-	reqOrgAdmin := ac.ReqHasRole(org.RoleAdmin)
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	canListNonCorePlugins := reqOrgAdmin(c) || hasAccess(reqOrgAdmin, ac.EvalAny(
-		ac.EvalPermission(datasources.ActionCreate),
-		ac.EvalPermission(plugins.ActionInstall),
-	))
 
 	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.OrgID)
 	if err != nil {
@@ -71,14 +59,10 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			continue
 		}
 
-		// FIXME: while we don't have permissions for listing plugins we need this complex check:
-		// When using access control, should be able to list non-core plugins:
-		//  * anyone that can create a data source
-		//  * anyone that can install a plugin
-		// Should be able to list this installed plugin:
-		//  * anyone that can edit its settings
-		if !pluginDef.IsCorePlugin() && !canListNonCorePlugins && !hasAccess(reqOrgAdmin,
-			ac.EvalPermission(plugins.ActionWrite, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
+		// Enforce RBAC on plugins
+		// FIXME: use a checker instead to leverage wildcard scopes
+		if !hasAccess(plugins.ReqCanReadPlugin(pluginDef),
+			ac.EvalPermission(plugins.ActionRead, plugins.ScopeProvider.GetResourceScope(pluginDef.ID))) {
 			continue
 		}
 
@@ -157,16 +141,6 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(http.StatusNotFound, "Plugin not found, no installed plugin with that id", nil)
-	}
-
-	// In a first iteration, we only have one permission for app plugins.
-	// We will need a different permission to allow users to configure the plugin without needing access to it.
-	if plugin.IsApp() {
-		hasAccess := ac.HasAccess(hs.AccessControl, c)
-		if !hasAccess(ac.ReqSignedIn,
-			ac.EvalPermission(plugins.ActionAppAccess, plugins.ScopeProvider.GetResourceScope(plugin.ID))) {
-			return response.Error(http.StatusForbidden, "Access Denied", nil)
-		}
 	}
 
 	dto := &dtos.PluginSetting{
