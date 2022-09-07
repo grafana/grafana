@@ -353,6 +353,49 @@ func TestBuildAnonymousUser(t *testing.T) {
 	})
 }
 
+func TestGetMetricRequest(t *testing.T) {
+	sqlStore := sqlstore.InitTestDB(t)
+	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
+	publicdashboardStore := database.ProvideStore(sqlStore)
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{})
+	publicDashboard := &PublicDashboard{
+		Uid:          "1",
+		DashboardUid: dashboard.Uid,
+		IsEnabled:    true,
+		AccessToken:  "abc123",
+	}
+	service := &PublicDashboardServiceImpl{
+		log:                log.New("test.logger"),
+		store:              publicdashboardStore,
+		intervalCalculator: intervalv2.NewCalculator(),
+	}
+
+	t.Run("will return an error when validation fails", func(t *testing.T) {
+		publicDashboardQueryDTO := PublicDashboardQueryDTO{
+			IntervalMs:    int64(-1),
+			MaxDataPoints: int64(-1),
+		}
+
+		_, err := service.GetMetricRequest(context.Background(), dashboard, publicDashboard, 1, publicDashboardQueryDTO)
+
+		require.Error(t, err)
+	})
+
+	t.Run("will not return an error when validation succeeds", func(t *testing.T) {
+		publicDashboardQueryDTO := PublicDashboardQueryDTO{
+			IntervalMs:    int64(1),
+			MaxDataPoints: int64(1),
+		}
+		from, to := internal.GetTimeRangeFromDashboard(t, dashboard.Data)
+
+		metricReq, err := service.GetMetricRequest(context.Background(), dashboard, publicDashboard, 1, publicDashboardQueryDTO)
+
+		require.NoError(t, err)
+		require.Equal(t, from, metricReq.From)
+		require.Equal(t, to, metricReq.To)
+	})
+}
+
 func TestBuildMetricRequest(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore := dashboardsDB.ProvideDashboardStore(sqlStore, featuremgmt.WithFeatures())
