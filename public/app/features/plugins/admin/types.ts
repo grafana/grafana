@@ -77,7 +77,7 @@ export interface CatalogPluginInfo {
   };
 }
 
-export type RemotePlugin = {
+export type RemotePlugin = WithAccessControlMetadata & {
   createdAt: string;
   description: string;
   downloads: number;

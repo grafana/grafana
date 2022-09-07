@@ -23,7 +23,9 @@ interface Props {
 export const InstallControls = ({ plugin, latestCompatibleVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
-  const hasPermission = contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin());
+  const hasPermission =
+    contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin()) &&
+    contextSrv.hasAccessInMetadata(AccessControlAction.PluginsRead, plugin, isGrafanaAdmin());
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const isCompatible = Boolean(latestCompatibleVersion);
   const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
