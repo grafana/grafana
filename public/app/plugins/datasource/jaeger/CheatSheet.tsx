@@ -31,7 +31,7 @@ export default function CheatSheet() {
             href="https://grafana.com/docs/grafana/latest/datasources/jaeger/#upload-json-trace-file"
             target="_blank"
             rel="noreferrer"
-            style={{ color: 'blue' }}
+            style={{ color: '#1F62E0' }}
           >
             here
           </a>{' '}
