@@ -404,7 +404,7 @@
   "resolutions": {
     "underscore": "1.13.4",
     "@types/slate": "0.47.9",
-    "@rushstack/node-core-library": "3.49.0",
+    "@rushstack/node-core-library": "3.51.1",
     "@rushstack/rig-package": "0.3.13",
     "@rushstack/ts-command-line": "4.12.1",
     "@storybook/react/webpack": "5.74.0",
