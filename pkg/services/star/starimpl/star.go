@@ -3,7 +3,6 @@ package starimpl
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,7 +12,7 @@ type Service struct {
 	store store
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, dashboardService dashboards.DashboardService) *Service {
+func ProvideService(db db.DB, cfg *setting.Cfg) *Service {
 	var s store = &sqlStore{
 		db: db,
 	}
