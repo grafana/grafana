@@ -30,7 +30,9 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().click({ force: true });
 
     // Save configuration
+    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
+    e2e().wait('@save');
 
     // e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().click();
 
@@ -114,7 +116,7 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().click({ force: true });
 
     // Save configuration
-    e2e().intercept('/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
+    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('save');
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().click();
     e2e().wait('@save');
 
