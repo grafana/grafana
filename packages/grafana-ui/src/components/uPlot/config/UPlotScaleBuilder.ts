@@ -1,6 +1,6 @@
 import uPlot, { Scale, Range } from 'uplot';
 
-import { isBooleanUnit } from '@grafana/data';
+import { DecimalCount, incrRoundDn, incrRoundUp, isBooleanUnit } from '@grafana/data';
 import { ScaleOrientation, ScaleDirection, ScaleDistribution } from '@grafana/schema';
 
 import { PlotConfigBuilder } from '../types';
@@ -18,6 +18,7 @@ export interface ScaleProps {
   direction: ScaleDirection;
   log?: number;
   centeredZero?: boolean;
+  decimals?: DecimalCount;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -38,6 +39,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       direction,
       orientation,
       centeredZero,
+      decimals,
     } = this.props;
     const distribution = !isTime
       ? {
@@ -74,8 +76,12 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     let hardMaxOnly = softMax == null && hardMax != null;
     let hasFixedRange = hardMinOnly && hardMaxOnly;
 
-    // uPlot range function
-    const rangeFn = (u: uPlot, dataMin: number | null, dataMax: number | null, scaleKey: string) => {
+    const rangeFn: uPlot.Range.Function = (
+      u: uPlot,
+      dataMin: number | null,
+      dataMax: number | null,
+      scaleKey: string
+    ) => {
       const scale = u.scales[scaleKey];
 
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
@@ -98,6 +104,11 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
       } else if (scale.distr === 3) {
         minMax = uPlot.rangeLog(dataMin!, dataMax!, scale.log ?? 10, true);
+      }
+
+      if (decimals === 0) {
+        minMax[0] = incrRoundDn(minMax[0]!, 1);
+        minMax[1] = incrRoundUp(minMax[1]!, 1);
       }
 
       // if all we got were hard limits, treat them as static min/max
