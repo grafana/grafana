@@ -111,7 +111,7 @@ func Test_maybeNewImage(t *testing.T) {
 	}
 }
 
-func TestIsItStale(t *testing.T) {
+func TestStateIsStale(t *testing.T) {
 	now := time.Now()
 	intervalSeconds := rand.Int63n(10) + 5
 
@@ -148,7 +148,7 @@ func TestIsItStale(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expectedResult, isItStale(now, tc.lastEvaluation, intervalSeconds))
+			require.Equal(t, tc.expectedResult, stateIsStale(now, tc.lastEvaluation, intervalSeconds))
 		})
 	}
 }
@@ -178,10 +178,10 @@ func TestClose(t *testing.T) {
 	st.Close(context.Background())
 
 	t.Run("should flush the state to store", func(t *testing.T) {
-		savedStates := make(map[string]ngmodels.SaveAlertInstanceCommand)
+		savedStates := make(map[string]ngmodels.AlertInstance)
 		for _, op := range instanceStore.RecordedOps {
 			switch q := op.(type) {
-			case ngmodels.SaveAlertInstanceCommand:
+			case ngmodels.AlertInstance:
 				cacheId, err := q.Labels.StringKey()
 				require.NoError(t, err)
 				savedStates[cacheId] = q
