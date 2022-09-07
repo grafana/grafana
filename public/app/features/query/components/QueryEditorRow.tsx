@@ -38,12 +38,6 @@ import { RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 
-export interface TrackActions {
-  duplicateQuery: string;
-  disableEnableQuery: string;
-  remove: string;
-}
-
 interface Props<TQuery extends DataQuery> {
   data: PanelData;
   query: TQuery;
@@ -63,7 +57,7 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
-  trackActions?: TrackActions;
+  trackingContext?: string;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -280,31 +274,31 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onRemoveQuery = () => {
-    const { onRemoveQuery, query, trackActions } = this.props;
+    const { onRemoveQuery, query, trackingContext } = this.props;
     onRemoveQuery(query);
 
-    if (trackActions) {
-      reportInteraction(trackActions.remove);
+    if (trackingContext) {
+      reportInteraction('grafana_queryRow_remove_query', { context: trackingContext });
     }
   };
 
   onCopyQuery = () => {
-    const { query, onAddQuery, trackActions } = this.props;
+    const { query, onAddQuery, trackingContext } = this.props;
     const copy = cloneDeep(query);
     onAddQuery(copy);
 
-    if (trackActions) {
-      reportInteraction(trackActions.duplicateQuery);
+    if (trackingContext) {
+      reportInteraction('grafana_queryRow_duplicate_query', { context: trackingContext });
     }
   };
 
   onDisableQuery = () => {
-    const { query, onChange, onRunQuery, trackActions } = this.props;
+    const { query, onChange, onRunQuery, trackingContext } = this.props;
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
 
-    if (trackActions) {
-      reportInteraction(trackActions.disableEnableQuery);
+    if (trackingContext) {
+      reportInteraction('grafana_queryRow_disable_enable_query', { context: trackingContext });
     }
   };
 

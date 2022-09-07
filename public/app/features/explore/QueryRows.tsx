@@ -44,12 +44,6 @@ export const QueryRows = ({ exploreId }: Props) => {
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
 
-  const trackActions = {
-    duplicateQuery: 'grafana_explore_duplicate_query',
-    disableEnableQuery: 'grafana_explore_disable_enable_query',
-    remove: 'grafana_explore_remove_query_row',
-  };
-
   const onRunQueries = useCallback(() => {
     dispatch(runQueries(exploreId));
   }, [dispatch, exploreId]);
@@ -91,7 +85,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
-      trackActions={trackActions}
+      trackingContext="explore"
     />
   );
 };
