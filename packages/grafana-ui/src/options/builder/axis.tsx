@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
 
-import { graphFieldOptions, Select, HorizontalGroup, RadioButtonGroup, Input, Field } from '../../index';
+import { graphFieldOptions, Select, RadioButtonGroup, Input, Field } from '../../index';
 
 /**
  * @alpha
