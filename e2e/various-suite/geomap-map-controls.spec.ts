@@ -17,7 +17,6 @@ e2e.scenario({
     cy.get('.ol-zoom').should('exist');
 
     // Mouse wheel zoom
-    e2e.components.OptionsGroup.group('Map controls').should('exist');
     e2e.components.PanelEditor.toggleMouseWheelZoom().check({ force: true });
     cy.get('.panel-content').trigger('wheel', {
       deltaY: -66.666666,
@@ -28,22 +27,18 @@ e2e.scenario({
     });
 
     // Show attribution
-    e2e.components.OptionsGroup.group('Map controls').should('exist');
     e2e.components.PanelEditor.toggleShowAttribution().check({ force: true });
     cy.get('.ol-attribution').should('exist');
 
     // Show scale
-    e2e.components.OptionsGroup.group('Map controls').should('exist');
     e2e.components.PanelEditor.toggleShowScale().check({ force: true });
     cy.get('.ol-scale-line').should('exist');
 
     // Show measure tool
-    e2e.components.OptionsGroup.group('Map controls').should('exist');
     e2e.components.PanelEditor.toggleShowMeasure().check({ force: true });
     e2e.components.PanelEditor.measureButton().should('exist');
 
     // Show debug
-    e2e.components.OptionsGroup.group('Map controls').should('exist');
     e2e.components.PanelEditor.toggleShowDebug().check({ force: true });
     e2e.components.DebugOverlay.wrapper().should('exist');
   },
