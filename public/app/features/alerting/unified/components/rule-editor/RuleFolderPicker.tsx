@@ -10,12 +10,10 @@ export interface Folder {
 
 export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
-  folderLabel: string;
-  setFolderLabel: (label: string) => void;
 }
 
 export function RuleFolderPicker(props: RuleFolderPickerProps) {
-  const { value, folderLabel, setFolderLabel } = props;
+  const { value } = props;
   return (
     <FolderPicker
       showRoot={false}
@@ -25,8 +23,6 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
       accessControlMetadata
       {...props}
       permissionLevel={PermissionLevelString.View}
-      folderLabel={folderLabel}
-      setFolderLabel={setFolderLabel}
     />
   );
 }

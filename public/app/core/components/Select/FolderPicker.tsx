@@ -1,14 +1,14 @@
+import { css } from '@emotion/css';
 import { t } from '@lingui/macro';
 import { debounce } from 'lodash';
 import React, { useState, useEffect, useMemo, useCallback, FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
-import { AppEvents, SelectableValue } from '@grafana/data';
+import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ActionMeta, AsyncSelect, Input } from '@grafana/ui';
+import { useStyles2, ActionMeta, AsyncSelect, Input } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
-import { initialFolderLabel } from 'app/features/alerting/unified/components/rule-editor/DetailsStep';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, PermissionLevelString } from 'app/types';
@@ -29,8 +29,6 @@ export interface Props {
   showRoot?: boolean;
   onClear?: () => void;
   accessControlMetadata?: boolean;
-  folderLabel?: string;
-  setFolderLabel?: (label: string) => void;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -61,11 +59,11 @@ export function FolderPicker(props: Props) {
     showRoot,
     skipInitialLoad,
     accessControlMetadata,
-    setFolderLabel,
   } = props;
   const isClearable = typeof onClear === 'function';
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCustom, setIsCustom] = useState(false);
+  const styles = useStyles2(getStyles);
 
   const getOptions = useCallback(
     async (query: string) => {
@@ -168,9 +166,8 @@ export function FolderPicker(props: Props) {
   useEffect(() => {
     if (folder && folder.id === VALUE_FOR_ADD) {
       setIsCustom(true);
-      setFolderLabel?.('Press enter to create and confirm the new folder.');
     }
-  }, [folder, setFolderLabel]);
+  }, [folder]);
 
   const onFolderChange = useCallback(
     (newFolder: SelectableValue<number>, actionMeta: ActionMeta) => {
@@ -220,17 +217,15 @@ export function FolderPicker(props: Props) {
         case 'Enter': {
           createNewFolder(folder?.title!);
           setIsCustom(false);
-          setFolderLabel?.(initialFolderLabel);
           break;
         }
         case 'Escape': {
           setFolder({ value: 0, label: rootName });
           setIsCustom(false);
-          setFolderLabel?.(initialFolderLabel);
         }
       }
     },
-    [createNewFolder, folder, rootName, setFolderLabel]
+    [createNewFolder, folder, rootName]
   );
 
   const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {
@@ -241,15 +236,18 @@ export function FolderPicker(props: Props) {
 
   if (isCustom) {
     return (
-      <Input
-        aria-label={'aria-label'}
-        width={30}
-        autoFocus={true}
-        value={folder?.title || ''}
-        onChange={onNewFolderChange}
-        onKeyDown={onKeyDown}
-        placeholder="Press enter to confirm new folder."
-      />
+      <>
+        <Input
+          aria-label={'aria-label'}
+          width={30}
+          autoFocus={true}
+          value={folder?.title || ''}
+          onChange={onNewFolderChange}
+          onKeyDown={onKeyDown}
+          placeholder="Press enter to confirm new folder."
+        />
+        <div className={styles.newFolder}>Press enter to create the new folder.</div>
+      </>
     );
   } else {
     return (
@@ -294,3 +292,11 @@ export async function getInitialValues({ folderName, folderId, getFolder }: Args
   const folderDto = await getFolder(folderId);
   return { label: folderDto.title, value: folderId };
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  newFolder: css`
+    color: ${theme.colors.warning.main};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    padding-top: ${theme.spacing(1)};
+  `,
+});
