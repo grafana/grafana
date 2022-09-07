@@ -99,7 +99,7 @@
     "@lingui/cli": "3.14.0",
     "@lingui/macro": "3.14.0",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.7",
-    "@react-types/button": "3.5.1",
+    "@react-types/button": "3.6.1",
     "@react-types/menu": "3.6.1",
     "@react-types/overlays": "3.6.1",
     "@react-types/shared": "3.13.1",
