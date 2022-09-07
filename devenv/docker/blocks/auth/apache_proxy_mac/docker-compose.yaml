@@ -5,6 +5,6 @@
 # root_url = %(protocol)s://%(domain)s:10081/grafana/
 
   apacheproxy:
-    build: docker/blocks/apache_proxy_mac
+    build: docker/blocks/auth/apache_proxy_mac
     ports:
       - "10081:10081"

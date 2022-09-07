@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/server/usagestatssvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -51,9 +52,9 @@ var wireExtsSet = wire.NewSet(
 	auth.ProvideUserAuthTokenService,
 	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
 	wire.Bind(new(models.UserTokenBackgroundService), new(*auth.UserAuthTokenService)),
-	ossaccesscontrol.ProvideService,
-	wire.Bind(new(accesscontrol.Service), new(*ossaccesscontrol.Service)),
-	wire.Bind(new(accesscontrol.RoleRegistry), new(*ossaccesscontrol.Service)),
+	acimpl.ProvideService,
+	wire.Bind(new(accesscontrol.Service), new(*acimpl.Service)),
+	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
 	thumbs.ProvideCrawlerAuthSetupService,
 	wire.Bind(new(thumbs.CrawlerAuthSetupService), new(*thumbs.OSSCrawlerAuthSetupService)),
 	validations.ProvideValidator,

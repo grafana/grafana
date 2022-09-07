@@ -419,6 +419,19 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	publicDashboardsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:dashboards.public:writer",
+			DisplayName: "Public Dashboard writer",
+			Description: "Create, write or disable a public dashboard.",
+			Group:       "Dashboards",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionDashboardPublicWrite, Scope: dashboards.ScopeDashboardsAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
 	return hs.accesscontrolService.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
@@ -426,6 +439,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
+		publicDashboardsWriterRole,
 	)
 }
 

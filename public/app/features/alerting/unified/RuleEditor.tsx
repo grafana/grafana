@@ -15,6 +15,7 @@ import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromBuildInfoAction, fetchEditableRuleAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
+import { initialAsyncRequestState } from './utils/redux';
 import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
@@ -22,7 +23,7 @@ interface ExistingRuleEditorProps {
 }
 
 const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
-  useCleanup((state) => state.unifiedAlerting.ruleForm.existingRule);
+  useCleanup((state) => (state.unifiedAlerting.ruleForm.existingRule = initialAsyncRequestState));
   const { loading, result, error, dispatched } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
   const dispatch = useDispatch();
   const { isEditable } = useIsRuleEditable(ruleId.ruleIdentifierToRuleSourceName(identifier), result?.rule);
