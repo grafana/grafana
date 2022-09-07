@@ -16,16 +16,6 @@ e2e.scenario({
     cy.contains('+');
     cy.get('.ol-zoom').should('exist');
 
-    // Mouse wheel zoom
-    e2e.components.PanelEditor.toggleMouseWheelZoom().check({ force: true });
-    cy.get('.panel-content').trigger('wheel', {
-      deltaY: -66.666666,
-      wheelDelta: 120,
-      wheelDeltaX: 0,
-      wheelDeltaY: 120,
-      bubbles: true,
-    });
-
     // Show attribution
     e2e.components.PanelEditor.toggleShowAttribution().check({ force: true });
     cy.get('.ol-attribution').should('exist');
