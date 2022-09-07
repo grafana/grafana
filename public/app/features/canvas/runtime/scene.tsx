@@ -449,20 +449,24 @@ export class Scene {
         // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
       }
-    }).on('selectEnd', (event) => {
-      targets = event.selected;
-      this.updateSelection({ targets });
+    })
+      .on('selectEnd', (event) => {
+        targets = event.selected;
+        this.updateSelection({ targets });
 
-      if (event.isDragStart) {
-        if (this.isEditingEnabled && this.selecto?.getSelectedTargets().length) {
-          this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+        if (event.isDragStart) {
+          if (this.isEditingEnabled && this.selecto?.getSelectedTargets().length) {
+            this.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
+          }
+          event.inputEvent.preventDefault();
+          event.data.timer = setTimeout(() => {
+            this.moveable!.dragStart(event.inputEvent);
+          });
         }
-        event.inputEvent.preventDefault();
-        setTimeout(() => {
-          this.moveable!.dragStart(event.inputEvent);
-        });
-      }
-    });
+      })
+      .on('dragEnd', (event) => {
+        clearTimeout(event.data.timer);
+      });
   };
 
   reorderElements = (src: ElementState, dest: ElementState, dragToGap: boolean, destPosition: number) => {

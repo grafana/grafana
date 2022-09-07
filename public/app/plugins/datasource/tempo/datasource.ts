@@ -3,13 +3,11 @@ import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'r
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
-  DataSourceJsonData,
   FieldType,
   isValidGoDuration,
   LoadingState,
@@ -30,7 +28,7 @@ import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsS
 import { serializeParams } from 'app/core/utils/fetch';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { LokiOptions, LokiQuery } from '../loki/types';
+import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
@@ -52,49 +50,7 @@ import {
   transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
 } from './resultTransformer';
-
-// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'traceql' | 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
-
-export interface TempoJsonData extends DataSourceJsonData {
-  tracesToLogs?: TraceToLogsOptions;
-  serviceMap?: {
-    datasourceUid?: string;
-  };
-  search?: {
-    hide?: boolean;
-  };
-  nodeGraph?: NodeGraphOptions;
-  lokiSearch?: {
-    datasourceUid?: string;
-  };
-  spanBar?: {
-    tag: string;
-  };
-}
-
-export interface TempoQuery extends DataQuery {
-  query: string;
-  // Query to find list of traces, e.g., via Loki
-  linkedQuery?: LokiQuery;
-  search?: string;
-  queryType: TempoQueryType;
-  serviceName?: string;
-  spanName?: string;
-  minDuration?: string;
-  maxDuration?: string;
-  limit?: number;
-  serviceMapQuery?: string;
-}
-
-interface SearchQueryParams {
-  minDuration?: string;
-  maxDuration?: string;
-  limit?: number;
-  tags?: string;
-  start?: number;
-  end?: number;
-}
+import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 
 export const DEFAULT_LIMIT = 20;
 

@@ -257,6 +257,38 @@ func TestProvisioningApi(t *testing.T) {
 			})
 		})
 
+		t.Run("exist in non-default orgs", func(t *testing.T) {
+			t.Run("POST sets expected fields", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rc.OrgID = 3
+				rule := createTestAlertRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 201, response.Status())
+				created := deserializeRule(t, response.Body())
+				require.Equal(t, int64(3), created.OrgID)
+			})
+
+			t.Run("PUT sets expected fields", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				uid := t.Name()
+				rule := createTestAlertRule("rule", 1)
+				rule.UID = uid
+				insertRuleInOrg(t, sut, rule, 3)
+				rc := createTestRequestCtx()
+				rc.OrgID = 3
+				rule.OrgID = 1 // Set the org back to something wrong, we should still prefer the value from the req context.
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 200, response.Status())
+				created := deserializeRule(t, response.Body())
+				require.Equal(t, int64(3), created.OrgID)
+			})
+		})
+
 		t.Run("are missing, PUT returns 404", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
@@ -543,11 +575,25 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 }
 
 func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.ProvisionedAlertRule) {
+	insertRuleInOrg(t, srv, rule, 1)
+}
+
+func insertRuleInOrg(t *testing.T, srv ProvisioningSrv, rule definitions.ProvisionedAlertRule, orgID int64) {
 	t.Helper()
 
 	rc := createTestRequestCtx()
+	rc.OrgID = orgID
 	resp := srv.RoutePostAlertRule(&rc, rule)
 	require.Equal(t, 201, resp.Status())
+}
+
+func deserializeRule(t *testing.T, data []byte) definitions.ProvisionedAlertRule {
+	t.Helper()
+
+	var rule definitions.ProvisionedAlertRule
+	err := json.Unmarshal(data, &rule)
+	require.NoError(t, err)
+	return rule
 }
 
 var testConfig = `
