@@ -1,6 +1,8 @@
 package datasources
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -30,32 +32,51 @@ const (
 
 type DsAccess string
 
+type SecureData map[string][]byte
+
+func (sd *SecureData) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		if len(v) == 0 {
+			return nil
+		}
+		return json.Unmarshal(v, &sd)
+	case string:
+		if len(v) == 0 {
+			return nil
+		}
+		return json.Unmarshal([]byte(v), &sd)
+	default:
+		return fmt.Errorf("unsupported type: %T", v)
+	}
+}
+
 type DataSource struct {
-	Id      int64 `json:"id,omitempty"`
-	OrgId   int64 `json:"orgId,omitempty"`
-	Version int   `json:"version,omitempty"`
+	Id      int64 `json:"id,omitempty" db:"id"`
+	OrgId   int64 `json:"orgId,omitempty" db:"org_id"`
+	Version int   `json:"version,omitempty" db:"version"`
 
-	Name   string   `json:"name"`
-	Type   string   `json:"type"`
-	Access DsAccess `json:"access"`
-	Url    string   `json:"url"`
+	Name   string   `json:"name" db:"name"`
+	Type   string   `json:"type" db:"type"`
+	Access DsAccess `json:"access" db:"access"`
+	Url    string   `json:"url" db:"url"`
 	// swagger:ignore
-	Password      string `json:"-"`
-	User          string `json:"user"`
-	Database      string `json:"database"`
-	BasicAuth     bool   `json:"basicAuth"`
-	BasicAuthUser string `json:"basicAuthUser"`
+	Password      string `json:"-" db:"password"`
+	User          string `json:"user" db:"user"`
+	Database      string `json:"database" db:"database"`
+	BasicAuth     bool   `json:"basicAuth" db:"basic_auth"`
+	BasicAuthUser string `json:"basicAuthUser" db:"basic_auth_user"`
 	// swagger:ignore
-	BasicAuthPassword string            `json:"-"`
-	WithCredentials   bool              `json:"withCredentials"`
-	IsDefault         bool              `json:"isDefault"`
-	JsonData          *simplejson.Json  `json:"jsonData"`
-	SecureJsonData    map[string][]byte `json:"secureJsonData"`
-	ReadOnly          bool              `json:"readOnly"`
-	Uid               string            `json:"uid"`
+	BasicAuthPassword string           `json:"-" db:"basic_auth_password"`
+	WithCredentials   bool             `json:"withCredentials" db:"with_credentials"`
+	IsDefault         bool             `json:"isDefault" db:"is_default"`
+	JsonData          *simplejson.Json `json:"jsonData" db:"json_data"`
+	SecureJsonData    SecureData       `json:"secureJsonData" db:"secure_json_data"`
+	ReadOnly          bool             `json:"readOnly" db:"read_only"`
+	Uid               string           `json:"uid" db:"uid"`
 
-	Created time.Time `json:"created,omitempty"`
-	Updated time.Time `json:"updated,omitempty"`
+	Created time.Time `json:"created,omitempty" db:"created"`
+	Updated time.Time `json:"updated,omitempty" db:"updated"`
 }
 
 // AllowedCookies parses the jsondata.keepCookies and returns a list of

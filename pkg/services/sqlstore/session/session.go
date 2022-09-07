@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -16,6 +17,7 @@ type Session interface {
 
 type SessionDB struct {
 	sqlxdb *sqlx.DB
+	bus    bus.Bus
 }
 
 func GetSession(sqlxdb *sqlx.DB) *SessionDB {
@@ -61,7 +63,18 @@ func (gs *SessionDB) WithTransaction(ctx context.Context, callback func(*Session
 		}
 		return err
 	}
-	return tx.sqlxtx.Commit()
+	if err = tx.sqlxtx.Commit(); err != nil {
+		return err
+	}
+	if len(tx.events) > 0 {
+		for _, e := range tx.events {
+			if err = gs.bus.Publish(ctx, e); err != nil {
+				fmt.Println("Failed to publish event after commit.")
+				// tsclogger.Error("Failed to publish event after commit.", "error", err)
+			}
+		}
+	}
+	return nil
 }
 
 func (gs *SessionDB) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
@@ -70,6 +83,7 @@ func (gs *SessionDB) ExecWithReturningId(ctx context.Context, query string, args
 
 type SessionTx struct {
 	sqlxtx *sqlx.Tx
+	events []interface{}
 }
 
 func (gtx *SessionTx) NamedExec(ctx context.Context, query string, arg interface{}) (sql.Result, error) {
@@ -90,6 +104,10 @@ func (gtx *SessionTx) driverName() string {
 
 func (gtx *SessionTx) ExecWithReturningId(ctx context.Context, query string, args ...interface{}) (int64, error) {
 	return execWithReturningId(ctx, gtx.driverName(), query, gtx, args...)
+}
+
+func (gtx *SessionTx) PublishAfterCommit(msg interface{}) {
+	gtx.events = append(gtx.events, msg)
 }
 
 func execWithReturningId(ctx context.Context, driverName string, query string, sess Session, args ...interface{}) (int64, error) {
