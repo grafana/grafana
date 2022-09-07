@@ -23,6 +23,8 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
       accessControlMetadata
       {...props}
       permissionLevel={PermissionLevelString.View}
+      dissalowSlashes={true}
+      customAdd={true}
     />
   );
 }
