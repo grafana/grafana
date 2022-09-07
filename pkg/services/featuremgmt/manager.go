@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/common/types"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -17,7 +20,7 @@ var (
 )
 
 type FeatureManager struct {
-	isDevMod  bool
+	isDevMode bool
 	licensing models.Licensing
 	flags     map[string]*FeatureFlag
 	enabled   map[string]bool // only the "on" values
@@ -75,7 +78,7 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 
 // meetsRequirements checks if grafana is able to run the given feature due to dev mode or licensing requirements
 func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) bool {
-	if ff.RequiresDevMode && !fm.isDevMod {
+	if ff.RequiresDevMode && !fm.isDevMode {
 		return false
 	}
 
@@ -88,6 +91,22 @@ func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) bool {
 
 // Update
 func (fm *FeatureManager) update() {
+	env, _ := cel.NewEnv(
+		cel.Variable("isDevMod", cel.BoolType),
+		cel.Variable("isProduction", cel.BoolType),
+		cel.Variable("grafana.BuildVersion", cel.StringType),
+		cel.Variable("grafana.BuildStamp", cel.IntType),
+		cel.Variable("grafana.IsEnterprise", cel.BoolType),
+		cel.Variable("grafana.Packaging", cel.StringType),
+	)
+	globalVars := map[string]interface{}{}
+	globalVars["isDevMode"] = fm.isDevMode
+	globalVars["isProduction"] = !fm.isDevMode
+	globalVars["grafana.BuildVersion"] = setting.BuildVersion
+	globalVars["grafana.BuildStamp"] = setting.BuildStamp
+	globalVars["grafana.IsEnterprise"] = setting.IsEnterprise
+	globalVars["grafana.Packaging"] = setting.Packaging
+
 	enabled := make(map[string]bool)
 	for _, flag := range fm.flags {
 		// if grafana cannot run the feature, omit metrics around it
@@ -97,10 +116,29 @@ func (fm *FeatureManager) update() {
 
 		// Update the registry
 		track := 0.0
-		// TODO: CEL - expression
-		if flag.Expression == "true" {
-			track = 1
-			enabled[flag.Name] = true
+
+		if flag.Expression != "" {
+			ast, iss := env.Parse(flag.Expression)
+			if iss.Err() != nil {
+				fm.log.Error("expression parsing error", "name", flag.Name, "expression", flag.Expression, "error", iss.Err())
+				continue
+			}
+
+			prg, err := env.Program(ast)
+			if err != nil {
+				fm.log.Error("expression error", "name", flag.Name, "expression", flag.Expression, "error", err)
+				continue
+			}
+			out, _, err := prg.Eval(globalVars)
+			if err != nil {
+				fm.log.Error("expression evaluation error", "name", flag.Name, "expression", flag.Expression, "error", err)
+				continue
+			}
+			// ignore expressions that do not return true/false
+			if out == types.True {
+				track = 1
+				enabled[flag.Name] = true
+			}
 		}
 
 		// Register value with prometheus metric
