@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button } from '@grafana/ui';
+import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, IconName } from '@grafana/ui';
 
 import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
 
@@ -23,7 +23,7 @@ const linkTypeOptions = [
   { value: 'link', label: 'Link' },
 ];
 
-export const linkIconMap: { [key: string]: string } = {
+export const linkIconMap: Record<string, IconName | undefined> = {
   'external link': 'external-link-alt',
   dashboard: 'apps',
   question: 'question-circle',

@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
