@@ -298,7 +298,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     onRunQuery();
 
     if (trackingContext) {
-      reportInteraction('grafana_queryRow_disable_enable_query', { context: trackingContext });
+      reportInteraction('grafana_queryRow_disable_enable_query', {
+        context: trackingContext,
+        queryEnabled: query.hide,
+      });
     }
   };
 
