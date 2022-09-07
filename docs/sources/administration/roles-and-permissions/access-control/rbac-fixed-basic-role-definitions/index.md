@@ -2,6 +2,7 @@
 aliases:
   - /docs/grafana/latest/enterprise/access-control/fine-grained-access-control-references/
   - /docs/grafana/latest/enterprise/access-control/rbac-fixed-basic-role-definitions/
+  - /docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
 description: This topic includes a table that lists permission associated with Grafana
   fixed and basic roles.
 menuTitle: RBAC role definitions
@@ -11,7 +12,7 @@ weight: 70
 
 # RBAC role definitions
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 The following tables list permissions associated with basic and fixed roles.
 
@@ -87,7 +88,7 @@ The following tables list permissions associated with basic and fixed roles.
 
 ### Alerting roles
 
-If alerting is [enabled]({{< relref "../../../alerting/migrating-alerts/opt-out/" >}}), you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
+If alerting is [enabled]({{< relref "../../../../alerting/migrating-alerts/opt-out/" >}}), you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
 
 Access to Grafana alert rules is an intersection of many permissions:
 
