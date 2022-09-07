@@ -1,22 +1,20 @@
 package manager
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
-	"text/template"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -61,36 +59,24 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 
 	features := featuremgmt.WithFeatures()
 
-	rawCfg := `
+	// We use the raw config here as it forms the basis for the setting.Provider implementation
+	// The plugin manager also relies directly on the setting.Cfg struct to provide Grafana specific
+	// properties such as the loading paths
+	raw, err := ini.Load([]byte(`
 		app_mode = production
-
-		[server]
-		static_root_path = {{.StaticRootPath}}
 
 		[plugin.test-app]
 		path=testdata/test-app
 
 		[plugin.test-panel]
 		not=included
-		`
-
-	tmpl, err := template.New("cfg").Parse(rawCfg)
-
-	data := struct {
-		StaticRootPath string
-	}{
-		StaticRootPath: staticRootPath,
-	}
-
-	var tmplBuf bytes.Buffer
-	err = tmpl.Execute(&tmplBuf, data)
-	require.NoError(t, err)
-
-	raw, err := ini.Load(tmplBuf.Bytes())
+		`),
+	)
 	require.NoError(t, err)
 
 	cfg := &setting.Cfg{
 		Raw:                raw,
+		StaticRootPath:     staticRootPath,
 		BundledPluginsPath: bundledPluginsPath,
 	}
 
@@ -122,7 +108,7 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
-	pm, err := ProvideService(pCfg, reg, loader.New(pCfg, license, signature.NewUnsignedAuthorizer(pCfg),
+	pm, err := ProvideService(pCfg, cfg, reg, loader.New(pCfg, license, signature.NewUnsignedAuthorizer(pCfg),
 		provider.ProvideService(coreRegistry)), nil)
 	require.NoError(t, err)
 	ps := store.ProvideService(reg)

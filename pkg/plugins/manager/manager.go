@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -31,10 +33,15 @@ type PluginManager struct {
 	log            log.Logger
 }
 
-func ProvideService(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
+func ProvideService(cfg *config.Cfg, grafCfg *setting.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) (*PluginManager, error) {
-	pm := New(cfg, pluginRegistry, pluginSources(cfg), pluginLoader,
-		pluginRepo, storage.FileSystem(logger.NewLogger("plugin.fs"), cfg.PluginsPath),
+	pm := New(cfg, pluginRegistry,
+		pluginSources(pathData{
+			pluginsPath:        grafCfg.PluginsPath,
+			bundledPluginsPath: grafCfg.BundledPluginsPath,
+			staticRootPath:     grafCfg.StaticRootPath,
+		}, cfg.PluginSettings),
+		pluginLoader, pluginRepo, storage.FileSystem(logger.NewLogger("plugin.fs"), grafCfg.PluginsPath),
 		process.NewManager(pluginRegistry),
 	)
 	if err := pm.Init(context.Background()); err != nil {
@@ -253,26 +260,30 @@ func (m *PluginManager) unregisterAndStop(ctx context.Context, p *plugins.Plugin
 	return nil
 }
 
-func pluginSources(cfg *config.Cfg) []plugins.PluginSource {
+type pathData struct {
+	pluginsPath, bundledPluginsPath, staticRootPath string
+}
+
+func pluginSources(p pathData, ps map[string]map[string]string) []plugins.PluginSource {
 	return []plugins.PluginSource{
-		{Class: plugins.Core, Paths: corePluginPaths(cfg)},
-		{Class: plugins.Bundled, Paths: []string{cfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg)...)},
+		{Class: plugins.Core, Paths: corePluginPaths(p.staticRootPath)},
+		{Class: plugins.Bundled, Paths: []string{p.bundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{p.pluginsPath}, pluginSettingPaths(ps)...)},
 	}
 }
 
 // corePluginPaths provides a list of the Core plugin paths which need to be scanned on init()
-func corePluginPaths(cfg *config.Cfg) []string {
-	datasourcePaths := filepath.Join(cfg.StaticRootPath, "app/plugins/datasource")
-	panelsPath := filepath.Join(cfg.StaticRootPath, "app/plugins/panel")
+func corePluginPaths(staticRootPath string) []string {
+	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
+	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
 	return []string{datasourcePaths, panelsPath}
 }
 
 // pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
-func pluginSettingPaths(cfg *config.Cfg) []string {
+func pluginSettingPaths(ps map[string]map[string]string) []string {
 	var pluginSettingDirs []string
-	for _, settings := range cfg.PluginSettings {
-		path, exists := settings["path"]
+	for _, s := range ps {
+		path, exists := s["path"]
 		if !exists || path == "" {
 			continue
 		}

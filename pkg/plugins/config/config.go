@@ -15,10 +15,6 @@ type Cfg struct {
 
 	DevMode bool
 
-	StaticRootPath     string // TODO Remove
-	PluginsPath        string // TODO Remove
-	BundledPluginsPath string // TODO Remove
-
 	PluginSettings       map[string]map[string]string
 	PluginsAllowUnsigned []string
 
@@ -35,10 +31,10 @@ type Cfg struct {
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
-	return NewCfg(settingProvider, grafanaCfg)
+	return NewCfg(settingProvider, grafanaCfg.BuildVersion)
 }
 
-func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
+func NewCfg(settingProvider setting.Provider, buildVersion string) *Cfg {
 	logger := log.New("plugin.cfg")
 
 	azure := settingProvider.Section("azure")
@@ -55,16 +51,10 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 		assumeRoleEnabled = false
 	}
 
-	staticRootPath := settingProvider.KeyValue("server", "static_root_path").Value()
-	pluginsPath := settingProvider.KeyValue("paths", "plugins").Value()
-
 	// TODO confirm if we should specify default values
 	return &Cfg{
 		log:                     logger,
 		DevMode:                 settingProvider.KeyValue("", "app_mode").Value() == setting.Dev,
-		StaticRootPath:          staticRootPath,
-		PluginsPath:             pluginsPath,
-		BundledPluginsPath:      grafanaCfg.BundledPluginsPath,
 		PluginSettings:          extractPluginSettings(settingProvider),
 		PluginsAllowUnsigned:    strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ","),
 		EnterpriseLicensePath:   settingProvider.KeyValue("enterprise", "license_path").Value(),
@@ -75,7 +65,7 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 			ManagedIdentityEnabled:  managedIdentityEnabled,
 			ManagedIdentityClientId: azure.KeyValue("managed_identity_client_id").Value(),
 		},
-		BuildVersion: grafanaCfg.BuildVersion,
+		BuildVersion: buildVersion,
 	}
 }
 
