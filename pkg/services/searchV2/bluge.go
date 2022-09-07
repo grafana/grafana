@@ -437,10 +437,12 @@ func doSearchQuery(
 			SetField(documentFieldName_sort).
 			SetBoost(6))
 
-		bq.AddShould(bluge.NewMatchQuery(q.Query).
-			SetField(documentFieldName_ngram).
-			SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
-			SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
+		if shouldUseNgram(q) {
+			bq.AddShould(bluge.NewMatchQuery(q.Query).
+				SetField(documentFieldName_ngram).
+				SetOperator(bluge.MatchQueryOperatorAnd). // all terms must match
+				SetAnalyzer(ngramQueryAnalyzer).SetBoost(1))
+		}
 
 		fullQuery.AddMust(bq)
 	}
@@ -654,6 +656,21 @@ func doSearchQuery(
 	}
 
 	return response
+}
+
+func shouldUseNgram(q DashboardQuery) bool {
+	var tokens []string
+	if len(q.Query) > ngramEdgeFilterMaxLength {
+		tokens = strings.Fields(q.Query)
+		for _, k := range tokens {
+			// ngram will never match if at least one input token exceeds the max token length,
+			// as all tokens must match simultaneously with the `bluge.MatchQueryOperatorAnd` operator
+			if len(k) > ngramEdgeFilterMaxLength {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func formatForNameSortField(name string) string {
