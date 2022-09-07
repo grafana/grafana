@@ -97,7 +97,7 @@ export const updateMap = (panel: GeomapPanel, options: GeomapPanelOptions) => {
 
 export const notifyPanelEditor = (geomapPanel: GeomapPanel, layers: MapLayerState[], selected: number) => {
   // Notify the panel editor
-  if (geomapPanel.panelContext.onInstanceStateChange) {
+  if (geomapPanel.panelContext && geomapPanel.panelContext.onInstanceStateChange) {
     geomapPanel.panelContext.onInstanceStateChange({
       map: geomapPanel.map,
       layers: layers,

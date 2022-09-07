@@ -13,7 +13,7 @@ export const getActions = (panel: GeomapPanel) => {
   const actions: GeomapLayerActions = {
     selectLayer: (uid: string) => {
       const selected = panel.layers.findIndex((v) => v.options.name === uid);
-      if (panel.panelContext.onInstanceStateChange) {
+      if (panel.panelContext && panel.panelContext.onInstanceStateChange) {
         panel.panelContext.onInstanceStateChange({
           map: panel.map,
           layers: panel.layers,
