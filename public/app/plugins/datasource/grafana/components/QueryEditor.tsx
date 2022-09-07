@@ -1,3 +1,4 @@
+import pluralize from 'pluralize';
 import React, { PureComponent } from 'react';
 
 import {
@@ -9,7 +10,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { InlineField, Select, Alert, Input, InlineFieldRow } from '@grafana/ui';
+import { InlineField, Select, Alert, Input, InlineFieldRow, InlineLabel } from '@grafana/ui';
 import { hasAlphaPanels } from 'app/core/config';
 import { SearchQuery } from 'app/features/search/service';
 
@@ -345,7 +346,15 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   renderSnapshotQuery() {
-    return <div>TODO... show table</div>;
+    const { query } = this.props;
+
+    return (
+      <InlineFieldRow>
+        <InlineField label="Snapshot" grow={true} labelWidth={labelWidth}>
+          <InlineLabel>{pluralize('frame', query.snapshot?.length ?? 0, true)}</InlineLabel>
+        </InlineField>
+      </InlineFieldRow>
+    );
   }
 
   onSearchChange = (search: SearchQuery) => {

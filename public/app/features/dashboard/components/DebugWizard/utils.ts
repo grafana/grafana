@@ -83,7 +83,7 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       <td >${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion}</td>
     </tr>
     <tr>
-      <th>Queries&nbsp;(${queries.length})</th>
+      <th>Queries</th>
       <td>${queries
         .map((t: DataQuery) => {
           const ds = t.datasource ?? dsref;
