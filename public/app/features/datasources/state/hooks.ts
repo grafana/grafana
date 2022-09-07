@@ -34,7 +34,7 @@ export const useInitDataSourceSettings = (uid: string) => {
     return function cleanUp() {
       dispatch(
         cleanUpAction({
-          stateSelector: (state) => state.dataSourceSettings,
+          cleanupAction: (state) => state.dataSourceSettings,
         })
       );
     };

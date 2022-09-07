@@ -415,12 +415,12 @@ def build_frontend_package_step(edition, ver_mode):
     # TODO: Use percentage for num jobs
     if ver_mode == 'release':
         cmds = [
-            './bin/grabpl build-frontend-packages --jobs 8 ' + \
+            './bin/build build-frontend-packages --jobs 8 ' + \
             '--edition {} ${{DRONE_TAG}}'.format(edition),
         ]
     else:
         cmds = [
-            './bin/grabpl build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
+            './bin/build build-frontend-packages --jobs 8 --edition {} '.format(edition) + \
             '--build-id {}'.format(build_no),
         ]
 
@@ -714,7 +714,7 @@ def grafana_server_step(edition, port=3001):
 
 
 def e2e_tests_step(suite, edition, port=3001, tries=None):
-    cmd = './bin/grabpl e2e-tests --port {} --suite {}'.format(port, suite)
+    cmd = './bin/build e2e-tests --port {} --suite {}'.format(port, suite)
     if tries:
         cmd += ' --tries {}'.format(tries)
     return {
