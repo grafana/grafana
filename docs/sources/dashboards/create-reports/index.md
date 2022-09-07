@@ -8,7 +8,7 @@ aliases:
   - /docs/grafana/latest/panels/create-reports
   - /docs/grafana/latest/dashboards/create-reports
 title: Create and manage reports
-menuTitle: Create and manage reports
+menuTitle: Reporting
 weight: 85
 keywords:
   - grafana
