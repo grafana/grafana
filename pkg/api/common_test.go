@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -253,6 +254,7 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		AccessControl:      accesscontrolmock.New().WithPermissions(permissions),
 		searchUsersService: searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		ldapGroups:         ldap.ProvideGroupsService(),
+		starHTTPService:    startest.NewStarServiceFake(),
 	}
 
 	sc := setupScenarioContext(t, url)
@@ -337,10 +339,11 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
-		Cfg:           cfg,
-		Features:      features,
-		License:       &licensing.OSSLicensingService{},
-		AccessControl: accesscontrolmock.New().WithDisabled(),
+		Cfg:             cfg,
+		Features:        features,
+		License:         &licensing.OSSLicensingService{},
+		AccessControl:   accesscontrolmock.New().WithDisabled(),
+		starHTTPService: startest.NewStarServiceFake(),
 	}
 }
 
@@ -408,6 +411,7 @@ func setupHTTPServerWithCfgDb(
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userMock,
+		starHTTPService:   startest.NewStarServiceFake(),
 	}
 
 	for _, o := range options {
@@ -478,6 +482,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 		AccessControl:      accesscontrolmock.New().WithDisabled(),
 		Features:           featuremgmt.WithFeatures(),
 		searchUsersService: &searchusers.OSSService{},
+		starHTTPService:    startest.NewStarServiceFake(),
 	}
 
 	for _, opt := range opts {
