@@ -152,6 +152,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   valueList: css`
     margin-right: ${theme.spacing(1)};
+    resize: horizontal;
   `,
   valueListWrapper: css`
     border-left: 1px solid ${theme.colors.border.medium};
