@@ -193,6 +193,58 @@ seqs: [
 				} @cuetsy(kind="interface") @reviewme()
 
 				// TODO docs
+				#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @reviewme()
+
+				// TODO docs
+				#MappingType: "value" | "range" | "regex" | "special" @cuetsy(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue") @reviewme()
+
+				// TODO docs
+				#ValueMap: {
+					type: #MappingType & "value"
+					options: [string]: #ValueMappingResult
+				} @cuetsy(kind="interface")
+
+				// TODO docs
+				#RangeMap: {
+					type: #MappingType & "range"
+					options: {
+						// to and from are `number | null` in current ts, really not sure what to do
+						from:   int32 @reviewme()
+						to:     int32 @reviewme()
+						result: #ValueMappingResult
+					}
+				} @cuetsy(kind="interface") @reviewme()
+
+				// TODO docs
+				#RegexMap: {
+					type: #MappingType & "regex"
+					options: {
+						pattern: string
+						result:  #ValueMappingResult
+					}
+				} @cuetsy(kind="interface") @reviewme()
+
+				// TODO docs
+				#SpecialValueMap: {
+					type: #MappingType & "special"
+					options: {
+						pattern: string
+						result:  #ValueMappingResult
+					}
+				} @cuetsy(kind="interface") @reviewme()
+
+				// TODO docs
+				#SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cuetsy(kind="enum",memberNames="True|False|Null|NaN|NullAndNan|Empty")
+
+				// TODO docs
+				#ValueMappingResult: {
+					text?:  string
+					color?: string
+					icon?:  string
+					index?: int32
+				} @cuetsy(kind="interface")
+
+				// TODO docs
 				// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
 				#Transformation: {
 					id: string
@@ -282,82 +334,82 @@ seqs: [
 					// plugin schemas.
 					options: {...} @reviewme()
 
-					fieldConfig: {
-						defaults: {
-							// The display value for this field.  This supports template variables blank is auto
-							displayName?: string @reviewme()
+					fieldConfig: #FieldConfigSource
+				} @cuetsy(kind="interface") @grafana(customVeneer) @reviewme()
 
-							// This can be used by data sources that return and explicit naming structure for values and labels
-							// When this property is configured, this value is used rather than the default naming strategy.
-							displayNameFromDS?: string @reviewme()
+				#FieldConfigSource: {
+					defaults: #FieldConfig
+					overrides: [...{
+						matcher: #MatcherConfig
+						properties: [...#DynamicConfigValue]
+					}] @reviewme()
+				} @cuetsy(kind="interface") @grafana(customVeneer) @reviewme()
 
-							// Human readable field metadata
-							description?: string @reviewme()
+				#MatcherConfig: {
+					id:       string | *"" @reviewme()
+					options?: _            @reviewme()
+				} @cuetsy(kind="interface")
 
-							// An explict path to the field in the datasource.  When the frame meta includes a path,
-							// This will default to `${frame.meta.path}/${field.name}
-							//
-							// When defined, this value can be used as an identifier within the datasource scope, and
-							// may be used to update the results
-							path?: string @reviewme()
+				#DynamicConfigValue: {
+					id:     string | *"" @reviewme()
+					value?: _            @reviewme()
+				}
 
-							// True if data source can write a value to the path.  Auth/authz are supported separately
-							writeable?: bool @reviewme()
+				#FieldConfig: {
+					// The display value for this field.  This supports template variables blank is auto
+					displayName?: string @reviewme()
 
-							// True if data source field supports ad-hoc filters
-							filterable?: bool @reviewme()
+					// This can be used by data sources that return and explicit naming structure for values and labels
+					// When this property is configured, this value is used rather than the default naming strategy.
+					displayNameFromDS?: string @reviewme()
 
-							// Numeric Options
-							unit?: string @reviewme()
+					// Human readable field metadata
+					description?: string @reviewme()
 
-							// Significant digits (for display)
-							decimals?: number @reviewme()
+					// An explict path to the field in the datasource.  When the frame meta includes a path,
+					// This will default to `${frame.meta.path}/${field.name}
+					//
+					// When defined, this value can be used as an identifier within the datasource scope, and
+					// may be used to update the results
+					path?: string @reviewme()
 
-							min?: number @reviewme()
-							max?: number @reviewme()
+					// True if data source can write a value to the path.  Auth/authz are supported separately
+					writeable?: bool @reviewme()
 
-							// Convert input values into a display string
-							//
-							// TODO this one corresponds to a complex type with
-							// generics on the typescript side. Ouch. Will
-							// either need special care, or we'll just need to
-							// accept a very loosely specified schema. It's very
-							// unlikely we'll be able to translate cue to
-							// typescript generics in the general case, though
-							// this particular one *may* be able to work.
-							mappings?: [...{...}] @reviewme()
+					// True if data source field supports ad-hoc filters
+					filterable?: bool @reviewme()
 
-							// Map numeric values to states
-							thresholds?: #ThresholdsConfig @reviewme()
+					// Numeric Options
+					unit?: string @reviewme()
 
-							//   // Map values to a display color
-							color?: #FieldColor @reviewme()
+					// Significant digits (for display)
+					decimals?: number @reviewme()
 
-							//   // Used when reducing field values
-							//   nullValueMode?: NullValueMode
+					min?: number @reviewme()
+					max?: number @reviewme()
 
-							//   // The behavior when clicking on a result
-							links?: [...] @reviewme()
+					// Convert input values into a display string
+					mappings?: [...#ValueMapping] @reviewme()
 
-							// Alternative to empty string
-							noValue?: string @reviewme()
+					// Map numeric values to states
+					thresholds?: #ThresholdsConfig @reviewme()
 
-							// custom is specified by the PanelFieldConfig field
-							// in panel plugin schemas.
-							custom?: {...} @reviewme()
-						} @reviewme()
-						overrides: [...{
-							matcher: {
-								id:       string | *"" @reviewme()
-								options?: _            @reviewme()
-							}
-							properties: [...{
-								id:     string | *"" @reviewme()
-								value?: _            @reviewme()
-							}]
-						}] @reviewme()
-					}
-				} @cuetsy(kind="interface") @reviewme()
+					//   // Map values to a display color
+					color?: #FieldColor @reviewme()
+
+					//   // Used when reducing field values
+					//   nullValueMode?: NullValueMode
+
+					//   // The behavior when clicking on a result
+					links?: [...] @reviewme()
+
+					// Alternative to empty string
+					noValue?: string @reviewme()
+
+					// custom is specified by the PanelFieldConfig field
+					// in panel plugin schemas.
+					custom?: {...} @reviewme()
+				} @cuetsy(kind="interface") @grafana(customVeneer) @reviewme()
 
 				// Row panel
 				#RowPanel: {

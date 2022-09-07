@@ -6,11 +6,7 @@
 //
 // Run `make gen-cue` from repository root to regenerate.
 
-
-// This model is a WIP and not yet canonical. Consequently, its members are
-// not exported to exclude it from grafana-schema's public API surface.
-
-interface AnnotationQuery {
+export interface AnnotationQuery {
   builtIn: number;
   datasource: {
     type?: string;
@@ -26,7 +22,7 @@ interface AnnotationQuery {
   type: string;
 }
 
-const defaultAnnotationQuery: Partial<AnnotationQuery> = {
+export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
   builtIn: 0,
   enable: true,
   hide: false,
@@ -34,13 +30,13 @@ const defaultAnnotationQuery: Partial<AnnotationQuery> = {
   type: 'dashboard',
 };
 
-interface VariableModel {
+export interface VariableModel {
   label?: string;
   name: string;
   type: VariableType;
 }
 
-interface DashboardLink {
+export interface DashboardLink {
   asDropdown: boolean;
   icon?: string;
   includeVars: boolean;
@@ -53,7 +49,7 @@ interface DashboardLink {
   url?: string;
 }
 
-const defaultDashboardLink: Partial<DashboardLink> = {
+export const defaultDashboardLink: Partial<DashboardLink> = {
   asDropdown: false,
   includeVars: false,
   keepTime: false,
@@ -61,11 +57,11 @@ const defaultDashboardLink: Partial<DashboardLink> = {
   targetBlank: false,
 };
 
-type DashboardLinkType = ('link' | 'dashboards');
+export type DashboardLinkType = ('link' | 'dashboards');
 
-type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
+export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
 
-enum FieldColorModeId {
+export enum FieldColorModeId {
   ContinuousGrYlRd = 'continuous-GrYlRd',
   Fixed = 'fixed',
   PaletteClassic = 'palette-classic',
@@ -73,15 +69,15 @@ enum FieldColorModeId {
   Thresholds = 'thresholds',
 }
 
-type FieldColorSeriesByMode = ('min' | 'max' | 'last');
+export type FieldColorSeriesByMode = ('min' | 'max' | 'last');
 
-interface FieldColor {
+export interface FieldColor {
   fixedColor?: string;
   mode: (FieldColorModeId | string);
   seriesBy?: FieldColorSeriesByMode;
 }
 
-interface GridPos {
+export interface GridPos {
   h: number;
   static?: boolean;
   w: number;
@@ -89,82 +85,108 @@ interface GridPos {
   y: number;
 }
 
-const defaultGridPos: Partial<GridPos> = {
+export const defaultGridPos: Partial<GridPos> = {
   h: 9,
   w: 12,
   x: 0,
   y: 0,
 };
 
-interface Threshold {
+export interface Threshold {
   color: string;
   state?: string;
   value?: number;
 }
 
-enum ThresholdsMode {
+export enum ThresholdsMode {
   Absolute = 'absolute',
   Percentage = 'percentage',
 }
 
-interface ThresholdsConfig {
+export interface ThresholdsConfig {
   mode: ThresholdsMode;
   steps: Threshold[];
 }
 
-const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
+export const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
   steps: [],
 };
 
-interface Transformation {
+export type ValueMapping = (ValueMap | RangeMap | RegexMap | SpecialValueMap);
+
+export enum MappingType {
+  RangeToText = 'range',
+  RegexToText = 'regex',
+  SpecialValue = 'special',
+  ValueToText = 'value',
+}
+
+export interface ValueMap {
+  options: {};
+  type: 'value';
+}
+
+export interface RangeMap {
+  options: {
+    from: number;
+    to: number;
+    result: ValueMappingResult;
+  };
+  type: 'range';
+}
+
+export interface RegexMap {
+  options: {
+    pattern: string;
+    result: ValueMappingResult;
+  };
+  type: 'regex';
+}
+
+export interface SpecialValueMap {
+  options: {
+    pattern: string;
+    result: ValueMappingResult;
+  };
+  type: 'special';
+}
+
+export enum SpecialValueMatch {
+  Empty = 'empty',
+  False = 'false',
+  NaN = 'nan',
+  Null = 'null',
+  NullAndNan = 'null+nan',
+  True = 'true',
+}
+
+export interface ValueMappingResult {
+  color?: string;
+  icon?: string;
+  index?: number;
+  text?: string;
+}
+
+export interface Transformation {
   id: string;
   options: {};
 }
 
-enum DashboardCursorSync {
+export enum DashboardCursorSync {
   Crosshair = 1,
   Off = 0,
   Tooltip = 2,
 }
 
-const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSync.Off;
+export const defaultDashboardCursorSync: DashboardCursorSync = DashboardCursorSync.Off;
 
-interface Panel {
+export interface Panel {
   datasource?: {
     type?: string;
     uid?: string;
   };
   description?: string;
-  fieldConfig: {
-    defaults: {
-      displayName?: string;
-      displayNameFromDS?: string;
-      description?: string;
-      path?: string;
-      writeable?: boolean;
-      filterable?: boolean;
-      unit?: string;
-      decimals?: number;
-      min?: number;
-      max?: number;
-      mappings?: {}[];
-      thresholds?: ThresholdsConfig;
-      color?: FieldColor;
-      links?: any[];
-      noValue?: string;
-      custom?: {};
-    };
-    overrides: {
-      matcher: {
-        id: string;
-        options?: any;
-      };
-      properties: {
-        id: string;
-        value?: any;
-      }[];
-    }[];
-  };
+  fieldConfig: FieldConfigSource;
   gridPos?: GridPos;
   id?: number;
   interval?: string;
@@ -186,7 +208,7 @@ interface Panel {
   type: string;
 }
 
-const defaultPanel: Partial<Panel> = {
+export const defaultPanel: Partial<Panel> = {
   links: [],
   repeatDirection: 'h',
   tags: [],
@@ -197,7 +219,55 @@ const defaultPanel: Partial<Panel> = {
   transparent: false,
 };
 
-interface RowPanel {
+export interface FieldConfigSource {
+  defaults: FieldConfig;
+  overrides: {
+    matcher: MatcherConfig;
+    properties: {
+      id: string;
+      value?: any;
+    }[];
+  }[];
+}
+
+export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
+  overrides: [],
+};
+
+export interface MatcherConfig {
+  id: string;
+  options?: any;
+}
+
+export const defaultMatcherConfig: Partial<MatcherConfig> = {
+  id: '',
+};
+
+export interface FieldConfig {
+  color?: FieldColor;
+  custom?: {};
+  decimals?: number;
+  description?: string;
+  displayName?: string;
+  displayNameFromDS?: string;
+  filterable?: boolean;
+  links?: any[];
+  mappings?: ValueMapping[];
+  max?: number;
+  min?: number;
+  noValue?: string;
+  path?: string;
+  thresholds?: ThresholdsConfig;
+  unit?: string;
+  writeable?: boolean;
+}
+
+export const defaultFieldConfig: Partial<FieldConfig> = {
+  links: [],
+  mappings: [],
+};
+
+export interface RowPanel {
   collapsed: boolean;
   datasource?: {
     type?: string;
@@ -215,12 +285,12 @@ interface RowPanel {
   type: 'row';
 }
 
-const defaultRowPanel: Partial<RowPanel> = {
+export const defaultRowPanel: Partial<RowPanel> = {
   collapsed: false,
   panels: [],
 };
 
-interface Dashboard {
+export interface Dashboard {
   annotations?: {
     list: AnnotationQuery[];
   };
@@ -262,7 +332,7 @@ interface Dashboard {
   weekStart?: string;
 }
 
-const defaultDashboard: Partial<Dashboard> = {
+export const defaultDashboard: Partial<Dashboard> = {
   editable: true,
   graphTooltip: DashboardCursorSync.Off,
   links: [],

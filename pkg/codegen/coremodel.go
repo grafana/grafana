@@ -131,7 +131,7 @@ func isAPIType(name string) bool {
 
 // FIXME specifying coremodel canonicality DOES NOT belong here - it should be part of the coremodel declaration.
 var canonicalCoremodels = map[string]bool{
-	"dashboard": false,
+	"dashboard": true,
 }
 
 // FIXME this also needs to be moved into coremodel metadata
