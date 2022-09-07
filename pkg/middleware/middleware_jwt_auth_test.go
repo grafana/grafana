@@ -79,6 +79,8 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with bearer in authorization header", func(t *testing.T, sc *scenarioContext) {
 		myUsername := "vladimir"
+		// We can ignore gosec G101 since this does not contain any credentials.
+		// nolint:gosec
 		myToken := "some.jwt.token"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
