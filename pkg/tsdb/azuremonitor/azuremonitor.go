@@ -99,6 +99,20 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
 
+		routesForModel := routes[cloud]
+
+		if cloud == "AzureCustomizedCloud" {
+			customizedCloudSettings := types.AzureMonitorCustomizedCloudSettings{}
+			err = json.Unmarshal(settings.JSONData, &customizedCloudSettings)
+			if err != nil {
+				return nil, fmt.Errorf("error getting customized cloud settings: %w", err)
+			}
+			if customizedCloudSettings.CustomizedRoutes == nil {
+				return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
+			}
+			routesForModel = customizedCloudSettings.CustomizedRoutes
+		}
+
 		credentials, err := getAzureCredentials(cfg, jsonData, settings.DecryptedSecureJSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
@@ -111,7 +125,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			JSONData:                jsonDataObj,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
-			Routes:                  routes[cloud],
+			Routes:                  routesForModel,
 			Services:                map[string]types.DatasourceService{},
 		}
 
