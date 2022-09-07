@@ -128,7 +128,7 @@ func TestShouldUploadWhenNoFileAlreadyExists(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.jpg"
-	mockStorage.On("Get", mock.Anything, fileName).Return(nil, nil)
+	mockStorage.On("Get", mock.Anything, fileName, &filestorage.GetFileOptions{WithContents: false}).Return(nil, false, nil)
 	mockStorage.On("Upsert", mock.Anything, &filestorage.UpsertFileCommand{
 		Path:     fileName,
 		MimeType: "image/jpeg",
@@ -157,7 +157,7 @@ func TestShouldFailUploadWithoutAccess(t *testing.T) {
 func TestShouldFailUploadWhenFileAlreadyExists(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
-	mockStorage.On("Get", mock.Anything, "/myFile.jpg").Return(&filestorage.File{Contents: make([]byte, 0)}, nil)
+	mockStorage.On("Get", mock.Anything, "/myFile.jpg", &filestorage.GetFileOptions{WithContents: false}).Return(&filestorage.File{Contents: make([]byte, 0)}, true, nil)
 
 	err := service.Upload(context.Background(), dummyUser, &UploadRequest{
 		EntityType: EntityTypeImage,
@@ -213,7 +213,7 @@ func TestShouldUploadSvg(t *testing.T) {
 	service, mockStorage, storageName := setupUploadStore(t, nil)
 
 	fileName := "/myFile.svg"
-	mockStorage.On("Get", mock.Anything, fileName).Return(nil, nil)
+	mockStorage.On("Get", mock.Anything, fileName, &filestorage.GetFileOptions{WithContents: false}).Return(nil, false, nil)
 	mockStorage.On("Upsert", mock.Anything, &filestorage.UpsertFileCommand{
 		Path:     fileName,
 		MimeType: "image/svg+xml",

@@ -63,7 +63,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			rule := models.AlertRuleGen(withQueryForState(t, evalState))()
 			ruleStore.PutRule(context.Background(), rule)
-
+			folder, _ := ruleStore.GetNamespaceByUID(context.Background(), rule.NamespaceUID, rule.OrgID, nil)
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
@@ -75,6 +75,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalChan <- &evaluation{
 				scheduledAt: expectedTime,
 				rule:        rule,
+				folderTitle: folder.Title,
 			}
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
@@ -82,7 +83,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			t.Run("it should add extra labels", func(t *testing.T) {
 				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
-				folder, _ := ruleStore.GetNamespaceByUID(context.Background(), rule.NamespaceUID, rule.OrgID, nil)
 				for _, s := range states {
 					assert.Equal(t, rule.UID, s.Labels[models.RuleUIDLabel])
 					assert.Equal(t, rule.NamespaceUID, s.Labels[models.NamespaceUIDLabel])
@@ -111,10 +111,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Len(t, states, 1)
 				s := states[0]
 
-				var cmd *models.SaveAlertInstanceCommand
+				var cmd *models.AlertInstance
 				for _, op := range instanceStore.RecordedOps {
 					switch q := op.(type) {
-					case models.SaveAlertInstanceCommand:
+					case models.AlertInstance:
 						cmd = &q
 					}
 					if cmd != nil {
@@ -123,11 +123,11 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				}
 
 				require.NotNil(t, cmd)
-				t.Logf("Saved alert instance: %v", cmd)
+				t.Logf("Saved alert instances: %v", cmd)
 				require.Equal(t, rule.OrgID, cmd.RuleOrgID)
 				require.Equal(t, expectedTime, cmd.LastEvalTime)
-				require.Equal(t, cmd.RuleUID, cmd.RuleUID)
-				require.Equal(t, evalState.String(), string(cmd.State))
+				require.Equal(t, rule.UID, cmd.RuleUID)
+				require.Equal(t, evalState.String(), string(cmd.CurrentState))
 				require.Equal(t, s.Labels, data.Labels(cmd.Labels))
 			})
 

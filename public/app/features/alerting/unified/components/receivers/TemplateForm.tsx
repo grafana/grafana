@@ -12,6 +12,7 @@ import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/ty
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
+import { initialAsyncRequestState } from '../../utils/redux';
 import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
@@ -38,7 +39,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 

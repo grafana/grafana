@@ -26,6 +26,7 @@ import { SilenceFormFields } from '../../types/silence-form';
 import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
 import { parseQueryParamMatchers } from '../../utils/matchers';
 import { makeAMLink } from '../../utils/misc';
+import { initialAsyncRequestState } from '../../utils/redux';
 
 import { MatchedSilencedRules } from './MatchedSilencedRules';
 import MatchersField from './MatchersField';
@@ -106,7 +107,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
 
   const { loading } = useUnifiedAlertingSelector((state) => state.updateSilence);
 
-  useCleanup((state) => state.unifiedAlerting.updateSilence);
+  useCleanup((state) => (state.unifiedAlerting.updateSilence = initialAsyncRequestState));
 
   const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
 

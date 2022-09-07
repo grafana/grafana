@@ -1,7 +1,6 @@
 import Prism, { LanguageMap } from 'prismjs';
 import { Block, Text, Decoration } from 'slate';
-
-import { Plugin } from '@grafana/slate-react';
+import { Plugin } from 'slate-react';
 
 import TOKEN_MARK from './TOKEN_MARK';
 import Options, { OptionsFormat } from './options';
