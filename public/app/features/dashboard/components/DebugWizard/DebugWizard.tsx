@@ -14,7 +14,7 @@ import {
   FeatureState,
   formattedValueToString,
 } from '@grafana/data';
-import { getTemplateSrv, locationService } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import {
   Drawer,
   Tab,
@@ -34,7 +34,7 @@ import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { pendingNewDashboard } from 'app/features/dashboard/state/initDashboard';
+import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { Randomize } from './randomizer';
@@ -72,9 +72,10 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   const [rand, setRand] = useState<Randomize>({});
   const [_, copyToClipboard] = useCopyToClipboard();
   const info = useAsync(async () => {
-    const dash = await getDebugDashboard(panel, rand, getTimeSrv().timeRange());
-    setDashboardText(JSON.stringify(dash, null, 2));
-  }, [rand, panel, plugin, setDashboardText]);
+    const dashboard = await getDebugDashboard(panel, rand, getTimeSrv().timeRange());
+    setDashboardToFetchFromLocalStorage({ meta: {}, dashboard });
+    setDashboardText(JSON.stringify(dashboard, null, 2));
+  }, [rand, panel, plugin, setDashboardText, currentTab]);
 
   const snapshotSize = useMemo(() => {
     return formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
@@ -95,9 +96,8 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   };
 
   const doImportDashboard = () => {
-    pendingNewDashboard.dashboard = JSON.parse(snapshotText);
-    locationService.push('/dashboard/new'); // will load the above body
-    appEvents.emit(AppEvents.alertSuccess, ['Panel snapshot dashboard']);
+    setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: JSON.parse(snapshotText) });
+    global.open(config.appUrl + 'dashboard/new', '_blank');
   };
 
   const doDownloadDashboard = () => {
@@ -130,7 +130,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   return (
     <Drawer
       title={`Debug: ${panelTitle}`}
-      width="50%"
+      width="90%"
       onClose={onClose}
       expandable
       scrollableContent
@@ -196,7 +196,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
           </AutoSizer>
         </div>
       ) : (
-        <div>
+        <>
           {false && (
             <Field
               label="Randomize data"
@@ -237,20 +237,24 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
                 <Button icon="github" onClick={doCopyMarkdown}>
                   Copy for github
                 </Button>
-              </HorizontalGroup>
-              <div>
-                <br />
                 <Button onClick={doImportDashboard} variant="secondary">
                   Preview
                 </Button>
-                &nbsp;Requires <a href="/plugins/testdata">Testdata DB</a> to be installed
-              </div>
+              </HorizontalGroup>
             </>
           </Field>
 
-          {/* TODO: can we iframe in the preview? */}
-          {false && <iframe src={`/dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`} width="100%" height={300} />}
-        </div>
+          <AutoSizer disableWidth>
+            {({ height }) => (
+              <iframe
+                src={`/dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`}
+                width="100%"
+                height={height - 100}
+                frameBorder="0"
+              />
+            )}
+          </AutoSizer>
+        </>
       )}
     </Drawer>
   );
