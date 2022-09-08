@@ -13,6 +13,8 @@ aliases:
   - /docs/grafana/latest/administration/reports/
   - /docs/grafana/latest/dashboards/reporting/
   - /docs/grafana/latest/enterprise/export-pdf/
+  - docs/grafana/latest/dashboards/share-dashboards-panels/
+  - /docs/grafana/latest/share-dashboards-panels/
 title: Share dashboards and panels
 menuTitle: Share dashboards and panels
 weight: 85
