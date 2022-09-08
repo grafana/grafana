@@ -138,8 +138,8 @@ RUN apt-get update && \
         ruby-dev        \
         rubygems        \
         unzip && \
-    gem install public_suffix -v 4.0.7 && \
-    gem install -N fpm && \
+    gem install -N public_suffix -v 4.0.7 && \
+    gem install --conservative -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
     curl -fsS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -  && \
     curl -O https://deb.nodesource.com/node_16.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
