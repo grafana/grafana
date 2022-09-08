@@ -154,12 +154,12 @@ Note: If a match is found in other fields, groups will be ignored.
 
 > Available in Grafana v9.2 and later versions.
 
-If the role mapping expression evaluates to `GrafanaAdmin`, the user will be granted server administrator privileges.  
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
 This is useful if you want to grant server administrator privileges to a subset of users.  
-The user will also be assigned the role of `Admin` of the default organization.
+Grafana also assigns the user the `Admin` role of the default organization.
 
 The setting `allow_assign_grafana_admin` under `[auth.gitlab]` must be set to `true` for this to work.  
-If the setting is set to `false`, the user will be assigned the role of `Admin` of the default organization, but not server administrator privileges.
+If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
 
 ```ini
 allow_assign_grafana_admin = true
