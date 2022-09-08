@@ -100,8 +100,8 @@ const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
         <Button type="button" onClick={onApply}>
           Apply
         </Button>
-        <Tooltip content={<YamlContentInfo />} theme="info" placement="left-start">
-          <Icon name="info-circle" size="xl" />
+        <Tooltip content={<YamlContentInfo />} theme="info" placement="left-start" interactive={true}>
+          <Icon name="exclamation-triangle" size="xl" />
         </Tooltip>
       </div>
 
@@ -130,8 +130,15 @@ const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
 function YamlContentInfo() {
   return (
     <div>
-      The YAML content in the editor represents a single alert only. <br />
-      It does not contain the complete configuration of alert rules needed for Prometheus configuration
+      The YAML content in the editor only contains alert rule configuration <br />
+      To configure Prometheus, you need to provide the rest of the{' '}
+      <a
+        href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/"
+        target="_blank"
+        rel="noreferrer"
+      >
+        configuration file content.
+      </a>
     </div>
   );
 }
