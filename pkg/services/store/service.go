@@ -34,8 +34,12 @@ var ErrOnlyDashboardSaveSupported = errors.New("only dashboard save is currently
 
 const RootPublicStatic = "public-static"
 const RootResources = "resources"
+const RootContent = "content"
 const RootDevenv = "devenv"
 const RootSystem = "system"
+
+const RootMountPoint = ""
+const ContentMountPoint = RootContent
 
 const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
@@ -108,6 +112,7 @@ func ProvideService(
 			Builtin:  true,
 		}, RootStorageConfig{
 			Prefix:      RootPublicStatic,
+			MountPoint:  RootMountPoint,
 			Name:        "Public static files",
 			Description: "Access files from the static public files",
 			Disk: &StorageLocalDiskConfig{
@@ -130,6 +135,7 @@ func ProvideService(
 				ReadOnly: false,
 			}, RootStorageConfig{
 				Prefix:      RootDevenv,
+				MountPoint:  ContentMountPoint,
 				Name:        "Development Environment",
 				Description: "Explore files within the developer environment directly",
 				Disk: &StorageLocalDiskConfig{
@@ -159,23 +165,22 @@ func ProvideService(
 	initializeOrgStorages := func(orgId int64) []storageRuntime {
 		storages := make([]storageRuntime, 0)
 
+		storages = append(storages,
+			newSQLStorage(RootStorageMeta{
+				Builtin: true,
+			}, RootContent, "Content", "Content root", &StorageSQLConfig{}, sql, orgId, true))
+
 		// Custom upload files
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootResources,
-				"Resources",
-				"Upload custom resource files",
-				&StorageSQLConfig{}, sql, orgId))
+			}, RootResources, "Resources", "Upload custom resource files", &StorageSQLConfig{}, sql, orgId, false))
 
 		// System settings
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootSystem,
-				"System",
-				"Grafana system storage",
-				&StorageSQLConfig{}, sql, orgId))
+			}, RootSystem, "System", "Grafana system storage", &StorageSQLConfig{}, sql, orgId, false))
 
 		return storages
 	}
@@ -248,6 +253,17 @@ func newStandardStorageService(
 	authService storageAuthService,
 	cfg *setting.Cfg,
 ) *standardStorageService {
+	prefixes := make(map[string]bool)
+
+	for _, root := range globalRoots {
+		currentPrefix := root.Meta().Config.Prefix
+		if _, ok := prefixes[currentPrefix]; ok {
+			panic("non-unique storage prefix: " + currentPrefix)
+		}
+
+		prefixes[currentPrefix] = true
+	}
+
 	rootsByOrgId := make(map[int64][]storageRuntime)
 	rootsByOrgId[ac.GlobalOrgID] = globalRoots
 

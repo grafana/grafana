@@ -276,7 +276,7 @@ func (s *standardStorageService) getConfig(c *models.ReqContext) response.Respon
 	t := s.tree
 	t.assureOrgIsInitialized(orgId)
 
-	storages := t.getStorages(orgId)
+	storages := t.getStorages(orgId, map[string]bool{RootMountPoint: true, ContentMountPoint: true})
 	for _, s := range storages {
 		roots = append(roots, s.Meta())
 	}

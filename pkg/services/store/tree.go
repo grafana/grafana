@@ -25,7 +25,13 @@ var (
 func asNameToFileStorageMap(storages []storageRuntime) map[string]storageRuntime {
 	lookup := make(map[string]storageRuntime)
 	for _, storage := range storages {
-		lookup[storage.Meta().Config.Prefix] = storage
+		mountPoint := storage.Meta().Config.MountPoint
+		prefix := storage.Meta().Config.Prefix
+		if mountPoint == RootMountPoint {
+			lookup[prefix] = storage
+		} else {
+			lookup[fmt.Sprintf("%s/%s", mountPoint, prefix)] = storage
+		}
 	}
 	return lookup
 }
@@ -61,6 +67,24 @@ func (t *nestedTree) getRoot(orgId int64, path string) (storageRuntime, string) 
 	rootKey, path := splitFirstSegment(path)
 	root, ok := t.lookup[orgId][rootKey]
 	if ok && root != nil {
+
+		if root.Meta().Config.CanBeAMountPoint {
+			mountedKey, nestedPath := splitFirstSegment(path)
+			nestedLookupKey := rootKey + "/" + mountedKey
+			nestedRoot, nestedOk := t.lookup[orgId][nestedLookupKey]
+
+			if nestedOk && nestedRoot != nil {
+				return nestedRoot, filestorage.Delimiter + nestedPath
+			}
+
+			if orgId != ac.GlobalOrgID {
+				globalRoot, globalOk := t.lookup[ac.GlobalOrgID][nestedLookupKey]
+				if globalOk && globalRoot != nil {
+					return globalRoot, filestorage.Delimiter + nestedPath
+				}
+			}
+		}
+
 		return root, filestorage.Delimiter + path
 	}
 
@@ -90,26 +114,37 @@ func (t *nestedTree) GetFile(ctx context.Context, orgId int64, path string) (*fi
 	return file, err
 }
 
-func (t *nestedTree) getStorages(orgId int64) []storageRuntime {
+func (t *nestedTree) getStorages(orgId int64, mountPoints map[string]bool) []storageRuntime {
 	globalStorages := make([]storageRuntime, 0)
 	globalStorages = append(globalStorages, t.rootsByOrgId[ac.GlobalOrgID]...)
 
 	if orgId == ac.GlobalOrgID {
-		return globalStorages
+		storages := make([]storageRuntime, 0)
+		for _, s := range globalStorages {
+			if _, ok := mountPoints[s.Meta().Config.MountPoint]; ok {
+				storages = append(storages, s)
+			}
+		}
+		return storages
 	}
 
 	orgPrefixes := make(map[string]bool)
 	storages := make([]storageRuntime, 0)
 
 	for _, s := range t.rootsByOrgId[orgId] {
-		storages = append(storages, s)
-		orgPrefixes[s.Meta().Config.Prefix] = true
+
+		if _, ok := mountPoints[s.Meta().Config.MountPoint]; ok {
+			storages = append(storages, s)
+			orgPrefixes[s.Meta().Config.Prefix] = true
+		}
 	}
 
 	for _, s := range globalStorages {
-		// prefer org-specific storage over global with the same prefix
-		if ok := orgPrefixes[s.Meta().Config.Prefix]; !ok {
-			storages = append(storages, s)
+		if _, ok := mountPoints[s.Meta().Config.MountPoint]; ok {
+			// prefer org-specific storage over global with the same prefix
+			if ok := orgPrefixes[s.Meta().Config.Prefix]; !ok {
+				storages = append(storages, s)
+			}
 		}
 	}
 
@@ -122,7 +157,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 
 		idx := 0
 
-		storages := t.getStorages(orgId)
+		storages := t.getStorages(orgId, map[string]bool{RootMountPoint: true, ContentMountPoint: true})
 		count := len(storages)
 
 		names := data.NewFieldFromFieldType(data.FieldTypeString, count)
@@ -154,6 +189,11 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		return nil, nil // not found (or not ready)
 	}
 
+	var storages []storageRuntime
+	if root.Meta().Config.CanBeAMountPoint {
+		storages = t.getStorages(orgId, map[string]bool{root.Meta().Config.Prefix: true})
+	}
+
 	store := root.Store()
 	if store == nil {
 		return nil, fmt.Errorf("store not ready")
@@ -170,7 +210,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		return nil, err
 	}
 
-	count := len(listResponse.Files)
+	count := len(listResponse.Files) + len(storages)
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
@@ -185,6 +225,14 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		mtype.Set(i, f.MimeType)
 		fsize.Set(i, f.Size)
 	}
+
+	for i, s := range storages {
+		idx := len(listResponse.Files) + i
+		names.Set(idx, s.Meta().Config.Prefix)
+		mtype.Set(idx, filestorage.DirectoryMimeType)
+		fsize.Set(idx, int64(0))
+	}
+
 	frame := data.NewFrame("", names, mtype, fsize)
 	frame.SetMeta(&data.FrameMeta{
 		Type: data.FrameTypeDirectoryListing,

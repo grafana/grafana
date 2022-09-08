@@ -101,13 +101,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	t.Helper()
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
-	sqlStorage := newSQLStorage(
-		RootStorageMeta{},
-		storageName, "Testing upload", "dummy descr",
-		&StorageSQLConfig{},
-		sqlstore.InitTestDB(t),
-		1, // orgID (prefix init)
-	)
+	sqlStorage := newSQLStorage(RootStorageMeta{}, storageName, "Testing upload", "dummy descr", &StorageSQLConfig{}, sqlstore.InitTestDB(t), 1, false)
 	sqlStorage.store = mockStorage
 
 	if authService == nil {

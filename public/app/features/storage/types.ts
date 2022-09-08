@@ -31,6 +31,7 @@ export interface StorageConfig {
   prefix: string;
   name: string;
   description: string;
+  mountPoint: string;
   disk?: {
     path: string;
   };
