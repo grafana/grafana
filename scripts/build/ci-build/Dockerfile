@@ -120,7 +120,6 @@ RUN apt-get update && \
     apt-get install -yq \
         apt-transport-https \
         build-essential netcat-traditional clang gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-mingw-w64-x86-64 \
-        python2-minimal \
         python-pip      \
         ca-certificates \
         curl            \
