@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
+import { toOption } from '@grafana/data';
+
 import { MetricStatEditor } from '..';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { MetricStat } from '../../types';
@@ -189,6 +191,16 @@ describe('MetricStatEditor', () => {
       expect(onChange.mock.calls).toEqual([
         [{ ...propsNamespaceMetrics.metricStat, metricName: 'm1', namespace: 'n2' }],
       ]);
+    });
+  });
+
+  describe('metric value', () => {
+    it('should be displayed when a custom value is used and its value is not in the select options', async () => {
+      const expected = 'CPUUtilzation';
+      await act(async () => {
+        render(<MetricStatEditor {...props} metricStat={{ ...props.metricStat, metricName: expected }} />);
+      });
+      expect(await screen.findByText(expected)).toBeInTheDocument();
     });
   });
 });
