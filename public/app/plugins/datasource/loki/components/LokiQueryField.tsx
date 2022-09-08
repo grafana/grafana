@@ -17,8 +17,8 @@ import {
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
+import LokiLanguageProvider from '../LanguageProvider';
 import { LokiDatasource } from '../datasource';
-import LokiLanguageProvider from '../language_provider';
 import { escapeLabelValueInSelector, shouldRefreshLabels } from '../language_utils';
 import { LokiQuery, LokiOptions } from '../types';
 
