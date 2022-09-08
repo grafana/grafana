@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -80,6 +81,33 @@ func checkSearchResponseExtended(t *testing.T, fileName string, index *orgIndex,
 	t.Helper()
 	resp := doSearchQuery(context.Background(), testLogger, index, filter, query, extender, "/pfix")
 	experimental.CheckGoldenJSONResponse(t, "testdata", fileName, resp, true)
+}
+
+func getFrameWithNames(resp *backend.DataResponse) *data.Frame {
+	if resp == nil || len(resp.Frames) == 0 {
+		return nil
+	}
+
+	frame := resp.Frames[0]
+	nameField, idx := frame.FieldByName(documentFieldName)
+	if nameField.Len() == 0 || idx == -1 {
+		return nil
+	}
+
+	scoreField, _ := frame.FieldByName("score")
+	return data.NewFrame("ordering frame", nameField, scoreField)
+}
+
+func checkSearchResponseOrdering(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery) {
+	t.Helper()
+	checkSearchResponseOrderingExtended(t, fileName, index, filter, query, &NoopQueryExtender{})
+}
+
+func checkSearchResponseOrderingExtended(t *testing.T, fileName string, index *orgIndex, filter ResourceFilter, query DashboardQuery, extender QueryExtender) {
+	t.Helper()
+	query.Explain = true
+	resp := doSearchQuery(context.Background(), testLogger, index, filter, query, extender, "/pfix")
+	experimental.CheckGoldenJSONFrame(t, "testdata", fileName, getFrameWithNames(resp), true)
 }
 
 var testDashboards = []dashboard{
