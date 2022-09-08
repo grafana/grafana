@@ -3,15 +3,14 @@ import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, NavSection } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { Dropdown, FilterInput, Icon, Tooltip, useStyles2, toIconName } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { useSearchQuery } from 'app/features/search/hooks/useSearchQuery';
 import { StoreState } from 'app/types';
 
-import { parseRouteParams } from '../../../features/search/utils';
 import { enrichConfigItems, enrichWithInteractionTracking } from '../NavBar/utils';
 import { OrgSwitcher } from '../OrgSwitcher';
 
@@ -21,7 +20,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const location = useLocation();
-  const queryParams = parseRouteParams(locationService.getSearchObject());
+  const { query, onQueryChange } = useSearchQuery({});
   const navBarTree = useSelector((state: StoreState) => state.navBarTree);
   const navTree = cloneDeep(navBarTree);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
@@ -29,24 +28,15 @@ export function TopSearchBar() {
     setShowSwitcherModal(!showSwitcherModal);
   };
 
-  const [searchValue, setSearchValue] = useState<string>(queryParams.query ?? '');
   const onOpenSearch = () => {
     locationService.partial({ search: 'open' });
   };
-  const onSearchChange = (newValue: string) => {
-    setSearchValue(newValue);
+  const onSearchChange = (value: string) => {
+    onQueryChange(value);
+    if (value) {
+      onOpenSearch();
+    }
   };
-  useDebounce(
-    () => {
-      if (searchValue) {
-        locationService.partial({ query: searchValue }, true);
-        onOpenSearch();
-        setSearchValue('');
-      }
-    },
-    200,
-    [searchValue]
-  );
 
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
@@ -69,7 +59,7 @@ export function TopSearchBar() {
         <FilterInput
           onClick={onOpenSearch}
           placeholder="Search Grafana"
-          value={searchValue}
+          value={query.query ?? ''}
           onChange={onSearchChange}
           className={styles.searchInput}
         />

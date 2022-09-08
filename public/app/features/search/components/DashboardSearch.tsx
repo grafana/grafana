@@ -62,7 +62,6 @@ export function DashboardSearch({ onCloseSearch }: Props) {
               setInputValue(newQueryText);
             }}
             showManage={false}
-            queryText={query.query}
             includePanels={includePanels!}
             setIncludePanels={setIncludePanels}
             keyboardEvents={keyboardEvents}

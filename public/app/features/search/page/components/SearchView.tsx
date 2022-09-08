@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import debounce from 'debounce-promise';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -31,7 +32,6 @@ import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
 export type SearchViewProps = {
-  queryText: string; // odd that it is not from query.query
   showManage: boolean;
   folderDTO?: FolderDTO;
   hidePseudoFolders?: boolean; // Recent + starred
@@ -44,7 +44,6 @@ export type SearchViewProps = {
 export const SearchView = ({
   showManage,
   folderDTO,
-  queryText,
   onQueryTextChange,
   hidePseudoFolders,
   includePanels,
@@ -63,7 +62,6 @@ export const SearchView = ({
     onLayoutChange,
     onClearStarred,
   } = useSearchQuery({});
-  query.query = queryText; // Use the query value passed in from parent rather than from URL
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
   const layout = getValidQueryLayout(query);
@@ -74,7 +72,7 @@ export const SearchView = ({
 
   const searchQuery = useMemo(() => {
     const q: SearchQuery = {
-      query: queryText,
+      query: query.query,
       tags: query.tag as string[],
       ds_uid: query.datasource as string,
       location: folderDTO?.uid, // This will scope all results to the prefix
@@ -104,7 +102,7 @@ export const SearchView = ({
       q.sort = 'name_sort';
     }
     return q;
-  }, [query, queryText, folderDTO, includePanels]);
+  }, [query, folderDTO, includePanels]);
 
   // Search usage reporting
   useDebounce(
@@ -133,32 +131,38 @@ export const SearchView = ({
     });
   };
 
-  const results = useAsync(() => {
-    const trackingInfo = {
-      layout: query.layout,
-      starred: query.starred,
-      sortValue: query.sort?.value,
-      query: query.query,
-      tagCount: query.tag?.length,
-      includePanels,
-    };
+  const doSearch = useMemo(
+    () =>
+      debounce((query, searchQuery, includePanels, eventTrackingNamespace) => {
+        const trackingInfo = {
+          layout: query.layout,
+          starred: query.starred,
+          sortValue: query.sort?.value,
+          query: query.query,
+          tagCount: query.tag?.length,
+          includePanels,
+        };
 
-    reportSearchQueryInteraction(eventTrackingNamespace, trackingInfo);
+        reportSearchQueryInteraction(eventTrackingNamespace, trackingInfo);
 
-    if (searchQuery.starred) {
-      return getGrafanaSearcher()
-        .starred(searchQuery)
-        .catch((error) =>
-          reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
-        );
-    }
+        if (searchQuery.starred) {
+          return getGrafanaSearcher()
+            .starred(searchQuery)
+            .catch((error) =>
+              reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+            );
+        }
 
-    return getGrafanaSearcher()
-      .search(searchQuery)
-      .catch((error) =>
-        reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
-      );
-  }, [searchQuery]);
+        return getGrafanaSearcher()
+          .search(searchQuery)
+          .catch((error) =>
+            reportSearchFailedQueryInteraction(eventTrackingNamespace, { ...trackingInfo, error: error?.message })
+          );
+      }, 300),
+    []
+  );
+
+  const results = useAsync(() => doSearch(query, searchQuery, includePanels, eventTrackingNamespace), [searchQuery]);
 
   const clearSelection = useCallback(() => {
     searchSelection.items.clear();
@@ -287,7 +291,7 @@ export const SearchView = ({
     );
   };
 
-  if (folderDTO && !results.loading && !results.value?.totalRows && !queryText.length) {
+  if (folderDTO && !results.loading && !results.value?.totalRows && !query.query.length) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"

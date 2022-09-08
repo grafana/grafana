@@ -4,7 +4,7 @@ import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { useRef, useState } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
-import { useDebounce, useLocalStorage } from 'react-use';
+import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -38,13 +38,9 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
     includePanels = false;
   }
 
-  const [inputValue, setInputValue] = useState(query.query ?? '');
   const onSearchQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    setInputValue(e.currentTarget.value);
+    onQueryChange(e.currentTarget.value);
   };
-
-  useDebounce(() => onQueryChange(inputValue), 200, [inputValue]);
 
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
@@ -67,7 +63,7 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
                 <input
                   type="text"
                   placeholder={includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
-                  value={inputValue}
+                  value={query.query ?? ''}
                   onChange={onSearchQueryChange}
                   onKeyDown={onKeyDown}
                   tabIndex={0}
@@ -85,10 +81,9 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
               <div className={styles.search}>
                 <SearchView
                   onQueryTextChange={(newQueryText) => {
-                    setInputValue(newQueryText);
+                    onQueryChange(newQueryText);
                   }}
                   showManage={false}
-                  queryText={query.query}
                   includePanels={includePanels!}
                   setIncludePanels={setIncludePanels}
                   keyboardEvents={keyboardEvents}
