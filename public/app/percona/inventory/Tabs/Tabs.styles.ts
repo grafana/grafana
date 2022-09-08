@@ -29,7 +29,6 @@ export const styles = {
   `,
   tableInnerWrapper: css`
     flex: 1;
-    overflow: hidden;
   `,
   destructiveButton: css`
     background: rgba(0, 0, 0, 0) linear-gradient(rgb(224, 47, 68) 0%, rgb(196, 22, 42) 100%) repeat scroll 0% 0%;
@@ -37,5 +36,18 @@ export const styles = {
   `,
   confirmationText: css`
     margin-bottom: 2em;
+  `,
+  emptyMessage: css`
+    height: 160px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  `,
+  overlay: css`
+    height: 160px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
   `,
 };

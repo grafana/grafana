@@ -1,4 +1,5 @@
-import { CheckboxField, logger } from '@percona/platform-core';
+/* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
+import { CheckboxField, Table, logger } from '@percona/platform-core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 
@@ -8,7 +9,6 @@ import { OldPage } from 'app/core/components/Page/Page';
 import { InventoryDataService, Model } from 'app/percona/inventory/Inventory.tools';
 import { AgentsList } from 'app/percona/inventory/Inventory.types';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
 import { FormElement } from 'app/percona/shared/components/Form';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -31,7 +31,7 @@ export const Agents = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<Model[]>([]);
-  const [selected, setSelectedRows] = useState([]);
+  const [selected, setSelectedRows] = useState<any[]>([]);
   const navModel = usePerconaNavModel('inventory-agents');
   const [generateToken] = useCancelToken();
 
@@ -82,6 +82,10 @@ export const Agents = () => {
     },
     [loadData]
   );
+
+  const handleSelectionChange = useCallback((rows: any[]) => {
+    setSelectedRows(rows);
+  }, []);
 
   return (
     <OldPage navModel={navModel}>
@@ -151,13 +155,17 @@ export const Agents = () => {
             </Modal>
             <div className={styles.tableInnerWrapper} data-testid="table-inner-wrapper">
               <Table
-                className={styles.table}
                 columns={AGENTS_COLUMNS}
                 data={data}
+                totalItems={data.length}
                 rowSelection
-                onRowSelection={(selected) => setSelectedRows(selected)}
-                noData={<h1>No agents Available</h1>}
-                loading={loading}
+                onRowSelection={handleSelectionChange}
+                showPagination
+                pageSize={25}
+                emptyMessage="No agents Available"
+                emptyMessageClassName={styles.emptyMessage}
+                pendingRequest={loading}
+                overlayClassName={styles.overlay}
               />
             </div>
           </div>

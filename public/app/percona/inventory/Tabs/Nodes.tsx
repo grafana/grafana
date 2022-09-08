@@ -1,15 +1,13 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
-import { CheckboxField, logger } from '@percona/platform-core';
+import { CheckboxField, Table, logger } from '@percona/platform-core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { AppEvents } from '@grafana/data';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
-import { InventoryDataService, Model } from 'app/percona/inventory/Inventory.tools';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { Table } from 'app/percona/shared/components/Elements/Table/Table';
-import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
+import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table';
 import { FormElement } from 'app/percona/shared/components/Form';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
@@ -19,6 +17,7 @@ import { filterFulfilled, processPromiseResults } from 'app/percona/shared/helpe
 import { appEvents } from '../../../core/app_events';
 import { GET_NODES_CANCEL_TOKEN, NODES_COLUMNS } from '../Inventory.constants';
 import { InventoryService } from '../Inventory.service';
+import { InventoryDataService, Model } from '../Inventory.tools';
 import { NodesList } from '../Inventory.types';
 
 import { styles } from './Tabs.styles';
@@ -34,7 +33,7 @@ export const NodesTab = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<Model[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selected, setSelectedRows] = useState([]);
+  const [selected, setSelectedRows] = useState<any[]>([]);
   const navModel = usePerconaNavModel('inventory-nodes');
   const [generateToken] = useCancelToken();
 
@@ -93,6 +92,10 @@ export const NodesTab = () => {
     },
     [removeNodes, selected]
   );
+
+  const handleSelectionChange = useCallback((rows: any[]) => {
+    setSelectedRows(rows);
+  }, []);
 
   return (
     <OldPage navModel={navModel}>
@@ -158,13 +161,17 @@ export const NodesTab = () => {
             </Modal>
             <div className={styles.tableInnerWrapper} data-testid="table-inner-wrapper">
               <Table
-                className={styles.table}
                 columns={NODES_COLUMNS}
                 data={data}
+                totalItems={data.length}
                 rowSelection
-                onRowSelection={(selected) => setSelectedRows(selected)}
-                noData={<h1>No nodes Available</h1>}
-                loading={loading}
+                onRowSelection={handleSelectionChange}
+                showPagination
+                pageSize={25}
+                emptyMessage="No nodes Available"
+                emptyMessageClassName={styles.emptyMessage}
+                pendingRequest={loading}
+                overlayClassName={styles.overlay}
               />
             </div>
           </div>
