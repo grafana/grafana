@@ -6906,6 +6906,11 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/jaeger/util.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
     "public/app/plugins/datasource/loki/components/LokiLabelBrowser.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -6934,11 +6939,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/getDerivedFields.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/loki/language_provider.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/datasource/loki/live_streams.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
