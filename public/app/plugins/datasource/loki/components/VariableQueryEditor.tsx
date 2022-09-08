@@ -98,13 +98,23 @@ export const LokiVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               allowCustomValue
             />
           </InlineField>
-          <InlineField label="Stream selector" labelWidth={20} tooltip={<div>Optional</div>}>
+          <InlineField
+            label="Stream selector"
+            labelWidth={20}
+            tooltip={
+              <div>
+                Optional. If defined, a list of values for the label in the specified log stream selector is returned.
+              </div>
+            }
+          >
             <Input
               type="text"
               aria-label="Stream selector"
+              placeholder="Optional stream selector"
               value={stream}
               onChange={onStreamChange}
               onBlur={handleBlur}
+              width={22}
             />
           </InlineField>
         </>
