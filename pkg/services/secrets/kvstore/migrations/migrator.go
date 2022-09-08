@@ -79,7 +79,7 @@ func (s *SecretMigrationProviderImpl) Migrate(ctx context.Context) error {
 		}
 	})
 	if err != nil {
-		logger.Warn("Server lock for secret migration already exists")
+		logger.Error("Server lock for secret migration already exists")
 	}
 	return nil
 }
