@@ -3,6 +3,7 @@ import React from 'react';
 import { AutoSizeInput, EditorField, EditorRow } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
+import { DEFAULT_LIMIT } from '../datasource';
 import { TempoQuery } from '../types';
 
 interface Props {
@@ -18,14 +19,14 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   return (
     <>
       <EditorRow>
-        <QueryOptionGroup title="Options" collapsedInfo={[`Limit: ${query.limit || 10}`]}>
+        <QueryOptionGroup title="Options" collapsedInfo={[`Limit: ${query.limit || DEFAULT_LIMIT}`]}>
           <EditorField label="Limit" tooltip="Maximum number of traces to return.">
             <AutoSizeInput
               className="width-4"
               placeholder="auto"
               type="number"
               min={1}
-              defaultValue={10}
+              defaultValue={DEFAULT_LIMIT}
               onCommitChange={onLimitChange}
               value={query.limit}
             />

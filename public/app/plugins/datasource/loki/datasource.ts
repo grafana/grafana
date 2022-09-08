@@ -44,9 +44,9 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
 
+import LanguageProvider from './LanguageProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
