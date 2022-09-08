@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -216,6 +217,30 @@ func ProvideService(
 					ActionFilesWrite:  systemBrandingFilter,
 					ActionFilesDelete: systemBrandingFilter,
 				}
+			}
+		}
+
+		if storageName == RootContent {
+			if user.OrgRole != org.RoleAdmin {
+				// read only
+				return map[string]filestorage.PathFilter{
+					ActionFilesRead:   allowAllPathFilter,
+					ActionFilesWrite:  denyAllPathFilter,
+					ActionFilesDelete: denyAllPathFilter,
+				}
+			}
+
+			// read/write for all except for devenv
+			writeFilter := filestorage.NewPathFilter(
+				[]string{filestorage.Delimiter}, // access to everything
+				nil,                             // access to the `/branding` folder itself, but not to any other sibling folder
+				[]string{filestorage.Delimiter + RootDevenv + filestorage.Delimiter}, // except devenv
+				[]string{filestorage.Delimiter + RootDevenv})
+
+			return map[string]filestorage.PathFilter{
+				ActionFilesRead:   allowAllPathFilter,
+				ActionFilesWrite:  writeFilter,
+				ActionFilesDelete: writeFilter,
 			}
 		}
 

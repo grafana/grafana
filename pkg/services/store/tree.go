@@ -194,7 +194,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 	}
 
 	var storages []storageRuntime
-	if root.Meta().Config.Prefix == RootContent {
+	if root.Meta().Config.Prefix == RootContent && (path == "" || path == "/") {
 		storages = filterStoragesUnderContentRoot(t.getStorages(orgId))
 	}
 	grafanaStorageLogger.Info("Listing folder", "path", path, "storageCount", len(storages))
