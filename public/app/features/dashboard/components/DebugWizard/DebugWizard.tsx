@@ -14,7 +14,7 @@ import {
   FeatureState,
   formattedValueToString,
 } from '@grafana/data';
-import { getTemplateSrv, locationService } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import {
   Drawer,
   Tab,
@@ -34,7 +34,7 @@ import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { pendingNewDashboard } from 'app/features/dashboard/state/initDashboard';
+import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { Randomize } from './randomizer';
@@ -95,9 +95,8 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   };
 
   const doImportDashboard = () => {
-    pendingNewDashboard.dashboard = JSON.parse(snapshotText);
-    locationService.push('/dashboard/new'); // will load the above body
-    appEvents.emit(AppEvents.alertSuccess, ['Panel snapshot dashboard']);
+    setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: JSON.parse(snapshotText) });
+    global.open(config.appUrl + 'dashboard/new', '_blank');
   };
 
   const doDownloadDashboard = () => {
