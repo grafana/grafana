@@ -36,7 +36,7 @@ import {
   PanelEvents,
   toUtc,
 } from '@grafana/data';
-import { graphTickFormatter, graphTimeFormat, IconName, MenuItemProps, MenuItemsGroup } from '@grafana/ui';
+import { graphTickFormatter, graphTimeFormat, MenuItemProps, MenuItemsGroup } from '@grafana/ui';
 import { coreModule } from 'app/angular/core_module';
 import config from 'app/core/config';
 import { updateLegendValues } from 'app/core/core';
@@ -256,7 +256,7 @@ class GraphElement {
               ariaLabel: link.title,
               url: link.href,
               target: link.target,
-              icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
+              icon: link.target === '_self' ? 'link' : 'external-link-alt',
               onClick: link.onClick,
             };
           }),
