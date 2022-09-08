@@ -108,7 +108,22 @@ export const Examples = () => {
   );
 };
 
-export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => <PanelChrome {...args} />;
+export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => {
+  const theme = useTheme2();
+
+  const contentStyle: CSSProperties = {
+    background: theme.colors.background.secondary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  return (
+    <PanelChrome {...args}>
+      {(width: number, height: number) => <div style={{ height, width, ...contentStyle }}>Description text</div>}
+    </PanelChrome>
+  );
+};
 
 const LoadingIcon = <PanelChrome.LoadingIndicator loading onCancel={() => {}} />;
 const ErrorIcon = <PanelChrome.ErrorIndicator error="Error text" onClick={() => {}} />;
@@ -133,9 +148,6 @@ Basic.args = {
   width: 400,
   height: 200,
   title: 'Title text',
-  children: (width: number, height: number) => (
-    <div style={{ height, width, background: '#22252b' }}>Description text</div>
-  ),
 };
 
 export default meta;
