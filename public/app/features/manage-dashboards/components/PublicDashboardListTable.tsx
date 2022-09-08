@@ -63,7 +63,7 @@ export const PublicDashboardListTable: FC = () => {
         <thead>
           <tr>
             <th>Dashboard</th>
-            <th>Public Dashboard Url</th>
+            <th>Public dashboard url</th>
             <th>Enabled</th>
           </tr>
         </thead>
