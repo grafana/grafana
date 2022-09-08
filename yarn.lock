@@ -5355,12 +5355,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.0.18":
-  version: 0.0.18
-  resolution: "@grafana/lezer-logql@npm:0.0.18"
+"@grafana/lezer-logql@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@grafana/lezer-logql@npm:0.1.0"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: bd15fc90b11ab96723cf0043956d1e30e5877bdc859f41dbc3637402ccee06c5adf58156bc1207cbce216c2646b1fad702703b59bbe1d9dcf116ad80ca592df2
+  checksum: 77c8a75c211cfdebe99eaf892d07673c52531fdb696c463a9dade74c25d919b87561b2f97c716d1d710c95da7c49edcffb6c98e0d4b635d0aa91d40cc5167f9e
   languageName: node
   linkType: hard
 
@@ -22100,7 +22100,7 @@ __metadata:
     "@grafana/eslint-config": 5.0.0
     "@grafana/experimental": ^0.0.2-canary.36
     "@grafana/google-sdk": 0.0.3
-    "@grafana/lezer-logql": 0.0.18
+    "@grafana/lezer-logql": 0.1.0
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"

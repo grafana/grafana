@@ -4,8 +4,8 @@ import { AbstractLabelOperator } from '@grafana/data';
 import { TypeaheadInput } from '@grafana/ui';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import LanguageProvider, { LokiHistoryItem } from './LanguageProvider';
 import { LokiDatasource } from './datasource';
-import LanguageProvider, { LokiHistoryItem } from './language_provider';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { LokiQueryType } from './types';
 
