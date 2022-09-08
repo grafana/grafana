@@ -18,7 +18,13 @@ func TestTemplate(t *testing.T) {
 		Error: errors.New("oh noes"),
 	})
 
-	require.True(t, errors.Is(err, tmpl))
+	t.Run("Built error should return true when compared with templated error ", func(t *testing.T) {
+		require.True(t, errors.Is(err, tmpl))
+	})
+
+	t.Run("Built error should return true when compared with templated error base ", func(t *testing.T) {
+		require.True(t, errors.Is(err, tmpl.Base))
+	})
 }
 
 func ExampleTemplate() {
