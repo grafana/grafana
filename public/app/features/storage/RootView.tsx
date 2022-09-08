@@ -68,7 +68,7 @@ export function RootView({ root, onPathChange }: Props) {
       <VerticalGroup>
         {roots.map((s) => {
           const ok = s.ready;
-          const subPath = [s.config?.mountPoint, s.config?.prefix].filter((s) => Boolean(s?.length)).join('/');
+          const subPath = s.config?.underContentRoot ? `content/${s.config.prefix}` : s.config.prefix;
           return (
             <Card key={s.config.prefix} href={ok ? `admin/storage/${subPath}/` : undefined}>
               <Card.Heading>{s.config.name}</Card.Heading>

@@ -101,8 +101,7 @@ func (c *GlobalStorageConfig) save() error {
 type RootStorageConfig struct {
 	Type             string `json:"type"`
 	Prefix           string `json:"prefix"`
-	MountPoint       string `json:"mountPoint"`
-	CanBeAMountPoint bool   `json:"supportsMountPoints"`
+	UnderContentRoot bool   `json:"underContentRoot"`
 	Name             string `json:"name"`
 	Description      string `json:"description"`
 	Disabled         bool   `json:"disabled,omitempty"`

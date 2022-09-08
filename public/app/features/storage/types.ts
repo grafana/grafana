@@ -31,7 +31,7 @@ export interface StorageConfig {
   prefix: string;
   name: string;
   description: string;
-  mountPoint: string;
+  underContentRoot: string;
   disk?: {
     path: string;
   };

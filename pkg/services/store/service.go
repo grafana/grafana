@@ -38,9 +38,6 @@ const RootContent = "content"
 const RootDevenv = "devenv"
 const RootSystem = "system"
 
-const RootMountPoint = ""
-const ContentMountPoint = RootContent
-
 const brandingStorage = "branding"
 const SystemBrandingStorage = "system/" + brandingStorage
 
@@ -112,7 +109,6 @@ func ProvideService(
 			Builtin:  true,
 		}, RootStorageConfig{
 			Prefix:      RootPublicStatic,
-			MountPoint:  RootMountPoint,
 			Name:        "Public static files",
 			Description: "Access files from the static public files",
 			Disk: &StorageLocalDiskConfig{
@@ -134,10 +130,10 @@ func ProvideService(
 			s := newDiskStorage(RootStorageMeta{
 				ReadOnly: false,
 			}, RootStorageConfig{
-				Prefix:      RootDevenv,
-				MountPoint:  ContentMountPoint,
-				Name:        "Development Environment",
-				Description: "Explore files within the developer environment directly",
+				Prefix:           RootDevenv,
+				UnderContentRoot: true,
+				Name:             "Development Environment",
+				Description:      "Explore files within the developer environment directly",
 				Disk: &StorageLocalDiskConfig{
 					Path: devenv,
 					Roots: []string{
@@ -153,6 +149,9 @@ func ProvideService(
 			grafanaStorageLogger.Warn("Invalid root configuration", "cfg", root)
 			continue
 		}
+
+		// all externally-defined storages lie under the "content" root
+		root.UnderContentRoot = true
 		s, err := newStorage(root, filepath.Join(cfg.DataPath, "storage", "cache", root.Prefix))
 		if err != nil {
 			grafanaStorageLogger.Warn("error loading storage config", "error", err)
@@ -168,19 +167,19 @@ func ProvideService(
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootContent, "Content", "Content root", &StorageSQLConfig{}, sql, orgId, true))
+			}, RootContent, "Content", "Content root", &StorageSQLConfig{}, sql, orgId))
 
 		// Custom upload files
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootResources, "Resources", "Upload custom resource files", &StorageSQLConfig{}, sql, orgId, false))
+			}, RootResources, "Resources", "Upload custom resource files", &StorageSQLConfig{}, sql, orgId))
 
 		// System settings
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootSystem, "System", "Grafana system storage", &StorageSQLConfig{}, sql, orgId, false))
+			}, RootSystem, "System", "Grafana system storage", &StorageSQLConfig{}, sql, orgId))
 
 		return storages
 	}
