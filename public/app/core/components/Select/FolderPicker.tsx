@@ -6,12 +6,25 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta } from '@grafana/ui';
+import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta, Icon, Stack, Tooltip} from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, PermissionLevelString } from 'app/types';
+
+const SlashesWarning = () => {
+  const styles = useStyles2(getStyles);
+  const onClick = () => window.open('https://github.com/grafana/grafana/issues/42947', '_blank');
+  return (
+    <Stack gap={0.5}>
+      <div className={styles.slashNotAllowed}>Folders with &apos;/&apos; character are not allowed.</div>
+      <Tooltip placement="top" content={'Link to the Github issue'} theme="info">
+        <Icon name="info-circle" size="xs" className={styles.infoIcon} onClick={onClick} />
+      </Tooltip>
+    </Stack>
+  );
+};
 
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
@@ -69,13 +82,9 @@ export function FolderPicker(props: Props) {
   } = props;
   const isClearable = typeof onClear === 'function';
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
-<<<<<<< HEAD
   const [isCreatingNew, setIsCreatingNew] = useState(false);
-=======
   const [inputValue, setInputValue] = useState<string>('');
->>>>>>> 953cfd2fb4 (Update DetailsStep component to use FolderPicker dissalowing slashes in folders)
   const styles = useStyles2(getStyles);
-  const [inputValue, setInputValue] = useState<string>('');
   const isUsingSlashes = containsSlashes(inputValue);
 
   const getOptions = useCallback(
@@ -211,16 +220,10 @@ export function FolderPicker(props: Props) {
           return;
         }
 
-<<<<<<< HEAD
         setFolder(newFolder);
         setInputValue(newFolder.label!);
         onChange({ id: newFolder.value!, title: newFolder.label! });
       }
-=======
-      setFolder(newFolder);
-      setInputValue(newFolder.label!);
-      onChange({ id: newFolder.value!, title: newFolder.label! });
->>>>>>> 953cfd2fb4 (Update DetailsStep component to use FolderPicker dissalowing slashes in folders)
     },
     [onChange, onClear, rootName, inputValue]
   );
@@ -305,9 +308,7 @@ export function FolderPicker(props: Props) {
     return (
     <>
       <div data-testid={selectors.components.FolderPicker.containerV2}>
-        {dissalowSlashes && isUsingSlashes && (
-          <div className={styles.slashNotAllowed}>Folders with &apos;/&apos; character are not allowed.</div>
-        )}
+        {dissalowSlashes && isUsingSlashes && <SlashesWarning />}
         <AsyncSelect
           inputId={inputId}
           aria-label={selectors.components.FolderPicker.input}
@@ -322,11 +323,6 @@ export function FolderPicker(props: Props) {
           onChange={onFolderChange}
           onCreateOption={createNewFolder}
           isClearable={isClearable}
-<<<<<<< HEAD
-=======
-          inputValue={inputValue}
-          onInputChange={handleInputChange}
->>>>>>> 953cfd2fb4 (Update DetailsStep component to use FolderPicker dissalowing slashes in folders)
           components={{
             Input,
           }}
@@ -376,5 +372,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.warning.main};
     font-size: 12px;
     margin-bottom: 2px;
+  `,
+  infoIcon: css`
+    color: ${theme.colors.warning.main};
+    font-size: 12px;
+    margin-bottom: 2px;
+    cursor: pointer;
   `,
 });

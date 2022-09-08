@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
@@ -70,9 +70,8 @@ describe('FolderPicker', () => {
     });
 
     expect(onChangeFn).toHaveBeenCalledWith({ title: newFolder.title, id: newFolder.id });
-    await waitFor(() => {
-      expect(screen.getByText(newFolder.title)).toBeInTheDocument();
-    });
+    const folderInput = await screen.findByTestId(selectors.components.FolderPicker.containerV2);
+    expect(within(folderInput).getByRole('combobox')).toHaveValue(newFolder.title);
   });
 });
 
