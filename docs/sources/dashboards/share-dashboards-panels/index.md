@@ -87,7 +87,7 @@ If you created a snapshot by mistake, click **Delete snapshot** to remove the sn
 
 ### Dashboard export
 
-Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/manage-dashboards/#export-and-import-dashboards" >}}).
+Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "./manage-dashboards/#export-and-import-dashboards" >}}).
 
 ![Export](/static/img/docs/sharing/share-dashboard-export-7-3.png)
 
