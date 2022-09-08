@@ -49,7 +49,7 @@
     "@types/lodash": "4.14.182",
     "@types/node": "16.11.45",
     "@types/uuid": "8.3.4",
-    "esbuild": "^0.14.47",
+    "esbuild": "0.15.7",
     "rollup": "2.77.2",
     "rollup-plugin-dts": "^4.2.2",
     "rollup-plugin-esbuild": "^4.9.1",
