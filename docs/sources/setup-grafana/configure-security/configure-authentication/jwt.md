@@ -143,3 +143,68 @@ You might also want to validate that other claims are really what you expect the
 # This can be seen as a required "subset" of a JWT Claims Set.
 expect_claims = {"iss": "https://your-token-issuer", "your-custom-claim": "foo"}
 ```
+
+## Roles
+
+Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to JWT token claims. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
+
+The organization that the role is assigned to can be configured using the `X-Grafana-Org-Id` header.
+
+### JMESPath examples
+
+To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
+
+### Role mapping
+
+If the `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
+
+**Basic example:**
+
+In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+
+Payload:
+
+```json
+{
+    ...
+    "role": "Editor",
+    ...
+}
+```
+
+Config:
+
+```bash
+role_attribute_path = role
+```
+
+**Advanced example:**
+
+In the following example user will get `Admin` as role when authenticating since it has a role `admin`. If a user has a role `editor` it will get `Editor` as role, otherwise `Viewer`.
+
+Payload:
+
+```json
+{
+    ...
+    "info": {
+        ...
+        "roles": [
+            "engineer",
+            "admin",
+        ],
+        ...
+    },
+    ...
+}
+```
+
+Config:
+
+```bash
+role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+```
+
+### Grafana Admin Role
+
+If the `role_attribute_path` property returns a `GrafanaAdmin` role, Grafana Admin is not assigned by default, instead the `Admin` role is assigned. To allow `Grafana Admin` role to be assigned set `allow_assign_grafana_admin = true`.

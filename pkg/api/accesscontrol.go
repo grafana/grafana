@@ -426,7 +426,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create, write or disable a public dashboard.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionDashboardPublicWrite, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsPublicWrite, Scope: dashboards.ScopeDashboardsAll},
 			},
 		},
 		Grants: []string{"Admin"},

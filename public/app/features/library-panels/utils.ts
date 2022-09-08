@@ -45,6 +45,7 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDT
     libraryPanel: toPanelModelLibraryPanel(updated),
     title: panel.title,
   });
+  panel.hasSavedPanelEditChange = true;
   panel.refresh();
 }
 

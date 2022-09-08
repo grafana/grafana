@@ -4,6 +4,7 @@ import {
   CartesianCoords2D,
   compareDataFrameStructures,
   DataFrame,
+  Field,
   getFieldDisplayName,
   PanelProps,
   TimeRange,
@@ -97,8 +98,12 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   };
 
   const frame0Ref = useRef<DataFrame>();
+  const colorByFieldRef = useRef<Field>();
+
   const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const chartDisplay = 'viz' in info ? info : null;
+
+  colorByFieldRef.current = chartDisplay?.colorByField;
 
   const structureRef = useRef(10000);
 
@@ -226,7 +231,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     const disp = colorByField.display!;
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByField.values.get(valueIdx)).color!;
+    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values.get(valueIdx)).color!;
   }
 
   const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
