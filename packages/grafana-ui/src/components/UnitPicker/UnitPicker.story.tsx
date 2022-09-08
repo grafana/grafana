@@ -1,13 +1,10 @@
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { UnitPicker } from '@grafana/ui';
-
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
+import { UnitPicker, UnitPickerProps } from './UnitPicker';
 import mdx from './UnitPicker.mdx';
-
-type Props = React.ComponentProps<typeof UnitPicker>;
 
 const meta: ComponentMeta<typeof UnitPicker> = {
   title: 'Pickers and Editors/UnitPicker',
@@ -21,7 +18,7 @@ const meta: ComponentMeta<typeof UnitPicker> = {
   },
 };
 
-export const Basic: ComponentStory<typeof UnitPicker> = (args: Props) => <UnitPicker {...args} />;
+export const Basic: ComponentStory<typeof UnitPicker> = (args: UnitPickerProps) => <UnitPicker {...args} />;
 
 Basic.args = {
   onChange: console.log,
