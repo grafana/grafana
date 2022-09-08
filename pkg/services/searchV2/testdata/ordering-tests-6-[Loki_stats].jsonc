@@ -2,14 +2,15 @@
 //  
 //  Frame[0] 
 //  Name: ordering frame
-//  Dimensions: 2 Fields by 1 Rows
-//  +------------------+-------------------+
-//  | Name: name       | Name: score       |
-//  | Labels:          | Labels:           |
-//  | Type: []string   | Type: []float64   |
-//  +------------------+-------------------+
-//  | Prometheus Stats | 7.621131552585596 |
-//  +------------------+-------------------+
+//  Dimensions: 2 Fields by 2 Rows
+//  +----------------+-------------------+
+//  | Name: name     | Name: score       |
+//  | Labels:        | Labels:           |
+//  | Type: []string | Type: []float64   |
+//  +----------------+-------------------+
+//  | Loki Stats     | 9.397899591158676 |
+//  | Loki 2.0 Stats | 2.638536183312778 |
+//  +----------------+-------------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -38,10 +39,12 @@
       "data": {
         "values": [
           [
-            "Prometheus Stats"
+            "Loki Stats",
+            "Loki 2.0 Stats"
           ],
           [
-            7.621131552585596
+            9.397899591158676,
+            2.638536183312778
           ]
         ]
       }

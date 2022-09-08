@@ -5,8 +5,10 @@ aliases:
   - /docs/grafana/latest/administration/reports/
   - /docs/grafana/latest/dashboards/reporting/
   - /docs/grafana/latest/enterprise/export-pdf/
+  - /docs/grafana/latest/panels/create-reports
+  - /docs/grafana/latest/dashboards/create-reports
 title: Create and manage reports
-menuTitle: Create and manage reports
+menuTitle: Reporting
 weight: 85
 keywords:
   - grafana
@@ -37,7 +39,7 @@ When [RBAC]({{< relref "../../administration/roles-and-permissions/access-contro
 
 ## Create or update a report
 
-Only organization admins can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}).
+Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}).
 
 1. Click on the Reports icon in the side navigation menu.
 
@@ -104,7 +106,7 @@ By default, reports use the saved time range of the dashboard. You can change th
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone use the time zone on the Grafana server.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls]({{< relref "../../dashboards/manage-dashboards/#dashboard-time-settings" >}}).
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls]({{< relref "./manage-dashboards/#dashboard-time-settings" >}}).
 
 ### Layout and orientation
 
