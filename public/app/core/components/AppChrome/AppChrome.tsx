@@ -19,7 +19,7 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
-  if (state.chromeless || !config.featureToggles.topnav) {
+  if (!config.featureToggles.topnav) {
     return <main className="main-view">{children}</main>;
   }
 
@@ -67,6 +67,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
+
+      '.sidemenu-hidden &': {
+        display: 'none',
+      },
     }),
   };
 };
