@@ -39,7 +39,7 @@ describe('removeEmpty', () => {
     expect(coerceESVersion('8.1.3')).toBe('8.1.3');
 
     // invalid string
-    expect(coerceESVersion('haha')).toBe('5.0.0');
+    expect(coerceESVersion('haha')).toBe('8.0.0');
 
     // known number
     expect(coerceESVersion(2)).toBe('2.0.0');
@@ -47,11 +47,12 @@ describe('removeEmpty', () => {
     expect(coerceESVersion(56)).toBe('5.6.0');
     expect(coerceESVersion(60)).toBe('6.0.0');
     expect(coerceESVersion(70)).toBe('7.0.0');
+    expect(coerceESVersion(8)).toBe('8.0.0');
 
     // unknown number
-    expect(coerceESVersion(42)).toBe('5.0.0');
+    expect(coerceESVersion(42)).toBe('8.0.0');
 
     // undefined
-    expect(coerceESVersion(undefined)).toBe('5.0.0');
+    expect(coerceESVersion(undefined)).toBe('8.0.0');
   });
 });

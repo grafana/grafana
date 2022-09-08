@@ -93,6 +93,8 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		histogram.Observe(elapsed.Seconds())
 	}
 
+	ctx = log.IncDBCallCounter(ctx)
+
 	_, span := h.tracer.Start(ctx, "database query")
 	defer span.End()
 

@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
+	dashboardThumbs "github.com/grafana/grafana/pkg/services/dashboard_thumbs"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -58,7 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	loginAttempt "github.com/grafana/grafana/pkg/services/login_attempt"
+	loginAttempt "github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -146,7 +147,7 @@ type HTTPServer struct {
 	secretsPluginManager         plugins.SecretsPluginManager
 	secretsStore                 secretsKV.SecretsKVStore
 	secretsMigrator              secrets.Migrator
-	secretsPluginMigrator        *spm.SecretMigrationServiceImpl
+	secretsPluginMigrator        spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
@@ -182,11 +183,12 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 
-	userService          user.Service
-	tempUserService      tempUser.Service
-	loginAttemptService  loginAttempt.Service
-	orgService           org.Service
-	accesscontrolService accesscontrol.Service
+	userService            user.Service
+	tempUserService        tempUser.Service
+	dashboardThumbsService dashboardThumbs.Service
+	loginAttemptService    loginAttempt.Service
+	orgService             org.Service
+	accesscontrolService   accesscontrol.Service
 }
 
 type ServerOptions struct {
@@ -223,9 +225,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
-	secretsPluginMigrator *spm.SecretMigrationServiceImpl, secretsStore secretsKV.SecretsKVStore,
+	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
-	accesscontrolService accesscontrol.Service,
+	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -317,6 +319,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PublicDashboardsApi:          publicDashboardsApi,
 		userService:                  userService,
 		tempUserService:              tempUserService,
+		dashboardThumbsService:       dashboardThumbsService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
 		accesscontrolService:         accesscontrolService,
