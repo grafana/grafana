@@ -243,7 +243,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 		scenarioCtx.rendererAvailable = true
 
 		renderService := &testRenderService{
-			isAvailableProvider: func() bool {
+			isAvailableProvider: func(ctx context.Context) bool {
 				return scenarioCtx.rendererAvailable
 			},
 			renderProvider: func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
@@ -334,7 +334,7 @@ func (n *testNotifier) GetFrequency() time.Duration {
 var _ Notifier = &testNotifier{}
 
 type testRenderService struct {
-	isAvailableProvider      func() bool
+	isAvailableProvider      func(ctx context.Context) bool
 	renderProvider           func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error)
 	renderErrorImageProvider func(error error) (*rendering.RenderResult, error)
 }
@@ -343,13 +343,13 @@ func (s *testRenderService) SanitizeSVG(ctx context.Context, req *rendering.Sani
 	return &rendering.SanitizeSVGResponse{Sanitized: req.Content}, nil
 }
 
-func (s *testRenderService) HasCapability(feature rendering.CapabilityName) (rendering.CapabilitySupportRequestResult, error) {
+func (s *testRenderService) HasCapability(_ context.Context, feature rendering.CapabilityName) (rendering.CapabilitySupportRequestResult, error) {
 	return rendering.CapabilitySupportRequestResult{}, nil
 }
 
-func (s *testRenderService) IsAvailable() bool {
+func (s *testRenderService) IsAvailable(ctx context.Context) bool {
 	if s.isAvailableProvider != nil {
-		return s.isAvailableProvider()
+		return s.isAvailableProvider(ctx)
 	}
 
 	return true

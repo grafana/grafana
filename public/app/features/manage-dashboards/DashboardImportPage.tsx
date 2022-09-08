@@ -28,6 +28,7 @@ import { cleanUpAction } from '../../core/actions/cleanUp';
 
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { fetchGcomDashboard, importDashboardJson } from './state/actions';
+import { initialImportDashboardState } from './state/reducers';
 import { validateDashboardJson, validateGcomDashboard } from './utils/validation';
 
 type DashboardImportPageRouteSearchParams = {
@@ -63,7 +64,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    this.props.cleanUpAction({ stateSelector: (state: StoreState) => state.importDashboard });
+    this.props.cleanUpAction({ cleanupAction: (state) => (state.importDashboard = initialImportDashboardState) });
   }
 
   onFileUpload = (event: FormEvent<HTMLInputElement>) => {

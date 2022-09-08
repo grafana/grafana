@@ -460,7 +460,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 	}
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		foldersSql := "SELECT D.uid, D.title FROM dashboard AS D WHERE is_folder = 1 AND EXISTS (SELECT 1 FROM alert_rule AS A WHERE D.uid = A.namespace_uid)"
+		foldersSql := "SELECT D.uid, D.title FROM dashboard AS D WHERE is_folder IS TRUE AND EXISTS (SELECT 1 FROM alert_rule AS A WHERE D.uid = A.namespace_uid)"
 		alertRulesSql := "SELECT * FROM alert_rule"
 		filter, args := st.getFilterByOrgsString()
 		if filter != "" {
