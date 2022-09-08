@@ -69,7 +69,11 @@ export function FolderPicker(props: Props) {
   } = props;
   const isClearable = typeof onClear === 'function';
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
+<<<<<<< HEAD
   const [isCreatingNew, setIsCreatingNew] = useState(false);
+=======
+  const [inputValue, setInputValue] = useState<string>('');
+>>>>>>> 953cfd2fb4 (Update DetailsStep component to use FolderPicker dissalowing slashes in folders)
   const styles = useStyles2(getStyles);
   const [inputValue, setInputValue] = useState<string>('');
   const isUsingSlashes = containsSlashes(inputValue);
@@ -207,10 +211,16 @@ export function FolderPicker(props: Props) {
           return;
         }
 
+<<<<<<< HEAD
         setFolder(newFolder);
         setInputValue(newFolder.label!);
         onChange({ id: newFolder.value!, title: newFolder.label! });
       }
+=======
+      setFolder(newFolder);
+      setInputValue(newFolder.label!);
+      onChange({ id: newFolder.value!, title: newFolder.label! });
+>>>>>>> 953cfd2fb4 (Update DetailsStep component to use FolderPicker dissalowing slashes in folders)
     },
     [onChange, onClear, rootName, inputValue]
   );
@@ -312,6 +322,11 @@ export function FolderPicker(props: Props) {
           onChange={onFolderChange}
           onCreateOption={createNewFolder}
           isClearable={isClearable}
+<<<<<<< HEAD
+=======
+          inputValue={inputValue}
+          onInputChange={handleInputChange}
+>>>>>>> 953cfd2fb4 (Update DetailsStep component to use FolderPicker dissalowing slashes in folders)
           components={{
             Input,
           }}
@@ -324,7 +339,6 @@ export function FolderPicker(props: Props) {
 
 function mapSearchHitsToOptions(hits: DashboardSearchHit[], filterSlashes: boolean, filter?: FolderPickerFilter) {
   const filteredHits = filter ? filter(hits) : hits;
-  console.log('filtering', filter, filterSlashes);
   if (filterSlashes) {
     return filteredHits
       .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? ''))

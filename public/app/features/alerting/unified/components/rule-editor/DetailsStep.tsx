@@ -117,6 +117,7 @@ export const DetailsStep = ({ initialFolder }: DetailsStepProps) => {
                   enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
                   enableReset={true}
                   filter={folderFilter}
+                  dissalowSlashes={true}
                 />
               )}
               name="folder"
@@ -165,7 +166,6 @@ const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
         existingRuleForm &&
         hit.folderId === existingRuleForm.id &&
         contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
-
       return canCreateRuleInFolder || canUpdateInCurrentFolder;
     },
     [existingRuleForm]
@@ -193,6 +193,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    align-items: flex-end;
+    align-items: end;
   `,
 });

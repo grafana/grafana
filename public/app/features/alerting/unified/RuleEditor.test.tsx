@@ -244,6 +244,10 @@ describe('RuleEditor', () => {
         title: 'Folder B',
         id: 2,
       },
+      {
+        title: 'Folder / with slash',
+        id: 2,
+      },
     ] as DashboardSearchHit[]);
 
     mocks.api.discoverFeatures.mockResolvedValue({

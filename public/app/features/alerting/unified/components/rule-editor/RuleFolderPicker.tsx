@@ -10,10 +10,10 @@ export interface Folder {
 
 export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
+  dissalowSlashes: boolean;
 }
 
-export function RuleFolderPicker(props: RuleFolderPickerProps) {
-  const { value } = props;
+export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, dissalowSlashes, ...props }) => {
   return (
     <FolderPicker
       showRoot={false}
@@ -24,6 +24,7 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
       {...props}
       permissionLevel={PermissionLevelString.View}
       customAdd={true}
+      dissalowSlashes
     />
   );
 }
