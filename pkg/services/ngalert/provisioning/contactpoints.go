@@ -418,6 +418,7 @@ groupLoop:
 				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
 				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
 					configModified = true
@@ -459,4 +460,16 @@ groupLoop:
 	}
 
 	return configModified
+}
+
+func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
+	if len(routes) == 0 {
+		return
+	}
+	for _, route := range routes {
+		if route.Receiver == oldName {
+			route.Receiver = newName
+		}
+		replaceReferences(oldName, newName, route.Routes...)
+	}
 }
