@@ -87,6 +87,7 @@ describe('DataSourceWithBackend', () => {
             },
           ],
         },
+        "hideFromInspector": false,
         "method": "POST",
         "requestId": undefined,
         "url": "/api/ds/query",
