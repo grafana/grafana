@@ -5,19 +5,36 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import { Stack, useStyles2 } from '@grafana/ui/src';
 
 export function TemplateDataDocs() {
+  const styles = useStyles2(getTemplateDataDocsStyles);
+
   return (
     <Stack gap={2}>
-      <TemplateDataTable caption="Template Data" dataItems={GlobalTemplateData} />
+      <TemplateDataTable caption={<h4 className={styles.header}>Template Data</h4>} dataItems={GlobalTemplateData} />
       <TemplateDataTable
-        caption="Alert template data - available only when in the context of an Alert"
+        caption={
+          <h4 className={styles.header}>
+            Alert template data <span>Available only when in the context of an Alert (e.g. inside .Alerts loop)</span>
+          </h4>
+        }
         dataItems={AlertTemplateData}
       />
     </Stack>
   );
 }
 
-function TemplateDataTable({ dataItems, caption }: { dataItems: TemplateDataItem[]; caption: string }) {
-  const styles = useStyles2(getTemplateDataDocsStyles);
+const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
+  header: css`
+    color: ${theme.colors.text.primary};
+
+    span {
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+    }
+  `,
+});
+
+function TemplateDataTable({ dataItems, caption }: { dataItems: TemplateDataItem[]; caption: JSX.Element | string }) {
+  const styles = useStyles2(getTemplateDataTableStyles);
 
   return (
     <table className={styles.table}>
@@ -42,7 +59,7 @@ function TemplateDataTable({ dataItems, caption }: { dataItems: TemplateDataItem
   );
 }
 
-const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
+const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
   table: css`
     table-layout: fixed;
     border-collapse: collapse;
@@ -50,8 +67,6 @@ const getTemplateDataDocsStyles = (theme: GrafanaTheme2) => ({
 
     caption {
       caption-side: top;
-      color: ${theme.colors.text.primary};
-      font-size: ${theme.typography.h4.fontSize};
     }
 
     td,

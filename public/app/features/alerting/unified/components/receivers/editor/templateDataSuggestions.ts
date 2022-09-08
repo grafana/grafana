@@ -78,19 +78,19 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
       kind,
       detail: 'string',
       documentation:
-        'Link to grafana silence for with labels for this alert pre-filled. Only for Grafana managed alerts.',
+        'Link to Grafana silence for with labels for this alert pre-filled. Only for Grafana managed alerts.',
     },
     {
       label: { label: 'DashboardURL', detail: '(Alert)' },
       kind,
       detail: 'string',
-      documentation: 'Link to grafana dashboard, if alert rule belongs to one. Only for Grafana managed alerts.',
+      documentation: 'Link to Grafana dashboard, if alert rule belongs to one. Only for Grafana managed alerts.',
     },
     {
       label: { label: 'PanelURL', detail: '(Alert)' },
       kind,
       detail: 'string',
-      documentation: 'Link to grafana dashboard panel, if alert rule belongs to one. Only for Grafana managed alerts.',
+      documentation: 'Link to Grafana dashboard panel, if alert rule belongs to one. Only for Grafana managed alerts.',
     },
     {
       label: { label: 'Fingerprint', detail: '(Alert)' },
@@ -102,7 +102,7 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
       label: { label: 'ValueString', detail: '(Alert)' },
       kind,
       detail: 'string',
-      documentation: 'A string that contains the labels and value of each reduced expression in the alert.',
+      documentation: 'String that contains labels and values of each reduced expression in the alert.',
     },
   ];
 }
