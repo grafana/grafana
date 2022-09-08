@@ -164,8 +164,8 @@
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "8.3.4",
-    "@typescript-eslint/eslint-plugin": "5.31.0",
-    "@typescript-eslint/parser": "5.31.0",
+    "@typescript-eslint/eslint-plugin": "5.36.2",
+    "@typescript-eslint/parser": "5.36.2",
     "@wojtekmaj/enzyme-adapter-react-17": "0.6.7",
     "autoprefixer": "10.4.7",
     "axios": "0.27.2",
@@ -234,7 +234,7 @@
     "ts-jest": "28.0.7",
     "ts-loader": "9.3.1",
     "ts-node": "10.9.1",
-    "typescript": "4.7.4",
+    "typescript": "4.8.2",
     "wait-on": "6.0.1",
     "webpack": "5.74.0",
     "webpack-bundle-analyzer": "4.5.0",
@@ -280,7 +280,7 @@
     "@react-stately/collections": "3.4.1",
     "@react-stately/menu": "3.4.1",
     "@react-stately/tree": "3.3.1",
-    "@reduxjs/toolkit": "1.8.3",
+    "@reduxjs/toolkit": "1.8.5",
     "@sentry/browser": "6.19.7",
     "@sentry/types": "6.19.7",
     "@sentry/utils": "6.19.7",
@@ -420,5 +420,5 @@
   "engines": {
     "node": ">= 16"
   },
-  "packageManager": "yarn@3.2.2"
+  "packageManager": "yarn@3.2.3"
 }

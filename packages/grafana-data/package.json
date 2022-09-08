@@ -87,7 +87,7 @@
     "rollup-plugin-esbuild": "^4.9.1",
     "rollup-plugin-node-externals": "^4.1.0",
     "sinon": "14.0.0",
-    "typescript": "4.7.4"
+    "typescript": "4.8.2"
   },
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0",
