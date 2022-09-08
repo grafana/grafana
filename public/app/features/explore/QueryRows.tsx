@@ -1,5 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { CoreApp, DataQuery, DataSourceInstanceSettings } from '@grafana/data';
@@ -44,6 +44,14 @@ export const QueryRows = ({ exploreId }: Props) => {
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
 
+  useEffect(() => {
+    console.log('QR start', exploreId);
+
+    return () => {
+      console.log('QR end');
+    };
+  }, [exploreId]);
+
   const onRunQueries = useCallback(() => {
     dispatch(runQueries(exploreId));
   }, [dispatch, exploreId]);
@@ -67,6 +75,7 @@ export const QueryRows = ({ exploreId }: Props) => {
     [onChange, queries]
   );
 
+  // a datasource change on the query row level means the root datasource is mixed
   const onMixedDataSourceChange = async (ds: DataSourceInstanceSettings, query: DataQuery) => {
     const queryDatasource = await getDataSourceSrv().get(query.datasource);
     const targetDS = await getDataSourceSrv().get({ uid: ds.uid });
@@ -85,6 +94,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
+      exploreId={exploreId}
     />
   );
 };

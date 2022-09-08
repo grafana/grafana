@@ -33,6 +33,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { ExploreId } from 'app/types';
 
 import { RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -57,6 +58,7 @@ interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
+  exploreId?: ExploreId;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -66,6 +68,7 @@ interface State<TQuery extends DataQuery> {
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
+  isMounted: boolean;
 }
 
 export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
@@ -74,6 +77,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   angularQueryEditor: AngularComponent | null = null;
 
   state: State<TQuery> = {
+    isMounted: false,
     datasource: null,
     hasTextEditMode: false,
     data: undefined,
@@ -81,15 +85,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     showingHelp: false,
   };
 
-  componentDidMount() {
+  async componentDidMount() {
+    console.log('qer mount', this.props.exploreId);
     const { data, query } = this.props;
     const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
-    this.setState({ data: dataFilteredByRefId });
+    this.setState({ data: dataFilteredByRefId, isMounted: true });
 
-    this.loadDatasource();
+    //commenting this fixes the problem (but we have no DS)
+    await this.loadDatasource();
   }
 
   componentWillUnmount() {
+    console.log('qer unmount', this.props.exploreId);
+    this.setState({ isMounted: false });
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
     }
@@ -135,6 +143,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   async loadDatasource() {
+    console.log('loadDatasource', this.props.exploreId);
     const dataSourceSrv = getDatasourceSrv();
     let datasource: DataSourceApi;
     const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
@@ -145,14 +154,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       datasource = await dataSourceSrv.get();
     }
 
-    this.setState({
-      datasource: datasource as unknown as DataSourceApi<TQuery>,
-      loadedDataSourceIdentifier: dataSourceIdentifier,
-      hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
-    });
+    if (this.state.isMounted) {
+      this.setState({
+        datasource: datasource as unknown as DataSourceApi<TQuery>,
+        loadedDataSourceIdentifier: dataSourceIdentifier,
+        hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
+      });
+    }
   }
 
   componentDidUpdate(prevProps: Props<TQuery>) {
+    console.log('QER update');
     const { datasource, loadedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 

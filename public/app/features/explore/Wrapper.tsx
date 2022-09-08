@@ -63,6 +63,7 @@ class WrapperUnconnected extends PureComponent<Props> {
   static contextType = GrafanaContext;
 
   componentWillUnmount() {
+    console.log('wrapper unmount');
     const { left, right } = this.props.queryParams;
 
     if (Boolean(left)) {
@@ -77,6 +78,7 @@ class WrapperUnconnected extends PureComponent<Props> {
   }
 
   componentDidMount() {
+    console.log('wrapper mount');
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
     this.context.chrome.update({ sectionNav: this.props.navModel.node });
@@ -99,14 +101,19 @@ class WrapperUnconnected extends PureComponent<Props> {
     }
   }
 
-  componentDidUpdate() {
-    const { left, right } = this.props.queryParams;
-    const hasSplit = Boolean(left) && Boolean(right);
-    const datasourceTitle = hasSplit
-      ? `${this.props.exploreState.left.datasourceInstance?.name} | ${this.props.exploreState.right?.datasourceInstance?.name}`
-      : `${this.props.exploreState.left.datasourceInstance?.name}`;
-    const documentTitle = `${this.props.navModel.main.text} - ${datasourceTitle} - ${Branding.AppTitle}`;
-    document.title = documentTitle;
+  componentDidUpdate(prevProps: Props) {
+    if (JSON.stringify(prevProps.exploreState) !== JSON.stringify(this.props.exploreState)) {
+      const { left, right } = this.props.queryParams;
+      const hasSplit = Boolean(left) && Boolean(right);
+      // in the update before the error, the only thing that changes is the location key.
+      //console.log('wrapper update', JSON.stringify(prevProps));
+      //console.log('wrapper update2', JSON.stringify(this.props));
+      const datasourceTitle = hasSplit
+        ? `${this.props.exploreState.left.datasourceInstance?.name} | ${this.props.exploreState.right?.datasourceInstance?.name}`
+        : `${this.props.exploreState.left.datasourceInstance?.name}`;
+      const documentTitle = `${this.props.navModel.main.text} - ${datasourceTitle} - ${Branding.AppTitle}`;
+      document.title = documentTitle;
+    }
   }
 
   updateSplitSize(rightSplitWidth: number) {
@@ -149,7 +156,7 @@ class WrapperUnconnected extends PureComponent<Props> {
             <SplitView
               uiState={splitSizeObj}
               minSize={this.minWidth}
-              resizeCallback={(width: number) => {
+              onResize={(width: number) => {
                 this.updateSplitSize(width);
               }}
             >

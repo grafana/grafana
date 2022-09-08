@@ -11,6 +11,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { ExploreId } from 'app/types';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
@@ -31,6 +32,7 @@ interface Props {
   app?: CoreApp;
   history?: Array<HistoryItem<DataQuery>>;
   eventBus?: EventBusExtended;
+  exploreId?: ExploreId;
 
   onDatasourceChange?: (dataSource: DataSourceInstanceSettings, query: DataQuery) => void;
 }
@@ -166,6 +168,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       app={app}
                       history={history}
                       eventBus={eventBus}
+                      exploreId={this.props.exploreId}
                     />
                   );
                 })}

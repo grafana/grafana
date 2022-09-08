@@ -10,15 +10,12 @@ interface Props {
   children: [ReactNode, ReactNode];
   uiState: { rightPaneSize: number };
   minSize?: number;
-  resizeCallback?: Function;
+  onResize?: (size: number) => void;
 }
 
-const onDragFinished = (size: number, resizeCallback?: Function) => {
+const onDragFinished = (size: number, onResize?: (size: number) => void) => {
   document.body.style.cursor = 'auto';
-
-  if (resizeCallback) {
-    resizeCallback(size);
-  }
+  onResize?.(size);
 };
 
 const onDragStarted = () => {
@@ -65,8 +62,10 @@ const getResizerStyles = (theme: GrafanaTheme2) => css`
   width: ${theme.spacing(2)};
 `;
 
-export const SplitView = ({ uiState: { rightPaneSize }, children, minSize = 200, resizeCallback }: Props) => {
+export const SplitView = ({ uiState: { rightPaneSize }, children, minSize = 200, onResize }: Props) => {
   const { width } = useViewportSize();
+
+  //console.log('splitview render', children);
 
   return (
     <SplitPane
@@ -78,7 +77,7 @@ export const SplitView = ({ uiState: { rightPaneSize }, children, minSize = 200,
       resizerClassName={useStyles2(getResizerStyles)}
       paneStyle={{ overflow: 'scroll' }}
       onDragStarted={onDragStarted}
-      onDragFinished={(size: number) => onDragFinished(size, resizeCallback)}
+      onDragFinished={(size: number) => onDragFinished(size, onResize)}
     >
       {children}
     </SplitPane>

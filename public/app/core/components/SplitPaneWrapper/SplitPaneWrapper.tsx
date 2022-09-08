@@ -111,7 +111,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     }
 
     return (
-      <SplitView uiState={{ rightPaneSize: rightPaneSize }}>
+      <SplitView uiState={{ rightPaneSize }}>
         {this.renderHorizontalSplit()}
         {rightPaneComponents}
       </SplitView>

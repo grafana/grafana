@@ -213,6 +213,8 @@ export const initialExploreState: ExploreState = {
  * Actions that have an `exploreId` get routed to the ExploreItemReducer.
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
+  //console.log(action.type, action.payload);
+
   if (splitCloseAction.match(action)) {
     const { itemId } = action.payload as SplitCloseActionPayload;
     const targetSplit = {
