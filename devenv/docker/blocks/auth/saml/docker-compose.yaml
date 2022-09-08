@@ -11,6 +11,6 @@
       - "8080:8080"
       - "8443:8443"
     volumes:
-      - ./docker/blocks/saml/users.php:/var/www/simplesamlphp/config/authsources.php
+      - ./docker/blocks/auth/saml/users.php:/var/www/simplesamlphp/config/authsources.php
 
 
