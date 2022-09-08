@@ -66,23 +66,15 @@ Value-specific variables are available under `__value` namespace:
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
 
-- `${myvar:queryparam}` - where `myvar` is the name of the template variable that matches a variable in the dashboard you want to use.
+`${var-myvar:queryparam}` - where `var-myvar` is the name of the template variable that matches one in the current dashboard that you want to use.
 
-| State        | Result                                                                        |
-| ------------ | ----------------------------------------------------------------------------- |
-| one selected | `value`                                                                       |
-| multiple     | escaped html `{value1,valuen}`                                                |
-| All          | the allValue with no surrounding symbols such as `.+` if that is the allValue |
+| Variable state           | Result in the created URL           |
+| ------------------------ | ----------------------------------- |
+| selected one value       | `var-myvar=value1`                  |
+| selected multiple values | `var-myvar=value1&var-myvar=value2` |
+| selected `All`           | `var-myvar=All`                     |
 
-- `${myvar:queryparam}` - where `myvar` is a name of the template variable that matches one in the current dashboard that you want to use as a query parameter.
-
-| State        | Result                              |
-| ------------ | ----------------------------------- |
-| one selected | `var-myvar=value`                   |
-| multiple     | `var-myvar=value1&var-myvar=value2` |
-| All          | `var-myvar=All`                     |
-
-If you want to add all of the current dashboard's variables to the URL, then use `__all_variables`. It behaves like `${some_var:queryparam}`, but for all variables.
+If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
 
 ## Data links
 
