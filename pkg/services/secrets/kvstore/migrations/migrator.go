@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,20 +20,25 @@ type SecretMigrationService interface {
 	Migrate(ctx context.Context) error
 }
 
-type SecretMigrationServiceImpl struct {
+type SecretMigrationProvider interface {
+	registry.BackgroundService
+	TriggerPluginMigration(ctx context.Context, toPlugin bool) error
+}
+
+type SecretMigrationProviderImpl struct {
 	services                 []SecretMigrationService
 	ServerLockService        *serverlock.ServerLockService
 	migrateToPluginService   *MigrateToPluginService
 	migrateFromPluginService *MigrateFromPluginService
 }
 
-func ProvideSecretMigrationService(
+func ProvideSecretMigrationProvider(
 	cfg *setting.Cfg,
 	serverLockService *serverlock.ServerLockService,
 	dataSourceSecretMigrationService *DataSourceSecretMigrationService,
 	migrateToPluginService *MigrateToPluginService,
 	migrateFromPluginService *MigrateFromPluginService,
-) *SecretMigrationServiceImpl {
+) *SecretMigrationProviderImpl {
 	services := make([]SecretMigrationService, 0)
 	services = append(services, dataSourceSecretMigrationService)
 	// Plugin migration should always be last; should either migrate to or from, not both
@@ -45,7 +51,7 @@ func ProvideSecretMigrationService(
 		services = append(services, migrateToPluginService)
 	}
 
-	return &SecretMigrationServiceImpl{
+	return &SecretMigrationProviderImpl{
 		ServerLockService:        serverLockService,
 		services:                 services,
 		migrateToPluginService:   migrateToPluginService,
@@ -53,9 +59,13 @@ func ProvideSecretMigrationService(
 	}
 }
 
+func (s *SecretMigrationProviderImpl) Run(ctx context.Context) error {
+	return s.Migrate(ctx)
+}
+
 // Migrate Run migration services. This will block until all services have exited.
 // This should only be called once at startup
-func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
+func (s *SecretMigrationProviderImpl) Migrate(ctx context.Context) error {
 	// Start migration services.
 	return s.ServerLockService.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
 		for _, service := range s.services {
@@ -71,7 +81,7 @@ func (s *SecretMigrationServiceImpl) Migrate(ctx context.Context) error {
 }
 
 // TriggerPluginMigration Kick off a migration to or from the plugin. This will block until all services have exited.
-func (s *SecretMigrationServiceImpl) TriggerPluginMigration(ctx context.Context, toPlugin bool) error {
+func (s *SecretMigrationProviderImpl) TriggerPluginMigration(ctx context.Context, toPlugin bool) error {
 	// Don't migrate if there is already one happening
 	return s.ServerLockService.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
 		var err error

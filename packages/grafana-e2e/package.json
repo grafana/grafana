@@ -57,8 +57,8 @@
     "webpack": "5.74.0"
   },
   "dependencies": {
-    "@babel/core": "7.18.9",
-    "@babel/preset-env": "7.18.9",
+    "@babel/core": "7.19.0",
+    "@babel/preset-env": "7.19.0",
     "@cypress/webpack-preprocessor": "5.12.0",
     "@grafana/e2e-selectors": "9.2.0-pre",
     "@grafana/tsconfig": "^1.2.0-rc1",

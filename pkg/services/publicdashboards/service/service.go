@@ -190,23 +190,13 @@ func (pd *PublicDashboardServiceImpl) updatePublicDashboardConfig(ctx context.Co
 	return dto.PublicDashboard.Uid, pd.store.UpdatePublicDashboardConfig(ctx, cmd)
 }
 
-func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO *PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	if err := validation.ValidateQueryPublicDashboardRequest(reqDTO); err != nil {
-		return nil, ErrPublicDashboardBadRequest
-	}
-
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
 	publicDashboard, dashboard, err := pd.GetPublicDashboard(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
 
-	metricReqDTO, err := pd.buildPublicDashboardMetricRequest(
-		ctx,
-		dashboard,
-		publicDashboard,
-		panelId,
-		reqDTO,
-	)
+	metricReq, err := pd.GetMetricRequest(ctx, dashboard, publicDashboard, panelId, queryDto)
 	if err != nil {
 		return nil, err
 	}
@@ -216,12 +206,31 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 		return nil, err
 	}
 
-	return pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReqDTO, true)
+	return pd.QueryDataService.QueryDataMultipleSources(ctx, anonymousUser, skipCache, metricReq, true)
 }
 
-// BuildPublicDashboardMetricRequest merges public dashboard parameters with
+func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, queryDto PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+	if err := validation.ValidateQueryPublicDashboardRequest(queryDto); err != nil {
+		return dtos.MetricRequest{}, ErrPublicDashboardBadRequest
+	}
+
+	metricReqDTO, err := pd.buildMetricRequest(
+		ctx,
+		dashboard,
+		publicDashboard,
+		panelId,
+		queryDto,
+	)
+	if err != nil {
+		return dtos.MetricRequest{}, err
+	}
+
+	return metricReqDTO, nil
+}
+
+// buildMetricRequest merges public dashboard parameters with
 // dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildPublicDashboardMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO *PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *models.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
 	queriesByPanel := queryModels.GroupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelId]
@@ -290,7 +299,7 @@ func GenerateAccessToken() (string, error) {
 // this is an additional validation, all data sources implements QueryData interface and should have proper validations
 // of these limits
 // for the maxDataPoints we took a hard limit from prometheus which is 11000
-func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO *PublicDashboardQueryDTO, ts *TimeSettings) (int64, int64) {
+func (pd *PublicDashboardServiceImpl) getSafeIntervalAndMaxDataPoints(reqDTO PublicDashboardQueryDTO, ts TimeSettings) (int64, int64) {
 	// arbitrary max value for all data sources, it is actually a hard limit defined in prometheus
 	safeResolution := int64(11000)
 
