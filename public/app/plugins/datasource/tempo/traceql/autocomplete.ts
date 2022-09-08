@@ -110,9 +110,9 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return [];
       }
       case 'EMPTY': {
-        return this.getScopesCompletions('{ .')
+        return this.getScopesCompletions('{ ')
           .concat(this.getIntrinsicsCompletions('{ '))
-          .concat(this.getTagsCompletions('{ '));
+          .concat(this.getTagsCompletions('{ .'));
       }
       case 'SPANSET_EMPTY':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions('.'));
