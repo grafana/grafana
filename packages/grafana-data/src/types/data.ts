@@ -1,4 +1,4 @@
-import { DataFrameDTO, FieldConfig } from './dataFrame';
+import { FieldConfig } from './dataFrame';
 import { DataFrameType } from './dataFrameTypes';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 import { DataTopic } from './query';
@@ -176,5 +176,4 @@ export interface DataConfigSource {
   getDataSupport: () => PanelPluginDataSupport;
   getTransformations: () => DataTransformerConfig[] | undefined;
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
-  snapshotData?: DataFrameDTO[];
 }

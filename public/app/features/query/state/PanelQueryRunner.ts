@@ -15,14 +15,12 @@ import {
   DataSourceJsonData,
   DataSourceRef,
   DataTransformerConfig,
-  getDefaultTimeRange,
   LoadingState,
   PanelData,
   rangeUtil,
   ScopedVars,
   TimeRange,
   TimeZone,
-  toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -92,15 +90,6 @@ export class PanelQueryRunner {
     let lastData: DataFrame[] = [];
     let isFirstPacket = true;
     let lastConfigRev = -1;
-
-    if (this.dataConfigSource.snapshotData) {
-      const snapshotPanelData: PanelData = {
-        state: LoadingState.Done,
-        series: this.dataConfigSource.snapshotData.map((v) => toDataFrame(v)),
-        timeRange: getDefaultTimeRange(), // Don't need real time range for snapshots
-      };
-      return of(snapshotPanelData);
-    }
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),

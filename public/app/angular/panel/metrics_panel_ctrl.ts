@@ -10,7 +10,6 @@ import {
   PanelData,
   PanelEvents,
   TimeRange,
-  toDataFrameDTO,
   toLegacyResponseData,
 } from '@grafana/data';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
@@ -209,10 +208,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   handleDataFrames(data: DataFrame[]) {
     this.loading = false;
 
-    if (this.dashboard && this.dashboard.snapshot) {
-      this.panel.snapshotData = data.map((frame) => toDataFrameDTO(frame));
-    }
-
     try {
       this.events.emit(PanelEvents.dataFramesReceived, data);
     } catch (err) {
@@ -222,10 +217,6 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   handleQueryResult(result: DataQueryResponse) {
     this.loading = false;
-
-    if (this.dashboard.snapshot) {
-      this.panel.snapshotData = result.data;
-    }
 
     if (!result || !result.data) {
       console.log('Data source query result invalid, missing data field:', result);

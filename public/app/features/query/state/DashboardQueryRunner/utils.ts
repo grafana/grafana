@@ -53,13 +53,6 @@ export function getAnnotationsByPanelId(annotations: AnnotationEvent[], panelId?
 }
 
 export function translateQueryResult(annotation: AnnotationQuery, results: AnnotationEvent[]): AnnotationEvent[] {
-  // if annotation has snapshotData
-  // make clone and remove it
-  if (annotation.snapshotData) {
-    annotation = cloneDeep(annotation);
-    delete annotation.snapshotData;
-  }
-
   for (const item of results) {
     item.source = annotation;
     item.color = config.theme2.visualization.getColorByName(annotation.iconColor);

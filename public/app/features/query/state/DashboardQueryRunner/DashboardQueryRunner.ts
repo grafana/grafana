@@ -11,7 +11,6 @@ import { DashboardModel } from '../../../dashboard/state';
 
 import { AlertStatesWorker } from './AlertStatesWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
-import { SnapshotWorker } from './SnapshotWorker';
 import { UnifiedAlertStatesWorker } from './UnifiedAlertStatesWorker';
 import {
   DashboardQueryRunner,
@@ -34,7 +33,6 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     private readonly timeSrv: TimeSrv = getTimeSrv(),
     private readonly workers: DashboardQueryRunnerWorker[] = [
       config.unifiedAlertingEnabled ? new UnifiedAlertStatesWorker() : new AlertStatesWorker(),
-      new SnapshotWorker(),
       new AnnotationsWorker(),
     ]
   ) {
