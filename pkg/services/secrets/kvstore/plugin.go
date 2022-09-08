@@ -268,7 +268,7 @@ func EvaluateRemoteSecretsPlugin(ctx context.Context, mg plugins.SecretsPluginMa
 }
 
 func HasPluginStarted(ctx context.Context, mg plugins.SecretsPluginManager) bool {
-	return mg.SecretsManager(ctx).SecretsManager != nil
+	return mg.SecretsManager(ctx) != nil && mg.SecretsManager(ctx).SecretsManager != nil
 }
 
 func StartAndReturnPlugin(mg plugins.SecretsPluginManager, ctx context.Context) (smp.SecretsManagerPlugin, error) {
