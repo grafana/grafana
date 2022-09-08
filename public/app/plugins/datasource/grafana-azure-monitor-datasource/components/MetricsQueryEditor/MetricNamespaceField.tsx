@@ -34,7 +34,7 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
   const optionValues = metricNamespaces
     .map((m) => m.value.toLowerCase())
     .concat(variableOptionGroup.options.map((p) => p.value));
-  const value = query.azureMonitor?.metricNamespace;
+  const value = query.azureMonitor?.customNamespace || query.azureMonitor?.metricNamespace;
   if (value && !optionValues.includes(value.toLowerCase())) {
     options.push({ label: value, value });
   }
@@ -43,7 +43,7 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
     <Field label="Metric namespace">
       <Select
         inputId="azure-monitor-metrics-metric-namespace-field"
-        value={query.azureMonitor?.metricNamespace || null}
+        value={query.azureMonitor?.customNamespace || query.azureMonitor?.metricNamespace || null}
         onChange={handleChange}
         options={options}
         allowCustomValue

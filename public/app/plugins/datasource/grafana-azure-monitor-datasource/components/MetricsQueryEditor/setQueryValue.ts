@@ -1,7 +1,7 @@
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
-export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: string | undefined): AzureMonitorQuery {
-  if (query.azureMonitor?.metricNamespace === metricNamespace) {
+export function setMetricNamespace(query: AzureMonitorQuery, selection: string | undefined): AzureMonitorQuery {
+  if (query.azureMonitor?.customNamespace === selection) {
     return query;
   }
 
@@ -9,7 +9,7 @@ export function setMetricNamespace(query: AzureMonitorQuery, metricNamespace: st
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
-      metricNamespace: metricNamespace,
+      customNamespace: selection,
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',

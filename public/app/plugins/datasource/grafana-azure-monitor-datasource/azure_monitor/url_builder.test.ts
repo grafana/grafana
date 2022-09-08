@@ -159,6 +159,21 @@ describe('AzureMonitorUrlBuilder', () => {
         '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Sql%2Fservers'
       );
     });
+
+    it('handles a custom namespace', () => {
+      const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
+        '',
+        '2017-05-01-preview',
+        {
+          resourceUri: '/subscriptions/sub/resource-uri/resource',
+          customNamespace: 'custom/namespace',
+        },
+        templateSrv
+      );
+      expect(url).toBe(
+        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=custom%2Fnamespace'
+      );
+    });
   });
 
   describe('Legacy query object', () => {
