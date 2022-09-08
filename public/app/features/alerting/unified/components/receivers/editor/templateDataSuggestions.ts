@@ -71,7 +71,7 @@ export function getAlertSuggestions(monaco: Monaco): SuggestionDefinition[] {
       label: { label: 'GeneratorURL', detail: '(Alert)' },
       kind,
       detail: 'string',
-      documentation: 'A back link to Grafana or external Alertmanager.',
+      documentation: 'Back link to Grafana or external Alertmanager.',
     },
     {
       label: { label: 'SilenceURL', detail: '(Alert)' },
@@ -141,7 +141,7 @@ export const snippets = {
   },
   alertDetails: {
     label: 'alertdetails',
-    description: 'Renders all the information available about the alert',
+    description: 'Renders all information available about the alert',
     snippet: alertDetailsSnippet,
   },
   groupLabels: {
