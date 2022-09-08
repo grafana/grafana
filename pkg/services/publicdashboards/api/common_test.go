@@ -45,16 +45,6 @@ func setupTestServer(
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	// build access control - FIXME we should be able to mock this, but to get
-	// tests going, we're going to instantiate full accesscontrol
-	//ac := accesscontrolmock.New()
-	//ac.WithDisabled()
-
-	// create a sqlstore for access control.
-	if db == nil {
-		db = sqlstore.InitTestDB(t)
-	}
-
 	var permissions []accesscontrol.Permission
 	if user != nil && user.Permissions != nil {
 		for action, scopes := range user.Permissions[user.OrgID] {
