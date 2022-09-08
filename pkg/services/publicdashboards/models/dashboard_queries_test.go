@@ -416,7 +416,6 @@ func TestGroupQueriesByPanelId(t *testing.T) {
               "type": "prometheus",
               "uid": "_yxMP8Ynk"
             },
-            "exemplar": true,
             "expr": "go_goroutines{job=\"$job\"}",
             "interval": "",
             "legendFormat": "",
@@ -429,7 +428,6 @@ func TestGroupQueriesByPanelId(t *testing.T) {
               "type": "prometheus",
               "uid": "promds2"
             },
-            "exemplar": true,
             "expr": "query2",
             "interval": "",
             "legendFormat": "",
@@ -452,7 +450,6 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 				"uid": "_yxMP8Ynk",
 				"type": "public-ds"
 			},
-            "exemplar": true,
             "expr": "go_goroutines{job=\"$job\"}",
             "interval": "",
             "legendFormat": "",
