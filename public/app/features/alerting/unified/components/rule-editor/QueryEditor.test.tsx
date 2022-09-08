@@ -1,3 +1,5 @@
+import { getDefaultRelativeTimeRange } from '@grafana/data';
+
 import { QueryEditor } from './QueryEditor';
 
 const onChangeMock = jest.fn();
@@ -37,9 +39,11 @@ describe('Query Editor', () => {
 
     queryEditor.onDuplicateQuery(query);
 
+    const defaultRange = getDefaultRelativeTimeRange();
+
     expect(onChangeMock).toHaveBeenCalledWith([
       query,
-      { ...query, ...{ refId: 'B', relativeTimeRange: { from: 600, to: 0 }, model: { refId: 'B', hide: false } } },
+      { ...query, ...{ refId: 'B', relativeTimeRange: defaultRange, model: { refId: 'B', hide: false } } },
     ]);
   });
 });
