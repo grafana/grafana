@@ -31,6 +31,7 @@ export const SearchWrapper: FC = memo(() => {
     isTopnav ? (
       <DashboardSearchModal isOpen={isOpen} onCloseSearch={closeSearch} />
     ) : (
+      // TODO: remove this component when we turn on the topnav feature toggle
       <DashboardSearch onCloseSearch={closeSearch} />
     )
   ) : null;
