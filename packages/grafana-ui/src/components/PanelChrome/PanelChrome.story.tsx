@@ -1,3 +1,4 @@
+import { action } from '@storybook/addon-actions';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import { merge } from 'lodash';
 import React, { CSSProperties, useState } from 'react';
@@ -125,10 +126,11 @@ export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps
   );
 };
 
-const LoadingIcon = <PanelChrome.LoadingIndicator loading onCancel={() => {}} />;
-const ErrorIcon = <PanelChrome.ErrorIndicator error="Error text" onClick={() => {}} />;
+const Default = <></>;
+const LoadingIcon = <PanelChrome.LoadingIndicator loading onCancel={action('LoadingIndicator: onCancel fired')} />;
+const ErrorIcon = <PanelChrome.ErrorIndicator error="Error text" onClick={action('ErrorIndicator: onClick fired')} />;
 
-const leftItems = { LoadingIcon, ErrorIcon };
+const leftItems = { LoadingIcon, ErrorIcon, Default };
 
 Basic.argTypes = {
   leftItems: {
@@ -139,6 +141,7 @@ Basic.argTypes = {
       labels: {
         LoadingIcon: 'With loading icon',
         ErrorIcon: 'With error icon',
+        Default: 'Default (no elements)',
       },
     },
   },
