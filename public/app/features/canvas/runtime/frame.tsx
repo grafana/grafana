@@ -28,6 +28,9 @@ export const frameItemDummy: CanvasElementItem = {
   },
 };
 
+const SCALE_VERTICAL_OFFSET = 2.5;
+const SCALE_HORIZONTAL_OFFSET = 0.5;
+
 export class FrameState extends ElementState {
   elements: ElementState[] = [];
   scene: Scene;
@@ -143,6 +146,20 @@ export class FrameState extends ElementState {
                 placement.bottom -= 10;
               }
               break;
+            case VerticalConstraint.Center:
+              if (placement.top != null) {
+                placement.top -= 10;
+              }
+              break;
+            case VerticalConstraint.Scale:
+              if (placement.bottom != null) {
+                placement.bottom -= SCALE_VERTICAL_OFFSET;
+              }
+
+              if (placement.top != null) {
+                placement.top += SCALE_VERTICAL_OFFSET;
+              }
+              break;
           }
 
           switch (horizontal) {
@@ -159,6 +176,20 @@ export class FrameState extends ElementState {
                 placement.right = 50;
               } else {
                 placement.right -= 10;
+              }
+              break;
+            case HorizontalConstraint.Center:
+              if (placement.left != null) {
+                placement.left -= 10;
+              }
+              break;
+            case HorizontalConstraint.Scale:
+              if (placement.right != null) {
+                placement.right -= SCALE_HORIZONTAL_OFFSET;
+              }
+
+              if (placement.left != null) {
+                placement.left += SCALE_HORIZONTAL_OFFSET;
               }
               break;
           }
