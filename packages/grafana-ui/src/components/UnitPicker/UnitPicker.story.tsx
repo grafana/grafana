@@ -1,3 +1,4 @@
+import { action } from '@storybook/addon-actions';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
@@ -21,7 +22,7 @@ const meta: ComponentMeta<typeof UnitPicker> = {
 export const Basic: ComponentStory<typeof UnitPicker> = (args: UnitPickerProps) => <UnitPicker {...args} />;
 
 Basic.args = {
-  onChange: console.log,
+  onChange: action('onChange fired'),
   width: 30,
 };
 
