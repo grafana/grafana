@@ -2716,6 +2716,12 @@ exports[`better eslint`] = {
     "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+<<<<<<< HEAD
+=======
+    "public/app/core/components/Select/FolderPicker.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+>>>>>>> dea6db62d5 (Refactor FolderPicker to functional componment and add dissalowSlashes as an optional prop)
     "public/app/core/components/Select/MetricSelect.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]

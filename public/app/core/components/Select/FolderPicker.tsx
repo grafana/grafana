@@ -32,6 +32,7 @@ export interface Props {
   onClear?: () => void;
   accessControlMetadata?: boolean;
   customAdd?: boolean;
+  dissalowSlashes?: boolean;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -44,6 +45,7 @@ export interface Props {
 }
 export type SelectedFolder = SelectableValue<number>;
 const VALUE_FOR_ADD = -10;
+const containsSlashes = (str: string): boolean => str.indexOf('/') !== -1;
 
 export function FolderPicker(props: Props) {
   const {
@@ -63,17 +65,23 @@ export function FolderPicker(props: Props) {
     skipInitialLoad,
     accessControlMetadata,
     customAdd,
+    dissalowSlashes
   } = props;
   const isClearable = typeof onClear === 'function';
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const styles = useStyles2(getStyles);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState<string>('');
+  const isUsingSlashes = containsSlashes(inputValue);
 
   const getOptions = useCallback(
     async (query: string) => {
       const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
-      const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(searchHits, filter);
+      const options: Array<SelectableValue<number>> = mapSearchHitsToOptions(
+        searchHits,
+        Boolean(dissalowSlashes),
+        filter
+      );
 
       const hasAccess =
         contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
@@ -108,6 +116,7 @@ export function FolderPicker(props: Props) {
       filter,
       enableCreateNew,
       customAdd,
+      dissalowSlashes,
     ]
   );
 
@@ -146,6 +155,11 @@ export function FolderPicker(props: Props) {
     }
     !isCreatingNew && setFolder(folder);
   };
+
+   //Keep the textbox value in line with what is selected
+   useEffect(() => {
+    setInputValue(folder?.label || '');
+  }, [folder]);
 
   useEffect(() => {
     // if this is not the same as our initial value notify parent
@@ -194,6 +208,7 @@ export function FolderPicker(props: Props) {
         }
 
         setFolder(newFolder);
+        setInputValue(newFolder.label!);
         onChange({ id: newFolder.value!, title: newFolder.label! });
       }
     },
@@ -202,6 +217,11 @@ export function FolderPicker(props: Props) {
 
   const createNewFolder = useCallback(
     async (folderName: string) => {
+      if (dissalowSlashes) {
+        if (containsSlashes(folderName)) {
+          return false;
+        }
+      }
       const newFolder = await createFolder({ title: folderName });
       let folder: SelectableValue<number> = { value: -1, label: 'Not created' };
 
@@ -217,7 +237,7 @@ export function FolderPicker(props: Props) {
 
       return folder;
     },
-    [onFolderChange]
+    [onFolderChange, dissalowSlashes]
   );
 
   const onKeyDown = useCallback(
@@ -231,11 +251,8 @@ export function FolderPicker(props: Props) {
         case 'Escape': {
           setFolder({ value: 0, label: rootName });
           setIsCreatingNew(false);
-        }
-      }
-    },
-    [createNewFolder, folder, rootName]
-  );
+  };
+}}, [createNewFolder, folder, rootName])
 
   const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value;
@@ -276,7 +293,11 @@ export function FolderPicker(props: Props) {
     );
   } else {
     return (
+    <>
       <div data-testid={selectors.components.FolderPicker.containerV2}>
+        {dissalowSlashes && isUsingSlashes && (
+          <div className={styles.slashNotAllowed}>Folders with &apos;/&apos; character are not allowed.</div>
+        )}
         <AsyncSelect
           inputId={inputId}
           aria-label={selectors.components.FolderPicker.input}
@@ -291,15 +312,26 @@ export function FolderPicker(props: Props) {
           onChange={onFolderChange}
           onCreateOption={createNewFolder}
           isClearable={isClearable}
+          components={{
+            Input,
+          }}
         />
       </div>
-    );
-  }
+    </>
+  );
+}
 }
 
-function mapSearchHitsToOptions(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
+function mapSearchHitsToOptions(hits: DashboardSearchHit[], filterSlashes: boolean, filter?: FolderPickerFilter) {
   const filteredHits = filter ? filter(hits) : hits;
-  return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
+  console.log('filtering', filter, filterSlashes);
+  if (filterSlashes) {
+    return filteredHits
+      .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? ''))
+      .map((hit) => ({ label: hit.title, value: hit.id }));
+  } else {
+    return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
+  }
 }
 interface Args {
   getFolder: typeof getFolderById;
@@ -325,5 +357,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.warning.main};
     font-size: ${theme.typography.bodySmall.fontSize};
     padding-top: ${theme.spacing(1)};
+    `,
+  slashNotAllowed: css`
+    color: ${theme.colors.warning.main};
+    font-size: 12px;
+    margin-bottom: 2px;
   `,
 });
