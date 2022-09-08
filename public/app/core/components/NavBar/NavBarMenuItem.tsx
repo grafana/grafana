@@ -15,6 +15,8 @@ export interface Props {
   url?: string;
   adjustHeightForBorder?: boolean;
   isMobile?: boolean;
+  // @Percona
+  showArrow?: boolean;
 }
 
 export function NavBarMenuItem({
@@ -27,6 +29,7 @@ export function NavBarMenuItem({
   text,
   url,
   isMobile = false,
+  showArrow = false,
 }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
@@ -35,6 +38,11 @@ export function NavBarMenuItem({
     <div className={styles.linkContent}>
       {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
       <div className={styles.linkText}>{text}</div>
+      {showArrow && (
+        <span className={styles.menuArrow}>
+          <Icon name={'angle-right'} />
+        </span>
+      )}
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
       )}
@@ -94,6 +102,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     gridColumnStart: 3,
   }),
   element: css({
+    position: 'relative',
     alignItems: 'center',
     background: 'none',
     border: 'none',
@@ -146,5 +155,11 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     height: '1px',
     margin: `${theme.spacing(1)} 0`,
     overflow: 'hidden',
+  }),
+  menuArrow: css({
+    flex: 1,
+    display: 'flex',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   }),
 });

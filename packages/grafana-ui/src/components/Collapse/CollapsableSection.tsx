@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { FC, ReactNode, useRef, useState } from 'react';
+import React, { FC, ReactNode, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -18,6 +18,8 @@ export interface Props {
   contentClassName?: string;
   loading?: boolean;
   labelId?: string;
+  // @Percona
+  controlled?: boolean;
 }
 
 export const CollapsableSection: FC<Props> = ({
@@ -29,9 +31,16 @@ export const CollapsableSection: FC<Props> = ({
   children,
   labelId,
   loading = false,
+  controlled = false,
 }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
+
+  useEffect(() => {
+    if (controlled) {
+      toggleOpen(isOpen);
+    }
+  }, [isOpen, controlled]);
 
   const onClick = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLElement && e.target.tagName === 'A') {

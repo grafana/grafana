@@ -16,7 +16,7 @@ export const NestedSubMenu: FC<Props> = ({ items = [] }) => {
     <ul className={styles.menu}>
       {items.map((item) => (
         <li key={item.id}>
-          <Link href={item.url || '#'} target={item.target} data-testid={`left-menu-${item.id}`}>
+          <Link href={item.url || '#'} target={item.target} data-testid={`left-menu-${item.id}`} onClick={item.onClick}>
             {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
             {item.icon && <Icon name={item.icon as IconName} className={styles.icon} />}
             {item.text}

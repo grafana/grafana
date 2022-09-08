@@ -18,7 +18,7 @@ export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => 
     ),
   },
   {
-    selector: '.dropdown > [aria-label="PMM dashboards"]',
+    selector: '#navbar-menu-portal-container [role="dialog"]',
     content: (
       <SidebarStep title={Messages.pmmDashboards.title}>
         <p>{Messages.pmmDashboards.grafanaTechnology}</p>
@@ -26,6 +26,8 @@ export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => 
         <p>{Messages.pmmDashboards.zoomIn}</p>
       </SidebarStep>
     ),
+    highlightedSelectors: ['.dropdown > [aria-label="MySQL"]', '#navbar-menu-portal-container [role="dialog"]'],
+    position: 'right',
   },
   {
     selector: '.dropdown > [aria-label="Query Analytics (QAN)"]',
@@ -54,7 +56,11 @@ export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => 
     selector: '.dropdown > [aria-label="Alerting"]',
     content: (
       <SidebarStep title={Messages.alerting.title}>
-        <p>{Messages.alerting.simplerToUse}</p>
+        <p>
+          {Messages.alerting.simplerToUse}
+          <strong>{Messages.alerting.admin}</strong>
+          {Messages.alerting.thatWorks}
+        </p>
         <p>{Messages.alerting.youDefine}</p>
         <p>{Messages.alerting.howToUse}</p>
         <p>
@@ -71,44 +77,6 @@ export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => 
       </SidebarStep>
     ),
   },
-  ...(isPmmAdmin
-    ? [
-        {
-          selector: '.dropdown > [aria-label="Configuration"]',
-          content: (
-            <SidebarStep title={Messages.configPanel.title}>
-              <p>{Messages.configPanel.services}</p>
-              <p>{Messages.configPanel.settings}</p>
-              <p>
-                {Messages.configPanel.settingsDocs}{' '}
-                <a
-                  href="https://docs.percona.com/percona-monitoring-and-management/how-to/configure.html"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {Messages.configPanel.settingsDocsLink}
-                </a>
-                .
-              </p>
-            </SidebarStep>
-          ),
-        },
-        {
-          selector: '.dropdown > [aria-label="Server Admin"]',
-          content: (
-            <SidebarStep title={Messages.serverAdmin.title}>
-              <p>{Messages.serverAdmin.userManagement}</p>
-              <ul>
-                <li>{Messages.serverAdmin.addEditRemove}</li>
-                <li>{Messages.serverAdmin.grant}</li>
-                <li>{Messages.serverAdmin.manageOrg}</li>
-                <li>{Messages.serverAdmin.changeOrg}</li>
-              </ul>
-            </SidebarStep>
-          ),
-        },
-      ]
-    : []),
   ...(isPmmAdmin && !!settings?.sttEnabled
     ? [
         {
@@ -145,6 +113,58 @@ export const getSteps = (isPmmAdmin = true, settings?: Settings): StepType[] => 
                 <li>{Messages.dbaas.singleInterface}</li>
                 <li>{Messages.dbaas.dbManagement}</li>
                 <li>{Messages.dbaas.automation}</li>
+              </ul>
+            </SidebarStep>
+          ),
+        },
+      ]
+    : []),
+  ...(isPmmAdmin && !!settings?.backupEnabled
+    ? [
+        {
+          selector: '.dropdown > [aria-label="Backup"]',
+          content: (
+            <SidebarStep title={Messages.backup.title}>
+              <p>{Messages.backup.feature}</p>
+              <p>{Messages.backup.onDemand}</p>
+              <p>{Messages.backup.shedule}</p>
+            </SidebarStep>
+          ),
+        },
+      ]
+    : []),
+  ...(isPmmAdmin
+    ? [
+        {
+          selector: '.dropdown > [aria-label="Configuration"]',
+          content: (
+            <SidebarStep title={Messages.configPanel.title}>
+              <p>{Messages.configPanel.services}</p>
+              <p>{Messages.configPanel.settings}</p>
+              <p>
+                {Messages.configPanel.settingsDocs}{' '}
+                <a
+                  href="https://docs.percona.com/percona-monitoring-and-management/how-to/configure.html"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {Messages.configPanel.settingsDocsLink}
+                </a>
+                .
+              </p>
+            </SidebarStep>
+          ),
+        },
+        {
+          selector: '.dropdown > [aria-label="Server admin"]',
+          content: (
+            <SidebarStep title={Messages.serverAdmin.title}>
+              <p>{Messages.serverAdmin.userManagement}</p>
+              <ul>
+                <li>{Messages.serverAdmin.addEditRemove}</li>
+                <li>{Messages.serverAdmin.grant}</li>
+                <li>{Messages.serverAdmin.manageOrg}</li>
+                <li>{Messages.serverAdmin.changeOrg}</li>
               </ul>
             </SidebarStep>
           ),

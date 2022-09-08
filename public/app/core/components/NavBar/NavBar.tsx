@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
+import { useTour } from '@reactour/tour';
 import { cloneDeep } from 'lodash';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ import { Icon, useTheme2 } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { getKioskMode } from 'app/core/navigation/kiosk';
+import { initialState, updateNavTree } from 'app/core/reducers/navBarTree';
 import { getPerconaSettings, getPerconaUser } from 'app/percona/shared/core/selectors';
 import { KioskMode, StoreState } from 'app/types';
 
@@ -39,9 +41,10 @@ import {
   buildIntegratedAlertingMenuItem,
   buildInventoryAndSettings,
   enrichConfigItems,
+  enrichWithClickDispatch,
   enrichWithInteractionTracking,
   getActiveItem,
-  isMatchOrChildMatch,
+  isMatchOrInnerMatch,
   isSearchActive,
   SEARCH_ITEM_ID,
 } from './utils';
@@ -54,16 +57,18 @@ export const NavBar = React.memo(() => {
   const navBarTree = useSelector((state: StoreState) => state.navBarTree);
   const theme = useTheme2();
   const styles = getStyles(theme);
+  const dispatchOffset = theme.transitions.duration.standard;
   const location = useLocation();
   const dispatch = useDispatch();
   const kiosk = getKioskMode();
   const { result } = useSelector(getPerconaSettings);
-  const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = result!;
+  const { alertingEnabled } = result!;
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuAnimationInProgress, setMenuAnimationInProgress] = useState(false);
-  const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>(undefined);
+  const [menuIdOpen, setMenuIdOpen] = useState<string | undefined>();
+  const { isOpen: isTourOpen } = useTour();
 
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
@@ -94,15 +99,19 @@ export const NavBar = React.memo(() => {
 
   const coreItems = navTree
     .filter((item) => item.section === NavSection.Core)
-    .map((item) => enrichWithInteractionTracking(item, menuOpen));
+    .map((item) => enrichWithInteractionTracking(item, menuOpen))
+    .map((item) => enrichWithClickDispatch(item, dispatch, dispatchOffset));
   const pluginItems = navTree
     .filter((item) => item.section === NavSection.Plugin)
-    .map((item) => enrichWithInteractionTracking(item, menuOpen));
+    .map((item) => enrichWithInteractionTracking(item, menuOpen))
+    .map((item) => enrichWithClickDispatch(item, dispatch, dispatchOffset));
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
     toggleSwitcherModal
-  ).map((item) => enrichWithInteractionTracking(item, menuOpen));
+  )
+    .map((item) => enrichWithInteractionTracking(item, menuOpen))
+    .map((item) => enrichWithClickDispatch(item, dispatch, dispatchOffset));
 
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
 
@@ -120,32 +129,42 @@ export const NavBar = React.memo(() => {
   dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
 
   // @PERCONA
-  if (isPlatformUser) {
-    coreItems.push(PMM_ENTITLEMENTS_PAGE);
-    coreItems.push(PMM_TICKETS_PAGE);
-    coreItems.push(PMM_ENVIRONMENT_OVERVIEW_PAGE);
-  }
+  useEffect(() => {
+    const updatedNavTree = cloneDeep(initialState);
 
-  // @PERCONA
-  if (isAuthorized) {
-    buildInventoryAndSettings(configItems);
+    const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = result!;
 
-    if (alertingEnabled) {
-      buildIntegratedAlertingMenuItem(coreItems);
+    // @PERCONA
+    if (isPlatformUser) {
+      updatedNavTree.push(PMM_ENTITLEMENTS_PAGE);
+      updatedNavTree.push(PMM_TICKETS_PAGE);
+      updatedNavTree.push(PMM_ENVIRONMENT_OVERVIEW_PAGE);
     }
 
-    if (sttEnabled) {
-      coreItems.push(PMM_STT_PAGE);
+    // @PERCONA
+    if (isAuthorized) {
+      buildInventoryAndSettings(updatedNavTree);
+
+      if (alertingEnabled) {
+        buildIntegratedAlertingMenuItem(updatedNavTree);
+      }
+
+      if (sttEnabled) {
+        updatedNavTree.push(PMM_STT_PAGE);
+      }
+
+      if (dbaasEnabled) {
+        updatedNavTree.push(PMM_DBAAS_PAGE);
+      }
+
+      if (backupEnabled) {
+        updatedNavTree.push(PMM_BACKUP_PAGE);
+      }
     }
 
-    if (dbaasEnabled) {
-      coreItems.push(PMM_DBAAS_PAGE);
-    }
-
-    if (backupEnabled) {
-      coreItems.push(PMM_BACKUP_PAGE);
-    }
-  }
+    dispatch(updateNavTree({ items: updatedNavTree }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result, isAuthorized, isPlatformUser]);
 
   if (kiosk !== KioskMode.Off) {
     return null;
@@ -155,7 +174,8 @@ export const NavBar = React.memo(() => {
       <nav className={cx(styles.sidemenu, 'sidemenu')} data-testid="sidemenu" aria-label="Main menu">
         <NavBarContext.Provider
           value={{
-            menuIdOpen: menuIdOpen,
+            // Show MySQL item during onboarding tour
+            menuIdOpen: isTourOpen ? 'mysql' : menuIdOpen,
             setMenuIdOpen: setMenuIdOpen,
           }}
         >
@@ -192,7 +212,7 @@ export const NavBar = React.memo(() => {
                 {coreItems.map((link, index) => (
                   <NavBarItem
                     key={`${link.id}-${index}`}
-                    isActive={isMatchOrChildMatch(link, activeItem)}
+                    isActive={isMatchOrInnerMatch(link, activeItem)}
                     link={{ ...link, subTitle: undefined }}
                   />
                 ))}
@@ -201,7 +221,7 @@ export const NavBar = React.memo(() => {
                   pluginItems.map((link, index) => (
                     <NavBarItem
                       key={`${link.id}-${index}`}
-                      isActive={isMatchOrChildMatch(link, activeItem)}
+                      isActive={isMatchOrInnerMatch(link, activeItem)}
                       link={link}
                     />
                   ))}
@@ -209,7 +229,7 @@ export const NavBar = React.memo(() => {
                 {configItems.map((link, index) => (
                   <NavBarItem
                     key={`${link.id}-${index}`}
-                    isActive={isMatchOrChildMatch(link, activeItem)}
+                    isActive={isMatchOrInnerMatch(link, activeItem)}
                     reverseMenuDirection
                     link={link}
                     className={cx({ [styles.verticalSpacer]: index === 0 })}

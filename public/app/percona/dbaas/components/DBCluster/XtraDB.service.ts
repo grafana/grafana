@@ -32,10 +32,12 @@ import {
 
 export class XtraDBService extends DBClusterService {
   addDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     return apiManagement.post<DBClusterPayload, any>('/DBaaS/PXCCluster/Create', toAPI(dbCluster));
   }
 
   updateDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     return apiManagement.post<DBClusterPayload, any>('/DBaaS/PXCCluster/Update', toAPI(dbCluster));
   }
 
@@ -64,6 +66,7 @@ export class XtraDBService extends DBClusterService {
   }
 
   getDBClusterCredentials(dbCluster: DBCluster): Promise<void | DBClusterConnectionAPI> {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     return apiManagement.post<DBClusterConnectionAPI, any>(
       '/DBaaS/PXCClusters/GetCredentials',
       omit(toAPI(dbCluster), ['params'])
@@ -77,16 +80,19 @@ export class XtraDBService extends DBClusterService {
       cluster_type: DBClusterType.pxc,
     };
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     return apiManagement.post<any, DBClusterActionAPI>('/DBaaS/DBClusters/Restart', body);
   }
 
   getComponents(kubernetesClusterName: string): Promise<DBClusterComponents> {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     return apiManagement.post<DBClusterComponents, any>('/DBaaS/Components/GetPXC', {
       kubernetes_cluster_name: kubernetesClusterName,
     });
   }
 
   setComponents(kubernetesClusterName: string, componentsVersions: ManageComponentsVersionsRenderProps): Promise<void> {
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     return apiManagement.post<any, DBClusterChangeComponentsAPI>('/DBaaS/Components/ChangePXC', {
       kubernetes_cluster_name: kubernetesClusterName,
       pxc: getComponentChange(Operators.pxc, SupportedComponents.pxc, componentsVersions),
@@ -96,6 +102,7 @@ export class XtraDBService extends DBClusterService {
 
   getDatabaseVersions(kubernetesClusterName: string): Promise<DatabaseVersion[]> {
     return this.getComponents(kubernetesClusterName).then(({ versions }) => {
+      /* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */
       return Object.entries(versions[0].matrix.pxc as DBClusterComponent).map(([version, component]) => ({
         value: component.image_path,
         label: version,

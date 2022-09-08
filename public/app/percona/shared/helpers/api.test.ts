@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
 import { AxiosError, AxiosInstance } from 'axios';
 
 import { ApiErrorCode, ApiParams } from '../core';

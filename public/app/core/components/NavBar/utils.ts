@@ -1,8 +1,10 @@
+import { Dispatch } from '@reduxjs/toolkit';
 import { Location } from 'history';
 
 import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { config } from 'app/core/config';
+import { updateMenuTree } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ShowModalReactEvent } from '../../../types/events';
@@ -92,23 +94,47 @@ export const enrichConfigItems = (
   return items;
 };
 
-export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
+export const enrichClickWith = (item: NavModelItem, withFc: (item: NavModelItem) => void) => {
   const onClick = item.onClick;
   item.onClick = () => {
-    reportInteraction('grafana_navigation_item_clicked', {
-      path: item.url ?? item.id,
-      state: expandedState ? 'expanded' : 'collapsed',
-    });
+    withFc(item);
+
     onClick?.();
   };
   if (item.children) {
-    item.children = item.children.map((item) => enrichWithInteractionTracking(item, expandedState));
+    item.children = item.children.map((item) => enrichClickWith(item, withFc));
   }
   return item;
 };
 
-export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem) => {
+export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) =>
+  enrichClickWith(item, (item) => {
+    reportInteraction('grafana_navigation_item_clicked', {
+      path: item.url ?? item.id,
+      state: expandedState ? 'expanded' : 'collapsed',
+    });
+  });
+
+// @Percona
+export const enrichWithClickDispatch = (item: NavModelItem, dispatch: Dispatch, dispatchOffset: number) =>
+  enrichClickWith(item, (link) => {
+    // let the animation play out, dispatch action after that
+    setTimeout(() => {
+      if (link.id) {
+        dispatch(updateMenuTree({ id: link.id, active: true }));
+      }
+    }, dispatchOffset);
+  });
+
+export const isMatchOrChildMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
   return Boolean(itemToCheck === searchItem || itemToCheck.children?.some((child) => child === searchItem));
+};
+
+// @Percona
+export const isMatchOrInnerMatch = (itemToCheck: NavModelItem, searchItem?: NavModelItem): boolean => {
+  return Boolean(
+    itemToCheck === searchItem || itemToCheck.children?.some((child) => isMatchOrInnerMatch(child, searchItem))
+  );
 };
 
 const stripQueryParams = (url?: string) => {
