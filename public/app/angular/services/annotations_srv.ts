@@ -1,5 +1,3 @@
-import { cloneDeep } from 'lodash';
-
 import { AnnotationEvent, deprecationWarning } from '@grafana/data';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from 'app/features/annotations/api';
 import { AnnotationQueryOptions } from 'app/features/annotations/types';
