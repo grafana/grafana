@@ -1,8 +1,15 @@
 import { ResourcesWithUnits } from '../DBCluster.types';
 
 export const Messages = {
-  buildResourcesLabel: (allocated: ResourcesWithUnits, allocatedWidth: number, total: ResourcesWithUnits) =>
-    `Using ${allocated.value} ${allocated.units} (${allocatedWidth}%) of ${total.value} ${total.units} in total`,
+  buildResourcesLabel: (
+    allocated: ResourcesWithUnits,
+    allocatedWidth: number,
+    total: ResourcesWithUnits,
+    emptyValueMessage?: string
+  ) =>
+    isNaN(allocated.value) && emptyValueMessage
+      ? emptyValueMessage
+      : `Using ${allocated.value} ${allocated.units} (${allocatedWidth}%) of ${total.value} ${total.units} in total`,
   buildExpectedLabel: (expected: ResourcesWithUnits, resourceLabel: string) =>
     `Required ${resourceLabel} (${expected.value} ${expected.units})`,
   buildExpectedAllocatedLabel: (expectedDowsize: ResourcesWithUnits, resourceLabel: string) =>

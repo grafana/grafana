@@ -7,6 +7,7 @@ export interface ResourcesBarProps {
   allocated: ResourcesWithUnits | undefined;
   expected: ResourcesWithUnits | undefined;
   resourceLabel: string;
+  resourceEmptyValueMessage?: string;
   icon?: ReactNode;
   dataTestId?: string;
   className?: string;

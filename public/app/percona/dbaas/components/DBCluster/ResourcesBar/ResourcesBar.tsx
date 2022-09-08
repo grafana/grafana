@@ -18,6 +18,7 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
   allocated,
   expected,
   resourceLabel,
+  resourceEmptyValueMessage,
   icon,
   dataTestId,
   className,
@@ -65,7 +66,12 @@ export const ResourcesBar: FC<ResourcesBarProps> = ({
         </div>
         {allocated && total && (
           <span data-testid="resources-bar-label" className={styles.resourcesBarLabel}>
-            {Messages.buildResourcesLabel(formatResources(allocated), allocatedWidth, formatResources(total))}
+            {Messages.buildResourcesLabel(
+              formatResources(allocated),
+              allocatedWidth,
+              formatResources(total),
+              resourceEmptyValueMessage
+            )}
           </span>
         )}
         {allocated && (
