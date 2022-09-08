@@ -53,7 +53,7 @@ type QuotaChecker interface {
 func PersistConfig(ctx context.Context, store AMConfigStore, cmd *models.SaveAlertmanagerConfigurationCmd) error {
 	cfg := &definitions.PostableUserConfig{}
 	if err := json.Unmarshal([]byte(cmd.AlertmanagerConfiguration), cfg); err != nil {
-		return fmt.Errorf("change would result in an invalid configruation state: %w", err)
+		return fmt.Errorf("change would result in an invalid configuration state: %w", err)
 	}
 	return store.UpdateAlertmanagerConfiguration(ctx, cmd)
 }
