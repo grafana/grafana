@@ -639,6 +639,22 @@ describe('LokiDatasource', () => {
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"}[5m])', 'rate({bar="baz", job="grafana"}[5m])', ds);
         });
+
+        it('then the correct label should be added for metrics query and variable', () => {
+          assertAdHocFilters('rate({bar="baz"}[$__interval])', 'rate({bar="baz", job="grafana"}[$__interval])', ds);
+        });
+
+        it('then the correct label should be added for logs query with empty selector', () => {
+          assertAdHocFilters('{}', '{job="grafana"}', ds);
+        });
+
+        it('then the correct label should be added for metrics query with empty selector', () => {
+          assertAdHocFilters('rate({}[5m])', 'rate({job="grafana"}[5m])', ds);
+        });
+
+        it('then the correct label should be added for metrics query with empty selector and variable', () => {
+          assertAdHocFilters('rate({}[$__interval])', 'rate({job="grafana"}[$__interval])', ds);
+        });
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
