@@ -7,6 +7,7 @@ aliases:
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/invite-user-join-org/
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/manage-pending-invites/
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/remove-user-from-org/
+  - /docs/grafana/latest/administration/user-management/manage-org-users/
 title: Manage users in an organization
 weight: 400
 ---

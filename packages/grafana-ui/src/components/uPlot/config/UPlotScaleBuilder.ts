@@ -17,6 +17,7 @@ export interface ScaleProps {
   orientation: ScaleOrientation;
   direction: ScaleDirection;
   log?: number;
+  linearThreshold?: number;
   centeredZero?: boolean;
   decimals?: DecimalCount;
 }
@@ -41,15 +42,21 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       centeredZero,
       decimals,
     } = this.props;
+
+    const distr = this.props.distribution;
+
     const distribution = !isTime
       ? {
           distr:
-            this.props.distribution === ScaleDistribution.Log
+            distr === ScaleDistribution.Symlog
+              ? 4
+              : distr === ScaleDistribution.Log
               ? 3
-              : this.props.distribution === ScaleDistribution.Ordinal
+              : distr === ScaleDistribution.Ordinal
               ? 2
               : 1,
-          log: this.props.distribution === ScaleDistribution.Log ? this.props.log || 2 : undefined,
+          log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? this.props.log ?? 2 : undefined,
+          asinh: distr === ScaleDistribution.Symlog ? this.props.linearThreshold ?? 1 : undefined,
         }
       : {};
 
@@ -91,7 +98,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         return minMax;
       }
 
-      if (scale.distr === 1 || scale.distr === 2) {
+      if (scale.distr === 1 || scale.distr === 2 || scale.distr === 4) {
         if (centeredZero) {
           let absMin = Math.abs(dataMin!);
           let absMax = Math.abs(dataMax!);
@@ -100,8 +107,14 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
           dataMax = max;
         }
 
-        // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
-        minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
+        if (scale.distr === 4) {
+          // TODO: switch to `, true)` after updating uPlot to 1.6.23+
+          // see https://github.com/leeoniya/uPlot/issues/749
+          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, scale.log ?? 10, false);
+        } else {
+          // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
+          minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
+        }
       } else if (scale.distr === 3) {
         minMax = uPlot.rangeLog(dataMin!, dataMax!, scale.log ?? 10, true);
       }
