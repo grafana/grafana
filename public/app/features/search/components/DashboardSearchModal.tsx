@@ -74,7 +74,7 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
               </div>
 
               <div className={styles.closeBtn}>
-                <IconButton name="times" onClick={onCloseSearch} size="xxl" tooltip="Close search" />
+                <IconButton name="times" onClick={onCloseSearch} size="xl" tooltip="Close search" />
               </div>
             </div>
             {animationComplete && (
@@ -188,17 +188,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.modal};
 
       ${theme.breakpoints.up('md')} {
-        border-radius: ${theme.shape.borderRadius(4)};
+        border-radius: ${theme.shape.borderRadius(2)};
         box-shadow: ${theme.shadows.z3};
         left: 0;
-        margin: ${theme.spacing(0.5, 'auto', 0)};
+        margin: ${theme.spacing(0, 'auto', 0)};
         padding: ${theme.spacing(1)};
         right: 0;
       }
     `,
     closeBtn: css`
       right: -5px;
-      top: 2px;
+      top: 0px;
       z-index: 1;
       position: absolute;
     `,
@@ -217,13 +217,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       outline: none;
       background-color: transparent;
       background: transparent;
-      border-bottom: 2px solid ${theme.v1.colors.border1};
-      font-size: 20px;
-      line-height: 38px;
+      border-bottom: 1px solid ${theme.colors.border.medium};
+      font-size: 16px;
+      line-height: 30px;
       width: 100%;
 
       &::placeholder {
-        color: ${theme.v1.colors.textWeak};
+        color: ${theme.colors.text.disabled};
       }
     `,
   };
