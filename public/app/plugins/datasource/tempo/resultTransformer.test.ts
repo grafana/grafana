@@ -31,6 +31,7 @@ const defaultSettings: DataSourceInstanceSettings = {
     module: '',
     baseUrl: '',
   },
+  readOnly: false,
   jsonData: {},
 };
 

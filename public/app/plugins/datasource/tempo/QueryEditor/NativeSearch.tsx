@@ -23,9 +23,10 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { TempoDatasource, TempoQuery } from '../datasource';
+import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { tokenizer } from '../syntax';
+import { TempoQuery } from '../types';
 
 interface Props {
   datasource: TempoDatasource;

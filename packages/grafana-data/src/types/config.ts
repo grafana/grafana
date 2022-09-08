@@ -186,7 +186,6 @@ export interface GrafanaConfig {
   loginHint: string;
   passwordHint: string;
   loginError?: string;
-  navTree: any;
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;

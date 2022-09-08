@@ -50,7 +50,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     }
   }, [dispatched, loading, onClose, error]);
 
-  useCleanup((state) => state.unifiedAlerting.updateLotexNamespaceAndGroup);
+  useCleanup((state) => (state.unifiedAlerting.updateLotexNamespaceAndGroup = initialAsyncRequestState));
 
   const onSubmit = (values: FormValues) => {
     dispatch(

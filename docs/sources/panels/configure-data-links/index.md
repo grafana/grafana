@@ -66,9 +66,15 @@ Value-specific variables are available under `__value` namespace:
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
 
-`${myvar:queryparam}` - where `myvar` is a name of the template variable that matches one in the current dashboard that you want to use.
+`${var-myvar:queryparam}` - where `var-myvar` is the name of the template variable that matches one in the current dashboard that you want to use.
 
-If you want to add all of the current dashboard's variables to the URL, then use `__all_variables`.
+| Variable state           | Result in the created URL           |
+| ------------------------ | ----------------------------------- |
+| selected one value       | `var-myvar=value1`                  |
+| selected multiple values | `var-myvar=value1&var-myvar=value2` |
+| selected `All`           | `var-myvar=All`                     |
+
+If you want to add all of the current dashboard's variables to the URL, then use `${__all_variables}`.
 
 ## Data links
 

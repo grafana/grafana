@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UserEvent } from '@testing-library/user-event/dist/types/setup';
 import React from 'react';
 
-import { TempoDatasource, TempoQuery } from '../datasource';
+import { TempoDatasource } from '../datasource';
+import { TempoQuery } from '../types';
 
 import NativeSearch from './NativeSearch';
 
@@ -49,7 +49,7 @@ let mockQuery = {
 } as TempoQuery;
 
 describe('NativeSearch', () => {
-  let user: UserEvent;
+  let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
     jest.useFakeTimers();
