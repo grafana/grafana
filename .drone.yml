@@ -424,6 +424,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.6.1
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -497,7 +501,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -1174,6 +1178,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.6.1
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -1210,6 +1218,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: store-storybook
   when:
+    paths:
+      include:
+      - packages/grafana-ui/**
     repo:
     - grafana/grafana
 - commands:
@@ -1380,7 +1391,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -1901,6 +1912,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.6.1
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl upload-cdn --edition oss
   depends_on:
@@ -1944,6 +1959,10 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: store-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
   depends_on:
@@ -2125,7 +2144,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -2806,7 +2825,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -3870,6 +3889,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.6.1
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl upload-cdn --edition oss
   depends_on:
@@ -4059,7 +4082,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -4704,7 +4727,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -5092,6 +5115,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 5e9c764e3444298fe44dff79d8cfc2baaa53bdf39e0d8afcee80b06a03421342
+hmac: 2c9dccbbf4e296786b87c9c17db21ed348147a811cef005a11a78c0cd9d052c7
 
 ...
