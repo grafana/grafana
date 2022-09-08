@@ -10,7 +10,6 @@ import { GrafanaTheme2, NavMenuItemType, NavModelItem } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
 
 import { NavBarItemMenuItem } from './NavBarItemMenuItem';
-import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { useNavBarItemMenuContext } from './context';
 import menuItemTranslations from './navBarItem-translations';
 import { getNavModelItemKey } from './utils';
@@ -76,14 +75,21 @@ export function NavBarItemMenu(props: NavBarItemMenuProps): ReactElement | null 
     </li>
   );
 
-  const contents = [itemComponents, subTitleComponent];
-  const contentComponent = (
-    <NavBarScrollContainer key="scrollContainer">
-      {reverseMenuDirection ? contents.reverse() : contents}
-    </NavBarScrollContainer>
-  );
+  // @Percona
+  //
+  // Scrollcontainer prevented nested navigation from working
+  // as it was hiding the expanded menus to the left
+  //
+  // const contents = [itemComponents, subTitleComponent];
+  // const contentComponent = (
+  //   <NavBarScrollContainer key="scrollContainer">
+  //     {reverseMenuDirection ? contents.reverse() : contents}
+  //   </NavBarScrollContainer>
+  // );
+  //
+  // const menu = [headerComponent, contentComponent];
 
-  const menu = [headerComponent, contentComponent];
+  const menu = [headerComponent, itemComponents, subTitleComponent];
 
   return (
     <ul className={styles.menu} ref={ref} {...mergeProps(menuProps, contextMenuProps)} tabIndex={menuHasFocus ? 0 : -1}>

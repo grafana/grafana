@@ -51,6 +51,7 @@ export const PerconaBootstrapper = () => {
         setSteps(getSteps(isPmmAdmin(contextSrv.user), settings));
         dispatch(setAuthorized(true));
       } catch (e) {
+        setSteps(getSteps(isPmmAdmin(contextSrv.user)));
         // @ts-ignore
         if (e.response?.status === 401) {
           setAuthorized(false);

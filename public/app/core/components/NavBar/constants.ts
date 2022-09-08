@@ -1,4 +1,4 @@
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, NavSection } from '@grafana/data';
 import config from 'app/core/config';
 
 export const PMM_STT_PAGE: NavModelItem = {
@@ -6,6 +6,7 @@ export const PMM_STT_PAGE: NavModelItem = {
   icon: 'percona-database-checks',
   text: 'Advisor Checks',
   subTitle: 'Percona Advisor Checks',
+  section: NavSection.Core,
   url: `${config.appSubUrl}/pmm-database-checks`,
   breadcrumbs: [
     {
@@ -34,6 +35,7 @@ export const PMM_DBAAS_PAGE: NavModelItem = {
   text: 'DBaaS',
   subTitle: 'Percona DBaaS',
   icon: 'database',
+  section: NavSection.Core,
   url: `${config.appSubUrl}/dbaas`,
   breadcrumbs: [
     {
@@ -63,6 +65,7 @@ export const PMM_BACKUP_PAGE: NavModelItem = {
   text: 'Backup',
   subTitle: 'Percona Backups',
   url: `${config.appSubUrl}/backup`,
+  section: NavSection.Core,
   breadcrumbs: [
     {
       title: 'Backup',
@@ -103,6 +106,7 @@ export const PMM_ALERTING_PAGE: NavModelItem = {
   text: 'Integrated Alerting',
   url: `${config.appSubUrl}/integrated-alerting`,
   subTitle: 'Percona Integrated Alerting',
+  section: NavSection.Core,
   breadcrumbs: [
     {
       title: 'Integrated Alerting',
@@ -237,6 +241,7 @@ export const PMM_TICKETS_PAGE: NavModelItem = {
   text: 'List of tickets opened by Customer Organization',
   subTitle: 'Percona Support Tickets from Portal',
   url: `${config.appSubUrl}/tickets`,
+  section: NavSection.Core,
 };
 
 export const PMM_ENTITLEMENTS_PAGE: NavModelItem = {
@@ -245,6 +250,7 @@ export const PMM_ENTITLEMENTS_PAGE: NavModelItem = {
   text: 'Entitlements',
   subTitle: 'Percona Entitlements',
   url: `${config.appSubUrl}/entitlements`,
+  section: NavSection.Core,
 };
 
 export const PMM_ENVIRONMENT_OVERVIEW_PAGE: NavModelItem = {
@@ -253,4 +259,5 @@ export const PMM_ENVIRONMENT_OVERVIEW_PAGE: NavModelItem = {
   text: 'Environment Overview',
   subTitle: 'Percona Environment Overview',
   url: `${config.appSubUrl}/environment-overview`,
+  section: NavSection.Core,
 };

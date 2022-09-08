@@ -31,6 +31,8 @@ export interface NavModelItem extends NavLinkDTO {
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   showIconInNavbar?: boolean;
+  // @Percona
+  expanded?: boolean;
 }
 
 export enum NavSection {

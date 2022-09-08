@@ -176,15 +176,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 	dashboardChildLinks := hs.buildDashboardNavLinks(c, hasEditPerm)
 
-	nodeSummaryChildNavs := []*dtos.NavLink{
-		{Text: "CPU Utilization", Id: "cpu-utilization", Url: setting.AppSubUrl + "/d/node-cpu/cpu-utilization-details", Icon: "percona-cpu", HideFromTabs: true},
-		{Text: "Disk", Id: "disk", Url: setting.AppSubUrl + "/d/node-disk/disk-details", Icon: "percona-disk", HideFromTabs: true},
-		{Text: "Memory", Id: "memory", Url: setting.AppSubUrl + "/d/node-memory/memory-details", Icon: "percona-memory", HideFromTabs: true},
-		{Text: "Network", Id: "network", Url: setting.AppSubUrl + "/d/node-network/network-details", Icon: "percona-network", HideFromTabs: true},
-		{Text: "Temperature", Id: "temperature", Url: setting.AppSubUrl + "/d/node-temp/node-temperature-details", Icon: "percona-temperature", HideFromTabs: true},
-		{Text: "NUMA", Id: "numa", Url: setting.AppSubUrl + "/d/node-memory-numa/numa-details", Icon: "percona-cluster-network", HideFromTabs: true},
-		{Text: "Processes", Id: "processes", Url: setting.AppSubUrl + "/d/node-cpu-process/processes-details", Icon: "percona-process", HideFromTabs: true},
-	}
 	navTree = append(navTree, &dtos.NavLink{
 		Text:           "Starred",
 		Id:             "starred",
@@ -195,132 +186,115 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		EmptyMessageId: "starred-empty",
 	})
 
+	systemChildNavs := []*dtos.NavLink{
+		// @PERCONA
+		// Items under summary were moved up
+		{Text: "Overview", Id: "node-overview", Url: setting.AppSubUrl + "/d/node-instance-overview/nodes-overview", Icon: "percona-nav-overview", HideFromTabs: true, ShowIconInNavbar: true},
+		{Text: "Summary", Id: "node-summary", Url: setting.AppSubUrl + "/d/node-instance-summary/node-summary", Icon: "percona-nav-summary", HideFromTabs: true, ShowIconInNavbar: true},
+		{Text: "CPU utilization", Id: "cpu-utilization", Url: setting.AppSubUrl + "/d/node-cpu/cpu-utilization-details", Icon: "percona-cpu", HideFromTabs: true},
+		{Text: "Disk", Id: "disk", Url: setting.AppSubUrl + "/d/node-disk/disk-details", Icon: "percona-disk", HideFromTabs: true},
+		{Text: "Memory", Id: "memory", Url: setting.AppSubUrl + "/d/node-memory/memory-details", Icon: "percona-memory", HideFromTabs: true},
+		{Text: "Network", Id: "network", Url: setting.AppSubUrl + "/d/node-network/network-details", Icon: "percona-network", HideFromTabs: true},
+		{Text: "Temperature", Id: "temperature", Url: setting.AppSubUrl + "/d/node-temp/node-temperature-details", Icon: "percona-temperature", HideFromTabs: true},
+		{Text: "NUMA", Id: "numa", Url: setting.AppSubUrl + "/d/node-memory-numa/numa-details", Icon: "percona-cluster-network", HideFromTabs: true},
+		{Text: "Processes", Id: "processes", Url: setting.AppSubUrl + "/d/node-cpu-process/processes-details", Icon: "percona-process", HideFromTabs: true},
+	}
+
 	// @PERCONA
-	// All these NavLink down to pmmChildNavs are Percona's dashboards
-	nodeChildNavs := []*dtos.NavLink{
-		{Text: "Node Overview", Id: "node-overview", Url: setting.AppSubUrl + "/d/node-instance-overview/nodes-overview", Icon: "percona-cluster-network", HideFromTabs: true},
-		{Text: "Node Summary", Id: "node-summary", Url: setting.AppSubUrl + "/d/node-instance-summary/node-summary", Icon: "percona-summary", HideFromTabs: true, Children: nodeSummaryChildNavs},
-	}
-
+	// All these NavLink down to QAN are Percona's dashboards
 	mysqlHAChildNavs := []*dtos.NavLink{
-		{Text: "MySQL Group Replication Summary", Id: "mysql-group-replication-summary", Url: setting.AppSubUrl + "/d/mysql-group-replicaset-summary/mysql-group-replication-summary", Icon: "percona-cluster", HideFromTabs: true},
-		{Text: "MySQL Replication Summary", Id: "mysql-replication-summary", Url: setting.AppSubUrl + "/d/mysql-replicaset-summary/mysql-replication-summary", Icon: "percona-cluster", HideFromTabs: true},
-		{Text: "PXC/Galera Cluster Summary", Id: "pxc-cluster-summary", Url: setting.AppSubUrl + "/d/pxc-cluster-summary/pxc-galera-cluster-summary", Icon: "percona-cluster", HideFromTabs: true},
-		{Text: "PXC/Galera Node Summary", Id: "pxc-node-summary", Url: setting.AppSubUrl + "/d/pxc-node-summary/pxc-galera-node-summary", Icon: "percona-cluster", HideFromTabs: true},
-		{Text: "PXC/Galera Nodes Compare", Id: "pxc-nodes-compare", Url: setting.AppSubUrl + "/d/pxc-nodes-compare/pxc-galera-nodes-compare", Icon: "percona-cluster", HideFromTabs: true},
+		{Text: "Group replication summary", Id: "mysql-group-replication-summary", Url: setting.AppSubUrl + "/d/mysql-group-replicaset-summary/mysql-group-replication-summary", Icon: "percona-cluster", HideFromTabs: true},
+		{Text: "Replication summary", Id: "mysql-replication-summary", Url: setting.AppSubUrl + "/d/mysql-replicaset-summary/mysql-replication-summary", Icon: "percona-cluster", HideFromTabs: true},
+		{Text: "PXC/Galera cluster summary", Id: "pxc-cluster-summary", Url: setting.AppSubUrl + "/d/pxc-cluster-summary/pxc-galera-cluster-summary", Icon: "percona-cluster", HideFromTabs: true},
+		{Text: "PXC/Galera node summary", Id: "pxc-node-summary", Url: setting.AppSubUrl + "/d/pxc-node-summary/pxc-galera-node-summary", Icon: "percona-cluster", HideFromTabs: true},
+		{Text: "PXC/Galera nodes compare", Id: "pxc-nodes-compare", Url: setting.AppSubUrl + "/d/pxc-nodes-compare/pxc-galera-nodes-compare", Icon: "percona-cluster", HideFromTabs: true},
 	}
 
-	mysqlSummaryChildNavs := []*dtos.NavLink{
+	mysqlChildNavs := []*dtos.NavLink{
 		{
-			Text: "MySQL Command/Handler Counters Compare",
+			Text: "Overview",
+			Id:   "mysql-overview",
+			Url:  setting.AppSubUrl + "/d/mysql-instance-overview/mysql-instances-overview", Icon: "percona-nav-overview",
+			HideFromTabs:     true,
+			ShowIconInNavbar: true,
+		},
+		{
+			Text: "Summary",
+			Id:   "mysql-summary",
+			Url:  setting.AppSubUrl + "/d/mysql-instance-summary/mysql-instance-summary", Icon: "percona-nav-summary",
+			HideFromTabs:     true,
+			ShowIconInNavbar: true,
+		},
+		{
+			Text:             "High availability",
+			Id:               "mysql-ha",
+			Icon:             "percona-cluster",
+			HideFromTabs:     true,
+			ShowIconInNavbar: true,
+			Children:         mysqlHAChildNavs,
+		},
+		{
+			Text: "Command/Handler counters compare",
 			Id:   "mysql-command-handler-counters-compare",
 			Url:  setting.AppSubUrl + "/d/mysql-commandhandler-compare/mysql-command-handler-counters-compare",
 			Icon: "sitemap",
 		},
 		{
-			Text: "MySQL InnoDB Compression Details",
-			Id:   "mysql-innodb-compression-details",
-			Url:  setting.AppSubUrl + "/d/mysql-innodb-compression/mysql-innodb-compression-details",
-			Icon: "sitemap",
-		},
-		{
-			Text: "MySQL InnoDB Details",
+			Text: "InnoDB details",
 			Id:   "mysql-innodb-details",
 			Url:  setting.AppSubUrl + "/d/mysql-innodb/mysql-innodb-details",
 			Icon: "sitemap",
 		},
 		{
-			Text: "MySQL Performance Schema Details",
+			Text: "InnoDB compression",
+			Id:   "mysql-innodb-compression-details",
+			Url:  setting.AppSubUrl + "/d/mysql-innodb-compression/mysql-innodb-compression-details",
+			Icon: "sitemap",
+		},
+		{
+			Text: "Performance schema",
 			Id:   "mysql-performance-schema-details",
 			Url:  setting.AppSubUrl + "/d/mysql-performance-schema/mysql-performance-schema-details",
 			Icon: "sitemap",
 		},
 		{
-			Text: "MySQL Query Response Time Details",
+			Text: "Query response time",
 			Id:   "mysql-query-response-time-details",
 			Url:  setting.AppSubUrl + "/d/mysql-queryresponsetime/mysql-query-response-time-details",
 			Icon: "sitemap",
 		},
 		{
-			Text: "MySQL Table Details",
+			Text: "Table details",
 			Id:   "mysql-table-details",
 			Url:  setting.AppSubUrl + "/d/mysql-table/mysql-table-details",
 			Icon: "sitemap",
 		},
 		{
-			Text: "MySQL TokuDB Details",
+			Text: "TokuDB details",
 			Id:   "mysql-tokudb-details",
 			Url:  setting.AppSubUrl + "/d/mysql-tokudb/mysql-tokudb-details",
 			Icon: "sitemap",
 		},
-		{
-			Text: "MySQL User Details",
-			Id:   "mysql-user-details",
-			Url:  setting.AppSubUrl + "/d/mysql-user/mysql-user-details",
-			Icon: "sitemap",
-		},
-		{
-			Text: "MySQL Wait Event Analyses Details",
-			Id:   "mysql-wait-event-analyses-details",
-			Url:  setting.AppSubUrl + "/d/mysql-waitevents-analysis/mysql-wait-event-analyses-details",
-			Icon: "sitemap",
-		},
-		{
-			Text: "MySQL MyISAM/Aria Details",
-			Id:   "mysql-myisam-aria-details",
-			Url:  setting.AppSubUrl + "/d/mysql-myisamaria/mysql-myisam-aria-details",
-			Icon: "sitemap",
-		},
-		{
-			Text: "MySQL MyRocks Details",
-			Id:   "mysql-myrocks-details",
-			Url:  setting.AppSubUrl + "/d/mysql-myrocks/mysql-myrocks-details",
-			Icon: "sitemap",
-		},
-		{
-			Text: "MySQL Amazon Aurora Details",
-			Id:   "mysql-amazon-aurora-details",
-			Url:  setting.AppSubUrl + "/d/mysql-amazonaurora/mysql-amazon-aurora-details",
-			Icon: "sitemap",
-		},
-	}
-
-	mysqlChildNavs := []*dtos.NavLink{
-		{Text: "HA (High availability)", Id: "mysql-ha", Icon: "percona-cluster", HideFromTabs: true, Children: mysqlHAChildNavs},
-		{Text: "MySQL Overview", Id: "mysql-overview", Url: setting.AppSubUrl + "/d/mysql-instance-overview/mysql-instances-overview", Icon: "percona-cluster-network", HideFromTabs: true},
-		{Text: "MySQL Summary", Id: "mysql-summary", Url: setting.AppSubUrl + "/d/mysql-instance-summary/mysql-instances-summary", Icon: "percona-summary", HideFromTabs: true, Children: mysqlSummaryChildNavs},
 	}
 
 	mongodbHAChildNavs := []*dtos.NavLink{
-		{Text: "MongoDB Cluster Summary", Id: "mongo-cluster-summary", Url: setting.AppSubUrl + "/d/mongodb-cluster-summary/mongodb-cluster-summary", Icon: "percona-cluster", HideFromTabs: true},
-		{Text: "MongoDB ReplSet Summary", Id: "mongo-rplset-summary", Url: setting.AppSubUrl + "/d/mongodb-replicaset-summary/mongodb-replset-summary", Icon: "percona-cluster", HideFromTabs: true},
-	}
-
-	mongodbSummaryChildNavs := []*dtos.NavLink{
-		{Text: "MongoDB InMemory Details", Id: "mongo-memory-details", Url: setting.AppSubUrl + "/d/mongodb-inmemory/mongodb-inmemory-details", Icon: "sitemap", HideFromTabs: true},
-		{Text: "MongoDB MMAPv1 Details", Id: "mongo-mmap-details", Url: setting.AppSubUrl + "/d/mongodb-mmapv1/mongodb-mmapv1-details", Icon: "sitemap", HideFromTabs: true},
-		{Text: "MongoDB WiredTiger Details", Id: "mondo-wiredtiger-details", Url: setting.AppSubUrl + "/d/mongodb-wiredtiger/mongodb-wiredtiger-details", Icon: "sitemap", HideFromTabs: true},
+		{Text: "Cluster summary", Id: "mongo-cluster-summary", Url: setting.AppSubUrl + "/d/mongodb-cluster-summary/mongodb-cluster-summary", Icon: "percona-cluster", HideFromTabs: true},
+		{Text: "ReplSet summary", Id: "mongo-rplset-summary", Url: setting.AppSubUrl + "/d/mongodb-replicaset-summary/mongodb-replset-summary", Icon: "percona-cluster", HideFromTabs: true},
 	}
 
 	mongodbChildNavs := []*dtos.NavLink{
-		{Text: "HA (High availability)", Id: "mongo-ha", Icon: "percona-cluster", HideFromTabs: true, Children: mongodbHAChildNavs},
-		{Text: "MongoDB Overview", Id: "mongo-overview", Url: setting.AppSubUrl + "/d/mongodb-instance-overview/mongodb-instances-overview", Icon: "percona-cluster-network", HideFromTabs: true},
-		{Text: "MongoDB Summary", Id: "mongo-summary", Url: setting.AppSubUrl + "/d/mongodb-instance-summary/mongodb-instance-summary", Icon: "percona-summary", HideFromTabs: true, Children: mongodbSummaryChildNavs},
+		{Text: "Overview", Id: "mongo-overview", Url: setting.AppSubUrl + "/d/mongodb-instance-overview/mongodb-instances-overview", Icon: "percona-nav-overview", HideFromTabs: true, ShowIconInNavbar: true},
+		{Text: "Summary", Id: "mongo-summary", Url: setting.AppSubUrl + "/d/mongodb-instance-summary/mongodb-instance-summary", Icon: "percona-nav-summary", HideFromTabs: true, ShowIconInNavbar: true},
+		{Text: "High availability", Id: "mongo-ha", Icon: "percona-cluster", HideFromTabs: true, Children: mongodbHAChildNavs, ShowIconInNavbar: true},
+		{Text: "InMemory", Id: "mongo-memory-details", Url: setting.AppSubUrl + "/d/mongodb-inmemory/mongodb-inmemory-details", Icon: "sitemap", HideFromTabs: true},
+		{Text: "MMAPv1", Id: "mongo-mmap-details", Url: setting.AppSubUrl + "/d/mongodb-mmapv1/mongodb-mmapv1-details", Icon: "sitemap", HideFromTabs: true},
+		{Text: "WiredTiger", Id: "mondo-wiredtiger-details", Url: setting.AppSubUrl + "/d/mongodb-wiredtiger/mongodb-wiredtiger-details", Icon: "sitemap", HideFromTabs: true},
 	}
 
 	postgresqlChildNavs := []*dtos.NavLink{
-		// 		{Text: "HA (High availability)", Id: "postgres-ha", Icon: "percona-cluster", HideFromTabs: true},
-		{Text: "PostgreSQL Overview", Id: "postgre-overwiew", Url: setting.AppSubUrl + "/d/postgresql-instance-overview/postgresql-instances-overview", Icon: "percona-cluster-network", HideFromTabs: true},
-		{Text: "PostgreSQL Summary", Id: "postgre-summary", Url: setting.AppSubUrl + "/d/postgresql-instance-summary/postgresql-instances-summary", Icon: "percona-summary", HideFromTabs: true},
-	}
-
-	pmmChildNavs := []*dtos.NavLink{
-		{Text: "System (Node)", Id: "system", Url: setting.AppSubUrl + "/d/node-instance-overview/nodes-overview", Icon: "percona-cluster-network", HideFromTabs: true, Children: nodeChildNavs},
-		{Text: "MySQL", Id: "mysql", Url: setting.AppSubUrl + "/d/mysql-instance-overview/mysql-instances-overview", Icon: "percona-database", HideFromTabs: true, Children: mysqlChildNavs},
-		{Text: "MongoDB", Id: "mongo", Url: setting.AppSubUrl + "/d/mongodb-instance-overview/mongodb-instances-overview", Icon: "percona-database", HideFromTabs: true, Children: mongodbChildNavs},
-		{Text: "PostgreSQL", Id: "postgre", Url: setting.AppSubUrl + "/d/postgresql-instance-overview/postgresql-instances-overview", Icon: "percona-database", HideFromTabs: true, Children: postgresqlChildNavs},
-		{Text: "ProxySQL", Id: "proxysql", Url: setting.AppSubUrl + "/d/proxysql-instance-summary/proxysql-instance-summary", Icon: "percona-database", HideFromTabs: true},
-		{Text: "HAProxy", Id: "haproxy", Url: setting.AppSubUrl + "/d/haproxy-instance-summary/haproxy-instance-summary", Icon: "percona-database", HideFromTabs: true},
+		// 		{Text: "HA (High availability)", Id: "postgres-ha", Icon: "percona-cluster", HideFromTabs: true, ShowIconInNavbar: true},
+		{Text: "Overview", Id: "postgre-overwiew", Url: setting.AppSubUrl + "/d/postgresql-instance-overview/postgresql-instances-overview", Icon: "percona-nav-overview", HideFromTabs: true, ShowIconInNavbar: true},
+		{Text: "Summary", Id: "postgre-summary", Url: setting.AppSubUrl + "/d/postgresql-instance-summary/postgresql-instance-summary", Icon: "percona-nav-summary", HideFromTabs: true, ShowIconInNavbar: true},
 	}
 
 	dashboardsUrl := "/dashboards"
@@ -340,19 +314,76 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
 	}
 
-	// @PERCONA
-	// Dashboards & QAN
 	navTree = append(navTree, &dtos.NavLink{
-		Text:       "PMM dashboards",
-		Id:         "pmm",
-		SubTitle:   "Manage dashboards & folders",
-		Icon:       "percona-dashboard",
-		Url:        setting.AppSubUrl + "/",
-		SortWeight: dtos.WeightDashboard,
-		Section:    dtos.NavSectionCore,
-		Children:   pmmChildNavs,
+		Text:             "Operating System (OS)",
+		Id:               "system",
+		Url:              setting.AppSubUrl + "/d/node-instance-overview/nodes-overview",
+		Icon:             "percona-system",
+		HideFromTabs:     true,
+		Children:         systemChildNavs,
+		ShowIconInNavbar: true,
+		SortWeight:       dtos.WeightDashboard,
+		Section:          dtos.NavSectionCore,
 	})
 
+	navTree = append(navTree, &dtos.NavLink{
+		Text:             "MySQL",
+		Id:               "mysql",
+		Url:              setting.AppSubUrl + "/d/mysql-instance-overview/mysql-instances-overview",
+		Icon:             "percona-database-mysql",
+		HideFromTabs:     true,
+		Children:         mysqlChildNavs,
+		ShowIconInNavbar: true,
+		SortWeight:       dtos.WeightDashboard,
+		Section:          dtos.NavSectionCore,
+	})
+
+	navTree = append(navTree, &dtos.NavLink{
+		Text:             "MongoDB",
+		Id:               "mongo",
+		Url:              setting.AppSubUrl + "/d/mongodb-instance-overview/mongodb-instances-overview",
+		Icon:             "percona-database-mongodb",
+		HideFromTabs:     true,
+		Children:         mongodbChildNavs,
+		ShowIconInNavbar: true,
+		SortWeight:       dtos.WeightDashboard,
+		Section:          dtos.NavSectionCore,
+	})
+
+	navTree = append(navTree, &dtos.NavLink{
+		Text:             "PostgreSQL",
+		Id:               "postgre",
+		Url:              setting.AppSubUrl + "/d/postgresql-instance-overview/postgresql-instances-overview",
+		Icon:             "percona-database-postgresql",
+		HideFromTabs:     true,
+		Children:         postgresqlChildNavs,
+		ShowIconInNavbar: true,
+		SortWeight:       dtos.WeightDashboard,
+		Section:          dtos.NavSectionCore,
+	})
+
+	navTree = append(navTree, &dtos.NavLink{
+		Text:             "ProxySQL",
+		Id:               "proxysql",
+		Url:              setting.AppSubUrl + "/d/proxysql-instance-summary/proxysql-instance-summary",
+		Icon:             "percona-database-proxysql",
+		HideFromTabs:     true,
+		ShowIconInNavbar: true,
+		SortWeight:       dtos.WeightDashboard,
+		Section:          dtos.NavSectionCore,
+	})
+
+	navTree = append(navTree, &dtos.NavLink{
+		Text: "HAProxy", Id: "haproxy",
+		Url:              setting.AppSubUrl + "/d/haproxy-instance-summary/haproxy-instance-summary",
+		Icon:             "percona-database-haproxy",
+		HideFromTabs:     true,
+		ShowIconInNavbar: true,
+		SortWeight:       dtos.WeightDashboard,
+		Section:          dtos.NavSectionCore,
+	})
+
+	// QAN
 	navTree = append(navTree, &dtos.NavLink{
 		Text:         "Query Analytics (QAN)",
 		Id:           "qan",

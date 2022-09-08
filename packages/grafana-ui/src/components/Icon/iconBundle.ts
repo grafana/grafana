@@ -184,6 +184,15 @@ import u1180 from '!!raw-loader!../../../../../public/img/icons/mono/percona-sur
 import u1181 from '!!raw-loader!../../../../../public/img/icons/mono/percona-temperature.svg';
 import u1182 from '!!raw-loader!../../../../../public/img/icons/mono/pmm-logo.svg';
 import u1183 from '!!raw-loader!../../../../../public/img/icons/mono/qan-logo.svg';
+import u1184 from '!!raw-loader!../../../../../public/img/icons/mono/percona-system.svg';
+import u1185 from '!!raw-loader!../../../../../public/img/icons/mono/percona-nav-overview.svg';
+import u1186 from '!!raw-loader!../../../../../public/img/icons/mono/percona-nav-summary.svg';
+import u1187 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-mysql.svg';
+import u1188 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-postgresql.svg';
+import u1189 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-mongodb.svg';
+import u1190 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-proxysql.svg';
+import u1191 from '!!raw-loader!../../../../../public/img/icons/mono/percona-database-haproxy.svg';
+
 import { cacheStore } from 'react-inlinesvg';
 
 export let cacheInitialized = false;
@@ -385,4 +394,12 @@ export function initIconCache() {
   cacheItem(u1181, 'mono/percona-temperature.svg');
   cacheItem(u1182, 'mono/pmm-logo.svg');
   cacheItem(u1183, 'mono/qan-logo.svg');
+  cacheItem(u1184, 'mono/percona-system.svg');
+  cacheItem(u1185, 'mono/percona-nav-overview.svg');
+  cacheItem(u1186, 'mono/percona-nav-summary.svg');
+  cacheItem(u1187, 'mono/percona-database-mysql.svg');
+  cacheItem(u1188, 'mono/percona-database-postgresql.svg');
+  cacheItem(u1189, 'mono/percona-database-mongodb.svg');
+  cacheItem(u1190, 'mono/percona-database-proxysql.svg');
+  cacheItem(u1191, 'mono/percona-database-haproxy.svg');
 }
