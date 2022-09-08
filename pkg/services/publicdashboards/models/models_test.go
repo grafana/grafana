@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,38 +14,30 @@ func TestPublicDashboardTableName(t *testing.T) {
 }
 
 func TestBuildTimeSettings(t *testing.T) {
-	var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8", "to": "now"}})
+	var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "2022-09-01T00:00:00.000Z", "to": "2022-09-01T12:00:00.000Z"}})
+	fromMs, toMs := internal.GetTimeRangeFromDashboard(t, dashboardData)
 	testCases := []struct {
 		name       string
 		dashboard  *models.Dashboard
 		pubdash    *PublicDashboard
-		timeResult *TimeSettings
+		timeResult TimeSettings
 	}{
 		{
 			name:      "should use dashboard time if pubdash time empty",
 			dashboard: &models.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{},
-			timeResult: &TimeSettings{
-				From: "now-8",
-				To:   "now",
+			timeResult: TimeSettings{
+				From: fromMs,
+				To:   toMs,
 			},
 		},
 		{
-			name:      "should use dashboard time if pubdash to/from empty",
-			dashboard: &models.Dashboard{Data: dashboardData},
-			pubdash:   &PublicDashboard{},
-			timeResult: &TimeSettings{
-				From: "now-8",
-				To:   "now",
-			},
-		},
-		{
-			name:      "should use pubdash time",
+			name:      "should use dashboard time even if pubdash time exists",
 			dashboard: &models.Dashboard{Data: dashboardData},
 			pubdash:   &PublicDashboard{TimeSettings: simplejson.NewFromAny(map[string]interface{}{"from": "now-12", "to": "now"})},
-			timeResult: &TimeSettings{
-				From: "now-12",
-				To:   "now",
+			timeResult: TimeSettings{
+				From: fromMs,
+				To:   toMs,
 			},
 		},
 	}
