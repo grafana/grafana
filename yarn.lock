@@ -5355,12 +5355,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.0.18":
-  version: 0.0.18
-  resolution: "@grafana/lezer-logql@npm:0.0.18"
+"@grafana/lezer-logql@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@grafana/lezer-logql@npm:0.1.0"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: bd15fc90b11ab96723cf0043956d1e30e5877bdc859f41dbc3637402ccee06c5adf58156bc1207cbce216c2646b1fad702703b59bbe1d9dcf116ad80ca592df2
+  checksum: 77c8a75c211cfdebe99eaf892d07673c52531fdb696c463a9dade74c25d919b87561b2f97c716d1d710c95da7c49edcffb6c98e0d4b635d0aa91d40cc5167f9e
   languageName: node
   linkType: hard
 
@@ -12595,17 +12595,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/webpack-env@npm:1.18.0":
+  version: 1.18.0
+  resolution: "@types/webpack-env@npm:1.18.0"
+  checksum: ecf4daa31cb37d474ac0ce058d83a3cadeb9881ca8107ae93c2299eaa9954943aae09b43e143c62ccbe4288a14db00c918c9debd707afe17c3998f873eaabc59
+  languageName: node
+  linkType: hard
+
 "@types/webpack-env@npm:^1.16.0":
   version: 1.16.3
   resolution: "@types/webpack-env@npm:1.16.3"
   checksum: faefa7c0a75289fb469b9a5ae44059a00009de840e0e62d13b3f837d77647da76808e7839cdc414b8c585969cf6b6a7f290dc2cb437a9ccdf04cb214c68f3223
-  languageName: node
-  linkType: hard
-
-"@types/webpack-env@npm:^1.17.0":
-  version: 1.17.0
-  resolution: "@types/webpack-env@npm:1.17.0"
-  checksum: 9ad4d208c4429c9427191d1f4c92e4c43e530384c17a6bc298acb89003fc47fcde1d8372e50acefa3061e9100e57fd9d616e96def875afd06c0c2afe508f298e
   languageName: node
   linkType: hard
 
@@ -22100,7 +22100,7 @@ __metadata:
     "@grafana/eslint-config": 5.0.0
     "@grafana/experimental": ^0.0.2-canary.36
     "@grafana/google-sdk": 0.0.3
-    "@grafana/lezer-logql": 0.0.18
+    "@grafana/lezer-logql": 0.1.0
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
@@ -22202,7 +22202,7 @@ __metadata:
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
-    "@types/webpack-env": ^1.17.0
+    "@types/webpack-env": 1.18.0
     "@typescript-eslint/eslint-plugin": 5.31.0
     "@typescript-eslint/parser": 5.31.0
     "@visx/event": 2.6.0

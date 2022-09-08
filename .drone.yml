@@ -501,7 +501,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -1391,7 +1391,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -2144,7 +2144,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -2825,7 +2825,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -4082,7 +4082,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -4727,7 +4727,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -5115,6 +5115,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 8c812cebfce6e0c9aabaa4d85da9fda2f13eeedae60406a3a196c7488c4cdd6c
+hmac: 0b1eda9462f2da0c0991a3e774e2073b082924705ef8d97dd58a40a8c314d9cd
 
 ...
