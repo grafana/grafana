@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/enterprise/access-control/assign-rbac-roles/
   - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-built-in-role-assignments/
   - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/manage-user-role-assignments/
+  - /docs/grafana/latest/administration/roles-and-permissions/access-control/assign-rbac-roles/
 description: Learn how to assign RBAC roles to users and teams in Grafana.
 menuTitle: Assign RBAC roles
 title: Assign Grafana RBAC roles
@@ -11,7 +12,7 @@ weight: 40
 
 # Assign RBAC roles
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 In this topic you'll learn how to use the role picker, provisioning, and the HTTP API to assign fixed and custom roles to users and teams.
 
@@ -46,7 +47,7 @@ In both cases, the assignment applies only to the user, team or service account 
 1. Sign in to Grafana.
 2. Switch to the organization that contains the user, team or service account.
 
-   For more information about switching organizations, refer to [Switch organizations]({{< relref "../../user-management/user-preferences/_index.md#switch-organizations" >}}).
+   For more information about switching organizations, refer to [Switch organizations]({{< relref "../../../user-management/user-preferences/_index.md#switch-organizations" >}}).
 
 3. Hover your cursor over **Configuration** (the gear icon) in the left navigation menu, and click **Users** or **Teams** or **Service Accounts**.
 4. In the **Role** column, select the fixed role that you want to assign to the user, team or service account.
@@ -70,7 +71,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 **Before you begin:**
 
 - Refer to [Role provisioning]({{< relref "./rbac-provisioning/#rbac-provisioning" >}})
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../team-management/" >}})
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../../team-management/" >}})
 
 **To assign a role to a team:**
 
@@ -96,7 +97,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
 
 The following example creates the `custom:users:writer` role and assigns it to the `user writers` and `user admins` teams along with the `fixed:users:writer` role:
 
