@@ -5,8 +5,7 @@ import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { GeomapInstanceState } from '../GeomapPanel';
-import { GeomapPanelOptions, MapViewConfig } from '../types';
+import { GeomapPanelOptions, MapViewConfig, GeomapInstanceState } from '../types';
 import { centerPointRegistry, MapCenterID } from '../view';
 
 export const MapViewEditor: FC<

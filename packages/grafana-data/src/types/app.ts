@@ -27,6 +27,7 @@ export interface AppRootProps<T = KeyValue> {
 
   /**
    * Pass the nav model to the container... is there a better way?
+   * @deprecated Use PluginPage component exported from @grafana/runtime instead
    */
   onNavChanged: (nav: NavModel) => void;
 

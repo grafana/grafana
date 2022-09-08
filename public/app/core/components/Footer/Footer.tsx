@@ -8,7 +8,6 @@ export interface FooterLink {
   id?: string;
   icon?: IconName;
   url?: string;
-  target?: string;
 }
 
 export let getFooterLinks = (): FooterLink[] => {
@@ -17,22 +16,29 @@ export let getFooterLinks = (): FooterLink[] => {
       text: 'Documentation',
       icon: 'document-info',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
-      target: '_blank',
     },
     {
       text: 'Support',
       icon: 'question-circle',
       url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
-      target: '_blank',
     },
     {
       text: 'Community',
       icon: 'comments-alt',
       url: 'https://community.grafana.com/?utm_source=grafana_footer',
-      target: '_blank',
     },
   ];
 };
+
+export function getVersionMeta(version: string) {
+  const containsHyphen = version.includes('-');
+  const isBeta = version.includes('-beta');
+
+  return {
+    hasReleaseNotes: !containsHyphen || isBeta,
+    isBeta,
+  };
+}
 
 export let getVersionLinks = (): FooterLink[] => {
   const { buildInfo, licenseInfo } = config;
@@ -45,7 +51,16 @@ export let getVersionLinks = (): FooterLink[] => {
     return links;
   }
 
-  links.push({ text: `v${buildInfo.version} (${buildInfo.commit})` });
+  const { hasReleaseNotes, isBeta } = getVersionMeta(buildInfo.version);
+  const versionSlug = buildInfo.version.replace(/\./g, '-'); // replace all periods with hyphens
+  const docsVersion = isBeta ? 'next' : 'latest';
+
+  links.push({
+    text: `v${buildInfo.version} (${buildInfo.commit})`,
+    url: hasReleaseNotes
+      ? `https://grafana.com/docs/grafana/${docsVersion}/release-notes/release-notes-${versionSlug}/`
+      : undefined,
+  });
 
   if (buildInfo.hasUpdate) {
     links.push({
@@ -53,7 +68,6 @@ export let getVersionLinks = (): FooterLink[] => {
       text: `New version available!`,
       icon: 'download-alt',
       url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
-      target: '_blank',
     });
   }
 
@@ -77,9 +91,7 @@ export const Footer: FC = React.memo(() => {
         <ul>
           {links.map((link) => (
             <li key={link.text}>
-              <a href={link.url} target={link.target} rel="noopener" id={link.id}>
-                {link.icon && <Icon name={link.icon} />} {link.text}
-              </a>
+              <FooterItem item={link} />
             </li>
           ))}
         </ul>
@@ -89,3 +101,19 @@ export const Footer: FC = React.memo(() => {
 });
 
 Footer.displayName = 'Footer';
+
+function FooterItem({ item }: { item: FooterLink }) {
+  const content = item.url ? (
+    <a href={item.url} target="_blank" rel="noopener noreferrer" id={item.id}>
+      {item.text}
+    </a>
+  ) : (
+    item.text
+  );
+
+  return (
+    <>
+      {item.icon && <Icon name={item.icon} />} {content}
+    </>
+  );
+}
