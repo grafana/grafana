@@ -191,7 +191,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         border-radius: ${theme.shape.borderRadius(2)};
         box-shadow: ${theme.shadows.z3};
         left: 0;
-        margin: ${theme.spacing(0, 'auto', 0)};
+        margin: ${theme.spacing(0.5, 'auto', 0)};
         padding: ${theme.spacing(1)};
         right: 0;
       }
