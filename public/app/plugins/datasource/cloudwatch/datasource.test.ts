@@ -5,6 +5,7 @@ import {
   ArrayVector,
   DataFrame,
   dataFrameToJSON,
+  DataQueryRequest,
   dateTime,
   Field,
   FieldType,
@@ -28,12 +29,22 @@ import {
 import { validLogsQuery, validMetricsQuery } from './__mocks__/queries';
 import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './datasource';
 import {
+  CloudWatchAnnotationQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
   MetricEditorMode,
   MetricQueryType,
 } from './types';
+
+const mockTimeRange = {
+  from: dateTime(1546372800000),
+  to: dateTime(1546380000000),
+  raw: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+  },
+};
 
 describe('datasource', () => {
   describe('query', () => {
@@ -311,23 +322,17 @@ describe('datasource', () => {
   });
 
   describe('annotation query', () => {
-    const query = {
-      range: { from: dateTime(), to: dateTime() },
-      rangeRaw: { from: 1483228800, to: 1483232400 },
+    const query: DataQueryRequest<CloudWatchAnnotationQuery> = {
+      range: mockTimeRange,
+      rangeRaw: mockTimeRange.raw,
       targets: [
         {
           actionPrefix: '',
           alarmNamePrefix: '',
-          alias: '',
           datasource: { type: 'cloudwatch' },
           dimensions: { InstanceId: 'i-12345678' },
-          enable: true,
-          expression: '',
-          iconColor: 'red',
-          id: '',
           matchExact: true,
           metricName: 'CPUUtilization',
-          name: 'CPU above 70',
           period: '300',
           prefixMatching: false,
           queryMode: 'Annotations',
@@ -337,6 +342,13 @@ describe('datasource', () => {
           statistic: 'Average',
         },
       ],
+      requestId: '',
+      interval: '',
+      intervalMs: 0,
+      scopedVars: {},
+      timezone: '',
+      app: '',
+      startTime: 0,
     };
 
     it('should issue the correct query', async () => {
