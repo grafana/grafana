@@ -1,6 +1,9 @@
 package datasources
 
 import (
+	"bytes"
+	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -34,21 +37,27 @@ type DsAccess string
 
 type SecureData map[string][]byte
 
+func (sd *SecureData) Value() (driver.Value, error) {
+	if sd == nil || len(*sd) == 0 {
+		return "{}", nil
+	}
+	return json.Marshal(sd)
+}
+
 func (sd *SecureData) Scan(val interface{}) error {
 	switch v := val.(type) {
 	case []byte:
-		if len(v) == 0 {
-			return nil
-		}
-		return json.Unmarshal(v, &sd)
+		dec := json.NewDecoder(bytes.NewBuffer(v))
+		dec.UseNumber()
+		return dec.Decode(&sd)
 	case string:
-		if len(v) == 0 {
-			return nil
-		}
-		return json.Unmarshal([]byte(v), &sd)
+		dec := json.NewDecoder(bytes.NewBuffer([]byte(v)))
+		dec.UseNumber()
+		return dec.Decode(&sd)
 	default:
 		return fmt.Errorf("unsupported type: %T", v)
 	}
+
 }
 
 type DataSource struct {
@@ -61,19 +70,20 @@ type DataSource struct {
 	Access DsAccess `json:"access" db:"access"`
 	Url    string   `json:"url" db:"url"`
 	// swagger:ignore
-	Password      string `json:"-" db:"password"`
-	User          string `json:"user" db:"user"`
-	Database      string `json:"database" db:"database"`
-	BasicAuth     bool   `json:"basicAuth" db:"basic_auth"`
-	BasicAuthUser string `json:"basicAuthUser" db:"basic_auth_user"`
+	Password      sql.NullString `json:"-" db:"password"`
+	User          string         `json:"user" db:"user"`
+	Database      string         `json:"database" db:"database"`
+	BasicAuth     bool           `json:"basicAuth" db:"basic_auth"`
+	BasicAuthUser string         `json:"basicAuthUser" db:"basic_auth_user"`
 	// swagger:ignore
-	BasicAuthPassword string           `json:"-" db:"basic_auth_password"`
+	BasicAuthPassword sql.NullString   `json:"-" db:"basic_auth_password"`
 	WithCredentials   bool             `json:"withCredentials" db:"with_credentials"`
 	IsDefault         bool             `json:"isDefault" db:"is_default"`
 	JsonData          *simplejson.Json `json:"jsonData" db:"json_data"`
-	SecureJsonData    SecureData       `json:"secureJsonData" db:"secure_json_data"`
-	ReadOnly          bool             `json:"readOnly" db:"read_only"`
-	Uid               string           `json:"uid" db:"uid"`
+	// it is not that resonable here knowing that secureJsonData is nullable, we should have used pointer instead
+	SecureJsonData *SecureData `json:"secureJsonData" db:"secure_json_data"`
+	ReadOnly       bool        `json:"readOnly" db:"read_only"`
+	Uid            string      `json:"uid" db:"uid"`
 
 	Created time.Time `json:"created,omitempty" db:"created"`
 	Updated time.Time `json:"updated,omitempty" db:"updated"`

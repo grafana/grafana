@@ -77,12 +77,13 @@ func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*
 }
 
 func DataSourceModel() *datasources.DataSource {
+	secureJsonData := datasources.SecureData(make(map[string][]byte))
 	return &datasources.DataSource{
 		Id:             DatasourceID,
 		Uid:            DatasourceUID,
 		Name:           DatasourceUID,
 		Type:           DatasourceType,
 		JsonData:       simplejson.New(),
-		SecureJsonData: make(map[string][]byte),
+		SecureJsonData: &secureJsonData,
 	}
 }

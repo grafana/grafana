@@ -236,12 +236,12 @@ func TestService_GetHttpTransport(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		dsService := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService())
-
+		secureJson := datasources.SecureData(map[string][]byte{"tlsCACert": []byte(caCert)})
 		ds := datasources.DataSource{
 			Id:             1,
 			Url:            "http://k8s:8001",
 			Type:           "Kubernetes",
-			SecureJsonData: map[string][]byte{"tlsCACert": []byte(caCert)},
+			SecureJsonData: &secureJson,
 			Updated:        time.Now().Add(-2 * time.Minute),
 		}
 
@@ -256,7 +256,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.Nil(t, tr1.TLSClientConfig.RootCAs)
 
 		ds.JsonData = nil
-		ds.SecureJsonData = map[string][]byte{}
+		secureJson = datasources.SecureData(map[string][]byte{})
+		ds.SecureJsonData = &secureJson
 		ds.Updated = time.Now()
 
 		rt2, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -573,7 +574,8 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		secureJsonData, err := dsService.SecretsService.EncryptJsonData(context.Background(), jsonData, secrets.WithoutScope())
 
 		require.NoError(t, err)
-		ds.SecureJsonData = secureJsonData
+		secureJson := datasources.SecureData(secureJsonData)
+		ds.SecureJsonData = &secureJson
 
 		values, err := dsService.DecryptedValues(context.Background(), ds)
 		require.NoError(t, err)

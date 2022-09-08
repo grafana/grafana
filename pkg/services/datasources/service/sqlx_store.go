@@ -62,9 +62,9 @@ func (ss *SqlxStore) GetDataSources(ctx context.Context, query *datasources.GetD
 	query.Result = make([]*datasources.DataSource, 0)
 	var err error
 	if query.DataSourceLimit <= 0 {
-		err = ss.sess.Select(ctx, query.Result, "SELECT * FROM data_source WHERE org_id=? ORDER BY name ASC", query.OrgId)
+		err = ss.sess.Select(ctx, &query.Result, "SELECT * FROM data_source WHERE org_id=? ORDER BY name ASC", query.OrgId)
 	} else {
-		err = ss.sess.Select(ctx, query.Result, "SELECT * FROM data_source WHERE org_id=? ORDER BY name ASC LIMIT ?", query.OrgId, query.DataSourceLimit)
+		err = ss.sess.Select(ctx, &query.Result, "SELECT * FROM data_source WHERE org_id=? ORDER BY name ASC LIMIT ?", query.OrgId, query.DataSourceLimit)
 	}
 	return err
 }
@@ -83,18 +83,17 @@ func (ss *SqlxStore) GetDataSourcesByType(ctx context.Context, query *datasource
 	query.Result = make([]*datasources.DataSource, 0)
 	var err error
 	if query.OrgId > 0 {
-		err = ss.sess.Select(ctx, query.Result, "SELECT * FROM data_source WHERE type=? AND org_id=? ORDER BY id ASC", query.Type, query.OrgId)
+		err = ss.sess.Select(ctx, &query.Result, "SELECT * FROM data_source WHERE type=? AND org_id=? ORDER BY id ASC", query.Type, query.OrgId)
 	} else {
-		err = ss.sess.Select(ctx, query.Result, "SELECT * FROM data_source WHERE type=? ORDER BY id ASC", query.Type)
+		err = ss.sess.Select(ctx, &query.Result, "SELECT * FROM data_source WHERE type=? ORDER BY id ASC", query.Type)
 	}
 	return err
 }
 
 // GetDefaultDataSource is used to get the default datasource of organization
 func (ss *SqlxStore) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
-	datasource := datasources.DataSource{}
-	var err error
-	err = ss.sess.Get(ctx, &datasource, "SELECT * FROM data_source WHERE org_id=? AND is_default=?", query.OrgId, true)
+	query.Result = &datasources.DataSource{}
+	err := ss.sess.Get(ctx, query.Result, "SELECT * FROM data_source WHERE org_id=? AND is_default=?", query.OrgId, true)
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		return datasources.ErrDataSourceNotFound
 	}
@@ -144,6 +143,10 @@ func (ss *SqlxStore) AddDataSource(ctx context.Context, cmd *datasources.AddData
 		cmd.JsonData = simplejson.New()
 	}
 
+	if cmd.SecureJsonData == nil {
+		cmd.SecureJsonData = make(map[string]string)
+	}
+
 	if cmd.Uid == "" {
 		uid, err := ss.generateNewDatasourceUid(ctx, cmd.OrgId)
 		if err != nil {
@@ -152,6 +155,7 @@ func (ss *SqlxStore) AddDataSource(ctx context.Context, cmd *datasources.AddData
 		cmd.Uid = uid
 	}
 
+	secureJson := datasources.SecureData(cmd.EncryptedSecureJsonData)
 	err = ss.sess.WithTransaction(ctx, func(sess *session.SessionTx) error {
 		ds := &datasources.DataSource{
 			OrgId:           cmd.OrgId,
@@ -166,18 +170,25 @@ func (ss *SqlxStore) AddDataSource(ctx context.Context, cmd *datasources.AddData
 			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
 			JsonData:        cmd.JsonData,
-			SecureJsonData:  cmd.EncryptedSecureJsonData,
+			SecureJsonData:  &secureJson,
 			Created:         time.Now(),
 			Updated:         time.Now(),
 			Version:         1,
 			ReadOnly:        cmd.ReadOnly,
 			Uid:             cmd.Uid,
 		}
+
+		secureJsonData, err := ds.SecureJsonData.Value()
+		if err != nil {
+			return err
+		}
 		rawQuery :=
 			`INSERT INTO data_source
 			(org_id, version, type, name, access, url, user, database, basic_auth, basic_auth_user, is_default, json_data, with_credentials, secure_json_data, created, updated, read_only, uid) 
-			VALUES (:org_id, :version, :type, :name, :access, :url, :user, :database, :basic_auth, :basic_auth_user, :is_default, :json_data, :with_credentials, :secure_json_data, :created, :updated, :read_only, :uid)`
-		if _, err := ss.sess.NamedExec(ctx, rawQuery, ds); err != nil {
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		if ds.Id, err = ss.sess.ExecWithReturningId(
+			ctx, rawQuery, ds.OrgId, ds.Version, ds.Type, ds.Name, ds.Access, ds.Url, ds.User, ds.Database, ds.BasicAuth, ds.BasicAuthUser, ds.IsDefault,
+			ds.JsonData, ds.WithCredentials, secureJsonData, ds.Created, ds.Updated, ds.ReadOnly, ds.Uid); err != nil {
 			if ss.dialect.IsUniqueConstraintViolation(err) && strings.Contains(strings.ToLower(ss.dialect.ErrorMessage(err)), "uid") {
 				return datasources.ErrDataSourceUidExists
 			}
@@ -266,6 +277,7 @@ func (ss *SqlxStore) UpdateDataSource(ctx context.Context, cmd *datasources.Upda
 			cmd.JsonData = simplejson.New()
 		}
 
+		secureJson := datasources.SecureData(cmd.EncryptedSecureJsonData)
 		ds := &datasources.DataSource{
 			Id:              cmd.Id,
 			OrgId:           cmd.OrgId,
@@ -280,28 +292,44 @@ func (ss *SqlxStore) UpdateDataSource(ctx context.Context, cmd *datasources.Upda
 			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
 			JsonData:        cmd.JsonData,
-			SecureJsonData:  cmd.EncryptedSecureJsonData,
+			SecureJsonData:  &secureJson,
 			Updated:         time.Now(),
 			ReadOnly:        cmd.ReadOnly,
 			Version:         cmd.Version + 1,
 			Uid:             cmd.Uid,
 		}
 
-		whereParams := []string{"id=:id and org_id=:org_id"}
+		secureJsonData, err := ds.SecureJsonData.Value()
+		if err != nil {
+			return err
+		}
+
+		whereQuery := []string{"id=? and org_id=?"}
+		var whereParams []interface{}
+		whereParams = append(whereParams, ds.Id, ds.OrgId)
 		if cmd.Version != 0 {
 			// the reason we allow cmd.version > db.version is make it possible for people to force
 			// updates to datasources using the datasource.yaml file without knowing exactly what version
 			// a datasource have in the db.
-			whereParams = append(whereParams, "version < :version")
+			whereQuery = append(whereQuery, "version < ?")
+			whereParams = append(whereParams, ds.Version)
 		}
-		whereStatment := strings.Join(whereParams, " and ")
+		whereStatment := strings.Join(whereQuery, " and ")
 
 		query := fmt.Sprintf(`UPDATE data_source 
-		SET id=:id, org_id=:org_id, name=:name, type=:type, access=:access, url=:url, user=:user, database=:database, is_default=:is_default, basic_auth=:basic_auth,
-		basic_auth_user=:basic_auth_user, with_credentials=:with_credentials, json_data=:json_data, secure_json_data=:secure_json_data, updated=:updated, read_only=:read_only,
-		version=:version, uid=:uid 
+		SET id=?, org_id=?, name=?, type=?, access=?, url=?, user=?, database=?, is_default=?, basic_auth=?,
+		basic_auth_user=?, with_credentials=?, json_data=?, secure_json_data=?, updated=?, read_only=?,
+		version=?, uid=? 
 		WHERE %s`, whereStatment)
-		res, err := sess.NamedExec(ctx, query, ds)
+
+		var args []interface{}
+		args = append(args, ds.Id, ds.OrgId, ds.Name, ds.Type, ds.Access, ds.Url, ds.User, ds.Database, ds.IsDefault, ds.BasicAuth,
+			ds.BasicAuthUser, ds.WithCredentials, ds.JsonData, secureJsonData, ds.Updated, ds.ReadOnly,
+			ds.Version, ds.Uid)
+		args = append(args, whereParams...)
+
+		res, err := sess.Exec(
+			ctx, query, args...)
 		if err != nil {
 			return err
 		}

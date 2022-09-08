@@ -70,6 +70,7 @@ func testIntegrationDataAccess(t *testing.T, fn getStore) {
 		query := datasources.GetDefaultDataSourceQuery{OrgId: 10}
 		err = ss.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
+		fmt.Println(">>>>>>>>>>>>>>>>>>", err)
 		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))
 	})
 
@@ -92,6 +93,7 @@ func testIntegrationDataAccess(t *testing.T, fn getStore) {
 		query := datasources.GetDefaultDataSourceQuery{OrgId: 10}
 		err = ss.GetDefaultDataSource(context.Background(), &query)
 		require.NoError(t, err)
+		require.NotNil(t, query.Result)
 		assert.Equal(t, "default datasource", query.Result.Name)
 	})
 

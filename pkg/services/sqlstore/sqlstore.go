@@ -182,7 +182,7 @@ func (ss *SQLStore) Bus() bus.Bus {
 
 func (ss *SQLStore) GetSqlxSession() *session.SessionDB {
 	if ss.sqlxsession == nil {
-		ss.sqlxsession = session.GetSession(sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName()))
+		ss.sqlxsession = session.GetSession(sqlx.NewDb(ss.engine.DB().DB, ss.GetDialect().DriverName()), ss.Bus())
 	}
 	return ss.sqlxsession
 }

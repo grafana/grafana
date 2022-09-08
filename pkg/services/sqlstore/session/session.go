@@ -20,8 +20,8 @@ type SessionDB struct {
 	bus    bus.Bus
 }
 
-func GetSession(sqlxdb *sqlx.DB) *SessionDB {
-	return &SessionDB{sqlxdb: sqlxdb}
+func GetSession(sqlxdb *sqlx.DB, bus bus.Bus) *SessionDB {
+	return &SessionDB{sqlxdb: sqlxdb, bus: bus}
 }
 
 func (gs *SessionDB) Get(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
