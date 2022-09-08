@@ -2,7 +2,6 @@ package social
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -114,21 +113,24 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	groups := s.GetGroups(client)
 
-	role, err := s.extractRole(response.Body, groups)
-	if err != nil {
-		s.log.Error("Failed to extract role", "error", err)
-	}
+	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, groups)
 	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, errors.New("invalid role")
+		return nil, ErrInvalidBasicRole
+	}
+
+	var isGrafanaAdmin *bool = nil
+	if s.allowAssignGrafanaAdmin {
+		isGrafanaAdmin = &grafanaAdmin
 	}
 
 	userInfo := &BasicUserInfo{
-		Id:     fmt.Sprintf("%d", data.Id),
-		Name:   data.Name,
-		Login:  data.Username,
-		Email:  data.Email,
-		Groups: groups,
-		Role:   string(role),
+		Id:             fmt.Sprintf("%d", data.Id),
+		Name:           data.Name,
+		Login:          data.Username,
+		Email:          data.Email,
+		Groups:         groups,
+		Role:           string(role),
+		IsGrafanaAdmin: isGrafanaAdmin,
 	}
 
 	if !s.IsGroupMember(groups) {
