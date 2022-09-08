@@ -19,7 +19,6 @@ import { changePanelPlugin } from 'app/features/panel/state/actions';
 import { dispatch } from 'app/store/store';
 
 import { appEvents } from '../../../core/core';
-import { loadSnapshotData } from '../../../features/dashboard/utils/loadSnapshotData';
 import { annotationsFromDataFrames } from '../../../features/query/state/DashboardQueryRunner/utils';
 import { ZoomOutEvent } from '../../../types/events';
 
@@ -161,7 +160,6 @@ export class GraphCtrl extends MetricsPanelCtrl {
 
     this.events.on(PanelEvents.render, this.onRender.bind(this));
     this.events.on(PanelEvents.dataFramesReceived, this.onDataFramesReceived.bind(this));
-    this.events.on(PanelEvents.dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
     this.events.on(PanelEvents.initPanelActions, this.onInitPanelActions.bind(this));
 
@@ -193,12 +191,6 @@ export class GraphCtrl extends MetricsPanelCtrl {
 
   zoomOut(evt: any) {
     appEvents.publish(new ZoomOutEvent({ scale: 2 }));
-  }
-
-  onDataSnapshotLoad(snapshotData: any) {
-    const { series, annotations } = loadSnapshotData(this.panel, this.dashboard);
-    this.panelData!.annotations = annotations;
-    this.onDataFramesReceived(series);
   }
 
   onDataFramesReceived(data: DataFrame[]) {

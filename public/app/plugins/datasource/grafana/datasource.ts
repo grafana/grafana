@@ -70,6 +70,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     const results: Array<Observable<DataQueryResponse>> = [];
     const targets: GrafanaQuery[] = [];
     const templateSrv = getTemplateSrv();
+
     for (const target of request.targets) {
       if (target.queryType === GrafanaQueryType.Annotations) {
         return from(
@@ -81,9 +82,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
           })
         );
       }
+
       if (target.hide) {
         continue;
       }
+
       if (target.queryType === GrafanaQueryType.Snapshot) {
         results.push(
           of({
@@ -93,6 +96,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         );
         continue;
       }
+
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
         const { filter } = target;
@@ -101,9 +105,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         if (!isValidLiveChannelAddress(addr)) {
           continue;
         }
+
         const buffer: Partial<StreamingFrameOptions> = {
           maxLength: request.maxDataPoints ?? 500,
         };
+
         if (target.buffer) {
           buffer.maxDelta = target.buffer;
           buffer.maxLength = buffer.maxLength! * 2; //??

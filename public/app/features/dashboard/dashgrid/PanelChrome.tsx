@@ -16,7 +16,6 @@ import {
   PanelPlugin,
   PanelPluginMeta,
   TimeRange,
-  toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -34,7 +33,6 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
-import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
@@ -179,15 +177,6 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     dashboard.panelInitialized(this.props.panel);
 
-    // Move snapshot data into the query response
-    if (this.hasPanelSnapshot) {
-      this.setState({
-        data: loadSnapshotData(panel, dashboard),
-        isFirstLoad: false,
-      });
-      return;
-    }
-
     if (!this.wantsQueryExecution) {
       this.setState({ isFirstLoad: false });
     }
@@ -258,7 +247,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
-    const { dashboard, panel, plugin } = this.props;
+    const { plugin } = this.props;
 
     // Ignore this data update if we are now a non data panel
     if (plugin.meta.skipDataQuery) {
@@ -286,10 +275,6 @@ export class PanelChrome extends PureComponent<Props, State> {
         }
         break;
       case LoadingState.Done:
-        // If we are doing a snapshot save data in panel model
-        if (dashboard.snapshot) {
-          panel.snapshotData = data.series.map((frame) => toDataFrameDTO(frame));
-        }
         if (isFirstLoad) {
           isFirstLoad = false;
         }
@@ -400,13 +385,8 @@ export class PanelChrome extends PureComponent<Props, State> {
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
-  get hasPanelSnapshot() {
-    const { panel } = this.props;
-    return panel.snapshotData && panel.snapshotData.length;
-  }
-
   get wantsQueryExecution() {
-    return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
+    return !this.props.plugin.meta.skipDataQuery;
   }
 
   onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {

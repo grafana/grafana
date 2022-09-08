@@ -1,13 +1,14 @@
 import { Trans, t } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { DataQuery, SelectableValue } from '@grafana/data';
 import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { VariableRefresh } from '../../../variables/types';
+import { getPanelDataFrames } from '../DebugWizard/utils';
 
 import { ShareModalTabProps } from './types';
 
@@ -93,27 +94,12 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   }
 
   createSnapshot = (external?: boolean) => () => {
-    const { timeoutSeconds } = this.state;
-    this.dashboard.snapshot = {
-      timestamp: new Date(),
-    };
-
-    if (!external) {
-      this.dashboard.snapshot.originalUrl = window.location.href;
-    }
-
-    this.setState({ isLoading: true });
-    this.dashboard.startRefresh();
-
-    setTimeout(() => {
-      this.saveSnapshot(this.dashboard, external);
-    }, timeoutSeconds * 1000);
+    const dash = this.transformToSnapshot(this.dashboard);
+    this.saveSnapshot(dash, external);
   };
 
-  saveSnapshot = async (dashboard: DashboardModel, external?: boolean) => {
+  saveSnapshot = async (dash: any, external?: boolean) => {
     const { snapshotExpires } = this.state;
-    const dash = this.dashboard.getSaveModelClone();
-    this.scrubDashboard(dash);
 
     const cmdData = {
       dashboard: dash,
@@ -121,6 +107,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       expires: snapshotExpires,
       external: external,
     };
+
+    this.setState({ isLoading: true });
 
     try {
       const results: { deleteUrl: string; url: string } = await getBackendSrv().post(snapshotApiUrl, cmdData);
@@ -137,44 +125,55 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     }
   };
 
-  scrubDashboard = (dash: DashboardModel) => {
+  transformToSnapshot(dash: DashboardModel) {
     const { panel } = this.props;
     const { snapshotName } = this.state;
+    const snapshot = dash.getSaveModelClone();
+
     // change title
-    dash.title = snapshotName;
+    snapshot.title = snapshotName;
+
+    snapshot.snapshot = {
+      timestamp: new Date(),
+      originalUrl: window.location.href,
+    };
 
     // make relative times absolute
-    dash.time = getTimeSrv().timeRange();
+    snapshot.time = getTimeSrv().timeRange();
 
     // Remove links
-    dash.links = [];
+    snapshot.links = [];
 
     // remove panel queries & links
-    dash.panels.forEach((panel) => {
+    snapshot.panels.forEach((panel) => {
       panel.targets = [];
       panel.links = [];
-      panel.datasource = null;
+      panel.datasource = { uid: 'grafana', type: 'grafana' };
+
+      const realPanel = dash.getPanelById(panel.id);
+      const lastResult = realPanel?.getQueryRunner().getLastResult();
+
+      if (lastResult) {
+        const frames = getPanelDataFrames(lastResult);
+
+        panel.targets = [
+          {
+            refId: 'A',
+            datasource: panel.datasource,
+            queryType: GrafanaQueryType.Snapshot,
+            snapshot: frames,
+          } as DataQuery,
+        ];
+      }
     });
 
     // remove annotation queries
-    const annotations = dash.annotations.list.filter((annotation) => annotation.enable);
-    dash.annotations.list = annotations.map((annotation) => {
-      return {
-        name: annotation.name,
-        enable: annotation.enable,
-        iconColor: annotation.iconColor,
-        snapshotData: annotation.snapshotData,
-        type: annotation.type,
-        builtIn: annotation.builtIn,
-        hide: annotation.hide,
-      };
-    });
+    snapshot.annotations.list = [];
 
     // remove template queries
-    dash.getVariables().forEach((variable: any) => {
+    snapshot.getVariables().forEach((variable: any) => {
       variable.query = '';
       variable.options = variable.current ? [variable.current] : [];
-      variable.refresh = VariableRefresh.never;
     });
 
     // snapshot single panel
@@ -184,18 +183,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       singlePanel.gridPos.x = 0;
       singlePanel.gridPos.y = 0;
       singlePanel.gridPos.h = 20;
-      dash.panels = [singlePanel];
+      snapshot.panels = [singlePanel];
     }
 
-    // cleanup snapshotData
-    delete this.dashboard.snapshot;
-    this.dashboard.forEachPanel((panel: PanelModel) => {
-      delete panel.snapshotData;
-    });
-    this.dashboard.annotations.list.forEach((annotation) => {
-      delete annotation.snapshotData;
-    });
-  };
+    return snapshot;
+  }
 
   deleteSnapshot = async () => {
     const { deleteUrl } = this.state;
@@ -224,8 +216,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
 
   renderStep1() {
     const { onDismiss } = this.props;
-    const { snapshotName, selectedExpireOption, timeoutSeconds, isLoading, sharingButtonText, externalEnabled } =
-      this.state;
+    const { snapshotName, selectedExpireOption, isLoading, sharingButtonText, externalEnabled } = this.state;
 
     const snapshotNameTranslation = t({
       id: 'share-modal.snapshot.name',
@@ -235,17 +226,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     const expireTranslation = t({
       id: 'share-modal.snapshot.expire',
       message: `Expire`,
-    });
-
-    const timeoutTranslation = t({
-      id: 'share-modal.snapshot.timeout',
-      message: `Timeout (seconds)`,
-    });
-
-    const timeoutDescriptionTranslation = t({
-      id: 'share-modal.snapshot.timeout-description',
-      message: `You might need to configure the timeout value if it takes a long time to collect your dashboard
-      metrics.`,
     });
 
     return (
@@ -277,10 +257,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
             onChange={this.onExpireChange}
           />
         </Field>
-        <Field label={timeoutTranslation} description={timeoutDescriptionTranslation}>
-          <Input id="timeout-input" type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
-        </Field>
-
         <Modal.ButtonRow>
           <Button variant="secondary" onClick={onDismiss} fill="outline">
             <Trans id="share-modal.snapshot.cancel-button">Cancel</Trans>
