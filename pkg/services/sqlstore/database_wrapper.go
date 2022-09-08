@@ -109,9 +109,17 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 
 // OnError will be called if any error happens
 func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
-	status := "error"
+	// Not a user error: driver is telling sql package that an
+	// optional interface method is not implemented. There is
+	// nothing to instrument here.
 	// https://golang.org/pkg/database/sql/driver/#ErrSkip
-	if err == nil || errors.Is(err, driver.ErrSkip) {
+	// https://github.com/DataDog/dd-trace-go/issues/270
+	if errors.Is(err, driver.ErrSkip) {
+		return nil
+	}
+
+	status := "error"
+	if err == nil {
 		status = "success"
 	}
 
