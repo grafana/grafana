@@ -233,7 +233,7 @@ func ProvideService(
 			// read/write for all except for devenv
 			writeFilter := filestorage.NewPathFilter(
 				[]string{filestorage.Delimiter}, // access to everything
-				nil,                             // access to the `/branding` folder itself, but not to any other sibling folder
+				nil,
 				[]string{filestorage.Delimiter + RootDevenv + filestorage.Delimiter}, // except devenv
 				[]string{filestorage.Delimiter + RootDevenv})
 
