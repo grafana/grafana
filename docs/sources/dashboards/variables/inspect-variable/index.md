@@ -10,10 +10,10 @@ keywords:
   - template
   - variable
 title: Inspect variables
-weight: 125
+weight: 200
 ---
 
-# Inspect variables and their dependencies
+# Inspect variables
 
 The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add]({{< relref "./add-template-variables/" >}}) and [manage](../manage-variable/) variables from this page.
 

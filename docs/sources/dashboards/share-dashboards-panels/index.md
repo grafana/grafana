@@ -87,7 +87,7 @@ If you created a snapshot by mistake, click **Delete snapshot** to remove the sn
 
 ### Dashboard export
 
-Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/export-import/" >}}).
+Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../manage-dashboards/#export-and-import-dashboards" >}}).
 
 ![Export](/static/img/docs/sharing/share-dashboard-export-7-3.png)
 
@@ -95,7 +95,7 @@ Grafana dashboards can easily be exported and imported. For more information, re
 
 You can generate and save PDF files of any dashboard.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../introduction/grafana-enterprise/" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
 
 1. In the upper-right corner of the dashboard that you want to export as PDF, click the **Share dashboard** icon.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
@@ -125,7 +125,7 @@ The **Link** tab shows the current time range, template variables, and the defau
 1. Send the copied URL to a Grafana user with authorization to view the link.
 1. You also optionally click **Direct link rendered image** to share an image of the panel.
 
-For more information, refer to [Image rendering]({{< relref "../setup-grafana/image-rendering/" >}}).
+For more information, refer to [Image rendering]({{< relref "../../setup-grafana/image-rendering/" >}}).
 
 The following example shows a link to a server-side rendered PNG:
 

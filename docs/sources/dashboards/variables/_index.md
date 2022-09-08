@@ -2,11 +2,11 @@
 aliases:
   - /docs/grafana/latest/variables/
   - /docs/grafana/latest/variables/variable-examples/
-title: Templates and variables
+title: Template variables
 weight: 130
 ---
 
-# Templates and variables
+# Template variables
 
 A variable is a placeholder for a value. You can use variables in metric queries and in panel titles. So when you change
 the value, using the dropdown at the top of the dashboard, your panel's metric queries will change to reflect the new value.
