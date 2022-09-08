@@ -11,7 +11,6 @@ import { Dropdown, FilterInput, Icon, Tooltip, useStyles2, toIconName } from '@g
 import { contextSrv } from 'app/core/core';
 import { StoreState } from 'app/types';
 
-import { useSearchQuery } from '../../../features/search/hooks/useSearchQuery';
 import { parseRouteParams } from '../../../features/search/utils';
 import { enrichConfigItems, enrichWithInteractionTracking } from '../NavBar/utils';
 import { OrgSwitcher } from '../OrgSwitcher';
@@ -30,23 +29,22 @@ export function TopSearchBar() {
     setShowSwitcherModal(!showSwitcherModal);
   };
 
-  const { onQueryChange } = useSearchQuery({});
   const [searchValue, setSearchValue] = useState<string>(queryParams.query ?? '');
   const onOpenSearch = () => {
     locationService.partial({ search: 'open' });
   };
   const onSearchChange = (newValue: string) => {
     setSearchValue(newValue);
-    onQueryChange(newValue);
   };
   useDebounce(
     () => {
       if (searchValue) {
+        locationService.partial({ query: searchValue }, true);
         onOpenSearch();
         setSearchValue('');
       }
     },
-    300,
+    200,
     [searchValue]
   );
 
