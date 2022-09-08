@@ -176,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       z-index: ${theme.zIndex.modalBackdrop};
     `,
     overlay: css`
-      background: ${theme.colors.background.canvas};
+      background: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};
       display: flex;
       flex-direction: column;
