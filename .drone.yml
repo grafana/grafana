@@ -308,7 +308,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -424,6 +424,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.9
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -497,7 +501,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -643,7 +647,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: lint-docs
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -727,7 +731,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: lint-docs
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -1049,7 +1053,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -1174,6 +1178,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.9
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
@@ -1210,6 +1218,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: store-storybook
   when:
+    paths:
+      include:
+      - packages/grafana-ui/**
     repo:
     - grafana/grafana
 - commands:
@@ -1380,7 +1391,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -1743,7 +1754,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
   - yarn-install
   environment:
@@ -1901,6 +1912,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.9
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl upload-cdn --edition oss
   depends_on:
@@ -1944,6 +1959,10 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: store-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
   depends_on:
@@ -2125,7 +2144,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -2367,7 +2386,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
+  - ./bin/build build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
   - yarn-install
   environment:
@@ -2806,7 +2825,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -3712,7 +3731,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -3870,6 +3889,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   image: grafana/build-container:1.5.9
   name: build-storybook
+  when:
+    paths:
+      include:
+      - packages/grafana-ui/**
 - commands:
   - ./bin/grabpl upload-cdn --edition oss
   depends_on:
@@ -4059,7 +4082,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -4282,8 +4305,7 @@ steps:
   image: grafana/build-container:1.5.9
   name: build-frontend
 - commands:
-  - ./bin/grabpl build-frontend-packages --jobs 8 --edition enterprise --build-id
-    ${DRONE_BUILD_NUMBER}
+  - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - yarn-install
   environment:
@@ -4705,7 +4727,7 @@ services:
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
-  image: mysql:5.6.48
+  image: mysql:5.7.39
   name: mysql
   volumes:
   - name: mysql
@@ -5093,6 +5115,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: fb770c3cc5bd204e3aceae01d35997818ee210efb54c8ccbe37a410773f1ce73
+hmac: 0b1eda9462f2da0c0991a3e774e2073b082924705ef8d97dd58a40a8c314d9cd
 
 ...

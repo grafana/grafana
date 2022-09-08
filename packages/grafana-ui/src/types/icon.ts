@@ -52,6 +52,7 @@ const availableIcons = [
   'chart-line' as const,
   'check' as const,
   'check-circle' as const,
+  'check-square' as const,
   'circle' as const,
   'clipboard-alt' as const,
   'clock-nine' as const,

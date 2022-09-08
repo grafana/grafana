@@ -1,4 +1,4 @@
-# OAUTH BLOCK
+# JWT PROXY BLOCK
 ## Devenv setup jwt auth
 
 To launch the block, use the oauth source. Ex:
@@ -18,10 +18,13 @@ enabled = true
 header_name = X-Forwarded-Access-Token
 username_claim = login
 email_claim = email
-jwk_set_file = devenv/docker/blocks/oauth/jwks.json
+jwk_set_file = devenv/docker/blocks/auth/oauth/jwks.json
 cache_ttl = 60m
 expected_claims = {"iss": "http://env.grafana.local:8087/auth/realms/grafana", "azp": "grafana-oauth"}
 auto_sign_up = true
+role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_strict = false
+allow_assign_grafana_admin = true
 ```
 
 Add *env.grafana.local* to /etc/hosts (Mac/Linux) or C:\Windows\System32\drivers\etc\hosts (Windows):
@@ -63,7 +66,7 @@ In case you want to make changes to the devenv setup, you can dump keycloak's DB
 
 ```bash
 cd devenv;
-docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > docker/blocks/jwt_proxy/cloak.sql
+docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > docker/blocks/auth/jwt_proxy/cloak.sql
 ```
 
 ## Connecting to keycloak:

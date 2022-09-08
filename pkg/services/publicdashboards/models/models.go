@@ -1,10 +1,12 @@
 package models
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // PublicDashboardErr represents a dashboard error.
@@ -81,22 +83,19 @@ type TimeSettings struct {
 
 // build time settings object from json on public dashboard. If empty, use
 // defaults on the dashboard
-func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) *TimeSettings {
-	ts := &TimeSettings{
-		From: dashboard.Data.GetPath("time", "from").MustString(),
-		To:   dashboard.Data.GetPath("time", "to").MustString(),
+func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) TimeSettings {
+	from := dashboard.Data.GetPath("time", "from").MustString()
+	to := dashboard.Data.GetPath("time", "to").MustString()
+	timeRange := legacydata.NewDataTimeRange(from, to)
+
+	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which expected the time range in epoch milliseconds.
+	ts := TimeSettings{
+		From: strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10),
+		To:   strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10),
 	}
 
 	if pd.TimeSettings == nil {
 		return ts
-	}
-
-	// merge time settings from public dashboard
-	to := pd.TimeSettings.Get("to").MustString("")
-	from := pd.TimeSettings.Get("from").MustString("")
-	if to != "" && from != "" {
-		ts.From = from
-		ts.To = to
 	}
 
 	return ts
