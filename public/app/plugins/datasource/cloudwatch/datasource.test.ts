@@ -310,6 +310,52 @@ describe('datasource', () => {
     });
   });
 
+  describe('annotation query', () => {
+    const query = {
+      range: { from: dateTime(), to: dateTime() },
+      rangeRaw: { from: 1483228800, to: 1483232400 },
+      targets: [
+        {
+          actionPrefix: '',
+          alarmNamePrefix: '',
+          alias: '',
+          datasource: { type: 'cloudwatch' },
+          dimensions: { InstanceId: 'i-12345678' },
+          enable: true,
+          expression: '',
+          iconColor: 'red',
+          id: '',
+          matchExact: true,
+          metricName: 'CPUUtilization',
+          name: 'CPU above 70',
+          period: '300',
+          prefixMatching: false,
+          queryMode: 'Annotations',
+          refId: 'Anno',
+          namespace: `$${namespaceVariable.name}`,
+          region: `$${regionVariable.name}`,
+          statistic: 'Average',
+        },
+      ],
+    };
+
+    it('should issue the correct query', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource({ variables: [namespaceVariable, regionVariable] });
+      await expect(datasource.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject(
+          expect.objectContaining({
+            region: regionVariable.current.value,
+            namespace: namespaceVariable.current.value,
+            metricName: query.targets[0].metricName,
+            dimensions: { InstanceId: ['i-12345678'] },
+            statistic: query.targets[0].statistic,
+            period: query.targets[0].period,
+          })
+        );
+      });
+    });
+  });
+
   describe('resource requests', () => {
     it('should map resource response to metric response', async () => {
       const datasource = setupMockedDataSource().datasource;
