@@ -168,12 +168,12 @@ const AlertTemplateData: TemplateDataItem[] = [
   {
     name: 'Labels',
     type: 'KeyValue',
-    notes: 'A set of labels attached to the alert.',
+    notes: 'Set of labels attached to the alert.',
   },
   {
     name: 'Annotations',
     type: 'KeyValue',
-    notes: 'A set of annotations attached to the alert.',
+    notes: 'Set of annotations attached to the alert.',
   },
   {
     name: 'StartsAt',
@@ -194,17 +194,17 @@ const AlertTemplateData: TemplateDataItem[] = [
   {
     name: 'SilenceURL',
     type: 'string',
-    notes: 'Link to grafana silence for with labels for this alert pre-filled. Only for Grafana managed alerts.',
+    notes: 'Link to Grafana silence for with labels for this alert pre-filled. Only for Grafana managed alerts.',
   },
   {
     name: 'DashboardURL',
     type: 'string',
-    notes: 'Link to grafana dashboard, if alert rule belongs to one. Only for Grafana managed alerts.',
+    notes: 'Link to Grafana dashboard, if alert rule belongs to one. Only for Grafana managed alerts.',
   },
   {
     name: 'PanelURL',
     type: 'string',
-    notes: 'Link to grafana dashboard panel, if alert rule belongs to one. Only for Grafana managed alerts.',
+    notes: 'Link to Grafana dashboard panel, if alert rule belongs to one. Only for Grafana managed alerts.',
   },
   {
     name: 'Fingerprint',
@@ -214,6 +214,6 @@ const AlertTemplateData: TemplateDataItem[] = [
   {
     name: 'ValueString',
     type: 'string',
-    notes: 'A string that contains the labels and value of each reduced expression in the alert.',
+    notes: 'String that contains the labels and value of each reduced expression in the alert.',
   },
 ];

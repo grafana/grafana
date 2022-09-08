@@ -202,9 +202,9 @@ function TemplatingGuideline() {
           rel="noreferrer"
           className={styles.externalLink}
         >
-          in the docs
+          in the documentation
         </a>
-        , together with{' '}
+        , along with{' '}
         <a
           href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating/example-template/"
           target="_blank"
@@ -215,7 +215,7 @@ function TemplatingGuideline() {
         </a>
       </div>
       <div>
-        To make templating easier we provide a few snippets to speed up your workflow.{' '}
+        To make templating easier, we provide a few snippets to help you speed up your workflow.{' '}
         <div className={styles.code}>
           {Object.values(snippets)
             .map((s) => s.label)
