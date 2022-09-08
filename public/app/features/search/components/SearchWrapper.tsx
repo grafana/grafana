@@ -15,15 +15,11 @@ export const SearchWrapper: FC = memo(() => {
 
   const closeSearch = () => {
     if (isOpen) {
-      const resetSearchParams = {
+      updateUrlParams({
         search: null,
         folder: null,
         ...defaultQueryParams,
-      };
-      if (isTopnav) {
-        delete resetSearchParams.query;
-      }
-      updateUrlParams(resetSearchParams);
+      });
     }
   };
 
