@@ -21,6 +21,8 @@ aliases:
   - /docs/grafana/latest/variables/variable-types/chained-variables/
   - /docs/grafana/latest/variables/add-template-variables/
   - /docs/grafana/latest/variables/variable-selection-options/
+  - /docs/grafana/latest/variables/filter-variables-with-regex/
+  - /docs/grafana/latest/variables/formatting-multi-value-variables/
 title: Add template variables
 menuTitle: Add template variables
 weight: 140
@@ -186,9 +188,32 @@ Ad hoc filters are one of the most complex and flexible variable options availab
 
 **Selection Options** are a feature you can use to manage variable option selections. All selection options are optional, and they are off by default.
 
-### Multi-value
+### Multi-value variables
 
-If you turn this on, then the variable dropdown list allows users to select multiple options at the same time. For more information, refer to [Formatting multi-value variables]({{< relref "formatting-multi-value-variables/" >}}).
+Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values into a string that is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to inform the templating interpolation engine what format to use for multiple values.
+
+> **Note:** The **Custom all value** option on the variable must be blank for Grafana to format all values into a single string. If leave it blank, then the Grafana concatenates (adds together) all the values in the query. Something like `value1,value2,value3`. If a custom `all` value is used, then instead the value will be something like `*` or `all`.
+
+#### Multi-value variables with a Graphite data source
+
+Graphite uses glob expressions. A variable with multiple values would, in this case, be interpolated as `{host1,host2,host3}` if the current variable value was _host1_, _host2_, and _host3_.
+
+#### Multi-value variables with a Prometheus or InfluxDB data source
+
+InfluxDB and Prometheus use regex expressions, so the same variable would be interpolated as `(host1|host2|host3)`. Every value would also be regex escaped. If not, a value with a regex control character would break the regex expression.
+
+#### Multi-value variables with an Elastic data source
+
+Elasticsearch uses lucene query syntax, so the same variable would be formatted as `("host1" OR "host2" OR "host3")`. In this case, every value must be escaped so that the value only contains lucene control words and quotation marks.
+
+#### Troubleshoot multi-value variables
+
+Automatic escaping and formatting can cause problems and it can be tricky to grasp the logic behind it. Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.
+
+If you do not want Grafana to do this automatic regex escaping and formatting, then you must do one of the following:
+
+- Turn off the **Multi-value** or **Include All option** options.
+- Use the [raw variable format]({{< relref "advanced-variable-format-options/#raw" >}}).
 
 ### Include All option
 
@@ -452,3 +477,108 @@ You can change the orders of variables in the dashboard variable list by clickin
 The more layers of dependency you have in variables, the longer it will take to update dashboards after you change variables.
 
 For example, if you have a series of four linked variables (country, region, server, metric) and you change a root variable value (country), then Grafana must run queries for all the dependent variables before it updates the visualizations in the dashboard.
+
+## Filter variables with regex
+
+Using the Regex Query option, you filter the list of options returned by the variable query or modify the options returned.
+
+This page shows how to use regex to filter/modify values in the variable dropdown.
+
+Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned. For more information, refer to the Mozilla guide on [Regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
+
+Examples of filtering on the following list of options:
+
+```text
+backend_01
+backend_02
+backend_03
+backend_04
+```
+
+### Filter so that only the options that end with `01` or `02` are returned:
+
+Regex:
+
+```regex
+/(01|02)$/
+```
+
+Result:
+
+```text
+backend_01
+backend_02
+```
+
+### Filter and modify the options using a regex capture group to return part of the text:
+
+Regex:
+
+```regex
+/.*(01|02)/
+```
+
+Result:
+
+```text
+01
+02
+```
+
+### Filter and modify - Prometheus Example
+
+List of options:
+
+```text
+up{instance="demo.robustperception.io:9090",job="prometheus"} 1 1521630638000
+up{instance="demo.robustperception.io:9093",job="alertmanager"} 1 1521630638000
+up{instance="demo.robustperception.io:9100",job="node"} 1 1521630638000
+```
+
+Regex:
+
+```regex
+/.*instance="([^"]*).*/
+```
+
+Result:
+
+```text
+demo.robustperception.io:9090
+demo.robustperception.io:9093
+demo.robustperception.io:9100
+```
+
+### Filter and modify using named text and value capture groups
+
+> **Note:** This feature is available in Grafana 7.4+.
+
+Using named capture groups, you can capture separate 'text' and 'value' parts from the options returned by the variable query. This allows the variable drop-down list to contain a friendly name for each value that can be selected.
+
+For example, when querying the `node_hwmon_chip_names` Prometheus metric, the `chip_name` is a lot friendlier that the `chip` value. So the following variable query result:
+
+```text
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_0",chip_name="enp216s0f0np0"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_1",chip_name="enp216s0f0np1"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_2",chip_name="enp216s0f0np2"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_3",chip_name="enp216s0f0np3"} 1
+```
+
+Passed through the following Regex:
+
+```regex
+/chip_name="(?<text>[^"]+)|chip="(?<value>[^"]+)/g
+```
+
+Would produce the following drop-down list:
+
+```text
+Display Name          Value
+------------          -------------------------
+enp216s0f0np0         0000:d7:00_0_0000:d8:00_0
+enp216s0f0np1         0000:d7:00_0_0000:d8:00_1
+enp216s0f0np2         0000:d7:00_0_0000:d8:00_2
+enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
+```
+
+**Note:** Only `text` and `value` capture group names are supported.
