@@ -1,9 +1,16 @@
+import { Map as OpenLayersMap } from 'ol';
+import { defaults as interactionDefaults } from 'ol/interaction';
+
 import { SelectableValue } from '@grafana/data';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data/src';
 import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
+import { GeomapPanel } from '../GeomapPanel';
 import { defaultStyleConfig, StyleConfig, StyleConfigState, StyleDimensions } from '../style/types';
+import { GeomapPanelOptions, MapLayerState } from '../types';
+
+import { initMapView } from './view';
 
 export function getStyleDimension(
   frame: DataFrame | undefined,
@@ -68,3 +75,46 @@ async function initGeojsonFiles() {
     });
   }
 }
+
+export const getNewOpenLayersMap = (panel: GeomapPanel, options: GeomapPanelOptions, div: HTMLDivElement) => {
+  const [view] = initMapView(options.view, undefined, undefined);
+  return (panel.map = new OpenLayersMap({
+    view: view,
+    pixelRatio: 1, // or zoom?
+    layers: [], // loaded explicitly below
+    controls: [],
+    target: div,
+    interactions: interactionDefaults({
+      mouseWheelZoom: false, // managed by initControls
+    }),
+  }));
+};
+
+export const updateMap = (panel: GeomapPanel, options: GeomapPanelOptions) => {
+  panel.initControls(options.controls);
+  panel.forceUpdate(); // first render
+};
+
+export const notifyPanelEditor = (geomapPanel: GeomapPanel, layers: MapLayerState[], selected: number) => {
+  // Notify the panel editor
+  if (geomapPanel.panelContext && geomapPanel.panelContext.onInstanceStateChange) {
+    geomapPanel.panelContext.onInstanceStateChange({
+      map: geomapPanel.map,
+      layers: layers,
+      selected: selected,
+      actions: geomapPanel.actions,
+    });
+  }
+};
+
+export const getNextLayerName = (panel: GeomapPanel) => {
+  let idx = panel.layers.length; // since basemap is 0, this looks right
+  while (true && idx < 100) {
+    const name = `Layer ${idx++}`;
+    if (!panel.byName.has(name)) {
+      return name;
+    }
+  }
+
+  return `Layer ${Date.now()}`;
+};

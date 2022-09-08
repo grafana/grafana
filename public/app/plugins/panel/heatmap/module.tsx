@@ -244,6 +244,12 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
           step: 1,
         },
       })
+      .addBooleanSwitch({
+        path: 'color.reverse',
+        name: 'Reverse',
+        defaultValue: defaultPanelOptions.color.reverse,
+        category,
+      })
       .addCustomEditor({
         id: '__scale__',
         path: `__scale__`,
