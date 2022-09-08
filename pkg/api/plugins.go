@@ -126,6 +126,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 			Signature:     pluginDef.Signature,
 			SignatureType: pluginDef.SignatureType,
 			SignatureOrg:  pluginDef.SignatureOrg,
+			AccessControl: pluginsMetadata[pluginDef.ID],
 		}
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
@@ -142,9 +143,6 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
 			listItem.DefaultNavUrl = hs.Cfg.AppSubURL + "/plugins/" + listItem.Id + "/"
 		}
-
-		// Set AccessControl Metadata
-		listItem.AccessControl = pluginsMetadata[pluginDef.ID]
 
 		result = append(result, listItem)
 	}
