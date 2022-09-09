@@ -12,24 +12,24 @@ e2e.scenario({
 
     // Show zoom
     e2e.components.OptionsGroup.group('Map controls').scrollIntoView().should('exist');
-    e2e.components.PanelEditor.toggleShowZoom().check({ force: true });
+    e2e.components.Switch.input('controls.showZoom').check({ force: true });
     cy.contains('+');
     cy.get('.ol-zoom').should('exist');
 
     // Show attribution
-    e2e.components.PanelEditor.toggleShowAttribution().check({ force: true });
+    e2e.components.Switch.input('controls.showAttribution').check({ force: true });
     cy.get('.ol-attribution').should('exist');
 
     // Show scale
-    e2e.components.PanelEditor.toggleShowScale().check({ force: true });
+    e2e.components.Switch.input('controls.showScale').check({ force: true });
     cy.get('.ol-scale-line').should('exist');
 
     // Show measure tool
-    e2e.components.PanelEditor.toggleShowMeasure().check({ force: true });
+    e2e.components.Switch.input('controls.showMeasure').check({ force: true });
     e2e.components.PanelEditor.measureButton().should('exist');
 
     // Show debug
-    e2e.components.PanelEditor.toggleShowDebug().check({ force: true });
+    e2e.components.Switch.input('controls.showDebug').check({ force: true });
     e2e.components.DebugOverlay.wrapper().should('exist');
   },
 });

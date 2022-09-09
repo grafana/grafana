@@ -110,6 +110,9 @@ export const Components = {
       rcContentWrapper: () => '.drawer-content-wrapper',
     },
   },
+  Switch: {
+    input: (title: string) => `data-testid ${title}`,
+  },
   PanelEditor: {
     General: {
       content: 'Panel editor content',
@@ -129,12 +132,6 @@ export const Components = {
     toggleTableView: 'toggle-table-view',
 
     // [Geomap] Map controls
-    toggleShowZoom: 'controls.showZoom',
-    toggleMouseWheelZoom: 'controls.mouseWheelZoom',
-    toggleShowAttribution: 'controls.showAttribution',
-    toggleShowScale: 'controls.showScale',
-    toggleShowMeasure: 'controls.showMeasure',
-    toggleShowDebug: 'controls.showDebug',
     measureButton: 'show measure tools',
   },
   PanelInspector: {

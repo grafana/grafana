@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 import React, { HTMLProps, useRef } from 'react';
 
 import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors/src';
 
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -35,7 +36,7 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
           id={switchIdRef.current}
           {...inputProps}
           ref={ref}
-          aria-label={inputProps['aria-label'] ?? switchIdRef.current}
+          data-testid={selectors.components.Switch.input(switchIdRef.current)}
         />
         <label htmlFor={switchIdRef.current} />
       </div>
