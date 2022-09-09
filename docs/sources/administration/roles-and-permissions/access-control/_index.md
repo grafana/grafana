@@ -88,7 +88,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Licenses]({{< relref "../../stats-and-license/" >}})
 - [Organizations]({{< relref "../../organization-management/" >}})
 - [Provisioning]({{< relref "../../provisioning/" >}})
-- [Reports]({{< relref "../../../panels/create-reports/" >}})
+- [Reports]({{< relref "../../../dashboards/create-reports/" >}})
 - [Roles]({{< relref "../../" >}})
 - [Settings]({{< relref "../../../enterprise/settings-updates/" >}})
 - [Service accounts]({{< relref "../../service-accounts/" >}})

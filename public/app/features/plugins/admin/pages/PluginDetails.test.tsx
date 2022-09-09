@@ -4,7 +4,13 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 
-import { PluginErrorCode, PluginSignatureStatus, PluginType, dateTimeFormatTimeAgo } from '@grafana/data';
+import {
+  PluginErrorCode,
+  PluginSignatureStatus,
+  PluginType,
+  dateTimeFormatTimeAgo,
+  WithAccessControlMetadata,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
@@ -45,6 +51,13 @@ jest.mock('../helpers.ts', () => ({
   updatePanels: jest.fn(),
 }));
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: (action: string, fallBack: boolean) => true,
+    hasAccessInMetadata: (action: string, object: WithAccessControlMetadata, fallBack: boolean) => true,
+  },
+}));
+
 const renderPluginDetails = (
   pluginOverride: Partial<CatalogPlugin>,
   {
@@ -83,7 +96,7 @@ const renderPluginDetails = (
 describe('Plugin details page', () => {
   const id = 'my-plugin';
   const originalWindowLocation = window.location;
-  let dateNow: any;
+  let dateNow: jest.SpyInstance<number, []>;
 
   beforeAll(() => {
     dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00
