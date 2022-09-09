@@ -155,7 +155,6 @@ func (ss *SqlxStore) AddDataSource(ctx context.Context, cmd *datasources.AddData
 		cmd.Uid = uid
 	}
 
-	secureJson := datasources.SecureData(cmd.EncryptedSecureJsonData)
 	err = ss.sess.WithTransaction(ctx, func(sess *session.SessionTx) error {
 		ds := &datasources.DataSource{
 			OrgId:           cmd.OrgId,
@@ -170,7 +169,7 @@ func (ss *SqlxStore) AddDataSource(ctx context.Context, cmd *datasources.AddData
 			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
 			JsonData:        cmd.JsonData,
-			SecureJsonData:  &secureJson,
+			SecureJsonData:  simplejson.NewFromAny(cmd.EncryptedSecureJsonData),
 			Created:         time.Now(),
 			Updated:         time.Now(),
 			Version:         1,
@@ -277,7 +276,6 @@ func (ss *SqlxStore) UpdateDataSource(ctx context.Context, cmd *datasources.Upda
 			cmd.JsonData = simplejson.New()
 		}
 
-		secureJson := datasources.SecureData(cmd.EncryptedSecureJsonData)
 		ds := &datasources.DataSource{
 			Id:              cmd.Id,
 			OrgId:           cmd.OrgId,
@@ -292,7 +290,7 @@ func (ss *SqlxStore) UpdateDataSource(ctx context.Context, cmd *datasources.Upda
 			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
 			JsonData:        cmd.JsonData,
-			SecureJsonData:  &secureJson,
+			SecureJsonData:  simplejson.NewFromAny(cmd.EncryptedSecureJsonData),
 			Updated:         time.Now(),
 			ReadOnly:        cmd.ReadOnly,
 			Version:         cmd.Version + 1,

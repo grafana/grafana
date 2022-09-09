@@ -81,9 +81,9 @@ type DataSource struct {
 	IsDefault         bool             `json:"isDefault" db:"is_default"`
 	JsonData          *simplejson.Json `json:"jsonData" db:"json_data"`
 	// it is not that resonable here knowing that secureJsonData is nullable, we should have used pointer instead
-	SecureJsonData *SecureData `json:"secureJsonData" db:"secure_json_data"`
-	ReadOnly       bool        `json:"readOnly" db:"read_only"`
-	Uid            string      `json:"uid" db:"uid"`
+	SecureJsonData *simplejson.Json `json:"secureJsonData" db:"secure_json_data"`
+	ReadOnly       bool             `json:"readOnly" db:"read_only"`
+	Uid            string           `json:"uid" db:"uid"`
 
 	Created time.Time `json:"created,omitempty" db:"created"`
 	Updated time.Time `json:"updated,omitempty" db:"updated"`

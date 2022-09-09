@@ -2,6 +2,7 @@ package sender
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -246,10 +247,22 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 		return parsed.String(), nil
 	}
 
-	password := d.secretService.GetDecryptedValue(context.Background(), ds.SecureJsonData, "basicAuthPassword", "")
-	if password == "" {
-		return "", fmt.Errorf("basic auth enabled but no password set")
+	var password string
+	if ds.SecureJsonData != nil {
+		bt, err := ds.SecureJsonData.Bytes()
+		if err != nil {
+			return "", err
+		}
+		secureData := make(map[string][]byte)
+		if err := json.Unmarshal(bt, &secureData); err != nil {
+			return "", err
+		}
+		password = d.secretService.GetDecryptedValue(context.Background(), secureData, "basicAuthPassword", "")
+		if password == "" {
+			return "", fmt.Errorf("basic auth enabled but no password set")
+		}
 	}
+
 	return fmt.Sprintf("%s://%s:%s@%s%s%s", parsed.Scheme, ds.BasicAuthUser,
 		password, parsed.Host, parsed.Path, parsed.RawQuery), nil
 }

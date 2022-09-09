@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -395,9 +396,9 @@ func TestBuildExternalURL(t *testing.T) {
 				Url:           "https://localhost:9000",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
-				SecureJsonData: map[string][]byte{
+				SecureJsonData: simplejson.NewFromAny(map[string][]byte{
 					"basicAuthPassword": []byte("123"),
-				},
+				}),
 			},
 			expectedURL: "https://johndoe:123@localhost:9000",
 		},
@@ -407,9 +408,9 @@ func TestBuildExternalURL(t *testing.T) {
 				Url:           "https://localhost:9000/path/to/am",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
-				SecureJsonData: map[string][]byte{
+				SecureJsonData: simplejson.NewFromAny(map[string][]byte{
 					"basicAuthPassword": []byte("123"),
-				},
+				}),
 			},
 			expectedURL: "https://johndoe:123@localhost:9000/path/to/am",
 		},
@@ -419,9 +420,9 @@ func TestBuildExternalURL(t *testing.T) {
 				Url:           "localhost:9000/path/to/am",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
-				SecureJsonData: map[string][]byte{
+				SecureJsonData: simplejson.NewFromAny(map[string][]byte{
 					"basicAuthPassword": []byte("123"),
-				},
+				}),
 			},
 			expectedURL: "http://johndoe:123@localhost:9000/path/to/am",
 		},

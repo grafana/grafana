@@ -174,7 +174,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			}
 			cmd.Uid = uid
 		}
-		secureJson := datasources.SecureData(cmd.EncryptedSecureJsonData)
+
 		ds := &datasources.DataSource{
 			OrgId:           cmd.OrgId,
 			Name:            cmd.Name,
@@ -188,7 +188,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
 			JsonData:        cmd.JsonData,
-			SecureJsonData:  &secureJson,
+			SecureJsonData:  simplejson.NewFromAny(cmd.EncryptedSecureJsonData),
 			Created:         time.Now(),
 			Updated:         time.Now(),
 			Version:         1,
@@ -242,7 +242,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
-		secureJson := datasources.SecureData(cmd.EncryptedSecureJsonData)
+
 		ds := &datasources.DataSource{
 			Id:              cmd.Id,
 			OrgId:           cmd.OrgId,
@@ -254,10 +254,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			Database:        cmd.Database,
 			IsDefault:       cmd.IsDefault,
 			BasicAuth:       cmd.BasicAuth,
-			BasicAuthUser:   cmd.BasicAuthUser,
+		BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
 			JsonData:        cmd.JsonData,
-			SecureJsonData:  &secureJson,
+			SecureJsonData:  simplejson.NewFromAny(cmd.EncryptedSecureJsonData),
 			Updated:         time.Now(),
 			ReadOnly:        cmd.ReadOnly,
 			Version:         cmd.Version + 1,

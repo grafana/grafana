@@ -2,6 +2,8 @@ package datamigrations
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,10 +25,10 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	defer session.Close()
 
 	ds := []*datasources.DataSource{
-		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},
-		{Type: "graphite", Name: "graphite", BasicAuthPassword: "foobar", Uid: "graphite"},
+		{Type: "influxdb", Name: "influxdb", Password: sql.NullString{String: "foobar", Valid: true}, Uid: "influx"},
+		{Type: "graphite", Name: "graphite", BasicAuthPassword: sql.NullString{String: "foobar", Valid: true}, Uid: "graphite"},
 		{Type: "prometheus", Name: "prometheus", Uid: "prom"},
-		{Type: "elasticsearch", Name: "elasticsearch", Password: "pwd", Uid: "elastic"},
+		{Type: "elasticsearch", Name: "elasticsearch", Password: sql.NullString{String: "pwd", Valid: true}, Uid: "elastic"},
 	}
 
 	// set required default values
@@ -36,10 +39,9 @@ func TestPasswordMigrationCommand(t *testing.T) {
 		if ds.Name == "elasticsearch" {
 			key, err := util.Encrypt([]byte("value"), setting.SecretKey)
 			require.NoError(t, err)
-
-			ds.SecureJsonData = map[string][]byte{"key": key}
+			ds.SecureJsonData = simplejson.NewFromAny(map[string][]byte{"key": key})
 		} else {
-			ds.SecureJsonData = map[string][]byte{}
+			ds.SecureJsonData = simplejson.NewFromAny(map[string][]byte{})
 		}
 	}
 
@@ -98,7 +100,18 @@ func TestPasswordMigrationCommand(t *testing.T) {
 
 func DecryptSecureJsonData(ds *datasources.DataSource) (map[string]string, error) {
 	decrypted := make(map[string]string)
-	for key, data := range ds.SecureJsonData {
+	if ds.SecureJsonData == nil {
+		return decrypted, nil
+	}
+	bt, err := ds.SecureJsonData.Bytes()
+	if err != nil {
+		return decrypted, err
+	}
+	sdmap := make(map[string][]byte)
+	if err := json.Unmarshal(bt, &sdmap); err != nil {
+		return decrypted, err
+	}
+	for key, data := range sdmap {
 		decryptedData, err := util.Decrypt(data, setting.SecretKey)
 		if err != nil {
 			return nil, err

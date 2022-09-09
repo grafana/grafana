@@ -326,7 +326,15 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 func (s *Service) decryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	secureJsonData := make(map[string]string)
 	if ds.SecureJsonData != nil {
-		for k, v := range *ds.SecureJsonData {
+		sjbyte, err := ds.SecureJsonData.Bytes()
+		if err != nil {
+			return secureJsonData, err
+		}
+
+		x := map[string][]byte{}
+		json.Unmarshal(sjbyte, &x)
+
+		for k, v := range x {
 			decrypted, err := s.SecretsService.Decrypt(ctx, v)
 			if err != nil {
 				return nil, err
