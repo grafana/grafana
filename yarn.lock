@@ -5656,7 +5656,7 @@ __metadata:
     ol: 6.15.1
     postcss: 8.4.14
     postcss-loader: 7.0.1
-    prismjs: 1.28.0
+    prismjs: 1.29.0
     process: ^0.11.10
     raw-loader: 4.0.2
     rc-cascader: 3.6.1
@@ -22344,7 +22344,7 @@ __metadata:
     postcss-reporter: 7.0.5
     postcss-scss: 4.0.4
     prettier: 2.7.1
-    prismjs: 1.28.0
+    prismjs: 1.29.0
     prop-types: 15.8.1
     raw-loader: 4.0.2
     rc-cascader: 3.6.1
@@ -31092,10 +31092,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prismjs@npm:1.28.0":
-  version: 1.28.0
-  resolution: "prismjs@npm:1.28.0"
-  checksum: bde93fb2beb45b7243219fc53855f59ee54b3fa179f315e8f9d66244d756ef984462e10561bbdc6713d3d7e051852472d7c284f5794a8791eeaefea2fb910b16
+"prismjs@npm:1.29.0":
+  version: 1.29.0
+  resolution: "prismjs@npm:1.29.0"
+  checksum: 007a8869d4456ff8049dc59404e32d5666a07d99c3b0e30a18bd3b7676dfa07d1daae9d0f407f20983865fd8da56de91d09cb08e6aa61f5bc420a27c0beeaf93
   languageName: node
   linkType: hard
 
