@@ -3,7 +3,6 @@ import { uniqueId } from 'lodash';
 import React, { HTMLProps, useRef } from 'react';
 
 import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors/src';
 
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
