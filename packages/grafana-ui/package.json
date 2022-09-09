@@ -168,7 +168,7 @@
     "css-minimizer-webpack-plugin": "4.0.0",
     "csstype": "3.1.0",
     "enzyme": "3.11.0",
-    "esbuild": "^0.14.47",
+    "esbuild": "0.15.7",
     "expose-loader": "4.0.0",
     "mock-raf": "1.0.1",
     "postcss": "8.4.14",

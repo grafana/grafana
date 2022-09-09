@@ -43,6 +43,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
+import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import LanguageProvider from './LanguageProvider';
 import { transformBackendResult } from './backendResultTransformer';
@@ -698,14 +699,14 @@ export class LokiDatasource
 
   addAdHocFilters(queryExpr: string) {
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    let expr = queryExpr;
+    let expr = replaceVariables(queryExpr);
 
     expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
       const { key, operator, value } = filter;
       return this.addLabelToQuery(acc, key, operator, value);
     }, expr);
 
-    return expr;
+    return returnVariables(expr);
   }
 
   addLabelToQuery(queryExpr: string, key: string, operator: string, value: string) {
