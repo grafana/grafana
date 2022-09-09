@@ -115,6 +115,9 @@ export enum AccessControlAction {
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
+
+  PluginsInstall = 'plugins:install',
+  PluginsWrite = 'plugins:write',
 }
 
 export interface Role {

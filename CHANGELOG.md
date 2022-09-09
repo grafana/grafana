@@ -1,3 +1,12 @@
+<!-- 9.1.4 START -->
+
+# 9.1.4 (2022-09-09)
+
+### Bug fixes
+
+- **GrafanaUI:** Fixes Chrome issue for various query fields. [#54566](https://github.com/grafana/grafana/pull/54566), [@kaydelaney](https://github.com/kaydelaney)
+
+<!-- 9.1.4 END -->
 <!-- 9.1.3 START -->
 
 # 9.1.3 (2022-09-05)

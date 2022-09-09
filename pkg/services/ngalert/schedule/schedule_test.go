@@ -76,38 +76,28 @@ func TestWarmStateCache(t *testing.T) {
 		},
 	}
 
-	labels := models.InstanceLabels{"test1": "testValue1"}
-	_, hash, _ := labels.StringAndHash()
-	instance1 := models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  rule.OrgID,
-			RuleUID:    rule.UID,
-			LabelsHash: hash,
-		},
-		CurrentState:      models.InstanceStateNormal,
+	saveCmd1 := &models.SaveAlertInstanceCommand{
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
+		Labels:            models.InstanceLabels{"test1": "testValue1"},
+		State:             models.InstanceStateNormal,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		Labels:            labels,
 	}
 
-	_ = dbstore.SaveAlertInstances(ctx, instance1)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd1)
 
-	labels = models.InstanceLabels{"test2": "testValue2"}
-	_, hash, _ = labels.StringAndHash()
-	instance2 := models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  rule.OrgID,
-			RuleUID:    rule.UID,
-			LabelsHash: hash,
-		},
-		CurrentState:      models.InstanceStateFiring,
+	saveCmd2 := &models.SaveAlertInstanceCommand{
+		RuleOrgID:         rule.OrgID,
+		RuleUID:           rule.UID,
+		Labels:            models.InstanceLabels{"test2": "testValue2"},
+		State:             models.InstanceStateFiring,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		Labels:            labels,
 	}
-	_ = dbstore.SaveAlertInstances(ctx, instance2)
+	_ = dbstore.SaveAlertInstance(ctx, saveCmd2)
 
 	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval:            time.Second,
@@ -262,7 +252,7 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 		case info := <-ch:
 			_, ok := expected[info.alertDefKey]
 			if !ok {
-				t.Fatalf(fmt.Sprintf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now))
+				t.Fatal(fmt.Sprintf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now))
 			}
 			t.Logf("alert rule: %v evaluated at: %v", info.alertDefKey, info.now)
 			assert.Equal(t, tick, info.now)
