@@ -20,8 +20,7 @@ export interface DataFrameJSON {
   data?: DataFrameData;
 }
 
-// eslint-ignore-next-line
-type FieldValues = any[];
+type FieldValues = unknown[];
 
 /**
  * @alpha
@@ -136,7 +135,7 @@ export function decodeFieldValueEntities(lookup: FieldValueEntityLookup, values:
  */
 export function decodeFieldValueEnums(lookup: string[], values: FieldValues) {
   for (let i = 0; i < values.length; i++) {
-    values[i] = lookup[values[i]];
+    values[i] = lookup[values[i] as number];
   }
 }
 

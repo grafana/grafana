@@ -66,7 +66,7 @@ export function randomizeData(data: DataFrameJSON[], opts: Randomize): DataFrame
       if (opts.values) {
         schema.fields.forEach((f, idx) => {
           if (f.type === FieldType.string && data) {
-            const v = data.values[idx].map((v) => rand(v));
+            const v = (data.values[idx] as string[]).map((v) => rand(v));
             data.values[idx] = v;
           }
         });
