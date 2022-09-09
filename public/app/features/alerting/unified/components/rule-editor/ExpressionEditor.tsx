@@ -1,38 +1,53 @@
 import { noop } from 'lodash';
-import React, { FC, useCallback, useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
+import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
+import { useAsync, useObservable } from 'react-use';
 
-import { CoreApp, DataQuery } from '@grafana/data';
+import { CoreApp, DataQuery, DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { Button } from '@grafana/ui/src';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
+
+import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
+import { dataQueryToAlertQuery } from '../../utils/query';
+import { RuleViewerVisualization } from '../rule-viewer/RuleViewerVisualization';
 
 export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
-  dataSourceName: string; // will be a prometheus or loki datasource
+  dsSettings: DataSourceInstanceSettings; // will be a prometheus or loki datasource
 }
 
-export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
-  const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
-  const [query, setQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
+export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dsSettings }) => {
+  const queryRunner = useRef(new AlertingQueryRunner());
+
+  const queryData = useObservable(queryRunner.current.get());
+
+  const { mapToValue, mapToQuery } = useQueryMappers(dsSettings.name);
+  const [dataQuery, setDataQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
+  const alertQuery = dataQueryToAlertQuery(dataQuery, dsSettings.uid);
+
   const {
     error,
     loading,
     value: dataSource,
   } = useAsync(() => {
-    return getDataSourceSrv().get(dataSourceName);
-  }, [dataSourceName]);
+    return getDataSourceSrv().get(dsSettings);
+  }, [dsSettings]);
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
-      setQuery(query);
+      setDataQuery(query);
       onChange(mapToValue(query));
     },
     [onChange, mapToValue]
   );
 
-  if (loading || dataSource?.name !== dataSourceName) {
+  const onRunQueriesClick = async () => {
+    await queryRunner.current.run([dataQueryToAlertQuery(dataQuery, dsSettings.uid)]);
+  };
+
+  if (loading || dataSource?.name !== dsSettings.name) {
     return null;
   }
 
@@ -44,14 +59,21 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
   const QueryEditor = dataSource?.components?.QueryEditor;
 
   return (
-    <QueryEditor
-      query={query}
-      queries={[query]}
-      app={CoreApp.CloudAlerting}
-      onChange={onChangeQuery}
-      onRunQuery={noop}
-      datasource={dataSource}
-    />
+    <>
+      <QueryEditor
+        query={dataQuery}
+        queries={[dataQuery]}
+        app={CoreApp.CloudAlerting}
+        onChange={onChangeQuery}
+        onRunQuery={noop}
+        datasource={dataSource}
+      />
+      <Button icon="sync" type="button" onClick={onRunQueriesClick}>
+        Run queries
+      </Button>
+
+      <RuleViewerVisualization query={alertQuery} data={queryData && queryData[alertQuery.refId]} />
+    </>
   );
 };
 

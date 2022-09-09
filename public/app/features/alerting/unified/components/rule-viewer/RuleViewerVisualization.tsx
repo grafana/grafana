@@ -17,17 +17,21 @@ import { PanelPluginsButtonGroup, SupportedPanelPlugins } from '../PanelPluginsB
 type RuleViewerVisualizationProps = {
   data?: PanelData;
   query: AlertQuery;
-  onChangeQuery: (query: AlertQuery) => void;
+  onChangeQuery?: (query: AlertQuery) => void;
+  showExploreLink?: boolean;
 };
 
 const headerHeight = 4;
 
 export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JSX.Element | null {
+  const { data, query, onChangeQuery, showExploreLink } = props;
+
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { data, query, onChangeQuery } = props;
+
   const defaultPanel = isExpressionQuery(query.model) ? TABLE : TIMESERIES;
   const [panel, setPanel] = useState<SupportedPanelPlugins>(defaultPanel);
+
   const dsSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   const relativeTimeRange = query.relativeTimeRange;
   const [options, setOptions] = useState<PanelOptions>({
@@ -37,6 +41,10 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
 
   const onTimeChange = useCallback(
     (newDateTime: DateTime) => {
+      if (!onChangeQuery) {
+        return;
+      }
+
       const now = dateTime().unix() - newDateTime.unix();
 
       if (relativeTimeRange) {
@@ -87,7 +95,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                   <span className={styles.dataSource}>({dsSettings.name})</span>
                 </div>
                 <div className={styles.actions}>
-                  {!isExpressionQuery(query.model) && relativeTimeRange ? (
+                  {!isExpressionQuery(query.model) && relativeTimeRange && onChangeQuery ? (
                     <DateTimePicker
                       date={setDateTime(relativeTimeRange.to)}
                       onChange={onTimeChange}
@@ -96,7 +104,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                   ) : null}
                   <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="md" />
                   <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
-                    {!isExpressionQuery(query.model) && (
+                    {!isExpressionQuery(query.model) && showExploreLink && (
                       <>
                         <div className={styles.spacing} />
                         <LinkButton

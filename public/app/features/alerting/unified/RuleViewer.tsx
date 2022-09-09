@@ -197,6 +197,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
                       query={query}
                       data={data && data[query.refId]}
                       onChangeQuery={onChangeQuery}
+                      showExploreLink={true}
                     />
                   </div>
                 );
