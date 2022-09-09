@@ -43,7 +43,7 @@ var (
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
 	// Declare plugins roles
-	if err := plugins.DeclareRBACRoles(hs.accesscontrolService); err != nil {
+	if err := plugins.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg); err != nil {
 		return err
 	}
 

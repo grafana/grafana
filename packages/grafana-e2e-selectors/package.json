@@ -39,7 +39,7 @@
     "@rollup/plugin-commonjs": "22.0.1",
     "@rollup/plugin-node-resolve": "13.3.0",
     "@types/node": "16.11.45",
-    "esbuild": "^0.14.47",
+    "esbuild": "0.15.7",
     "rimraf": "3.0.2",
     "rollup": "2.77.2",
     "rollup-plugin-dts": "^4.2.2",
