@@ -93,7 +93,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 			sc.context = c
 			c.Req.Body = mockRequestBody(event)
 			c.Req.Header.Add("Content-Type", "application/json")
-			loggingHandler(c.Context)
+			loggingHandler(nil, c.Context)
 			return response.Success("ok")
 		})
 
@@ -166,7 +166,7 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 			sc.context = c
 			c.Req.Body = mockRequestBody(event)
 			c.Req.Header.Add("Content-Type", "application/json")
-			loggingHandler(c.Context)
+			loggingHandler(nil, c.Context)
 			return response.Success("OK")
 		})
 

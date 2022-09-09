@@ -11,14 +11,17 @@ import (
 
 var frontendLogger = log.New("frontend")
 
-type frontendLogMessageHandler func(c *web.Context)
+type frontendLogMessageHandler func(hs *HTTPServer, c *web.Context)
 
 func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
-	return func(c *web.Context) {
+	return func(hs *HTTPServer, c *web.Context) {
 		event := frontendlogging.FrontendSentryEvent{}
 		if err := web.Bind(c.Req, &event); err != nil {
 			c.Resp.WriteHeader(http.StatusBadRequest)
-			c.Resp.Write([]byte("bad request data"))
+			_, err = c.Resp.Write([]byte("bad request data"))
+			if err != nil {
+				hs.log.Error("could not write to response", "err", err)
+			}
 			return
 		}
 
@@ -45,16 +48,18 @@ func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) fronten
 
 		c.Resp.WriteHeader(http.StatusAccepted)
 		c.Resp.Write([]byte("OK"))
-
 	}
 }
 
 func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
-	return func(c *web.Context) {
+	return func(hs *HTTPServer, c *web.Context) {
 		event := frontendlogging.FrontendGrafanaJavascriptAgentEvent{}
 		if err := web.Bind(c.Req, &event); err != nil {
 			c.Resp.WriteHeader(http.StatusBadRequest)
-			c.Resp.Write([]byte("bad request data"))
+			_, err = c.Resp.Write([]byte("bad request data"))
+			if err != nil {
+				hs.log.Error("could not write to response", "err", err)
+			}
 		}
 
 		// Meta object is standard across event types, adding it globally.
@@ -116,6 +121,9 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 			}
 		}
 		c.Resp.WriteHeader(http.StatusAccepted)
-		c.Resp.Write([]byte("OK"))
+		_, err := c.Resp.Write([]byte("OK"))
+		if err != nil {
+			hs.log.Error("could not write to response", "err", err)
+		}
 	}
 }

@@ -674,7 +674,10 @@ func (hs *HTTPServer) setupFrontendLogHandlers() {
 		hs.web.Use(func(ctx *web.Context) {
 			if ctx.Req.Method == http.MethodPost && (ctx.Req.URL.Path == "/log" || ctx.Req.URL.Path == "/log-grafana-javascript-agent") {
 				ctx.Resp.WriteHeader(http.StatusAccepted)
-				ctx.Resp.Write([]byte("OK"))
+				_, err := ctx.Resp.Write([]byte("OK"))
+				if err != nil {
+					hs.log.Error("could not write to response", "err", err)
+				}
 			}
 		})
 		return
@@ -702,14 +705,17 @@ func (hs *HTTPServer) setupFrontendLogHandlers() {
 	hs.web.Use(func(ctx *web.Context) {
 		if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == dummyEndpoint {
 			ctx.Resp.WriteHeader(http.StatusAccepted)
-			ctx.Resp.Write([]byte("OK"))
+			_, err := ctx.Resp.Write([]byte("OK"))
+			if err != nil {
+				hs.log.Error("could not write to response", "err", err)
+			}
 		}
 		if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == handlerEndpoint {
 			if !rateLimiter.AllowN(time.Now(), 1) {
 				ctx.Resp.WriteHeader(http.StatusTooManyRequests)
 				return
 			}
-			handler(ctx)
+			handler(hs, ctx)
 		}
 	})
 }
