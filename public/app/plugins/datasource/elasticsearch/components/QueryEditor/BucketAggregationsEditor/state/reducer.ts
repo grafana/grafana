@@ -6,7 +6,7 @@ import { removeEmpty } from '../../../../utils';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
 import { initQuery } from '../../state';
-import { BucketAggregation, Terms } from '../aggregations';
+import { BucketAggregation, isBucketAggregationWithSettings, Terms } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
 
 import {
@@ -89,7 +89,7 @@ export const createReducer =
 
     if (changeBucketAggregationSetting.match(action)) {
       return state!.map((bucketAgg) => {
-        if (bucketAgg.id !== action.payload.bucketAgg.id) {
+        if (bucketAgg.id !== action.payload.bucketAgg.id || !isBucketAggregationWithSettings(bucketAgg)) {
           return bucketAgg;
         }
 

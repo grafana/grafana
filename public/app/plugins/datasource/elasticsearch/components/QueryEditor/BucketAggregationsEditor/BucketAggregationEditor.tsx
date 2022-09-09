@@ -8,7 +8,12 @@ import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { segmentStyles } from '../styles';
 
 import { SettingsEditor } from './SettingsEditor';
-import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
+import {
+  BucketAggregation,
+  BucketAggregationType,
+  isBucketAggregationWithField,
+  isBucketAggregationWithSettings,
+} from './aggregations';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
 import { bucketAggregationConfig } from './utils';
 
@@ -53,7 +58,7 @@ export const BucketAggregationEditor = ({ value }: QueryMetricEditorProps) => {
         )}
       </InlineSegmentGroup>
 
-      <SettingsEditor bucketAgg={value} />
+      {isBucketAggregationWithSettings(value) && <SettingsEditor bucketAgg={value} />}
     </>
   );
 };
