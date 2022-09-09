@@ -118,7 +118,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 		if azJSONModel.CustomNamespace != "" {
 			params.Add("metricnamespace", azJSONModel.CustomNamespace)
 		} else {
-			params.Add("metricnamespace", azJSONModel.MetricNamespace) // MetricName or MetricNames ?
+			params.Add("metricnamespace", azJSONModel.MetricNamespace)
 		}
 
 		// old model
