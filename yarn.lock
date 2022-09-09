@@ -5355,12 +5355,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.0.18":
-  version: 0.0.18
-  resolution: "@grafana/lezer-logql@npm:0.0.18"
+"@grafana/lezer-logql@npm:0.1.0":
+  version: 0.1.0
+  resolution: "@grafana/lezer-logql@npm:0.1.0"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: bd15fc90b11ab96723cf0043956d1e30e5877bdc859f41dbc3637402ccee06c5adf58156bc1207cbce216c2646b1fad702703b59bbe1d9dcf116ad80ca592df2
+  checksum: 77c8a75c211cfdebe99eaf892d07673c52531fdb696c463a9dade74c25d919b87561b2f97c716d1d710c95da7c49edcffb6c98e0d4b635d0aa91d40cc5167f9e
   languageName: node
   linkType: hard
 
@@ -5611,7 +5611,7 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.1
     common-tags: 1.8.2
-    core-js: 3.24.0
+    core-js: 3.25.1
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.0.0
     csstype: 3.1.0
@@ -11911,12 +11911,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ol-ext@npm:@siedlerchr/types-ol-ext@2.1.2":
-  version: 2.1.2
-  resolution: "@siedlerchr/types-ol-ext@npm:2.1.2"
+"@types/ol-ext@npm:@siedlerchr/types-ol-ext@2.3.0":
+  version: 2.3.0
+  resolution: "@siedlerchr/types-ol-ext@npm:2.3.0"
   dependencies:
     jspdf: ^2.5.1
-  checksum: dba755c6e20aacc8ccb35ba6b4430e251b874b0e50953e5ff37173b8ee3e86ad5143106df179aea5e5e84d5a841ea96b64d3a4448e745df6d0bc6d2db17b87fe
+  checksum: b6652eddf17860df2d42b08ed2639abe21709da91619498ae9ff7cac8b01e0e5359226df0cb501c46248e26288dc7dee704742745af76da5ac00704d904b1596
   languageName: node
   linkType: hard
 
@@ -12595,17 +12595,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/webpack-env@npm:1.18.0":
+  version: 1.18.0
+  resolution: "@types/webpack-env@npm:1.18.0"
+  checksum: ecf4daa31cb37d474ac0ce058d83a3cadeb9881ca8107ae93c2299eaa9954943aae09b43e143c62ccbe4288a14db00c918c9debd707afe17c3998f873eaabc59
+  languageName: node
+  linkType: hard
+
 "@types/webpack-env@npm:^1.16.0":
   version: 1.16.3
   resolution: "@types/webpack-env@npm:1.16.3"
   checksum: faefa7c0a75289fb469b9a5ae44059a00009de840e0e62d13b3f837d77647da76808e7839cdc414b8c585969cf6b6a7f290dc2cb437a9ccdf04cb214c68f3223
-  languageName: node
-  linkType: hard
-
-"@types/webpack-env@npm:^1.17.0":
-  version: 1.17.0
-  resolution: "@types/webpack-env@npm:1.17.0"
-  checksum: 9ad4d208c4429c9427191d1f4c92e4c43e530384c17a6bc298acb89003fc47fcde1d8372e50acefa3061e9100e57fd9d616e96def875afd06c0c2afe508f298e
   languageName: node
   linkType: hard
 
@@ -13082,9 +13082,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/shape@npm:2.11.1":
-  version: 2.11.1
-  resolution: "@visx/shape@npm:2.11.1"
+"@visx/shape@npm:2.12.2":
+  version: 2.12.2
+  resolution: "@visx/shape@npm:2.12.2"
   dependencies:
     "@types/d3-path": ^1.0.8
     "@types/d3-shape": ^1.3.1
@@ -13100,7 +13100,7 @@ __metadata:
     prop-types: ^15.5.10
   peerDependencies:
     react: ^16.3.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: 3ad97badb4376dd143a208ec46a01b55c9b59f50391f5e70efab609000f9333cc27747e1c5f6379aae897febed5dbf8073bbb9d1634ba7863bbb2f8dbca7e17b
+  checksum: 62943394c63a273332de17f1341cdad403090a89328e6649824f9723946ff92f6932f2b6bc4fbe64090231218489a639b18bc3f28e170bcb55ecf880016ff56f
   languageName: node
   linkType: hard
 
@@ -17092,10 +17092,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.24.0":
-  version: 3.24.0
-  resolution: "core-js@npm:3.24.0"
-  checksum: f1d1feef82bac7ecddd9e40e75b7126e7b5299a0d17aa046238bd8c78567d485b32c9c80b212704d9483ccc8b3f13b3ee35a5ec69fdca874377f654664068669
+"core-js@npm:3.25.1":
+  version: 3.25.1
+  resolution: "core-js@npm:3.25.1"
+  checksum: bfacb078e790913841e2d5008b9b6705ae56ed23f83c7f0ae08d330d874561012611089d53b71520105234ed0abba36f28d91b391514a16541a8c8d98c464239
   languageName: node
   linkType: hard
 
@@ -22100,7 +22100,7 @@ __metadata:
     "@grafana/eslint-config": 5.0.0
     "@grafana/experimental": ^0.0.2-canary.36
     "@grafana/google-sdk": 0.0.3
-    "@grafana/lezer-logql": 0.0.18
+    "@grafana/lezer-logql": 0.1.0
     "@grafana/runtime": "workspace:*"
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
@@ -22171,7 +22171,7 @@ __metadata:
     "@types/logfmt": ^1.2.1
     "@types/mousetrap": 1.6.9
     "@types/node": 16.11.45
-    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@2.1.2"
+    "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@2.3.0"
     "@types/papaparse": 5.3.2
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
@@ -22202,14 +22202,14 @@ __metadata:
     "@types/testing-library__react-hooks": ^3.2.0
     "@types/tinycolor2": 1.4.3
     "@types/uuid": 8.3.4
-    "@types/webpack-env": ^1.17.0
+    "@types/webpack-env": 1.18.0
     "@typescript-eslint/eslint-plugin": 5.31.0
     "@typescript-eslint/parser": 5.31.0
     "@visx/event": 2.6.0
     "@visx/gradient": 2.10.0
     "@visx/group": 2.10.0
     "@visx/scale": 2.2.2
-    "@visx/shape": 2.11.1
+    "@visx/shape": 2.12.2
     "@visx/tooltip": 2.10.0
     "@welldone-software/why-did-you-render": 7.0.1
     "@wojtekmaj/enzyme-adapter-react-17": 0.6.7
@@ -22232,7 +22232,7 @@ __metadata:
     comlink: 4.3.1
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
-    core-js: 3.24.0
+    core-js: 3.25.1
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.0.0
     cypress: 9.5.1

@@ -43,7 +43,7 @@ var (
 // that HTTPServer needs
 func (hs *HTTPServer) declareFixedRoles() error {
 	// Declare plugins roles
-	if err := plugins.DeclareRBACRoles(hs.accesscontrolService); err != nil {
+	if err := plugins.DeclareRBACRoles(hs.accesscontrolService, hs.Cfg); err != nil {
 		return err
 	}
 
@@ -426,7 +426,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create, write or disable a public dashboard.",
 			Group:       "Dashboards",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionDashboardPublicWrite, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsPublicWrite, Scope: dashboards.ScopeDashboardsAll},
 			},
 		},
 		Grants: []string{"Admin"},
