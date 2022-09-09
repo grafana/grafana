@@ -5,11 +5,13 @@ export function setMetricNamespace(query: AzureMonitorQuery, selection: string |
     return query;
   }
 
+  const customNamespace = selection?.toLowerCase().startsWith('microsoft.storage/storageaccounts/') ? '' : selection;
+
   return {
     ...query,
     azureMonitor: {
       ...query.azureMonitor,
-      customNamespace: selection,
+      customNamespace,
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',
