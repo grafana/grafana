@@ -189,7 +189,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	}
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		err = PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,
@@ -284,7 +284,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		err = PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,
@@ -344,7 +344,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		if err != nil {
 			return err
 		}
-		return ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		return PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,

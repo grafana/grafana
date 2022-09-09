@@ -16,6 +16,7 @@ import { DashboardSettings } from './DashboardSettings';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   locationService: {
+    getSearchObject: jest.fn().mockResolvedValue({}),
     partial: jest.fn(),
   },
 }));

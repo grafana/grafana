@@ -7,8 +7,10 @@ title: Configure standard options
 menuTitle: Configure standard options
 weight: 40
 keywords:
-  - xxx
-  - xxx
+  - panel
+  - dasboard
+  - standard
+  - option
 ---
 
 # Configure standard options
@@ -83,7 +85,7 @@ To change this setting, type a number in the field and then click outside the fi
 
 ### Display name
 
-Lets you set the display title of all fields. You can use [variables]({{< relref "../../variables/" >}}) in the field title.
+Lets you set the display title of all fields. You can use [variables]({{< relref "../../dashboards/variables/" >}}) in the field title.
 
 When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
 

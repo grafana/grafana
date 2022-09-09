@@ -16,8 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -44,26 +45,27 @@ func setupTestServer(
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	// build access control - FIXME we should be able to mock this, but to get
-	// tests going, we're going to instantiate full accesscontrol
-	//ac := accesscontrolmock.New()
-	//ac.WithDisabled()
-
-	// create a sqlstore for access control.
-	if db == nil {
-		db = sqlstore.InitTestDB(t)
+	var permissions []accesscontrol.Permission
+	if user != nil && user.Permissions != nil {
+		for action, scopes := range user.Permissions[user.OrgID] {
+			for _, scope := range scopes {
+				permissions = append(permissions, accesscontrol.Permission{
+					Action: action,
+					Scope:  scope,
+				})
+			}
+		}
 	}
 
-	var err error
-	acService, err := acimpl.ProvideService(cfg, database.ProvideService(db), rr)
-	require.NoError(t, err)
-	ac := acimpl.ProvideAccessControl(cfg, acService)
+	acService := actest.FakeService{ExpectedPermissions: permissions, ExpectedDisabled: !cfg.RBACEnabled}
+	ac := acimpl.ProvideAccessControl(cfg)
 
 	// build mux
 	m := web.New()
 
 	// set initial context
 	m.Use(contextProvider(&testContext{user}))
+	m.Use(accesscontrol.LoadPermissionsMiddleware(acService))
 
 	// build api, this will mount the routes at the same time if
 	// featuremgmt.FlagPublicDashboard is enabled
