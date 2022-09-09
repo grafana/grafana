@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import OpenTsDatasource from '../datasource';
 import { OpenTsdbOptions, OpenTsdbQuery } from '../types';
 
+import { DownSample } from './DownSample';
 import { MetricSection } from './MetricSection';
 
 export type OpenTsdbQueryEditorProps = QueryEditorProps<OpenTsDatasource, OpenTsdbQuery, OpenTsdbOptions>;
@@ -66,9 +67,11 @@ export function OpenTsdbQueryEditor({
   // aggreagator only exists in the query
   // Xaggregator: any;
 
+  // DownSample component
   // downsampleInterval: any;
   // downsampleAggregator: any;
   // downsampleFillPolicy: any;
+
   // errors: any;
   // Xlet suggestMetrics: any;
   // suggestTagKeys: any;
@@ -126,6 +129,14 @@ export function OpenTsdbQueryEditor({
           onRunQuery={onRunQuery}
           suggestMetrics={suggestMetrics}
           aggregators={aggregators}
+        />
+        <DownSample
+          query={query}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+          aggregators={aggregators}
+          fillPolicies={fillPolicies}
+          tsdbVersion={tsdbVersion}
         />
         <div>WIP</div>
         <div>Errors: {errors.toString()}</div>

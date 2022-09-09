@@ -11,6 +11,7 @@ export interface OpenTsdbQuery extends DataQuery {
   downsampleInterval?: string;
   downsampleAggregator?: string;
   downsampleFillPolicy?: string;
+  disableDownsampling?: boolean;
 
   // annotation attrs
   fromAnnotations?: boolean;
