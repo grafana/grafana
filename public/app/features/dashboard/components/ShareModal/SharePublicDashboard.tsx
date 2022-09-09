@@ -18,6 +18,10 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
+import { contextSrv } from '../../../../core/services/context_srv';
+import { AccessControlAction } from '../../../../types';
+import { isOrgAdmin } from '../../../plugins/admin/permissions';
+
 import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
@@ -39,6 +43,8 @@ interface Acknowledgements {
 export const SharePublicDashboard = (props: Props) => {
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+
+  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
 
   const [publicDashboard, setPublicDashboardConfig] = useState<PublicDashboard>({
     isEnabled: false,
@@ -122,13 +128,12 @@ export const SharePublicDashboard = (props: Props) => {
           <hr />
           <div>
             Before you click Save, please acknowledge the following information: <br />
-            <FieldSet>
+            <FieldSet disabled={publicDashboardPersisted(publicDashboard) || !hasWritePermissions}>
               <br />
               <div>
                 <Checkbox
                   label="Your entire dashboard will be public"
                   value={acknowledgements.public}
-                  disabled={publicDashboardPersisted(publicDashboard)}
                   data-testid={selectors.WillBePublicCheckbox}
                   onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
                 />
@@ -138,7 +143,6 @@ export const SharePublicDashboard = (props: Props) => {
                 <Checkbox
                   label="Publishing currently only works with a subset of datasources"
                   value={acknowledgements.datasources}
-                  disabled={publicDashboardPersisted(publicDashboard)}
                   data-testid={selectors.LimitedDSCheckbox}
                   onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
                 />
@@ -156,7 +160,6 @@ export const SharePublicDashboard = (props: Props) => {
               <Checkbox
                 label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
                 value={acknowledgements.usage}
-                disabled={publicDashboardPersisted(publicDashboard)}
                 data-testid={selectors.CostIncreaseCheckbox}
                 onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
               />
@@ -175,7 +178,7 @@ export const SharePublicDashboard = (props: Props) => {
           </div>
           <div>
             <h4 className="share-modal-info-text">Public Dashboard Configuration</h4>
-            <FieldSet>
+            <FieldSet disabled={!hasWritePermissions}>
               <Label description="The public dashboard uses the default time settings of the dashboard">
                 Time Range
               </Label>
@@ -213,6 +216,9 @@ export const SharePublicDashboard = (props: Props) => {
                   }}
                 />
               </Field>
+            </FieldSet>
+
+            <FieldSet>
               {publicDashboardPersisted(publicDashboard) && publicDashboard.isEnabled && (
                 <Field label="Link URL">
                   <Input
@@ -236,14 +242,18 @@ export const SharePublicDashboard = (props: Props) => {
               )}
             </FieldSet>
 
-            {props.dashboard.hasUnsavedChanges() && (
-              <Alert
-                title="Please save your dashboard changes before updating the public configuration"
-                severity="warning"
-              />
+            {hasWritePermissions ? (
+              props.dashboard.hasUnsavedChanges() && (
+                <Alert
+                  title="Please save your dashboard changes before updating the public configuration"
+                  severity="warning"
+                />
+              )
+            ) : (
+              <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
             )}
             <Button
-              disabled={!acknowledged() || props.dashboard.hasUnsavedChanges()}
+              disabled={!hasWritePermissions || !acknowledged() || props.dashboard.hasUnsavedChanges()}
               onClick={onSavePublicConfig}
               data-testid={selectors.SaveConfigButton}
             >
