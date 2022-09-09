@@ -3,12 +3,15 @@ import { useArgs } from '@storybook/client-api';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
 import { CollapsableSection, Props } from './CollapsableSection';
 import mdx from './CollapsableSection.mdx';
 
 const meta: ComponentMeta<typeof CollapsableSection> = {
   title: 'Layout/CollapsableSection',
   component: CollapsableSection,
+  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
