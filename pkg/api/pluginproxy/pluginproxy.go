@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,6 +25,13 @@ type templateData struct {
 func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.Route,
 	appID string, cfg *setting.Cfg, secretsService secrets.Service) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
+		list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
+		if list != nil {
+			for _, name := range list.Items {
+				req.Header.Del(name)
+			}
+		}
+
 		query := models.GetPluginSettingByIdQuery{OrgId: ctx.OrgId, PluginId: appID}
 		if err := bus.Dispatch(ctx.Req.Context(), &query); err != nil {
 			ctx.JsonApiErr(500, "Failed to fetch plugin settings", err)

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -731,6 +732,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		require.NotNil(t, req)
 		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
 	})
+
 	t.Run("Data source should handle proxy path url encoding correctly with opentelemetry", func(t *testing.T) {
 		var req *http.Request
 		ctx, ds := setUp(t, setUpCfg{
@@ -753,6 +755,36 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		require.NoError(t, writeErr)
 		require.NotNil(t, req)
 		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
+	})
+
+	t.Run("Data source should handle proxy path url encoding correctly with opentelemetry", func(t *testing.T) {
+		var req *http.Request
+		reqCtx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
+				req = r
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("OK"))
+				require.NoError(t, err)
+			},
+		})
+
+		reqCtx.Req = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
+
+		const customHeader = "X-CUSTOM"
+		reqCtx.Req.Header.Set(customHeader, "val")
+		ctx := contexthandler.WithAuthHTTPHeader(reqCtx.Req.Context(), customHeader)
+
+		reqCtx.Req = reqCtx.Req.WithContext(ctx)
+		var routes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
+		proxy, err := NewDataSourceProxy(ds, routes, reqCtx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
+		require.NoError(t, err)
+
+		proxy.HandleRequest()
+		require.NoError(t, writeErr)
+		require.NotNil(t, req)
+		require.Empty(t, req.Header.Get(customHeader))
 	})
 }
 
