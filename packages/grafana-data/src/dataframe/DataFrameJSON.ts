@@ -50,8 +50,10 @@ export interface DataFrameData {
   factors?: number[];
 
   /**
-   * Holds enums per field so we can encode recurring values as ints
+   * Holds enums per field so we can encode recurring string values as ints
    * e.g. ["foo", "foo", "baz", "foo"] -> ["foo", "baz"] + [0,0,1,0]
+   *
+   * NOTE: currently only decoding is implemented
    */
   enums?: Array<string[] | null>;
 }
