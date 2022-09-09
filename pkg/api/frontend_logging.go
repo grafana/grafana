@@ -47,7 +47,10 @@ func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) fronten
 		}
 
 		c.Resp.WriteHeader(http.StatusAccepted)
-		c.Resp.Write([]byte("OK"))
+		_, err := c.Resp.Write([]byte("OK"))
+		if err != nil {
+			hs.log.Error("could not write to response", "err", err)
+		}
 	}
 }
 
