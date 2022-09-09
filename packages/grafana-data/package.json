@@ -77,7 +77,7 @@
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/testing-library__react-hooks": "^3.2.0",
     "@types/tinycolor2": "1.4.3",
-    "esbuild": "^0.14.47",
+    "esbuild": "0.15.7",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-test-renderer": "17.0.2",
