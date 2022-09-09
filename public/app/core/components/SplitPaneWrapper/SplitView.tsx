@@ -67,8 +67,13 @@ const getResizerStyles = (hasSplit: boolean) => (theme: GrafanaTheme2) =>
 export const SplitView = ({ uiState: { rightPaneSize }, children, minSize = 200, onResize }: Props) => {
   const { width } = useViewportSize();
 
-  //console.log('splitview render', children);
+  // create two elements for library, even if only one exists (one will be hidden)
   const hasSplit = children.filter(Boolean).length === 2;
+
+  const existingChildren = [
+    <React.Fragment key="leftPane">{children[0]}</React.Fragment>,
+    <React.Fragment key="rightPane">{hasSplit && children[1]}</React.Fragment>,
+  ];
 
   return (
     <SplitPane
@@ -82,7 +87,7 @@ export const SplitView = ({ uiState: { rightPaneSize }, children, minSize = 200,
       onDragStarted={onDragStarted}
       onDragFinished={(size: number) => onDragFinished(size, onResize)}
     >
-      {children}
+      {existingChildren}
     </SplitPane>
   );
 };

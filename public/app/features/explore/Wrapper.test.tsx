@@ -33,6 +33,18 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
+/*jest.mock('react-split-pane', () => {
+  return {
+    __esModule: true,
+    default(props: any) {
+      return <> 
+      <div>{props.children[0]}</div>
+      <div>{props.children[1]}</div>
+      </>;
+    },
+  };
+}); */
+
 describe('Wrapper', () => {
   afterEach(() => {
     tearDown();
@@ -218,15 +230,20 @@ describe('Wrapper', () => {
 
     it('can close a panel from a split', async () => {
       const urlParams = {
-        left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
-        right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
+        left: JSON.stringify(['now-1h', 'now', 'loki-uid', { refId: 'A' }]),
+        right: JSON.stringify(['now-1h', 'now', 'elastic-uid', { refId: 'A' }]),
       };
-      setupExplore({ urlParams });
-      const closeButtons = await screen.findAllByLabelText(/Close split pane/i);
+      const { datasources } = setupExplore({ urlParams });
+      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+      jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeLogsQueryResponse());
+
+      await screen.findByText(/^loki Editor input:$/);
+
+      const closeButtons = await screen.findAllByTitle(/Close split pane/i);
       await userEvent.click(closeButtons[1]);
 
       await waitFor(() => {
-        const logsPanels = screen.queryAllByLabelText(/Close split pane/i);
+        const logsPanels = screen.queryAllByTitle(/Close split pane/i);
         expect(logsPanels.length).toBe(0);
       });
     });

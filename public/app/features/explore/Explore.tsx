@@ -121,17 +121,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   componentDidMount() {
-    console.log('Explore mount', this.props.exploreId);
     this.absoluteTimeUnsubsciber = appEvents.subscribe(AbsoluteTimeEvent, this.onMakeAbsoluteTime);
   }
 
   componentWillUnmount() {
-    console.log('Explore unmount', this.props.exploreId);
     this.absoluteTimeUnsubsciber?.unsubscribe();
-  }
-
-  componentDidUpdate() {
-    console.log('Explore update', this.props.exploreId);
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -183,7 +177,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onResize = (size: { height: number; width: number }) => {
-    console.log('onResize', size);
     this.props.changeSize(this.props.exploreId, size);
   };
 
@@ -381,8 +374,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             </PanelContainer>
             <AutoSizer onResize={this.onResize} disableHeight disableWidth>
               {({ width }) => {
-                console.log('resize', width);
-
                 if (width === 0) {
                   return null;
                 }

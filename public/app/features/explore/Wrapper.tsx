@@ -63,7 +63,6 @@ class WrapperUnconnected extends PureComponent<Props> {
   static contextType = GrafanaContext;
 
   componentWillUnmount() {
-    console.log('wrapper unmount');
     const { left, right } = this.props.queryParams;
 
     if (Boolean(left)) {
@@ -78,7 +77,6 @@ class WrapperUnconnected extends PureComponent<Props> {
   }
 
   componentDidMount() {
-    console.log('wrapper mount');
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
     this.context.chrome.update({ sectionNav: this.props.navModel.node });
@@ -105,9 +103,6 @@ class WrapperUnconnected extends PureComponent<Props> {
     if (JSON.stringify(prevProps.exploreState) !== JSON.stringify(this.props.exploreState)) {
       const { left, right } = this.props.queryParams;
       const hasSplit = Boolean(left) && Boolean(right);
-      // in the update before the error, the only thing that changes is the location key.
-      //console.log('wrapper update', JSON.stringify(prevProps));
-      //console.log('wrapper update2', JSON.stringify(this.props));
       const datasourceTitle = hasSplit
         ? `${this.props.exploreState.left.datasourceInstance?.name} | ${this.props.exploreState.right?.datasourceInstance?.name}`
         : `${this.props.exploreState.left.datasourceInstance?.name}`;
@@ -142,12 +137,6 @@ class WrapperUnconnected extends PureComponent<Props> {
 
     const splitSizeObj = { rightPaneSize: widthCalc };
 
-    const leftPane = (
-      <ErrorBoundaryAlert style="page">
-        <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
-      </ErrorBoundaryAlert>
-    );
-
     return (
       <div className={styles.pageScrollbarWrapper}>
         <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
@@ -159,9 +148,11 @@ class WrapperUnconnected extends PureComponent<Props> {
               this.updateSplitSize(width);
             }}
           >
-            {leftPane}
+            <ErrorBoundaryAlert style="page" key="LeftPane">
+              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
+            </ErrorBoundaryAlert>
             {hasSplit && (
-              <ErrorBoundaryAlert style="page">
+              <ErrorBoundaryAlert style="page" key="RightPane">
                 <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
               </ErrorBoundaryAlert>
             )}
