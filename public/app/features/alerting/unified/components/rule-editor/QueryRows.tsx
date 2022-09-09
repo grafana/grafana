@@ -27,6 +27,7 @@ interface Props {
 
   // Query editing
   onQueriesChange: (queries: AlertQuery[]) => void;
+  onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
 }
@@ -148,10 +149,6 @@ export class QueryRows extends PureComponent<Props> {
     onQueriesChange(update);
   };
 
-  onDuplicateQuery = (query: DataQuery): void => {
-    throw new Error('not yet implemented');
-  };
-
   getDataSourceSettings = (query: AlertQuery): DataSourceInstanceSettings | undefined => {
     return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
@@ -247,7 +244,7 @@ export class QueryRows extends PureComponent<Props> {
                       onRemoveQuery={this.onRemoveQuery}
                       queries={queries}
                       onChangeDataSource={this.onChangeDataSource}
-                      onDuplicateQuery={this.onDuplicateQuery}
+                      onDuplicateQuery={this.props.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}
                       thresholds={thresholdByRefId[query.refId]}
                       onChangeThreshold={this.onChangeThreshold}

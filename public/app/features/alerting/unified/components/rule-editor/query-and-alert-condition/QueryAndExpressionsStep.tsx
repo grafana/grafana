@@ -19,6 +19,7 @@ import { refIdExists } from '../util';
 
 import { AlertType } from './AlertType';
 import {
+  duplicateQuery,
   addNewDataQuery,
   addNewExpression,
   queriesAndExpressionsReducer,
@@ -133,6 +134,10 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     [queries]
   );
 
+  const onDuplicateQuery = useCallback((query: AlertQuery) => {
+    dispatch(duplicateQuery(query));
+  }, []);
+
   // update the condition if it's been removed
   useEffect(() => {
     if (!refIdExists(queries, condition)) {
@@ -168,6 +173,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           <QueryEditor
             queries={dataQueries}
             onChangeQueries={onChangeQueries}
+            onDuplicateQuery={onDuplicateQuery}
             panelData={panelData}
             condition={condition}
             onSetCondition={(refId) => {

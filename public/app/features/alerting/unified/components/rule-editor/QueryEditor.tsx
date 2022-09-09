@@ -11,11 +11,19 @@ interface Props {
   panelData: Record<string, PanelData>;
   queries: AlertQuery[];
   onChangeQueries: (queries: AlertQuery[]) => void;
+  onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
 }
 
-export const QueryEditor: FC<Props> = ({ queries, panelData, onChangeQueries, condition, onSetCondition }) => {
+export const QueryEditor: FC<Props> = ({
+  queries,
+  panelData,
+  onChangeQueries,
+  onDuplicateQuery,
+  condition,
+  onSetCondition,
+}) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -24,6 +32,7 @@ export const QueryEditor: FC<Props> = ({ queries, panelData, onChangeQueries, co
         data={panelData}
         queries={queries}
         onQueriesChange={onChangeQueries}
+        onDuplicateQuery={onDuplicateQuery}
         condition={condition}
         onSetCondition={onSetCondition}
       />

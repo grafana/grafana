@@ -22,6 +22,7 @@ const initialState: State = {
   queries: [],
 };
 
+export const duplicateQuery = createAction<AlertQuery>('duplicateQuery');
 export const addNewDataQuery = createAction('addNewDataQuery');
 export const setDataQueries = createAction<AlertQuery[]>('setDataQueries');
 
@@ -35,6 +36,9 @@ export const updateExpressionType = createAction<{ refId: string; type: Expressi
 export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
   // data queries actions
   builder
+    .addCase(duplicateQuery, (state, { payload }) => {
+      state.queries = addQuery(state.queries, payload);
+    })
     .addCase(addNewDataQuery, (state) => {
       const datasource = getDefaultOrFirstCompatibleDataSource();
       if (!datasource) {
