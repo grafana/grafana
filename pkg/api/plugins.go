@@ -555,7 +555,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 		}
 	}
 
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
+	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies, []string{hs.Cfg.LoginCookieName})
 	proxyutil.PrepareProxyRequest(req)
 
 	body, err := ioutil.ReadAll(req.Body)
