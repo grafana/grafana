@@ -102,7 +102,7 @@ func (nps *NotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgI
 		OrgID:                     orgID,
 	}
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = nps.amStore.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, nps.amStore, &cmd)
 		if err != nil {
 			return err
 		}
@@ -149,7 +149,7 @@ func (nps *NotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID
 		OrgID:                     orgID,
 	}
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err := nps.amStore.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err := PersistConfig(ctx, nps.amStore, &cmd)
 		if err != nil {
 			return err
 		}

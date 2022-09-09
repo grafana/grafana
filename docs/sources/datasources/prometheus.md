@@ -168,7 +168,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -190,7 +190,7 @@ For details of what _metric names_, _label names_ and _label values_ are please 
 
 > Support for `$__range`, `$__range_s` and `$__range_ms` only available from Grafana v5.3
 
-You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../variables/variable-types/global-variables/" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
+You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. See [Global built-in variables]({{< relref "../dashboards/variables/add-template-variables/#global-variables" >}}) for more information. They are convenient to use in conjunction with the `query_result` function when you need to filter variable queries since the `label_values` function doesn't support queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
 
@@ -235,7 +235,7 @@ options are enabled, Grafana converts the labels from plain text to a regex comp
 
 ### Ad hoc filters variable
 
-Prometheus supports the special [ad hoc filters]({{< relref "../variables/variable-types/add-ad-hoc-filters/" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
+Prometheus supports the special [ad hoc filters]({{< relref "../dashboards/variables/add-template-variables/#add-ad-hoc-filters" >}}) variable type. It allows you to specify any number of label/value filters on the fly. These filters are automatically
 applied to all your Prometheus queries.
 
 ## Annotations
