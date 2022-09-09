@@ -17,7 +17,7 @@ import (
 )
 
 // for stubbing in tests
-//nolint: gocritic
+// nolint: gocritic
 var newImageUploaderProvider = func() (imguploader.ImageUploader, error) {
 	return imguploader.NewImageUploader()
 }
