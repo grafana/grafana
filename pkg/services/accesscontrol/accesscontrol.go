@@ -161,6 +161,12 @@ var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
 }
 
+// ReqHasRole generates a fallback to check whether the user has a role
+// Note that while ReqOrgAdmin returns false for a Grafana Admin / Viewer, ReqHasRole(org.RoleAdmin) will return true
+func ReqHasRole(role org.RoleType) func(c *models.ReqContext) bool {
+	return func(c *models.ReqContext) bool { return c.HasRole(role) }
+}
+
 func BuildPermissionsMap(permissions []Permission) map[string]bool {
 	permissionsMap := make(map[string]bool)
 	for _, p := range permissions {
