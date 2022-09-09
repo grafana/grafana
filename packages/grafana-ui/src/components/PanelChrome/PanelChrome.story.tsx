@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import { merge } from 'lodash';
-import React, { CSSProperties, useState } from 'react';
+import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -22,6 +22,16 @@ const meta: ComponentMeta<typeof PanelChrome> = {
   },
 };
 
+function getContentStyle(theme: GrafanaTheme2): CSSProperties {
+  return {
+    background: theme.colors.background.secondary,
+    color: theme.colors.text.primary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+}
+
 function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: GrafanaTheme2) {
   const props: PanelChromeProps = {
     width: 400,
@@ -32,12 +42,7 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: 
 
   merge(props, overrides);
 
-  const contentStyle: CSSProperties = {
-    background: theme.colors.background.secondary,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
+  const contentStyle = getContentStyle(theme);
 
   return (
     <PanelChrome {...props}>
@@ -111,13 +116,7 @@ export const Examples = () => {
 
 export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => {
   const theme = useTheme2();
-
-  const contentStyle: CSSProperties = {
-    background: theme.colors.background.secondary,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
+  const contentStyle = getContentStyle(theme);
 
   return (
     <PanelChrome {...args}>
