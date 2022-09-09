@@ -351,6 +351,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onClick={this.onBack}
         variant="primary"
         title="Apply changes and go back to dashboard"
+        data-testid={selectors.components.PanelEditor.applyButton}
         key="apply"
         size={size}
       >
