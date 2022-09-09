@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -117,6 +118,14 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 			hs.log.Warn("failed to unpack JSONData in datasource instance settings", "err", err)
 		}
 	}
+
+	list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
+	if list != nil {
+		for _, name := range list.Items {
+			req.Header.Del(name)
+		}
+	}
+
 	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
 	proxyutil.PrepareProxyRequest(req)
 
