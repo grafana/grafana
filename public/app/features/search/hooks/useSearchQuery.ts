@@ -32,6 +32,29 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     updateLocation({ query });
   };
 
+  const onCloseSearch = () => {
+    locationService.partial(
+      {
+        search: null,
+        folder: null,
+        ...defaultQueryParams,
+      },
+      true
+    );
+  };
+
+  const onSelectSearchItem = () => {
+    dispatch(queryChange(''));
+    locationService.partial(
+      {
+        search: null,
+        folder: null,
+        ...defaultQueryParams,
+      },
+      true
+    );
+  };
+
   const onTagFilterChange = (tags: string[]) => {
     dispatch(setTags(tags));
     updateLocation({ tag: tags });
@@ -89,5 +112,7 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     onSortChange,
     onLayoutChange,
     onDatasourceChange,
+    onCloseSearch,
+    onSelectSearchItem,
   };
 };

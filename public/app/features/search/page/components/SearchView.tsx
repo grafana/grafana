@@ -35,7 +35,6 @@ export type SearchViewProps = {
   showManage: boolean;
   folderDTO?: FolderDTO;
   hidePseudoFolders?: boolean; // Recent + starred
-  onQueryTextChange: (newQueryText: string) => void;
   includePanels: boolean;
   setIncludePanels: (v: boolean) => void;
   keyboardEvents: Observable<React.KeyboardEvent>;
@@ -44,7 +43,6 @@ export type SearchViewProps = {
 export const SearchView = ({
   showManage,
   folderDTO,
-  onQueryTextChange,
   hidePseudoFolders,
   includePanels,
   setIncludePanels,
@@ -54,6 +52,7 @@ export const SearchView = ({
 
   const {
     query,
+    onQueryChange,
     onTagFilterChange,
     onStarredFilterChange,
     onTagAdd,
@@ -61,6 +60,7 @@ export const SearchView = ({
     onSortChange,
     onLayoutChange,
     onClearStarred,
+    onSelectSearchItem,
   } = useSearchQuery({});
 
   const [searchSelection, setSearchSelection] = useState(newSearchSelection());
@@ -129,6 +129,7 @@ export const SearchView = ({
       tagCount: query.tag?.length,
       includePanels,
     });
+    onSelectSearchItem();
   };
 
   const doSearch = useMemo(
@@ -188,7 +189,7 @@ export const SearchView = ({
     clearSelection();
     setListKey(Date.now());
     // trigger again the search to the backend
-    onQueryTextChange(query.query);
+    onQueryChange(query.query);
   };
 
   const getStarredItems = useCallback(
@@ -214,7 +215,7 @@ export const SearchView = ({
             variant="secondary"
             onClick={() => {
               if (query.query) {
-                onQueryTextChange('');
+                onQueryChange('');
               }
               if (query.tag?.length) {
                 onTagFilterChange([]);
@@ -315,7 +316,7 @@ export const SearchView = ({
           onLayoutChange={(v) => {
             if (v === SearchLayout.Folders) {
               if (query.query) {
-                onQueryTextChange(''); // parent will clear the sort
+                onQueryChange(''); // parent will clear the sort
               }
               if (query.starred) {
                 onClearStarred();

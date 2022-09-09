@@ -32,7 +32,6 @@ jest.mock('@grafana/runtime', () => {
 const setup = (propOverrides?: Partial<SearchViewProps>, storeOverrides?: Partial<StoreState>) => {
   const props: SearchViewProps = {
     showManage: false,
-    onQueryTextChange: jest.fn(),
     includePanels: false,
     setIncludePanels: jest.fn(),
     keyboardEvents: {} as Observable<React.KeyboardEvent>,

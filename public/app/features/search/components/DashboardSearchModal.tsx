@@ -19,13 +19,12 @@ const ANIMATION_DURATION = 200;
 
 export interface Props {
   isOpen: boolean;
-  onCloseSearch: () => void;
 }
 
-export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
+export function DashboardSearchModal({ isOpen }: Props) {
   const styles = useStyles2(getStyles);
   const animStyles = useStyles2((theme) => getAnimStyles(theme, ANIMATION_DURATION));
-  const { query, onQueryChange } = useSearchQuery({});
+  const { query, onQueryChange, onCloseSearch } = useSearchQuery({});
   const ref = useRef<HTMLDivElement>(null);
   const [animationComplete, setAnimationComplete] = useState(false);
 
@@ -57,7 +56,7 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
         classNames={animStyles.overlay}
       >
         <div ref={ref} className={styles.overlay} {...overlayProps} {...dialogProps}>
-          <FocusScope contain autoFocus restoreFocus>
+          <FocusScope contain autoFocus>
             <div className={styles.searchField}>
               <div>
                 <input
@@ -80,9 +79,6 @@ export function DashboardSearchModal({ isOpen, onCloseSearch }: Props) {
             {animationComplete && (
               <div className={styles.search}>
                 <SearchView
-                  onQueryTextChange={(newQueryText) => {
-                    onQueryChange(newQueryText);
-                  }}
                   showManage={false}
                   includePanels={includePanels!}
                   setIncludePanels={setIncludePanels}
@@ -180,7 +176,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${theme.components.panel.borderColor};
       display: flex;
       flex-direction: column;
-      max-width: 1400px;
       margin: 0 auto;
       padding: ${theme.spacing(1)};
       position: fixed;
