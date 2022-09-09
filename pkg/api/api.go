@@ -21,14 +21,11 @@
 //
 // SecurityDefinitions:
 // basic:
-//
-//	type: basic
-//
+//  type: basic
 // api_key:
-//
-//	type: apiKey
-//	name: Authorization
-//	in: header
+//  type: apiKey
+//  name: Authorization
+//  in: header
 //
 // swagger:meta
 package api
