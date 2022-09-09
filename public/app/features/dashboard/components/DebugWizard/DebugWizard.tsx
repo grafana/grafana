@@ -58,15 +58,15 @@ const options: Array<SelectableValue<ShowMessge>> = [
     value: ShowMessge.GithubComment,
   },
   {
-    label: 'Panel debug snapshot',
-    description: 'Dashboard to help debug any visualization issues',
+    label: 'Panel support snapshot',
+    description: 'Dashboard JSON used to help troubleshoot visualization issues',
     value: ShowMessge.PanelSnapshot,
   },
 ];
 
 export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   const styles = useStyles2(getStyles);
-  const [currentTab, setCurrentTab] = useState(InspectTab.Debug);
+  const [currentTab, setCurrentTab] = useState(InspectTab.Support);
   const [showMessage, setShowMessge] = useState(ShowMessge.GithubComment);
   const [snapshotText, setDashboardText] = useState('...');
   const [rand, setRand] = useState<Randomize>({});
@@ -114,8 +114,8 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   };
 
   const tabs = [
-    { label: 'Snapshot', value: InspectTab.Debug },
-    { label: 'Code', value: InspectTab.JSON },
+    { label: 'Support', value: InspectTab.Support },
+    { label: 'Data', value: InspectTab.JSON },
   ];
   let activeTab = currentTab;
   if (!tabs.find((item) => item.value === currentTab)) {
@@ -129,7 +129,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
 
   return (
     <Drawer
-      title={`Debug: ${panelTitle}`}
+      title={`Panel: ${panelTitle}`}
       width="90%"
       onClose={onClose}
       expandable
@@ -149,7 +149,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
                 key={`${t.value}-${index}`}
                 label={t.label}
                 active={t.value === activeTab}
-                onChangeTab={() => setCurrentTab(t.value || InspectTab.Debug)}
+                onChangeTab={() => setCurrentTab(t.value || InspectTab.Support)}
               />
             );
           })}
@@ -226,15 +226,15 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
           )}
 
           <Field
-            label="Debug snapshot"
-            description="A panel debug snapshot creates a dashboard that can reproduce visualization issues while disconnected from the original data sources."
+            label="Support snapshot"
+            description="This snapshot contains the query response data and raw panel settings.  Including this snapshot in support requests can help identify issues faster."
           >
             <>
               <HorizontalGroup>
                 <Button icon="download-alt" onClick={doDownloadDashboard}>
-                  Download ({snapshotSize})
+                  Dashboard ({snapshotSize})
                 </Button>
-                <Button icon="github" onClick={doCopyMarkdown}>
+                <Button icon="github" onClick={doCopyMarkdown} title="Paste this into a github issue">
                   Copy for github
                 </Button>
                 <Button onClick={doImportDashboard} variant="secondary">

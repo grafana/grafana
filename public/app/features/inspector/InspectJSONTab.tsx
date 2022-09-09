@@ -136,7 +136,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
   onShowSupportWizard = () => {
     const queryParms = locationService.getSearch();
-    queryParms.set('inspectTab', InspectTab.Debug.toString());
+    queryParms.set('inspectTab', InspectTab.Support.toString());
     locationService.push('?' + queryParms.toString());
   };
 
@@ -170,7 +170,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           )}
           {show === ShowContent.DataFrames && (
             <Button className={styles.toolbarItem} onClick={this.onShowSupportWizard}>
-              Debug
+              Support
             </Button>
           )}
         </div>
