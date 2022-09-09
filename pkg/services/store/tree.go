@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -67,9 +68,9 @@ func (t *nestedTree) getRoot(orgId int64, path string) (storageRuntime, string) 
 	rootKey, path := splitFirstSegment(path)
 	root, ok := t.lookup[orgId][rootKey]
 	if ok && root != nil {
-		if root.Meta().Config.Prefix == RootContent {
+		if root.Meta().Config.Prefix == RootContent && strings.Contains(path, filestorage.Delimiter) {
 			mountedKey, nestedPath := splitFirstSegment(path)
-			nestedLookupKey := rootKey + "/" + mountedKey
+			nestedLookupKey := rootKey + filestorage.Delimiter + mountedKey
 			nestedRoot, nestedOk := t.lookup[orgId][nestedLookupKey]
 
 			if nestedOk && nestedRoot != nil {
@@ -88,9 +89,23 @@ func (t *nestedTree) getRoot(orgId int64, path string) (storageRuntime, string) 
 	}
 
 	if orgId != ac.GlobalOrgID {
-		//
 		globalRoot, ok := t.lookup[ac.GlobalOrgID][rootKey]
 		if ok && globalRoot != nil {
+			if globalRoot.Meta().Config.Prefix == RootContent && strings.Contains(path, filestorage.Delimiter) {
+				mountedKey, nestedPath := splitFirstSegment(path)
+				nestedLookupKey := rootKey + filestorage.Delimiter + mountedKey
+				nestedRoot, nestedOk := t.lookup[orgId][nestedLookupKey]
+
+				if nestedOk && nestedRoot != nil {
+					return nestedRoot, filestorage.Delimiter + nestedPath
+				}
+
+				globalNestedRoot, globalOk := t.lookup[ac.GlobalOrgID][nestedLookupKey]
+				if globalOk && globalNestedRoot != nil {
+					return globalNestedRoot, filestorage.Delimiter + nestedPath
+				}
+			}
+
 			return globalRoot, filestorage.Delimiter + path
 		}
 	}

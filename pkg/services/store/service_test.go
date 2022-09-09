@@ -5,10 +5,12 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -101,7 +103,7 @@ func setupUploadStore(t *testing.T, authService storageAuthService) (StorageServ
 	t.Helper()
 	storageName := "resources"
 	mockStorage := &filestorage.MockFileStorage{}
-	sqlStorage := newSQLStorage(RootStorageMeta{}, storageName, "Testing upload", "dummy descr", &StorageSQLConfig{}, sqlstore.InitTestDB(t), 1)
+	sqlStorage := newSQLStorage(RootStorageMeta{}, storageName, "Testing upload", "dummy descr", &StorageSQLConfig{}, sqlstore.InitTestDB(t), 1, false)
 	sqlStorage.store = mockStorage
 
 	if authService == nil {
@@ -248,4 +250,111 @@ func TestShouldNotUploadJpgDisguisedAsSvg(t *testing.T) {
 		Path:       storageName + fileName,
 	})
 	require.ErrorIs(t, err, ErrValidationFailed)
+}
+
+func TestSetupWithNonUniqueStoragePrefixes(t *testing.T) {
+	prefix := "resources"
+	sqlStorage := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, sqlstore.InitTestDB(t), 1, false)
+	sqlStorage2 := newSQLStorage(RootStorageMeta{}, prefix, "Testing upload", "dummy descr", &StorageSQLConfig{}, sqlstore.InitTestDB(t), 1, false)
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("The setup should have panicked")
+		}
+	}()
+
+	newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{sqlStorage, sqlStorage2}, func(orgId int64) []storageRuntime {
+		return make([]storageRuntime, 0)
+	}, allowAllAuthService, cfg)
+}
+
+func TestContentRootWithNestedStorage(t *testing.T) {
+	globalOrgID := int64(accesscontrol.GlobalOrgID)
+	db := sqlstore.InitTestDB(t)
+	globalUser := &user.SignedInUser{OrgID: 0}
+	orgedUser := &user.SignedInUser{OrgID: 1}
+
+	t.Helper()
+	mockContentFSApi := &filestorage.MockFileStorage{}
+	contentStorage := newSQLStorage(RootStorageMeta{}, RootContent, "Content root", "dummy descr", &StorageSQLConfig{}, db, globalOrgID, false)
+	contentStorage.store = mockContentFSApi
+
+	nestedRoot := "nested"
+	mockNestedFSApi := &filestorage.MockFileStorage{}
+	nestedStorage := newSQLStorage(RootStorageMeta{}, nestedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, db, globalOrgID, true)
+	nestedStorage.store = mockNestedFSApi
+
+	nestedOrgedRoot := "nestedOrged"
+	mockNestedOrgedFSApi := &filestorage.MockFileStorage{}
+	nestedOrgedStorage := newSQLStorage(RootStorageMeta{}, nestedOrgedRoot, "Nested root", "dummy descr", &StorageSQLConfig{}, db, globalOrgID, true)
+	nestedOrgedStorage.store = mockNestedOrgedFSApi
+
+	store := newStandardStorageService(sqlstore.InitTestDB(t), []storageRuntime{contentStorage, nestedStorage}, func(orgId int64) []storageRuntime {
+		return []storageRuntime{nestedOrgedStorage, contentStorage}
+	}, allowAllAuthService, cfg)
+	store.cfg = &GlobalStorageConfig{
+		AllowUnsanitizedSvgUpload: true,
+	}
+	store.quotaService = quotatest.NewQuotaServiceFake()
+	fileName := "file.jpg"
+
+	tests := []struct {
+		user         *user.SignedInUser
+		name         string
+		mockNestedFS *filestorage.MockFileStorage
+		nestedRoot   string
+	}{
+		{
+			user:         globalUser,
+			name:         "global user, global nested storage",
+			mockNestedFS: mockNestedFSApi,
+			nestedRoot:   nestedRoot,
+		},
+		{
+			user:         orgedUser,
+			name:         "non-global user, global nested storage",
+			mockNestedFS: mockNestedFSApi,
+			nestedRoot:   nestedRoot,
+		},
+		{
+			user:         orgedUser,
+			name:         "non-global user, non-global nested storage",
+			mockNestedFS: mockNestedOrgedFSApi,
+			nestedRoot:   nestedOrgedRoot,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name+": Uploading a file under /content/nested/.. should delegate to nested storage", func(t *testing.T) {
+			test.mockNestedFS.On("Get", mock.Anything, filestorage.Delimiter+fileName, &filestorage.GetFileOptions{WithContents: false}).Return(nil, false, nil)
+			test.mockNestedFS.On("Upsert", mock.Anything, &filestorage.UpsertFileCommand{
+				Path:     filestorage.Delimiter + fileName,
+				MimeType: "image/jpeg",
+				Contents: jpgBytes,
+			}).Return(nil)
+			mockContentFSApi.AssertNotCalled(t, "Get")
+			mockContentFSApi.AssertNotCalled(t, "Upsert")
+
+			err := store.Upload(context.Background(), test.user, &UploadRequest{
+				EntityType: EntityTypeImage,
+				Contents:   jpgBytes,
+				Path:       strings.Join([]string{RootContent, test.nestedRoot, fileName}, filestorage.Delimiter),
+			})
+			require.NoError(t, err)
+		})
+
+		t.Run(test.name+": Creating a /content/nested folder should fail", func(t *testing.T) {
+			mockContentFSApi.AssertNotCalled(t, "CreateFolder")
+
+			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: RootContent + "/" + test.nestedRoot})
+			require.ErrorIs(t, err, ErrValidationFailed)
+		})
+
+		t.Run(test.name+": Deleting a /content/nested folder should fail", func(t *testing.T) {
+			mockContentFSApi.AssertNotCalled(t, "DeleteFolder")
+
+			err := store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: RootContent + "/" + test.nestedRoot})
+			require.ErrorIs(t, err, ErrValidationFailed)
+		})
+	}
 }

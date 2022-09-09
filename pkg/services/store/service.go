@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -168,19 +169,19 @@ func ProvideService(
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootContent, "Content", "Content root", &StorageSQLConfig{}, sql, orgId))
+			}, RootContent, "Content", "Content root", &StorageSQLConfig{}, sql, orgId, false))
 
 		// Custom upload files
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootResources, "Resources", "Upload custom resource files", &StorageSQLConfig{}, sql, orgId))
+			}, RootResources, "Resources", "Upload custom resource files", &StorageSQLConfig{}, sql, orgId, false))
 
 		// System settings
 		storages = append(storages,
 			newSQLStorage(RootStorageMeta{
 				Builtin: true,
-			}, RootSystem, "System", "Grafana system storage", &StorageSQLConfig{}, sql, orgId))
+			}, RootSystem, "System", "Grafana system storage", &StorageSQLConfig{}, sql, orgId, false))
 
 		return storages
 	}
@@ -424,6 +425,10 @@ func (s *standardStorageService) DeleteFolder(ctx context.Context, user *user.Si
 		return ErrUnsupportedStorage
 	}
 
+	if err := s.validateFolderNameDoesNotConflictWithNestedStorages(root, storagePath, user.OrgID); err != nil {
+		return err
+	}
+
 	if storagePath == "" {
 		storagePath = filestorage.Delimiter
 	}
@@ -449,10 +454,36 @@ func (s *standardStorageService) CreateFolder(ctx context.Context, user *user.Si
 		return ErrUnsupportedStorage
 	}
 
+	if err := s.validateFolderNameDoesNotConflictWithNestedStorages(root, storagePath, user.OrgID); err != nil {
+		return err
+	}
+
 	err := root.Store().CreateFolder(ctx, storagePath)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *standardStorageService) validateFolderNameDoesNotConflictWithNestedStorages(root storageRuntime, storagePath string, orgID int64) error {
+	if root.Meta().Config.Prefix != RootContent {
+		// 'content' root is the only storage that supports "symlinks"
+		return nil
+	}
+
+	storagePath = strings.TrimPrefix(storagePath, filestorage.Delimiter)
+	if strings.Contains(storagePath, filestorage.Delimiter) {
+		// creating/deleting folders within nested storages is allowed
+		return nil
+	}
+
+	nestedStorages := filterStoragesUnderContentRoot(s.tree.getStorages(orgID))
+	for _, s := range nestedStorages {
+		if s.Meta().Config.Prefix == storagePath {
+			return ErrValidationFailed
+		}
+	}
+
 	return nil
 }
 
