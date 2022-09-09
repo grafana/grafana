@@ -45,7 +45,9 @@ func ProvideMigrateToPluginService(
 }
 
 func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
-	if err := secretskvs.EvaluateRemoteSecretsPlugin(ctx, s.manager, s.cfg); err == nil {
+	err := secretskvs.EvaluateRemoteSecretsPlugin(ctx, s.manager, s.cfg)
+	hasStarted := secretskvs.HasPluginStarted(ctx, s.manager)
+	if err == nil && hasStarted {
 		logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to get the fallback store since in this scenario the secrets store would be the plugin.
 		tmpStore, err := secretskvs.GetUnwrappedStoreFromCache(s.secretsStore)
