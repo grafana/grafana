@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { StoreState } from 'app/types';
 
 import { defaultQuery } from '../../reducers/searchQueryReducer';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
@@ -28,15 +29,23 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-jest.mock('../../reducers/searchQueryReducer', () => {
-  const originalModule = jest.requireActual('../../reducers/searchQueryReducer');
-  return {
-    ...originalModule,
-    defaultQuery: {
-      ...originalModule.defaultQuery,
-    },
+const setup = (propOverrides?: Partial<SearchViewProps>, storeOverrides?: Partial<StoreState>) => {
+  const props: SearchViewProps = {
+    showManage: false,
+    includePanels: false,
+    setIncludePanels: jest.fn(),
+    keyboardEvents: {} as Observable<React.KeyboardEvent>,
+    ...propOverrides,
   };
-});
+
+  const mockStore = configureMockStore();
+  const store = mockStore({ searchQuery: defaultQuery, ...storeOverrides });
+  render(
+    <Provider store={store}>
+      <SearchView {...props} />
+    </Provider>
+  );
+};
 
 describe('SearchView', () => {
   const folderData: DataFrame = {
@@ -60,15 +69,6 @@ describe('SearchView', () => {
     view: new DataFrameView<DashboardQueryResult>(folderData),
   };
 
-  const baseProps: SearchViewProps = {
-    showManage: false,
-    queryText: '',
-    onQueryTextChange: jest.fn(),
-    includePanels: false,
-    setIncludePanels: jest.fn(),
-    keyboardEvents: {} as Observable<React.KeyboardEvent>,
-  };
-
   beforeAll(() => {
     jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
   });
@@ -79,26 +79,18 @@ describe('SearchView', () => {
   });
 
   it('does not show checkboxes or manage actions if showManage is false', async () => {
-    render(<SearchView {...baseProps} />);
+    setup();
     await waitFor(() => expect(screen.queryAllByRole('checkbox')).toHaveLength(0));
     expect(screen.queryByTestId('manage-actions')).not.toBeInTheDocument();
   });
 
   it('shows checkboxes if showManage is true', async () => {
-    render(<SearchView {...baseProps} showManage={true} />);
+    setup({ showManage: true });
     await waitFor(() => expect(screen.queryAllByRole('checkbox')).toHaveLength(2));
   });
 
   it('shows the manage actions if show manage is true and the user clicked a checkbox', async () => {
-    //Mock store
-    const mockStore = configureMockStore();
-    const store = mockStore({ dashboard: { panels: [] } });
-
-    render(
-      <Provider store={store}>
-        <SearchView {...baseProps} showManage={true} />
-      </Provider>
-    );
+    setup({ showManage: true });
     await waitFor(() => userEvent.click(screen.getAllByRole('checkbox')[0]));
 
     expect(screen.queryByTestId('manage-actions')).toBeInTheDocument();
@@ -110,7 +102,12 @@ describe('SearchView', () => {
       totalRows: 0,
       view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
     });
-    render(<SearchView {...baseProps} queryText={'asdfasdfasdf'} />);
+    setup(undefined, {
+      searchQuery: {
+        ...defaultQuery,
+        query: 'asdfasdfasdf',
+      },
+    });
     await waitFor(() => expect(screen.queryByText('No results found for your query.')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Clear search and filters' })).toBeInTheDocument();
   });
@@ -119,14 +116,14 @@ describe('SearchView', () => {
     it('should be enabled when layout is list', async () => {
       config.featureToggles.panelTitleSearch = true;
       defaultQuery.layout = SearchLayout.List;
-      render(<SearchView {...baseProps} />);
+      setup();
 
       await waitFor(() => expect(screen.getByLabelText(/include panels/i)).toBeInTheDocument());
       expect(screen.getByTestId('include-panels')).toBeEnabled();
     });
     it('should be disabled when layout is folder', async () => {
       config.featureToggles.panelTitleSearch = true;
-      render(<SearchView {...baseProps} />);
+      setup();
 
       await waitFor(() => expect(screen.getByLabelText(/include panels/i)).toBeInTheDocument());
       expect(screen.getByTestId('include-panels')).toBeDisabled();

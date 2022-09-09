@@ -47,13 +47,10 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanTreeOffset.test.js:174536706": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:2286101708": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:989353473": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineHeaderRow.test.js:2106409544": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:1423129438": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:4192868446": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:551014442": [
@@ -1989,10 +1986,6 @@ exports[`better eslint`] = {
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineRow.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4900,9 +4893,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
-    "public/app/features/plugins/admin/pages/PluginDetails.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/plugins/admin/pages/PluginDetails.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -5191,8 +5181,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/search/hooks/useSearchQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/search/page/components/MoveToFolderModal.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5219,6 +5208,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"]
+    ],
+    "public/app/features/search/reducers/searchQueryReducer.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/search/service/bluge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -6906,6 +6898,11 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/jaeger/util.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
     "public/app/plugins/datasource/loki/components/LokiLabelBrowser.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -6934,11 +6931,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/getDerivedFields.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/loki/language_provider.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/plugins/datasource/loki/live_streams.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

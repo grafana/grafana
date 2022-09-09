@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/build/config"
@@ -12,25 +10,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func GenerateVersions(c *cli.Context) error {
+func GenerateMetadata(c *cli.Context) (config.Metadata, error) {
 	var metadata config.Metadata
 	version := ""
-	if c.NArg() == 1 {
-		version = strings.TrimPrefix(c.Args().Get(0), "v")
-	} else {
-		buildID, ok := os.LookupEnv("DRONE_BUILD_NUMBER")
-		if !ok {
-			return fmt.Errorf("unable to get DRONE_BUILD_NUMBER environmental variable")
-		}
-		var err error
-		version, err = config.GetGrafanaVersion(buildID, ".")
-		if err != nil {
-			return err
-		}
-	}
+
 	event, err := droneutil.GetDroneEventFromEnv()
 	if err != nil {
-		return err
+		return config.Metadata{}, err
 	}
 
 	var releaseMode config.ReleaseMode
@@ -40,13 +26,13 @@ func GenerateVersions(c *cli.Context) error {
 	case config.Push:
 		mode, err := config.CheckDroneTargetBranch()
 		if err != nil {
-			return err
+			return config.Metadata{}, err
 		}
 		releaseMode = config.ReleaseMode{Mode: mode}
 	case config.Custom:
 		mode, err := config.CheckDroneTargetBranch()
 		if err != nil {
-			return err
+			return config.Metadata{}, err
 		}
 		// if there is a custom event targeting the main branch, that's an enterprise downstream build
 		if mode == config.MainBranch {
@@ -55,16 +41,28 @@ func GenerateVersions(c *cli.Context) error {
 			releaseMode = config.ReleaseMode{Mode: mode}
 		}
 	case config.Tag, config.Promote:
+		tag, ok := os.LookupEnv("DRONE_TAG")
+		if !ok || tag == "" {
+			return config.Metadata{}, err
+		}
+		version = strings.TrimPrefix(tag, "v")
 		mode, err := config.CheckSemverSuffix()
 		if err != nil {
-			return err
+			return config.Metadata{}, err
 		}
 		releaseMode = mode
 	}
 
+	if version == "" {
+		version, err = generateVersionFromBuildID()
+		if err != nil {
+			return config.Metadata{}, err
+		}
+	}
+
 	currentCommit, err := config.GetDroneCommit()
 	if err != nil {
-		return err
+		return config.Metadata{}, err
 	}
 	metadata = config.Metadata{
 		GrafanaVersion: version,
@@ -75,25 +73,18 @@ func GenerateVersions(c *cli.Context) error {
 
 	fmt.Printf("building Grafana version: %s, release mode: %+v", metadata.GrafanaVersion, metadata.ReleaseMode)
 
-	jsonMetadata, err := json.Marshal(&metadata)
+	return metadata, nil
+}
+
+func generateVersionFromBuildID() (string, error) {
+	buildID, ok := os.LookupEnv("DRONE_BUILD_NUMBER")
+	if !ok {
+		return "", fmt.Errorf("unable to get DRONE_BUILD_NUMBER environmental variable")
+	}
+	var err error
+	version, err := config.GetGrafanaVersion(buildID, ".")
 	if err != nil {
-		return fmt.Errorf("error marshalling metadata, %w", err)
+		return "", err
 	}
-
-	const distDir = "dist"
-	if _, err := os.Stat(distDir); os.IsNotExist(err) {
-		if err := os.RemoveAll(distDir); err != nil {
-			return err
-		}
-		if err := os.Mkdir(distDir, 0750); err != nil {
-			return err
-		}
-
-		// nolint:gosec
-		if err := os.WriteFile(filepath.Join(distDir, "version.json"), jsonMetadata, 0664); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return version, nil
 }
