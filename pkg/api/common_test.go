@@ -381,7 +381,7 @@ func setupHTTPServerWithCfgDb(
 		var err error
 		acService, err = acimpl.ProvideService(cfg, database.ProvideService(db), routeRegister)
 		require.NoError(t, err)
-		ac = acimpl.ProvideAccessControl(cfg, acService)
+		ac = acimpl.ProvideAccessControl(cfg)
 	}
 
 	teamPermissionService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, routeRegister, db, ac, license, acService)
