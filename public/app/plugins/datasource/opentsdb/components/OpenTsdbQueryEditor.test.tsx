@@ -7,10 +7,12 @@ import { OpenTsdbQuery } from '../types';
 import { OpenTsdbQueryEditor, OpenTsdbQueryEditorProps, testIds } from './OpenTsdbQueryEditor';
 
 const setup = (propOverrides?: Object) => {
-  const getAggregators = jest.fn();
+  const getAggregators = jest.fn().mockResolvedValue([]);
+  const getFilterTypes = jest.fn().mockResolvedValue([]);
 
   const datasourceMock: unknown = {
-    getAggregators: getAggregators,
+    getAggregators,
+    getFilterTypes,
     tsdbVersion: 1,
   };
 
