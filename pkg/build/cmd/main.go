@@ -11,7 +11,6 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Before = GenerateVersions
 	app.Commands = cli.Commands{
 		{
 			Name:      "build-backend",

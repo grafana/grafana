@@ -130,6 +130,27 @@ role_attribute_path = contains(groups[*], '@github/example-group') && 'Editor' |
 
 Note: If a match is found in other fields, teams will be ignored.
 
+#### Map server administrator privileges
+
+> Available in Grafana v9.2 and later versions.
+
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
+This is useful if you want to grant server administrator privileges to a subset of users.  
+Grafana also assigns the user the `Admin` role of the default organization.
+
+The setting `allow_assign_grafana_admin` under `[auth.github]` must be set to `true` for this to work.  
+If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
+
+```ini
+allow_assign_grafana_admin = true
+```
+
+Example:
+
+```ini
+role_attribute_path = [login==octocat] && 'GrafanaAdmin' || 'Viewer'
+```
+
 ### Team Sync (Enterprise only)
 
 > Only available in Grafana Enterprise v6.3+

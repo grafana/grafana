@@ -271,6 +271,7 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 	dto.User = &user.SignedInUser{
 		UserID:      0,
 		OrgRole:     org.RoleAdmin,
+		OrgID:       dto.OrgId,
 		Permissions: map[int64]map[string][]string{dto.OrgId: provisionerPermissions},
 	}
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, false)
