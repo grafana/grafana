@@ -324,7 +324,7 @@ func (st *Manager) flushState(ctx context.Context) {
 
 	totalStates, errorsCnt := 0, 0
 	stateBatchSize := 512 // 4KiB, 8 bytes per pointer
-	var stateSlice []*State = make([]*State, 0, stateBatchSize)
+	var stateSlice = make([]*State, 0, stateBatchSize)
 
 	writeBatch := func() {
 		if len(stateSlice) > 0 {
