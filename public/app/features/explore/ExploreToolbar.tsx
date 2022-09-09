@@ -124,7 +124,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
 
     const onClickResize = () => {
       if (isLargerExploreId) {
-        this.props.evenResizePane(true);
+        this.props.evenResizePane();
       } else {
         this.props.maximizePane(exploreId);
       }

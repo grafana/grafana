@@ -22,7 +22,6 @@ import {
   richHistoryUpdatedAction,
   cleanupPaneAction,
   changeLargerPane,
-  evenResizePane,
 } from './state/main';
 
 const styles = {
@@ -52,7 +51,6 @@ const mapDispatchToProps = {
   richHistoryUpdatedAction,
   cleanupPaneAction,
   changeLargerPane,
-  evenResizePane,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

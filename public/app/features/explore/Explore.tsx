@@ -372,7 +372,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               />
               <ResponseErrorContainer exploreId={exploreId} />
             </PanelContainer>
-            <AutoSizer onResize={this.onResize} disableHeight disableWidth>
+            <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
                   return null;

@@ -157,9 +157,9 @@ export function maximizePane(exploreId?: ExploreId): ThunkResult<void> {
   };
 }
 
-export function evenResizePane(evenResize?: boolean): ThunkResult<void> {
+export function evenResizePane(): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(evenPaneResizeAction({ evenResize }));
+    dispatch(evenPaneResizeAction({ evenResize: true }));
   };
 }
 

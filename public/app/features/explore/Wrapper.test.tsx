@@ -33,18 +33,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
-/*jest.mock('react-split-pane', () => {
-  return {
-    __esModule: true,
-    default(props: any) {
-      return <> 
-      <div>{props.children[0]}</div>
-      <div>{props.children[1]}</div>
-      </>;
-    },
-  };
-}); */
-
 describe('Wrapper', () => {
   afterEach(() => {
     tearDown();
