@@ -669,7 +669,6 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 // this is to avoid reporting errors in case config was changes but there are browser
 // sessions still open with older config
 func (hs *HTTPServer) setupFrontendLogHandlers() {
-
 	if !(hs.Cfg.GrafanaJavascriptAgent.Enabled || hs.Cfg.Sentry.Enabled) {
 		hs.web.Use(func(ctx *web.Context) {
 			if ctx.Req.Method == http.MethodPost && (ctx.Req.URL.Path == "/log" || ctx.Req.URL.Path == "/log-grafana-javascript-agent") {
