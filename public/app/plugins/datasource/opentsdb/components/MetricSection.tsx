@@ -15,14 +15,14 @@ export interface MetricSectionProps {
 
 export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, aggregators }: MetricSectionProps) {
   const [state, setState] = useState<{
-    metrics?: Array<SelectableValue<any>>;
+    metrics?: Array<SelectableValue<string>>;
     isLoading?: boolean;
   }>({});
 
   // We are matching words split with space
   const splitSeparator = ' ';
-  const customFilterOption = useCallback((option: SelectableValue<any>, searchQuery: string) => {
-    const label = option.value;
+  const customFilterOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
+    const label = option.value ?? '';
 
     const searchWords = searchQuery.split(splitSeparator);
     return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);

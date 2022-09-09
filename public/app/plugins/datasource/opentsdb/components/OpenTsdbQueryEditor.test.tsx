@@ -7,7 +7,10 @@ import { OpenTsdbQuery } from '../types';
 import { OpenTsdbQueryEditor, OpenTsdbQueryEditorProps, testIds } from './OpenTsdbQueryEditor';
 
 const setup = (propOverrides?: Object) => {
+  const getAggregators = jest.fn();
+
   const datasourceMock: unknown = {
+    getAggregators: getAggregators,
     tsdbVersion: 1,
   };
 
