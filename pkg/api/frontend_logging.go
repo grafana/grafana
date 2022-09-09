@@ -5,21 +5,21 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 var frontendLogger = log.New("frontend")
 
-type frontendLogMessageHandler func(c *models.ReqContext) response.Response
+type frontendLogMessageHandler func(c *web.Context)
 
 func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
-	return func(c *models.ReqContext) response.Response {
+	return func(c *web.Context) {
 		event := frontendlogging.FrontendSentryEvent{}
 		if err := web.Bind(c.Req, &event); err != nil {
-			return response.Error(http.StatusBadRequest, "bad request data", err)
+			c.Resp.WriteHeader(http.StatusBadRequest)
+			c.Resp.Write([]byte("bad request data"))
+			return
 		}
 
 		var msg = "unknown"
@@ -43,15 +43,18 @@ func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) fronten
 			frontendLogger.Info(msg, ctx...)
 		}
 
-		return response.Success("ok")
+		c.Resp.WriteHeader(http.StatusAccepted)
+		c.Resp.Write([]byte("OK"))
+
 	}
 }
 
 func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
-	return func(c *models.ReqContext) response.Response {
+	return func(c *web.Context) {
 		event := frontendlogging.FrontendGrafanaJavascriptAgentEvent{}
 		if err := web.Bind(c.Req, &event); err != nil {
-			return response.Error(http.StatusBadRequest, "bad request data", err)
+			c.Resp.WriteHeader(http.StatusBadRequest)
+			c.Resp.Write([]byte("bad request data"))
 		}
 
 		// Meta object is standard across event types, adding it globally.
@@ -112,6 +115,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 				frontendLogger.Error(exception.Message(), ctx...)
 			}
 		}
-		return response.Success("ok")
+		c.Resp.WriteHeader(http.StatusAccepted)
+		c.Resp.Write([]byte("OK"))
 	}
 }
