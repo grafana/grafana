@@ -1,10 +1,9 @@
 import { AzureMetricDimension, AzureMonitorQuery } from '../../types';
 
-export function setMetricNamespace(query: AzureMonitorQuery, selection: string | undefined): AzureMonitorQuery {
+export function setCustomNamespace(query: AzureMonitorQuery, selection: string | undefined): AzureMonitorQuery {
   if (query.azureMonitor?.customNamespace === selection) {
     return query;
   }
-
   const customNamespace = selection?.toLowerCase().startsWith('microsoft.storage/storageaccounts/') ? '' : selection;
 
   return {

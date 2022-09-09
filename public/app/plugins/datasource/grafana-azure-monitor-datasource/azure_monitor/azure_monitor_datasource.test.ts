@@ -192,7 +192,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           basePath +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
@@ -257,7 +257,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           basePath +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
@@ -594,7 +594,7 @@ describe('AzureMonitorDatasource', () => {
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
-            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
           expect(path).toBe(expected);
           return Promise.resolve(response);
         });
@@ -660,7 +660,7 @@ describe('AzureMonitorDatasource', () => {
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
-            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
           expect(path).toBe(expected);
           return Promise.resolve(response);
         });
@@ -728,7 +728,7 @@ describe('AzureMonitorDatasource', () => {
           const expected =
             basePath +
             '/providers/microsoft.insights/components/resource1' +
-            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=microsoft.insights%2Fcomponents';
+            '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
           expect(path).toBe(expected);
           return Promise.resolve(response);
         });

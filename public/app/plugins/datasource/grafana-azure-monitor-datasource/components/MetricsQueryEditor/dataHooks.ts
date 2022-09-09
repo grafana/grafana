@@ -8,7 +8,7 @@ import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../
 import { toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
 
-import { setMetricNamespace } from './setQueryValue';
+import { setCustomNamespace } from './setQueryValue';
 
 type SetErrorFn = (source: string, error: AzureMonitorErrorish | undefined) => void;
 
@@ -61,7 +61,7 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
 
       // Do some cleanup of the query state if need be
       if (!metricNamespace && options.length) {
-        onChange(setMetricNamespace(query, options[0].value));
+        onChange(setCustomNamespace(query, options[0].value));
       }
 
       return options;

@@ -81,7 +81,7 @@ export default class UrlBuilder {
     templateSrv: TemplateSrv
   ) {
     let resourceUri: string;
-    const { customNamespace, metricNamespace } = query;
+    const { customNamespace } = query;
     if ('resourceUri' in query) {
       resourceUri = query.resourceUri;
     } else {
@@ -93,13 +93,11 @@ export default class UrlBuilder {
         resourceName,
       });
     }
-
     let url = `${baseUrl}${resourceUri}/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}`;
     if (customNamespace) {
       url += `&metricnamespace=${encodeURIComponent(customNamespace)}`;
-    } else if (metricNamespace) {
-      url += `&metricnamespace=${encodeURIComponent(metricNamespace)}`;
     }
+
     return url;
   }
 }

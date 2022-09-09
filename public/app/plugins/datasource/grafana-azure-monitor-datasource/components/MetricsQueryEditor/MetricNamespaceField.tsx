@@ -6,7 +6,7 @@ import { Select } from '@grafana/ui';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 import { Field } from '../Field';
 
-import { setMetricNamespace } from './setQueryValue';
+import { setCustomNamespace } from './setQueryValue';
 
 interface MetricNamespaceFieldProps extends AzureQueryEditorFieldProps {
   metricNamespaces: AzureMonitorOption[];
@@ -24,7 +24,7 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
         return;
       }
 
-      const newQuery = setMetricNamespace(query, change.value);
+      const newQuery = setCustomNamespace(query, change.value);
       onQueryChange(newQuery);
     },
     [onQueryChange, query]
@@ -43,7 +43,7 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
     <Field label="Metric namespace">
       <Select
         inputId="azure-monitor-metrics-metric-namespace-field"
-        value={query.azureMonitor?.customNamespace || query.azureMonitor?.metricNamespace || null}
+        value={value || null}
         onChange={handleChange}
         options={options}
         allowCustomValue
