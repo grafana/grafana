@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 
 	"golang.org/x/oauth2"
@@ -498,7 +499,7 @@ func TestAPIEndpoint_Metrics_ParseDashboardQueryParams(t *testing.T) {
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
