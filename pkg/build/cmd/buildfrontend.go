@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/build/errutil"
 	"github.com/grafana/grafana/pkg/build/frontend"
@@ -11,10 +10,11 @@ import (
 )
 
 func BuildFrontend(c *cli.Context) error {
-	version := ""
-	if c.NArg() == 1 {
-		version = strings.TrimPrefix(c.Args().Get(0), "v")
+	metadata, err := GenerateMetadata(c)
+	if err != nil {
+		return err
 	}
+	version := metadata.GrafanaVersion
 
 	cfg, mode, err := frontend.GetConfig(c, version)
 	if err != nil {

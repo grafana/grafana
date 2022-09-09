@@ -15,10 +15,10 @@ import (
 
 var _ accesscontrol.AccessControl = new(AccessControl)
 
-func ProvideAccessControl(cfg *setting.Cfg, service accesscontrol.Service) *AccessControl {
+func ProvideAccessControl(cfg *setting.Cfg) *AccessControl {
 	logger := log.New("accesscontrol")
 	return &AccessControl{
-		cfg, logger, accesscontrol.NewResolvers(logger), service,
+		cfg, logger, accesscontrol.NewResolvers(logger),
 	}
 }
 
@@ -26,7 +26,6 @@ type AccessControl struct {
 	cfg       *setting.Cfg
 	log       log.Logger
 	resolvers accesscontrol.Resolvers
-	service   accesscontrol.Service
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -34,18 +33,10 @@ func (a *AccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, e
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()
 
-	if user.Permissions == nil {
-		user.Permissions = map[int64]map[string][]string{}
+	if !verifyPermissions(user) {
+		a.log.Warn("no permissions set for user", "userID", user.UserID, "orgID", user.OrgID)
+		return false, nil
 	}
-
-	if _, ok := user.Permissions[user.OrgID]; !ok {
-		permissions, err := a.service.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
-		if err != nil {
-			return false, err
-		}
-		user.Permissions[user.OrgID] = accesscontrol.GroupScopesByAction(permissions)
-	}
-
 	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
 	if evaluator.Evaluate(user.Permissions[user.OrgID]) {
 		return true, nil
@@ -68,4 +59,8 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 
 func (a *AccessControl) IsDisabled() bool {
 	return accesscontrol.IsDisabled(a.cfg)
+}
+
+func verifyPermissions(u *user.SignedInUser) bool {
+	return u.Permissions != nil || u.Permissions[u.OrgID] != nil
 }
