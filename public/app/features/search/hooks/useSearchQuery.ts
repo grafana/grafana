@@ -1,87 +1,104 @@
 import { debounce } from 'lodash';
-import { FormEvent, useCallback, useReducer } from 'react';
+import { FormEvent } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { StoreState } from 'app/types';
 
-import { SEARCH_SELECTED_LAYOUT } from '../constants';
 import {
-  ADD_TAG,
-  CLEAR_FILTERS,
-  LAYOUT_CHANGE,
-  QUERY_CHANGE,
-  SET_TAGS,
-  TOGGLE_SORT,
-  TOGGLE_STARRED,
-  DATASOURCE_CHANGE,
-} from '../reducers/actionTypes';
-import { defaultQuery, defaultQueryParams, queryReducer } from '../reducers/searchQueryReducer';
+  defaultQueryParams,
+  queryChange,
+  setTags,
+  addTag,
+  datasourceChange,
+  toggleStarred,
+  removeStarred,
+  clearFilters,
+  toggleSort,
+  layoutChange,
+} from '../reducers/searchQueryReducer';
 import { DashboardQuery, SearchLayout } from '../types';
-import { hasFilters, parseRouteParams } from '../utils';
+import { hasFilters } from '../utils';
 
 const updateLocation = debounce((query) => locationService.partial(query, true), 300);
 
 export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
-  const queryParams = parseRouteParams(locationService.getSearchObject());
-  const initialState = { ...defaultQuery, ...defaults, ...queryParams };
-  const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
-  if (!queryParams.layout?.length && selectedLayout?.length) {
-    initialState.layout = selectedLayout;
-  }
-  const [query, dispatch] = useReducer(queryReducer, initialState);
+  const query = useSelector((state: StoreState) => state.searchQuery);
+  const dispatch = useDispatch();
 
-  const onQueryChange = useCallback((query: string) => {
-    dispatch({ type: QUERY_CHANGE, payload: query });
+  const onQueryChange = (query: string) => {
+    dispatch(queryChange(query));
     updateLocation({ query });
-  }, []);
+  };
 
-  const onTagFilterChange = useCallback((tags: string[]) => {
-    dispatch({ type: SET_TAGS, payload: tags });
+  const onCloseSearch = () => {
+    locationService.partial(
+      {
+        search: null,
+        folder: null,
+        ...defaultQueryParams,
+      },
+      true
+    );
+  };
+
+  const onSelectSearchItem = () => {
+    dispatch(queryChange(''));
+    locationService.partial(
+      {
+        search: null,
+        folder: null,
+        ...defaultQueryParams,
+      },
+      true
+    );
+  };
+
+  const onTagFilterChange = (tags: string[]) => {
+    dispatch(setTags(tags));
     updateLocation({ tag: tags });
-  }, []);
+  };
 
-  const onDatasourceChange = useCallback((datasource?: string) => {
-    dispatch({ type: DATASOURCE_CHANGE, payload: datasource });
+  const onDatasourceChange = (datasource?: string) => {
+    dispatch(datasourceChange(datasource));
     updateLocation({ datasource });
-  }, []);
+  };
 
-  const onTagAdd = useCallback(
-    (tag: string) => {
-      dispatch({ type: ADD_TAG, payload: tag });
-      updateLocation({ tag: [...query.tag, tag] });
-    },
-    [query.tag]
-  );
+  const onTagAdd = (tag: string) => {
+    dispatch(addTag(tag));
+    updateLocation({ tag: [...query.tag, tag] });
+  };
 
-  const onClearFilters = useCallback(() => {
-    dispatch({ type: CLEAR_FILTERS });
+  const onClearFilters = () => {
+    dispatch(clearFilters());
     updateLocation(defaultQueryParams);
-  }, []);
+  };
 
-  const onStarredFilterChange = useCallback((e: FormEvent<HTMLInputElement>) => {
+  const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const starred = (e.target as HTMLInputElement).checked;
-    dispatch({ type: TOGGLE_STARRED, payload: starred });
+    dispatch(toggleStarred(starred));
     updateLocation({ starred: starred || null });
-  }, []);
+  };
 
-  const onClearStarred = useCallback(() => {
-    dispatch({ type: TOGGLE_STARRED, payload: false });
+  const onClearStarred = () => {
+    dispatch(removeStarred());
     updateLocation({ starred: null });
-  }, []);
+  };
 
-  const onSortChange = useCallback((sort: SelectableValue | null) => {
-    dispatch({ type: TOGGLE_SORT, payload: sort });
+  const onSortChange = (sort: SelectableValue | null) => {
+    dispatch(toggleSort(sort));
     updateLocation({ sort: sort?.value, layout: SearchLayout.List });
-  }, []);
+  };
 
-  const onLayoutChange = useCallback((layout: SearchLayout) => {
-    dispatch({ type: LAYOUT_CHANGE, payload: layout });
+  const onLayoutChange = (layout: SearchLayout) => {
+    dispatch(layoutChange(layout));
     if (layout === SearchLayout.Folders) {
       updateLocation({ layout, sort: null });
       return;
     }
     updateLocation({ layout });
-  }, []);
+  };
 
   return {
     query,
@@ -95,5 +112,7 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     onSortChange,
     onLayoutChange,
     onDatasourceChange,
+    onCloseSearch,
+    onSelectSearchItem,
   };
 };

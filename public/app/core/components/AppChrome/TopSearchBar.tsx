@@ -5,8 +5,10 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavSection } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Dropdown, FilterInput, Icon, Tooltip, useStyles2, toIconName } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { useSearchQuery } from 'app/features/search/hooks/useSearchQuery';
 import { StoreState } from 'app/types';
 
 import { enrichConfigItems, enrichWithInteractionTracking } from '../NavBar/utils';
@@ -18,12 +20,24 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const location = useLocation();
+  const { query, onQueryChange } = useSearchQuery({});
   const navBarTree = useSelector((state: StoreState) => state.navBarTree);
   const navTree = cloneDeep(navBarTree);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const toggleSwitcherModal = () => {
     setShowSwitcherModal(!showSwitcherModal);
   };
+
+  const onOpenSearch = () => {
+    locationService.partial({ search: 'open' });
+  };
+  const onSearchChange = (value: string) => {
+    onQueryChange(value);
+    if (value) {
+      onOpenSearch();
+    }
+  };
+
   const configItems = enrichConfigItems(
     navTree.filter((item) => item.section === NavSection.Config),
     location,
@@ -42,7 +56,13 @@ export function TopSearchBar() {
         </a>
       </div>
       <div className={styles.searchWrapper}>
-        <FilterInput placeholder="Search grafana" value={''} onChange={() => {}} className={styles.searchInput} />
+        <FilterInput
+          onClick={onOpenSearch}
+          placeholder="Search Grafana"
+          value={query.query ?? ''}
+          onChange={onSearchChange}
+          className={styles.searchInput}
+        />
       </div>
       <div className={styles.actions}>
         <Tooltip placement="bottom" content="Help menu (todo)">
