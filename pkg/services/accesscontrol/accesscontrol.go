@@ -93,7 +93,7 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
+func HasGlobalAccess(ac AccessControl, service Service, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
@@ -103,11 +103,22 @@ func HasGlobalAccess(ac AccessControl, c *models.ReqContext) func(fallback func(
 		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""
 		userCopy.OrgName = ""
+		if userCopy.Permissions[GlobalOrgID] == nil {
+			permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
+			if err != nil {
+				c.Logger.Error("failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
+			}
+			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
+		}
+
 		hasAccess, err := ac.Evaluate(c.Req.Context(), &userCopy, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
 		}
+
+		// set on user so we don't fetch global permissions every time this is called
+		c.SignedInUser.Permissions[GlobalOrgID] = userCopy.Permissions[GlobalOrgID]
 
 		return hasAccess
 	}

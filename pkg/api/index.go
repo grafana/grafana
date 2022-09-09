@@ -714,7 +714,7 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 
 func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasGlobalAccess := ac.HasGlobalAccess(hs.AccessControl, c)
+	hasGlobalAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 	adminNavLinks := []*dtos.NavLink{}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
