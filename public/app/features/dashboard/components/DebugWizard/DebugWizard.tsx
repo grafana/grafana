@@ -109,6 +109,15 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
   };
 
   const doCopyMarkdown = () => {
+    const maxLen = Math.pow(1024, 2) * 1.5; // 1.5MB
+    if (markdownText.length > maxLen) {
+      appEvents.emit(AppEvents.alertError, [
+        `Snapshot is too large`,
+        'Consider downloading and attaching the file instead',
+      ]);
+      return;
+    }
+
     copyToClipboard(markdownText);
     appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
   };
