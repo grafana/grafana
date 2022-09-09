@@ -23,21 +23,31 @@ export function AppChrome({ children }: Props) {
     return <main className="main-view">{children}</main>;
   }
 
+  const contentClass = cx({
+    [styles.content]: true,
+    [styles.contentNoSearchBar]: state.searchBarHidden,
+    [styles.contentChromeless]: state.chromeless,
+  });
+
   return (
     <main className="main-view">
-      <div className={cx(styles.topNav, state.chromeless && styles.topNavChromeless)}>
-        {!state.searchBarHidden && <TopSearchBar />}
-        <NavToolbar
-          searchBarHidden={state.searchBarHidden}
-          sectionNav={state.sectionNav}
-          pageNav={state.pageNav}
-          actions={state.actions}
-          onToggleSearchBar={chrome.toggleSearchBar}
-          onToggleMegaMenu={chrome.toggleMegaMenu}
-        />
-      </div>
-      <div className={cx(styles.content, state.searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
-      <MegaMenu searchBarHidden={state.searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+      {!state.chromeless && (
+        <div className={cx(styles.topNav)}>
+          {!state.searchBarHidden && <TopSearchBar />}
+          <NavToolbar
+            searchBarHidden={state.searchBarHidden}
+            sectionNav={state.sectionNav}
+            pageNav={state.pageNav}
+            actions={state.actions}
+            onToggleSearchBar={chrome.toggleSearchBar}
+            onToggleMegaMenu={chrome.toggleMegaMenu}
+          />
+        </div>
+      )}
+      <div className={contentClass}>{children}</div>
+      {!state.chromeless && (
+        <MegaMenu searchBarHidden={state.searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+      )}
     </main>
   );
 }
@@ -58,6 +68,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT,
     }),
+    contentChromeless: css({
+      paddingTop: 0,
+    }),
     topNav: css({
       display: 'flex',
       position: 'fixed',
@@ -67,9 +80,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
-    }),
-    topNavChromeless: css({
-      display: 'none',
     }),
   };
 };
