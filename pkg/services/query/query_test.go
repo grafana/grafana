@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -99,7 +100,7 @@ func setup(t *testing.T) *testContext {
 		dataSourceCache:        dc,
 		oauthTokenService:      tc,
 		pluginRequestValidator: rv,
-		queryService:           query.ProvideService(nil, dc, nil, rv, ds, pc, tc),
+		queryService:           query.ProvideService(setting.NewCfg(), dc, nil, rv, ds, pc, tc),
 	}
 }
 
