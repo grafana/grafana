@@ -47,13 +47,10 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanTreeOffset.test.js:174536706": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:2286101708": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:989353473": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineHeaderRow.test.js:2106409544": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:1423129438": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:4192868446": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:551014442": [
@@ -1989,10 +1986,6 @@ exports[`better eslint`] = {
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineRow.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
