@@ -1,10 +1,13 @@
-import { DeepPartial, SubmitHandler, UnpackNestedValue, useForm } from 'react-hook-form';
+import { DeepPartial, FieldValues, SubmitHandler, UnpackNestedValue, useForm } from 'react-hook-form';
 
-interface UseCorrelationFormOptions<T> {
+interface UseCorrelationFormOptions<T extends FieldValues> {
   onSubmit: SubmitHandler<T>;
   defaultValues?: UnpackNestedValue<DeepPartial<T>>;
 }
-export const useCorrelationForm = <T>({ onSubmit, defaultValues }: UseCorrelationFormOptions<T>) => {
+export const useCorrelationForm = <T extends FieldValues>({
+  onSubmit,
+  defaultValues,
+}: UseCorrelationFormOptions<T>) => {
   const {
     handleSubmit: submit,
     control,
