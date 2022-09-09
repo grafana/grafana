@@ -330,7 +330,7 @@
     "kbar": "0.1.0-beta.36",
     "lodash": "4.17.21",
     "logfmt": "^1.3.2",
-    "lru-cache": "7.13.1",
+    "lru-cache": "7.14.0",
     "memoize-one": "6.0.0",
     "moment": "2.29.4",
     "moment-timezone": "0.5.35",
