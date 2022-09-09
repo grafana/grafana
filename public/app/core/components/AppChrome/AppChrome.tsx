@@ -25,7 +25,7 @@ export function AppChrome({ children }: Props) {
 
   return (
     <main className="main-view">
-      <div className={styles.topNav}>
+      <div className={cx(styles.topNav, state.chromeless && styles.topNavChromeless)}>
         {!state.searchBarHidden && <TopSearchBar />}
         <NavToolbar
           searchBarHidden={state.searchBarHidden}
@@ -67,10 +67,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
-
-      '.sidemenu-hidden &': {
-        display: 'none',
-      },
+    }),
+    topNavChromeless: css({
+      display: 'none',
     }),
   };
 };
