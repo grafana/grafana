@@ -197,7 +197,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 
 		dashboardsUrl := "/dashboards"
 
-		navTree = append(navTree, &dtos.NavLink{
+		dashboardLink := &dtos.NavLink{
 			Text:       "Dashboards",
 			Id:         "dashboards",
 			SubTitle:   "Manage dashboards and folders",
@@ -206,7 +206,13 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 			SortWeight: dtos.WeightDashboard,
 			Section:    dtos.NavSectionCore,
 			Children:   dashboardChildLinks,
-		})
+		}
+
+		if hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+			dashboardLink.Id = "dashboards/browse"
+		}
+
+		navTree = append(navTree, dashboardLink)
 	}
 
 	canExplore := func(context *models.ReqContext) bool {
@@ -378,7 +384,8 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	if c.OrgRole == org.RoleAdmin || (hs.Cfg.PluginAdminEnabled && ac.ReqGrafanaAdmin(c)) {
+	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
+	if plugins.ReqCanAdminPlugins(hs.Cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(hs.Cfg), plugins.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
@@ -507,9 +514,11 @@ func (hs *HTTPServer) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	}
 
 	dashboardChildNavs := []*dtos.NavLink{}
-	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
-		Text: "Browse", Id: "dashboards/browse", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
-	})
+	if !hs.Features.IsEnabled(featuremgmt.FlagTopnav) {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Browse", Id: "dashboards/browse", Url: hs.Cfg.AppSubURL + "/dashboards", Icon: "sitemap",
+		})
+	}
 	dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 		Text: "Playlists", Id: "dashboards/playlists", Url: hs.Cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 	})
@@ -706,7 +715,7 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 
 func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasGlobalAccess := ac.HasGlobalAccess(hs.AccessControl, c)
+	hasGlobalAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 	adminNavLinks := []*dtos.NavLink{}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
