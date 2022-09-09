@@ -3,8 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
-import { toOption } from '@grafana/data';
-
 import { MetricStatEditor } from '..';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { MetricStat } from '../../types';
