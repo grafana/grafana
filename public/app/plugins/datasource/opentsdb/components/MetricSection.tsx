@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { InlineLabel, Select, Input } from '@grafana/ui';
+import { InlineLabel, Select, Input, InlineFormLabel } from '@grafana/ui';
 
 import { OpenTsdbQuery } from '../types';
 
@@ -73,7 +73,13 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
         />
       </div>
       <div className="gf-form max-width-20">
-        <InlineLabel className="query-keyword width-6">Alias</InlineLabel>
+        <InlineFormLabel
+          className="query-keyword"
+          width={6}
+          tooltip={<div>Use patterns like $tag_tagname to replace part of the alias for a tag value</div>}
+        >
+          Alias
+        </InlineFormLabel>
         <Input
           placeholder="series alias"
           onChange={(e) => {
