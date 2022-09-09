@@ -78,6 +78,7 @@ export default function Ticks(props: TicksProps) {
     const portion = i / (numTicks - 1);
     ticks.push(
       <div
+        data-testid="TicksID"
         key={portion}
         className={styles.TicksTick}
         style={{
