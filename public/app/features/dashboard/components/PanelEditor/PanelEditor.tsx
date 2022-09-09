@@ -425,10 +425,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   renderToolbar() {
     if (config.featureToggles.topnav) {
-      const pageNav = { text: 'Edit panel', parentItem: this.props.pageNav };
       return (
         <AppChromeUpdate
-          pageNav={pageNav}
           actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>}
         />
       );

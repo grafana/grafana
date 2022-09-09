@@ -86,7 +86,7 @@ export interface State {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
   updateScrollTop?: number;
-  rememberScrollTop: number;
+  rememberScrollTop?: number;
   showLoadingState: boolean;
   panelNotFound: boolean;
   editPanelAccessDenied: boolean;
@@ -104,7 +104,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       editPanel: null,
       viewPanel: null,
       showLoadingState: false,
-      rememberScrollTop: 0,
       panelNotFound: false,
       editPanelAccessDenied: false,
     };
@@ -228,54 +227,58 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       return state;
     }
 
-    state = updateStatePageNavFromProps(props, state);
+    const updatedState = { ...state };
 
     // Entering edit mode
     if (!state.editPanel && urlEditPanelId) {
       const panel = dashboard.getPanelByUrlId(urlEditPanelId);
-      if (!panel) {
-        return { ...state, panelNotFound: true };
-      }
-
-      if (dashboard.canEditPanel(panel)) {
-        return { ...state, editPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop };
+      if (panel) {
+        if (dashboard.canEditPanel(panel)) {
+          updatedState.editPanel = panel;
+          updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        } else {
+          updatedState.editPanelAccessDenied = true;
+        }
       } else {
-        return { ...state, editPanelAccessDenied: true };
+        updatedState.panelNotFound = true;
       }
     }
     // Leaving edit mode
     else if (state.editPanel && !urlEditPanelId) {
-      return { ...state, editPanel: null, updateScrollTop: state.rememberScrollTop };
+      updatedState.editPanel = null;
+      updatedState.updateScrollTop = state.rememberScrollTop;
     }
 
     // Entering view mode
     if (!state.viewPanel && urlViewPanelId) {
       const panel = dashboard.getPanelByUrlId(urlViewPanelId);
-      if (!panel) {
-        return { ...state, panelNotFound: urlEditPanelId };
+      if (panel) {
+        // This mutable state feels wrong to have in getDerivedStateFromProps
+        // Should move this state out of dashboard in the future
+        dashboard.initViewPanel(panel);
+        updatedState.viewPanel = panel;
+        updatedState.rememberScrollTop = state.scrollElement?.scrollTop;
+        updatedState.updateScrollTop = 0;
+      } else {
+        updatedState.panelNotFound = true;
       }
-
-      // This mutable state feels wrong to have in getDerivedStateFromProps
-      // Should move this state out of dashboard in the future
-      dashboard.initViewPanel(panel);
-
-      return { ...state, viewPanel: panel, rememberScrollTop: state.scrollElement?.scrollTop, updateScrollTop: 0 };
     }
     // Leaving view mode
     else if (state.viewPanel && !urlViewPanelId) {
       // This mutable state feels wrong to have in getDerivedStateFromProps
       // Should move this state out of dashboard in the future
       dashboard.exitViewPanel(state.viewPanel);
-
-      return { ...state, viewPanel: null, updateScrollTop: state.rememberScrollTop };
+      updatedState.viewPanel = null;
+      updatedState.updateScrollTop = state.rememberScrollTop;
     }
 
     // if we removed url edit state, clear any panel not found state
     if (state.panelNotFound || (state.editPanelAccessDenied && !urlEditPanelId)) {
-      return { ...state, panelNotFound: false, editPanelAccessDenied: false };
+      updatedState.panelNotFound = false;
+      updatedState.editPanelAccessDenied = false;
     }
 
-    return state;
+    return updateStatePageNavFromProps(props, updatedState);
   }
 
   onAddPanel = () => {
@@ -441,6 +444,14 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     }
   } else {
     sectionNav = getNavModel(props.navIndex, config.featureToggles.topnav ? 'dashboards/browse' : 'dashboards');
+  }
+
+  if (state.editPanel || state.viewPanel) {
+    pageNav = {
+      ...pageNav,
+      text: `${state.editPanel ? 'Edit' : 'View'} panel`,
+      parentItem: pageNav,
+    };
   }
 
   if (state.pageNav === pageNav && state.sectionNav === sectionNav) {
