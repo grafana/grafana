@@ -216,11 +216,11 @@ Variable of the type _Query_ allows you to query Loki for a list labels or label
 provides a form to select the type of values that can be expected to be used for a given variable. This form has the following
 options to choose from:
 
-| Query Type   | Label       | Stream Selector       | Description                                                                            |
-| ------------ | ----------- | --------------------- | -------------------------------------------------------------------------------------- |
-| Label names  | No required | Not required          | Returns a list of label names.                                                         |
-| Label values | `label`     | -                     | Returns a list of label values for the `label`.                                        |
-| Label values | `label`     | `log stream selector` | Returns a list of label values for the `label` in the specified `log stream selector`. |
+| Query Type   | Label        | Stream Selector       | Description                                                                            |
+| ------------ | ------------ | --------------------- | -------------------------------------------------------------------------------------- |
+| Label names  | Not required | Not required          | Returns a list of label names.                                                         |
+| Label values | `label`      |                       | Returns a list of label values for the `label`.                                        |
+| Label values | `label`      | `log stream selector` | Returns a list of label values for the `label` in the specified `log stream selector`. |
 
 ### Ad hoc filters variable
 
