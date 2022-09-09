@@ -12,7 +12,7 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneDataTransformationNode } from '../core/SceneTransformationNode';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
-export function getTransformationNodeTest(): Scene {
+export function getScene(): Scene {
   const timeRangeNode1 = new SceneTimeRange({
     range: getDefaultTimeRange(),
   });
@@ -128,7 +128,7 @@ export function getTransformationNodeTest(): Scene {
                               data: transformationNode3,
                             },
                             pluginId: 'stat',
-                            title: 'Fill height',
+                            title: 'Limit + reduce',
                           }),
                         ],
                       }),
@@ -139,7 +139,7 @@ export function getTransformationNodeTest(): Scene {
                               data: transformationNode2,
                             },
                             pluginId: 'table',
-                            title: 'Fill height',
+                            title: 'Reduce + organize',
                           }),
                         ],
                       }),
@@ -191,3 +191,8 @@ export function getTransformationNodeTest(): Scene {
 
   return scene;
 }
+
+export const transformationsDemo = {
+  title: 'Scene with transformations',
+  getScene,
+};

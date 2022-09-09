@@ -52,9 +52,10 @@ export class SceneDataProviderNode extends SceneDataObject<SceneDataProviderNode
     this.runner.updateQueries(this.staticQueries);
 
     const timeRange = this.state.inputParams.timeRange;
-
+    // console.log(timeRange);
+    // debugger;
     this.subs.add(
-      timeRange.subscribe({
+      this.state.inputParams.timeRange.subscribe({
         next: (timeRange) => {
           this.runner.runWithTimeRange(timeRange.range!).then((data) => {
             if (!data) {
@@ -131,5 +132,11 @@ export class SceneDataProviderNode extends SceneDataObject<SceneDataProviderNode
       this.querySub.unsubscribe();
       this.querySub = undefined;
     }
+  }
+
+  toJSON() {
+    return {
+      queries: [...this.state.queries],
+    };
   }
 }

@@ -81,6 +81,9 @@ export interface SceneObject<TState extends SceneObjectState = SceneObjectState>
 
   /** To be replaced by declarative method */
   Editor(props: SceneComponentProps<SceneObject<TState>>): React.ReactElement | null;
+
+  /** Function returning a serialized scene object */
+  toJSON?(): object;
 }
 
 export type SceneLayoutChild = SceneObject<SceneLayoutChildState | SceneLayoutState>;

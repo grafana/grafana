@@ -101,9 +101,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
   activate() {
     this.isActive = true;
-
     if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
-      console.log('activating', this);
       const params = (this.state as any).inputParams;
       for (const param in params) {
         if (isSceneObject(params[param]) && !params[param].isActive) {
@@ -147,6 +145,7 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
    * Will walk up the scene object graph to the closest $timeRange scene object
    */
   getTimeRange(): SceneObject<SceneTimeRangeState> {
+    debugger;
     if (Object.prototype.hasOwnProperty.call(this.state, 'inputParams')) {
       const params = (this.state as any).inputParams;
 
@@ -233,8 +232,6 @@ export abstract class SceneObjectBase<TState extends SceneObjectState = {}> impl
 
     return new (this.constructor as any)(clonedState);
   }
-
-  // abstract toJSON(): object;
 }
 
 /**
@@ -273,6 +270,7 @@ export class SceneTimeRangeObject<TState extends SceneTimeRangeState = SceneTime
   }
 
   onTimeRangeChange = (range: TimeRange) => {
+    debugger;
     this.setState({ range });
   };
 

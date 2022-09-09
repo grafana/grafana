@@ -37,8 +37,7 @@ export function isDataNode(node: SceneObject): boolean {
     node instanceof SceneDataProviderNode ||
     node instanceof SceneDataTransformationNode ||
     node instanceof SceneDataNode ||
-    node instanceof SceneTimeShiftNode ||
-    node instanceof VizPanel
+    node instanceof SceneTimeShiftNode
   );
 }
 

@@ -6,7 +6,7 @@ import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
-export function getDemo(): Scene {
+export function getScene(): Scene {
   const timeRangeNode1 = new SceneTimeRange({
     range: getDefaultTimeRange(),
   });
@@ -47,3 +47,8 @@ export function getDemo(): Scene {
 
   return scene;
 }
+
+export const demo = {
+  title: 'Minimal example: Data + viz',
+  getScene,
+};

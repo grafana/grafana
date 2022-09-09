@@ -3,14 +3,16 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import dagre from 'dagre';
 import ReactFlow, { ConnectionLineType, Node, Edge, Position } from 'react-flow-renderer';
 import { isDataNode, isLayoutNode, isLayoutState, isParametrizedState } from '../core/typeguards';
-import { Drawer, RadioButtonGroup } from '@grafana/ui';
+import { Checkbox, CodeEditor, Drawer, Field, RadioButtonGroup } from '@grafana/ui';
 import { SceneObjectBase } from '../core/SceneObjectBase';
 import { SceneObject } from '../core/types';
 import { Scene } from './Scene';
+import { serializeScene } from '../core/serialization';
 
-export function SceneInspectGraph({ model, onClose }: any) {
+export function SceneInspectGraph({ model, onClose }: { model: Scene; onClose: () => void }) {
   const { children } = model.useState();
   const [previewMode, setPreviewMode] = useState<string>('all');
+  const [hoistDataNodes, setHoistDataNodes] = useState(false);
   const flattenedNodes = flattenSceneNodes(children);
 
   const nodes = [];
@@ -70,6 +72,17 @@ export function SceneInspectGraph({ model, onClose }: any) {
   }
 
   const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(dagreGraph, flowNodes, flowEdges);
+  const jsonModel = serializeScene(model, false, hoistDataNodes);
+
+  let text = '';
+
+  if (previewMode === 'all') {
+    text = JSON.stringify(jsonModel, null, 2);
+  } else if (previewMode === 'data') {
+    text = JSON.stringify(jsonModel.inputs, null, 2);
+  } else if (previewMode === 'layout') {
+    text = JSON.stringify(jsonModel.layout, null, 2);
+  }
 
   return (
     <Drawer onClose={onClose} width="100%">
@@ -82,27 +95,54 @@ export function SceneInspectGraph({ model, onClose }: any) {
         ]}
         onChange={setPreviewMode}
       />
-      <div style={{ height: '100%', overflow: 'hidden', flexGrow: 1 }}>
-        <AutoSizer>
-          {({ width, height }) => {
-            return (
-              <div style={{ width, height }}>
-                <ReactFlow
-                  nodes={layoutedNodes}
-                  edges={layoutedEdges}
-                  connectionLineType={ConnectionLineType.Straight}
-                  fitView
-                />
-              </div>
-            );
-          }}
-        </AutoSizer>
+      <div style={{ display: 'flex', flexDirection: 'row', flexGrow: 1, height: '100%' }}>
+        <div style={{ height: '100%', width: '66%', overflow: 'hidden', flexGrow: 1 }}>
+          <AutoSizer>
+            {({ width, height }) => {
+              return (
+                <div style={{ width, height }}>
+                  <ReactFlow
+                    nodes={layoutedNodes}
+                    edges={layoutedEdges}
+                    connectionLineType={ConnectionLineType.Straight}
+                    fitView
+                  />
+                </div>
+              );
+            }}
+          </AutoSizer>
+        </div>
+        <div style={{ height: '100%', width: '34%', overflow: 'hidden', flexGrow: 1 }}>
+          <div style={{ flexGrow: 0 }}>
+            <Field>
+              <Checkbox
+                label="Hoist data nodes"
+                description="Replace nested scene's data nodes(time range, data nodes) with input references when possible"
+                value={hoistDataNodes}
+                onChange={(e) => {
+                  setHoistDataNodes(e.currentTarget.checked);
+                }}
+              />
+            </Field>
+          </div>
+          <div style={{ height: '100%', flexGrow: 1 }}>
+            <AutoSizer>
+              {({ width, height }) => {
+                return (
+                  <div style={{ width, height }}>
+                    <CodeEditor width="100%" height={height} language="json" showLineNumbers={true} value={text} />
+                  </div>
+                );
+              }}
+            </AutoSizer>
+          </div>
+        </div>
       </div>
     </Drawer>
   );
 }
 
-function getAllSceneNodes(model: SceneObject[]): Array<{ key: string; node: SceneObjectBase }> {
+export function getAllSceneNodes(model: SceneObject[]): Array<{ key: string; node: SceneObjectBase }> {
   let result: any = [];
 
   model.forEach((child) => {
@@ -124,7 +164,7 @@ function getAllSceneNodes(model: SceneObject[]): Array<{ key: string; node: Scen
   return result;
 }
 
-function flattenSceneNodes(model: SceneObjectBase[]): Map<string, SceneObject> {
+export function flattenSceneNodes(model: SceneObject[]): Map<string, SceneObject> {
   const nodes = getAllSceneNodes(model);
   const m = new Map();
   nodes.forEach((node) => {

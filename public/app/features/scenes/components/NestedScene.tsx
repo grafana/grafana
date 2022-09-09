@@ -14,6 +14,7 @@ import {
 import { SceneCanvasText } from './SceneCanvasText';
 import { SceneFlexLayout, SceneFlexChild } from './SceneFlexLayout';
 import { SceneToolbar } from './SceneToolbar';
+import { serializeNode, serializeScene } from '../core/serialization';
 
 interface NestedSceneState extends SceneLayoutChildState, SceneLayoutState {
   title: string;
@@ -135,6 +136,20 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
       });
     }
   };
+
+  toJSON() {
+    // preparing clone to avoid serializing dynamically created children
+    const clone = this.clone();
+    clone.setState({ children: this.collapsibleChildren });
+
+    return {
+      ...serializeScene(clone, true),
+      actions: this.state.actions?.map((x) => serializeNode(x)),
+      isCollapsed: this.state.isCollapsed,
+      canCollapse: this.state.canCollapse,
+      canRemove: this.state.canRemove,
+    };
+  }
 }
 
 interface SceneCollapserState extends SceneLayoutChildState {

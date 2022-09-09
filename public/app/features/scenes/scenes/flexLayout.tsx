@@ -10,7 +10,7 @@ import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
-export function getFlexLayoutTest(): Scene {
+export function getScene(): Scene {
   const timeRangeNode1 = new SceneTimeRange({
     range: getDefaultTimeRange(),
   });
@@ -151,3 +151,8 @@ export function getFlexLayoutTest(): Scene {
 
   return scene;
 }
+
+export const flexLayout = {
+  title: 'Flex layout test',
+  getScene,
+};

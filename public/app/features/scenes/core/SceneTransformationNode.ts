@@ -32,4 +32,10 @@ export class SceneDataTransformationNode extends SceneDataObject<SceneDataTransf
       })
     );
   }
+
+  toJSON() {
+    return {
+      transformations: [...this.state.transformations],
+    };
+  }
 }

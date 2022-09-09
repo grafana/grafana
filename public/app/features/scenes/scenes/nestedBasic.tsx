@@ -9,61 +9,13 @@ import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 export function getScene(): Scene {
-  const timeRangeNode = new SceneTimeRange({
-    range: getDefaultTimeRange(),
-  });
-
-  const dataProviderNode = new SceneDataProviderNode({
-    inputParams: {
-      timeRange: timeRangeNode,
-    },
-    queries: [
-      {
-        refId: 'A',
-        datasource: {
-          uid: 'gdev-testdata',
-          type: 'testdata',
-        },
-        scenarioId: 'random_walk',
-      },
-    ],
-  });
-
   const scene = new Scene({
-    title: 'Nested Scene demo',
+    title: 'Nested Scene demo (isolated)',
     $editor: new SceneEditManager({}),
     children: [
       new SceneFlexLayout({
         direction: 'column',
-        children: [
-          new SceneFlexChild({
-            size: { ySizing: 'content' },
-            children: [timeRangeNode],
-          }),
-          new SceneFlexChild({
-            children: [
-              new SceneFlexLayout({
-                direction: 'column',
-                children: [
-                  new SceneFlexChild({
-                    children: [
-                      new VizPanel({
-                        inputParams: {
-                          data: dataProviderNode,
-                        },
-                        key: '3',
-                        pluginId: 'timeseries',
-                        title: 'Panel 3',
-                      }),
-                    ],
-                  }),
-
-                  getInnerScene('Inner scene'),
-                ],
-              }),
-            ],
-          }),
-        ],
+        children: [getInnerScene('Inner scene')],
       }),
     ],
   });
@@ -134,7 +86,7 @@ export function getInnerScene(title: string) {
   return scene;
 }
 
-export const nestedScene = {
-  title: 'Scene with a nested scene',
+export const basicNestedScene = {
+  title: 'Nested Scene demo (nested scene only)',
   getScene,
 };

@@ -45,12 +45,6 @@ export class SceneTimeShiftNode extends SceneTimeRangeObject<SceneTimeShiftNodeS
   }
 
   getShiftedTimeRange(range: TimeRange, shift: string): TimeRange {
-    // naive copy from panel utils now
-    // const timeShiftInfo = rangeUtil.describeTextRange(shift);
-
-    // if (timeShiftInfo.invalid) {
-    // }
-
     // nned to copy time range to avoid mutating original via dateMath.parseDateMath
     const oldFrom = dateTime(range.from);
     const oldTo = dateTime(range.to);
@@ -68,6 +62,12 @@ export class SceneTimeShiftNode extends SceneTimeRangeObject<SceneTimeShiftNodeS
     };
 
     return next;
+  }
+
+  toJSON() {
+    return {
+      timeShift: this.state.timeShift,
+    };
   }
 }
 

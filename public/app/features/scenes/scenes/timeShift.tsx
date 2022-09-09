@@ -11,7 +11,7 @@ import { SceneDataProviderNode } from '../core/SceneDataProviderNode';
 import { SceneTimeRange } from '../core/SceneTimeRange';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
-export function getTimeShiftDemo(): Scene {
+export function getScene(): Scene {
   const timeRangeNode1 = new SceneTimeRange({
     range: getDefaultTimeRange(),
   });
@@ -138,3 +138,8 @@ export function getTimeShiftDemo(): Scene {
 
   return scene;
 }
+
+export const timeShiftScene = {
+  title: 'Scene with time shift ranges',
+  getScene,
+};

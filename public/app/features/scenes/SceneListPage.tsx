@@ -17,8 +17,8 @@ export const SceneListPage: FC<Props> = ({}) => {
       <Page.Contents>
         <Stack direction="column">
           {scenes.map((scene) => (
-            <Card href={`/scenes/${scene.state.title}`} key={scene.state.title}>
-              <Card.Heading>{scene.state.title}</Card.Heading>
+            <Card href={`/scenes/${scene.title}`} key={scene.title}>
+              <Card.Heading>{scene.title}</Card.Heading>
             </Card>
           ))}
         </Stack>

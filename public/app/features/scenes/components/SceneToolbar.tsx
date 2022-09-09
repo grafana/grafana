@@ -24,4 +24,9 @@ export class SceneToolbar extends SceneObjectBase<SceneToolbarState> {
       </>
     );
   };
+
+  toJSON() {
+    const { children, $editor, $variables, ...rest } = this.state;
+    return rest;
+  }
 }

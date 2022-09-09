@@ -1,19 +1,31 @@
 import { Scene } from '../components/Scene';
-import { getDemo } from './basic';
-import { getFlexLayoutTest } from './flexLayout';
-import { getNestedScene } from './nested';
-import { getSceneWithRows } from './sceneWithRows';
-import { getTimeShiftDemo } from './timeShift';
-import { getTransformationNodeTest } from './transformationNode';
+import { demo } from './basic';
+import { demoFromJSON } from './basicFromJson';
+import { flexLayout } from './flexLayout';
+import { flexLayoutFromJSON } from './flexLayoutFromJson';
+import { basicNestedScene } from './nestedBasic';
+import { nestedScene } from './nested';
+import { nestedSceneFromJson } from './nestedFromJson';
+import { basicNestedSceneFromJson } from './nestedBasicFromJson';
+import { sceneWithRows } from './sceneWithRows';
+import { sceneWithRowsFromJson } from './sceneWithRowsFromJson';
+import { timeShiftScene } from './timeShift';
+import { transformationsDemo } from './transformationNode';
 
-export function getScenes(): Scene[] {
+export function getScenes(): Array<{ title: string; getScene: () => Scene }> {
   return [
-    getDemo(),
-    getFlexLayoutTest(),
-    getNestedScene(),
-    getSceneWithRows(),
-    getTransformationNodeTest(),
-    getTimeShiftDemo(),
+    demo,
+    demoFromJSON,
+    flexLayout,
+    flexLayoutFromJSON,
+    basicNestedScene,
+    basicNestedSceneFromJson,
+    nestedScene,
+    nestedSceneFromJson,
+    sceneWithRows,
+    sceneWithRowsFromJson,
+    timeShiftScene,
+    transformationsDemo,
   ];
 }
 
@@ -24,10 +36,10 @@ export function getSceneByTitle(title: string) {
     return cache[title];
   }
 
-  const scene = getScenes().find((x) => x.state.title === title);
+  const scene = getScenes().find((x) => x.title === title);
   if (scene) {
-    cache[title] = scene;
+    cache[title] = scene.getScene();
   }
 
-  return scene;
+  return cache[title];
 }

@@ -11,7 +11,7 @@ import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getSceneWithRows(): Scene {
+export function getScene(): Scene {
   const timeRange = new SceneTimeRange({ range: getDefaultTimeRange() });
 
   const dataNode = new SceneDataProviderNode({
@@ -118,3 +118,8 @@ export function getSceneWithRows(): Scene {
 
   return scene;
 }
+
+export const sceneWithRows = {
+  title: 'Scene with rows',
+  getScene,
+};
