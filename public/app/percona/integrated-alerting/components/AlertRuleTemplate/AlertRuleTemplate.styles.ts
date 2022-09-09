@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ spacing }: GrafanaTheme) => ({
+export const getStyles = ({ v1: { spacing, typography, colors } }: GrafanaTheme2) => ({
   actionsWrapper: css`
     display: flex;
     justify-content: flex-end;
-    margin-bottom: ${spacing.sm};
+  `,
+  dateWrapper: css`
+    font-size: ${typography.size.xs};
+    color: ${colors.textFaint};
   `,
 });

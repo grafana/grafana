@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 type Props = {
   children: React.ReactNode | React.ReactNode[];
@@ -15,10 +16,12 @@ type Props = {
 export function RuleViewerLayout(props: Props): JSX.Element | null {
   const { wrapInContent = true, children, title } = props;
   const styles = useStyles2(getPageStyles);
+  const [queryParams] = useQueryParams();
+  const returnTo = String(queryParams['returnTo'] || '') || '/alerting/list';
 
   return (
     <Page>
-      <PageToolbar title={title} pageIcon="bell" onGoBack={() => locationService.push('/alerting/list')} />
+      <PageToolbar title={title} pageIcon="bell" onGoBack={() => locationService.push(returnTo)} />
       <div className={styles.content}>{wrapInContent ? <RuleViewerLayoutContent {...props} /> : children}</div>
     </Page>
   );

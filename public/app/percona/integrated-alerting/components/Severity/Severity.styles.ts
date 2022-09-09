@@ -4,8 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { Severity } from 'app/percona/shared/core';
 
-const getSeverityColor = ({ v1: { palette } }: GrafanaTheme2, severity: Severity) => {
-  const map: Record<Severity, string> = {
+const getSeverityColor = ({ v1: { palette } }: GrafanaTheme2, severity: string) => {
+  const map: Record<string, string> = {
     [Severity.SEVERITY_EMERGENCY]: palette.red,
     [Severity.SEVERITY_ALERT]: palette.red,
     [Severity.SEVERITY_CRITICAL]: palette.red,
@@ -16,10 +16,10 @@ const getSeverityColor = ({ v1: { palette } }: GrafanaTheme2, severity: Severity
     [Severity.SEVERITY_DEBUG]: palette.blue80,
   };
 
-  return map[severity];
+  return map.hasOwnProperty(severity) ? map[severity] : '';
 };
 
-export const getStyles = stylesFactory((theme: GrafanaTheme2, severity: Severity) => ({
+export const getStyles = stylesFactory((theme: GrafanaTheme2, severity: string) => ({
   severity: css`
     color: ${getSeverityColor(theme, severity)};
   `,

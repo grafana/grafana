@@ -8,7 +8,7 @@ export const UNIT_MAP: Record<TemplateParamUnit, string> = {
 
 export const SOURCE_MAP: Record<SourceDescription, string> = {
   [SourceDescription.BUILT_IN]: 'Built-in',
-  [SourceDescription.SAAS]: 'Percona',
+  [SourceDescription.SAAS]: 'Percona Platform',
   [SourceDescription.USER_FILE]: 'User Created (file)',
   [SourceDescription.USER_API]: 'User Created (UI)',
 };

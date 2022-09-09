@@ -341,6 +341,7 @@ abstract class DataSourceApi<
    * Defines new variable support
    * @alpha -- experimental
    */
+  // @ts-ignore
   variables?:
     | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
     | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>

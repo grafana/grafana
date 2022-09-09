@@ -3,9 +3,12 @@ import React, { FC } from 'react';
 import { FolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/FolderPicker';
 import { AccessControlAction, PermissionLevelString } from 'app/types';
 
+// @PERCONA
+// Added uid here as optional
 export interface Folder {
   title: string;
   id: number;
+  uid?: number;
 }
 
 export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {

@@ -1,4 +1,3 @@
 export interface AlertDetailsProps {
-  ruleExpression?: string;
-  labels: string[];
+  labels: Record<string, string>;
 }

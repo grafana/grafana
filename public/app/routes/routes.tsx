@@ -446,12 +446,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/integrated-alerting',
-      // eslint-disable-next-line react/display-name
-      component: () => <Redirect to="/integrated-alerting/alerts" />,
-    },
-    {
-      path: '/integrated-alerting/alerts',
+      path: '/alerting/alerts',
       component: SafeDynamicImport(
         () =>
           import(
@@ -460,29 +455,11 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/integrated-alerting/alert-rule-templates',
+      path: '/alerting/alert-rule-templates',
       component: SafeDynamicImport(
         () =>
           import(
             /* webpackChunkName: "IntegratedAlertingTemplates" */ 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate'
-          )
-      ),
-    },
-    {
-      path: '/integrated-alerting/notification-channels',
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "IntegratedAlertingChannels" */ 'app/percona/integrated-alerting/components/NotificationChannel/NotificationChannel'
-          )
-      ),
-    },
-    {
-      path: '/integrated-alerting/alert-rules',
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "IntegratedAlertingRules" */ 'app/percona/integrated-alerting/components/AlertRules/AlertRules'
           )
       ),
     },

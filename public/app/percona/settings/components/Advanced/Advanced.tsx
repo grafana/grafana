@@ -239,6 +239,16 @@ export const Advanced: FC = () => {
                     dataTestId="advanced-advisors"
                     component={SwitchRow}
                   />
+                  <Field
+                    name="alerting"
+                    type="checkbox"
+                    label={alertingLabel}
+                    tooltip={alertingTooltip}
+                    tooltipLinkText={tooltipLinkText}
+                    link={alertingLink}
+                    dataTestId="advanced-alerting"
+                    component={SwitchRow}
+                  />
                   <div className={styles.advancedRow}>
                     <div className={cx(styles.advancedCol, styles.publicAddressLabelWrapper)}>
                       <div className={settingsStyles.labelWrapper} data-testid="public-address-label">
@@ -315,16 +325,6 @@ export const Advanced: FC = () => {
                       tooltipLinkText={tooltipLinkText}
                       link={backupLink}
                       dataTestId="advanced-backup"
-                      component={SwitchRow}
-                    />
-                    <Field
-                      name="alerting"
-                      type="checkbox"
-                      label={alertingLabel}
-                      tooltip={alertingTooltip}
-                      tooltipLinkText={tooltipLinkText}
-                      link={alertingLink}
-                      dataTestId="advanced-alerting"
                       component={SwitchRow}
                     />
                     <Field

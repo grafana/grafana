@@ -43,7 +43,7 @@ export interface TableProps {
   data: object[];
   columns: Array<ExtendedColumn<any>>;
   pendingRequest?: boolean;
-  emptyMessage?: string;
+  emptyMessage?: React.ReactNode;
   showPagination?: boolean;
   totalItems: number;
   totalPages?: number;

@@ -100,42 +100,20 @@ export const PMM_BACKUP_PAGE: NavModelItem = {
   ],
 };
 
-export const PMM_ALERTING_PAGE: NavModelItem = {
-  id: 'integrated-alerting',
-  icon: 'bell',
-  text: 'Integrated Alerting',
-  url: `${config.appSubUrl}/integrated-alerting`,
-  subTitle: 'Percona Integrated Alerting',
-  section: NavSection.Core,
-  breadcrumbs: [
-    {
-      title: 'Integrated Alerting',
-      url: `${config.appSubUrl}/integrated-alerting`,
-    },
-  ],
-  children: [
-    {
-      id: 'integrated-alerting-alerts',
-      text: 'Alerts',
-      url: `${config.appSubUrl}/integrated-alerting/alerts`,
-    },
-    {
-      id: 'integrated-alerting-rules',
-      text: 'Alert Rules',
-      url: `${config.appSubUrl}/integrated-alerting/alert-rules`,
-    },
-    {
-      id: 'integrated-alerting-templates',
-      text: 'Alert Rule Templates',
-      url: `${config.appSubUrl}/integrated-alerting/alert-rule-templates`,
-    },
-    {
-      id: 'integrated-alerting-notification-channels',
-      text: 'Notification Channels',
-      url: `${config.appSubUrl}/integrated-alerting/notification-channels`,
-    },
-  ],
-};
+export const PMM_ALERTING_PERCONA_ALERTS: NavModelItem[] = [
+  {
+    id: 'integrated-alerting-alerts',
+    text: 'Fired alerts',
+    icon: 'info-circle',
+    url: `${config.appSubUrl}/alerting/alerts`,
+  },
+  {
+    id: 'integrated-alerting-templates',
+    text: 'Alert rule templates',
+    icon: 'brackets-curly',
+    url: `${config.appSubUrl}/alerting/alert-rule-templates`,
+  },
+];
 
 export const PMM_INVENTORY_PAGE: NavModelItem = {
   id: 'inventory',
@@ -210,13 +188,14 @@ export const getPmmSettingsPage = (alertingEnabled = false): NavModelItem => {
     },
   ];
 
-  if (alertingEnabled) {
-    children.push({
-      id: 'settings-communication',
-      text: 'Communication',
-      url: `${config.appSubUrl}/settings/communication`,
-    });
-  }
+  // TODO remove after integrating SMTP/slack with Grafana's alerting system
+  // if (alertingEnabled) {
+  //   children.push({
+  //     id: 'settings-communication',
+  //     text: 'Communication',
+  //     url: `${config.appSubUrl}/settings/communication`,
+  //   });
+  // }
   const page: NavModelItem = {
     id: 'settings',
     icon: 'percona-setting',

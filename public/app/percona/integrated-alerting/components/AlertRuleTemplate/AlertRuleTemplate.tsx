@@ -1,14 +1,15 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
+import { format } from 'date-fns';
 import React, { FC, useState, useEffect, useCallback } from 'react';
 import { Column } from 'react-table';
 
-import { Button, useStyles } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
+import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { OldPage } from 'app/core/components/Page/Page';
+import { useNavModel } from 'app/core/hooks/useNavModel';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { TechnicalPreview } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
-import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
@@ -24,15 +25,15 @@ import { FormattedTemplate } from './AlertRuleTemplate.types';
 import { formatSource, formatTemplates } from './AlertRuleTemplate.utils';
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions/AlertRuleTemplateActions';
 
-const { noData, columns } = Messages.alertRuleTemplate.table;
+const { columns } = Messages.alertRuleTemplate.table;
 
-const { name: nameColumn, source: sourceColumn, createdAt: createdAtColumn, actions: actionsColumn } = columns;
+const { name: nameColumn, source: sourceColumn, actions: actionsColumn } = columns;
 
 export const AlertRuleTemplate: FC = () => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);
-  const navModel = usePerconaNavModel('integrated-alerting-templates');
+  const navModel = useNavModel('integrated-alerting-templates');
   const [data, setData] = useState<FormattedTemplate[]>([]);
   const [pageSize, setPageSize] = useStoredTablePageSize(ALERT_RULE_TEMPLATES_TABLE_ID);
   const [pageIndex, setPageindex] = useState(0);
@@ -70,18 +71,25 @@ export const AlertRuleTemplate: FC = () => {
       {
         Header: nameColumn,
         accessor: 'summary',
-        width: '70%',
+        width: '60%',
       },
       {
         Header: sourceColumn,
         accessor: 'source',
-        width: '20%',
-        Cell: ({ value }) => formatSource(value),
-      },
-      {
-        Header: createdAtColumn,
-        accessor: 'created_at',
-        width: '10%',
+        width: '30%',
+        Cell: ({ value, row }) => {
+          return (
+            <div>
+              {formatSource(value)}
+              <br />
+              {row.original.created_at && (
+                <span className={styles.dateWrapper}>
+                  Created at: {format(new Date(row.original.created_at), 'yyyy-MM-dd')}
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         Header: actionsColumn,
@@ -90,7 +98,7 @@ export const AlertRuleTemplate: FC = () => {
         ),
       },
     ],
-    [getAlertRuleTemplates]
+    [getAlertRuleTemplates, styles.dateWrapper]
   );
 
   const handlePaginationChanged = useCallback(
@@ -104,6 +112,10 @@ export const AlertRuleTemplate: FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('alertingEnabled'), []);
 
+  const handleAddButton = () => {
+    setAddModalVisible((visible) => !visible);
+  };
+
   useEffect(() => {
     getAlertRuleTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -112,14 +124,13 @@ export const AlertRuleTemplate: FC = () => {
   return (
     <OldPage navModel={navModel}>
       <OldPage.Contents>
-        <TechnicalPreview />
-        <FeatureLoader featureName={Messages.integratedAlerting} featureSelector={featureSelector}>
+        <FeatureLoader featureName={Messages.alerting} featureSelector={featureSelector}>
           <div className={styles.actionsWrapper}>
             <Button
               size="md"
               icon="plus-square"
               fill="text"
-              onClick={() => setAddModalVisible(!addModalVisible)}
+              onClick={handleAddButton}
               data-testid="alert-rule-template-add-modal-button"
             >
               {Messages.alertRuleTemplate.addAction}
@@ -140,7 +151,14 @@ export const AlertRuleTemplate: FC = () => {
             data={data}
             columns={columns}
             pendingRequest={pendingRequest}
-            emptyMessage={noData}
+            emptyMessage={
+              <EmptyListCTA
+                title={Messages.alertRuleTemplate.table.noCreated}
+                buttonIcon="bell"
+                buttonTitle={Messages.alertRuleTemplate.table.newAlertRuleTemplate}
+                onClick={handleAddButton}
+              />
+            }
           />
         </FeatureLoader>
       </OldPage.Contents>

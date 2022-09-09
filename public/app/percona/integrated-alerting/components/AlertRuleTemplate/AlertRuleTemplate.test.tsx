@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { Router } from 'react-router-dom';
 
+import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
@@ -34,7 +36,9 @@ describe('AlertRuleTemplate', () => {
           },
         } as StoreState)}
       >
-        <AlertRuleTemplate />
+        <Router history={locationService.getHistory()}>
+          <AlertRuleTemplate />
+        </Router>
       </Provider>
     );
 
@@ -56,7 +60,9 @@ describe('AlertRuleTemplate', () => {
           },
         } as StoreState)}
       >
-        <AlertRuleTemplate />
+        <Router history={locationService.getHistory()}>
+          <AlertRuleTemplate />
+        </Router>
       </Provider>
     );
 
@@ -81,7 +87,9 @@ describe('AlertRuleTemplate', () => {
           },
         } as StoreState)}
       >
-        <AlertRuleTemplate />
+        <Router history={locationService.getHistory()}>
+          <AlertRuleTemplate />
+        </Router>
       </Provider>
     );
 

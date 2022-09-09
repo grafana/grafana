@@ -12,3 +12,4 @@ export const getAddKubernetes = (state: StoreState) => state.percona.addKubernet
 export const getAddDbCluster = (state: StoreState) => state.percona.addDbCluster;
 export const getPerconaDBClusters = (state: StoreState) => state.percona.dbClusters;
 export const getPerconaServer = (state: StoreState) => state.percona.server;
+export const getTemplates = (state: StoreState) => state.percona.templates;

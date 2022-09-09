@@ -19,3 +19,5 @@ export const formatTemplates = (templates: Template[]): FormattedTemplate[] => t
 export const beautifyUnit = (unit: TemplateParamUnit) => UNIT_MAP[unit];
 
 export const formatSource = (source: SourceDescription) => SOURCE_MAP[source];
+
+export const formatDate = (date: string | undefined) => date && moment(date).format('YYYY-MM-DD');

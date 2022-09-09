@@ -19,6 +19,8 @@ import {
   OperatorsList,
 } from 'app/percona/dbaas/components/Kubernetes/Kubernetes.types';
 import { KubernetesClusterStatus } from 'app/percona/dbaas/components/Kubernetes/KubernetesClusterStatus/KubernetesClusterStatus.types';
+import { AlertRuleTemplateService } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.service';
+import { TemplatesList } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.types';
 import { SettingsService } from 'app/percona/settings/Settings.service';
 import { Settings, SettingsAPIChangePayload } from 'app/percona/settings/Settings.types';
 import { PlatformService } from 'app/percona/settings/components/Platform/Platform.service';
@@ -377,6 +379,19 @@ export const fetchServerSaasHostAction = createAsyncThunk(
     )
 );
 
+export const fetchTemplatesAction = createAsyncThunk(
+  'percona/fetchTemplates',
+  async (): Promise<TemplatesList> =>
+    withSerializedError(
+      AlertRuleTemplateService.list({
+        page_params: {
+          index: 0,
+          page_size: 100,
+        },
+      })
+    )
+);
+
 const kubernetesReducer = createAsyncSlice('kubernetes', fetchKubernetesAction).reducer;
 const deleteKubernetesReducer = createAsyncSlice('deleteKubernetes', deleteKubernetesAction).reducer;
 const addKubernetesReducer = createAsyncSlice('addKubernetes', addKubernetesAction).reducer;
@@ -388,6 +403,7 @@ const installKubernetesOperatorReducer = createAsyncSlice(
 const dbClustersReducer = createAsyncSlice('dbClusters', fetchDBClustersAction).reducer;
 const settingsReducer = createAsyncSlice('settings', fetchSettingsAction, initialSettingsState).reducer;
 const updateSettingsReducer = createAsyncSlice('updateSettings', updateSettingsAction).reducer;
+const templatesReducer = createAsyncSlice('templates', fetchTemplatesAction).reducer;
 
 export default {
   percona: combineReducers({
@@ -402,5 +418,6 @@ export default {
     installKubernetesOperator: installKubernetesOperatorReducer,
     dbClusters: dbClustersReducer,
     server: perconaServerReducers,
+    templates: templatesReducer,
   }),
 };

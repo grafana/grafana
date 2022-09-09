@@ -12,7 +12,7 @@ import appEvents from '../../app_events';
 import { getFooterLinks } from '../Footer/Footer';
 import { HelpModal } from '../help/HelpModal';
 
-import { PMM_ADD_INSTANCE_PAGE } from './constants';
+import { PMM_ADD_INSTANCE_PAGE, PMM_ALERTING_PERCONA_ALERTS } from './constants';
 
 export const SEARCH_ITEM_ID = 'search';
 export const NAV_MENU_PORTAL_CONTAINER_ID = 'navbar-menu-portal-container';
@@ -199,30 +199,33 @@ export function getNavModelItemKey(item: NavModelItem) {
   return item.id ?? item.text;
 }
 
-export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavModelItem[] => {
-  const integratedAlertingLink = {
-    id: 'integrated-alerting',
-    text: 'Integrated Alerting',
-    icon: 'bell',
-    url: `${config.appSubUrl}/integrated-alerting`,
-  };
+export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavModelItem | undefined => {
+  const alertingItem = mainLinks.find(({ id }) => id === 'alerting');
 
-  const alertingIndex = mainLinks.findIndex(({ id }) => id === 'alerting');
-
-  if (alertingIndex === -1) {
-    mainLinks.push({
-      id: 'alerting',
-      text: 'Alerting',
-      icon: 'bell',
-      url: `${config.appSubUrl}/integrated-alerting/alerts`,
-      subTitle: 'Alert rules & notifications',
-      children: [integratedAlertingLink],
-    });
-  } else {
-    mainLinks[alertingIndex].children?.unshift(integratedAlertingLink, DIVIDER);
+  if (alertingItem?.url) {
+    alertingItem.url = `${config.appSubUrl}/alerting/alerts`;
   }
 
-  return mainLinks;
+  alertingItem?.children?.unshift(...PMM_ALERTING_PERCONA_ALERTS);
+  return alertingItem;
+};
+
+export const removeAlertingMenuItem = (mainLinks: NavModelItem[]) => {
+  const alertingItem = mainLinks.find(({ id }) => id === 'alerting');
+
+  PMM_ALERTING_PERCONA_ALERTS.forEach((alertingTab, idx) => {
+    const item = alertingItem?.children?.find((c) => c.id === alertingTab.id);
+
+    if (item) {
+      alertingItem?.children?.splice(idx, 1);
+    }
+  });
+
+  if (alertingItem?.url) {
+    alertingItem.url = `${config.appSubUrl}/alerting/list`;
+  }
+
+  return alertingItem;
 };
 
 export const buildInventoryAndSettings = (mainLinks: NavModelItem[]): NavModelItem[] => {

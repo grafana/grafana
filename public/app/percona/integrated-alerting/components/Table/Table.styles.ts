@@ -20,6 +20,7 @@ export const getStyles = (theme: GrafanaTheme) => {
       /* This is required to make the table full-width */
       display: block;
       max-width: 100%;
+      overflow-x: scroll;
 
       table {
         /* Make sure the inner table is always as wide as needed */

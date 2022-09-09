@@ -27,7 +27,6 @@ import { NavBarToggle } from './NavBarToggle';
 import {
   getPmmSettingsPage,
   PMM_ADD_INSTANCE_PAGE,
-  PMM_ALERTING_PAGE,
   PMM_BACKUP_PAGE,
   PMM_DBAAS_PAGE,
   PMM_ENTITLEMENTS_PAGE,
@@ -46,6 +45,7 @@ import {
   getActiveItem,
   isMatchOrInnerMatch,
   isSearchActive,
+  removeAlertingMenuItem,
   SEARCH_ITEM_ID,
 } from './utils';
 
@@ -62,7 +62,7 @@ export const NavBar = React.memo(() => {
   const dispatch = useDispatch();
   const kiosk = getKioskMode();
   const { result } = useSelector(getPerconaSettings);
-  const { alertingEnabled } = result!;
+  const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result!;
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
   const [showSwitcherModal, setShowSwitcherModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -114,11 +114,11 @@ export const NavBar = React.memo(() => {
     .map((item) => enrichWithClickDispatch(item, dispatch, dispatchOffset));
 
   const activeItem = isSearchActive(location) ? searchItem : getActiveItem(navTree, location.pathname);
+  const iaMenuItem = alertingEnabled ? buildIntegratedAlertingMenuItem(coreItems) : removeAlertingMenuItem(coreItems);
 
   // @PERCONA
   // All these dispatches are our pages
   dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
-  dispatch(updateNavIndex(PMM_ALERTING_PAGE));
   dispatch(updateNavIndex(PMM_STT_PAGE));
   dispatch(updateNavIndex(PMM_DBAAS_PAGE));
   dispatch(updateNavIndex(PMM_BACKUP_PAGE));
@@ -128,11 +128,13 @@ export const NavBar = React.memo(() => {
   dispatch(updateNavIndex(PMM_ENTITLEMENTS_PAGE));
   dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
 
+  if (iaMenuItem) {
+    dispatch(updateNavIndex(iaMenuItem));
+  }
+
   // @PERCONA
   useEffect(() => {
     const updatedNavTree = cloneDeep(initialState);
-
-    const { sttEnabled, alertingEnabled, dbaasEnabled, backupEnabled } = result!;
 
     // @PERCONA
     if (isPlatformUser) {
@@ -144,10 +146,6 @@ export const NavBar = React.memo(() => {
     // @PERCONA
     if (isAuthorized) {
       buildInventoryAndSettings(updatedNavTree);
-
-      if (alertingEnabled) {
-        buildIntegratedAlertingMenuItem(updatedNavTree);
-      }
 
       if (sttEnabled) {
         updatedNavTree.push(PMM_STT_PAGE);

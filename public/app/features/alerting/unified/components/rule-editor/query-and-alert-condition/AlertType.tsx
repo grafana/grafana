@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useSelector } from 'react-redux';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Field, InputControl, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { AccessControlAction } from 'app/types';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
@@ -17,6 +19,11 @@ interface Props {
 
 export const AlertType: FC<Props> = ({ editingExistingRule }) => {
   const { enabledRuleTypes, defaultRuleType } = getAvailableRuleTypes();
+  const { result } = useSelector(getPerconaSettings);
+
+  if (result && !!result.alertingEnabled) {
+    enabledRuleTypes.push(RuleFormType.templated);
+  }
 
   const {
     control,
@@ -90,9 +97,10 @@ function getAvailableRuleTypes() {
     contextSrv.hasEditPermissionInFolders
   );
   const canCreateCloudRules = contextSrv.hasAccess(AccessControlAction.AlertingRuleExternalWrite, contextSrv.isEditor);
-  const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
+  const defaultRuleType = RuleFormType.templated;
 
   const enabledRuleTypes: RuleFormType[] = [];
+
   if (canCreateGrafanaRules) {
     enabledRuleTypes.push(RuleFormType.grafana);
   }

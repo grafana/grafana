@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Alert, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
@@ -74,6 +74,10 @@ export const Communication: FC = () => {
       <OldPage.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={cx(settingsStyles.wrapper)}>
+            <Alert title="Communication settings" severity="warning" data-testid="communication-warning">
+              This page is deprecated for now. Please resort to Grafana&apos;s SMTP settings via .ini file and use
+              Contact Points to setup Slack notifications.
+            </Alert>
             <TabsBar>
               {tabs.map((tab, index) => (
                 <Tab

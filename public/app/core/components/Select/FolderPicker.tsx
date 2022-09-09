@@ -14,7 +14,9 @@ import appEvents from '../../app_events';
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
 export interface Props {
-  onChange: ($folder: { title: string; id: number }) => void;
+  // @PERCONA
+  // Added uid here
+  onChange: ($folder: { title: string; id: number; uid: number }) => void;
   enableCreateNew?: boolean;
   rootName?: string;
   enableReset?: boolean;
@@ -137,7 +139,9 @@ export class FolderPicker extends PureComponent<Props, State> {
       {
         folder: newFolder,
       },
-      () => this.props.onChange({ id: newFolder.value!, title: newFolder.label! })
+      // @PERCONA
+      // Added uid here
+      () => this.props.onChange({ id: newFolder.value!, title: newFolder.label!, uid: newFolder.uid })
     );
   };
 
@@ -147,7 +151,9 @@ export class FolderPicker extends PureComponent<Props, State> {
 
     if (newFolder.id > -1) {
       appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
-      folder = { value: newFolder.id, label: newFolder.title };
+      // @PERCONA
+      // Added uid here
+      folder = { value: newFolder.id, label: newFolder.title, uid: newFolder.uid };
       this.setState(
         {
           folder: newFolder,
@@ -201,7 +207,9 @@ export class FolderPicker extends PureComponent<Props, State> {
       () => {
         // if this is not the same as our initial value notify parent
         if (folder && folder.value !== initialFolderId) {
-          this.props.onChange({ id: folder.value!, title: folder.label! });
+          // @PERCONA
+          // Added uid here
+          this.props.onChange({ id: folder.value!, title: folder.label!, uid: folder.uid });
         }
       }
     );
@@ -234,7 +242,9 @@ export class FolderPicker extends PureComponent<Props, State> {
 
 function mapSearchHitsToOptions(hits: DashboardSearchHit[], filter?: FolderPickerFilter) {
   const filteredHits = filter ? filter(hits) : hits;
-  return filteredHits.map((hit) => ({ label: hit.title, value: hit.id }));
+  // @PERCONA
+  // Added uid here
+  return filteredHits.map((hit) => ({ label: hit.title, value: hit.id, uid: hit.uid }));
 }
 
 interface Args {

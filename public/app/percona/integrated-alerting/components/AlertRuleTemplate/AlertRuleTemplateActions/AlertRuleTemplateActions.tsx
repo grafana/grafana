@@ -1,6 +1,8 @@
+import { cx } from '@emotion/css';
 import React, { FC, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 
-import { IconButton, Tooltip, useStyles } from '@grafana/ui';
+import { IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SourceDescription } from '../AlertRuleTemplate.types';
 import { DeleteRuleTemplateModal } from '../DeleteRuleTemplateModal/DeleteRuleTemplateModal';
@@ -12,7 +14,7 @@ import { AlertRuleTemplateActionsProps } from './AlertRuleTemplateActions.types'
 const nonActionableSources = [SourceDescription.BUILT_IN, SourceDescription.USER_FILE, SourceDescription.SAAS];
 
 export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ template, getAlertRuleTemplates }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const { source, yaml, name, summary } = template;
@@ -20,10 +22,20 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
 
   return (
     <div className={styles.actionsWrapper}>
+      <Tooltip placement="top" content="Create alert rule from this template">
+        <Link
+          to={`/alerting/new?returnTo=%2Falerting%2Falert-rule-templates&template=${template.name}`}
+          className={styles.actionLink}
+        >
+          <IconButton data-testid="create-from-template-button" name="plus" size="lg" className={styles.button} />
+        </Link>
+      </Tooltip>
       <Tooltip placement="top" content="Edit">
         <IconButton
           data-testid="edit-template-button"
           name="pen"
+          size="lg"
+          className={cx(styles.button, styles.editButton)}
           disabled={isActionDisabled}
           onClick={() => setEditModalVisible(true)}
         />
@@ -33,6 +45,7 @@ export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ te
           data-testid="delete-template-button"
           name="times"
           size="xl"
+          className={cx(styles.button)}
           disabled={isActionDisabled}
           onClick={() => setDeleteModalVisible(true)}
         />

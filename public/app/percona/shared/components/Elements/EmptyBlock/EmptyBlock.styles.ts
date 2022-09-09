@@ -1,21 +1,15 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = (theme: GrafanaTheme) => {
-  const { colors } = theme;
-  const backgroundColorBody = colors.bg1;
-  const borderColor = colors.border2;
-
-  return {
-    emptyBlockWrapper: css`
-      display: flex;
-      width: 100%;
-      height: 160px;
-      justify-content: center;
-      align-items: center;
-      border: 1px solid ${borderColor};
-      background-color: ${backgroundColorBody};
-    `,
-  };
-};
+export const getStyles = (theme: GrafanaTheme2) => ({
+  emptyBlockWrapper: css`
+    display: flex;
+    width: 100%;
+    height: 160px;
+    justify-content: center;
+    align-items: center;
+    border-radius: ${theme.shape.borderRadius(2)};
+    background: ${theme.colors.background.secondary};
+  `,
+});

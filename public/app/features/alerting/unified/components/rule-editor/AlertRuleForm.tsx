@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
 import { FormProvider, useForm, UseFormWatch } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,6 +9,7 @@ import { Button, ConfirmModal, CustomScrollbar, PageToolbar, Spinner, useStyles2
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -23,6 +24,7 @@ import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
 import { NotificationsStep } from './NotificationsStep';
 import { RuleInspector } from './RuleInspector';
+import { TemplateStep } from './TemplateStep/TemplateStep';
 import { QueryAndAlertConditionStep } from './query-and-alert-condition/QueryAndAlertConditionStep';
 
 type Props = {
@@ -35,6 +37,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const notifyApp = useAppNotification();
   const [queryParams] = useQueryParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
+  const { result } = useSelector(getPerconaSettings);
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -47,9 +50,12 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
       ...getDefaultFormValues(),
       queries: getDefaultQueries(),
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
-      type: RuleFormType.grafana,
+      // @PERCONA
+      // Set templated as default
+      type: result && !!result.alertingEnabled ? RuleFormType.templated : RuleFormType.grafana,
+      group: result && !!result.alertingEnabled ? 'default-alert-group' : '',
     };
-  }, [existing, queryParams]);
+  }, [existing, queryParams, result]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -63,6 +69,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const dataSourceName = watch('dataSourceName');
 
   const showStep2 = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
+  const showTemplateStep = type === RuleFormType.templated;
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
@@ -152,6 +159,8 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
               <QueryAndAlertConditionStep editingExistingRule={!!existing} />
+              {/* @PERCONA */}
+              {showTemplateStep && <TemplateStep />}
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? <GrafanaEvaluationBehavior /> : <CloudEvaluationBehavior />}

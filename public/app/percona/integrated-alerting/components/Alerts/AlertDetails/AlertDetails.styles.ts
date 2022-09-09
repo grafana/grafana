@@ -1,28 +1,12 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
-
-export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
+export const getStyles = () => ({
   wrapper: css`
     display: flex;
     align-items: center;
-
-    & > * {
-      flex: 1 0 50%;
-      display: flex;
-      align-items: center;
-
-      &:first-child {
-        margin-right: ${spacing.md};
-      }
-
-      & > span {
-        margin-right: ${spacing.md};
-      }
-    }
-
-    pre {
-      margin-bottom: 0;
-    }
+    justify-content: space-between;
+  `,
+  labels: css`
+    justify-content: flex-start;
   `,
 });
