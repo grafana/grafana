@@ -110,9 +110,6 @@ export const Components = {
       rcContentWrapper: () => '.drawer-content-wrapper',
     },
   },
-  Switch: {
-    input: (title: string) => `data-testid ${title}`,
-  },
   PanelEditor: {
     General: {
       content: 'Panel editor content',

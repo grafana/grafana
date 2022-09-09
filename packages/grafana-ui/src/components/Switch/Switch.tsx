@@ -36,7 +36,6 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
           id={switchIdRef.current}
           {...inputProps}
           ref={ref}
-          data-testid={selectors.components.Switch.input(switchIdRef.current)}
         />
         <label htmlFor={switchIdRef.current} />
       </div>
