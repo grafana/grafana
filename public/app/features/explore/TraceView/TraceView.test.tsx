@@ -105,7 +105,7 @@ describe('TraceView', () => {
   it('shows timeline ticks', () => {
     renderTraceViewNew();
     function ticks() {
-      return screen.getByText('', { selector: 'div[data-test-id="TimelineHeaderRow"]' }).children[1].children[1]
+      return screen.getByText('', { selector: 'div[data-testid="TimelineHeaderRow"]' }).children[1].children[1]
         .textContent;
     }
     expect(ticks()).toBe('0μs274.5μs549μs823.5μs1.1ms');
