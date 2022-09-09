@@ -490,6 +490,14 @@ describe('RuleEditor', () => {
     await userEvent.click(within(folderInput).getByRole('combobox'));
     expect(screen.getByText(folder.title)).toBeInTheDocument();
     expect(screen.queryByText(slashedFolder.title)).not.toBeInTheDocument();
+
+    //check that slashes warning is only shown once user search slashes
+    expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
+    await userEvent.type(within(folderInput).getByRole('combobox'), 'new slashed //');
+    expect(within(folderInput).getByText("Folders with '/' character are not allowed.")).toBeInTheDocument();
+    await userEvent.keyboard('{backspace} {backspace}{backspace}');
+    expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
+
     // add an annotation
     await clickSelectOption(ui.inputs.annotationKey(2).get(), /Add new/);
     await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
