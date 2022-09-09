@@ -14,7 +14,7 @@ const meta: ComponentMeta<typeof CollapsableSection> = {
       page: mdx,
     },
     controls: {
-      exclude: ['className', 'contentClassName', 'onToggle', 'labelId'],
+      exclude: ['className', 'contentClassName', 'onToggle', 'labelId', 'isOpen'],
     },
   },
   args: {
