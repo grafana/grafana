@@ -42,7 +42,7 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
           allowCustomValue
           filterOption={customFilterOption}
           onOpenMenu={async () => {
-            if (state.metrics && state.metrics.length === 0) {
+            if (!state.metrics) {
               setState({ isLoading: true });
               const metrics = await suggestMetrics();
               setState({ metrics, isLoading: undefined });
@@ -53,9 +53,9 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
           onChange={({ value }) => {
             if (value) {
               onChange({ ...query, metric: value });
+              onRunQuery();
             }
           }}
-          onBlur={() => onRunQuery()}
         />
       </div>
       <div className="gf-form">
@@ -67,9 +67,9 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
           onChange={({ value }) => {
             if (value) {
               onChange({ ...query, aggregator: value });
+              onRunQuery();
             }
           }}
-          onBlur={() => onRunQuery()}
         />
       </div>
       <div className="gf-form max-width-20">
@@ -82,6 +82,7 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
         </InlineFormLabel>
         <Input
           placeholder="series alias"
+          value={query.alias ?? ''}
           onChange={(e) => {
             const value = e.currentTarget.value;
             onChange({ ...query, alias: value });
