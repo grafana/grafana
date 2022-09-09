@@ -598,7 +598,7 @@ func (g *GrafanaLive) handleOnRPC(client *centrifuge.Client, e centrifuge.RPCEve
 		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusForbidden), Message: http.StatusText(http.StatusForbidden)}
 		}
-		if errors.Is(err, query.ErrBadQuery) {
+		if errors.Is(err, query.ErrQueryValidationFailure) {
 			return centrifuge.RPCReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: http.StatusText(http.StatusBadRequest)}
 		}
 		return centrifuge.RPCReply{}, centrifuge.ErrorInternal
