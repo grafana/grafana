@@ -126,9 +126,17 @@ export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps
   );
 };
 
-const Default = <></>;
-const LoadingIcon = <PanelChrome.LoadingIndicator loading onCancel={action('LoadingIndicator: onCancel fired')} />;
-const ErrorIcon = <PanelChrome.ErrorIndicator error="Error text" onClick={action('ErrorIndicator: onClick fired')} />;
+const Default: ReactNode = [];
+const LoadingIcon = [
+  <PanelChrome.LoadingIndicator key="loadingIndicator" loading onCancel={action('LoadingIndicator: onCancel fired')} />,
+];
+const ErrorIcon = [
+  <PanelChrome.ErrorIndicator
+    key="errorIndicator"
+    error="Error text"
+    onClick={action('ErrorIndicator: onClick fired')}
+  />,
+];
 
 const leftItems = { LoadingIcon, ErrorIcon, Default };
 
