@@ -20,6 +20,7 @@ export interface DataFrameJSON {
   data?: DataFrameData;
 }
 
+// eslint-ignore-next-line
 type FieldValues = any[];
 
 /**

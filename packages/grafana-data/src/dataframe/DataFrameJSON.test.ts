@@ -84,7 +84,7 @@ describe('DataFrame JSON', () => {
       `);
     });
 
-    it('should inflate values from enums', () => {
+    it('should inflate values from enums and switch to string field type', () => {
       const json: DataFrameJSON = {
         schema: {
           fields: [
