@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/zipkin/
+  - /docs/grafana/next/datasources/zipkin/
 description: Guide for using Zipkin in Grafana
 keywords:
   - grafana

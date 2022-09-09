@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/controls/
-  - /docs/grafana/latest/panels/visualizations/geomap/controls/
+  - /docs/grafana/next/features/panels/geomap/controls/
+  - /docs/grafana/next/panels/visualizations/geomap/controls/
 description: Map Controls
 keywords:
   - grafana

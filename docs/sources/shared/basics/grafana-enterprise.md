@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/shared/basics/grafana-enterprise/
+  - /docs/grafana/next/shared/basics/grafana-enterprise/
 title: Grafana Enterprise
 ---
 

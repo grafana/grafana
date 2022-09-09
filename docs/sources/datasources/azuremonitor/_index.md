@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/azuremonitor/
-  - /docs/grafana/latest/features/datasources/azuremonitor/
+  - /docs/grafana/next/datasources/azuremonitor/
+  - /docs/grafana/next/features/datasources/azuremonitor/
 description: Guide for using Azure Monitor in Grafana
 keywords:
   - grafana

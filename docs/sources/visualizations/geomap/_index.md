@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/
-  - /docs/grafana/latest/panels/visualizations/geomap/
-  - /docs/grafana/latest/visualizations/geomap/
+  - /docs/grafana/next/features/panels/geomap/
+  - /docs/grafana/next/panels/visualizations/geomap/
+  - /docs/grafana/next/visualizations/geomap/
 description: Geomap visualization documentation
 keywords:
   - grafana

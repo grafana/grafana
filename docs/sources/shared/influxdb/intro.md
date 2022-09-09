@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/shared/influxdb/intro/
+  - /docs/grafana/next/shared/influxdb/intro/
 title: Intro paragraph
 ---
 

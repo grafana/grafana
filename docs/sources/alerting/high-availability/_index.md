@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/high-availability/
-  - /docs/grafana/latest/alerting/unified-alerting/high-availability/
+  - /docs/grafana/next/alerting/high-availability/
+  - /docs/grafana/next/alerting/unified-alerting/high-availability/
 description: High availability
 keywords:
   - grafana

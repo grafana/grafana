@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/kubernetes/
-  - /docs/grafana/latest/setup-grafana/installation/kubernetes/
+  - /docs/grafana/next/installation/kubernetes/
+  - /docs/grafana/next/setup-grafana/installation/kubernetes/
 description: Guide for deploying Grafana on Kubernetes
 title: Deploy Grafana on Kubernetes
 weight: 300

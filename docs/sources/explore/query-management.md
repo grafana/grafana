@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/explore/query-management/
+  - /docs/grafana/next/explore/query-management/
 keywords:
   - explore
   - loki

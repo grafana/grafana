@@ -1,22 +1,22 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/time-series/
-  - /docs/grafana/latest/visualizations/time-series/
-  - /docs/grafana/latest/panels/visualizations/time-series/annotate-time-series/
-  - /docs/grafana/latest/visualizations/time-series/annotate-time-series/
-  - /docs/grafana/latest/panels/visualizations/time-series/change-axis-display/
-  - /docs/grafana/latest/visualizations/time-series/change-axis-display/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-color-scheme/
-  - /docs/grafana/latest/visualizations/time-series/graph-color-scheme/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-bars/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-bars/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-lines/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-lines/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-points/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-as-points/
-  - /docs/grafana/latest/features/panels/histogram/
-  - /docs/grafana/latest/panels/visualizations/time-series/graph-time-series-stacking/
-  - /docs/grafana/latest/visualizations/time-series/graph-time-series-stacking/
+  - /docs/grafana/next/panels/visualizations/time-series/
+  - /docs/grafana/next/visualizations/time-series/
+  - /docs/grafana/next/panels/visualizations/time-series/annotate-time-series/
+  - /docs/grafana/next/visualizations/time-series/annotate-time-series/
+  - /docs/grafana/next/panels/visualizations/time-series/change-axis-display/
+  - /docs/grafana/next/visualizations/time-series/change-axis-display/
+  - /docs/grafana/next/panels/visualizations/time-series/graph-color-scheme/
+  - /docs/grafana/next/visualizations/time-series/graph-color-scheme/
+  - /docs/grafana/next/panels/visualizations/time-series/graph-time-series-as-bars/
+  - /docs/grafana/next/visualizations/time-series/graph-time-series-as-bars/
+  - /docs/grafana/next/panels/visualizations/time-series/graph-time-series-as-lines/
+  - /docs/grafana/next/visualizations/time-series/graph-time-series-as-lines/
+  - /docs/grafana/next/panels/visualizations/time-series/graph-time-series-as-points/
+  - /docs/grafana/next/visualizations/time-series/graph-time-series-as-points/
+  - /docs/grafana/next/features/panels/histogram/
+  - /docs/grafana/next/panels/visualizations/time-series/graph-time-series-stacking/
+  - /docs/grafana/next/visualizations/time-series/graph-time-series-stacking/
 keywords:
   - grafana
   - graph panel

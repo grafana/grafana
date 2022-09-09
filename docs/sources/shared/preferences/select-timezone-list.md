@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/shared/preferences/select-timezone-list/
+  - /docs/grafana/next/shared/preferences/select-timezone-list/
 title: Select home dashboard list
 ---
 

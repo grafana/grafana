@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/
-  - /docs/grafana/latest/visualizations/
+  - /docs/grafana/next/panels/visualizations/
+  - /docs/grafana/next/visualizations/
 title: Visualizations
 weight: 75
 ---

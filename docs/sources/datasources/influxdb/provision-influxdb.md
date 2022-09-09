@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/influxdb/provision-influxdb/
+  - /docs/grafana/next/datasources/influxdb/provision-influxdb/
 description: Guide for provisioning InfluxDB
 title: Provision InfluxDB
 weight: 400

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/filter-variables-with-regex/
+  - /docs/grafana/next/variables/filter-variables-with-regex/
 keywords:
   - grafana
   - templating

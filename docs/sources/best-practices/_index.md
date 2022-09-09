@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/best-practices/
+  - /docs/grafana/next/best-practices/
 description: Best practices for working with Grafana
 title: Best practices
 weight: 20

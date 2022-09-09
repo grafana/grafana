@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/global-variables/
-  - /docs/grafana/latest/variables/variable-types/global-variables/
+  - /docs/grafana/next/variables/global-variables/
+  - /docs/grafana/next/variables/variable-types/global-variables/
 keywords:
   - grafana
   - templating

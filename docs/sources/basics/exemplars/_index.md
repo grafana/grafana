@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/basics/exemplars/
+  - /docs/grafana/next/basics/exemplars/
 description: Exemplars
 keywords:
   - grafana

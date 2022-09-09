@@ -1,9 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/test-contact-point/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
+  - /docs/grafana/next/alerting/contact-points/message-templating/
+  - /docs/grafana/next/alerting/contact-points/test-contact-point/
+  - /docs/grafana/next/alerting/message-templating/
+  - /docs/grafana/next/alerting/unified-alerting/message-templating/
 keywords:
   - grafana
   - alerting

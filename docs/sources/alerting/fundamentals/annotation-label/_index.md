@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/alert-annotation-label/
-  - /docs/grafana/latest/alerting/fundamentals/annotation-label/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/alert-annotation-label/
+  - /docs/grafana/next/alerting/alerting-rules/alert-annotation-label/
+  - /docs/grafana/next/alerting/fundamentals/annotation-label/
+  - /docs/grafana/next/alerting/unified-alerting/alerting-rules/alert-annotation-label/
 description: Annotations and labels for alerting
 keywords:
   - grafana

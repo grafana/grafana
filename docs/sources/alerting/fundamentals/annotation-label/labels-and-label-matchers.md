@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/fundamentals/annotation-label/labels-and-label-matchers/
+  - /docs/grafana/next/alerting/fundamentals/annotation-label/labels-and-label-matchers/
 description: Learn about labels and label matchers in alerting
 keywords:
   - grafana

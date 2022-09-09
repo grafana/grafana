@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/anotations/
-  - /docs/grafana/latest/panels/visualizations/annotations/
-  - /docs/grafana/latest/visualizations/annotations/
+  - /docs/grafana/next/features/panels/anotations/
+  - /docs/grafana/next/panels/visualizations/annotations/
+  - /docs/grafana/next/visualizations/annotations/
 description: Annotations visualization documentation
 keywords:
   - grafana

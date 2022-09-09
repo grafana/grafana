@@ -1,10 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/service-accounts/
-  - /docs/grafana/latest/administration/service-accounts/about-service-accounts/
-  - /docs/grafana/latest/administration/service-accounts/add-service-account-token/
-  - /docs/grafana/latest/administration/service-accounts/create-service-account/
-  - /docs/grafana/latest/administration/service-accounts/enable-service-accounts/
+  - /docs/grafana/next/administration/service-accounts/
+  - /docs/grafana/next/administration/service-accounts/about-service-accounts/
+  - /docs/grafana/next/administration/service-accounts/add-service-account-token/
+  - /docs/grafana/next/administration/service-accounts/create-service-account/
+  - /docs/grafana/next/administration/service-accounts/enable-service-accounts/
 description: This page contains information about service accounts in Grafana
 keywords:
   - API keys

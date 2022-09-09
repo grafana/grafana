@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/data-frames/
+  - /docs/grafana/next/developers/plugins/data-frames/
 title: Data frames
 ---
 

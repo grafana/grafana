@@ -1,16 +1,16 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-manage/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-folders/
-  - /docs/grafana/latest/reference/dashboard_folders/
-  - /docs/grafana/latest/dashboards/export-import/
-  - /docs/grafana/latest/reference/export_import/
-  - /docs/grafana/latest/troubleshooting/troubleshoot-dashboards/
-  - /docs/grafana/latest/dashboards/time-range-controls/
-  - /docs/grafana/latest/reference/timerange/
-  - /docs/grafana/latest/panels/working-with-panels/organize-dashboard/
-  - /docs/grafana/latest/dashboards/manage-dashboards/
+  - /docs/grafana/next/dashboards/dashboard-manage/
+  - /docs/grafana/next/features/dashboard/dashboards/
+  - /docs/grafana/next/dashboards/dashboard-folders/
+  - /docs/grafana/next/reference/dashboard_folders/
+  - /docs/grafana/next/dashboards/export-import/
+  - /docs/grafana/next/reference/export_import/
+  - /docs/grafana/next/troubleshooting/troubleshoot-dashboards/
+  - /docs/grafana/next/dashboards/time-range-controls/
+  - /docs/grafana/next/reference/timerange/
+  - /docs/grafana/next/panels/working-with-panels/organize-dashboard/
+  - /docs/grafana/next/dashboards/manage-dashboards/
 title: Manage dashboards
 menuTitle: Manage dashboards
 weight: 8

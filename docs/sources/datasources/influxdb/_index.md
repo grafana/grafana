@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/influxdb/
-  - /docs/grafana/latest/features/datasources/influxdb/
+  - /docs/grafana/next/datasources/influxdb/
+  - /docs/grafana/next/features/datasources/influxdb/
 description: Guide for using InfluxDB in Grafana
 keywords:
   - grafana

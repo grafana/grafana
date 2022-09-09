@@ -1,14 +1,14 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/configure-value-mappings/
-  - /docs/grafana/latest/panels/format-data/
-  - /docs/grafana/latest/panels/value-mappings/
-  - /docs/grafana/latest/panels/format-data/about-value-mapping/
-  - /docs/grafana/latest/panels/format-data/edit-value-mapping/
-  - /docs/grafana/latest/panels/format-data/map-a-range/
-  - /docs/grafana/latest/panels/format-data/map-a-regular-expression/
-  - /docs/grafana/latest/panels/format-data/map-a-special-value/
-  - /docs/grafana/latest/panels/format-data/map-a-value/
+  - /docs/grafana/next/panels/configure-value-mappings/
+  - /docs/grafana/next/panels/format-data/
+  - /docs/grafana/next/panels/value-mappings/
+  - /docs/grafana/next/panels/format-data/about-value-mapping/
+  - /docs/grafana/next/panels/format-data/edit-value-mapping/
+  - /docs/grafana/next/panels/format-data/map-a-range/
+  - /docs/grafana/next/panels/format-data/map-a-regular-expression/
+  - /docs/grafana/next/panels/format-data/map-a-special-value/
+  - /docs/grafana/next/panels/format-data/map-a-value/
 title: Configure value mappings
 menuTitle: Configure value mappings
 weight: 600

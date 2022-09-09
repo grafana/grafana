@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/reference/templating/
-  - /docs/grafana/latest/variables/syntax/
+  - /docs/grafana/next/reference/templating/
+  - /docs/grafana/next/variables/syntax/
 keywords:
   - grafana
   - templating

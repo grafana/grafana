@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/notifications/
-  - /docs/grafana/latest/old-alerting/notifications/
+  - /docs/grafana/next/alerting/notifications/
+  - /docs/grafana/next/old-alerting/notifications/
 description: Alerting notifications guide
 draft: true
 keywords:

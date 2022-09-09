@@ -1,9 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/logs/
-  - /docs/grafana/latest/panels/visualizations/logs-panel/
-  - /docs/grafana/latest/reference/logs/
-  - /docs/grafana/latest/visualizations/logs-panel/
+  - /docs/grafana/next/features/panels/logs/
+  - /docs/grafana/next/panels/visualizations/logs-panel/
+  - /docs/grafana/next/reference/logs/
+  - /docs/grafana/next/visualizations/logs-panel/
 keywords:
   - grafana
   - dashboard

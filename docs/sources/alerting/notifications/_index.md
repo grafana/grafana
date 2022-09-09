@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/notifications/
-  - /docs/grafana/latest/alerting/old-alerting/notifications/
-  - /docs/grafana/latest/alerting/unified-alerting/notifications/
+  - /docs/grafana/next/alerting/notifications/
+  - /docs/grafana/next/alerting/old-alerting/notifications/
+  - /docs/grafana/next/alerting/unified-alerting/notifications/
 description: Notification policies
 keywords:
   - grafana

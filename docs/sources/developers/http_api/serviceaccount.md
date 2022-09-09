@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/serviceaccount/
-  - /docs/grafana/latest/http_api/serviceaccount/
+  - /docs/grafana/next/developers/http_api/serviceaccount/
+  - /docs/grafana/next/http_api/serviceaccount/
 description: Grafana service account HTTP API
 keywords:
   - grafana

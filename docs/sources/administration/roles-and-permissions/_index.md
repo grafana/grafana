@@ -1,11 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/
-  - /docs/grafana/latest/manage-users/
-  - /docs/grafana/latest/permissions/
-  - /docs/grafana/latest/permissions/organization_roles/
-  - /docs/grafana/latest/permissions/overview/
-  - /docs/grafana/latest/administration/roles-and-permissions/
+  - /docs/grafana/next/administration/manage-users-and-permissions/about-users-and-permissions/
+  - /docs/grafana/next/manage-users/
+  - /docs/grafana/next/permissions/
+  - /docs/grafana/next/permissions/organization_roles/
+  - /docs/grafana/next/permissions/overview/
+  - /docs/grafana/next/administration/roles-and-permissions/
 description: Information about Grafana user, team, and organization roles and permissions
 title: Roles and permissions
 weight: 300

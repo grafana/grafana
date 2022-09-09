@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/variable-examples/
+  - /docs/grafana/next/variables/variable-examples/
 keywords:
   - grafana
   - templating

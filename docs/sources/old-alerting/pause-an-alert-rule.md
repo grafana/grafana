@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/pause-an-alert-rule/
-  - /docs/grafana/latest/old-alerting/pause-an-alert-rule/
+  - /docs/grafana/next/alerting/pause-an-alert-rule/
+  - /docs/grafana/next/old-alerting/pause-an-alert-rule/
 description: Pause an existing alert rule
 draft: true
 keywords:

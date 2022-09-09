@@ -1,10 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/expressions/
-  - /docs/grafana/latest/panels/inspect-panel/
-  - /docs/grafana/latest/panels/queries/
-  - /docs/grafana/latest/panels/query-a-data-source/
-  - /docs/grafana/latest/panels/share-query-results/
+  - /docs/grafana/next/panels/expressions/
+  - /docs/grafana/next/panels/inspect-panel/
+  - /docs/grafana/next/panels/queries/
+  - /docs/grafana/next/panels/query-a-data-source/
+  - /docs/grafana/next/panels/share-query-results/
   - /docs/sources/panels/query-a-data-source/_index/
 title: Query a data source
 weight: 200

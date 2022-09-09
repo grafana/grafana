@@ -1,18 +1,18 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/transform-data/
-  - /docs/grafana/latest/panels/transformations/
-  - /docs/grafana/latest/panels/transformations/apply-transformations/
-  - /docs/grafana/latest/panels/transformations/config-from-query/
-  - /docs/grafana/latest/panels/transformations/rows-to-fields/
-  - /docs/grafana/latest/panels/transform-data/about-transformation/
-  - /docs/grafana/latest/panels/transform-data/add-transformation-to-data/
-  - /docs/grafana/latest/panels/transform-data/apply-transformation-to-data/
-  - /docs/grafana/latest/panels/transform-data/debug-transformation/
-  - /docs/grafana/latest/panels/transform-data/delete-transformation/
-  - /docs/grafana/latest/panels/reference-transformation-functions/
-  - /docs/grafana/latest/panels/transform-data/transformation-functions/
-  - /docs/grafana/latest/panels/transformations/types-options/
+  - /docs/grafana/next/panels/transform-data/
+  - /docs/grafana/next/panels/transformations/
+  - /docs/grafana/next/panels/transformations/apply-transformations/
+  - /docs/grafana/next/panels/transformations/config-from-query/
+  - /docs/grafana/next/panels/transformations/rows-to-fields/
+  - /docs/grafana/next/panels/transform-data/about-transformation/
+  - /docs/grafana/next/panels/transform-data/add-transformation-to-data/
+  - /docs/grafana/next/panels/transform-data/apply-transformation-to-data/
+  - /docs/grafana/next/panels/transform-data/debug-transformation/
+  - /docs/grafana/next/panels/transform-data/delete-transformation/
+  - /docs/grafana/next/panels/reference-transformation-functions/
+  - /docs/grafana/next/panels/transform-data/transformation-functions/
+  - /docs/grafana/next/panels/transformations/types-options/
 title: Transform data
 weight: 500
 ---

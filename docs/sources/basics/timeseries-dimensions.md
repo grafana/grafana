@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/basics/timeseries-dimensions/
-  - /docs/grafana/latest/getting-started/timeseries-dimensions/
-  - /docs/grafana/latest/guides/timeseries-dimensions/
+  - /docs/grafana/next/basics/timeseries-dimensions/
+  - /docs/grafana/next/getting-started/timeseries-dimensions/
+  - /docs/grafana/next/guides/timeseries-dimensions/
 description: time series dimensions
 keywords:
   - grafana

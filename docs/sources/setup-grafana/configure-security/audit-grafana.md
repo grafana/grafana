@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/auditing/
-  - /docs/grafana/latest/setup-grafana/configure-security/audit-grafana/
+  - /docs/grafana/next/enterprise/auditing/
+  - /docs/grafana/next/setup-grafana/configure-security/audit-grafana/
 description: Auditing
 keywords:
   - grafana

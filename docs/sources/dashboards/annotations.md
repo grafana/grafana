@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/annotations/
-  - /docs/grafana/latest/reference/annotations/
+  - /docs/grafana/next/dashboards/annotations/
+  - /docs/grafana/next/reference/annotations/
 keywords:
   - grafana
   - annotations

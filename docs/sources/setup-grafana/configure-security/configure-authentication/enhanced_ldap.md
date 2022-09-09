@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/enhanced_ldap/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/enhanced_ldap/
+  - /docs/grafana/next/enterprise/enhanced_ldap/
+  - /docs/grafana/next/setup-grafana/configure-security/configure-authentication/enhanced_ldap/
 description: Grafana Enhanced LDAP Integration Guide
 keywords:
   - grafana

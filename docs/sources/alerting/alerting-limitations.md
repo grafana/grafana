@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-limitations/
+  - /docs/grafana/next/alerting/alerting-limitations/
 title: Limitations
 weight: 552
 ---

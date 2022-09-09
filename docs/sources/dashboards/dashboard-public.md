@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-manage/
-  - /docs/grafana/latest/features/dashboard/dashboards/
+  - /docs/grafana/next/dashboards/dashboard-manage/
+  - /docs/grafana/next/features/dashboard/dashboards/
 title: Public dashboards
 weight: 8
 ---

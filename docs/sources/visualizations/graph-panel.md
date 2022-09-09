@@ -1,9 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/graph/
-  - /docs/grafana/latest/panels/visualizations/graph-panel/
-  - /docs/grafana/latest/reference/graph/
-  - /docs/grafana/latest/visualizations/graph-panel/
+  - /docs/grafana/next/features/panels/graph/
+  - /docs/grafana/next/panels/visualizations/graph-panel/
+  - /docs/grafana/next/reference/graph/
+  - /docs/grafana/next/visualizations/graph-panel/
 keywords:
   - grafana
   - graph panel

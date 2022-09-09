@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/candlestick/
-  - /docs/grafana/latest/panels/visualizations/candlestick/
-  - /docs/grafana/latest/visualizations/candlestick/
+  - /docs/grafana/next/features/panels/candlestick/
+  - /docs/grafana/next/panels/visualizations/candlestick/
+  - /docs/grafana/next/visualizations/candlestick/
 description: Candlestick visualization documentation
 keywords:
   - grafana

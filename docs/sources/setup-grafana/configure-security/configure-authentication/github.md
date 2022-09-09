@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/github/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/github/
+  - /docs/grafana/next/auth/github/
+  - /docs/grafana/next/setup-grafana/configure-security/configure-authentication/github/
 description: Grafana OAuthentication Guide
 keywords:
   - grafana
@@ -134,11 +134,11 @@ Note: If a match is found in other fields, teams will be ignored.
 
 > Available in Grafana v9.2 and later versions.
 
-If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
-This is useful if you want to grant server administrator privileges to a subset of users.  
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.
+This is useful if you want to grant server administrator privileges to a subset of users.
 Grafana also assigns the user the `Admin` role of the default organization.
 
-The setting `allow_assign_grafana_admin` under `[auth.github]` must be set to `true` for this to work.  
+The setting `allow_assign_grafana_admin` under `[auth.github]` must be set to `true` for this to work.
 If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
 
 ```ini

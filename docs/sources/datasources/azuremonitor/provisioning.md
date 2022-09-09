@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/azuremonitor/provisioning/
+  - /docs/grafana/next/datasources/azuremonitor/provisioning/
 description: Template to provision the Azure Monitor data source
 keywords:
   - grafana

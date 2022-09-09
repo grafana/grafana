@@ -1,12 +1,12 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/enterprise/reporting/
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/dashboards/reporting/
-  - /docs/grafana/latest/enterprise/export-pdf/
-  - /docs/grafana/latest/panels/create-reports
-  - /docs/grafana/latest/dashboards/create-reports
+  - /docs/grafana/next/administration/reports/
+  - /docs/grafana/next/enterprise/reporting/
+  - /docs/grafana/next/administration/reports/
+  - /docs/grafana/next/dashboards/reporting/
+  - /docs/grafana/next/enterprise/export-pdf/
+  - /docs/grafana/next/panels/create-reports
+  - /docs/grafana/next/dashboards/create-reports
 title: Create and manage reports
 menuTitle: Reporting
 weight: 85

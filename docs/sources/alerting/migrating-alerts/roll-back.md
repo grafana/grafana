@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/migrating-alerts/roll-back/
-  - /docs/grafana/latest/alerting/opt-in/
-  - /docs/grafana/latest/alerting/unified-alerting/roll-back/
+  - /docs/grafana/next/alerting/migrating-alerts/roll-back/
+  - /docs/grafana/next/alerting/opt-in/
+  - /docs/grafana/next/alerting/unified-alerting/roll-back/
 description: Roll back to legacy alerting
 title: Roll back to legacy alerting
 weight: 103

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/advanced-variable-format-options/
+  - /docs/grafana/next/variables/advanced-variable-format-options/
 keywords:
   - grafana
   - templating

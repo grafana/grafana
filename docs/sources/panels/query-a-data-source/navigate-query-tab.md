@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/navigate-query-tab/
+  - /docs/grafana/next/panels/query-a-data-source/navigate-query-tab/
   - /docs/sources/panels/query-a-data-source/navigate-query-tab/
 title: Navigate the query tab
 weight: 20

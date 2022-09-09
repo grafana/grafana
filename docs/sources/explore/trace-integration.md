@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/explore/trace-integration/
+  - /docs/grafana/next/explore/trace-integration/
 description: Tracing in Explore
 keywords:
   - explore

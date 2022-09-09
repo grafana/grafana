@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/
+  - /docs/grafana/next/administration/
 description: Administration
 title: Administration
 weight: 40

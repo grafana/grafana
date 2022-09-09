@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/troubleshooting/
+  - /docs/grafana/next/troubleshooting/
 description: Guide to troubleshooting Grafana problems
 keywords:
   - grafana

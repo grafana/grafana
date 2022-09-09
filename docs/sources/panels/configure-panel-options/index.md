@@ -1,10 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/add-panels-dynamically/
-  - /docs/grafana/latest/panels/repeat-panels-or-rows/
-  - /docs/grafana/latest/panels/working-with-panels/add-title-and-description/
-  - /docs/grafana/latest/panels/working-with-panels/view-json-model/
-  - /docs/grafana/latest/panels/configure-panel-options/
+  - /docs/grafana/next/panels/add-panels-dynamically/
+  - /docs/grafana/next/panels/repeat-panels-or-rows/
+  - /docs/grafana/next/panels/working-with-panels/add-title-and-description/
+  - /docs/grafana/next/panels/working-with-panels/view-json-model/
+  - /docs/grafana/next/panels/configure-panel-options/
 title: Configure panel options
 menuTitle: Configure panel options
 weight: 150

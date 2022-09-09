@@ -1,14 +1,14 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/table_panel/
-  - /docs/grafana/latest/reference/table/
-  - /docs/grafana/latest/visualizations/table/
+  - /docs/grafana/next/features/panels/table_panel/
+  - /docs/grafana/next/reference/table/
+  - /docs/grafana/next/visualizations/table/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
-  - /docs/grafana/latest/features/panels/table_panel/
-  - /docs/grafana/latest/panels/visualizations/table/filter-table-columns/
-  - /docs/grafana/latest/reference/table/
-  - /docs/grafana/latest/visualizations/table/filter-table-columns/
-  - /docs/grafana/latest/visualizations/table/
+  - /docs/grafana/next/features/panels/table_panel/
+  - /docs/grafana/next/panels/visualizations/table/filter-table-columns/
+  - /docs/grafana/next/reference/table/
+  - /docs/grafana/next/visualizations/table/filter-table-columns/
+  - /docs/grafana/next/visualizations/table/
 keywords:
   - grafana
   - dashboard

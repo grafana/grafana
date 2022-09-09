@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/migration-guide/
+  - /docs/grafana/next/developers/plugins/migration-guide/
 title: Plugin migration guide
 ---
 

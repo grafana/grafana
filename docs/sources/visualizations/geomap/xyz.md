@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/zyx/
-  - /docs/grafana/latest/panels/visualizations/geomap/zyx/
+  - /docs/grafana/next/features/panels/geomap/zyx/
+  - /docs/grafana/next/panels/visualizations/geomap/zyx/
 description: ArcGIS layer
 keywords:
   - grafana

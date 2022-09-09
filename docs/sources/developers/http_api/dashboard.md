@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/dashboard/
-  - /docs/grafana/latest/http_api/dashboard/
+  - /docs/grafana/next/developers/http_api/dashboard/
+  - /docs/grafana/next/http_api/dashboard/
 description: Grafana Dashboard HTTP API
 keywords:
   - grafana

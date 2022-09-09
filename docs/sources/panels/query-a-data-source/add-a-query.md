@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/add-a-query/
+  - /docs/grafana/next/panels/query-a-data-source/add-a-query/
   - /docs/sources/panels/query-a-data-source/add-a-query/
 title: Add a query
 weight: 30

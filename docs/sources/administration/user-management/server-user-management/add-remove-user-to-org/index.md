@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-remove-user-to-org/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-user-to-org/
-  - /docs/grafana/latest/administration/user-management/server-user-management/add-remove-user-to-org/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-server-users/add-remove-user-to-org/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-server-users/add-user-to-org/
+  - /docs/grafana/next/administration/user-management/server-user-management/add-remove-user-to-org/
 title: Add or remove a user in an organization
 description: Describes how a Grafana server administrator can add or remove users in an organization
 weight: 30

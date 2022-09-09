@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/edit-mimir-loki-namespace-group/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
+  - /docs/grafana/next/alerting/alerting-rules/edit-mimir-loki-namespace-group/
+  - /docs/grafana/next/alerting/unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
+  - /docs/grafana/next/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
 description: Edit Grafana Mimir or Loki rule groups and namespaces
 keywords:
   - grafana

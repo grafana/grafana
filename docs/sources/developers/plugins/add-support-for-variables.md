@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/add-support-for-variables/
+  - /docs/grafana/next/developers/plugins/add-support-for-variables/
 title: Add support for variables in plugins
 ---
 

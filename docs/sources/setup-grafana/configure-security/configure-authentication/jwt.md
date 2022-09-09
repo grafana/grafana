@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/jwt/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/jwt/
+  - /docs/grafana/next/auth/jwt/
+  - /docs/grafana/next/setup-grafana/configure-security/configure-authentication/jwt/
 description: Grafana JWT Authentication
 title: Configure JWT Authentication
 weight: 500

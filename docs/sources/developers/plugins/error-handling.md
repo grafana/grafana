@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/error-handling/
+  - /docs/grafana/next/developers/plugins/error-handling/
 title: Error handling
 ---
 

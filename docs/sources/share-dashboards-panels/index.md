@@ -1,18 +1,18 @@
 ---
 aliases:
-  - /docs/grafana/latest/sharing/
-  - /docs/grafana/latest/dashboards/share-dashboard/
-  - /docs/grafana/latest/reference/share_dashboard/
-  - /docs/grafana/latest/sharing/share-dashboard/
-  - /docs/grafana/latest/dashboards/share-dashboard/
-  - /docs/grafana/latest/reference/share_panel/
-  - /docs/grafana/latest/sharing/share-panel/
-  - /docs/grafana/latest/sharing/playlists/
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/enterprise/reporting/
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/dashboards/reporting/
-  - /docs/grafana/latest/enterprise/export-pdf/
+  - /docs/grafana/next/sharing/
+  - /docs/grafana/next/dashboards/share-dashboard/
+  - /docs/grafana/next/reference/share_dashboard/
+  - /docs/grafana/next/sharing/share-dashboard/
+  - /docs/grafana/next/dashboards/share-dashboard/
+  - /docs/grafana/next/reference/share_panel/
+  - /docs/grafana/next/sharing/share-panel/
+  - /docs/grafana/next/sharing/playlists/
+  - /docs/grafana/next/administration/reports/
+  - /docs/grafana/next/enterprise/reporting/
+  - /docs/grafana/next/administration/reports/
+  - /docs/grafana/next/dashboards/reporting/
+  - /docs/grafana/next/enterprise/export-pdf/
 title: Share dashboards and panels
 menuTitle: Share dashboards and panels
 weight: 85

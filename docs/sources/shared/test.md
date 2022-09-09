@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/shared/test/
+  - /docs/grafana/next/shared/test/
 title: Shared Content
 ---
 

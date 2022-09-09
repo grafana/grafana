@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/basics/timeseries/
+  - /docs/grafana/next/basics/timeseries/
 description: Introduction to time series
 keywords:
   - grafana

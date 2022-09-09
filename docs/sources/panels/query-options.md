@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-options/
-  - /docs/grafana/latest/panels/reference-query-options/
+  - /docs/grafana/next/panels/query-options/
+  - /docs/grafana/next/panels/reference-query-options/
   - /docs/sources/panels/reference-query-options/
 title: Query options
 weight: 900

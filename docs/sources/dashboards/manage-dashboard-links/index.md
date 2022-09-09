@@ -1,11 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/linking/
-  - /docs/grafana/latest/features/navigation-links/
-  - /docs/grafana/latest/linking/linking-overview/
-  - /docs/grafana/latest/linking/dashboard-links/
-  - /docs/grafana/latest/dashboards/manage-dashboard-links/
-  - /docs/grafana/latest/panels/working-with-panels/add-link-to-panel/
+  - /docs/grafana/next/linking/
+  - /docs/grafana/next/features/navigation-links/
+  - /docs/grafana/next/linking/linking-overview/
+  - /docs/grafana/next/linking/dashboard-links/
+  - /docs/grafana/next/dashboards/manage-dashboard-links/
+  - /docs/grafana/next/panels/working-with-panels/add-link-to-panel/
 description: How to link Grafana dashboards.
 keywords:
   - link

@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/add-text-box-variable/
-  - /docs/grafana/latest/variables/variable-types/add-text-box-variable/
+  - /docs/grafana/next/variables/add-text-box-variable/
+  - /docs/grafana/next/variables/variable-types/add-text-box-variable/
 title: Add a text box variable
 weight: 300
 ---

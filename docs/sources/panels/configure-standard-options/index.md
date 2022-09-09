@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/working-with-panels/format-standard-fields/
-  - /docs/grafana/latest/panels/reference-standard-field-definitions/
-  - /docs/grafana/latest/panels/standard-field-definitions/
+  - /docs/grafana/next/panels/working-with-panels/format-standard-fields/
+  - /docs/grafana/next/panels/reference-standard-field-definitions/
+  - /docs/grafana/next/panels/standard-field-definitions/
 title: Configure standard options
 menuTitle: Configure standard options
 weight: 40

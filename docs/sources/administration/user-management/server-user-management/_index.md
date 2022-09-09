@@ -1,14 +1,14 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/
-  - /docs/grafana/latest/manage-users/server-admin/
-  - /docs/grafana/latest/manage-users/server-admin/server-admin-manage-users/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-list-users/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-edit-user-account/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-user/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/force-user-logout/
-  - /docs/grafana/latest/administration/user-management/server-user-management/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-server-users/
+  - /docs/grafana/next/manage-users/server-admin/
+  - /docs/grafana/next/manage-users/server-admin/server-admin-manage-users/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-server-users/view-list-users/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-server-users/view-edit-user-account/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-server-users/add-user/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-server-users/force-user-logout/
+  - /docs/grafana/next/administration/user-management/server-user-management/
 title: Server user management
 weight: 100
 ---

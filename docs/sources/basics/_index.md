@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/basics/
+  - /docs/grafana/next/basics/
 title: Grafana basics
 weight: 15
 ---

@@ -1,13 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/panel-library/
-  - /docs/grafana/latest/panels/library-panels/
-  - /docs/grafana/latest/panels/library-panels/create-library-panel/
-  - /docs/grafana/latest/panels/library-panels/add-library-panel/
-  - /docs/grafana/latest/panels/library-panels/unlink-library-panel/
-  - /docs/grafana/latest/panels/library-panels/manage-library-panel/
-  - /docs/grafana/latest/panels/library-panels/delete-library-panel/
-  - /docs/grafana/latest/dashboards/manage-library-panels/
+  - /docs/grafana/next/panels/panel-library/
+  - /docs/grafana/next/panels/library-panels/
+  - /docs/grafana/next/panels/library-panels/create-library-panel/
+  - /docs/grafana/next/panels/library-panels/add-library-panel/
+  - /docs/grafana/next/panels/library-panels/unlink-library-panel/
+  - /docs/grafana/next/panels/library-panels/manage-library-panel/
+  - /docs/grafana/next/panels/library-panels/delete-library-panel/
+  - /docs/grafana/next/dashboards/manage-library-panels/
 title: Manage Grafana library panels
 menuTitle: Manage library panels
 weight: 3

@@ -1,13 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/
-  - /docs/grafana/latest/manage-users/org-admin/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/view-list-org-users/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/invite-user-join-org/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/manage-pending-invites/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-org-users/remove-user-from-org/
-  - /docs/grafana/latest/administration/user-management/manage-org-users/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-org-users/
+  - /docs/grafana/next/manage-users/org-admin/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-org-users/view-list-org-users/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-org-users/change-user-org-permissions/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-org-users/invite-user-join-org/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-org-users/manage-pending-invites/
+  - /docs/grafana/next/administration/manage-users-and-permissions/manage-org-users/remove-user-from-org/
+  - /docs/grafana/next/administration/user-management/manage-org-users/
 title: Manage users in an organization
 weight: 400
 ---

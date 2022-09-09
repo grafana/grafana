@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/rule-list/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/rule-list/
+  - /docs/grafana/next/alerting/alerting-rules/rule-list/
+  - /docs/grafana/next/alerting/unified-alerting/alerting-rules/rule-list/
 description: Manage alerting rules
 keywords:
   - grafana

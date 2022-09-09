@@ -2,7 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/release-notes/release-notes-8-2-0-beta2/
+  - /docs/grafana/next/release-notes/release-notes-8-2-0-beta2/
 title: Release notes for Grafana 8.2.0-beta2
 ---
 

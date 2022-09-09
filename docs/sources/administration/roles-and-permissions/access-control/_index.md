@@ -1,10 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/access-control/
-  - /docs/grafana/latest/enterprise/access-control/
-  - /docs/grafana/latest/enterprise/access-control/about-rbac/
-  - /docs/grafana/latest/enterprise/access-control/roles/
-  - /docs/grafana/latest/administration/roles-and-permissions/access-control/
+  - /docs/grafana/next/enterprise/access-control/
+  - /docs/grafana/next/enterprise/access-control/
+  - /docs/grafana/next/enterprise/access-control/about-rbac/
+  - /docs/grafana/next/enterprise/access-control/roles/
+  - /docs/grafana/next/administration/roles-and-permissions/access-control/
 description: Role-based access control (RBAC) provides a standardized way of granting,
   changing, and revoking access so that users can view and modify Grafana resources,
   such as users and reports.

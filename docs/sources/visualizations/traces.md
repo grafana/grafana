@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/visualizations/traces/
+  - /docs/grafana/next/visualizations/traces/
 keywords:
   - grafana
   - dashboard

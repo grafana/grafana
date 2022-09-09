@@ -1,13 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-ui/
-  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-header/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-ui/dashboard-row/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/shortcuts/
-  - /docs/grafana/latest/dashboards/search/
-  - /docs/grafana/latest/reference/search/
+  - /docs/grafana/next/dashboards/dashboard-ui/
+  - /docs/grafana/next/dashboards/dashboard-ui/dashboard-header/
+  - /docs/grafana/next/features/dashboard/dashboards/
+  - /docs/grafana/next/dashboards/dashboard-ui/dashboard-row/
+  - /docs/grafana/next/features/dashboard/dashboards/
+  - /docs/grafana/next/dashboards/shortcuts/
+  - /docs/grafana/next/dashboards/search/
+  - /docs/grafana/next/reference/search/
 title: 'Use dashboards'
 menuTitle: Use dashboards
 weight: 1

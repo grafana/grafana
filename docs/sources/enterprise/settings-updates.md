@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/settings-updates/
+  - /docs/grafana/next/enterprise/settings-updates/
 description: Settings updates at runtime
 keywords:
   - grafana

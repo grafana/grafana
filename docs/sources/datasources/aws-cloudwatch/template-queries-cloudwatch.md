@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/aws-cloudwatch/template-queries-cloudwatch/
-  - /docs/grafana/latest/datasources/cloudwatch/
+  - /docs/grafana/next/datasources/aws-cloudwatch/template-queries-cloudwatch/
+  - /docs/grafana/next/datasources/cloudwatch/
 description: Template variables in CloudWatch queryh
 title: Template variables in CloudWatch query
 weight: 10

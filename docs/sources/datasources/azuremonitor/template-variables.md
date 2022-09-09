@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/azuremonitor/template-variables/
+  - /docs/grafana/next/datasources/azuremonitor/template-variables/
 description: Using template variables with Azure Monitor in Grafana
 keywords:
   - grafana

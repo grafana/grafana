@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/
+  - /docs/grafana/next/panels/query-a-data-source/use-expressions-to-manipulate-data/
   - /docs/sources/panels/query-a-data-source/use-expressions-to-manipulate-data/
 title: Use expressions to manipulate data
 weight: 40

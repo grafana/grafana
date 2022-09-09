@@ -2,7 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/release-notes/release-notes-v7-4-2/
+  - /docs/grafana/next/release-notes/release-notes-v7-4-2/
 title: undefined
 ---
 

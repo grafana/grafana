@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alert-groups/
-  - /docs/grafana/latest/alerting/unified-alerting/alert-groups/
+  - /docs/grafana/next/alerting/alert-groups/
+  - /docs/grafana/next/alerting/unified-alerting/alert-groups/
 description: Alert groups
 keywords:
   - grafana

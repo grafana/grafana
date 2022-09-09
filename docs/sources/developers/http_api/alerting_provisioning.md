@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/alerting_provisioning/
-  - /docs/grafana/latest/http_api/alerting_provisioning/
+  - /docs/grafana/next/developers/http_api/alerting_provisioning/
+  - /docs/grafana/next/http_api/alerting_provisioning/
 description: Grafana Alerts HTTP API
 keywords:
   - grafana

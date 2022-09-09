@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
+  - /docs/grafana/next/alerting/contact-points/message-templating/
+  - /docs/grafana/next/alerting/message-templating/
+  - /docs/grafana/next/alerting/unified-alerting/message-templating/
 description: Message templating
 keywords:
   - grafana

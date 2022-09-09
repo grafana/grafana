@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/library_element/
-  - /docs/grafana/latest/http_api/library_element/
+  - /docs/grafana/next/developers/http_api/library_element/
+  - /docs/grafana/next/http_api/library_element/
 description: Grafana Library Element HTTP API
 keywords:
   - grafana

@@ -1,11 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/view-server/
-  - /docs/grafana/latest/admin/view-server-settings/
-  - /docs/grafana/latest/administration/view-server/view-server-settings/
-  - /docs/grafana/latest/admin/view-server-stats/
-  - /docs/grafana/latest/administration/view-server/view-server-stats/
-  - /docs/grafana/latest/administration/stats-and-license/
+  - /docs/grafana/next/administration/view-server/
+  - /docs/grafana/next/admin/view-server-settings/
+  - /docs/grafana/next/administration/view-server/view-server-settings/
+  - /docs/grafana/next/admin/view-server-stats/
+  - /docs/grafana/next/administration/view-server/view-server-stats/
+  - /docs/grafana/next/administration/stats-and-license/
 description: How to view server settings in the Grafana UI
 keywords:
   - grafana

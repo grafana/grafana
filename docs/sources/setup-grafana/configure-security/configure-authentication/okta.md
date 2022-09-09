@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/okta/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/okta/
+  - /docs/grafana/next/auth/okta/
+  - /docs/grafana/next/setup-grafana/configure-security/configure-authentication/okta/
 description: Grafana Okta OAuth Guide
 title: Configure Okta OAuth2 authentication
 weight: 1200
@@ -81,11 +81,11 @@ Read about how to [add custom claims](https://developer.okta.com/docs/guides/cus
 
 > Available in Grafana v9.2 and later versions.
 
-If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
-This is useful if you want to grant server administrator privileges to a subset of users.  
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.
+This is useful if you want to grant server administrator privileges to a subset of users.
 Grafana also assigns the user the `Admin` role of the default organization.
 
-The setting `allow_assign_grafana_admin` under `[auth.okta]` must be set to `true` for this to work.  
+The setting `allow_assign_grafana_admin` under `[auth.okta]` must be set to `true` for this to work.
 If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
 
 ```ini
