@@ -15,7 +15,7 @@ type Cfg struct {
 
 	DevMode bool
 
-	PluginSettings       PluginSettings
+	PluginSettings       setting.PluginSettings
 	PluginsAllowUnsigned []string
 
 	EnterpriseLicensePath string
@@ -29,9 +29,6 @@ type Cfg struct {
 
 	BuildVersion string // TODO Remove
 }
-
-// PluginSettings maps plugin id to map of key/value settings.
-type PluginSettings map[string]map[string]string
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 	return NewCfg(settingProvider, grafanaCfg.BuildVersion)
@@ -72,8 +69,8 @@ func NewCfg(settingProvider setting.Provider, buildVersion string) *Cfg {
 	}
 }
 
-func extractPluginSettings(settingProvider setting.Provider) PluginSettings {
-	ps := PluginSettings{}
+func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {
+	ps := setting.PluginSettings{}
 	for sectionName, section := range settingProvider.Current() {
 		if !strings.HasPrefix(sectionName, "plugin.") {
 			continue
