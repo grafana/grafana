@@ -2218,6 +2218,7 @@ d4b2c483-1dd3-47f6-86bf-42548009918d	\N	password	74e29604-ff35-42bb-a26d-4d0b81e
 b8c9b8b4-5943-43fe-9274-d63fd3e4a139	\N	password	c685749a-645e-4396-b9ee-6eedbfd89d5e	1656420634344	\N	{"value":"IAOFzbDfWwzosZc+Z5nFm/i0B4foqmU4Q0EKG34RU3iwlIYUseEB3BoJqLEfM3Rj9oOSryEbCzblWRDS/5Padw==","salt":"7VR1+KwLVRZ6PenxaQoQTA==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 94aeafd3-71a5-4966-b2b6-34a083df6e92	\N	password	bdce2246-bb51-4f55-bb81-b7b8856225bc	1656425248776	\N	{"value":"uD8KlRNocvZwYq1VZUShVp88zEtMUEeQnLYkW8ZvZXDdn1w1EahwnpNWYIc5QewEm3Nnf3DBYlUUrrbMC4XyfQ==","salt":"REwgUSsxRA/sqM5ujSrpcg==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 624725ce-9e36-4501-8bc8-ec39ee6b98d5	\N	password	56eff2b3-e36a-4e3e-84a1-361ad312667b	1656428741229	\N	{"value":"4UBzDNd3oPxP54/z7ez1Bd3xSfKJBpbE3rQppM3Xg+2bLaLNoU90TPEK+8SWbpMAFBKHz53qPWrZ50MbNgcGSA==","salt":"iTNvn3xr0acn9wqQxJ3d/A==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
+77f9adeb-4bd6-47bd-93d6-49ac90edc731	\N	password	b8aada79-3fb4-45cd-95d0-c046f3a0113a	1662476251794	\N	{"value":"dQJruhADrlLXvwYwd3L2S7ie5FWLGFxJVZm2Eog92xUH2+oahsM52tFvVfsI4wlbAN+XBqMGsfz9rsXeROWvXw==","salt":"64V0IRC+zdOkJ8l4ejfmHA==","additionalParameters":{}}	{"hashIterations":27500,"algorithm":"pbkdf2-sha256","additionalParameters":{}}	10
 \.
 
 
@@ -2571,9 +2572,9 @@ b8a4faaf-86d9-43eb-bb18-0eaa654b35a7	ef7f6eac-9fff-44aa-a86c-5125d52acc82	t	${ro
 c49bddc6-ec92-4caa-bc04-57ba80a92eb9	grafana	f	${role_offline-access}	offline_access	grafana	\N	grafana
 0f3d47bb-002a-4cd0-a502-725f224308a7	grafana	f	${role_uma_authorization}	uma_authorization	grafana	\N	grafana
 60f1b1ea-9059-41ea-acef-573643b24709	grafana	f	Grafana Organization Administrator	admin	grafana	\N	grafana
-c029a218-4519-4537-ae12-d8f3c27a0003	grafana	f	Grafana Server Admin	serveradmin	grafana	\N	grafana
 c9a776f9-2740-435f-a725-4dbcc17a6c91	grafana	f	Grafana Viewer	viewer	grafana	\N	grafana
 c4c74006-c346-48cf-8cf1-1617e3e1cde1	grafana	f	Grafana Editor	editor	grafana	\N	grafana
+c90ad7c8-d14b-46ed-b94d-2de3baa50ff7	grafana	f	Grafana Server Admin	grafanaadmin	grafana	\N	grafana
 \.
 
 
@@ -3301,6 +3302,7 @@ COPY public.user_entity (id, email, email_constraint, email_verified, enabled, f
 c685749a-645e-4396-b9ee-6eedbfd89d5e	oauth-admin@example.org	oauth-admin@example.org	f	t	\N	Admin	Oauth	grafana	oauth-admin	1656418530879	\N	0
 56eff2b3-e36a-4e3e-84a1-361ad312667b	oauth-editor@example.org	oauth-editor@example.org	f	t	\N	Editor	Oauth	grafana	oauth-editor	1656418563005	\N	0
 bdce2246-bb51-4f55-bb81-b7b8856225bc	oauth-viewer@example.org	oauth-viewer@example.org	f	t	\N	Viewer	Oauth	grafana	oauth-viewer	1656425237046	\N	0
+b8aada79-3fb4-45cd-95d0-c046f3a0113a	oauth-grafanaadmin@example.org	oauth-grafanaadmin@example.org	t	t	\N	Grafanaadmin	Oauth	grafana	oauth-grafanaadmin	1662476222024	\N	0
 \.
 
 
@@ -3376,6 +3378,11 @@ c49bddc6-ec92-4caa-bc04-57ba80a92eb9	bdce2246-bb51-4f55-bb81-b7b8856225bc
 0f3d47bb-002a-4cd0-a502-725f224308a7	bdce2246-bb51-4f55-bb81-b7b8856225bc
 f1311ecb-6a6a-49d6-bb16-5132daf93a64	bdce2246-bb51-4f55-bb81-b7b8856225bc
 18a7066b-fe71-410e-9581-69f78347ec29	bdce2246-bb51-4f55-bb81-b7b8856225bc
+c49bddc6-ec92-4caa-bc04-57ba80a92eb9	b8aada79-3fb4-45cd-95d0-c046f3a0113a
+0f3d47bb-002a-4cd0-a502-725f224308a7	b8aada79-3fb4-45cd-95d0-c046f3a0113a
+f1311ecb-6a6a-49d6-bb16-5132daf93a64	b8aada79-3fb4-45cd-95d0-c046f3a0113a
+18a7066b-fe71-410e-9581-69f78347ec29	b8aada79-3fb4-45cd-95d0-c046f3a0113a
+c90ad7c8-d14b-46ed-b94d-2de3baa50ff7	b8aada79-3fb4-45cd-95d0-c046f3a0113a
 \.
 
 

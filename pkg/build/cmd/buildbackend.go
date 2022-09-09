@@ -3,32 +3,21 @@ package main
 import (
 	"fmt"
 	"log"
-	"path/filepath"
-	"strings"
-
-	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/build/compilers"
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
 	"github.com/grafana/grafana/pkg/build/grafana"
 	"github.com/grafana/grafana/pkg/build/syncutil"
+	"github.com/urfave/cli/v2"
 )
 
 func BuildBackend(ctx *cli.Context) error {
-	metadata, err := config.GetMetadata(filepath.Join("dist", "version.json"))
+	metadata, err := GenerateMetadata(ctx)
 	if err != nil {
 		return err
 	}
-
-	var version string
-
-	// ./ci build-backend v1.0.0
-	if ctx.NArg() == 1 {
-		version = strings.TrimPrefix(ctx.Args().Get(0), "v")
-	} else {
-		version = metadata.GrafanaVersion
-	}
+	version := metadata.GrafanaVersion
 
 	var (
 		edition = config.Edition(ctx.String("edition"))
