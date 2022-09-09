@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 
 	"golang.org/x/oauth2"
@@ -68,7 +69,7 @@ func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -117,7 +118,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 
 func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
