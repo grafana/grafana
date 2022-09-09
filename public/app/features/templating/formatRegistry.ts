@@ -260,6 +260,10 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
 });
 
 function luceneEscape(value: string) {
+  if (isNaN(+value) === false) {
+    return value;
+  }
+
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
