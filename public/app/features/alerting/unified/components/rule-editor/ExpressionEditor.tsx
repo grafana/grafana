@@ -1,5 +1,5 @@
 import { noop } from 'lodash';
-import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
+import React, { FC, useCallback, useMemo, useRef } from 'react';
 import { useAsync, useObservable } from 'react-use';
 
 import { CoreApp, DataQuery, DataSourceInstanceSettings } from '@grafana/data';
@@ -20,11 +20,10 @@ export interface ExpressionEditorProps {
 
 export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dsSettings }) => {
   const queryRunner = useRef(new AlertingQueryRunner());
-
   const queryData = useObservable(queryRunner.current.get());
 
   const { mapToValue, mapToQuery } = useQueryMappers(dsSettings.name);
-  const [dataQuery, setDataQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
+  const dataQuery = mapToQuery({ refId: 'A', hide: false }, value);
   const alertQuery = dataQueryToAlertQuery(dataQuery, dsSettings.uid);
 
   const {
@@ -37,7 +36,6 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
-      setDataQuery(query);
       onChange(mapToValue(query));
     },
     [onChange, mapToValue]
