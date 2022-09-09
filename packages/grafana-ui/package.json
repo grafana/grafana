@@ -61,7 +61,7 @@
     "ansicolor": "1.1.100",
     "calculate-size": "1.1.1",
     "classnames": "2.3.1",
-    "core-js": "3.24.0",
+    "core-js": "3.25.1",
     "d3": "5.15.0",
     "date-fns": "2.29.1",
     "hoist-non-react-statics": "3.3.2",
