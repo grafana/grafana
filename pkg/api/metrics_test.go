@@ -4,25 +4,30 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/web/webtest"
-
 	"golang.org/x/oauth2"
 
-	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	pluginclient "github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fakedatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 var queryDatasourceInput = `{
@@ -73,7 +78,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
-		&fakeDatasources.FakeDataSourceService{},
+		&fakedatasources.FakeDataSourceService{},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
@@ -122,7 +127,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
-		&fakeDatasources.FakeDataSourceService{SimulatePluginFailure: true},
+		&fakedatasources.FakeDataSourceService{SimulatePluginFailure: true},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
@@ -156,4 +161,86 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		require.Equal(t, "unknown error", resObj.Error)
 		require.Contains(t, resObj.Message, "Secrets Plugin error:")
 	})
+}
+
+func TestDataSourceQueryError(t *testing.T) {
+	tcs := []struct {
+		err            error
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			err:            backendplugin.ErrPluginUnavailable,
+			expectedStatus: errutil.StatusInternal.HTTPStatus(),
+			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
+		},
+		{
+			err:            backendplugin.ErrMethodNotImplemented,
+			expectedStatus: errutil.StatusNotImplemented.HTTPStatus(),
+			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
+		},
+		{
+			err:            errors.New("surprise surprise"),
+			expectedStatus: errutil.StatusInternal.HTTPStatus(),
+			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":500,"traceID":""}`,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.err), func(t *testing.T) {
+			p := &plugins.Plugin{
+				JSONData: plugins.JSONData{
+					ID: "grafana",
+				},
+			}
+			p.RegisterClient(&fakePluginBackend{
+				qdr: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+					return nil, tc.err
+				},
+			})
+			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				r := registry.NewInMemory()
+				err := r.Add(context.Background(), p)
+				require.NoError(t, err)
+				hs.queryDataService = query.ProvideService(
+					nil,
+					nil,
+					nil,
+					&fakePluginRequestValidator{},
+					&fakedatasources.FakeDataSourceService{},
+					pluginclient.ProvideService(r),
+					&fakeOAuthTokenService{},
+				)
+				hs.QuotaService = quotatest.NewQuotaServiceFake()
+			})
+			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
+			resp, err := srv.SendJSON(req)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.expectedStatus, resp.StatusCode)
+			require.Equal(t, tc.expectedStatus, resp.StatusCode)
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedBody, string(body))
+			require.NoError(t, resp.Body.Close())
+		})
+	}
+}
+
+type fakePluginBackend struct {
+	qdr backend.QueryDataHandlerFunc
+
+	backendplugin.Plugin
+}
+
+func (f *fakePluginBackend) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if f.qdr != nil {
+		return f.qdr(ctx, req)
+	}
+	return backend.NewQueryDataResponse(), nil
+}
+
+func (f *fakePluginBackend) IsDecommissioned() bool {
+	return false
 }
