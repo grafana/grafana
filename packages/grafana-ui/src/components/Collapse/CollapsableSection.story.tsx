@@ -37,9 +37,11 @@ export const Basic: ComponentStory<typeof CollapsableSection> = ({ children, ...
   };
 
   return (
-    <CollapsableSection {...args} onToggle={onToggle}>
-      <>{children}</>
-    </CollapsableSection>
+    <div>
+      <CollapsableSection {...args} onToggle={onToggle}>
+        <>{children}</>
+      </CollapsableSection>
+    </div>
   );
 };
 
