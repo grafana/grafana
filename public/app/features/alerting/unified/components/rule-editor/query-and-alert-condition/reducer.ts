@@ -133,7 +133,10 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     });
 });
 
-const addQuery = (queries: AlertQuery[], queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid'>): AlertQuery[] => {
+const addQuery = (
+  queries: AlertQuery[],
+  queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid' | 'relativeTimeRange'>
+): AlertQuery[] => {
   const refId = getNextRefIdChar(queries);
 
   const query: AlertQuery = {
@@ -145,7 +148,7 @@ const addQuery = (queries: AlertQuery[], queryToAdd: Pick<AlertQuery, 'model' | 
       hide: false,
       refId,
     },
-    relativeTimeRange: defaultTimeRange(queryToAdd.model),
+    relativeTimeRange: queryToAdd.relativeTimeRange ?? defaultTimeRange(queryToAdd.model),
   };
 
   return [...queries, query];
