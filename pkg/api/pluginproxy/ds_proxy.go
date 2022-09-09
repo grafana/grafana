@@ -240,7 +240,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	proxyutil.ClearCookieHeader(req, keepCookieNames)
+	proxyutil.ClearCookieHeader(req, keepCookieNames, []string{proxy.cfg.LoginCookieName})
 	proxyutil.PrepareProxyRequest(req)
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))

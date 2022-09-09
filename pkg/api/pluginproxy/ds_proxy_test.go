@@ -438,6 +438,34 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		assert.Equal(t, "JSESSION_ID=test", req.Header.Get("Cookie"))
 	})
 
+	t.Run("When proxying a data source with keep cookies specified including login cookie name", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(`{"keepCookies": ["JSESSION_ID", "grafana_session"]}`))
+		require.NoError(t, err)
+
+		ds := &models.DataSource{
+			Type:     models.DS_GRAPHITE,
+			Url:      "http://graphite:8086",
+			JsonData: json,
+		}
+
+		ctx := &models.ReqContext{}
+		var pluginRoutes []*plugins.Route
+		secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+		dsService := datasources.ProvideService(bus.New(), nil, secretsService, &acmock.Mock{})
+		proxy, err := NewDataSourceProxy(ds, pluginRoutes, ctx, "", &setting.Cfg{LoginCookieName: "grafana_session"}, httpClientProvider, &oauthtoken.Service{}, dsService, tracer)
+		require.NoError(t, err)
+
+		requestURL, err := url.Parse("http://grafana.com/sub")
+		require.NoError(t, err)
+		req := http.Request{URL: requestURL, Header: make(http.Header)}
+		cookies := "grafana_user=admin; grafana_remember=99; grafana_session=abc-token; JSESSION_ID=test"
+		req.Header.Set("Cookie", cookies)
+
+		proxy.director(&req)
+
+		assert.Equal(t, "JSESSION_ID=test", req.Header.Get("Cookie"))
+	})
+
 	t.Run("When proxying a custom datasource", func(t *testing.T) {
 		ds := &models.DataSource{
 			Type: "custom-datasource",
