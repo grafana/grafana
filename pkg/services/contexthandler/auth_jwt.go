@@ -99,6 +99,9 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		return true
 	}
 
+	newCtx := WithAuthHTTPHeader(ctx.Req.Context(), h.Cfg.JWTAuthHeaderName)
+	*ctx.Req = *ctx.Req.WithContext(newCtx)
+
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
 

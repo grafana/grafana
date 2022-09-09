@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -271,6 +272,12 @@ func TestMakePluginResourceRequest(t *testing.T) {
 		pluginClient: pluginClient,
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+	const customHeader = "X-CUSTOM"
+	req.Header.Set(customHeader, "val")
+	ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
+	req = req.WithContext(ctx)
+
 	resp := httptest.NewRecorder()
 	pCtx := backend.PluginContext{}
 	err := hs.makePluginResourceRequest(resp, req, pCtx)
@@ -283,6 +290,7 @@ func TestMakePluginResourceRequest(t *testing.T) {
 	}
 
 	require.Equal(t, "sandbox", resp.Header().Get("Content-Security-Policy"))
+	require.Empty(t, req.Header.Get(customHeader))
 }
 
 func callGetPluginAsset(sc *scenarioContext) {
