@@ -30,7 +30,6 @@ export interface Props {
   onClear?: () => void;
   accessControlMetadata?: boolean;
   customAdd?: boolean;
-  dissalowSlashes?: boolean;
   /**
    * Skips loading all folders in order to find the folder matching
    * the folder where the dashboard is stored.
@@ -61,7 +60,6 @@ export function FolderPicker(props: Props) {
     showRoot,
     skipInitialLoad,
     accessControlMetadata,
-    dissalowSlashes,
     customAdd,
   } = props;
   const isClearable = typeof onClear === 'function';
@@ -180,7 +178,7 @@ export function FolderPicker(props: Props) {
       if (value === VALUE_FOR_ADD) {
         setFolder({
           id: VALUE_FOR_ADD,
-          title: dissalowSlashes ? newFolder?.title?.split('/').join('') || '' : newFolder?.title,
+          title: newFolder?.title,
         });
       } else {
         if (!newFolder) {
@@ -196,7 +194,7 @@ export function FolderPicker(props: Props) {
         onChange({ id: newFolder.value!, title: newFolder.label! });
       }
     },
-    [onChange, onClear, rootName, dissalowSlashes]
+    [onChange, onClear, rootName]
   );
 
   const createNewFolder = useCallback(
@@ -238,8 +236,7 @@ export function FolderPicker(props: Props) {
 
   const onNewFolderChange = (e: FormEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value;
-    const safeValue = dissalowSlashes ? value.split('/').join('') : value;
-    setFolder({ id: -1, title: safeValue });
+    setFolder({ id: -1, title: value });
   };
 
   if (isCreatingNew) {
