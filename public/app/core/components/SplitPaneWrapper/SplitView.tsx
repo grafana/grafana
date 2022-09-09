@@ -22,50 +22,53 @@ const onDragStarted = () => {
   document.body.style.cursor = 'row-resize';
 };
 
-const getResizerStyles = (theme: GrafanaTheme2) => css`
-  position: relative;
+const getResizerStyles = (hasSplit: boolean) => (theme: GrafanaTheme2) =>
+  css`
+    position: relative;
+    display: ${hasSplit ? 'block' : 'none'};
 
-  &::before {
-    content: '';
-    position: absolute;
-    transition: 0.2s border-color ease-in-out;
-    border-right: 1px solid ${theme.colors.border.weak};
-    height: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  &::after {
-    background: ${theme.colors.border.weak};
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transition: 0.2s background ease-in-out;
-    transform: translate(-50%, -50%);
-    border-radius: 4px;
-    height: 200px;
-    width: 4px;
-  }
-
-  &:hover {
     &::before {
-      border-color: ${theme.colors.primary.main};
+      content: '';
+      position: absolute;
+      transition: 0.2s border-color ease-in-out;
+      border-right: 1px solid ${theme.colors.border.weak};
+      height: 100%;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
     &::after {
-      background: ${theme.colors.primary.main};
+      background: ${theme.colors.border.weak};
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transition: 0.2s background ease-in-out;
+      transform: translate(-50%, -50%);
+      border-radius: 4px;
+      height: 200px;
+      width: 4px;
     }
-  }
 
-  cursor: col-resize;
-  width: ${theme.spacing(2)};
-`;
+    &:hover {
+      &::before {
+        border-color: ${theme.colors.primary.main};
+      }
+
+      &::after {
+        background: ${theme.colors.primary.main};
+      }
+    }
+
+    cursor: col-resize;
+    width: ${theme.spacing(2)};
+  `;
 
 export const SplitView = ({ uiState: { rightPaneSize }, children, minSize = 200, onResize }: Props) => {
   const { width } = useViewportSize();
 
   //console.log('splitview render', children);
+  const hasSplit = children.filter(Boolean).length === 2;
 
   return (
     <SplitPane
@@ -74,7 +77,7 @@ export const SplitView = ({ uiState: { rightPaneSize }, children, minSize = 200,
       primary="second"
       minSize={minSize}
       maxSize={width - minSize}
-      resizerClassName={useStyles2(getResizerStyles)}
+      resizerClassName={useStyles2(getResizerStyles(hasSplit))}
       paneStyle={{ overflow: 'scroll' }}
       onDragStarted={onDragStarted}
       onDragFinished={(size: number) => onDragFinished(size, onResize)}

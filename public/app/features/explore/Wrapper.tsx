@@ -152,22 +152,20 @@ class WrapperUnconnected extends PureComponent<Props> {
       <div className={styles.pageScrollbarWrapper}>
         <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
         <div className={styles.exploreWrapper}>
-          {hasSplit ? (
-            <SplitView
-              uiState={splitSizeObj}
-              minSize={this.minWidth}
-              onResize={(width: number) => {
-                this.updateSplitSize(width);
-              }}
-            >
-              {leftPane}
+          <SplitView
+            uiState={splitSizeObj}
+            minSize={this.minWidth}
+            onResize={(width: number) => {
+              this.updateSplitSize(width);
+            }}
+          >
+            {leftPane}
+            {hasSplit && (
               <ErrorBoundaryAlert style="page">
                 <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
               </ErrorBoundaryAlert>
-            </SplitView>
-          ) : (
-            leftPane
-          )}
+            )}
+          </SplitView>
         </div>
       </div>
     );
