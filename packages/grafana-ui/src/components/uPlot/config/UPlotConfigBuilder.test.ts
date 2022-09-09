@@ -124,6 +124,7 @@ describe('UPlotConfigBuilder', () => {
               "time": true,
             },
             "scale-y": Object {
+              "asinh": undefined,
               "auto": true,
               "dir": 1,
               "distr": 1,
@@ -209,6 +210,7 @@ describe('UPlotConfigBuilder', () => {
             ],
             "scales": Object {
               "scale-y": Object {
+                "asinh": undefined,
                 "auto": true,
                 "dir": 1,
                 "distr": 1,
@@ -274,6 +276,7 @@ describe('UPlotConfigBuilder', () => {
               ],
               "scales": Object {
                 "scale-y": Object {
+                  "asinh": undefined,
                   "auto": true,
                   "dir": 1,
                   "distr": 1,
@@ -340,6 +343,7 @@ describe('UPlotConfigBuilder', () => {
               ],
               "scales": Object {
                 "scale-y": Object {
+                  "asinh": undefined,
                   "auto": true,
                   "dir": 1,
                   "distr": 1,

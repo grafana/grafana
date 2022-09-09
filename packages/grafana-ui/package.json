@@ -61,7 +61,7 @@
     "ansicolor": "1.1.100",
     "calculate-size": "1.1.1",
     "classnames": "2.3.1",
-    "core-js": "3.24.0",
+    "core-js": "3.25.1",
     "d3": "5.15.0",
     "date-fns": "2.29.1",
     "hoist-non-react-statics": "3.3.2",
@@ -105,7 +105,7 @@
     "uuid": "8.3.2"
   },
   "devDependencies": {
-    "@babel/core": "7.18.9",
+    "@babel/core": "7.19.0",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-node-resolve": "13.3.0",
@@ -168,7 +168,7 @@
     "css-minimizer-webpack-plugin": "4.0.0",
     "csstype": "3.1.0",
     "enzyme": "3.11.0",
-    "esbuild": "^0.14.47",
+    "esbuild": "0.15.7",
     "expose-loader": "4.0.0",
     "mock-raf": "1.0.1",
     "postcss": "8.4.14",
