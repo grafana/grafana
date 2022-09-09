@@ -1,18 +1,23 @@
 import { bucketAggregationConfig } from './utils';
 
-export type BucketAggregationType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram' | 'nested';
+export type SimpleBucketAggregationType = 'nested';
+export type BucketAggregationWithSettingsType = 'terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram';
+export type BucketAggregationType = SimpleBucketAggregationType | BucketAggregationWithSettingsType;
 
 interface BaseBucketAggregation {
   id: string;
   type: BucketAggregationType;
-  settings?: Record<string, unknown>;
 }
 
 export interface BucketAggregationWithField extends BaseBucketAggregation {
   field?: string;
 }
 
-export interface DateHistogram extends BucketAggregationWithField {
+export interface BaseBucketAggregationWithSettings extends BaseBucketAggregation {
+  settings?: Record<string, unknown>;
+}
+
+export interface DateHistogram extends BucketAggregationWithField, BaseBucketAggregationWithSettings {
   type: 'date_histogram';
   settings?: {
     interval?: string;
@@ -23,7 +28,7 @@ export interface DateHistogram extends BucketAggregationWithField {
   };
 }
 
-export interface Histogram extends BucketAggregationWithField {
+export interface Histogram extends BucketAggregationWithField, BaseBucketAggregationWithSettings {
   type: 'histogram';
   settings?: {
     interval?: string;
@@ -33,7 +38,7 @@ export interface Histogram extends BucketAggregationWithField {
 
 type TermsOrder = 'desc' | 'asc';
 
-export interface Terms extends BucketAggregationWithField {
+export interface Terms extends BucketAggregationWithField, BaseBucketAggregationWithSettings {
   type: 'terms';
   settings?: {
     order?: TermsOrder;
@@ -48,14 +53,14 @@ export type Filter = {
   query: string;
   label: string;
 };
-export interface Filters extends BaseBucketAggregation {
+export interface Filters extends BaseBucketAggregation, BaseBucketAggregationWithSettings {
   type: 'filters';
   settings?: {
     filters?: Filter[];
   };
 }
 
-interface GeoHashGrid extends BucketAggregationWithField {
+interface GeoHashGrid extends BucketAggregationWithField, BaseBucketAggregationWithSettings {
   type: 'geohash_grid';
   settings?: {
     precision?: string;
@@ -64,7 +69,6 @@ interface GeoHashGrid extends BucketAggregationWithField {
 
 interface Nested extends BucketAggregationWithField {
   type: 'nested';
-  settings?: {};
 }
 
 export type BucketAggregation = DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested;
@@ -73,7 +77,13 @@ export const isBucketAggregationWithField = (
   bucketAgg: BucketAggregation | BucketAggregationWithField
 ): bucketAgg is BucketAggregationWithField => bucketAggregationConfig[bucketAgg.type].requiresField;
 
-export const BUCKET_AGGREGATION_TYPES: BucketAggregationType[] = [
+export type BucketAggregationWithSettings = DateHistogram | Histogram | Terms | Filters | GeoHashGrid;
+
+export const isBucketAggregationWithSettings = (
+  bucketAgg: BucketAggregation | BucketAggregationWithSettings
+): bucketAgg is BucketAggregationWithSettings => bucketAggregationConfig[bucketAgg.type].hasSettings;
+
+export const BUCKET_AGGREGATION_TYPES: Array<BucketAggregationType | BucketAggregationWithSettingsType> = [
   'date_histogram',
   'histogram',
   'terms',

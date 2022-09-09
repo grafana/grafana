@@ -8,6 +8,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   terms: {
     label: 'Terms',
     requiresField: true,
+    hasSettings: true,
     defaultSettings: {
       min_doc_count: '1',
       size: '10',
@@ -17,6 +18,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   },
   filters: {
     label: 'Filters',
+    hasSettings: true,
     requiresField: false,
     defaultSettings: {
       filters: [defaultFilter()],
@@ -24,6 +26,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   },
   geohash_grid: {
     label: 'Geo Hash Grid',
+    hasSettings: true,
     requiresField: true,
     defaultSettings: {
       precision: '3',
@@ -31,6 +34,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   },
   date_histogram: {
     label: 'Date Histogram',
+    hasSettings: true,
     requiresField: true,
     defaultSettings: {
       interval: 'auto',
@@ -41,6 +45,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   },
   histogram: {
     label: 'Histogram',
+    hasSettings: true,
     requiresField: true,
     defaultSettings: {
       interval: '1000',
@@ -49,8 +54,8 @@ export const bucketAggregationConfig: BucketsConfiguration = {
   },
   nested: {
     label: 'Nested (experimental)',
+    hasSettings: false,
     requiresField: true,
-    defaultSettings: {},
   },
 };
 

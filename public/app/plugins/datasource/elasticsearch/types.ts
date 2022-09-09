@@ -3,6 +3,8 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 import {
   BucketAggregation,
   BucketAggregationType,
+  BucketAggregationWithSettings,
+  BucketAggregationWithSettingsType,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import {
   MetricAggregation,
@@ -43,10 +45,13 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   defaults: Omit<Extract<MetricAggregation, { type: T }>, 'id' | 'type'>;
 }
 
-type BucketConfiguration<T extends BucketAggregationType> = {
+type BucketConfiguration<T extends BucketAggregationType | BucketAggregationWithSettingsType> = {
   label: string;
   requiresField: boolean;
-  defaultSettings: Extract<BucketAggregation, { type: T }>['settings'];
+  hasSettings: boolean;
+  defaultSettings?: T extends BucketAggregationWithSettingsType
+    ? Extract<BucketAggregationWithSettings, { type: T }>['settings']
+    : never;
 };
 
 export type MetricsConfiguration = {
@@ -54,7 +59,7 @@ export type MetricsConfiguration = {
 };
 
 export type BucketsConfiguration = {
-  [P in BucketAggregationType]: BucketConfiguration<P>;
+  [P in BucketAggregationType | BucketAggregationWithSettingsType]: BucketConfiguration<P>;
 };
 
 export interface ElasticsearchAggregation {
