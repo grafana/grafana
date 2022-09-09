@@ -144,11 +144,7 @@ func (t *nestedTree) getStorages(orgId int64) []storageRuntime {
 	globalStorages = append(globalStorages, t.rootsByOrgId[ac.GlobalOrgID]...)
 
 	if orgId == ac.GlobalOrgID {
-		storages := make([]storageRuntime, 0)
-		for _, s := range globalStorages {
-			storages = append(storages, s)
-		}
-		return storages
+		return append(make([]storageRuntime, 0), globalStorages...)
 	}
 
 	orgPrefixes := make(map[string]bool)
