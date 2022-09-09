@@ -64,7 +64,7 @@ const options: Array<SelectableValue<ShowMessge>> = [
   },
 ];
 
-export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
+export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   const styles = useStyles2(getStyles);
   const [currentTab, setCurrentTab] = useState(InspectTab.Support);
   const [showMessage, setShowMessge] = useState(ShowMessge.GithubComment);
@@ -267,7 +267,7 @@ export const DebugWizard = ({ panel, plugin, onClose }: Props) => {
       )}
     </Drawer>
   );
-};
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   code: css`

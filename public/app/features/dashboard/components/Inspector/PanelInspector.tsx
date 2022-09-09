@@ -10,8 +10,8 @@ import { getPanelStateForModel } from 'app/features/panel/state/selectors';
 import { StoreState } from 'app/types';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { DebugWizard } from '../DebugWizard/DebugWizard';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
+import { SupportSnapshot } from '../SupportSnapshot/SupportSnapshot';
 
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
@@ -51,7 +51,7 @@ const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
   }
 
   if (defaultTab === InspectTab.Support) {
-    return <DebugWizard panel={panel} plugin={plugin} onClose={onClose} />;
+    return <SupportSnapshot panel={panel} plugin={plugin} onClose={onClose} />;
   }
 
   return (

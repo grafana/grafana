@@ -10,7 +10,7 @@ import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
-import { getPanelDataFrames } from '../dashboard/components/DebugWizard/utils';
+import { getPanelDataFrames } from '../dashboard/components/SupportSnapshot/utils';
 import { getPanelInspectorStyles } from '../inspector/styles';
 
 import { InspectTab } from './types';
