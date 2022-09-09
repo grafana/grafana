@@ -5236,7 +5236,7 @@ __metadata:
     fast_array_intersect: 1.1.0
     history: 4.10.1
     lodash: 4.17.21
-    marked: 4.0.18
+    marked: 4.1.0
     moment: 2.29.4
     moment-timezone: 0.5.35
     ol: 6.15.1
@@ -27065,12 +27065,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:4.0.18":
-  version: 4.0.18
-  resolution: "marked@npm:4.0.18"
+"marked@npm:4.1.0":
+  version: 4.1.0
+  resolution: "marked@npm:4.1.0"
   bin:
     marked: bin/marked.js
-  checksum: a13e886d5059a8500a6fd552feecc16e18fc3636aa491fce372384b1fdea67e323d67ac49f7618f6977e66ca96e39f27400eb5c1273d5ee9c2301e8c33e90dce
+  checksum: f0b3732a9d6208c933541342e60eb78029bd046c143a6ade0e76ed80b6174f92b186205a9dfe805e435070806ec475b0e87e62d04348eafd2f761c24281b192a
   languageName: node
   linkType: hard
 
