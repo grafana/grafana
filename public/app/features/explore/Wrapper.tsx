@@ -39,6 +39,10 @@ const styles = {
 interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
 interface OwnProps {}
 
+interface WrapperState {
+  rightPaneWidth?: number;
+}
+
 const mapStateToProps = (state: StoreState) => {
   return {
     navModel: getNavModel(state.navIndex, 'explore'),
@@ -56,9 +60,16 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
-class WrapperUnconnected extends PureComponent<Props> {
+class WrapperUnconnected extends PureComponent<Props, WrapperState> {
   minWidth = 200;
   static contextType = GrafanaContext;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      rightPaneWidth: undefined,
+    };
+  }
 
   componentWillUnmount() {
     const { left, right } = this.props.queryParams;
@@ -98,25 +109,25 @@ class WrapperUnconnected extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if (JSON.stringify(prevProps.exploreState) !== JSON.stringify(this.props.exploreState)) {
-      const { left, right } = this.props.queryParams;
-      const hasSplit = Boolean(left) && Boolean(right);
-      const datasourceTitle = hasSplit
-        ? `${this.props.exploreState.left.datasourceInstance?.name} | ${this.props.exploreState.right?.datasourceInstance?.name}`
-        : `${this.props.exploreState.left.datasourceInstance?.name}`;
-      const documentTitle = `${this.props.navModel.main.text} - ${datasourceTitle} - ${Branding.AppTitle}`;
-      document.title = documentTitle;
-    }
+    const { left, right } = this.props.queryParams;
+    const hasSplit = Boolean(left) && Boolean(right);
+    const datasourceTitle = hasSplit
+      ? `${this.props.exploreState.left.datasourceInstance?.name} | ${this.props.exploreState.right?.datasourceInstance?.name}`
+      : `${this.props.exploreState.left.datasourceInstance?.name}`;
+    const documentTitle = `${this.props.navModel.main.text} - ${datasourceTitle} - ${Branding.AppTitle}`;
+    document.title = documentTitle;
   }
 
-  updateSplitSize(rightSplitWidth: number) {
+  updateSplitSize(rightPaneWidth: number) {
     const evenSplitWidth = window.innerWidth / 2;
-    const areBothSimilar = inRange(rightSplitWidth, evenSplitWidth - 100, evenSplitWidth + 100);
+    const areBothSimilar = inRange(rightPaneWidth, evenSplitWidth - 100, evenSplitWidth + 100);
     if (areBothSimilar) {
       this.props.changeLargerPane(undefined);
     } else {
-      this.props.changeLargerPane(rightSplitWidth > evenSplitWidth ? ExploreId.right : ExploreId.left);
+      this.props.changeLargerPane(rightPaneWidth > evenSplitWidth ? ExploreId.right : ExploreId.left);
     }
+
+    this.setState({ rightPaneWidth });
   }
 
   render() {
@@ -128,8 +139,10 @@ class WrapperUnconnected extends PureComponent<Props> {
     if (hasSplit) {
       if (!evenSplitPanes && maxedExploreId) {
         widthCalc = maxedExploreId === ExploreId.right ? window.innerWidth - this.minWidth : this.minWidth;
-      } else {
-        widthCalc = window.innerWidth / 2;
+      } else if (evenSplitPanes) {
+        widthCalc = Math.floor(window.innerWidth / 2);
+      } else if (this.state.rightPaneWidth !== undefined) {
+        widthCalc = this.state.rightPaneWidth;
       }
     }
 

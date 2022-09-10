@@ -45,9 +45,7 @@ export const maximizePaneAction = createAction<{
   exploreId?: ExploreId;
 }>('explore/maximizePaneAction');
 
-export const evenPaneResizeAction = createAction<{
-  evenResize?: boolean;
-}>('explore/evenPaneResizeAction');
+export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction');
 
 /**
  * Resets state for explore.
@@ -159,7 +157,7 @@ export function maximizePane(exploreId?: ExploreId): ThunkResult<void> {
 
 export function evenResizePane(): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(evenPaneResizeAction({ evenResize: true }));
+    dispatch(evenPaneResizeAction());
   };
 }
 
@@ -205,7 +203,7 @@ export const initialExploreState: ExploreState = {
   richHistoryMigrationFailed: false,
   largerExploreId: undefined,
   maxedExploreId: undefined,
-  evenSplitPanes: undefined,
+  evenSplitPanes: true,
 };
 
 /**
@@ -213,8 +211,6 @@ export const initialExploreState: ExploreState = {
  * Actions that have an `exploreId` get routed to the ExploreItemReducer.
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
-  //console.log(action.type, action.payload);
-
   if (splitCloseAction.match(action)) {
     const { itemId } = action.payload as SplitCloseActionPayload;
     const targetSplit = {
@@ -226,7 +222,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       ...targetSplit,
       largerExploreId: undefined,
       maxedExploreId: undefined,
-      evenSplitPanes: undefined,
+      evenSplitPanes: true,
     };
   }
 
@@ -236,7 +232,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       ...state,
       largerExploreId,
       maxedExploreId: undefined,
-      evenSplitPanes: undefined,
+      evenSplitPanes: largerExploreId === undefined,
     };
   }
 
@@ -251,12 +247,11 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (evenPaneResizeAction.match(action)) {
-    const { evenResize } = action.payload;
     return {
       ...state,
       largerExploreId: undefined,
       maxedExploreId: undefined,
-      evenSplitPanes: evenResize,
+      evenSplitPanes: true,
     };
   }
 

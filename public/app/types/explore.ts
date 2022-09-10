@@ -72,7 +72,7 @@ export interface ExploreState {
   largerExploreId?: ExploreId;
 
   /**
-   * If a maximize pane button is pressed, which side should be resized. Will be undefined if not split or if it is manually resized
+   * If a maximize pane button is pressed, this indicates which side was maximized. Will be undefined if not split or if it is manually resized
    */
   maxedExploreId?: ExploreId;
 
