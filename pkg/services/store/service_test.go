@@ -390,7 +390,7 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		t.Run(test.name+": Listing outside of nested storages should delegate to the content root", func(t *testing.T) {
+		t.Run(test.name+": Listing outside of the nested storages should delegate to the content root", func(t *testing.T) {
 			test.mockNestedFS.AssertNotCalled(t, "List")
 
 			mockContentFSApi.On(
@@ -446,7 +446,7 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		t.Run(test.name+": Listing outside of nested storages should delegate to the content root", func(t *testing.T) {
+		t.Run(test.name+": Uploading files outside of the nested storages should delegate to the content root", func(t *testing.T) {
 			test.mockNestedFS.AssertNotCalled(t, "Get")
 			test.mockNestedFS.AssertNotCalled(t, "Upsert")
 
@@ -479,6 +479,38 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 				Contents:   jpgBytes,
 				Path:       strings.Join([]string{RootContent, "a", fileName}, "/"),
 			})
+			require.NoError(t, err)
+		})
+
+		t.Run(test.name+": Creating folders under /content/nested/.. should delegate to the nested roots", func(t *testing.T) {
+			mockContentFSApi.AssertNotCalled(t, "CreateFolder")
+			mockContentFSApi.AssertNotCalled(t, "DeleteFolder")
+
+			test.mockNestedFS.On("CreateFolder", mock.Anything, "/folder").Return(nil)
+
+			path := strings.Join([]string{RootContent, test.nestedRoot, "folder"}, "/")
+			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: path})
+			require.NoError(t, err)
+
+			test.mockNestedFS.On("DeleteFolder", mock.Anything, "/folder", mock.Anything).Return(nil)
+
+			err = store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: path})
+			require.NoError(t, err)
+		})
+
+		t.Run(test.name+": Creating folders under outside of the nested storages should delegate to the content root", func(t *testing.T) {
+			test.mockNestedFS.AssertNotCalled(t, "CreateFolder")
+			test.mockNestedFS.AssertNotCalled(t, "DeleteFolder")
+
+			mockContentFSApi.On("CreateFolder", mock.Anything, "/folder").Return(nil)
+
+			path := strings.Join([]string{RootContent, "folder"}, "/")
+			err := store.CreateFolder(context.Background(), test.user, &CreateFolderCmd{Path: path})
+			require.NoError(t, err)
+
+			mockContentFSApi.On("DeleteFolder", mock.Anything, "/folder", mock.Anything).Return(nil)
+
+			err = store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: path})
 			require.NoError(t, err)
 		})
 	}
