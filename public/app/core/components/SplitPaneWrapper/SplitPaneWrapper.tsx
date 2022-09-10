@@ -96,7 +96,7 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       );
     }
 
-    return leftPaneComponents;
+    return <div className={styles.singleLeftPane}>{leftPaneComponents}</div>;
   }
 
   render() {
@@ -155,6 +155,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   `;
 
   return {
+    singleLeftPane: css`
+      height: 100%;
+      position: absolute;
+      overflow: hidden;
+      width: 100%;
+    `,
     resizerV: cx(
       resizer,
       css`

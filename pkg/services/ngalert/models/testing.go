@@ -53,25 +53,25 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 		if rand.Int63()%2 == 0 {
 			d := util.GenerateShortUID()
 			dashUID = &d
-			p := rand.Int63n(1500)
+			p := rand.Int63()
 			panelID = &p
 		}
 
 		rule := &AlertRule{
-			ID:              rand.Int63n(1500),
-			OrgID:           rand.Int63n(1500),
+			ID:              rand.Int63(),
+			OrgID:           rand.Int63(),
 			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
 			Condition:       "A",
 			Data:            []AlertQuery{GenerateAlertQuery()},
 			Updated:         time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
 			IntervalSeconds: rand.Int63n(60) + 1,
-			Version:         rand.Int63n(1500), // Don't generate a rule ID too big for postgres
+			Version:         rand.Int63(),
 			UID:             util.GenerateShortUID(),
 			NamespaceUID:    util.GenerateShortUID(),
 			DashboardUID:    dashUID,
 			PanelID:         panelID,
 			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
-			RuleGroupIndex:  rand.Intn(1500),
+			RuleGroupIndex:  rand.Int(),
 			NoDataState:     randNoDataState(),
 			ExecErrState:    randErrState(),
 			For:             forInterval,
@@ -95,7 +95,7 @@ func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
 		for {
-			id := rand.Int63n(1500)
+			id := rand.Int63()
 			if _, ok := usedID[id]; !ok {
 				usedID[id] = struct{}{}
 				rule.ID = id
