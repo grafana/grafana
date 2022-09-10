@@ -33,6 +33,7 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
           Down sample
         </InlineFormLabel>
         <Input
+          data-testid={testIds.interval}
           placeholder="interval"
           value={query.downsampleInterval ?? ''}
           onChange={(e) => {
@@ -45,7 +46,6 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
       <div className="gf-form">
         <InlineLabel className="width-8 query-keyword">Aggregator</InlineLabel>
         <Select
-          inputId="opentsdb-aggregator-select"
           value={query.downsampleAggregator ? toOption(query.downsampleAggregator) : undefined}
           options={aggregatorOptions}
           onChange={({ value }) => {
@@ -89,4 +89,5 @@ export function DownSample({ query, onChange, onRunQuery, aggregators, fillPolic
 
 export const testIds = {
   section: 'opentsdb-downsample',
+  interval: 'downsample-interval',
 };

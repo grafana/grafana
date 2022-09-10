@@ -1,15 +1,21 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { OpenTsdbQuery } from '../types';
 
 import { MetricSection, MetricSectionProps, testIds } from './MetricSection';
 
+const onRunQuery = jest.fn();
+const onChange = jest.fn();
+
 const setup = (propOverrides?: Object) => {
-  const onRunQuery = jest.fn();
-  const onChange = jest.fn();
   const suggestMetrics = jest.fn();
-  const query: OpenTsdbQuery = { metric: '', refId: 'A' };
+  const query: OpenTsdbQuery = {
+    metric: 'cpu',
+    refId: 'A',
+    aggregator: 'avg',
+    alias: 'alias',
+  };
   const props: MetricSectionProps = {
     query,
     onChange: onChange,
@@ -23,26 +29,40 @@ const setup = (propOverrides?: Object) => {
   return render(<MetricSection {...props} />);
 };
 describe('MetricSection', () => {
-  it('should render section', () => {
+  it('should render metrics section', () => {
     setup();
     expect(screen.getByTestId(testIds.section)).toBeInTheDocument();
   });
 
-  // describe('metric select', () => {
-  //   it('calls suggestMetrics on click', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  describe('metric aggregator', () => {
+    it('should render metrics select', () => {
+      setup();
+      expect(screen.getByText('cpu')).toBeInTheDocument();
+    });
+  });
 
-  //   });
-  // });
+  describe('metric aggregator', () => {
+    it('should render the metrics aggregator', () => {
+      setup();
+      expect(screen.getByText('avg')).toBeInTheDocument();
+    });
+  });
 
-  // describe('aggregator select', () => {
-  //   it('should contain an aggregator', () => {
+  describe('metric alias', () => {
+    it('should render the alias input', () => {
+      setup();
+      expect(screen.getByTestId('metric-alias')).toBeInTheDocument();
+    });
 
-  //   });
-  // });
-
-  // describe('alias input', () => {
-  //   it('should call onChange on blur', () => {
-
-  //   });
-  // });
+    it('should fire OnRunQuery on blur', () => {
+      setup();
+      const alias = screen.getByTestId('metric-alias');
+      fireEvent.click(alias);
+      fireEvent.blur(alias);
+      expect(onRunQuery).toHaveBeenCalled();
+    });
+  });
 });

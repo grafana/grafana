@@ -81,6 +81,7 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
           Alias
         </InlineFormLabel>
         <Input
+          data-testid={testIds.alias}
           placeholder="series alias"
           value={query.alias ?? ''}
           onChange={(e) => {
@@ -96,4 +97,5 @@ export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, agg
 
 export const testIds = {
   section: 'opentsdb-metricsection',
+  alias: 'metric-alias',
 };
