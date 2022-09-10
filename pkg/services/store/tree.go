@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -68,7 +67,7 @@ func (t *nestedTree) getRoot(orgId int64, path string) (storageRuntime, string) 
 	rootKey, path := splitFirstSegment(path)
 	root, ok := t.lookup[orgId][rootKey]
 	if ok && root != nil {
-		if root.Meta().Config.Prefix == RootContent && strings.Contains(path, filestorage.Delimiter) {
+		if root.Meta().Config.Prefix == RootContent && path != "" && path != "/" {
 			mountedKey, nestedPath := splitFirstSegment(path)
 			nestedLookupKey := rootKey + filestorage.Delimiter + mountedKey
 			nestedRoot, nestedOk := t.lookup[orgId][nestedLookupKey]
@@ -91,7 +90,7 @@ func (t *nestedTree) getRoot(orgId int64, path string) (storageRuntime, string) 
 	if orgId != ac.GlobalOrgID {
 		globalRoot, ok := t.lookup[ac.GlobalOrgID][rootKey]
 		if ok && globalRoot != nil {
-			if globalRoot.Meta().Config.Prefix == RootContent && strings.Contains(path, filestorage.Delimiter) {
+			if globalRoot.Meta().Config.Prefix == RootContent && path != "" && path != "/" {
 				mountedKey, nestedPath := splitFirstSegment(path)
 				nestedLookupKey := rootKey + filestorage.Delimiter + mountedKey
 				nestedRoot, nestedOk := t.lookup[orgId][nestedLookupKey]
@@ -208,7 +207,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 	if root.Meta().Config.Prefix == RootContent && (path == "" || path == "/") {
 		storages = filterStoragesUnderContentRoot(t.getStorages(orgId))
 	}
-	grafanaStorageLogger.Info("Listing folder", "path", path, "storageCount", len(storages))
+	grafanaStorageLogger.Info("Listing folder", "path", path, "storageCount", len(storages), "root", root.Meta().Config.Prefix)
 
 	store := root.Store()
 	if store == nil {

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
@@ -466,22 +465,12 @@ func (s *standardStorageService) CreateFolder(ctx context.Context, user *user.Si
 }
 
 func (s *standardStorageService) validateFolderNameDoesNotConflictWithNestedStorages(root storageRuntime, storagePath string, orgID int64) error {
-	if root.Meta().Config.Prefix != RootContent {
-		// 'content' root is the only storage that supports "symlinks"
+	if !root.Meta().Config.UnderContentRoot {
 		return nil
 	}
 
-	storagePath = strings.TrimPrefix(storagePath, filestorage.Delimiter)
-	if strings.Contains(storagePath, filestorage.Delimiter) {
-		// creating/deleting folders within nested storages is allowed
-		return nil
-	}
-
-	nestedStorages := filterStoragesUnderContentRoot(s.tree.getStorages(orgID))
-	for _, s := range nestedStorages {
-		if s.Meta().Config.Prefix == storagePath {
-			return ErrValidationFailed
-		}
+	if storagePath == "" || storagePath == "/" {
+		return ErrValidationFailed
 	}
 
 	return nil

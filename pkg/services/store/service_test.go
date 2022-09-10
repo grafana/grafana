@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -325,7 +326,7 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.name+": Uploading a file under /content/nested/.. should delegate to nested storage", func(t *testing.T) {
+		t.Run(test.name+": Uploading a file under a /content/nested/.. should delegate to the nested storage", func(t *testing.T) {
 			test.mockNestedFS.On("Get", mock.Anything, filestorage.Delimiter+fileName, &filestorage.GetFileOptions{WithContents: false}).Return(nil, false, nil)
 			test.mockNestedFS.On("Upsert", mock.Anything, &filestorage.UpsertFileCommand{
 				Path:     filestorage.Delimiter + fileName,
@@ -355,6 +356,130 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 
 			err := store.DeleteFolder(context.Background(), test.user, &DeleteFolderCmd{Path: RootContent + "/" + test.nestedRoot})
 			require.ErrorIs(t, err, ErrValidationFailed)
+		})
+
+		t.Run(test.name+": Listing /content/nested should delegate to the nested root", func(t *testing.T) {
+			mockContentFSApi.AssertNotCalled(t, "List")
+			test.mockNestedFS.On(
+				"List",
+				mock.Anything,
+				"/",
+				mock.Anything,
+				mock.Anything,
+			).Return(&filestorage.ListResponse{
+				Files: []*filestorage.File{},
+			}, nil)
+
+			_, err := store.List(context.Background(), test.user, RootContent+"/"+test.nestedRoot)
+			require.NoError(t, err)
+		})
+
+		t.Run(test.name+": Listing a folder inside /content/nested/.. should delegate to the nested root", func(t *testing.T) {
+			mockContentFSApi.AssertNotCalled(t, "List")
+			test.mockNestedFS.On(
+				"List",
+				mock.Anything,
+				"/folder1/folder2",
+				mock.Anything,
+				mock.Anything,
+			).Return(&filestorage.ListResponse{
+				Files: []*filestorage.File{},
+			}, nil)
+
+			_, err := store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot, "folder1", "folder2"}, "/"))
+			require.NoError(t, err)
+		})
+
+		t.Run(test.name+": Listing outside of nested storages should delegate to the content root", func(t *testing.T) {
+			test.mockNestedFS.AssertNotCalled(t, "List")
+
+			mockContentFSApi.On(
+				"List",
+				mock.Anything,
+				"/not-nested-content",
+				mock.Anything,
+				mock.Anything,
+			).Return(&filestorage.ListResponse{
+				Files: []*filestorage.File{},
+			}, nil)
+
+			mockContentFSApi.On(
+				"List",
+				mock.Anything,
+				"/a/b/c",
+				mock.Anything,
+				mock.Anything,
+			).Return(&filestorage.ListResponse{
+				Files: []*filestorage.File{},
+			}, nil)
+
+			mockContentFSApi.On(
+				"List",
+				mock.Anything,
+				fmt.Sprintf("/%sa", test.nestedRoot),
+				mock.Anything,
+				mock.Anything,
+			).Return(&filestorage.ListResponse{
+				Files: []*filestorage.File{},
+			}, nil)
+
+			mockContentFSApi.On(
+				"List",
+				mock.Anything,
+				fmt.Sprintf("/%sa/b", test.nestedRoot),
+				mock.Anything,
+				mock.Anything,
+			).Return(&filestorage.ListResponse{
+				Files: []*filestorage.File{},
+			}, nil)
+
+			_, err := store.List(context.Background(), test.user, strings.Join([]string{RootContent, "not-nested-content"}, "/"))
+			require.NoError(t, err)
+
+			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, "a", "b", "c"}, "/"))
+			require.NoError(t, err)
+
+			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot + "a"}, "/"))
+			require.NoError(t, err)
+
+			_, err = store.List(context.Background(), test.user, strings.Join([]string{RootContent, test.nestedRoot + "a", "b"}, "/"))
+			require.NoError(t, err)
+		})
+
+		t.Run(test.name+": Listing outside of nested storages should delegate to the content root", func(t *testing.T) {
+			test.mockNestedFS.AssertNotCalled(t, "Get")
+			test.mockNestedFS.AssertNotCalled(t, "Upsert")
+
+			// file at the root of the content root - /content/myFile.jpg
+			fileName := "myFile.jpg"
+			mockContentFSApi.On("Get", mock.Anything, "/"+fileName, &filestorage.GetFileOptions{WithContents: false}).Return(nil, false, nil)
+			mockContentFSApi.On("Upsert", mock.Anything, &filestorage.UpsertFileCommand{
+				Path:     "/" + fileName,
+				MimeType: "image/jpeg",
+				Contents: jpgBytes,
+			}).Return(nil)
+
+			err := store.Upload(context.Background(), dummyUser, &UploadRequest{
+				EntityType: EntityTypeImage,
+				Contents:   jpgBytes,
+				Path:       strings.Join([]string{RootContent, fileName}, "/"),
+			})
+			require.NoError(t, err)
+
+			// file in the folder belonging to the content root storage - /content/nested/a/myFile.jpg
+			mockContentFSApi.On("Get", mock.Anything, "/a/"+fileName, &filestorage.GetFileOptions{WithContents: false}).Return(nil, false, nil)
+			mockContentFSApi.On("Upsert", mock.Anything, &filestorage.UpsertFileCommand{
+				Path:     "/a/" + fileName,
+				MimeType: "image/jpeg",
+				Contents: jpgBytes,
+			}).Return(nil)
+
+			err = store.Upload(context.Background(), dummyUser, &UploadRequest{
+				EntityType: EntityTypeImage,
+				Contents:   jpgBytes,
+				Path:       strings.Join([]string{RootContent, "a", fileName}, "/"),
+			})
+			require.NoError(t, err)
 		})
 	}
 }
