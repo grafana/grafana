@@ -32,6 +32,7 @@ var (
 	jpgBytes, _         = os.ReadFile("testdata/image.jpg")
 	svgBytes, _         = os.ReadFile("testdata/image.svg")
 	dummyUser           = &user.SignedInUser{OrgID: 1}
+	globalUser          = &user.SignedInUser{OrgID: 0}
 	allowAllAuthService = newStaticStorageAuthService(func(ctx context.Context, user *user.SignedInUser, storageName string) map[string]filestorage.PathFilter {
 		return map[string]filestorage.PathFilter{
 			ActionFilesDelete: allowAllPathFilter,
@@ -272,7 +273,6 @@ func TestSetupWithNonUniqueStoragePrefixes(t *testing.T) {
 func TestContentRootWithNestedStorage(t *testing.T) {
 	globalOrgID := int64(accesscontrol.GlobalOrgID)
 	db := sqlstore.InitTestDB(t)
-	globalUser := &user.SignedInUser{OrgID: 0}
 	orgedUser := &user.SignedInUser{OrgID: 1}
 
 	t.Helper()
@@ -514,4 +514,40 @@ func TestContentRootWithNestedStorage(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	ctx := context.Background()
+	nestedStorage := newSQLStorage(RootStorageMeta{}, "nested", "Testing upload", "dummy descr", &StorageSQLConfig{}, db, accesscontrol.GlobalOrgID, true)
+	contentStorage := newSQLStorage(RootStorageMeta{}, RootContent, "Testing upload", "dummy descr", &StorageSQLConfig{}, db, accesscontrol.GlobalOrgID, false)
+
+	_, err := contentStorage.Write(ctx, &WriteValueRequest{
+		User:       globalUser,
+		Path:       "/nested/abc.jpg",
+		EntityType: EntityTypeImage,
+		Body:       jpgBytes,
+	})
+	require.NoError(t, err)
+
+	store := newStandardStorageService(db, []storageRuntime{nestedStorage, contentStorage}, func(orgId int64) []storageRuntime { return make([]storageRuntime, 0) }, allowAllAuthService, cfg)
+	store.cfg = &GlobalStorageConfig{
+		AllowUnsanitizedSvgUpload: true,
+	}
+
+	resp, err := store.List(ctx, globalUser, "content/nested")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	rowLen, err := resp.Frame.RowLen()
+	require.NoError(t, err)
+	require.Equal(t, 0, rowLen) // nested storage is empty
+
+	resp, err = store.List(ctx, globalUser, "content")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	rowLen, err = resp.Frame.RowLen()
+	require.NoError(t, err)
+	require.Equal(t, 1, rowLen) // just a single "nested" folder
 }

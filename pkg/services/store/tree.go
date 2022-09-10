@@ -209,6 +209,11 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 	}
 	grafanaStorageLogger.Info("Listing folder", "path", path, "storageCount", len(storages), "root", root.Meta().Config.Prefix)
 
+	storagePrefixes := make(map[string]bool)
+	for _, s := range storages {
+		storagePrefixes[s.Meta().Config.Prefix] = true
+	}
+
 	store := root.Store()
 	if store == nil {
 		return nil, fmt.Errorf("store not ready")
@@ -225,7 +230,14 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		return nil, err
 	}
 
-	count := len(listResponse.Files) + len(storages)
+	nonConflictingFileNames := 0
+	for _, f := range listResponse.Files {
+		if _, ok := storagePrefixes[f.Name]; !ok {
+			nonConflictingFileNames++
+		}
+	}
+
+	count := nonConflictingFileNames + len(storages)
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
@@ -235,17 +247,22 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 	fsize.Config = &data.FieldConfig{
 		Unit: "bytes",
 	}
-	for i, f := range listResponse.Files {
-		names.Set(i, f.Name)
-		mtype.Set(i, f.MimeType)
-		fsize.Set(i, f.Size)
-	}
 
-	for i, s := range storages {
-		idx := len(listResponse.Files) + i
+	idx := 0
+	for _, s := range storages {
 		names.Set(idx, s.Meta().Config.Prefix)
 		mtype.Set(idx, filestorage.DirectoryMimeType)
 		fsize.Set(idx, int64(0))
+		idx++
+	}
+
+	for _, f := range listResponse.Files {
+		if _, ok := storagePrefixes[f.Name]; !ok {
+			names.Set(idx, f.Name)
+			mtype.Set(idx, f.MimeType)
+			fsize.Set(idx, f.Size)
+			idx++
+		}
 	}
 
 	frame := data.NewFrame("", names, mtype, fsize)
