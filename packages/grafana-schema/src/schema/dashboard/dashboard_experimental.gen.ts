@@ -20,6 +20,7 @@ interface AnnotationQuery {
   name?: string;
   rawQuery?: string;
   showIn: number;
+  tagColors?: TagColor[];
   target?: {};
   type: string;
 }
@@ -29,6 +30,7 @@ const defaultAnnotationQuery: Partial<AnnotationQuery> = {
   enable: true,
   hide: false,
   showIn: 0,
+  tagColors: [],
   type: 'dashboard',
 };
 
@@ -36,6 +38,11 @@ interface VariableModel {
   label?: string;
   name: string;
   type: VariableType;
+}
+
+interface TagColor {
+  color: string;
+  tag: string;
 }
 
 interface DashboardLink {

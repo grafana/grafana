@@ -101,6 +101,10 @@ seqs: [
 					// Annotation icon color.
 					iconColor?: string                @reviewme()
 					type:       string | *"dashboard" @reviewme()
+					iconColor?: string @reviewme()
+					// Annotation color for individual tags.
+					tagColors?: [...#TagColor] @reviewme()
+					type:  string | *"dashboard" @reviewme()
 					// Query for annotation data.
 					rawQuery?: string     @reviewme()
 					showIn:    uint8 | *0 @reviewme()
@@ -116,6 +120,12 @@ seqs: [
 					name:   string
 					label?: string
 					...
+				} @cuetsy(kind="interface") @reviewme()
+
+				// TagColor represents which color should be displyed in an Annotation for the specified tag.
+				#TagColor: {
+					tag: string @reviewme()
+					color: string @reviewme()
 				} @cuetsy(kind="interface") @reviewme()
 
 				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
