@@ -377,8 +377,11 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 // Also, each Frame must be uniquely identified by its Field.Labels or a single Error result will be returned.
 //
 // Per Frame, data becomes a State based on the following rules:
+//
+// If no value is set:
 //   - Empty or zero length Frames result in NoData.
-//   - If a value:
+//
+// If a value is set:
 //   - 0 results in Normal.
 //   - Nonzero (e.g 1.2, NaN) results in Alerting.
 //   - nil results in noData.
