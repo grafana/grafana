@@ -464,6 +464,18 @@ describe('Wrapper', () => {
         'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
       );
     });
+
+    it('Datasource in root not found and no queries changes to default', async () => {
+      setupExplore({
+        urlParams: 'orgId=1&left={"datasource":"asdasdasd","range":{"from":"now-1h","to":"now"}}',
+        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+      });
+      await waitForExplore();
+      const urlParams = decodeURIComponent(locationService.getSearch().toString());
+      expect(urlParams).toBe(
+        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
+      );
+    });
   });
 
   it('removes `from` and `to` parameters from url when first mounted', async () => {
