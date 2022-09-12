@@ -7,10 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrBadQuery = errutil.NewBase(errutil.StatusBadRequest, "query.badRequest").MustTemplate("Bad plugin request: {{ .Error }}", errutil.WithPublic("{{ .Public.Message }}"))
+var ErrQueryValidationFailure = errutil.NewBase(errutil.StatusBadRequest, "query.validationError").MustTemplate("query validation failed: {{ .Error }}", errutil.WithPublic("{{ .Public.Message }}"))
 
-func badQueryErr(publicMessage string) error {
-	return ErrBadQuery.Build(errutil.TemplateData{
+func queryValidationError(publicMessage string) error {
+	return ErrQueryValidationFailure.Build(errutil.TemplateData{
 		Public: map[string]interface{}{
 			"Message": util.Capitalize(publicMessage),
 		},
