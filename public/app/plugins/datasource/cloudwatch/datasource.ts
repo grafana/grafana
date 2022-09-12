@@ -21,7 +21,6 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { DataSourceWithBackend, FetchError, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
-import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { notifyApp } from 'app/core/actions';
 import { config } from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
@@ -30,6 +29,8 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
+
+import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
 
 import { CloudWatchAnnotationSupport } from './annotationSupport';
 import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
