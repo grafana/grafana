@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { periodOption } from '../../constants';
+import { periodOption } from '../constants';
 
 export interface Props {
   inputId: string;

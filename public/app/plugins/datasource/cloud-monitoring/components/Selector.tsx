@@ -3,9 +3,9 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, Select } from '@grafana/ui';
 
-import { SELECTORS } from '../../constants';
-import CloudMonitoringDatasource from '../../datasource';
-import { SLOQuery } from '../../types';
+import { SELECTORS } from '../constants';
+import CloudMonitoringDatasource from '../datasource';
+import { SLOQuery } from '../types';
 
 export interface Props {
   refId: string;
