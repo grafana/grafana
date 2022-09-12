@@ -16,11 +16,15 @@ export function SectionNavItem({ item }: Props) {
   const isRoot = item.parentItem == null;
   const hasChildren = Boolean(children?.length);
 
+  // If first root child is a section skip the bottom margin (as sections have top margin already)
+  const noRootMargin = isRoot && Boolean(item.children![0].children?.length);
+
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
     [styles.isSection]: hasChildren,
     [styles.isRoot]: isRoot,
+    [styles.noRootMargin]: noRootMargin,
   });
 
   return (
@@ -98,13 +102,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     isRoot: css({
       fontSize: theme.typography.h4.fontSize,
-      margin: theme.spacing(0, 0, 0, 0),
+      marginTop: 0,
+      marginBottom: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
     }),
     isSection: css({
       fontSize: theme.typography.h5.fontSize,
       marginTop: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
+    }),
+    noRootMargin: css({
+      marginBottom: 0,
     }),
   };
 };
