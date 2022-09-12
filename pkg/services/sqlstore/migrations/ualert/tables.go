@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+const UIDMaxLength = 40
+
 // AddMigration defines database migrations.
 func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertDefinitionMigrations(mg, 60)
@@ -44,7 +46,7 @@ func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds 
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalSeconds)},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false, Default: "0"},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id", "title"}, Type: migrator.IndexType},
@@ -87,7 +89,7 @@ func AddAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alert_definition_id", Type: migrator.DB_BigInt},
-			{Name: "alert_definition_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "alert_definition_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			{Name: "parent_version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "restored_from", Type: migrator.DB_Int, Nullable: false},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false},
@@ -116,7 +118,7 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 		Name: "alert_instance",
 		Columns: []*migrator.Column{
 			{Name: "def_org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "def_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "def_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			{Name: "labels", Type: migrator.DB_Text, Nullable: false},
 			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "current_state", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
@@ -174,9 +176,9 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalSeconds)},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false, Default: "0"},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			// the following fields will correspond to a dashboard (or folder) UIID
-			{Name: "namespace_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "namespace_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false},
 			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'NoData'"},
 			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: "'Alerting'"},
@@ -259,9 +261,9 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "rule_org_id", Type: migrator.DB_BigInt},
-			{Name: "rule_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			{Name: "rule_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			// the following fields will correspond to a dashboard (or folder) UID
-			{Name: "rule_namespace_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "rule_namespace_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false},
 			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "parent_version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "restored_from", Type: migrator.DB_Int, Nullable: false},
