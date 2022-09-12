@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"strconv"
 	"time"
 
@@ -78,6 +79,14 @@ func (pd PublicDashboard) TableName() string {
 type TimeSettings struct {
 	From string `json:"from,omitempty"`
 	To   string `json:"to,omitempty"`
+}
+
+func (ts *TimeSettings) FromDB(data []byte) error {
+	return json.Unmarshal(data, ts)
+}
+
+func (ts *TimeSettings) ToDB() ([]byte, error) {
+	return json.Marshal(ts)
 }
 
 // build time settings object from json on public dashboard. If empty, use
