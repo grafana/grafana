@@ -82,7 +82,7 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
               }}
             />
             <nav className={styles.content}>
-              <CustomScrollbar hideHorizontalTrack>
+              <CustomScrollbar showScrollIndicators hideHorizontalTrack>
                 <ul className={styles.itemList}>
                   {navItems.map((link) => (
                     <NavItem link={link} onClose={onMenuClose} activeItem={activeItem} key={link.text} />

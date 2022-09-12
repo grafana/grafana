@@ -31,9 +31,6 @@
 package api
 
 import (
-	"time"
-
-	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -650,11 +647,4 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(hs.DeleteDashboardSnapshot))
-
-	// Frontend logs
-	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)
-	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now),
-		routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
-	r.Post("/log-grafana-javascript-agent", middleware.RateLimit(hs.Cfg.GrafanaJavascriptAgent.EndpointRPS, hs.Cfg.GrafanaJavascriptAgent.EndpointBurst, time.Now),
-		routing.Wrap(GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)))
 }
