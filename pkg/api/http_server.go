@@ -12,9 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
-
-	"golang.org/x/time/rate"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
@@ -23,7 +20,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
-	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -576,7 +572,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(hs.pluginMetricsEndpoint)
-	hs.setupFrontendLogHandlers()
+	m.Use(hs.frontendLogEndpoints())
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))
@@ -662,61 +658,6 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	if _, err := ctx.Resp.Write(dataBytes); err != nil {
 		hs.log.Error("Failed to write to response", "err", err)
 	}
-}
-
-// setupFrontendLogHandlers will set up handlers for logs incoming from frontend.
-// handlers are setup even if frontend logging is disabled, but in this case do nothing
-// this is to avoid reporting errors in case config was changes but there are browser
-// sessions still open with older config
-func (hs *HTTPServer) setupFrontendLogHandlers() {
-	if !(hs.Cfg.GrafanaJavascriptAgent.Enabled || hs.Cfg.Sentry.Enabled) {
-		hs.web.Use(func(ctx *web.Context) {
-			if ctx.Req.Method == http.MethodPost && (ctx.Req.URL.Path == "/log" || ctx.Req.URL.Path == "/log-grafana-javascript-agent") {
-				ctx.Resp.WriteHeader(http.StatusAccepted)
-				_, err := ctx.Resp.Write([]byte("OK"))
-				if err != nil {
-					hs.log.Error("could not write to response", "err", err)
-				}
-			}
-		})
-		return
-	}
-
-	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)
-
-	var rateLimiter *rate.Limiter
-	var handler frontendLogMessageHandler
-	handlerEndpoint := ""
-	dummyEndpoint := ""
-
-	if hs.Cfg.GrafanaJavascriptAgent.Enabled {
-		rateLimiter = rate.NewLimiter(rate.Limit(hs.Cfg.GrafanaJavascriptAgent.EndpointRPS), hs.Cfg.GrafanaJavascriptAgent.EndpointBurst)
-		handler = GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
-		handlerEndpoint = "/log-grafana-javascript-agent"
-		dummyEndpoint = "/log"
-	} else {
-		rateLimiter = rate.NewLimiter(rate.Limit(hs.Cfg.Sentry.EndpointRPS), hs.Cfg.Sentry.EndpointBurst)
-		handler = NewFrontendLogMessageHandler(sourceMapStore)
-		handlerEndpoint = "/log"
-		dummyEndpoint = "/log-grafana-javascript-agent"
-	}
-
-	hs.web.Use(func(ctx *web.Context) {
-		if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == dummyEndpoint {
-			ctx.Resp.WriteHeader(http.StatusAccepted)
-			_, err := ctx.Resp.Write([]byte("OK"))
-			if err != nil {
-				hs.log.Error("could not write to response", "err", err)
-			}
-		}
-		if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == handlerEndpoint {
-			if !rateLimiter.AllowN(time.Now(), 1) {
-				ctx.Resp.WriteHeader(http.StatusTooManyRequests)
-				return
-			}
-			handler(hs, ctx)
-		}
-	})
 }
 
 func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string, exclude ...string) {

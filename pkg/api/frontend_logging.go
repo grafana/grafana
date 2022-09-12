@@ -2,8 +2,11 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/getsentry/sentry-go"
+	"golang.org/x/time/rate"
+
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/web"
@@ -12,6 +15,9 @@ import (
 var frontendLogger = log.New("frontend")
 
 type frontendLogMessageHandler func(hs *HTTPServer, c *web.Context)
+
+const sentryLogEndpointPath = "/log"
+const grafanaJavascriptAgentEndpointPath = "/log-grafana-javascript-agent"
 
 func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
 	return func(hs *HTTPServer, c *web.Context) {
@@ -127,6 +133,60 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		_, err := c.Resp.Write([]byte("OK"))
 		if err != nil {
 			hs.log.Error("could not write to response", "err", err)
+		}
+	}
+}
+
+// setupFrontendLogHandlers will set up handlers for logs incoming from frontend.
+// handlers are setup even if frontend logging is disabled, but in this case do nothing
+// this is to avoid reporting errors in case config was changes but there are browser
+// sessions still open with older config
+func (hs *HTTPServer) frontendLogEndpoints() web.Handler {
+	if !(hs.Cfg.GrafanaJavascriptAgent.Enabled || hs.Cfg.Sentry.Enabled) {
+		return func(ctx *web.Context) {
+			if ctx.Req.Method == http.MethodPost && (ctx.Req.URL.Path == sentryLogEndpointPath || ctx.Req.URL.Path == grafanaJavascriptAgentEndpointPath) {
+				ctx.Resp.WriteHeader(http.StatusAccepted)
+				_, err := ctx.Resp.Write([]byte("OK"))
+				if err != nil {
+					hs.log.Error("could not write to response", "err", err)
+				}
+			}
+		}
+	}
+
+	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.pluginStaticRouteResolver, frontendlogging.ReadSourceMapFromFS)
+
+	var rateLimiter *rate.Limiter
+	var handler frontendLogMessageHandler
+	handlerEndpoint := ""
+	dummyEndpoint := ""
+
+	if hs.Cfg.GrafanaJavascriptAgent.Enabled {
+		rateLimiter = rate.NewLimiter(rate.Limit(hs.Cfg.GrafanaJavascriptAgent.EndpointRPS), hs.Cfg.GrafanaJavascriptAgent.EndpointBurst)
+		handler = GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
+		handlerEndpoint = grafanaJavascriptAgentEndpointPath
+		dummyEndpoint = sentryLogEndpointPath
+	} else {
+		rateLimiter = rate.NewLimiter(rate.Limit(hs.Cfg.Sentry.EndpointRPS), hs.Cfg.Sentry.EndpointBurst)
+		handler = NewFrontendLogMessageHandler(sourceMapStore)
+		handlerEndpoint = sentryLogEndpointPath
+		dummyEndpoint = grafanaJavascriptAgentEndpointPath
+	}
+
+	return func(ctx *web.Context) {
+		if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == dummyEndpoint {
+			ctx.Resp.WriteHeader(http.StatusAccepted)
+			_, err := ctx.Resp.Write([]byte("OK"))
+			if err != nil {
+				hs.log.Error("could not write to response", "err", err)
+			}
+		}
+		if ctx.Req.Method == http.MethodPost && ctx.Req.URL.Path == handlerEndpoint {
+			if !rateLimiter.AllowN(time.Now(), 1) {
+				ctx.Resp.WriteHeader(http.StatusTooManyRequests)
+				return
+			}
+			handler(hs, ctx)
 		}
 	}
 }
