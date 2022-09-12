@@ -15,6 +15,8 @@ import { AccessControlAction, PermissionLevelString } from 'app/types';
 
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
+export const ADD_NEW_FOLER_OPTION = '+ Add new';
+
 export interface Props {
   onChange: ($folder: { title: string; id: number }) => void;
   enableCreateNew?: boolean;
@@ -89,7 +91,7 @@ export function FolderPicker(props: Props) {
         options.unshift({ label: initialTitle, value: initialFolderId });
       }
       if (enableCreateNew && customAdd) {
-        return [...options, { value: VALUE_FOR_ADD, label: '+ Add new', title: query }];
+        return [...options, { value: VALUE_FOR_ADD, label: ADD_NEW_FOLER_OPTION, title: query }];
       } else {
         return options;
       }
