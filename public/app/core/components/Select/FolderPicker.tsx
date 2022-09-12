@@ -241,6 +241,10 @@ export function FolderPicker(props: Props) {
     setFolder({ id: -1, title: value });
   };
 
+  const onBlur = () => {
+    setFolder({ value: 0, label: rootName });
+    setIsCreatingNew(false);
+  };
   if (isCreatingNew) {
     return (
       <>
@@ -252,6 +256,7 @@ export function FolderPicker(props: Props) {
           onChange={onNewFolderChange}
           onKeyDown={onKeyDown}
           placeholder="Press enter to confirm new folder."
+          onBlur={onBlur}
         />
         <div className={styles.newFolder}>Press enter to create the new folder.</div>
       </>
