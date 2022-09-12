@@ -16,12 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -34,53 +34,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type Server struct {
-	Mux           *web.Mux
-	RouteRegister routing.RouteRegister
-	TestServer    *httptest.Server
-}
-
 func setupTestServer(
 	t *testing.T,
 	cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	service publicdashboards.Service,
 	db *sqlstore.SQLStore,
+	user *user.SignedInUser,
 ) *web.Mux {
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	// build access control - FIXME we should be able to mock this, but to get
-	// tests going, we're going to instantiate full accesscontrol
-	//ac := accesscontrolmock.New()
-	//ac.WithDisabled()
-
-	// create a sqlstore for access control.
-	if db == nil {
-		db = sqlstore.InitTestDB(t)
+	var permissions []accesscontrol.Permission
+	if user != nil && user.Permissions != nil {
+		for action, scopes := range user.Permissions[user.OrgID] {
+			for _, scope := range scopes {
+				permissions = append(permissions, accesscontrol.Permission{
+					Action: action,
+					Scope:  scope,
+				})
+			}
+		}
 	}
 
-	var err error
-	acService, err := ossaccesscontrol.ProvideService(cfg, database.ProvideService(db), rr)
-	require.NoError(t, err)
-	ac := ossaccesscontrol.ProvideAccessControl(cfg, acService)
+	acService := actest.FakeService{ExpectedPermissions: permissions, ExpectedDisabled: !cfg.RBACEnabled}
+	ac := acimpl.ProvideAccessControl(cfg)
 
 	// build mux
 	m := web.New()
 
 	// set initial context
-	m.Use(func(c *web.Context) {
-		ctx := &models.ReqContext{
-			Context:    c,
-			IsSignedIn: true, // FIXME need to be able to change this for tests
-			SkipCache:  true, // hardcoded to make sure query service doesnt hit the cache
-			Logger:     log.New("publicdashboards-test"),
-
-			// Set signed in user. We might not actually need to do this.
-			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testUser"},
-		}
-		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), ctx))
-	})
+	m.Use(contextProvider(&testContext{user}))
+	m.Use(accesscontrol.LoadPermissionsMiddleware(acService))
 
 	// build api, this will mount the routes at the same time if
 	// featuremgmt.FlagPublicDashboard is enabled
@@ -90,6 +75,24 @@ func setupTestServer(
 	rr.Register(m.Router)
 
 	return m
+}
+
+type testContext struct {
+	user *user.SignedInUser
+}
+
+func contextProvider(tc *testContext) web.Handler {
+	return func(c *web.Context) {
+		signedIn := tc.user != nil
+		reqCtx := &models.ReqContext{
+			Context:      c,
+			SignedInUser: tc.user,
+			IsSignedIn:   signedIn,
+			SkipCache:    true,
+			Logger:       log.New("publicdashboards-test"),
+		}
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
+	}
 }
 
 func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T) *httptest.ResponseRecorder {

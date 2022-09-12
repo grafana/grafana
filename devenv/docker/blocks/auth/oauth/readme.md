@@ -26,7 +26,8 @@ name_attribute_path = name
 auth_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/auth
 token_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/token
 api_url = http://localhost:8087/auth/realms/grafana/protocol/openid-connect/userinfo
-role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+allow_assign_grafana_admin = true
 ```
 
 ## Devenv setup jwt auth
@@ -45,7 +46,7 @@ enabled = true
 header_name = X-JWT-Assertion
 username_claim = login
 email_claim = email
-jwk_set_file = devenv/docker/blocks/oauth/jwks.json
+jwk_set_file = devenv/docker/blocks/auth/oauth/jwks.json
 cache_ttl = 60m
 expected_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
 auto_sign_up = true
@@ -105,16 +106,17 @@ In case you want to make changes to the devenv setup, you can dump keycloak's DB
 
 ```bash
 cd devenv;
-docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > docker/blocks/oauth/cloak.sql
+docker-compose exec -T oauthkeycloakdb bash -c "pg_dump -U keycloak keycloak" > docker/blocks/auth/oauth/cloak.sql
 ```
 
 ## Connecting to keycloak:
 
 - keycloak admin:                     http://localhost:8087
 - keycloak admin login:               admin:admin
-- grafana oauth viewer login:          oauth-viewer:grafana
-- grafana oauth editor login:          oauth-editor:grafana
-- grafana oauth admin login:           oauth-admin:grafana
+- grafana oauth viewer login:         oauth-viewer:grafana
+- grafana oauth editor login:         oauth-editor:grafana
+- grafana oauth admin login:          oauth-admin:grafana
+- grafana oauth server admin login:   oauth-grafanaadmin:grafana
 
 # Troubleshooting
 

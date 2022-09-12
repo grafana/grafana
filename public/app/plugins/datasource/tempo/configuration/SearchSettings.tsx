@@ -4,7 +4,7 @@ import React from 'react';
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles } from '@grafana/ui';
 
-import { TempoJsonData } from '../datasource';
+import { TempoJsonData } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 

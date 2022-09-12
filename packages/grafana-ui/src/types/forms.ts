@@ -1,7 +1,7 @@
 import { UseFormReturn, FieldValues, FieldErrors } from 'react-hook-form';
 export type { SubmitHandler as FormsOnSubmit, FieldErrors as FormFieldErrors } from 'react-hook-form';
 
-export type FormAPI<T> = Omit<UseFormReturn<T>, 'trigger' | 'handleSubmit'> & {
+export type FormAPI<T extends FieldValues> = Omit<UseFormReturn<T>, 'trigger' | 'handleSubmit'> & {
   errors: FieldErrors<T>;
 };
 

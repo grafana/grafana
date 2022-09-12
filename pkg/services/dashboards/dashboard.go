@@ -6,8 +6,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-//go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 // DashboardService is a service for operating on dashboards.
+//
+//go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
@@ -32,8 +33,9 @@ type PluginService interface {
 	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
 }
 
-//go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --inpackage --filename dashboard_provisioning_mock.go
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
+//
+//go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --inpackage --filename dashboard_provisioning_mock.go
 type DashboardProvisioningService interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
@@ -45,8 +47,9 @@ type DashboardProvisioningService interface {
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }
 
-//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 // Store is a dashboard store.
+//
+//go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
@@ -76,8 +79,9 @@ type Store interface {
 	FolderStore
 }
 
-//go:generate mockery --name FolderStore --structname FakeFolderStore --inpackage --filename folder_store_mock.go
 // FolderStore is a folder store.
+//
+//go:generate mockery --name FolderStore --structname FakeFolderStore --inpackage --filename folder_store_mock.go
 type FolderStore interface {
 	// GetFolderByTitle retrieves a folder by its title
 	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*models.Folder, error)

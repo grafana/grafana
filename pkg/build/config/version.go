@@ -2,10 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -57,40 +54,6 @@ func (md *Metadata) GetReleaseMode() (ReleaseMode, error) {
 // than the way it will be built in 'main'
 type VersionMap map[VersionMode]Version
 
-// GetMetadata attempts to read the JSON file located at 'path' and decode it as a Metadata{} type.
-// If the provided path does not exist, then an error is not returned. Instead, an empty metadata is returned with no error.
-func GetMetadata(path string) (*Metadata, error) {
-	if _, err := os.Stat(path); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return &Metadata{}, nil
-		}
-		return nil, err
-	}
-	// Ignore gosec G304 as this function is only used in the build process.
-	//nolint:gosec
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Printf("error closing file at '%s': %s", path, err.Error())
-		}
-	}()
-
-	return DecodeMetadata(file)
-}
-
-// DecodeMetadata decodes the data in the io.Reader 'r' as Metadata.
-func DecodeMetadata(r io.Reader) (*Metadata, error) {
-	m := &Metadata{}
-	if err := json.NewDecoder(r).Decode(m); err != nil {
-		return nil, err
-	}
-
-	return m, nil
-}
-
 // GetVersions reads the embedded config.json and decodes it.
 func GetVersion(mode VersionMode) (*Version, error) {
 	if v, ok := Versions[mode]; ok {
@@ -98,15 +61,6 @@ func GetVersion(mode VersionMode) (*Version, error) {
 	}
 
 	return nil, fmt.Errorf("mode '%s' not found in version list", mode)
-}
-
-func shortenBuildID(buildID string) string {
-	buildID = strings.ReplaceAll(buildID, "-", "")
-	if len(buildID) < 9 {
-		return buildID
-	}
-
-	return buildID[0:8]
 }
 
 // GetGrafanaVersion gets the Grafana version from the package.json
@@ -141,6 +95,7 @@ func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 
 func CheckDroneTargetBranch() (VersionMode, error) {
 	reRlsBranch := regexp.MustCompile(`^v\d+\.\d+\.x$`)
+	rePRCheckBranch := regexp.MustCompile(`^pr-check-\d+`)
 	target := os.Getenv("DRONE_TARGET_BRANCH")
 	if target == "" {
 		return "", fmt.Errorf("failed to get DRONE_TARGET_BRANCH environmental variable")
@@ -150,7 +105,11 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 	if reRlsBranch.MatchString(target) {
 		return ReleaseBranchMode, nil
 	}
-	return "", fmt.Errorf("unrecognized target branch: %s", target)
+	if rePRCheckBranch.MatchString(target) {
+		return PullRequestMode, nil
+	}
+	fmt.Printf("unrecognized target branch: %s, defaulting to %s", target, PullRequestMode)
+	return PullRequestMode, nil
 }
 
 func CheckSemverSuffix() (ReleaseMode, error) {
@@ -178,4 +137,13 @@ func GetDroneCommit() (string, error) {
 		return "", fmt.Errorf("the environment variable DRONE_COMMIT is missing")
 	}
 	return commit, nil
+}
+
+func shortenBuildID(buildID string) string {
+	buildID = strings.ReplaceAll(buildID, "-", "")
+	if len(buildID) < 9 {
+		return buildID
+	}
+
+	return buildID[0:8]
 }

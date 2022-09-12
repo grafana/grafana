@@ -43,10 +43,11 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { serializeParams } from '../../../core/utils/fetch';
 import { renderLegendFormat } from '../prometheus/legend';
+import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
+import LanguageProvider from './LanguageProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import LanguageProvider from './language_provider';
 import { escapeLabelValueInSelector } from './language_utils';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
@@ -61,7 +62,14 @@ import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
-import { LokiOptions, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import {
+  LokiOptions,
+  LokiQuery,
+  LokiQueryDirection,
+  LokiQueryType,
+  LokiVariableQuery,
+  LokiVariableQueryType,
+} from './types';
 import { LokiVariableSupport } from './variables';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
@@ -304,16 +312,43 @@ export class LokiDatasource
     return res.data || [];
   }
 
-  async metricFindQuery(query: string) {
+  async metricFindQuery(query: LokiVariableQuery | string) {
     if (!query) {
       return Promise.resolve([]);
     }
 
-    const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
-    return await this.processMetricFindQuery(interpolated);
+    if (typeof query === 'string') {
+      const interpolated = this.interpolateString(query);
+      return await this.legacyProcessMetricFindQuery(interpolated);
+    }
+
+    const interpolatedQuery = {
+      ...query,
+      label: this.interpolateString(query.label || ''),
+      stream: this.interpolateString(query.stream || ''),
+    };
+
+    return await this.processMetricFindQuery(interpolatedQuery);
   }
 
-  async processMetricFindQuery(query: string) {
+  async processMetricFindQuery(query: LokiVariableQuery) {
+    if (query.type === LokiVariableQueryType.LabelNames) {
+      return this.labelNamesQuery();
+    }
+
+    if (!query.label) {
+      return [];
+    }
+
+    // If we have stream selector, use /series endpoint
+    if (query.stream) {
+      return this.labelValuesSeriesQuery(query.stream, query.label);
+    }
+
+    return this.labelValuesQuery(query.label);
+  }
+
+  async legacyProcessMetricFindQuery(query: string) {
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
       return await this.labelNamesQuery();
@@ -321,7 +356,7 @@ export class LokiDatasource
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
-      // If we have query expr, use /series endpoint
+      // If we have stream selector, use /series endpoint
       if (labelValues[1]) {
         return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2]);
       }
@@ -698,14 +733,14 @@ export class LokiDatasource
 
   addAdHocFilters(queryExpr: string) {
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    let expr = queryExpr;
+    let expr = replaceVariables(queryExpr);
 
     expr = adhocFilters.reduce((acc: string, filter: { key: string; operator: string; value: string }) => {
       const { key, operator, value } = filter;
       return this.addLabelToQuery(acc, key, operator, value);
     }, expr);
 
-    return expr;
+    return returnVariables(expr);
   }
 
   addLabelToQuery(queryExpr: string, key: string, operator: string, value: string) {

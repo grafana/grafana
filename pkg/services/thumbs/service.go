@@ -317,7 +317,7 @@ func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *models.ReqContext) 
 }
 
 func (hs *thumbService) getDashboardPreviewsSetupSettings(ctx context.Context) dashboardPreviewsSetupConfig {
-	systemRequirements := hs.getSystemRequirements()
+	systemRequirements := hs.getSystemRequirements(ctx)
 	thumbnailsExist, err := hs.thumbnailRepo.doThumbnailsExist(ctx)
 
 	if err != nil {
@@ -333,8 +333,8 @@ func (hs *thumbService) getDashboardPreviewsSetupSettings(ctx context.Context) d
 	}
 }
 
-func (hs *thumbService) getSystemRequirements() dashboardPreviewsSystemRequirements {
-	res, err := hs.renderingService.HasCapability(rendering.ScalingDownImages)
+func (hs *thumbService) getSystemRequirements(ctx context.Context) dashboardPreviewsSystemRequirements {
+	res, err := hs.renderingService.HasCapability(ctx, rendering.ScalingDownImages)
 	if err != nil {
 		hs.log.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
 		return dashboardPreviewsSystemRequirements{

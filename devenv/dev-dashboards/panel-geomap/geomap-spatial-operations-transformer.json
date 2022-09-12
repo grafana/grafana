@@ -70,11 +70,11 @@
       "options": {
         "controls": {
           "mouseWheelZoom": true,
-          "showAttribution": true,
+          "showAttribution": false,
           "showDebug": false,
           "showMeasure": false,
           "showScale": false,
-          "showZoom": true
+          "showZoom": false
         },
         "tooltip": {
           "mode": "details"

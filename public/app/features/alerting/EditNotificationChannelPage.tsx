@@ -12,7 +12,7 @@ import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app
 
 import { NotificationChannelForm } from './components/NotificationChannelForm';
 import { loadNotificationChannel, testNotificationChannel, updateNotificationChannel } from './state/actions';
-import { resetSecureField } from './state/reducers';
+import { initialChannelState, resetSecureField } from './state/reducers';
 import { mapChannelsToSelectableValue, transformSubmitData, transformTestData } from './utils/notificationChannels';
 
 interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
@@ -135,5 +135,5 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 export default connectWithCleanUp(
   mapStateToProps,
   mapDispatchToProps,
-  (state) => state.notificationChannel
+  (state) => (state.notificationChannel = initialChannelState)
 )(EditNotificationChannelPage);

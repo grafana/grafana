@@ -12,6 +12,8 @@ import (
 	"context"
 
 	"golang.org/x/oauth2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -31,28 +33,29 @@ type SocialService struct {
 }
 
 type OAuthInfo struct {
-	ClientId, ClientSecret string
-	Scopes                 []string
-	AuthUrl, TokenUrl      string
-	Enabled                bool
-	EmailAttributeName     string
-	EmailAttributePath     string
-	RoleAttributePath      string
-	RoleAttributeStrict    bool
-	GroupsAttributePath    string
-	TeamIdsAttributePath   string
-	AllowedDomains         []string
-	HostedDomain           string
-	ApiUrl                 string
-	TeamsUrl               string
-	AllowSignup            bool
-	Name                   string
-	Icon                   string
-	TlsClientCert          string
-	TlsClientKey           string
-	TlsClientCa            string
-	TlsSkipVerify          bool
-	UsePKCE                bool
+	ClientId, ClientSecret  string
+	Scopes                  []string
+	AuthUrl, TokenUrl       string
+	Enabled                 bool
+	EmailAttributeName      string
+	EmailAttributePath      string
+	RoleAttributePath       string
+	RoleAttributeStrict     bool
+	GroupsAttributePath     string
+	TeamIdsAttributePath    string
+	AllowedDomains          []string
+	AllowAssignGrafanaAdmin bool
+	HostedDomain            string
+	ApiUrl                  string
+	TeamsUrl                string
+	AllowSignup             bool
+	Name                    string
+	Icon                    string
+	TlsClientCert           string
+	TlsClientKey            string
+	TlsClientCa             string
+	TlsSkipVerify           bool
+	UsePKCE                 bool
 }
 
 func ProvideService(cfg *setting.Cfg) *SocialService {
@@ -66,30 +69,31 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		sec := cfg.Raw.Section("auth." + name)
 
 		info := &OAuthInfo{
-			ClientId:             sec.Key("client_id").String(),
-			ClientSecret:         sec.Key("client_secret").String(),
-			Scopes:               util.SplitString(sec.Key("scopes").String()),
-			AuthUrl:              sec.Key("auth_url").String(),
-			TokenUrl:             sec.Key("token_url").String(),
-			ApiUrl:               sec.Key("api_url").String(),
-			TeamsUrl:             sec.Key("teams_url").String(),
-			Enabled:              sec.Key("enabled").MustBool(),
-			EmailAttributeName:   sec.Key("email_attribute_name").String(),
-			EmailAttributePath:   sec.Key("email_attribute_path").String(),
-			RoleAttributePath:    sec.Key("role_attribute_path").String(),
-			RoleAttributeStrict:  sec.Key("role_attribute_strict").MustBool(),
-			GroupsAttributePath:  sec.Key("groups_attribute_path").String(),
-			TeamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
-			AllowedDomains:       util.SplitString(sec.Key("allowed_domains").String()),
-			HostedDomain:         sec.Key("hosted_domain").String(),
-			AllowSignup:          sec.Key("allow_sign_up").MustBool(),
-			Name:                 sec.Key("name").MustString(name),
-			Icon:                 sec.Key("icon").String(),
-			TlsClientCert:        sec.Key("tls_client_cert").String(),
-			TlsClientKey:         sec.Key("tls_client_key").String(),
-			TlsClientCa:          sec.Key("tls_client_ca").String(),
-			TlsSkipVerify:        sec.Key("tls_skip_verify_insecure").MustBool(),
-			UsePKCE:              sec.Key("use_pkce").MustBool(),
+			ClientId:                sec.Key("client_id").String(),
+			ClientSecret:            sec.Key("client_secret").String(),
+			Scopes:                  util.SplitString(sec.Key("scopes").String()),
+			AuthUrl:                 sec.Key("auth_url").String(),
+			TokenUrl:                sec.Key("token_url").String(),
+			ApiUrl:                  sec.Key("api_url").String(),
+			TeamsUrl:                sec.Key("teams_url").String(),
+			Enabled:                 sec.Key("enabled").MustBool(),
+			EmailAttributeName:      sec.Key("email_attribute_name").String(),
+			EmailAttributePath:      sec.Key("email_attribute_path").String(),
+			RoleAttributePath:       sec.Key("role_attribute_path").String(),
+			RoleAttributeStrict:     sec.Key("role_attribute_strict").MustBool(),
+			GroupsAttributePath:     sec.Key("groups_attribute_path").String(),
+			TeamIdsAttributePath:    sec.Key("team_ids_attribute_path").String(),
+			AllowedDomains:          util.SplitString(sec.Key("allowed_domains").String()),
+			HostedDomain:            sec.Key("hosted_domain").String(),
+			AllowSignup:             sec.Key("allow_sign_up").MustBool(),
+			Name:                    sec.Key("name").MustString(name),
+			Icon:                    sec.Key("icon").String(),
+			TlsClientCert:           sec.Key("tls_client_cert").String(),
+			TlsClientKey:            sec.Key("tls_client_key").String(),
+			TlsClientCa:             sec.Key("tls_client_ca").String(),
+			TlsSkipVerify:           sec.Key("tls_skip_verify_insecure").MustBool(),
+			UsePKCE:                 sec.Key("use_pkce").MustBool(),
+			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(false),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
@@ -163,21 +167,17 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:          newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
-				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
-				autoAssignOrgRole:   cfg.AutoAssignOrgRole,
-				roleAttributeStrict: info.RoleAttributeStrict,
+				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:          newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
-				apiUrl:              info.ApiUrl,
-				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
-				roleAttributePath:   info.RoleAttributePath,
-				roleAttributeStrict: info.RoleAttributeStrict,
+				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole),
+				apiUrl:        info.ApiUrl,
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 
@@ -190,8 +190,6 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 				emailAttributeName:   info.EmailAttributeName,
 				emailAttributePath:   info.EmailAttributePath,
 				nameAttributePath:    sec.Key("name_attribute_path").String(),
-				roleAttributePath:    info.RoleAttributePath,
-				roleAttributeStrict:  info.RoleAttributeStrict,
 				groupsAttributePath:  info.GroupsAttributePath,
 				loginAttributePath:   sec.Key("login_attribute_path").String(),
 				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
@@ -226,18 +224,18 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 }
 
 type BasicUserInfo struct {
-	Id      string
-	Name    string
-	Email   string
-	Login   string
-	Company string
-	Role    string
-	Groups  []string
+	Id             string
+	Name           string
+	Email          string
+	Login          string
+	Role           string
+	IsGrafanaAdmin *bool // nil will avoid overriding user's set server admin setting
+	Groups         []string
 }
 
 func (b *BasicUserInfo) String() string {
-	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Company: %s, Role: %s, Groups: %v",
-		b.Id, b.Name, b.Email, b.Login, b.Company, b.Role, b.Groups)
+	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Role: %s, Groups: %v",
+		b.Id, b.Name, b.Email, b.Login, b.Role, b.Groups)
 }
 
 type SocialConnector interface {
@@ -254,9 +252,10 @@ type SocialConnector interface {
 
 type SocialBase struct {
 	*oauth2.Config
-	log            log.Logger
-	allowSignup    bool
-	allowedDomains []string
+	log                     log.Logger
+	allowSignup             bool
+	allowAssignGrafanaAdmin bool
+	allowedDomains          []string
 
 	roleAttributePath   string
 	roleAttributeStrict bool
@@ -272,7 +271,8 @@ func (e Error) Error() string {
 }
 
 const (
-	grafanaCom = "grafana_com"
+	grafanaCom       = "grafana_com"
+	RoleGrafanaAdmin = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
 )
 
 var (
@@ -297,13 +297,14 @@ func newSocialBase(name string,
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
-		Config:              config,
-		log:                 logger,
-		allowSignup:         info.AllowSignup,
-		allowedDomains:      info.AllowedDomains,
-		autoAssignOrgRole:   autoAssignOrgRole,
-		roleAttributePath:   info.RoleAttributePath,
-		roleAttributeStrict: info.RoleAttributeStrict,
+		Config:                  config,
+		log:                     logger,
+		allowSignup:             info.AllowSignup,
+		allowAssignGrafanaAdmin: info.AllowAssignGrafanaAdmin,
+		allowedDomains:          info.AllowedDomains,
+		autoAssignOrgRole:       autoAssignOrgRole,
+		roleAttributePath:       info.RoleAttributePath,
+		roleAttributeStrict:     info.RoleAttributeStrict,
 	}
 }
 
@@ -311,28 +312,38 @@ type groupStruct struct {
 	Groups []string `json:"groups"`
 }
 
-func (s *SocialBase) extractRole(rawJSON []byte, groups []string) (org.RoleType, error) {
+func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool) {
 	if s.roleAttributePath == "" {
 		if s.autoAssignOrgRole != "" {
-			return org.RoleType(s.autoAssignOrgRole), nil
+			return org.RoleType(s.autoAssignOrgRole), false
 		}
 
-		return "", nil
+		return "", false
 	}
 
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
 	if err == nil && role != "" {
-		return org.RoleType(role), nil
+		return getRoleFromSearch(role)
 	}
 
 	if groupBytes, err := json.Marshal(groupStruct{groups}); err == nil {
-		if role, err := s.searchJSONForStringAttr(
-			s.roleAttributePath, groupBytes); err == nil && role != "" {
-			return org.RoleType(role), nil
+		role, err := s.searchJSONForStringAttr(s.roleAttributePath, groupBytes)
+		if err == nil && role != "" {
+			return getRoleFromSearch(role)
 		}
 	}
 
-	return "", nil
+	return "", false
+}
+
+// match grafana admin role and translate to org role and bool.
+// treat the JSON search result to ensure correct casing.
+func getRoleFromSearch(role string) (org.RoleType, bool) {
+	if strings.EqualFold(role, RoleGrafanaAdmin) {
+		return org.RoleAdmin, true
+	}
+
+	return org.RoleType(cases.Title(language.Und).String(role)), false
 }
 
 // GetOAuthProviders returns available oauth providers and if they're enabled or not

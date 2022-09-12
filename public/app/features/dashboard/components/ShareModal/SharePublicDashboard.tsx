@@ -11,6 +11,7 @@ import {
   ClipboardButton,
   Field,
   HorizontalGroup,
+  FieldSet,
   Input,
   Label,
   LinkButton,
@@ -22,6 +23,10 @@ import {
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
+
+import { contextSrv } from '../../../../core/services/context_srv';
+import { AccessControlAction } from '../../../../types';
+import { isOrgAdmin } from '../../../plugins/admin/permissions';
 
 import {
   dashboardHasTemplateVariables,
@@ -45,6 +50,8 @@ export const SharePublicDashboard = (props: Props) => {
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
+
+  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
 
   const [publicDashboard, setPublicDashboardConfig] = useState<PublicDashboard>({
     isEnabled: false,
@@ -123,59 +130,59 @@ export const SharePublicDashboard = (props: Props) => {
             >
               GitHub discussion
             </a>
+            .
           </p>
           <hr />
           <div className={styles.checkboxes}>
             <p>Before you click Save, please acknowledge the following information:</p>
-            <VerticalGroup spacing="md">
-              <Checkbox
-                label="Your entire dashboard will be public"
-                value={acknowledgements.public}
-                disabled={publicDashboardPersisted(publicDashboard)}
-                data-testid={selectors.WillBePublicCheckbox}
-                onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
-              />
-              <HorizontalGroup spacing="none">
+            <FieldSet disabled={publicDashboardPersisted(publicDashboard) || !hasWritePermissions}>
+              <VerticalGroup spacing="md">
                 <Checkbox
-                  label="Publishing currently only works with a subset of datasources"
-                  value={acknowledgements.datasources}
-                  disabled={publicDashboardPersisted(publicDashboard)}
-                  data-testid={selectors.LimitedDSCheckbox}
-                  onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
+                  label="Your entire dashboard will be public"
+                  value={acknowledgements.public}
+                  data-testid={selectors.WillBePublicCheckbox}
+                  onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
                 />
-                <LinkButton
-                  variant="primary"
-                  href="https://grafana.com/docs/grafana/latest/datasources/"
-                  target="_blank"
-                  fill="text"
-                  icon="info-circle"
-                  rel="noopener noreferrer"
-                  tooltip="Learn more about public datasources"
-                />
-              </HorizontalGroup>
-              <HorizontalGroup spacing="none">
-                <Checkbox
-                  label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
-                  value={acknowledgements.usage}
-                  disabled={publicDashboardPersisted(publicDashboard)}
-                  data-testid={selectors.CostIncreaseCheckbox}
-                  onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
-                />
-                <LinkButton
-                  variant="primary"
-                  href="https://grafana.com/docs/grafana/latest/enterprise/query-caching/"
-                  target="_blank"
-                  fill="text"
-                  icon="info-circle"
-                  rel="noopener noreferrer"
-                  tooltip="Learn more about query caching"
-                />
-              </HorizontalGroup>
-            </VerticalGroup>
+                <HorizontalGroup spacing="none">
+                  <Checkbox
+                    label="Publishing currently only works with a subset of datasources"
+                    value={acknowledgements.datasources}
+                    data-testid={selectors.LimitedDSCheckbox}
+                    onChange={(e) => onAcknowledge('datasources', e.currentTarget.checked)}
+                  />
+                  <LinkButton
+                    variant="primary"
+                    href="https://grafana.com/docs/grafana/latest/datasources/"
+                    target="_blank"
+                    fill="text"
+                    icon="info-circle"
+                    rel="noopener noreferrer"
+                    tooltip="Learn more about public datasources"
+                  />
+                </HorizontalGroup>
+                <HorizontalGroup spacing="none">
+                  <Checkbox
+                    label="Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs"
+                    value={acknowledgements.usage}
+                    data-testid={selectors.CostIncreaseCheckbox}
+                    onChange={(e) => onAcknowledge('usage', e.currentTarget.checked)}
+                  />
+                  <LinkButton
+                    variant="primary"
+                    href="https://grafana.com/docs/grafana/latest/enterprise/query-caching/"
+                    target="_blank"
+                    fill="text"
+                    icon="info-circle"
+                    rel="noopener noreferrer"
+                    tooltip="Learn more about query caching"
+                  />
+                </HorizontalGroup>
+              </VerticalGroup>
+            </FieldSet>
           </div>
           <div>
             <h4 className="share-modal-info-text">Public dashboard configuration</h4>
-            <div className={styles.dashboardConfig}>
+            <FieldSet disabled={!hasWritePermissions} className={styles.dashboardConfig}>
               <VerticalGroup spacing="md">
                 <HorizontalGroup spacing="xs" justify="space-between">
                   <Label description="The public dashboard uses the default time settings of the dashboard">
@@ -223,7 +230,9 @@ export const SharePublicDashboard = (props: Props) => {
                           data-testid={selectors.CopyUrlButton}
                           variant="primary"
                           icon="copy"
-                          getText={() => generatePublicDashboardUrl(publicDashboard)}
+                          getText={() => {
+                            return generatePublicDashboardUrl(publicDashboard);
+                          }}
                         >
                           Copy
                         </ClipboardButton>
@@ -232,15 +241,19 @@ export const SharePublicDashboard = (props: Props) => {
                   </Field>
                 )}
               </VerticalGroup>
-            </div>
-            {props.dashboard.hasUnsavedChanges() && (
-              <Alert
-                title="Please save your dashboard changes before updating the public configuration"
-                severity="warning"
-              />
+            </FieldSet>
+            {hasWritePermissions ? (
+              props.dashboard.hasUnsavedChanges() && (
+                <Alert
+                  title="Please save your dashboard changes before updating the public configuration"
+                  severity="warning"
+                />
+              )
+            ) : (
+              <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
             )}
             <Button
-              disabled={!acknowledged || props.dashboard.hasUnsavedChanges()}
+              disabled={!hasWritePermissions || !acknowledged || props.dashboard.hasUnsavedChanges()}
               onClick={onSavePublicConfig}
               data-testid={selectors.SaveConfigButton}
             >

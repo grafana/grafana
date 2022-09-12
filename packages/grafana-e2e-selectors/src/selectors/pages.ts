@@ -218,11 +218,6 @@ export const Pages = {
   PlaylistForm: {
     name: 'Playlist name',
     interval: 'Playlist interval',
-    itemRow: 'Playlist item row',
-    itemIdType: 'Playlist item dashboard by ID type',
-    itemTagType: 'Playlist item dashboard by Tag type',
-    itemMoveUp: 'Move playlist item order up',
-    itemMoveDown: 'Move playlist item order down',
     itemDelete: 'Delete playlist item',
   },
 };

@@ -59,13 +59,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	loginAttempt "github.com/grafana/grafana/pkg/services/login_attempt"
+	loginAttempt "github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -147,7 +147,7 @@ type HTTPServer struct {
 	secretsPluginManager         plugins.SecretsPluginManager
 	secretsStore                 secretsKV.SecretsKVStore
 	secretsMigrator              secrets.Migrator
-	secretsPluginMigrator        *spm.SecretMigrationServiceImpl
+	secretsPluginMigrator        spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
@@ -169,7 +169,7 @@ type HTTPServer struct {
 	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
 	dashboardsnapshotsService    dashboardsnapshots.Service
-	PluginSettings               *pluginSettings.Service
+	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
 	Csrf                         csrf.Service
@@ -218,14 +218,14 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService dashboards.FolderService,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings *pluginSettings.Service,
+	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, coremodels *registry.Base,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
-	secretsPluginMigrator *spm.SecretMigrationServiceImpl, secretsStore secretsKV.SecretsKVStore,
+	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service, loginAttemptService loginAttempt.Service, orgService org.Service,
 	accesscontrolService accesscontrol.Service, dashboardThumbsService dashboardThumbs.Service,
 ) (*HTTPServer, error) {
@@ -572,6 +572,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(hs.pluginMetricsEndpoint)
+	m.Use(hs.frontendLogEndpoints())
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.SQLStore))

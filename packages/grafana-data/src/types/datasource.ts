@@ -16,7 +16,10 @@ import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSuppo
 
 import { DataSourceRef, WithAccessControlMetadata } from '.';
 
-export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
+export interface DataSourcePluginOptionsEditorProps<
+  JSONData extends DataSourceJsonData = DataSourceJsonData,
+  SecureJSONData = {}
+> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
