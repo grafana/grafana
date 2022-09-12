@@ -2,16 +2,18 @@
 aliases:
   - /docs/grafana/latest/dashboards/annotations/
   - /docs/grafana/latest/reference/annotations/
+  - /docs/grafana/next/dashboards/build-dashboards/annotate-visualizations/
 keywords:
   - grafana
   - annotations
   - documentation
   - guide
-title: Annotations
-weight: 9
+title: Annotate visualizations
+menuTitle: Annotate visualizations
+weight: 600
 ---
 
-# Annotations
+# Annotate visualizations
 
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get event description and event tags. The text field can include links to other systems with more detail.

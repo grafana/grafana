@@ -2,17 +2,19 @@
 aliases:
   - /docs/grafana/latest/dashboards/dashboard-history/
   - /docs/grafana/latest/reference/dashboard_history/
+  - /docs/grafana/next/dashboards/build-dashboards/manage-version-history/
 keywords:
   - grafana
   - dashboard
   - documentation
   - version
   - history
-title: Dashboard version history
-weight: 14
+title: Manage dashboard version history
+menutitle: Manage version history
+weight: 400
 ---
 
-# Dashboard version history
+# Manage dashboard version history
 
 Whenever you save a version of your dashboard, a copy of that version is saved so that previous versions of your dashboard are never lost. A list of these versions is available by entering the dashboard settings and then selecting "Versions" in the left side menu.
 

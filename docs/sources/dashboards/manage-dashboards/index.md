@@ -14,7 +14,7 @@ aliases:
 title: Manage dashboards
 menuTitle: Manage dashboards
 weight: 8
-eywords:
+keywords:
   - grafana
   - dashboard
   - dashboard folders
