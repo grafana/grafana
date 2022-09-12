@@ -59,9 +59,6 @@ exports[`no enzyme tests`] = {
     "public/app/core/components/Select/MetricSelect.test.tsx:1074737147": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/alerting/AlertRuleList.test.tsx:2998938420": [
-      [0, 19, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:145048794": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
@@ -3187,9 +3184,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/admin/ldap/LdapPage.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/alerting/AlertRuleList.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/alerting/AlertRuleList.tsx:5381": [
