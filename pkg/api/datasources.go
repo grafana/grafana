@@ -622,7 +622,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *models.ReqContext, ds *models.Dat
 		}
 	}
 
-	proxyutil.ClearCookieHeader(c.Req, ds.AllowedCookies())
+	proxyutil.ClearCookieHeader(c.Req, ds.AllowedCookies(), []string{hs.Cfg.LoginCookieName})
 	if cookieStr := c.Req.Header.Get("Cookie"); cookieStr != "" {
 		req.Headers["Cookie"] = cookieStr
 	}
