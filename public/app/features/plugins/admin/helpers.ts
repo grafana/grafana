@@ -101,6 +101,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     signatureOrg,
     signatureType,
     hasUpdate,
+    accessControl,
   } = plugin;
 
   const isDisabled = !!error || isDisabledSecretsPlugin(type);
@@ -127,6 +128,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isEnterprise: false,
     type,
     error: error?.errorCode,
+    accessControl: accessControl,
   };
 }
 
@@ -179,6 +181,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     updatedAt: remote?.updatedAt || local?.info.updated || '',
     installedVersion,
     error: error?.errorCode,
+    // Only local plugins have access control metadata
+    accessControl: local?.accessControl,
   };
 }
 

@@ -196,11 +196,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getMetricNamespaces(query: GetMetricNamespacesQuery) {
+  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
       this.replaceTemplateVariables(query),
+      globalRegion,
       this.templateSrv
     );
     return this.getResource(url)

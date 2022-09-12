@@ -2,7 +2,6 @@ load(
     'scripts/drone/steps/lib.star',
     'identify_runner_step',
     'download_grabpl_step',
-    'gen_version_step',
     'yarn_install_step',
     'lint_frontend_step',
     'betterer_frontend_step',
@@ -19,7 +18,6 @@ def test_frontend(trigger, ver_mode):
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
-        gen_version_step(ver_mode),
         yarn_install_step(),
         compile_build_cmd(),
     ]

@@ -21,6 +21,7 @@ const TeamPermissions = (props: TeamPermissionsProps) => {
       title=""
       addPermissionTitle="Add member"
       buttonLabel="Add member"
+      emptyLabel="There are no members in this team or you do not have the permissions to list the current members."
       resource="teams"
       resourceId={props.team.id}
       canSetPermissions={canSetPermissions}

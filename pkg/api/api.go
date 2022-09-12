@@ -66,7 +66,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	authorize := ac.Middleware(hs.AccessControl)
-	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.userService)
+	authorizeInOrg := ac.AuthorizeInOrgMiddleware(hs.AccessControl, hs.accesscontrolService, hs.userService)
 	quota := middleware.Quota(hs.QuotaService)
 
 	r := hs.RouteRegister
@@ -88,7 +88,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/new", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, orgsCreateAccessEvaluator), hs.Index)
 	r.Get("/datasources/", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
-	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
 	r.Get("/datasources/correlations", authorize(reqOrgAdmin, correlations.ConfigurationPageAccess), hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
@@ -369,16 +369,16 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Cfg.PluginAdminEnabled && !hs.Cfg.PluginAdminExternalManageEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-				pluginRoute.Post("/:pluginId/install", routing.Wrap(hs.InstallPlugin))
-				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
-			}, reqGrafanaAdmin)
+				pluginRoute.Post("/:pluginId/install", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.InstallPlugin))
+				pluginRoute.Post("/:pluginId/uninstall", authorize(reqGrafanaAdmin, ac.EvalPermission(plugins.ActionInstall)), routing.Wrap(hs.UninstallPlugin))
+			})
 		}
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(hs.GetPluginDashboards))
-			pluginRoute.Post("/:pluginId/settings", routing.Wrap(hs.UpdatePluginSetting))
-			pluginRoute.Get("/:pluginId/metrics", routing.Wrap(hs.CollectPluginMetrics))
-		}, reqOrgAdmin)
+			pluginRoute.Get("/:pluginId/dashboards/", reqOrgAdmin, routing.Wrap(hs.GetPluginDashboards))
+			pluginRoute.Post("/:pluginId/settings", authorize(reqOrgAdmin, ac.EvalPermission(plugins.ActionWrite, pluginIDScope)), routing.Wrap(hs.UpdatePluginSetting))
+			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
+		})
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", authorize(reqSignedIn, ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
@@ -601,8 +601,9 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-secrets", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptSecrets))
 		adminRoute.Post("/encryption/rollback-secrets", reqGrafanaAdmin, routing.Wrap(hs.AdminRollbackSecrets))
-		adminRoute.Post("/encryption/migrate-secrets/to-plugin", reqGrafanaAdmin, routing.Wrap(hs.MigrateSecretsToPlugin))
-		adminRoute.Post("/encryption/migrate-secrets/from-plugin", reqGrafanaAdmin, routing.Wrap(hs.MigrateSecretsFromPlugin))
+		adminRoute.Post("/encryption/migrate-secrets/to-plugin", reqGrafanaAdmin, routing.Wrap(hs.AdminMigrateSecretsToPlugin))
+		adminRoute.Post("/encryption/migrate-secrets/from-plugin", reqGrafanaAdmin, routing.Wrap(hs.AdminMigrateSecretsFromPlugin))
+		adminRoute.Post("/encryption/delete-secretsmanagerplugin-secrets", reqGrafanaAdmin, routing.Wrap(hs.AdminDeleteAllSecretsManagerPluginSecrets))
 
 		adminRoute.Post("/provisioning/dashboards/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDashboards)), routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))

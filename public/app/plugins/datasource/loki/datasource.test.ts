@@ -24,6 +24,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 import { LokiDatasource } from './datasource';
 import { createMetadataRequest, createLokiDatasource } from './mocks';
 import { LokiOptions, LokiQuery, LokiQueryType } from './types';
+import { LokiVariableSupport } from './variables';
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
@@ -638,6 +639,22 @@ describe('LokiDatasource', () => {
         it('then the correct label should be added for metrics query', () => {
           assertAdHocFilters('rate({bar="baz"}[5m])', 'rate({bar="baz", job="grafana"}[5m])', ds);
         });
+
+        it('then the correct label should be added for metrics query and variable', () => {
+          assertAdHocFilters('rate({bar="baz"}[$__interval])', 'rate({bar="baz", job="grafana"}[$__interval])', ds);
+        });
+
+        it('then the correct label should be added for logs query with empty selector', () => {
+          assertAdHocFilters('{}', '{job="grafana"}', ds);
+        });
+
+        it('then the correct label should be added for metrics query with empty selector', () => {
+          assertAdHocFilters('rate({}[5m])', 'rate({job="grafana"}[5m])', ds);
+        });
+
+        it('then the correct label should be added for metrics query with empty selector and variable', () => {
+          assertAdHocFilters('rate({}[$__interval])', 'rate({job="grafana"}[$__interval])', ds);
+        });
       });
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
@@ -820,6 +837,14 @@ describe('applyTemplateVariables', () => {
     const spy = jest.spyOn(ds, 'addAdHocFilters');
     ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
     expect(spy).toHaveBeenCalledWith('{test}');
+  });
+});
+
+describe('Variable support', () => {
+  it('has Loki variable support', () => {
+    const ds = createLokiDatasource(templateSrvStub);
+
+    expect(ds.variables).toBeInstanceOf(LokiVariableSupport);
   });
 });
 

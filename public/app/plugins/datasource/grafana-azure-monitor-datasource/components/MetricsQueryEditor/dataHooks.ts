@@ -48,12 +48,15 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
         return;
       }
 
-      const results = await datasource.azureMonitorDatasource.getMetricNamespaces({
-        subscription,
-        metricNamespace,
-        resourceGroup,
-        resourceName,
-      });
+      const results = await datasource.azureMonitorDatasource.getMetricNamespaces(
+        {
+          subscription,
+          metricNamespace,
+          resourceGroup,
+          resourceName,
+        },
+        false
+      );
       const options = formatOptions(results, metricNamespace);
 
       // Do some cleanup of the query state if need be
