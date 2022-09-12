@@ -106,20 +106,24 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
-          <Collapse label="Logs" loading={false} isOpen>
-            <LiveTailControls exploreId={exploreId}>
-              {(controls) => (
-                <LiveLogsWithTheme
-                  logRows={logRows}
-                  timeZone={timeZone}
-                  stopLive={controls.stop}
-                  isPaused={this.props.isPaused}
-                  onPause={controls.pause}
-                  onResume={controls.resume}
-                />
-              )}
-            </LiveTailControls>
-          </Collapse>
+          <>
+            {/* this empty-div takes the place of the logs-volume-histogram in the crossfade transition animation */}
+            <div />
+            <Collapse label="Logs" loading={false} isOpen>
+              <LiveTailControls exploreId={exploreId}>
+                {(controls) => (
+                  <LiveLogsWithTheme
+                    logRows={logRows}
+                    timeZone={timeZone}
+                    stopLive={controls.stop}
+                    isPaused={this.props.isPaused}
+                    onPause={controls.pause}
+                    onResume={controls.resume}
+                  />
+                )}
+              </LiveTailControls>
+            </Collapse>
+          </>
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>
           <Logs
