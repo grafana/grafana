@@ -127,6 +127,9 @@ export const Components = {
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
     toggleTableView: 'toggle-table-view',
+
+    // [Geomap] Map controls
+    measureButton: 'show measure tools',
   },
   PanelInspector: {
     Data: {
@@ -367,5 +370,8 @@ export const Components = {
   FileUpload: {
     inputField: 'data-testid-file-upload-input-field',
     fileNameSpan: 'data-testid-file-upload-file-name',
+  },
+  DebugOverlay: {
+    wrapper: 'debug-overlay',
   },
 };

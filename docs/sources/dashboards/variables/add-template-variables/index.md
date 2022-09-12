@@ -25,15 +25,13 @@ aliases:
   - /docs/grafana/latest/variables/formatting-multi-value-variables/
   - /docs/grafana/latest/reference/templating/
   - /docs/grafana/latest/variables/manage-variable/
-title: Add and manage template variables
-menuTitle: Add and manage template variables
+title: Add and manage variables
+menuTitle: Manage variables
 weight: 100
 keywords:
   - grafana
-  - templating
   - documentation
   - guide
-  - template
   - variable
   - global
   - standard
@@ -42,7 +40,7 @@ keywords:
   - linked
 ---
 
-# Add and manage template variables
+# Add and manage variables
 
 The following table lists the types of variables shipped with Grafana.
 
@@ -58,7 +56,7 @@ The following table lists the types of variables shipped with Grafana.
 | Global variables  | Built-in variables that can be used in expressions in the query editor. Refer to [Global variables]({{< relref "#global-variables" >}}).                                                           |
 | Chained variables | Variable queries can contain other variables. Refer to [Chained variables]({{< relref "#chained-variables" >}}).                                                                                   |
 
-### Enter General options
+## Enter General options
 
 You must enter general options for any type of variable that you create.
 

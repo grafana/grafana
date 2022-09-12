@@ -8,7 +8,7 @@ import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationSearchToObject, locationService, reportInteraction } from '@grafana/runtime';
-import { Icon, useTheme2 } from '@grafana/ui';
+import { Icon, useTheme2, CustomScrollbar } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { KioskMode, StoreState } from 'app/types';
 
@@ -19,7 +19,6 @@ import { NavBarItemIcon } from './NavBarItemIcon';
 import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenu } from './NavBarMenu';
 import { NavBarMenuPortalContainer } from './NavBarMenuPortalContainer';
-import { NavBarScrollContainer } from './NavBarScrollContainer';
 import { NavBarToggle } from './NavBarToggle';
 import { NavBarContext } from './context';
 import {
@@ -125,7 +124,7 @@ export const NavBar = React.memo(() => {
               <NavBarItemIcon link={homeItem} />
             </NavBarItemWithoutMenu>
 
-            <NavBarScrollContainer>
+            <CustomScrollbar hideHorizontalTrack hideVerticalTrack showScrollIndicators>
               <ul className={styles.itemList}>
                 <NavBarItem className={styles.search} isActive={activeItem === searchItem} link={searchItem} />
 
@@ -156,7 +155,7 @@ export const NavBar = React.memo(() => {
                   />
                 ))}
               </ul>
-            </NavBarScrollContainer>
+            </CustomScrollbar>
           </FocusScope>
         </NavBarContext.Provider>
       </nav>

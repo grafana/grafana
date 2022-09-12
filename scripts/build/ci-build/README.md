@@ -3,7 +3,7 @@
 These are the sources for the Docker image that we use for the Grafana build containers. The image source itself
 is in Dockerfile, but there are supporting scripts such as the Makefile, for building images.
 
-The image is based on Debian Stretch, since we want an older Linux distribution (Stretch has long-term support into 2022) to build binaries that are as portable as possible.
+The image is based on Debian Buster, since we want an older Linux distribution (Buster has long-term support into 2024) to build binaries that are as portable as possible.
 
 ## Build/Publish Docker Image
 
