@@ -38,5 +38,4 @@ func PublishMetrics(c *cli.Context) error {
 	}
 
 	return nil
-
 }

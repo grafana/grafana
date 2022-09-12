@@ -49,11 +49,19 @@ func Publish(metrics map[string]string, apiKey string) error {
 		buf.String())
 
 	u := fmt.Sprintf("https://6371:%s@graphite-us-central1.grafana.net/metrics", apiKey)
+
+	//nolint:gosec
 	resp, err := http.Post(u, "application/json", &buf)
 	if err != nil {
 		return fmt.Errorf("metrics publishing failed: %w", err)
 	}
-	defer resp.Body.Close()
+
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Println("Error closing HTTP body", err)
+		}
+	}()
+
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("metrics publishing failed with status code %d", resp.StatusCode)
 	}
