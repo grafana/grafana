@@ -157,7 +157,7 @@ export default function StoragePage(props: Props) {
 
     const canAddFolder = isFolder && (path.startsWith('resources') || path.startsWith('content'));
     const canDelete = path.startsWith('resources/') || path.startsWith('content/');
-    const canViewDashboard = config.featureToggles.dashboardsFromStorage && (isFolder || path.endsWith('.json'));
+    const canViewDashboard = config.featureToggles.dashboardsFromStorage && path.startsWith('content/');
 
     const getErrorMessages = () => {
       return (
