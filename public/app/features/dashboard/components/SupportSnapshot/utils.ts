@@ -7,8 +7,6 @@ import {
   DataQuery,
   PanelData,
   DataTransformerConfig,
-  getValueFormat,
-  formattedValueToString,
   DataFrameJSON,
   LoadingState,
   dataFrameToJSON,
@@ -16,6 +14,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { Randomize, randomizeData } from './randomizer';
 
@@ -74,8 +73,8 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       withTransforms: false,
     })
   );
+  const dsref = panel.datasource;
   const frames = randomizeData(getPanelDataFrames(data), rand);
-  const rawFrameContent = JSON.stringify(frames);
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
   const queries = saveModel?.targets ?? [];
   const html = `<table width="100%">
@@ -84,15 +83,16 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       <td >${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion}</td>
     </tr>
     <tr>
-      <th>Queries&nbsp;(${queries.length})</th>
+      <th>Queries</th>
       <td>${queries
         .map((t: DataQuery) => {
-          return `${t.refId}[${t.datasource?.type}]`;
+          const ds = t.datasource ?? dsref;
+          return `${t.refId}[${ds?.type}]`;
         })
         .join(', ')}</td>
     </tr>
     ${getTransformsRow(saveModel)}
-    ${getDataRow(data, rawFrameContent)}
+    ${getDataRow(data, frames)}
     ${getAnnotationsRow(data)}
     <tr>
       <th>Grafana</th>
@@ -108,11 +108,11 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       {
         refId: 'A',
         datasource: {
-          type: 'testdata',
-          uid: '${testdata}',
+          type: 'grafana',
+          uid: 'grafana',
         },
-        rawFrameContent,
-        scenarioId: 'raw_frame',
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: frames,
       },
     ],
   };
@@ -137,8 +137,8 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
       type: 'table',
       title: 'Annotations',
       datasource: {
-        type: 'testdata',
-        uid: '${testdata}',
+        type: 'grafana',
+        uid: 'grafana',
       },
       targets: [
         {
@@ -174,19 +174,22 @@ function getTransformsRow(saveModel: any): string {
   </tr>`;
 }
 
-function getDataRow(data: PanelData, raw: string): string {
+function getDataRow(data: PanelData, frames: DataFrameJSON[]): string {
   let frameCount = data.series.length ?? 0;
   let fieldCount = 0;
+  let rowCount = 0;
   for (const frame of data.series) {
     fieldCount += frame.fields.length;
+    rowCount += frame.length;
   }
   return (
     '<tr>' +
     '<th>Data</th>' +
     '<td>' +
     `${data.state !== LoadingState.Done ? data.state : ''} ` +
-    `${frameCount} frames, ${fieldCount} fields` +
-    `(${formattedValueToString(getValueFormat('decbytes')(raw?.length))} JSON)` +
+    `${frameCount} frames, ${fieldCount} fields, ` +
+    `${rowCount} rows ` +
+    // `(${formattedValueToString(getValueFormat('decbytes')(raw?.length))} JSON)` +
     '</td>' +
     '</tr>'
   );
@@ -211,8 +214,8 @@ const embeddedDataTemplate: any = {
       id: 2,
       title: 'Reproduced with embedded data',
       datasource: {
-        type: 'testdata',
-        uid: '${testdata}',
+        type: 'grafana',
+        uid: 'grafana',
       },
       gridPos: {
         h: 13,
@@ -283,23 +286,4 @@ const embeddedDataTemplate: any = {
     },
   ],
   schemaVersion: 37,
-  templating: {
-    list: [
-      {
-        current: {
-          selected: true,
-          text: 'gdev-testdata',
-          value: 'gdev-testdata',
-        },
-        hide: 0,
-        includeAll: false,
-        multi: false,
-        name: 'testdata',
-        options: [],
-        query: 'testdata',
-        skipUrlSync: false,
-        type: 'datasource',
-      },
-    ],
-  },
 };

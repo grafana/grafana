@@ -3,32 +3,29 @@
 // The Grafana backend exposes an HTTP API, the same API is used by the frontend to do
 // everything from saving dashboards, creating users and updating data sources.
 //
-// Schemes: http, https
-// BasePath: /api
-// Version: 0.0.1
-// License: GNU Affero General Public License v3.0 https://www.gnu.org/licenses/agpl-3.0.en.html
-// Contact: Grafana Labs<hello@grafana.com> https://grafana.com
+//	Schemes: http, https
+//	BasePath: /api
+//	Version: 0.0.1
+//	License: GNU Affero General Public License v3.0 https://www.gnu.org/licenses/agpl-3.0.en.html
+//	Contact: Grafana Labs<hello@grafana.com> https://grafana.com
 //
-// Consumes:
-// - application/json
+//	Consumes:
+//	- application/json
 //
-// Produces:
-// - application/json
+//	Produces:
+//	- application/json
 //
-// Security:
-// - basic:
-// - api_key:
+//	Security:
+//	- basic:
+//	- api_key:
 //
-// SecurityDefinitions:
-// basic:
-//
-//	type: basic
-//
-// api_key:
-//
-//	type: apiKey
-//	name: Authorization
-//	in: header
+//	SecurityDefinitions:
+//	basic:
+//	 type: basic
+//	api_key:
+//	 type: apiKey
+//	 name: Authorization
+//	 in: header
 //
 // swagger:meta
 package api
@@ -91,7 +88,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/org/new", authorizeInOrg(reqGrafanaAdmin, ac.UseGlobalOrg, orgsCreateAccessEvaluator), hs.Index)
 	r.Get("/datasources/", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
-	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
 	r.Get("/datasources/correlations", authorize(reqOrgAdmin, correlations.ConfigurationPageAccess), hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, ac.EvalPermission(ac.ActionOrgUsersRead)), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)

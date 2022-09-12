@@ -114,9 +114,9 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		IsDisabled:       args.IsDisabled,
 		OrgID:            orgID,
 		EmailVerified:    args.EmailVerified,
-		Created:          time.Now(),
-		Updated:          time.Now(),
-		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		Created:          TimeNow(),
+		Updated:          TimeNow(),
+		LastSeenAt:       TimeNow().AddDate(-10, 0, 0),
 		IsServiceAccount: args.IsServiceAccount,
 	}
 
@@ -159,8 +159,8 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 			OrgId:   orgID,
 			UserId:  usr.ID,
 			Role:    org.RoleAdmin,
-			Created: time.Now(),
-			Updated: time.Now(),
+			Created: TimeNow(),
+			Updated: TimeNow(),
 		}
 
 		if ss.Cfg.AutoAssignOrg && !usr.IsAdmin {
@@ -314,7 +314,7 @@ func (ss *SQLStore) UpdateUser(ctx context.Context, cmd *models.UpdateUserComman
 			Email:   cmd.Email,
 			Login:   cmd.Login,
 			Theme:   cmd.Theme,
-			Updated: time.Now(),
+			Updated: TimeNow(),
 		}
 
 		if _, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user); err != nil {
@@ -343,7 +343,7 @@ func (ss *SQLStore) ChangeUserPassword(ctx context.Context, cmd *models.ChangeUs
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			Password: cmd.NewPassword,
-			Updated:  time.Now(),
+			Updated:  TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Where(notServiceAccountFilter(ss)).Update(&user)
@@ -355,7 +355,7 @@ func (ss *SQLStore) UpdateUserLastSeenAt(ctx context.Context, cmd *models.Update
 	return ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		user := user.User{
 			ID:         cmd.UserId,
-			LastSeenAt: time.Now(),
+			LastSeenAt: TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Update(&user)
@@ -849,7 +849,7 @@ func (ss *SQLStore) SetUserHelpFlag(ctx context.Context, cmd *models.SetUserHelp
 		user := user.User{
 			ID:         cmd.UserId,
 			HelpFlags1: cmd.HelpFlags1,
-			Updated:    time.Now(),
+			Updated:    TimeNow(),
 		}
 
 		_, err := sess.ID(cmd.UserId).Cols("help_flags1").Update(&user)
