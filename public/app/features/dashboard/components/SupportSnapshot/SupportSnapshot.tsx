@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAsync, useCopyToClipboard } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -84,6 +84,21 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   const markdownText = useMemo(() => {
     return getGithubMarkdown(panel, snapshotText);
   }, [snapshotText, panel]);
+
+  const [iframeLoading, setIframeLoading] = useState(false);
+
+  // Listen for messages from loaded iframe
+  useEffect(() => {
+    const handleEvent = (evt: MessageEvent<string>) => {
+      if (evt.data === 'GrafanaAppInit') {
+        setIframeLoading(true);
+      }
+    };
+    window.addEventListener('message', handleEvent, false);
+    return function cleanup() {
+      window.removeEventListener('message', handleEvent);
+    };
+  }, []);
 
   if (!plugin) {
     return null;
@@ -255,12 +270,18 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
 
           <AutoSizer disableWidth>
             {({ height }) => (
-              <iframe
-                src={`/dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`}
-                width="100%"
-                height={height - 100}
-                frameBorder="0"
-              />
+              <>
+                <iframe
+                  src={`/dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`}
+                  width="100%"
+                  height={height - 100}
+                  frameBorder="0"
+                  style={{
+                    display: iframeLoading ? 'block' : 'none',
+                  }}
+                />
+                {!iframeLoading && <div>No iframe support?</div>}
+              </>
             )}
           </AutoSizer>
         </>
