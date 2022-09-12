@@ -318,14 +318,14 @@ export class LokiDatasource
     }
 
     if (typeof query === 'string') {
-      const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
+      const interpolated = this.interpolateString(query);
       return await this.legacyProcessMetricFindQuery(interpolated);
     }
 
     const interpolatedQuery = {
       ...query,
-      label: this.templateSrv.replace(query.label, {}, this.interpolateQueryExpr),
-      stream: this.templateSrv.replace(query.stream, {}, this.interpolateQueryExpr),
+      label: this.interpolateString(query.label || ''),
+      stream: this.interpolateString(query.stream || ''),
     };
 
     return await this.processMetricFindQuery(interpolatedQuery);
