@@ -201,7 +201,7 @@ export const getAvailableIcons = () => availableIcons;
 
 type BrandIconNames = typeof avaibleBrandIcons;
 
-export type IconName = ReturnType<typeof getAvailableIcons>[number] | BrandIconNames[number];
+export type IconName = ReturnType<typeof getAvailableIcons>[number] | BrandIconNames[number] | string;
 
 /** Get the icon for a given field type */
 export function getFieldTypeIcon(field?: Field): IconName {
@@ -226,17 +226,6 @@ export function getFieldTypeIcon(field?: Field): IconName {
   return 'question-circle';
 }
 
-function isValidIconName(iconName: string): iconName is IconName {
-  const namedIcons: string[] = availableIcons;
-  const brandIcons: string[] = avaibleBrandIcons;
-
-  return namedIcons.includes(iconName) || brandIcons.includes(iconName);
-}
-
-export function toIconName(iconName: string): IconName | undefined {
-  if (isValidIconName(iconName)) {
-    return iconName;
-  }
-
-  return undefined;
+export function toIconName(iconName: string): IconName {
+  return iconName as IconName;
 }

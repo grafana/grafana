@@ -73,7 +73,6 @@ export function RadioButtonGroup<T>({
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
       {options.map((opt, i) => {
         const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);
-        const icon = opt.icon ? toIconName(opt.icon) : undefined;
         return (
           <RadioButton
             size={size}
@@ -89,7 +88,7 @@ export function RadioButtonGroup<T>({
             fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
           >
-            {icon && <Icon name={icon} className={styles.icon} />}
+            {opt.icon && <Icon name={opt.icon} className={styles.icon} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
             {opt.label} {opt.component ? <opt.component /> : null}
           </RadioButton>
