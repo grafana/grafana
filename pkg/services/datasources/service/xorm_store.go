@@ -254,7 +254,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			Database:        cmd.Database,
 			IsDefault:       cmd.IsDefault,
 			BasicAuth:       cmd.BasicAuth,
-		BasicAuthUser:   cmd.BasicAuthUser,
+			BasicAuthUser:   cmd.BasicAuthUser,
 			WithCredentials: cmd.WithCredentials,
 			JsonData:        cmd.JsonData,
 			SecureJsonData:  simplejson.NewFromAny(cmd.EncryptedSecureJsonData),

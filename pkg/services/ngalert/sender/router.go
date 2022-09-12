@@ -249,11 +249,12 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 
 	var password string
 	if ds.SecureJsonData != nil {
-		bt, err := ds.SecureJsonData.Bytes()
+		secureData := make(map[string][]byte)
+		bt, err := ds.SecureJsonData.MarshalJSON()
 		if err != nil {
 			return "", err
 		}
-		secureData := make(map[string][]byte)
+
 		if err := json.Unmarshal(bt, &secureData); err != nil {
 			return "", err
 		}
