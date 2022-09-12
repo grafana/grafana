@@ -91,7 +91,7 @@ describe('ShareModal', () => {
   describe('with current time range and panel', () => {
     it('should generate share url absolute time', async () => {
       render(<ShareLink {...props} />);
-      expect(await screen.findByLabelText('Link URL')).toHaveValue(
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
         'http://server/#!/test?from=1000&to=2000&orgId=1&viewPanel=22'
       );
     });
@@ -102,10 +102,9 @@ describe('ShareModal', () => {
 
       const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
       const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
-      expect(await screen.findByLabelText(selectors.pages.SharePanelModal.linkToRenderedImage)).toHaveAttribute(
-        'href',
-        base + params
-      );
+      expect(
+        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+      ).toHaveAttribute('href', base + params);
     });
 
     it('should generate render url for scripted dashboard', async () => {
@@ -114,16 +113,17 @@ describe('ShareModal', () => {
 
       const base = 'http://dashboards.grafana.com/render/dashboard-solo/script/my-dash.js';
       const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
-      expect(await screen.findByLabelText(selectors.pages.SharePanelModal.linkToRenderedImage)).toHaveAttribute(
-        'href',
-        base + params
-      );
+      expect(
+        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+      ).toHaveAttribute('href', base + params);
     });
 
     it('should remove panel id when no panel in scope', async () => {
       props.panel = undefined;
       render(<ShareLink {...props} />);
-      expect(await screen.findByLabelText('Link URL')).toHaveValue('http://server/#!/test?from=1000&to=2000&orgId=1');
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
+        'http://server/#!/test?from=1000&to=2000&orgId=1'
+      );
     });
 
     it('should add theme when specified', async () => {
@@ -131,7 +131,7 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       await userEvent.click(screen.getByLabelText('Light'));
-      expect(await screen.findByLabelText('Link URL')).toHaveValue(
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
         'http://server/#!/test?from=1000&to=2000&orgId=1&theme=light'
       );
     });
@@ -141,18 +141,21 @@ describe('ShareModal', () => {
       render(<ShareLink {...props} />);
 
       const base = 'http://server/#!/test';
-      expect(await screen.findByLabelText('Link URL')).toHaveValue(base + '?editPanel=1&from=1000&to=2000&orgId=1');
-      expect(await screen.findByLabelText(selectors.pages.SharePanelModal.linkToRenderedImage)).toHaveAttribute(
-        'href',
-        base + '?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC'
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
+        base + '?editPanel=1&from=1000&to=2000&orgId=1'
       );
+      expect(
+        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+      ).toHaveAttribute('href', base + '?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
     });
 
     it('should shorten url', async () => {
       render(<ShareLink {...props} />);
 
       await userEvent.click(await screen.findByLabelText('Shorten URL'));
-      expect(await screen.findByLabelText('Link URL')).toHaveValue(`http://localhost:3000/goto/${mockUid}`);
+      expect(await screen.findByRole('textbox', { name: 'Link URL' })).toHaveValue(
+        `http://localhost:3000/goto/${mockUid}`
+      );
     });
   });
 });
@@ -186,7 +189,9 @@ describe('when appUrl is set in the grafana config', () => {
     mockLocationHref('http://dashboards.grafana.com/?orgId=1');
     render(<ShareLink {...props} />);
 
-    expect(await screen.findByLabelText(selectors.pages.SharePanelModal.linkToRenderedImage)).toHaveAttribute(
+    expect(
+      await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+    ).toHaveAttribute(
       'href',
       `http://dashboards.grafana.com/render/d-solo/${mockDashboard.uid}?orgId=1&from=1000&to=2000&panelId=${mockPanel.id}&width=1000&height=500&tz=UTC`
     );
