@@ -59,6 +59,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     menuButton: css({
       display: 'flex',
       alignItems: 'center',
+      marginRight: theme.spacing(1),
     }),
     actions: css({
       display: 'flex',
