@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/grafana/build-pipeline/pkg/fs"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 	cliv1 "github.com/urfave/cli"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
@@ -23,7 +23,7 @@ func VerifyDrone(c *cli.Context) error {
 	const yml = ".drone.yml"
 	const backup = ".drone.yml.bak"
 
-	if err := fs.CopyFile(yml, backup); err != nil {
+	if err := fsutil.CopyFile(yml, backup); err != nil {
 		return cli.NewExitError(fmt.Sprintf("failed to copy %s to %s: %s", yml, backup, err), 1)
 	}
 	defer func() {
