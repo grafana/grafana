@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
-import { Field, LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
+import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme } from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
@@ -14,6 +14,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     getRows: () => [],
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
+    theme: createTheme(),
     ...(propOverrides || {}),
   };
 

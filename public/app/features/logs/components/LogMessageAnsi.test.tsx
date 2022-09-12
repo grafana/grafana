@@ -35,7 +35,7 @@ describe('<LogMessageAnsi />', () => {
   it('renders string with ANSI dim code with appropriate themed color', () => {
     const value = 'Lorem \u001B[1;2mIpsum';
     const theme = createTheme();
-    render(<LogMessageAnsi value={value} theme={theme} />);
+    render(<LogMessageAnsi value={value} theme={createTheme()} />);
 
     expect(screen.queryByTestId('ansiLogLine')).toBeInTheDocument();
     expect(screen.getAllByTestId('ansiLogLine')).toHaveLength(1);
