@@ -114,7 +114,6 @@ func TestMakeAlertRule(t *testing.T) {
 			require.Regexp(t, "^_.{10}$", uniq)
 			require.Equal(t, ar.Title, ar.RuleGroup)
 		})
-
 	})
 }
 
