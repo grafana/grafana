@@ -99,9 +99,9 @@ type ProvisionedAlertRule struct {
 }
 
 var (
-	ErrRuleMissingTitle     = errors.New("alert rules has no title set")
-	ErrRuleMissingFolderUID = errors.New("alert rules has no folder UID set")
-	ErrRuleMissingRuleGroup = errors.New("alert rule has no rule group set")
+	ErrRuleMissingTitle     = errors.New("rule has no title set")
+	ErrRuleMissingFolderUID = errors.New("rule has no folder UID set")
+	ErrRuleMissingRuleGroup = errors.New("rule has no rule group set")
 )
 
 func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
