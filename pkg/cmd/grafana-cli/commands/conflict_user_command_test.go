@@ -74,8 +74,8 @@ func TestBuildConflictBlock(t *testing.T) {
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
-				r := ConflictResolver{Users: m}
-				r.BuildConflictBlocks(fmt.Sprintf)
+				r := ConflictResolver{}
+				r.BuildConflictBlocks(m, fmt.Sprintf)
 				require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
 				require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
 			}
@@ -341,8 +341,8 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 				}
 				m, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 				require.NoError(t, err)
-				r := ConflictResolver{Users: m}
-				r.BuildConflictBlocks(fmt.Sprintf)
+				r := ConflictResolver{}
+				r.BuildConflictBlocks(m, fmt.Sprintf)
 				if tc.wantDiscardedBlock != "" {
 					require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
 				}
@@ -381,8 +381,8 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
-			r := ConflictResolver{Users: conflictUsers}
-			r.BuildConflictBlocks(fmt.Sprintf)
+			r := ConflictResolver{}
+			r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
 			tmpFile, err := generateConflictUsersFile(&r)
 			require.NoError(t, err)
 
@@ -390,7 +390,6 @@ func TestRunValidateConflictUserFile(t *testing.T) {
 			require.NoError(t, err)
 
 			validErr := getValidConflictUsers(&r, b)
-			fmt.Printf("\n\nvalid users %v\n\n", r.ValidUsers)
 			require.NoError(t, validErr)
 			require.Equal(t, 2, len(r.ValidUsers))
 		}
@@ -433,8 +432,8 @@ func TestMergeUser(t *testing.T) {
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
-			r := ConflictResolver{Users: conflictUsers}
-			r.BuildConflictBlocks(fmt.Sprintf)
+			r := ConflictResolver{}
+			r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
 			tmpFile, err := generateConflictUsersFile(&r)
 			require.NoError(t, err)
 			// validation to get newConflicts
@@ -486,7 +485,6 @@ func TestMergeUser(t *testing.T) {
 		choosenUser user.User
 		otherUsers  []user.User
 	}{}
-	fmt.Printf("%v+", permissionCases)
 	t.Run("merging user should inherit permissions from other users", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := sqlstore.InitTestDB(t)
@@ -533,8 +531,8 @@ func TestMergeUser(t *testing.T) {
 			// get users
 			conflictUsers, err := GetUsersWithConflictingEmailsOrLogins(&cli.Context{Context: context.Background()}, sqlStore)
 			require.NoError(t, err)
-			r := ConflictResolver{Users: conflictUsers}
-			r.BuildConflictBlocks(fmt.Sprintf)
+			r := ConflictResolver{}
+			r.BuildConflictBlocks(conflictUsers, fmt.Sprintf)
 			tmpFile, err := generateConflictUsersFile(&r)
 			require.NoError(t, err)
 			// validation to get newConflicts
@@ -544,7 +542,6 @@ func TestMergeUser(t *testing.T) {
 			validErr := getValidConflictUsers(&r, b)
 			require.NoError(t, validErr)
 			require.Equal(t, 2, len(r.ValidUsers))
-
 			// test starts here
 			err = r.MergeConflictingUsers(context.Background(), sqlStore)
 			require.NoError(t, err)
@@ -553,14 +550,14 @@ func TestMergeUser(t *testing.T) {
 			// user with uppercaseemail should not exist
 			query := &models.GetUserByIdQuery{Id: userWithUpperCase.ID}
 			err = sqlStore.GetUserById(context.Background(), query)
-			require.NoError(t, err)
+			require.Error(t, user.ErrUserNotFound, err)
 
 			// TODO:
-			/* query := accesscontrol.GetUserPermissionsQuery{OrgID: testOrgID, UserID: userWithUpperCase.ID} */
-			/* testUser := &models.SignedInUser{OrgId: testOrgID, Permissions: map[int64]map[string][]string{1: { */
-			/* 	ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll}, */
-			/* 	ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll}, */
-			/* }}} */
+			// query = accesscontrol.GetUserPermissionsQuery{OrgID: testOrgID, UserID: userWithUpperCase.ID}
+			// testUser := &models.SignedInUser{OrgId: testOrgID, Permissions: map[int64]map[string][]string{1: {
+			// 	ac.ActionTeamsRead:    []string{ac.ScopeTeamsAll},
+			// 	ac.ActionOrgUsersRead: []string{ac.ScopeUsersAll},
+			// }}}
 		}
 	})
 }

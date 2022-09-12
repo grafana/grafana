@@ -52,8 +52,8 @@ func runListConflictUsers() func(context *cli.Context) error {
 			return nil
 		}
 		whiteBold := color.New(color.FgWhite).Add(color.Bold)
-		resolver := ConflictResolver{Users: conflicts}
-		resolver.BuildConflictBlocks(whiteBold.Sprintf)
+		resolver := ConflictResolver{}
+		resolver.BuildConflictBlocks(conflicts, whiteBold.Sprintf)
 		logger.Infof("\n\nShowing Conflicts\n\n")
 		logger.Infof(resolver.ToStringPresentation())
 		logger.Infof("\n")
@@ -80,8 +80,8 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-		resolver := ConflictResolver{Users: conflicts}
-		resolver.BuildConflictBlocks(fmt.Sprintf)
+		resolver := ConflictResolver{}
+		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
 		tmpFile, err := generateConflictUsersFile(&resolver)
 		if err != nil {
 			return fmt.Errorf("generating file return error: %w", err)
@@ -117,7 +117,7 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 			return fmt.Errorf("%v: %w", "grafana error: sql error to get users with conflicts, abandoning validation", err)
 		}
 		resolver := ConflictResolver{Users: conflicts}
-		resolver.BuildConflictBlocks(fmt.Sprintf)
+		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
 		b, err = os.ReadFile(arg)
 		if err != nil {
 			return fmt.Errorf("could not read file with error %e", err)
@@ -148,7 +148,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 			return fmt.Errorf("%v: %w", "grafana error: sql error to get users with conflicts, abandoning validation", err)
 		}
 		resolver := ConflictResolver{Users: conflicts}
-		resolver.BuildConflictBlocks(fmt.Sprintf)
+		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
 		b, err := os.ReadFile(arg)
 		if err != nil {
 			return fmt.Errorf("could not read file with error %e", err)
@@ -157,6 +157,8 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		if validErr != nil {
 			return fmt.Errorf("could not validate file with error %s", err)
 		}
+		// should we rebuild blocks here?
+		// kind of a weird thing maybe?
 		err = mergeUsers(context, &resolver)
 		if err != nil {
 			return fmt.Errorf("not able to merge")
@@ -177,6 +179,9 @@ func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
 }
 
 func mergeUsers(context *cli.Context, r *ConflictResolver) error {
+	if len(r.ValidUsers) == 0 {
+		return fmt.Errorf("no users")
+	}
 	// need to validate input again, just because
 	sqlStore, err := getSqlStore(context)
 	if err != nil {
@@ -236,8 +241,6 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 		case strings.HasPrefix(row, "+"):
 			newUser := &ConflictingUser{}
 			newUser.Marshal(row)
-			fmt.Printf("%s", row)
-			fmt.Printf("%v+\n", newUser)
 			if !previouslySeenEmails[strings.ToLower(newUser.Email)] {
 				return fmt.Errorf("not valid email: %s, email not in previous conflicts seen", newUser.Email)
 			}
@@ -269,6 +272,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	// meaning how do we show have we will perform this operation
 	// and the final output of the ingest operation
 	r.ValidUsers = newConflicts
+	r.BuildConflictBlocks(newConflicts, fmt.Sprintf)
 	return nil
 }
 
@@ -303,7 +307,8 @@ func shouldDiscardBlock(seenUsersInBlock map[string]string, block string, user C
 	return false
 }
 
-func (r *ConflictResolver) BuildConflictBlocks(f Formatter) {
+func (r *ConflictResolver) BuildConflictBlocks(users ConflictingUsers, f Formatter) {
+	r.Users = users
 	discardedBlocks := make(map[string]bool)
 	seenUsersToBlock := make(map[string]string)
 	blocks := make(map[string]ConflictingUsers)
