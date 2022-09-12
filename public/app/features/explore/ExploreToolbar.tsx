@@ -136,6 +136,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           aria-label="Explore toolbar"
           title={exploreId === ExploreId.left ? 'Explore' : undefined}
           pageIcon={exploreId === ExploreId.left ? 'compass' : undefined}
+          buttonOverflowAlignment="left"
           leftItems={[
             exploreId === ExploreId.left && (
               <DashNavButton
