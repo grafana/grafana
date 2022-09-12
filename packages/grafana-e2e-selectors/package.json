@@ -49,6 +49,6 @@
   "dependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
     "tslib": "2.4.0",
-    "typescript": "4.7.4"
+    "typescript": "4.8.2"
   }
 }
