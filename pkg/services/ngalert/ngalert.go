@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -41,7 +43,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 	sqlStore *sqlstore.SQLStore, kvStore kvstore.KVStore, expressionService *expr.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService quota.Service, secretsService secrets.Service, notificationService notifications.Service, m *metrics.NGAlert,
 	folderService dashboards.FolderService, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService, renderService rendering.Service,
-	bus bus.Bus, accesscontrolService accesscontrol.Service) (*AlertNG, error) {
+	bus bus.Bus, accesscontrolService accesscontrol.Service, annotationsRepo annotations.Repository) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
 		DataSourceCache:      dataSourceCache,
@@ -62,6 +64,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		renderService:        renderService,
 		bus:                  bus,
 		accesscontrolService: accesscontrolService,
+		annotationsRepo:      annotationsRepo,
 	}
 
 	if ng.IsDisabled() {
@@ -102,6 +105,7 @@ type AlertNG struct {
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
+	annotationsRepo      annotations.Repository
 
 	bus bus.Bus
 }
@@ -165,7 +169,7 @@ func (ng *AlertNG) init() error {
 		AlertSender:   alertsRouter,
 	}
 
-	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk)
+	stateManager := state.NewManager(ng.Log, ng.Metrics.GetStateMetrics(), appUrl, store, store, ng.dashboardService, ng.imageService, clk, annotationstest.NewFakeAnnotationsRepo())
 	scheduler := schedule.NewScheduler(schedCfg, appUrl, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
