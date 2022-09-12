@@ -4,6 +4,7 @@ const ds1 = {
   type: 'prometheus',
   name: 'gdev-prometheus',
   meta: {
+    alerting: true,
     info: {
       logos: {
         small: 'http://example.com/logo.png',

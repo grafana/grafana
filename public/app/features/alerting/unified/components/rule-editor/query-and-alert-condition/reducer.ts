@@ -14,11 +14,11 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
-interface State {
+export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
 }
 
-const initialState: State = {
+const initialState: QueriesAndExpressionsState = {
   queries: [],
 };
 
