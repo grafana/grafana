@@ -213,8 +213,8 @@ Check out the [Templating]({{< relref "../variables/" >}}) documentation for an 
 ## Query variable
 
 Variable of the type _Query_ allows you to query Loki for a list labels or label values. The Loki data source plugin
-provides a form to select the type of values that can be expected to be used for a given variable. This form has the following
-options to choose from:
+provides a form to select the type of values that can be expected for a given variable.
+The form has these options:
 
 | Query Type   | Label        | Stream Selector       | Description                                                                            |
 | ------------ | ------------ | --------------------- | -------------------------------------------------------------------------------------- |
