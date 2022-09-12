@@ -2,9 +2,7 @@ import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
 import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
-
-import { withTheme2 } from '../../themes/index';
-import { Themeable2 } from '../../types/theme';
+import { withTheme2, Themeable2 } from '@grafana/ui';
 
 //Components
 import { LogRow } from './LogRow';

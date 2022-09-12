@@ -2,12 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2 } from '@grafana/data';
-
-import { withTheme2 } from '../../themes/index';
-import { Themeable2 } from '../../types/theme';
-import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
-import { DataLinkButton } from '../DataLinks/DataLinkButton';
-import { IconButton } from '../IconButton/IconButton';
+import { withTheme2, Themeable2, ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';

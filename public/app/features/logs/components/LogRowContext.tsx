@@ -2,12 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
 
 import { GrafanaTheme2, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
-
-import { useStyles2 } from '../../themes/ThemeContext';
-import { Alert } from '../Alert/Alert';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { List } from '../List/List';
+import { useStyles2, Alert, ClickOutsideWrapper, CustomScrollbar, List } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';

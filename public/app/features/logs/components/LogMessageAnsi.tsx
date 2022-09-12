@@ -3,9 +3,7 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
-
-import { withTheme2 } from '../../themes';
-import { Themeable2 } from '../../types';
+import { withTheme2, Themeable2 } from '@grafana/ui';
 
 interface Style {
   [key: string]: string;

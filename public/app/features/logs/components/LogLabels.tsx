@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { FunctionComponent } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
-
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '@grafana/ui';
 
 // Levels are already encoded in color, filename is a Loki-ism
 const HIDDEN_LABELS = ['level', 'lvl', 'filename'];

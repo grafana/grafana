@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
-
-import { styleMixins } from '../../themes';
+import { styleMixins } from '@grafana/ui';
 
 export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;

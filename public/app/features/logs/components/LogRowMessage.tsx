@@ -5,11 +5,7 @@ import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme2 } from '@grafana/data';
-
-// @ts-ignore
-
-import { withTheme2 } from '../../themes/index';
-import { Themeable2 } from '../../types/theme';
+import { withTheme2, Themeable2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowContext } from './LogRowContext';

@@ -2,9 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { LogRowModel, Field, LinkModel } from '@grafana/data';
-
-import { withTheme2 } from '../../themes/index';
-import { Themeable2 } from '../../types/theme';
+import { withTheme2, Themeable2 } from '@grafana/ui';
 
 import { getAllFields } from './logParser';
 

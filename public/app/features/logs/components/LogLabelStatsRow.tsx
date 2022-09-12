@@ -2,8 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { FunctionComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '@grafana/ui';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsStatsRow: css`

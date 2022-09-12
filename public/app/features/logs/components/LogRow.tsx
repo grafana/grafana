@@ -13,11 +13,7 @@ import {
   escapeUnescapedString,
   GrafanaTheme2,
 } from '@grafana/data';
-
-import { styleMixins, withTheme2 } from '../../themes/index';
-import { Themeable2 } from '../../types/theme';
-import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
 
 import { LogDetails } from './LogDetails';
 import { LogLabels } from './LogLabels';
