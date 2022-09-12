@@ -70,4 +70,5 @@ export type NavIndex = { [s: string]: NavModelItem };
 export enum PageLayoutType {
   Standard,
   Canvas,
+  Custom,
 }
