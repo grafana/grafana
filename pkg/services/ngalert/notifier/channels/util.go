@@ -96,6 +96,7 @@ func withStoredImages(ctx context.Context, l log.Logger, imageStore ImageStore, 
 
 // The path argument here comes from reading internal image storage, not user
 // input, so we ignore the security check here.
+//
 //nolint:gosec
 func openImage(path string) (io.ReadCloser, error) {
 	fp := filepath.Clean(path)

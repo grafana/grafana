@@ -62,7 +62,14 @@ import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './query_utils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
-import { LokiOptions, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import {
+  LokiOptions,
+  LokiQuery,
+  LokiQueryDirection,
+  LokiQueryType,
+  LokiVariableQuery,
+  LokiVariableQueryType,
+} from './types';
 import { LokiVariableSupport } from './variables';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
@@ -305,16 +312,43 @@ export class LokiDatasource
     return res.data || [];
   }
 
-  async metricFindQuery(query: string) {
+  async metricFindQuery(query: LokiVariableQuery | string) {
     if (!query) {
       return Promise.resolve([]);
     }
 
-    const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
-    return await this.processMetricFindQuery(interpolated);
+    if (typeof query === 'string') {
+      const interpolated = this.interpolateString(query);
+      return await this.legacyProcessMetricFindQuery(interpolated);
+    }
+
+    const interpolatedQuery = {
+      ...query,
+      label: this.interpolateString(query.label || ''),
+      stream: this.interpolateString(query.stream || ''),
+    };
+
+    return await this.processMetricFindQuery(interpolatedQuery);
   }
 
-  async processMetricFindQuery(query: string) {
+  async processMetricFindQuery(query: LokiVariableQuery) {
+    if (query.type === LokiVariableQueryType.LabelNames) {
+      return this.labelNamesQuery();
+    }
+
+    if (!query.label) {
+      return [];
+    }
+
+    // If we have stream selector, use /series endpoint
+    if (query.stream) {
+      return this.labelValuesSeriesQuery(query.stream, query.label);
+    }
+
+    return this.labelValuesQuery(query.label);
+  }
+
+  async legacyProcessMetricFindQuery(query: string) {
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
       return await this.labelNamesQuery();
@@ -322,7 +356,7 @@ export class LokiDatasource
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
-      // If we have query expr, use /series endpoint
+      // If we have stream selector, use /series endpoint
       if (labelValues[1]) {
         return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2]);
       }
