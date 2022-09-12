@@ -1,5 +1,6 @@
 import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
 import {
+  config,
   DataSourceWithBackend,
   getDataSourceSrv,
   HealthCheckError,
@@ -17,6 +18,7 @@ import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types'
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
+import { trackDataSourceCreated } from '../tracking';
 import { nameExits, findNewName } from '../utils';
 
 import { buildCategories } from './buildCategories';
@@ -196,6 +198,13 @@ export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURC
 
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
+
+    trackDataSourceCreated({
+      grafana_version: config.buildInfo.version,
+      datasource: plugin.id,
+      datasource_uid: result.datasource.uid,
+      source: DATASOURCES_ROUTES.New,
+    });
 
     locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));
   };
