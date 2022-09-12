@@ -70,7 +70,7 @@
     "rollup-plugin-node-externals": "^4.1.0",
     "rollup-plugin-sourcemaps": "0.6.3",
     "rollup-plugin-terser": "7.0.2",
-    "typescript": "4.7.4"
+    "typescript": "4.8.2"
   },
   "peerDependencies": {
     "react": "17.0.2",
