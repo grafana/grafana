@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { colorManipulator, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, Icon, toIconName } from '@grafana/ui';
 
@@ -38,7 +38,6 @@ export function SectionNavItem({ item }: Props) {
       >
         {isRoot && item.icon && <Icon name={toIconName(item.icon)!} />}
         {isRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
-        {/* {!isRoot && <div className={styles.iconSpacer} />} */}
         {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
@@ -50,11 +49,6 @@ export function SectionNavItem({ item }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const brandColor = colorManipulator.alpha(theme.v1.palette.brandPrimary, 0.08);
-  const activeBg = theme.isLight
-    ? `linear-gradient(90deg, ${brandColor} 10%, ${theme.colors.action.disabledBackground} 50%)`
-    : `linear-gradient(90deg, ${brandColor} 10%, ${theme.colors.action.disabledBackground} 50%)`;
-
   return {
     link: css`
       padding: ${theme.spacing(1, 0, 1, 1.5)};
@@ -62,7 +56,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       gap: ${theme.spacing(1)};
       height: 100%;
-      cursor: pointer;
       position: relative;
       color: ${theme.colors.text.secondary};
 
@@ -74,10 +67,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     activeStyle: css`
       label: activeTabStyle;
       color: ${theme.colors.text.primary};
-      /* background-color: ${theme.colors.action.disabledBackground}; */
-      background: ${activeBg};
+      background-color: ${theme.colors.action.disabledBackground};
       border-radius: ${theme.shape.borderRadius(2)};
-      font-weight: 500;
+      fontWeight: theme.typography.fontWeightMedium,
 
       &::before {
         display: block;
@@ -88,7 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         bottom: 2px;
         top: 2px;
         border-radius: 2px;
-        background-image: linear-gradient(0deg, #f05a28 30%, #fbca0a 99%);
+        background-image: ${theme.colors.gradients.brandVertical};
       }
     `,
     suffix: css`
@@ -96,9 +88,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     sectionImg: css({
       height: 18,
-    }),
-    iconSpacer: css({
-      width: 26,
     }),
     isRoot: css({
       fontSize: theme.typography.h4.fontSize,
