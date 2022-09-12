@@ -522,13 +522,13 @@ describe('LokiDatasource', () => {
         label: 'label5',
       });
 
-      expect(templateSrvStub.replace).toHaveBeenCalledWith('label_names()', {}, expect.any(Function));
+      expect(templateSrvStub.replace).toHaveBeenCalledWith('label_names()', undefined, expect.any(Function));
       expect(templateSrvStub.replace).toHaveBeenCalledWith(
         '{label1="value1", label2="value2"}',
-        {},
+        undefined,
         expect.any(Function)
       );
-      expect(templateSrvStub.replace).toHaveBeenCalledWith('label5', {}, expect.any(Function));
+      expect(templateSrvStub.replace).toHaveBeenCalledWith('label5', undefined, expect.any(Function));
     });
   });
 
