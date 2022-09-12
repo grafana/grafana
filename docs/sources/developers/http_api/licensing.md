@@ -117,7 +117,7 @@ Status Codes:
 
 - **200** - OK
 - **400** - Bad request
-- **500** - Internal server error (refer server logs for more details)
+- **500** - Internal server error (refer to server logs for more details)
 
 ## Manually force license refresh
 
