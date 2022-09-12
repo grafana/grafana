@@ -65,9 +65,6 @@ exports[`no enzyme tests`] = {
     "public/app/features/alerting/AlertRuleList.test.tsx:2998938420": [
       [0, 19, 13, "RegExp match", "2409514259"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:3716733755": [
-      [0, 35, 13, "RegExp match", "2409514259"]
-    ],
     "public/app/features/dimensions/editors/ThresholdsEditor/ThresholdsEditor.test.tsx:145048794": [
       [0, 17, 13, "RegExp match", "2409514259"]
     ],
@@ -3828,14 +3825,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareModal.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
