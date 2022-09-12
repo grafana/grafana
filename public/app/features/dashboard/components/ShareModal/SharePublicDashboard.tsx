@@ -180,6 +180,7 @@ export const SharePublicDashboard = (props: Props) => {
               </VerticalGroup>
             </FieldSet>
           </div>
+          <hr />
           <div>
             <h4 className="share-modal-info-text">Public dashboard configuration</h4>
             <FieldSet disabled={!hasWritePermissions} className={styles.dashboardConfig}>

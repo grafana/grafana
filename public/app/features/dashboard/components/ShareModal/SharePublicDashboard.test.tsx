@@ -90,9 +90,9 @@ describe('SharePublic', () => {
 
     await waitFor(() => screen.getByText('Link'));
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
-    expect(screen.getByRole('tablist')).toHaveTextContent('Public Dashboard');
+    expect(screen.getByRole('tablist')).toHaveTextContent('Public dashboard');
 
-    fireEvent.click(screen.getByText('Public Dashboard'));
+    fireEvent.click(screen.getByText('Public dashboard'));
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
   });
@@ -107,17 +107,19 @@ describe('SharePublic', () => {
     });
 
     expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
+
+    const from = '2022-06-08T03:00:00.000Z';
+    const to = '2022-09-08T03:00:00.000Z';
     //@ts-ignore
-    mockDashboard.originalTime = { from: 'test-from', to: 'test-to' };
+    mockDashboard.originalTime = { from, to };
 
     render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
 
     await waitFor(() => screen.getByText('Link'));
-    fireEvent.click(screen.getByText('Public Dashboard'));
+    fireEvent.click(screen.getByText('Public dashboard'));
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
-    expect(screen.getByDisplayValue('test-from')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('test-to')).toBeInTheDocument();
+    expect(screen.getByText(`${from} to ${to}`)).toBeInTheDocument();
   });
 
   // test checking if current version of dashboard in state is persisted to db
