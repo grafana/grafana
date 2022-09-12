@@ -40,6 +40,7 @@ export interface ScatterFieldConfig extends HideableFieldConfig, AxisConfig {
 export interface ScatterSeriesConfig extends ScatterFieldConfig {
   x?: string;
   y?: string;
+  name?: string;
 }
 
 export const defaultScatterConfig: ScatterFieldConfig = {
@@ -65,7 +66,7 @@ export interface XYDimensionConfig {
 }
 
 export interface XYChartOptions extends OptionsWithLegend, OptionsWithTooltip {
-  mode?: 'xy' | 'explicit';
+  mode?: 'auto' | 'manual';
   dims: XYDimensionConfig;
 
   series?: ScatterSeriesConfig[];

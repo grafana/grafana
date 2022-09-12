@@ -31,8 +31,9 @@ export const useDispatch = () => useDispatchUntyped<AppDispatch>();
 export const useSelector: TypedUseSelectorHook<StoreState> = useSelectorUntyped;
 
 type DefaultThunkApiConfig = { dispatch: AppDispatch; state: StoreState };
-export const createAsyncThunk = <Returned, ThunkArg = void, ThunkApiConfig = DefaultThunkApiConfig>(
+export const createAsyncThunk = <Returned, ThunkArg = void, ThunkApiConfig extends {} = DefaultThunkApiConfig>(
   typePrefix: string,
   payloadCreator: AsyncThunkPayloadCreator<Returned, ThunkArg, ThunkApiConfig>,
   options?: AsyncThunkOptions<ThunkArg, ThunkApiConfig>
-): AsyncThunk<Returned, ThunkArg, ThunkApiConfig> => createAsyncThunkUntyped(typePrefix, payloadCreator, options);
+): AsyncThunk<Returned, ThunkArg, ThunkApiConfig> =>
+  createAsyncThunkUntyped<Returned, ThunkArg, ThunkApiConfig>(typePrefix, payloadCreator, options);

@@ -46,7 +46,7 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 // QueryMetricsV2 returns query metrics.
 // swagger:route POST /ds/query ds queryMetricsWithExpressions
 //
-// DataSource query metrics with expressions
+// DataSource query metrics with expressions.
 //
 // If you are running Grafana Enterprise and have Fine-grained access control enabled
 // you need to have a permission with action: `datasources:query`.

@@ -17,9 +17,7 @@ import config from 'app/core/config';
 
 import {
   DEFAULT_LIMIT,
-  TempoJsonData,
   TempoDatasource,
-  TempoQuery,
   buildExpr,
   buildLinkExpr,
   getRateAlignedValues,
@@ -29,6 +27,7 @@ import {
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
+import { TempoJsonData, TempoQuery } from './types';
 
 let mockObservable: () => Observable<any>;
 jest.mock('@grafana/runtime', () => {

@@ -8,6 +8,7 @@ aliases:
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-user/
   - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/force-user-logout/
+  - /docs/grafana/latest/administration/user-management/server-user-management/
 title: Server user management
 weight: 100
 ---
