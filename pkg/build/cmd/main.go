@@ -117,7 +117,7 @@ func main() {
 		{
 			Name:   "verify-drone",
 			Usage:  "Verify Drone configuration",
-			Action: ArgCountWrapper(1, VerifyDrone),
+			Action: VerifyDrone,
 		},
 	}
 
