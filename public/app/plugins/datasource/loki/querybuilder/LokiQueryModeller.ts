@@ -2,7 +2,7 @@ import { LokiAndPromQueryModellerBase } from '../../prometheus/querybuilder/shar
 import { QueryBuilderLabelFilter } from '../../prometheus/querybuilder/shared/types';
 
 import { getOperationDefinitions } from './operations';
-import { LokiOperationId, LokiQueryPattern, LokiVisualQueryOperationCategory } from './types';
+import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType, LokiVisualQueryOperationCategory } from './types';
 
 export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
   constructor() {
@@ -29,7 +29,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
   getQueryPatterns(): LokiQueryPattern[] {
     return [
       {
-        name: 'Log query with parsing',
+        name: 'Parse log lines with logfmt parser',
+        type: LokiQueryPatternType.Logs,
         // {} | logfmt | __error__=``
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },
@@ -37,7 +38,31 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Log query with filtering and parsing',
+        name: 'Parse log lines with logfmt parser, Parse log lines with logfmt parser, Parse log lines with logfmt parser',
+        type: LokiQueryPatternType.Logs,
+        // {} | logfmt | __error__=``
+        operations: [
+          { id: LokiOperationId.LineContains, params: [''] },
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
+          { id: LokiOperationId.Unwrap, params: [''] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
+          { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
+          { id: LokiOperationId.Sum, params: [] },
+        ],
+      },
+      {
+        name: 'Parse log lines with JSON parser',
+        type: LokiQueryPatternType.Logs,
+        // {} | json | __error__=``
+        operations: [
+          { id: LokiOperationId.Json, params: [] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
+        ],
+      },
+      {
+        name: 'Filter log line and parse with logfmt parser',
+        type: LokiQueryPatternType.Logs,
         // {} |= `` | logfmt | __error__=``
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -46,7 +71,18 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Log query with parsing and label filter',
+        name: 'Filter log line and parse with json parser',
+        type: LokiQueryPatternType.Logs,
+        // {} |= `` | json | __error__=``
+        operations: [
+          { id: LokiOperationId.LineContains, params: [''] },
+          { id: LokiOperationId.Json, params: [] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
+        ],
+      },
+      {
+        name: 'Parse log line with logfmt parser and use label filter',
+        type: LokiQueryPatternType.Logs,
         // {} |= `` | logfmt | __error__=`` | label=`value`
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -56,7 +92,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Log query with parsing of nested json',
+        name: 'Parse log lines with nested json',
+        type: LokiQueryPatternType.Logs,
         // {} |= `` | json | line_format `{{ .message}}` | json
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -68,7 +105,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Log query with reformatted log line',
+        name: 'Reformat log line',
+        type: LokiQueryPatternType.Logs,
         // {} |= `` | logfmt | line_format `{{.message}}`
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -78,7 +116,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Log query with mapped log level',
+        name: 'Rename lvl label to level',
+        type: LokiQueryPatternType.Logs,
         // {} |= `` | logfmt | label_format level=lvl
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -88,7 +127,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query on value inside log line',
+        name: 'Query on value inside log line',
+        type: LokiQueryPatternType.Metrics,
         // sum(sum_over_time({ | logfmt | __error__=`` | unwrap | __error__=`` [$__interval]))
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -101,7 +141,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for total requests per label of streams',
+        name: 'Total requests per label of streams',
+        type: LokiQueryPatternType.Metrics,
         // sum by() (count_over_time({}[$__interval)
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -110,7 +151,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for total requests per parsed label or label of streams',
+        name: 'Total requests per parsed label or label of streams',
+        type: LokiQueryPatternType.Metrics,
         // sum by() (count_over_time({}| logfmt | __error__=`` [$__interval))
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -121,7 +163,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for bytes used by log stream',
+        name: 'Bytes used by log stream',
+        type: LokiQueryPatternType.Metrics,
         // bytes_over_time({}[$__interval])
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -129,7 +172,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for count of log lines per stream',
+        name: 'Count of log lines per stream',
+        type: LokiQueryPatternType.Metrics,
         // count_over_time({}[$__interval])
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
@@ -137,7 +181,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for top n results by label or parsed label',
+        name: 'Top N results by label or parsed label',
+        type: LokiQueryPatternType.Metrics,
         // topk(10, sum by () (count_over_time({} | logfmt | __error__=`` [$__interval])))
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },
@@ -148,7 +193,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Metrics query for extracted quantile',
+        name: 'Extracted quantile',
+        type: LokiQueryPatternType.Metrics,
         // quantile_over_time(0.5,{} | logfmt | unwrap latency[$__interval]) by ()
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },

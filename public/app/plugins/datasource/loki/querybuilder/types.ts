@@ -11,10 +11,15 @@ export interface LokiVisualQuery {
 }
 
 export type LokiVisualQueryBinary = VisualQueryBinary<LokiVisualQuery>;
+export enum LokiQueryPatternType {
+  Logs = 'logs',
+  Metrics = 'metrics',
+}
 
 export interface LokiQueryPattern {
   name: string;
   operations: QueryBuilderOperation[];
+  type: LokiQueryPatternType;
 }
 
 export enum LokiVisualQueryOperationCategory {
