@@ -86,6 +86,7 @@ exposeToPlugin('react-router-dom', reactRouter);
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
 exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact); // for backwards compatibility with older plugins
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
