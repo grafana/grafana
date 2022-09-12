@@ -163,8 +163,6 @@ export class FrameState extends ElementState {
                 placement.top -= DEFAULT_OFFSET;
               }
               break;
-            default:
-              break;
           }
 
           switch (horizontal) {
