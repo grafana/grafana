@@ -1,4 +1,4 @@
-import { mount } from 'enzyme';
+import { render } from '@testing-library/react';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 
@@ -169,7 +169,7 @@ describe('LogRowContextProvider', () => {
         return <></>;
       });
       await act(async () => {
-        await mount(
+        render(
           <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
             {mockedChildren}
           </LogRowContextProvider>
