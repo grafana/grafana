@@ -45,6 +45,7 @@ func TestReadPromFrames(t *testing.T) {
 }
 
 // FIXME:
+//
 //lint:ignore U1000 Ignore used function for now
 func runScenario(name string, opts Options) func(t *testing.T) {
 	return func(t *testing.T) {

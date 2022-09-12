@@ -44,6 +44,9 @@ func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.Pl
 
 func (pr fakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
 	var result []plugins.PluginDTO
+	if len(pluginTypes) == 0 {
+		pluginTypes = plugins.PluginTypes
+	}
 	for _, v := range pr.plugins {
 		for _, t := range pluginTypes {
 			if v.Type == t {

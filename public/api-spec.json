@@ -28,7 +28,7 @@
   "paths": {
     "/access-control/roles": {
       "get": {
-        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:list` and scope `roles:*`.",
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
         "tags": [
           "access_control",
           "enterprise"
@@ -228,7 +228,7 @@
     },
     "/access-control/teams/{teamId}/roles": {
       "get": {
-        "description": "You need to have a permission with action `teams.roles:list` and scope `teams:id:\u003cteam ID\u003e`.",
+        "description": "You need to have a permission with action `teams.roles:read` and scope `teams:id:\u003cteam ID\u003e`.",
         "tags": [
           "access_control",
           "enterprise"
@@ -383,7 +383,7 @@
     },
     "/access-control/users/{userId}/roles": {
       "get": {
-        "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:list` and scope `users:id:\u003cuser ID\u003e`.",
+        "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:\u003cuser ID\u003e`.",
         "tags": [
           "access_control",
           "enterprise"
@@ -1485,7 +1485,7 @@
         "tags": [
           "legacy_alerts_notification_channels"
         ],
-        "summary": "Get all notification channels (lookup)",
+        "summary": "Get all notification channels (lookup).",
         "operationId": "getAlertNotificationLookup",
         "responses": {
           "200": {
@@ -1549,7 +1549,7 @@
         "tags": [
           "legacy_alerts_notification_channels"
         ],
-        "summary": "Get notification channel by UID",
+        "summary": "Get notification channel by UID.",
         "operationId": "getAlertNotificationChannelByUID",
         "parameters": [
           {
@@ -2238,7 +2238,7 @@
         "tags": [
           "annotations"
         ],
-        "summary": "Get Annotation by Id.",
+        "summary": "Get Annotation by ID.",
         "operationId": "getAnnotationByID",
         "parameters": [
           {
@@ -2336,7 +2336,7 @@
         "tags": [
           "annotations"
         ],
-        "summary": "Patch Annotation",
+        "summary": "Patch Annotation.",
         "operationId": "patchAnnotation",
         "parameters": [
           {
@@ -2409,7 +2409,7 @@
         }
       },
       "post": {
-        "description": "Will return details of the created API key",
+        "description": "Will return details of the created API key.",
         "tags": [
           "api_keys"
         ],
@@ -4468,7 +4468,7 @@
         "tags": [
           "ds"
         ],
-        "summary": "DataSource query metrics with expressions",
+        "summary": "DataSource query metrics with expressions.",
         "operationId": "queryMetricsWithExpressions",
         "parameters": [
           {
@@ -5328,10 +5328,10 @@
     },
     "/org": {
       "get": {
-        "description": "Get current Organization",
         "tags": [
           "org"
         ],
+        "summary": "Get current Organization.",
         "operationId": "getCurrentOrg",
         "responses": {
           "200": {
@@ -5632,7 +5632,7 @@
         "tags": [
           "org"
         ],
-        "summary": "Add a new user to the current organization",
+        "summary": "Add a new user to the current organization.",
         "operationId": "addOrgUserToCurrentOrg",
         "parameters": [
           {
@@ -5703,7 +5703,7 @@
         "tags": [
           "org"
         ],
-        "summary": "Delete user in current organization",
+        "summary": "Delete user in current organization.",
         "operationId": "removeOrgUserForCurrentOrg",
         "parameters": [
           {
@@ -5737,7 +5737,7 @@
         "tags": [
           "org"
         ],
-        "summary": "Updates the given user",
+        "summary": "Updates the given user.",
         "operationId": "updateOrgUserForCurrentOrg",
         "parameters": [
           {
@@ -5782,10 +5782,10 @@
             "basic": []
           }
         ],
-        "description": "Search all Organizations",
         "tags": [
           "orgs"
         ],
+        "summary": "Search all Organizations.",
         "operationId": "searchOrgs",
         "parameters": [
           {
@@ -6074,7 +6074,7 @@
     },
     "/orgs/{org_id}/quotas": {
       "get": {
-        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).\nlist",
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).",
         "tags": [
           "orgs"
         ],
@@ -6205,7 +6205,7 @@
         "tags": [
           "orgs"
         ],
-        "summary": "Add a new user to the current organization",
+        "summary": "Add a new user to the current organization.",
         "operationId": "addOrgUser",
         "parameters": [
           {
@@ -6246,7 +6246,7 @@
         "tags": [
           "orgs"
         ],
-        "summary": "Delete user in current organization",
+        "summary": "Delete user in current organization.",
         "operationId": "removeOrgUser",
         "parameters": [
           {
@@ -6846,11 +6846,11 @@
     },
     "/recording-rules": {
       "get": {
-        "description": "Lists all rules in the database: active or deleted",
         "tags": [
           "recording_rules",
           "enterprise"
         ],
+        "summary": "Lists all rules in the database: active or deleted.",
         "operationId": "listRecordingRules",
         "responses": {
           "200": {
@@ -6871,11 +6871,11 @@
         }
       },
       "put": {
-        "description": "Update the active status of a rule",
         "tags": [
           "recording_rules",
           "enterprise"
         ],
+        "summary": "Update the active status of a rule.",
         "operationId": "updateRecordingRule",
         "parameters": [
           {
@@ -6906,11 +6906,11 @@
         }
       },
       "post": {
-        "description": "Create a recording rule that is then registered and started",
         "tags": [
           "recording_rules",
           "enterprise"
         ],
+        "summary": "Create a recording rule that is then registered and started.",
         "operationId": "createRecordingRule",
         "parameters": [
           {
@@ -7788,10 +7788,10 @@
     },
     "/search/sorting": {
       "get": {
-        "description": "List search sorting options",
         "tags": [
           "search"
         ],
+        "summary": "List search sorting options.",
         "operationId": "listSortOptions",
         "responses": {
           "200": {

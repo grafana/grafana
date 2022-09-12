@@ -47,13 +47,10 @@ exports[`no enzyme tests`] = {
     "packages/jaeger-ui-components/src/TraceTimelineViewer/SpanTreeOffset.test.js:174536706": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:2286101708": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineColumnResizer.test.js:989353473": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineHeaderRow.test.js:2106409544": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:1423129438": [
+    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.js:4192868446": [
       [15, 17, 13, "RegExp match", "2409514259"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.js:551014442": [
@@ -112,14 +109,11 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-data/src/dataframe/DataFrameJSON.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "packages/grafana-data/src/dataframe/DataFrameView.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1213,10 +1207,7 @@ exports[`better eslint`] = {
     "packages/grafana-toolkit/src/cli/utils/prompt.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "packages/grafana-toolkit/src/cli/utils/useSpinner.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1989,10 +1980,6 @@ exports[`better eslint`] = {
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineRow.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3869,6 +3856,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/features/dashboard/components/SupportSnapshot/randomizer.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/dashboard/components/TransformationsEditor/TransformationEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -4900,9 +4890,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
-    "public/app/features/plugins/admin/pages/PluginDetails.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/plugins/admin/pages/PluginDetails.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -5191,8 +5178,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/search/hooks/useSearchQuery.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/search/page/components/MoveToFolderModal.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5219,6 +5205,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"]
+    ],
+    "public/app/features/search/reducers/searchQueryReducer.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/search/service/bluge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -7121,10 +7110,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
+      [0, 0, 0, "Do not use any type assertions.", "9"],
+      [0, 0, 0, "Do not use any type assertions.", "10"],
       [0, 0, 0, "Do not use any type assertions.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],

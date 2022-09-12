@@ -363,7 +363,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 	}
 }
 
-// `/public/dashboards/:uid/query`` endpoint test
+// `/public/dashboards/:uid/query“ endpoint test
 func TestAPIQueryPublicDashboard(t *testing.T) {
 	mockedResponse := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{

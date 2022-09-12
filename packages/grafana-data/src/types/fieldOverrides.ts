@@ -63,7 +63,7 @@ export interface FieldOverrideContext extends StandardEditorContext<any, any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
 }
-export interface FieldConfigEditorProps<TValue, TSettings>
+export interface FieldConfigEditorProps<TValue, TSettings extends {}>
   extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
   item: FieldConfigPropertyItem<any, TValue, TSettings>; // The property info
   value: TValue;
