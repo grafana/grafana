@@ -23,9 +23,10 @@ type rootStorageSQL struct {
 
 // getDbRootFolder creates a DB path prefix for a given storage name and orgId.
 // example:
-//   orgId: 5
-//   storageName: "upload"
-//     => prefix: "/5/upload/"
+//
+//	orgId: 5
+//	storageName: "upload"
+//	  => prefix: "/5/upload/"
 func getDbStoragePathPrefix(orgId int64, storageName string) string {
 	return filestorage.Join(fmt.Sprintf("%d", orgId), storageName+filestorage.Delimiter)
 }

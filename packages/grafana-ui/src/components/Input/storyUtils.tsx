@@ -1,6 +1,8 @@
 import React from 'react';
 
-import { Icon, toIconName } from '../Icon/Icon';
+import { toIconName } from '@grafana/data';
+
+import { Icon } from '../Icon/Icon';
 
 export function parseAccessory(prefix: string | undefined) {
   const icon = prefix && prefix.match(/icon-/g) && toIconName(prefix.replace(/icon-/g, ''));
