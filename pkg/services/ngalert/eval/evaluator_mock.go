@@ -48,8 +48,8 @@ type FakeEvaluator_ConditionEval_Call struct {
 }
 
 // ConditionEval is a helper method to define mock.On call
-//  - condition models.Condition
-//  - now time.Time
+//   - condition models.Condition
+//   - now time.Time
 func (_e *FakeEvaluator_Expecter) ConditionEval(condition interface{}, now interface{}) *FakeEvaluator_ConditionEval_Call {
 	return &FakeEvaluator_ConditionEval_Call{Call: _e.mock.On("ConditionEval", condition, now)}
 }
@@ -95,9 +95,9 @@ type FakeEvaluator_QueriesAndExpressionsEval_Call struct {
 }
 
 // QueriesAndExpressionsEval is a helper method to define mock.On call
-//  - orgID int64
-//  - data []models.AlertQuery
-//  - now time.Time
+//   - orgID int64
+//   - data []models.AlertQuery
+//   - now time.Time
 func (_e *FakeEvaluator_Expecter) QueriesAndExpressionsEval(orgID interface{}, data interface{}, now interface{}) *FakeEvaluator_QueriesAndExpressionsEval_Call {
 	return &FakeEvaluator_QueriesAndExpressionsEval_Call{Call: _e.mock.On("QueriesAndExpressionsEval", orgID, data, now)}
 }

@@ -252,7 +252,7 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 		case info := <-ch:
 			_, ok := expected[info.alertDefKey]
 			if !ok {
-				t.Fatal(fmt.Sprintf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now))
+				t.Fatalf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now)
 			}
 			t.Logf("alert rule: %v evaluated at: %v", info.alertDefKey, info.now)
 			assert.Equal(t, tick, info.now)
