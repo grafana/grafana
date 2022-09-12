@@ -156,7 +156,22 @@ describe('AzureMonitorUrlBuilder', () => {
         templateSrv
       );
       expect(url).toBe(
-        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Sql%2Fservers'
+        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
+      );
+    });
+
+    it('handles a custom namespace', () => {
+      const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
+        '',
+        '2017-05-01-preview',
+        {
+          resourceUri: '/subscriptions/sub/resource-uri/resource',
+          customNamespace: 'custom/namespace',
+        },
+        templateSrv
+      );
+      expect(url).toBe(
+        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=custom%2Fnamespace'
       );
     });
   });
@@ -259,7 +274,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.NetApp%2FnetAppAccounts%2FcapacityPools%2Fvolumes'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -279,7 +294,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn1/databases/rn2/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Sql%2Fservers%2Fdatabases'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -299,7 +314,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Sql%2Fservers'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -319,7 +334,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Storage%2FstorageAccounts%2FblobServices'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -339,7 +354,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Storage%2FstorageAccounts%2FfileServices'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -359,7 +374,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/tableServices/default/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Storage%2FstorageAccounts%2FtableServices'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
@@ -379,7 +394,7 @@ describe('AzureMonitorUrlBuilder', () => {
         );
         expect(url).toBe(
           '/subscriptions/sub1/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/queueServices/default/' +
-            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=Microsoft.Storage%2FstorageAccounts%2FqueueServices'
+            'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview'
         );
       });
     });
