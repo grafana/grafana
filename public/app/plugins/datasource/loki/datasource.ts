@@ -340,7 +340,7 @@ export class LokiDatasource
       return [];
     }
 
-    // If we have query expr, use /series endpoint
+    // If we have stream selector, use /series endpoint
     if (query.stream) {
       return this.labelValuesSeriesQuery(query.stream, query.label);
     }
@@ -356,7 +356,7 @@ export class LokiDatasource
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
-      // If we have query expr, use /series endpoint
+      // If we have stream selector, use /series endpoint
       if (labelValues[1]) {
         return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2]);
       }
