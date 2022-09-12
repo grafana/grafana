@@ -297,7 +297,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *models.ReqContext) response.Response {
 
 // swagger:route PATCH /annotations/{annotation_id} annotations patchAnnotation
 //
-// Patch Annotation
+// Patch Annotation.
 //
 // Updates one or more properties of an annotation that matches the specified ID.
 // This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
@@ -442,7 +442,7 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 
 // swagger:route GET /annotations/{annotation_id} annotations getAnnotationByID
 //
-// Get Annotation by Id.
+// Get Annotation by ID.
 //
 // Responses:
 // 200: getAnnotationByIDResponse

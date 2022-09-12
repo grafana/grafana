@@ -66,7 +66,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   loginHint = '';
   passwordHint = '';
   loginError = undefined;
-  navTree: any;
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;

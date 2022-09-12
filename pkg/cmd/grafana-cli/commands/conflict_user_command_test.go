@@ -485,6 +485,8 @@ func TestMergeUser(t *testing.T) {
 		choosenUser user.User
 		otherUsers  []user.User
 	}{}
+	// TODO: user permission cases
+	fmt.Printf(permissionCases.name)
 	t.Run("merging user should inherit permissions from other users", func(t *testing.T) {
 		// Restore after destructive operation
 		sqlStore := sqlstore.InitTestDB(t)

@@ -158,6 +158,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   valueList: css`
     margin-right: ${theme.spacing.sm};
+    resize: horizontal;
   `,
   valueListWrapper: css`
     border-left: 1px solid ${theme.colors.border2};
