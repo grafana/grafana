@@ -1,0 +1,110 @@
+import { css, cx } from '@emotion/css';
+import React from 'react';
+
+import { colorManipulator, GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { useStyles2, Icon, toIconName } from '@grafana/ui';
+
+export interface Props {
+  item: NavModelItem;
+}
+
+export function SectionNavItem({ item }: Props) {
+  const styles = useStyles2(getStyles);
+
+  const children = item.children?.filter((x) => !x.hideFromTabs);
+  const isRoot = item.parentItem == null;
+  const hasChildren = Boolean(children?.length);
+
+  const linkClass = cx({
+    [styles.link]: true,
+    [styles.activeStyle]: item.active,
+    [styles.isSection]: hasChildren,
+    [styles.isRoot]: isRoot,
+  });
+
+  return (
+    <>
+      <a
+        href={item.url}
+        className={linkClass}
+        aria-label={selectors.components.Tab.title(item.text)}
+        role="tab"
+        aria-selected={item.active}
+      >
+        {isRoot && item.icon && <Icon name={toIconName(item.icon)!} />}
+        {isRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
+        {/* {!isRoot && <div className={styles.iconSpacer} />} */}
+        {item.text}
+        {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
+      </a>
+      {children?.map((child, index) => (
+        <SectionNavItem item={child} key={index} />
+      ))}
+    </>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  const brandColor = colorManipulator.alpha(theme.v1.palette.brandPrimary, 0.08);
+  const activeBg = theme.isLight
+    ? `linear-gradient(90deg, ${brandColor} 10%, ${theme.colors.action.disabledBackground} 50%)`
+    : `linear-gradient(90deg, ${brandColor} 10%, ${theme.colors.action.disabledBackground} 50%)`;
+
+  return {
+    link: css`
+      padding: ${theme.spacing(1, 0, 1, 1.5)};
+      display: flex;
+      align-items: center;
+      gap: ${theme.spacing(1)};
+      height: 100%;
+      cursor: pointer;
+      position: relative;
+      color: ${theme.colors.text.secondary};
+
+      &:hover,
+      &:focus {
+        text-decoration: underline;
+      }
+    `,
+    activeStyle: css`
+      label: activeTabStyle;
+      color: ${theme.colors.text.primary};
+      /* background-color: ${theme.colors.action.disabledBackground}; */
+      background: ${activeBg};
+      border-radius: ${theme.shape.borderRadius(2)};
+      font-weight: 500;
+
+      &::before {
+        display: block;
+        content: ' ';
+        position: absolute;
+        left: 0;
+        width: 4px;
+        bottom: 2px;
+        top: 2px;
+        border-radius: 2px;
+        background-image: linear-gradient(0deg, #f05a28 30%, #fbca0a 99%);
+      }
+    `,
+    suffix: css`
+      margin-left: ${theme.spacing(1)};
+    `,
+    sectionImg: css({
+      height: 18,
+    }),
+    iconSpacer: css({
+      width: 26,
+    }),
+    isRoot: css({
+      fontSize: theme.typography.h4.fontSize,
+      margin: theme.spacing(0, 0, 0, 0),
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+    isSection: css({
+      fontSize: theme.typography.h5.fontSize,
+      marginTop: theme.spacing(2),
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+  };
+};
