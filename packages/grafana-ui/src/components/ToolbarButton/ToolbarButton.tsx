@@ -1,13 +1,11 @@
 import { cx, css } from '@emotion/css';
-import { isString } from 'lodash';
 import React, { forwardRef, ButtonHTMLAttributes } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
 import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -115,7 +113,7 @@ function renderIcon(icon: IconName | React.ReactNode) {
     return null;
   }
 
-  if (isString(icon)) {
+  if (isIconName(icon)) {
     return <Icon name={icon} size="lg" />;
   }
 

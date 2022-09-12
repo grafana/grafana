@@ -2,10 +2,9 @@ import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { toIconName } from '../../../types/icon';
 import { Icon } from '../../Icon/Icon';
 
 import { RadioButtonSize, RadioButton } from './RadioButton';
@@ -73,6 +72,8 @@ export function RadioButtonGroup<T>({
     <div className={cx(styles.radioGroup, fullWidth && styles.fullWidth, className)}>
       {options.map((opt, i) => {
         const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);
+        const icon = opt.icon ? toIconName(opt.icon) : undefined;
+
         return (
           <RadioButton
             size={size}
@@ -88,7 +89,7 @@ export function RadioButtonGroup<T>({
             fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
           >
-            {opt.icon && <Icon name={opt.icon} className={styles.icon} />}
+            {icon && <Icon name={icon} className={styles.icon} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
             {opt.label} {opt.component ? <opt.component /> : null}
           </RadioButton>

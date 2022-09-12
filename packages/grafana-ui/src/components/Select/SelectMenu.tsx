@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { FC, RefCallback } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toIconName } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -51,6 +51,7 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
 }) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+  const icon = data.icon ? toIconName(data.icon) : undefined;
 
   return (
     <div
@@ -65,7 +66,7 @@ export const SelectMenuOptions: FC<SelectMenuOptionProps<any>> = ({
       aria-label="Select option"
       title={data.title}
     >
-      {data.icon && <Icon name={data.icon} className={styles.optionIcon} />}
+      {icon && <Icon name={icon} className={styles.optionIcon} />}
       {data.imgUrl && <img className={styles.optionImage} src={data.imgUrl} alt={data.label || data.value} />}
       <div className={styles.optionBody}>
         <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>

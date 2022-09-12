@@ -1,12 +1,14 @@
 import { ComponentType } from 'react';
 
+import { IconName } from './icon';
+
 export interface NavLinkDTO {
   id?: string;
   text: string;
   description?: string;
   section?: NavSection;
   subTitle?: string;
-  icon?: string;
+  icon?: IconName;
   img?: string;
   url?: string;
   target?: string;
