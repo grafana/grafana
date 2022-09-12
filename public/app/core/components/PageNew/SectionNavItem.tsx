@@ -14,7 +14,7 @@ export function SectionNavItem({ item }: Props) {
 
   const children = item.children?.filter((x) => !x.hideFromTabs);
   const isRoot = item.parentItem == null;
-  const hasChildren = Boolean(children?.length);
+  const hasActiveChild = Boolean(children?.length && children.find((x) => x.active));
 
   // If first root child is a section skip the bottom margin (as sections have top margin already)
   const noRootMargin = isRoot && Boolean(item.children![0].children?.length);
@@ -22,7 +22,8 @@ export function SectionNavItem({ item }: Props) {
   const linkClass = cx({
     [styles.link]: true,
     [styles.activeStyle]: item.active,
-    [styles.isSection]: hasChildren,
+    [styles.isSection]: Boolean(children?.length),
+    [styles.hasActiveChild]: hasActiveChild,
     [styles.isRoot]: isRoot,
     [styles.noRootMargin]: noRootMargin,
   });
@@ -69,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.primary};
       background-color: ${theme.colors.action.disabledBackground};
       border-radius: ${theme.shape.borderRadius(2)};
-      fontWeight: theme.typography.fontWeightMedium,
+      fontweight: theme.typography.fontWeightMedium;
 
       &::before {
         display: block;
@@ -90,6 +91,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: 18,
     }),
     isRoot: css({
+      color: theme.colors.text.primary,
       fontSize: theme.typography.h4.fontSize,
       marginTop: 0,
       marginBottom: theme.spacing(2),
@@ -102,6 +104,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     noRootMargin: css({
       marginBottom: 0,
+    }),
+    hasActiveChild: css({
+      color: theme.colors.text.primary,
     }),
   };
 };
