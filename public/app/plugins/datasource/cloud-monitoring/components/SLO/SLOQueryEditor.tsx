@@ -9,7 +9,7 @@ import { AlignmentTypes, CustomMetaData, SLOQuery } from '../../types';
 
 import { LookbackPeriodSelect } from './LookbackPeriodSelect';
 
-import { Selector, Service, SLO } from '.';
+import { Selector, Service, SLO } from './';
 
 export interface Props {
   refId: string;

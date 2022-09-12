@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { periodOption } from '../constants';
+import { periodOption } from '../../constants';
 
 export interface Props {
   inputId: string;
@@ -21,7 +21,6 @@ export function PeriodSelect({
   templateVariableOptions,
   onChange,
   current,
-  selectWidth,
   disabled,
   aligmentPeriods,
 }: Props) {
@@ -37,7 +36,7 @@ export function PeriodSelect({
 
   return (
     <Select
-      width={selectWidth}
+      width="auto"
       onChange={({ value }) => onChange(value!)}
       value={[...options, ...templateVariableOptions].find((s) => s.value === current)}
       options={[
@@ -55,6 +54,6 @@ export function PeriodSelect({
       inputId={inputId}
       disabled={disabled}
       allowCustomValue
-    ></Select>
+    />
   );
 }
