@@ -18,7 +18,10 @@ const props = {
 
 describe('Azure Monitor QueryEditor', () => {
   it('should render the current value', async () => {
-    const metricNamespaces: AzureMonitorOption[] = [{ label: 'foo', value: 'foo' }];
+    const metricNamespaces: AzureMonitorOption[] = [
+      { label: 'foo', value: 'foo' },
+      { label: 'bar', value: 'bar' },
+    ];
     const query = {
       ...props.query,
       azureMonitor: {
@@ -39,6 +42,18 @@ describe('Azure Monitor QueryEditor', () => {
     };
     render(<MetricNamespaceField {...props} metricNamespaces={metricNamespaces} query={query} />);
     expect(screen.queryByText('bar')).toBeInTheDocument();
+    expect(screen.queryByText('foo')).not.toBeInTheDocument();
+  });
+
+  it('should not render if only value', async () => {
+    const metricNamespaces: AzureMonitorOption[] = [{ label: 'foo', value: 'foo' }];
+    const query = {
+      ...props.query,
+      azureMonitor: {
+        metricNamespace: 'foo',
+      },
+    };
+    render(<MetricNamespaceField {...props} metricNamespaces={metricNamespaces} query={query} />);
     expect(screen.queryByText('foo')).not.toBeInTheDocument();
   });
 });

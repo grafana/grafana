@@ -47,6 +47,7 @@ export interface AzureMetricQuery {
   resourceName?: string;
   /** Resource type */
   metricNamespace?: string;
+  /** used as the value for the metricNamespace param but that name is already used. */
   customNamespace?: string;
   metricName?: string;
   timeGrain?: string;

@@ -38,6 +38,12 @@ const MetricNamespaceField: React.FC<MetricNamespaceFieldProps> = ({
   if (value && !optionValues.includes(value.toLowerCase())) {
     options.push({ label: value, value });
   }
+  const noAdditionalNamespaces =
+    metricNamespaces.length === 1 && metricNamespaces[0].value === query.azureMonitor?.metricNamespace;
+
+  if (noAdditionalNamespaces) {
+    return null;
+  }
 
   return (
     <Field label="Metric namespace">
