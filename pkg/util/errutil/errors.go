@@ -23,9 +23,10 @@ type Base struct {
 // to serve as the base for user facing error messages.
 //
 // msgID should be structured as component.error-brief, for example
-//   login.failed-authentication
-//   dashboards.validation-error
-//   dashboards.uid-already-exists
+//
+//	login.failed-authentication
+//	dashboards.validation-error
+//	dashboards.uid-already-exists
 func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	b := Base{
 		reason:    reason,

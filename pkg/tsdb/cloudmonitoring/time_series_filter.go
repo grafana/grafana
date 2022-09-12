@@ -12,8 +12,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context, req *backend.QueryDataRequest,
@@ -82,7 +83,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) run(ctx context.Context
 	return dr, d, r.URL.RawQuery, nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	frames := data.Frames{}
