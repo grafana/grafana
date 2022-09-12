@@ -230,9 +230,7 @@ export const SharePublicDashboard = (props: Props) => {
                           data-testid={selectors.CopyUrlButton}
                           variant="primary"
                           icon="copy"
-                          getText={() => {
-                            return generatePublicDashboardUrl(publicDashboard);
-                          }}
+                          getText={() => generatePublicDashboardUrl(publicDashboard)}
                         >
                           Copy
                         </ClipboardButton>
