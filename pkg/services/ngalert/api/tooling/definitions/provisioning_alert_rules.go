@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -97,10 +98,25 @@ type ProvisionedAlertRule struct {
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
+var (
+	ErrRuleMissingTitle     = errors.New("alert rules has no title set")
+	ErrRuleMissingFolderUID = errors.New("alert rules has no folder UID set")
+	ErrRuleMissingRuleGroup = errors.New("alert rule has no rule group set")
+)
+
 func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
 	forDur, err := time.ParseDuration(a.For.String())
 	if err != nil {
 		return models.AlertRule{}, err
+	}
+	if a.Title == "" {
+		return models.AlertRule{}, ErrRuleMissingTitle
+	}
+	if a.FolderUID == "" {
+		return models.AlertRule{}, ErrRuleMissingFolderUID
+	}
+	if a.RuleGroup == "" {
+		return models.AlertRule{}, ErrRuleMissingRuleGroup
 	}
 	return models.AlertRule{
 		ID:           a.ID,
