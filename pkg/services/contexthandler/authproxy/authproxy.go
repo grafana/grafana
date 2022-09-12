@@ -328,6 +328,10 @@ func (auth *AuthProxy) getDecodedHeader(reqCtx *models.ReqContext, headerName st
 		headerValue = util.DecodeQuotedPrintable(headerValue)
 	}
 
+	if auth.cfg.AuthProxyHeadersStripPrefix != "" {
+		headerValue = strings.TrimPrefix(headerValue, auth.cfg.AuthProxyHeadersStripPrefix)
+	}
+
 	return headerValue
 }
 

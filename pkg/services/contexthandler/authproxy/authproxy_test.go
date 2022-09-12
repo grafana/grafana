@@ -207,4 +207,15 @@ func TestDecodeHeader(t *testing.T) {
 		header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
 		assert.Equal(t, "München", header)
 	})
+
+	t.Run("should be able to strip a prefix", func(t *testing.T) {
+		auth, reqCtx := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
+			cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
+			cfg.AuthProxyHeadersStripPrefix = "accounts.contoso.com:"
+			req.Header.Set(cfg.AuthProxyHeaderName, "accounts.contoso.com:callum_jones")
+		})
+
+		header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
+		assert.Equal(t, "callum_jones", header)
+	})
 }

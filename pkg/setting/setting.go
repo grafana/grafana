@@ -304,15 +304,16 @@ type Cfg struct {
 	Azure *azsettings.AzureSettings
 
 	// Auth proxy settings
-	AuthProxyEnabled          bool
-	AuthProxyHeaderName       string
-	AuthProxyHeaderProperty   string
-	AuthProxyAutoSignUp       bool
-	AuthProxyEnableLoginToken bool
-	AuthProxyWhitelist        string
-	AuthProxyHeaders          map[string]string
-	AuthProxyHeadersEncoded   bool
-	AuthProxySyncTTL          int
+	AuthProxyEnabled            bool
+	AuthProxyHeaderName         string
+	AuthProxyHeaderProperty     string
+	AuthProxyAutoSignUp         bool
+	AuthProxyEnableLoginToken   bool
+	AuthProxyWhitelist          string
+	AuthProxyHeaders            map[string]string
+	AuthProxyHeadersEncoded     bool
+	AuthProxyHeadersStripPrefix string
+	AuthProxySyncTTL            int
 
 	// OAuth
 	OAuthCookieMaxAge int
@@ -1356,6 +1357,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
+	cfg.AuthProxyHeadersStripPrefix = authProxy.Key("headers_strip_prefix").MustString("")
 
 	return nil
 }
