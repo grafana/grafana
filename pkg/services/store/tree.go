@@ -209,35 +209,32 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 	}
 	grafanaStorageLogger.Info("Listing folder", "path", path, "storageCount", len(storages), "root", root.Meta().Config.Prefix)
 
-	storagePrefixes := make(map[string]bool)
-	for _, s := range storages {
-		storagePrefixes[s.Meta().Config.Prefix] = true
-	}
-
 	store := root.Store()
 	if store == nil {
 		return nil, fmt.Errorf("store not ready")
+	}
+
+	pathFilter := accessFilter
+	if root.Meta().Config.Prefix == RootContent && len(storages) > 0 {
+		// create a PathFilter that will filter out folders that are "shadowed" by the mounted storages
+		pathFilter = filestorage.NewAndPathFilter(
+			accessFilter,
+			t.createPathFilterForContentRoot(storages),
+		)
 	}
 
 	listResponse, err := store.List(ctx, path, nil, &filestorage.ListOptions{
 		Recursive:   false,
 		WithFolders: true,
 		WithFiles:   true,
-		Filter:      accessFilter,
+		Filter:      pathFilter,
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	nonConflictingFileNames := 0
-	for _, f := range listResponse.Files {
-		if _, ok := storagePrefixes[f.Name]; !ok {
-			nonConflictingFileNames++
-		}
-	}
-
-	count := nonConflictingFileNames + len(storages)
+	count := len(listResponse.Files) + len(storages)
 	names := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	mtype := data.NewFieldFromFieldType(data.FieldTypeString, count)
 	fsize := data.NewFieldFromFieldType(data.FieldTypeInt64, count)
@@ -257,12 +254,10 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 	}
 
 	for _, f := range listResponse.Files {
-		if _, ok := storagePrefixes[f.Name]; !ok {
-			names.Set(idx, f.Name)
-			mtype.Set(idx, f.MimeType)
-			fsize.Set(idx, f.Size)
-			idx++
-		}
+		names.Set(idx, f.Name)
+		mtype.Set(idx, f.MimeType)
+		fsize.Set(idx, f.Size)
+		idx++
 	}
 
 	frame := data.NewFrame("", names, mtype, fsize)
@@ -273,4 +268,18 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 		},
 	})
 	return &StorageListFrame{frame}, nil
+}
+
+func (t *nestedTree) createPathFilterForContentRoot(storages []storageRuntime) filestorage.PathFilter {
+	disallowedPrefixes := make([]string, 0)
+	disallowedPaths := make([]string, 0)
+
+	for _, s := range storages {
+		path := filestorage.Delimiter + s.Meta().Config.Prefix
+		disallowedPaths = append(disallowedPaths, path)
+		disallowedPrefixes = append(disallowedPrefixes, path+filestorage.Delimiter)
+	}
+
+	grafanaStorageLogger.Info("Created a path filter for the content root", "disallowedPrefixes", disallowedPrefixes, "disallowedPaths", disallowedPaths)
+	return filestorage.NewPathFilter(nil, nil, disallowedPrefixes, disallowedPaths)
 }
