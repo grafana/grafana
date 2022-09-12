@@ -114,6 +114,11 @@ func main() {
 			ArgsUsage: "<api-key>",
 			Action:    ArgCountWrapper(1, PublishMetrics),
 		},
+		{
+			Name:   "verify-drone",
+			Usage:  "Verify Drone configuration",
+			Action: ArgCountWrapper(1, VerifyDrone),
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
