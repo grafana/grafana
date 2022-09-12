@@ -6,7 +6,7 @@ import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
 
-import { GrafanaTheme, NavLinkDTO, OrgRole } from '.';
+import { GrafanaTheme, IconName, NavLinkDTO, OrgRole } from '.';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -104,7 +104,7 @@ export type OAuth =
  *
  * @public
  */
-export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: string }>>;
+export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconName }>>;
 
 /** Current user info included in bootData
  *
