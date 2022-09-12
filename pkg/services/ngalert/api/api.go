@@ -144,5 +144,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		templates:           api.Templates,
 		muteTimings:         api.MuteTimings,
 		alertRules:          api.AlertRules,
+		cfg:                 api.Cfg.UnifiedAlerting,
+		datasourceCache:     api.DatasourceCache,
 	}), m)
 }

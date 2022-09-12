@@ -4,16 +4,22 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// When validation a rule, disable patching mode
+const disablePatching = false
 
 type ProvisioningSrv struct {
 	log                 log.Logger
@@ -22,6 +28,9 @@ type ProvisioningSrv struct {
 	templates           TemplateService
 	muteTimings         MuteTimingService
 	alertRules          AlertRuleService
+	// rule validation depedencies
+	cfg             setting.UnifiedAlertingSettings
+	datasourceCache datasources.CacheService
 }
 
 type ContactPointService interface {
@@ -258,6 +267,16 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
+	// here we just pass the default interval as otherwise we would have to do a trip to the database
+	// to fetch the group interval. we later check in the service if the interval is valid
+	err = validateAlertRule(&upstreamModel,
+		int64(srv.cfg.BaseInterval.Seconds()),
+		srv.cfg.DefaultRuleEvaluationInterval,
+		disablePatching,
+		conditionValidator(c, srv.datasourceCache))
+	if err != nil {
+		ErrResp(http.StatusBadRequest, err, "")
+	}
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.ProvenanceAPI, c.UserID)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
@@ -283,6 +302,16 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 		ErrResp(http.StatusBadRequest, err, "")
 	}
 	updated.UID = UID
+	// here we just pass the default interval as otherwise we would have to do a trip to the database
+	// to fetch the group interval. we later check in the service if the interval is valid
+	err = validateAlertRule(&updated,
+		int64(srv.cfg.BaseInterval.Seconds()),
+		srv.cfg.DefaultRuleEvaluationInterval,
+		disablePatching,
+		conditionValidator(c, srv.datasourceCache))
+	if err != nil {
+		ErrResp(http.StatusBadRequest, err, "")
+	}
 	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
@@ -325,6 +354,16 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 	groupModel, err := ag.ToModel()
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
+	}
+	for _, rule := range groupModel.Rules {
+		err = validateAlertRule(&rule,
+			int64(srv.cfg.BaseInterval.Seconds()),
+			time.Duration(groupModel.Interval)*time.Second,
+			disablePatching,
+			conditionValidator(c, srv.datasourceCache))
+		if err != nil {
+			ErrResp(http.StatusBadRequest, err, "")
+		}
 	}
 	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgID, groupModel, c.UserID, alerting_models.ProvenanceAPI)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {

@@ -25,28 +25,12 @@ func validateRuleNode(
 
 	baseIntervalSeconds := int64(cfg.BaseInterval.Seconds())
 
-	if interval <= 0 {
-		return nil, fmt.Errorf("rule evaluation interval must be positive duration that is multiple of the base interval %d seconds", baseIntervalSeconds)
-	}
-
-	if intervalSeconds%baseIntervalSeconds != 0 {
-		return nil, fmt.Errorf("rule evaluation interval %d should be multiple of the base interval of %d seconds", int64(interval.Seconds()), baseIntervalSeconds)
-	}
-
 	if ruleNode.GrafanaManagedAlert == nil {
 		return nil, fmt.Errorf("not Grafana managed alert rule")
 	}
 
 	// if UID is specified then we can accept partial model. Therefore, some validation can be skipped as it will be patched later
 	canPatch := ruleNode.GrafanaManagedAlert.UID != ""
-
-	if ruleNode.GrafanaManagedAlert.Title == "" && !canPatch {
-		return nil, errors.New("alert rule title cannot be empty")
-	}
-
-	if len(ruleNode.GrafanaManagedAlert.Title) > store.AlertRuleMaxTitleLength {
-		return nil, fmt.Errorf("alert rule title is too long. Max length is %d", store.AlertRuleMaxTitleLength)
-	}
 
 	noDataState := ngmodels.NoData
 	if ruleNode.GrafanaManagedAlert.NoDataState == "" && canPatch {
@@ -72,27 +56,6 @@ func validateRuleNode(
 		errorState, err = ngmodels.ErrStateFromString(string(ruleNode.GrafanaManagedAlert.ExecErrState))
 		if err != nil {
 			return nil, err
-		}
-	}
-
-	if len(ruleNode.GrafanaManagedAlert.Data) == 0 {
-		if canPatch {
-			if ruleNode.GrafanaManagedAlert.Condition != "" {
-				return nil, fmt.Errorf("%w: query is not specified by condition is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
-			}
-		} else {
-			return nil, fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
-		}
-	}
-
-	if len(ruleNode.GrafanaManagedAlert.Data) != 0 {
-		cond := ngmodels.Condition{
-			Condition: ruleNode.GrafanaManagedAlert.Condition,
-			OrgID:     orgId,
-			Data:      ruleNode.GrafanaManagedAlert.Data,
-		}
-		if err := conditionValidator(cond); err != nil {
-			return nil, fmt.Errorf("failed to validate condition of alert rule %s: %w", ruleNode.GrafanaManagedAlert.Title, err)
 		}
 	}
 
@@ -124,7 +87,56 @@ func validateRuleNode(
 			return nil, err
 		}
 	}
+
+	if err := validateAlertRule(&newAlertRule, baseIntervalSeconds, interval, canPatch, conditionValidator); err != nil {
+		return nil, err
+	}
+
 	return &newAlertRule, nil
+}
+
+func validateAlertRule(rule *ngmodels.AlertRule,
+	baseIntervalSeconds int64,
+	interval time.Duration,
+	canPatch bool,
+	conditionValidator func(ngmodels.Condition) error) error {
+	if rule.IntervalSeconds <= 0 {
+		return fmt.Errorf("rule evaluation interval must be positive duration that is multiple of the base interval %d seconds", baseIntervalSeconds)
+	}
+
+	if rule.IntervalSeconds%baseIntervalSeconds != 0 {
+		return fmt.Errorf("rule evaluation interval %d should be multiple of the base interval of %d seconds", int64(interval.Seconds()), baseIntervalSeconds)
+	}
+
+	if rule.Title == "" && !canPatch {
+		return errors.New("alert rule title cannot be empty")
+	}
+
+	if len(rule.Title) > store.AlertRuleMaxTitleLength {
+		return fmt.Errorf("alert rule title is too long. Max length is %d", store.AlertRuleMaxTitleLength)
+	}
+
+	if len(rule.Data) == 0 {
+		if canPatch {
+			if rule.Condition != "" {
+				return fmt.Errorf("%w: query is not specified by condition is. You must specify both query and condition to update existing alert rule", ngmodels.ErrAlertRuleFailedValidation)
+			}
+		} else {
+			return fmt.Errorf("%w: no queries or expressions are found", ngmodels.ErrAlertRuleFailedValidation)
+		}
+	}
+
+	if len(rule.Data) != 0 {
+		cond := ngmodels.Condition{
+			Condition: rule.Condition,
+			OrgID:     rule.OrgID,
+			Data:      rule.Data,
+		}
+		if err := conditionValidator(cond); err != nil {
+			return fmt.Errorf("failed to validate condition of alert rule %s: %w", rule.Title, err)
+		}
+	}
+	return nil
 }
 
 // validateForInterval validates ApiRuleNode.For and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
