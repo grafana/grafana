@@ -1,6 +1,6 @@
 import { t } from '@lingui/macro';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { KioskMode } from '../../types';
@@ -27,10 +27,8 @@ export function toggleKioskMode() {
   locationService.partial({ kiosk });
 }
 
-export function getKioskMode(): KioskMode {
-  const kiosk = locationService.getSearchObject().kiosk;
-
-  switch (kiosk) {
+export function getKioskMode(queryParams: UrlQueryMap): KioskMode {
+  switch (queryParams.kiosk) {
     case 'tv':
       return KioskMode.TV;
     //  legacy support
