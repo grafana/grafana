@@ -381,8 +381,9 @@ export interface QueryEditorProps<
   query: TVQuery;
   onRunQuery: () => void;
   onChange: (value: TVQuery) => void;
+  onAddQuery: (query: TQuery) => void;
   onBlur?: () => void;
-  onAddQuery?: (query: TQuery) => void;
+
   /**
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
