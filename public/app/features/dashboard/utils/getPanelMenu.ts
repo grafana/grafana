@@ -12,6 +12,7 @@ import {
   duplicatePanel,
   removePanel,
   sharePanel,
+  toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
@@ -89,6 +90,10 @@ export function getPanelMenu(
     store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
   };
 
+  const onToggleLegend = (event: React.MouseEvent) => {
+    event.preventDefault();
+    toggleLegend(panel);
+  };
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
@@ -170,6 +175,7 @@ export function getPanelMenu(
     id: 'panel.header-menu.inspect',
     message: `Inspect`,
   });
+
   menu.push({
     type: 'submenu',
     text: inspectTextTranslation,
@@ -227,6 +233,14 @@ export function getPanelMenu(
 
       subMenu.push(reactItem);
     }
+  }
+
+  if (panel.options.legend) {
+    subMenu.push({
+      text: panel.options.legend.showLegend ? 'Hide legend' : 'Show legend',
+      onClick: onToggleLegend,
+      shortcut: 'p l',
+    });
   }
 
   if (!panel.isEditing && subMenu.length) {
