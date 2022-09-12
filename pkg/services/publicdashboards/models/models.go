@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -58,12 +57,12 @@ var (
 )
 
 type PublicDashboard struct {
-	Uid          string           `json:"uid" xorm:"pk uid"`
-	DashboardUid string           `json:"dashboardUid" xorm:"dashboard_uid"`
-	OrgId        int64            `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
-	TimeSettings *simplejson.Json `json:"timeSettings" xorm:"time_settings"`
-	IsEnabled    bool             `json:"isEnabled" xorm:"is_enabled"`
-	AccessToken  string           `json:"accessToken" xorm:"access_token"`
+	Uid          string        `json:"uid" xorm:"pk uid"`
+	DashboardUid string        `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId        int64         `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
+	TimeSettings *TimeSettings `json:"timeSettings" xorm:"time_settings"`
+	IsEnabled    bool          `json:"isEnabled" xorm:"is_enabled"`
+	AccessToken  string        `json:"accessToken" xorm:"access_token"`
 
 	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
 	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
@@ -77,8 +76,8 @@ func (pd PublicDashboard) TableName() string {
 }
 
 type TimeSettings struct {
-	From string `json:"from"`
-	To   string `json:"to"`
+	From string `json:"from,omitempty"`
+	To   string `json:"to,omitempty"`
 }
 
 // build time settings object from json on public dashboard. If empty, use
