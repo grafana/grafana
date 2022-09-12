@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlstore *sqlstore.SQLStore, starService star.StoreService, dashboardService dashboards.DashboardService) *SearchService {
+func ProvideService(cfg *setting.Cfg, sqlstore *sqlstore.SQLStore, starService star.Service, dashboardService dashboards.DashboardService) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
 		sortOptions: map[string]models.SortOption{
@@ -54,7 +54,7 @@ type SearchService struct {
 	Cfg              *setting.Cfg
 	sortOptions      map[string]models.SortOption
 	sqlstore         sqlstore.Store
-	starService      star.StoreService
+	starService      star.Service
 	dashboardService dashboards.DashboardService
 }
 

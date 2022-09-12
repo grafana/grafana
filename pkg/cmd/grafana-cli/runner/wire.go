@@ -311,7 +311,7 @@ var wireSet = wire.NewSet(
 	ossaccesscontrol.ProvideDashboardPermissions,
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	starimpl.ProvideService,
-	wire.Bind(new(star.StoreService), new(*starimpl.Service)),
+	wire.Bind(new(star.Service), new(*starimpl.Service)),
 	starhttp.ProvideService,
 	wire.Bind(new(star.HTTPService), new(*starhttp.Service)),
 	playlistimpl.ProvideService,

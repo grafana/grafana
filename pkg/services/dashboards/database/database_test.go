@@ -29,7 +29,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var savedFolder, savedDash, savedDash2 *models.Dashboard
 	var dashboardStore *DashboardStore
-	var starService star.StoreService
+	var starService star.Service
 
 	setup := func() {
 		sqlStore = sqlstore.InitTestDB(t)

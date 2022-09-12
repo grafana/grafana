@@ -12,11 +12,11 @@ import (
 )
 
 type Service struct {
-	storeService     star.StoreService
+	storeService     star.Service
 	dashboardService dashboards.DashboardService
 }
 
-func ProvideService(storeService star.StoreService, dashboardService dashboards.DashboardService) *Service {
+func ProvideService(storeService star.Service, dashboardService dashboards.DashboardService) *Service {
 	return &Service{
 		storeService:     storeService,
 		dashboardService: dashboardService,

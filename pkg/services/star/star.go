@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type StoreService interface {
+type Service interface {
 	Add(context.Context, *StarDashboardCommand) error
 	Delete(context.Context, *UnstarDashboardCommand) error
 	DeleteByUser(context.Context, int64) error
