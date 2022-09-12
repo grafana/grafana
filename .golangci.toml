@@ -29,13 +29,12 @@ rules = "pkg/ruleguard.rules.go"
 disable-all = true
 enable = [
   "bodyclose",
-  "deadcode",
   "depguard",
   "dogsled",
   "errcheck",
   # "gochecknoinits",
   "goconst",
-  "gocritic",
+  # "gocritic", # Temporarily disabled on 2022-09-09, running into weird bug "ruleguard: execution error: used Run() with an empty rule set; forgot to call Load() first?"
   "goimports",
   "goprintffuncname",
   "gosec",
@@ -47,12 +46,10 @@ enable = [
   "rowserrcheck",
   "exportloopref",
   "staticcheck",
-  "structcheck",
   "stylecheck",
   "typecheck",
   "unconvert",
   "unused",
-  "varcheck",
   "whitespace",
   "gocyclo",
   "exhaustive",
@@ -80,6 +77,13 @@ text = "ST1003"
 [[issues.exclude-rules]]
 linters = ["stylecheck"]
 text = "ST1001"
+
+# Enable when appropriate
+# strings.Title has been deprecated since Go 1.18 and an alternative has been available since Go 1.0: The rule Title uses for word boundaries does not handle Unicode punctuation properly.
+# Use golang.org/x/text/cases instead.
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]
