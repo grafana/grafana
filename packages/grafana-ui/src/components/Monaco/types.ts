@@ -19,11 +19,10 @@ export type MonacoEditor = monacoType.editor.IStandaloneCodeEditor;
 export type MonacoOptions = MonacoOptionsWithGrafanaDefaults;
 
 export interface CodeEditorProps {
-  value: string;
+  value: string | undefined;
   language: string;
   width?: number | string;
   height?: number | string;
-
   readOnly?: boolean;
   showMiniMap?: boolean;
   showLineNumbers?: boolean;

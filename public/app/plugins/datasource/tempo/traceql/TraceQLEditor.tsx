@@ -14,7 +14,7 @@ import { CompletionProvider } from './autocomplete';
 import { languageDefinition } from './traceql';
 
 interface Props {
-  value: string;
+  value: string | undefined;
   onChange: (val: string) => void;
   onRunQuery: () => void;
   datasource: TempoDatasource;

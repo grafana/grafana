@@ -63,6 +63,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
   onClearResults = () => {
     // Run clear query to clear results
     const { onChange, query, onRunQuery } = this.props;
+    delete query.traceQLQuery;
     onChange({
       ...query,
       queryType: 'clear',

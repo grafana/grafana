@@ -36,6 +36,7 @@ export type TempoQueryType = 'traceql' | 'search' | 'traceId' | 'serviceMap' | '
 
 export interface TempoQuery extends DataQuery {
   query: string;
+  traceQLQuery?: string;
   // Query to find list of traces, e.g., via Loki
   linkedQuery?: LokiQuery;
   search?: string;

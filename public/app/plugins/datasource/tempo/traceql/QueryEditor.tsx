@@ -18,7 +18,7 @@ export function QueryEditor(props: Props) {
   const query = defaults(props.query, defaultQuery);
 
   const onEditorChange = (value: string) => {
-    props.onChange({ ...query, query: value });
+    props.onChange({ ...query, traceQLQuery: value });
   };
 
   return (
@@ -34,7 +34,7 @@ export function QueryEditor(props: Props) {
         </a>
       </InlineLabel>
       <TraceQLEditor
-        value={query.query}
+        value={query.traceQLQuery}
         onChange={onEditorChange}
         datasource={props.datasource}
         onRunQuery={props.onRunQuery}
