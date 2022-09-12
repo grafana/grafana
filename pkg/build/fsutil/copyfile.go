@@ -3,6 +3,7 @@ package fsutil
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -59,12 +60,18 @@ func CopyFile(src, dst string) (err error) {
 // destination file exists, all it's contents will be replaced by the contents
 // of the source file.
 func copyFileContents(src, dst string) (err error) {
+	//nolint:gosec
 	in, err := os.Open(src)
 	if err != nil {
 		return
 	}
-	defer in.Close()
+	defer func() {
+		if err := in.Close(); err != nil {
+			log.Println("error closing file", err)
+		}
+	}()
 
+	//nolint:gosec
 	out, err := os.Create(dst)
 	if err != nil {
 		return

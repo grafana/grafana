@@ -67,11 +67,16 @@ func VerifyDrone(c *cli.Context) error {
 }
 
 func readConfig(fpath string) ([]map[string]interface{}, error) {
+	//nolint:gosec
 	f, err := os.Open(fpath)
 	if err != nil {
 		return nil, cli.NewExitError(fmt.Sprintf("failed to read %s: %s", fpath, err), 1)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Println("error closing file", err)
+		}
+	}()
 
 	// The YAML stream may contain multiple pipeline configurations, read them all
 	dec := yaml.NewDecoder(f)
