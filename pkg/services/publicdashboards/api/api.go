@@ -48,7 +48,7 @@ func ProvideApi(
 	return api
 }
 
-//Registers Endpoints on Grafana Router
+// Registers Endpoints on Grafana Router
 func (api *Api) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.AccessControl)
 
