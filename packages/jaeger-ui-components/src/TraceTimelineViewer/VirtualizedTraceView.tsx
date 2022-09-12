@@ -395,12 +395,13 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       createSpanLink,
       focusedSpanId,
       focusedSpanIdForSearch,
+      theme,
     } = this.props;
     // to avert flow error
     if (!trace) {
       return null;
     }
-    const color = getColorByKey(serviceName);
+    const color = getColorByKey(serviceName, theme);
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
@@ -414,7 +415,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       if (rpcSpan) {
         const rpcViewBounds = this.getViewedBounds()(rpcSpan.startTime, rpcSpan.startTime + rpcSpan.duration);
         rpc = {
-          color: getColorByKey(rpcSpan.process.serviceName),
+          color: getColorByKey(rpcSpan.process.serviceName, theme),
           operationName: rpcSpan.operationName,
           serviceName: rpcSpan.process.serviceName,
           viewEnd: rpcViewBounds.end,
@@ -430,7 +431,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     if (!span.hasChildren && peerServiceKV && isKindClient(span)) {
       noInstrumentedServer = {
         serviceName: peerServiceKV.value,
-        color: getColorByKey(peerServiceKV.value),
+        color: getColorByKey(peerServiceKV.value, theme),
       };
     }
 
@@ -490,12 +491,13 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       focusedSpanId,
       createFocusSpanLink,
       topOfViewRefType,
+      theme,
     } = this.props;
     const detailState = detailStates.get(spanID);
     if (!trace || !detailState) {
       return null;
     }
-    const color = getColorByKey(serviceName);
+    const color = getColorByKey(serviceName, theme);
     const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
