@@ -2,6 +2,7 @@ package expr
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -31,50 +32,51 @@ func NewThresholdCommand(refID string, referenceVar string, thresholdFunc string
 	}, nil
 }
 
+type ThresholdConditionJSON struct {
+	Evaluator ConditionEvalJSON `json:"evaluator"`
+}
+
+type ConditionEvalJSON struct {
+	Params []float64 `json:"params"`
+	Type   string    `json:"type"` // e.g. "gt"
+}
+
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
 func UnmarshalThresholdCommand(rn *rawNode) (*ThresholdCommand, error) {
-	rawVar, ok := rn.Query["expression"]
+	rawQuery := rn.Query
+
+	rawExpression, ok := rawQuery["expression"]
 	if !ok {
 		return nil, fmt.Errorf("no variable specified to reference for refId %v", rn.RefID)
 	}
-	referenceVar, ok := rawVar.(string)
+	referenceVar, ok := rawExpression.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected threshold variable to be a string, got %T for refId %v", rawVar, rn.RefID)
+		return nil, fmt.Errorf("expected threshold variable to be a string, got %T for refId %v", rawExpression, rn.RefID)
 	}
 
-	rawThresholdFunc, ok := rn.Query["threshold"]
-	if !ok {
-		return nil, fmt.Errorf("no reference function specified for refId %v", rn.RefID)
+	jsonFromM, err := json.Marshal(rawQuery["conditions"])
+	if err != nil {
+		return nil, fmt.Errorf("failed to remarshal threshold expression body: %w", err)
 	}
-	thresholdFunc, ok := rawThresholdFunc.(string)
-	if !ok {
-		return nil, fmt.Errorf("expected threshold function to be a string, got %T for refId %v", rawVar, rn.RefID)
-	}
-
-	if !IsSupportedThresholdFunc(thresholdFunc) {
-		supportedThresholdFuncs := GetSupportedThresholdFuncs()
-		return nil, fmt.Errorf("expected threshold function to be one of %s, got %s", strings.Join(supportedThresholdFuncs, ", "), thresholdFunc)
+	var conditions []ThresholdConditionJSON
+	if err = json.Unmarshal(jsonFromM, &conditions); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal remarshaled threshold expression body: %w", err)
 	}
 
-	rawConditions, ok := rn.Query["conditions"]
-	if !ok {
-		return nil, fmt.Errorf("no conditions specified for refId %v", rn.RefID)
-	}
-	conditions, ok := rawConditions.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("expected conditions variable to be a []float64, got %T for refId %v", rawConditions, rn.RefID)
-	}
-
-	var conditionFloats []float64
-	for _, v := range conditions {
-		condition, ok := v.(float64)
-		if !ok {
-			return nil, fmt.Errorf("expected condition value to be a float64, got %T for refId %v", v, rn.RefID)
+	for _, condition := range conditions {
+		if !IsSupportedThresholdFunc(condition.Evaluator.Type) {
+			supportedThresholdFuncs := GetSupportedThresholdFuncs()
+			return nil, fmt.Errorf("expected threshold function to be one of %s, got %s", strings.Join(supportedThresholdFuncs, ", "), condition.Evaluator.Type)
 		}
-		conditionFloats = append(conditionFloats, condition)
 	}
 
-	return NewThresholdCommand(rn.RefID, referenceVar, thresholdFunc, conditionFloats)
+	// we only support one condition for now, we might want to turn this in to "OR" expressions later
+	if len(conditions) < 1 {
+		return nil, fmt.Errorf("threshold expression requires at least one condition")
+	}
+	firstCondition := conditions[0]
+
+	return NewThresholdCommand(rn.RefID, referenceVar, firstCondition.Evaluator.Type, firstCondition.Evaluator.Params)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -100,13 +102,13 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, vars mathexp.Vars) (mat
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
 func createMathExpression(referenceVar string, thresholdFunc string, args []float64) (string, error) {
 	switch thresholdFunc {
-	case "isAbove":
+	case "gt":
 		return fmt.Sprintf("${%s} > %f", referenceVar, args[0]), nil
-	case "isBelow":
+	case "lt":
 		return fmt.Sprintf("${%s} < %f", referenceVar, args[0]), nil
-	case "isWithinRange":
+	case "within_range":
 		return fmt.Sprintf("${%s} > %f && ${%s} < %f", referenceVar, args[0], referenceVar, args[1]), nil
-	case "isOutsideRange":
+	case "outside_range":
 		return fmt.Sprintf("${%s} < %f || ${%s} > %f", referenceVar, args[0], referenceVar, args[1]), nil
 	default:
 		return "", fmt.Errorf("failed to evaluate threshold expression: no such threshold function %s", thresholdFunc)
@@ -115,7 +117,7 @@ func createMathExpression(referenceVar string, thresholdFunc string, args []floa
 
 // GetSupportedThresholdFuncs returns collection of supported threshold function names
 func GetSupportedThresholdFuncs() []string {
-	return []string{"isAbove", "isBelow", "isWithinRange", "isOutsideRange"}
+	return []string{"gt", "lt", "within_range", "outside_range"}
 }
 
 func IsSupportedThresholdFunc(name string) bool {
