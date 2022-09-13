@@ -69,13 +69,17 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 
 func extractPluginSettings(settingProvider setting.Provider) setting.PluginSettings {
 	ps := setting.PluginSettings{}
-	for sectionName, section := range settingProvider.Current() {
+	for sectionName, sectionCopy := range settingProvider.Current() {
 		if !strings.HasPrefix(sectionName, "plugin.") {
 			continue
 		}
-
+		// Calling Current() returns a redacted version of section. We need to replace the map values with the unredacted values.
+		section := settingProvider.Section(sectionName)
+		for k := range sectionCopy {
+			sectionCopy[k] = section.KeyValue(k).MustString("")
+		}
 		pluginID := strings.Replace(sectionName, "plugin.", "", 1)
-		ps[pluginID] = section
+		ps[pluginID] = sectionCopy
 	}
 
 	return ps
