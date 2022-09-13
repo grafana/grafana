@@ -54,14 +54,14 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: &SocialBase{autoAssignOrgRole: "Viewer"},
+				SocialBase: &SocialBase{},
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
 				Login:  "me@example.com",
-				Role:   "Viewer",
+				Role:   "",
 				Groups: []string{},
 			},
 		},
@@ -93,14 +93,14 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: &SocialBase{autoAssignOrgRole: "Viewer"},
+				SocialBase: &SocialBase{},
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
 				Login:  "me@example.com",
-				Role:   "Viewer",
+				Role:   "",
 				Groups: []string{},
 			},
 		},
@@ -154,7 +154,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:   "My Name",
 				Email:  "me@example.com",
 				Login:  "me@example.com",
-				Role:   "Viewer",
+				Role:   "",
 				Groups: []string{},
 			},
 		},
@@ -168,14 +168,14 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: &SocialBase{autoAssignOrgRole: "Editor"},
+				SocialBase: &SocialBase{},
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
 				Email:  "me@example.com",
 				Login:  "me@example.com",
-				Role:   "Editor",
+				Role:   "",
 				Groups: []string{},
 			},
 		},
@@ -239,7 +239,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
 			fields: fields{
 				SocialBase: newSocialBase("azuread",
-					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "")},
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true})},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -297,7 +297,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name: "Error if user is a member of allowed_groups",
 			fields: fields{
 				allowedGroups: []string{"foo", "bar"},
-				SocialBase:    &SocialBase{autoAssignOrgRole: "Viewer"},
+				SocialBase:    &SocialBase{},
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -312,14 +312,14 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:   "My Name",
 				Email:  "me@example.com",
 				Login:  "me@example.com",
-				Role:   "Viewer",
+				Role:   "",
 				Groups: []string{"foo"},
 			},
 		},
 		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}),
 			},
 			claims: &azureClaims{
 				ID:                "1",
@@ -344,7 +344,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -360,7 +360,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no role claims returned",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, ""),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -383,7 +383,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			}
 
 			if tt.fields.SocialBase == nil {
-				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "")
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{})
 			}
 
 			key := []byte("secret")

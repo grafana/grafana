@@ -68,10 +68,11 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, ErrEmailNotFound
 	}
 
-	role, grafanaAdmin := claims.extractRoleAndAdmin(s.autoAssignOrgRole, s.roleAttributeStrict)
-	if role == "" {
+	role, grafanaAdmin := claims.extractRoleAndAdmin()
+	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, ErrInvalidBasicRole
 	}
+
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := extractGroups(client, claims, token)
@@ -127,13 +128,9 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (claims *azureClaims) extractRoleAndAdmin(autoAssignRole string, strictMode bool) (org.RoleType, bool) {
+func (claims *azureClaims) extractRoleAndAdmin() (org.RoleType, bool) {
 	if len(claims.Roles) == 0 {
-		if strictMode {
-			return org.RoleType(""), false
-		}
-
-		return org.RoleType(autoAssignRole), false
+		return org.RoleType(""), false
 	}
 
 	roleOrder := []org.RoleType{
@@ -153,11 +150,7 @@ func (claims *azureClaims) extractRoleAndAdmin(autoAssignRole string, strictMode
 		}
 	}
 
-	if strictMode {
-		return org.RoleType(""), false
-	}
-
-	return org.RoleViewer, false
+	return "", false
 }
 
 func hasRole(roles []string, role org.RoleType) bool {

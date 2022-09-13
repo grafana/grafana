@@ -116,7 +116,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		userTeamsRawJSON         string
 		settingAutoAssignOrgRole string
 		roleAttributePath        string
-		autoAssignOrgRole        string
 		want                     *BasicUserInfo
 		wantErr                  bool
 	}{
@@ -124,7 +123,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			name:              "Basic User info",
 			userRawJSON:       testGHUserJSON,
 			userTeamsRawJSON:  testGHUserTeamsJSON,
-			autoAssignOrgRole: "",
 			roleAttributePath: "",
 			want: &BasicUserInfo{
 				Id:     "1",
@@ -139,7 +137,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			name:              "Admin mapping takes precedence over auto assign org role",
 			roleAttributePath: "[login==octocat] && 'Admin' || 'Viewer'",
 			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			want: &BasicUserInfo{
 				Id:     "1",
@@ -154,7 +151,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			name:              "Editor mapping via groups",
 			roleAttributePath: "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
 			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Viewer",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			want: &BasicUserInfo{
 				Id:     "1",
@@ -169,7 +165,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			name:              "auto assign org role",
 			roleAttributePath: "",
 			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Editor",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			want: &BasicUserInfo{
 				Id:     "1",
@@ -202,7 +197,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 
 			s := &SocialGithub{
 				SocialBase: newSocialBase("github", &oauth2.Config{},
-					&OAuthInfo{RoleAttributePath: tt.roleAttributePath}, tt.autoAssignOrgRole),
+					&OAuthInfo{RoleAttributePath: tt.roleAttributePath}),
 				allowedOrganizations: []string{},
 				apiUrl:               server.URL + "/user",
 				teamIds:              []int{},
