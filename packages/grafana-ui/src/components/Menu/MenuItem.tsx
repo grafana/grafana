@@ -6,6 +6,7 @@ import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
+import { ReactUtils } from '../../utils';
 import { Icon } from '../Icon/Icon';
 
 import { SubMenu } from './SubMenu';
@@ -40,6 +41,8 @@ export interface MenuItemProps<T = any> {
   tabIndex?: number;
   /** List of menu items for the subMenu */
   childItems?: Array<ReactElement<MenuItemProps>>;
+  /** Custom renderer for label */
+  renderCustomLabel?: React.ReactElement | (() => React.ReactElement);
 }
 
 /** @internal */
@@ -59,6 +62,7 @@ export const MenuItem = React.memo(
       childItems,
       role = 'menuitem',
       tabIndex = -1,
+      renderCustomLabel,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -136,8 +140,15 @@ export const MenuItem = React.memo(
         aria-checked={ariaChecked}
         tabIndex={tabIndex}
       >
-        {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
-        {label}
+        {renderCustomLabel ? (
+          ReactUtils.renderOrCallToRender(renderCustomLabel)
+        ) : (
+          <>
+            {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+            {label}
+          </>
+        )}
+
         {hasSubMenu && (
           <SubMenu
             items={childItems}

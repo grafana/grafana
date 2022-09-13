@@ -5,7 +5,7 @@ import { Icon, IconName } from '@grafana/ui';
 
 export interface FooterLink {
   text: string;
-  id?: string;
+  id: string;
   icon?: IconName;
   url?: string;
 }
@@ -13,16 +13,19 @@ export interface FooterLink {
 export let getFooterLinks = (): FooterLink[] => {
   return [
     {
+      id: 'documentation',
       text: 'Documentation',
       icon: 'document-info',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
     },
     {
+      id: 'support',
       text: 'Support',
       icon: 'question-circle',
       url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
     },
     {
+      id: 'community',
       text: 'Community',
       icon: 'comments-alt',
       url: 'https://community.grafana.com/?utm_source=grafana_footer',
@@ -45,7 +48,7 @@ export let getVersionLinks = (): FooterLink[] => {
   const links: FooterLink[] = [];
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
 
-  links.push({ text: `${buildInfo.edition}${stateInfo}`, url: licenseInfo.licenseUrl });
+  links.push({ id: 'version', text: `${buildInfo.edition}${stateInfo}`, url: licenseInfo.licenseUrl });
 
   if (buildInfo.hideVersion) {
     return links;
@@ -56,6 +59,7 @@ export let getVersionLinks = (): FooterLink[] => {
   const docsVersion = isBeta ? 'next' : 'latest';
 
   links.push({
+    id: 'version',
     text: `v${buildInfo.version} (${buildInfo.commit})`,
     url: hasReleaseNotes
       ? `https://grafana.com/docs/grafana/${docsVersion}/release-notes/release-notes-${versionSlug}/`

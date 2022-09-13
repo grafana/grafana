@@ -3,7 +3,7 @@ import { i18n } from '@lingui/core';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
+import { Menu, MenuItem, useStyles2, Icon } from '@grafana/ui';
 
 import menuItemTranslations from '../../NavBar/navBarItem-translations';
 
@@ -31,11 +31,21 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
       {node.children?.map((item) => {
         const translationKey = item.id && menuItemTranslations[item.id];
         const itemText = translationKey ? i18n._(translationKey) : item.text;
-
+        const showExternalLinkIcon = /^https?:\/\//.test(item.url || '');
         return !item.target && item.url?.startsWith('/') ? (
           <MenuItem url={item.url} label={itemText} key={item.id} />
         ) : (
-          <MenuItem onClick={() => onNavigate(item)} label={itemText} key={item.id} />
+          <MenuItem
+            onClick={() => onNavigate(item)}
+            label={itemText}
+            key={item.id}
+            renderCustomLabel={
+              <>
+                {itemText}
+                {showExternalLinkIcon && <Icon name="external-link-alt" className={styles.icon} aria-hidden />}
+              </>
+            }
+          />
         );
       })}
       {node.subTitle && (
@@ -51,6 +61,10 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    icon: css`
+      margin-left: ${theme.spacing(1)};
+      color: ${theme.colors.text.secondary};
+    `,
     subtitle: css`
       background-color: transparent;
       border-top: 1px solid ${theme.colors.border.weak};
