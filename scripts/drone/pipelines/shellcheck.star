@@ -20,7 +20,7 @@ trigger = {
             'latest.json',
         ],
         'include': [
-            '**.sh'
+            'scripts/**/*.sh'
         ],
     },
 }

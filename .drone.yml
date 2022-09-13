@@ -716,7 +716,7 @@ trigger:
     - docs/**
     - latest.json
     include:
-    - '**.sh'
+    - scripts/**/*.sh
 type: docker
 volumes:
 - host:
@@ -5155,6 +5155,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: be233e03a7c7e269ff9e6b0888d1834efe6c144e74c436c2c19c71537405f738
+hmac: 4bbc2634a2ab447c9f9e7fc38a8015570562edd36294b6c17025a72b87eed396
 
 ...
