@@ -845,11 +845,11 @@ export class PrometheusDatasource
       { requestId: query.requestId, headers: query.headers }
     );
   }
-
-  async getSubtitle(): Promise<JSX.Element | null> {
-    const buildInfo = await this.getBuildInfo();
-    return buildInfo ? this.getBuildInfoMessage(buildInfo) : null;
-  }
+  //
+  // async getSubtitle(): Promise<JSX.Element | null> {
+  //   const buildInfo = await this.getBuildInfo();
+  //   return buildInfo ? this.getBuildInfoMessage(buildInfo) : null;
+  // }
 
   async getTagKeys(options?: any) {
     if (options?.series) {
