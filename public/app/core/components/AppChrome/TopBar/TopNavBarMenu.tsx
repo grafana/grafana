@@ -3,7 +3,7 @@ import { i18n } from '@lingui/core';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Menu, MenuItem, useStyles2, Icon } from '@grafana/ui';
+import { Menu, MenuItem, useStyles2 } from '@grafana/ui';
 
 import menuItemTranslations from '../../NavBar/navBarItem-translations';
 
