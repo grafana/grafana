@@ -62,7 +62,7 @@ export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ chil
         onClick={linkModel.onClick}
         target={linkModel.target}
         title={linkModel.title}
-        style={{ ...style, overflow: 'hidden' }}
+        style={{ ...style, overflow: 'hidden', display: 'flex' }}
         aria-label={selectors.components.DataLinksContextMenu.singleLink}
       >
         {children({})}
