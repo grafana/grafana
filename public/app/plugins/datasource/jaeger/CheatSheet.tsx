@@ -3,6 +3,8 @@ import React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
+const linkColor = '#1F62E0';
+
 export default function CheatSheet() {
   const styles = useStyles2(getStyles);
   return (
@@ -48,7 +50,7 @@ export default function CheatSheet() {
 
 const getStyles = () => ({
   linkColor: css`
-    color: #1f62e0;
+    color: ${linkColor};
   `,
   removeBullets: css`
     list-style-type: none;
