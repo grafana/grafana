@@ -248,7 +248,7 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 	return user, nil
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
 	q := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
 	err := s.sqlStore.GetUserByLogin(ctx, &q)
@@ -258,7 +258,7 @@ func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuer
 	return q.Result, nil
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
 	q := models.GetUserByEmailQuery{Email: query.Email}
 	err := s.sqlStore.GetUserByEmail(ctx, &q)
@@ -268,7 +268,7 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 	return q.Result, nil
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	q := &models.UpdateUserCommand{
 		Name:   cmd.Name,
@@ -280,7 +280,7 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 	return s.sqlStore.UpdateUser(ctx, q)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswordCommand) error {
 	q := &models.ChangeUserPasswordCommand{
 		UserId:      cmd.UserID,
@@ -290,7 +290,7 @@ func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswo
 	return s.sqlStore.ChangeUserPassword(ctx, q)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	q := &models.UpdateUserLastSeenAtCommand{
 		UserId: cmd.UserID,
@@ -298,7 +298,7 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 	return s.sqlStore.UpdateUserLastSeenAt(ctx, q)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
 	q := &models.SetUsingOrgCommand{
 		UserId: cmd.UserID,
@@ -307,7 +307,7 @@ func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand)
 	return s.sqlStore.SetUsingOrg(ctx, q)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	q := &models.GetSignedInUserQuery{
 		UserId: query.UserID,
@@ -322,7 +322,7 @@ func (s *Service) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.G
 	return q.Result, nil
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	q := &models.GetSignedInUserQuery{
 		UserId: query.UserID,
@@ -337,7 +337,7 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 	return q.Result, nil
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
 	var usrSeschHitDTOs []*user.UserSearchHitDTO
 	q := &models.SearchUsersQuery{
@@ -379,7 +379,7 @@ func (s *Service) Search(ctx context.Context, query *user.SearchUsersQuery) (*us
 	return res, nil
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
 	q := &models.DisableUserCommand{
 		UserId:     cmd.UserID,
@@ -388,7 +388,7 @@ func (s *Service) Disable(ctx context.Context, cmd *user.DisableUserCommand) err
 	return s.sqlStore.DisableUser(ctx, q)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
 	c := &models.BatchDisableUsersCommand{
 		UserIds:    cmd.UserIDs,
@@ -397,12 +397,12 @@ func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableU
 	return s.sqlStore.BatchDisableUsers(ctx, c)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) UpdatePermissions(userID int64, isAdmin bool) error {
 	return s.sqlStore.UpdateUserPermissions(userID, isAdmin)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlagCommand) error {
 	c := &models.SetUserHelpFlagCommand{
 		UserId:     cmd.UserID,
@@ -411,7 +411,7 @@ func (s *Service) SetUserHelpFlag(ctx context.Context, cmd *user.SetUserHelpFlag
 	return s.sqlStore.SetUserHelpFlag(ctx, c)
 }
 
-//  TODO: remove wrapper around sqlstore
+// TODO: remove wrapper around sqlstore
 func (s *Service) GetUserProfile(ctx context.Context, query *user.GetUserProfileQuery) (user.UserProfileDTO, error) {
 	q := &models.GetUserProfileQuery{
 		UserId: query.UserID,

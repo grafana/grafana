@@ -241,7 +241,7 @@ describe('DashboardPage', () => {
     });
 
     it('Should render panel editor', () => {
-      expect(screen.getByLabelText('Apply changes and go back to dashboard')).toBeInTheDocument();
+      expect(screen.getByTitle('Apply changes and go back to dashboard')).toBeInTheDocument();
     });
 
     it('Should reset state when leaving', () => {
@@ -294,9 +294,8 @@ describe('DashboardPage', () => {
 
   dashboardPageScenario('When in full kiosk mode', (ctx) => {
     ctx.setup(() => {
-      locationService.partial({ kiosk: true });
       ctx.mount({
-        queryParams: {},
+        queryParams: { kiosk: true },
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });

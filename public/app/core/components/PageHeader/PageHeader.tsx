@@ -57,14 +57,13 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
       <SelectNav customCss="page-header__select-nav">{children}</SelectNav>
       <TabsBar className="page-header__tabs" hideBorder={true}>
         {children.map((child, index) => {
-          const icon = child.icon ? toIconName(child.icon) : undefined;
           return (
             !child.hideFromTabs && (
               <Tab
                 label={child.text}
                 active={child.active}
                 key={`${child.url}-${index}`}
-                icon={icon}
+                icon={child.icon}
                 href={child.url}
                 suffix={child.tabSuffix}
               />

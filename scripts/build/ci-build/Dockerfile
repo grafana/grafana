@@ -1,5 +1,5 @@
-# Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20210208 AS toolchain
+# Use old Debian (LTS into 2024) in order to ensure binary compatibility with older glibc's.
+FROM debian:buster-20220822 AS toolchain
 
 ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
@@ -99,13 +99,13 @@ RUN tar -xzvf dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz -C /tmp/
 RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 
 # Base image to crossbuild grafana.
-# Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20210208
+# Use old Debian (LTS into 2024) in order to ensure binary compatibility with older glibc's.
+FROM debian:buster-20220822
 
-ENV GOVERSION=1.17.12 \
+ENV GOVERSION=1.19.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=16.14.0-1nodesource1 \
+    NODEVERSION=16.17.0-1nodesource1 \
     YARNVERSION=1.22.19-1
 
 # Use ARG so as not to persist environment variable in image
@@ -126,7 +126,7 @@ RUN apt-get update && \
         gcc             \
         g++             \
         git             \
-	jq		\
+	      jq		          \
         make            \
         rpm             \
         xz-utils        \
@@ -136,8 +136,9 @@ RUN apt-get update && \
         ruby            \
         ruby-dev        \
         rubygems        \
-        unzip &&        \
-    gem install -N fpm && \
+        unzip && \
+    gem install -N public_suffix -v 4.0.7 && \
+    gem install --conservative -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
     curl -fsS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -  && \
     curl -O https://deb.nodesource.com/node_16.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\

@@ -339,7 +339,7 @@ export class CloudWatchDatasource
         namespace: this.templateSrv.replace(query.namespace),
         metricName: this.templateSrv.replace(query.metricName),
         dimensions: this.convertDimensionFormat(query.dimensions ?? {}, {}),
-        period: query.period ? parseInt(query.period, 10) : 300,
+        period: query.period ?? '',
         actionPrefix: query.actionPrefix ?? '',
         alarmNamePrefix: query.alarmNamePrefix ?? '',
         type: 'annotationQuery',

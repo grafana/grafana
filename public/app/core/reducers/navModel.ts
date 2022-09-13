@@ -29,7 +29,7 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
   const node = {
     text,
     subTitle,
-    icon: 'exclamation-triangle',
+    icon: 'exclamation-triangle' as const,
   };
   return {
     node: node,

@@ -331,18 +331,18 @@ func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, no
 //
 // For example, given the following:
 //
-//		map[string]string{
-//			"ref1": "datasource1",
-//			"ref2": "datasource1",
-//			"ref3": "datasource2",
-//		}
+//	map[string]string{
+//		"ref1": "datasource1",
+//		"ref2": "datasource1",
+//		"ref3": "datasource2",
+//	}
 //
 // we would expect:
 //
-//  	map[string][]string{
-// 			"datasource1": []string{"ref1", "ref2"},
-//			"datasource2": []string{"ref3"},
-//		}
+//	 	map[string][]string{
+//				"datasource1": []string{"ref1", "ref2"},
+//				"datasource2": []string{"ref3"},
+//			}
 func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string][]string {
 	if refIDsToDatasourceUIDs == nil {
 		return nil
@@ -377,12 +377,15 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 // Also, each Frame must be uniquely identified by its Field.Labels or a single Error result will be returned.
 //
 // Per Frame, data becomes a State based on the following rules:
-//  - Empty or zero length Frames result in NoData.
-//  - If a value:
-//    - 0 results in Normal.
-//    - Nonzero (e.g 1.2, NaN) results in Alerting.
-//    - nil results in noData.
-//    - unsupported Frame schemas results in Error.
+//
+// If no value is set:
+//   - Empty or zero length Frames result in NoData.
+//
+// If a value is set:
+//   - 0 results in Normal.
+//   - Nonzero (e.g 1.2, NaN) results in Alerting.
+//   - nil results in noData.
+//   - unsupported Frame schemas results in Error.
 func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
 	evalResults := make([]Result, 0)
 

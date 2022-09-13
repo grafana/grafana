@@ -52,13 +52,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageToolbar: css({
       height: TOP_BAR_LEVEL_HEIGHT,
       display: 'flex',
-      padding: theme.spacing(0, 2),
+      padding: theme.spacing(0, 1, 0, 2),
       alignItems: 'center',
       justifyContent: 'space-between',
     }),
     menuButton: css({
       display: 'flex',
       alignItems: 'center',
+      marginRight: theme.spacing(1),
     }),
     actions: css({
       display: 'flex',
