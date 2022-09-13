@@ -2,11 +2,15 @@
 aliases:
   - /docs/grafana/latest/variables/
   - /docs/grafana/latest/variables/variable-examples/
-title: Template variables
+title: Variables
 weight: 130
 ---
 
-# Template variables
+# Variables
+
+The following topics describe how to add and manage variables in your dashboards:
+
+{{< section >}}
 
 A variable is a placeholder for a value. You can use variables in metric queries and in panel titles. So when you change
 the value, using the dropdown at the top of the dashboard, your panel's metric queries will change to reflect the new value.
@@ -32,7 +36,7 @@ wmi_system_threads{instance=~"$server"}
 
 Variable values are always synced to the URL using the syntax `var-<varname>=value`.
 
-## Examples of templates and variables
+## Examples
 
 Variables are listed in drop-down lists across the top of the screen. Select different variables to see how the visualizations change.
 
