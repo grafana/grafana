@@ -19,25 +19,35 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
-  if (state.chromeless || !config.featureToggles.topnav) {
+  if (!config.featureToggles.topnav) {
     return <main className="main-view">{children}</main>;
   }
 
+  const contentClass = cx({
+    [styles.content]: true,
+    [styles.contentNoSearchBar]: state.searchBarHidden,
+    [styles.contentChromeless]: state.chromeless,
+  });
+
   return (
     <main className="main-view">
-      <div className={styles.topNav}>
-        {!state.searchBarHidden && <TopSearchBar />}
-        <NavToolbar
-          searchBarHidden={state.searchBarHidden}
-          sectionNav={state.sectionNav}
-          pageNav={state.pageNav}
-          actions={state.actions}
-          onToggleSearchBar={chrome.toggleSearchBar}
-          onToggleMegaMenu={chrome.toggleMegaMenu}
-        />
-      </div>
-      <div className={cx(styles.content, state.searchBarHidden && styles.contentNoSearchBar)}>{children}</div>
-      <MegaMenu searchBarHidden={state.searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+      {!state.chromeless && (
+        <div className={cx(styles.topNav)}>
+          {!state.searchBarHidden && <TopSearchBar />}
+          <NavToolbar
+            searchBarHidden={state.searchBarHidden}
+            sectionNav={state.sectionNav}
+            pageNav={state.pageNav}
+            actions={state.actions}
+            onToggleSearchBar={chrome.toggleSearchBar}
+            onToggleMegaMenu={chrome.toggleMegaMenu}
+          />
+        </div>
+      )}
+      <div className={contentClass}>{children}</div>
+      {!state.chromeless && (
+        <MegaMenu searchBarHidden={state.searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+      )}
     </main>
   );
 }
@@ -57,6 +67,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT,
+    }),
+    contentChromeless: css({
+      paddingTop: 0,
     }),
     topNav: css({
       display: 'flex',

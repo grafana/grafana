@@ -1,6 +1,5 @@
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { FieldType, LogRowModel, MutableDataFrame, DataQueryResponse } from '@grafana/data';
 
@@ -152,7 +151,7 @@ describe('LogRowContextProvider', () => {
           expect(errors).toEqual({ before: undefined, after: undefined });
           expect(hasMoreContextRows).toEqual({ before: true, after: true });
           expect(limit).toBe(10);
-          return <></>;
+          return <div data-testid="mockChild" />;
         }
         if (!updateLimitCalled && result.before.length > 0) {
           expect(result).toEqual({ before: ['10', '9', '8', '7', '6', '5'], after: ['14', '13', '12'] });
@@ -161,20 +160,19 @@ describe('LogRowContextProvider', () => {
           expect(limit).toBe(10);
           updateLimit();
           updateLimitCalled = true;
-          return <></>;
+          return <div data-testid="mockChild" />;
         }
         if (updateLimitCalled && result.before.length > 0 && limit > 10) {
           expect(limit).toBe(20);
         }
-        return <></>;
+        return <div data-testid="mockChild" />;
       });
-      await act(async () => {
-        await mount(
-          <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
-            {mockedChildren}
-          </LogRowContextProvider>
-        );
-      });
+      render(
+        <LogRowContextProvider row={row} getRowContext={getRowContextMock}>
+          {mockedChildren}
+        </LogRowContextProvider>
+      );
+      await screen.findByTestId('mockChild');
     });
   });
 });

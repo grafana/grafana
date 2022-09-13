@@ -3,10 +3,10 @@ import { action } from '@storybook/addon-actions';
 import { Meta, Story } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toIconName } from '@grafana/data';
 import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 
-import { getAvailableIcons, toIconName } from '../../types';
+import { getAvailableIcons } from '../../types';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Select.mdx';

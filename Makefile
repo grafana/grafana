@@ -134,7 +134,7 @@ test: test-go test-js ## Run all tests.
 golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
-		--config ./conf/.golangci.toml \
+		--config .golangci.toml \
 		$(GO_FILES)
 
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check

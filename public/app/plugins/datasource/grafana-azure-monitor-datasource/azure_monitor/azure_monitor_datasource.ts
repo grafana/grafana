@@ -94,6 +94,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const resourceGroup = templateSrv.replace(item.resourceGroup, scopedVars);
     const resourceName = templateSrv.replace(item.resourceName, scopedVars);
     const metricNamespace = templateSrv.replace(item.metricNamespace, scopedVars);
+    const customNamespace = templateSrv.replace(item.customNamespace, scopedVars);
     const timeGrain = templateSrv.replace((item.timeGrain || '').toString(), scopedVars);
     const aggregation = templateSrv.replace(item.aggregation, scopedVars);
     const top = templateSrv.replace(item.top || '', scopedVars);
@@ -112,6 +113,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const azMonitorQuery: AzureMetricQuery = {
       resourceGroup,
       metricNamespace,
+      customNamespace,
       resourceName,
       timeGrain,
       allowedTimeGrainsMs: item.allowedTimeGrainsMs,
