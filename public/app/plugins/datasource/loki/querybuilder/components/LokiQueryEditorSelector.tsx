@@ -28,7 +28,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
   const { onChange, onRunQuery, onAddQuery, data, app, queries } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
-
   const [dataIsStale, setDataIsStale] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
   const { flag: rawQuery, setFlag: setRawQuery } = useFlag(lokiQueryEditorRawQueryKey, true);
