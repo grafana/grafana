@@ -21,13 +21,13 @@ weight: 200
 
 Usage insights enables you to have a better understanding of how your Grafana instance is used.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}). Grafana Cloud provides additional features via the Usage Insights dashboards. Read more [here](TODO).
 
 The usage insights feature collects a number of aggregated data and stores them in the database:
 
 - Dashboard views (aggregated and per user)
-- Data source errors
-- Data source queries
+- Data source error messages
+- Data source query counts
 
 The aggregated data provides you access to several features:
 
