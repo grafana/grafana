@@ -3,6 +3,7 @@ package userimpl
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -250,12 +251,42 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 
 //  TODO: remove wrapper around sqlstore
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
+	if query.LoginOrEmail == "" {
+		return nil, user.ErrUserNotFound
+	}
+	// Try and find the user by login first.
+	// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+	where := "login=?"
+	if s.cfg.CaseInsensitiveLogin {
+		where = "LOWER(login)=LOWER(?)"
+	}
 	q := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := s.sqlStore.GetUserByLogin(ctx, &q)
-	if err != nil {
+	usr, err := s.store.GetByLogin(ctx, q.LoginOrEmail, where)
+	if err != nil && err != user.ErrUserNotFound {
 		return nil, err
 	}
-	return q.Result, nil
+
+	if err == user.ErrUserNotFound && strings.Contains(query.LoginOrEmail, "@") {
+		// If the user wasn't found, and it contains an "@" fallback to finding the
+		// user by email.
+
+		where = "email=?"
+		if s.cfg.CaseInsensitiveLogin {
+			where = "LOWER(email)=LOWER(?)"
+		}
+		usr, err = s.store.GetByLogin(ctx, q.LoginOrEmail, where)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if s.cfg.CaseInsensitiveLogin {
+		if err := s.store.CaseInsensitiveLoginConflict(ctx, usr.Login, usr.Email); err != nil {
+			return nil, err
+		}
+	}
+
+	return usr, nil
 }
 
 //  TODO: remove wrapper around sqlstore

@@ -18,6 +18,7 @@ type store interface {
 	GetNotServiceAccount(context.Context, int64) (*user.User, error)
 	Delete(context.Context, int64) error
 	CaseInsensitiveLoginConflict(context.Context, string, string) error
+	GetByLogin(context.Context, string, string) (*user.User, error)
 }
 
 type sqlStore struct {
@@ -118,8 +119,8 @@ func (ss *sqlStore) notServiceAccountFilter() string {
 }
 
 func (ss *sqlStore) CaseInsensitiveLoginConflict(ctx context.Context, login, email string) error {
-	users := make([]user.User, 0)
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		users := make([]user.User, 0)
 		if err := sess.Where("LOWER(email)=LOWER(?) OR LOWER(login)=LOWER(?)",
 			email, login).Find(&users); err != nil {
 			return err
@@ -130,5 +131,23 @@ func (ss *sqlStore) CaseInsensitiveLoginConflict(ctx context.Context, login, ema
 		}
 		return nil
 	})
-	return err
+}
+
+func (ss *sqlStore) GetByLogin(ctx context.Context, loginOrEmail, where string) (*user.User, error) {
+	var usr *user.User
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		has, err := sess.Where(ss.notServiceAccountFilter()).Where(where, loginOrEmail).Get(usr)
+		if err != nil {
+			return err
+		}
+
+		if err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+
+		return nil
+	})
+	return usr, err
 }
