@@ -114,6 +114,11 @@ func main() {
 			ArgsUsage: "<api-key>",
 			Action:    ArgCountWrapper(1, PublishMetrics),
 		},
+		{
+			Name:   "export-version",
+			Usage:  "Exports version in dist/grafana.version",
+			Action: ExportVersion,
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
