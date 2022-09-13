@@ -157,7 +157,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchQueryRunner {
             (res: string[], { refId, region }) =>
               (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
             []
-          ) as string[];
+          );
           regionsAffected.forEach((region) => {
             const actualRegion = this.getActualRegion(region);
             if (actualRegion) {

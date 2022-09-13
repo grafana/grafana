@@ -5,6 +5,7 @@ import {
   DataSourceRef,
   getDataSourceRef,
   ScopedVars,
+  TypedVariableModel,
   VariableWithMultiSupport,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -67,8 +68,11 @@ export abstract class CloudWatchQueryRunner {
     const valueVar = this.templateSrv.getVariables().find(({ name }) => {
       return name === variableName;
     });
+
     if (variableName && valueVar) {
-      if ((valueVar as unknown as VariableWithMultiSupport).multi) {
+      const isMultiVariable =
+        valueVar?.type === 'custom' || valueVar?.type === 'query' || valueVar?.type === 'datasource';
+      if (isMultiVariable && valueVar.multi) {
         return this.templateSrv.replace(value, scopedVars, 'pipe').split('|');
       }
       return [this.templateSrv.replace(value, scopedVars)];
@@ -100,7 +104,9 @@ export abstract class CloudWatchQueryRunner {
     if (displayErrorIfIsMultiTemplateVariable && !!target) {
       const variables = this.templateSrv.getVariables();
       const variable = variables.find(({ name }) => name === this.templateSrv.getVariableName(target));
-      if (variable && (variable as unknown as VariableWithMultiSupport).multi) {
+      const isMultiVariable =
+        variable?.type === 'custom' || variable?.type === 'query' || variable?.type === 'datasource';
+      if (isMultiVariable && variable.multi) {
         this.debouncedCustomAlert(
           'CloudWatch templating error',
           `Multi template variables are not supported for ${fieldName || target}`

@@ -22,7 +22,7 @@ describe('datasource', () => {
     it('should return error if log query and log groups is not specified', async () => {
       const { datasource } = setupMockedDataSource();
       const observable = datasource.query({
-        targets: [{ queryMode: 'Logs' as 'Logs', id: '', refId: '', region: '' }],
+        targets: [{ queryMode: 'Logs', id: '', refId: '', region: '' }],
         requestId: '',
         interval: '',
         intervalMs: 0,
@@ -42,7 +42,7 @@ describe('datasource', () => {
     it('should return empty response if queries are hidden', async () => {
       const { datasource } = setupMockedDataSource();
       const observable = datasource.query({
-        targets: [{ queryMode: 'Logs' as 'Logs', hide: true, id: '', refId: '', region: '' }],
+        targets: [{ queryMode: 'Logs', hide: true, id: '', refId: '', region: '' }],
         requestId: '',
         interval: '',
         intervalMs: 0,

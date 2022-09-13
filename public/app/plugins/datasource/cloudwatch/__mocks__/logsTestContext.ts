@@ -1,10 +1,25 @@
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
-import { DataFrame, dataFrameToJSON, MutableDataFrame, ArrayVector } from '@grafana/data';
+import {
+  DataFrame,
+  dataFrameToJSON,
+  MutableDataFrame,
+  ArrayVector,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourceRef,
+  ScopedVars,
+  DataSourceApi,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+} from '@grafana/data';
+import { GetDataSourceListFilters, setDataSourceSrv } from '@grafana/runtime';
 
+import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLogsQueryStatus } from '../types';
 
-import { setupMockedDataSource } from './CloudWatchDataSource';
+import { meta, setupMockedDataSource } from './CloudWatchDataSource';
 
 export function setupForLogs() {
   function envelope(frame: DataFrame) {
@@ -35,6 +50,45 @@ export function setupForLogs() {
   });
 
   fetchMock.mockReturnValueOnce(of(envelope(logsFrame)));
+
+  setDataSourceSrv({
+    async get() {
+      const ds: DataSourceApi = {
+        name: 'Xray',
+        id: 0,
+        type: '',
+        uid: '',
+        query: function (
+          request: DataQueryRequest<DataQuery>
+        ): Observable<DataQueryResponse> | Promise<DataQueryResponse> {
+          throw new Error('Function not implemented.');
+        },
+        testDatasource: function (): Promise<CloudWatchDatasource> {
+          throw new Error('Function not implemented.');
+        },
+        meta: meta,
+        getRef: function (): DataSourceRef {
+          throw new Error('Function not implemented.');
+        },
+      };
+
+      return ds;
+    },
+    getList: function (
+      filters?: GetDataSourceListFilters | undefined
+    ): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
+      throw new Error('Function not implemented.');
+    },
+    getInstanceSettings: function (
+      ref?: string | DataSourceRef | null | undefined,
+      scopedVars?: ScopedVars | undefined
+    ): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+      throw new Error('Function not implemented.');
+    },
+    reload: function (): void {
+      throw new Error('Function not implemented.');
+    },
+  });
 
   return { datasource, fetchMock, timeSrv };
 }

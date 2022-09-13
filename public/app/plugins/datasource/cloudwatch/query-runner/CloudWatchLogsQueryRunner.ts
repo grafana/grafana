@@ -129,8 +129,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchQueryRunner {
             queryId: dataFrame.fields[0].values.get(0),
             region: dataFrame.meta?.custom?.['Region'] ?? 'default',
             refId: dataFrame.refId!,
-            statsGroups: (logQueries.find((target) => target.refId === dataFrame.refId)! as CloudWatchLogsQuery)
-              .statsGroups,
+            statsGroups: logQueries.find((target) => target.refId === dataFrame.refId)?.statsGroups,
           })),
           timeoutFunc
         ).pipe(
@@ -191,22 +190,23 @@ export class CloudWatchLogsQueryRunner extends CloudWatchQueryRunner {
       share()
     );
 
+    const initialValue: { failures: number; prevRecordsMatched: Record<string, number> } = {
+      failures: 0,
+      prevRecordsMatched: {},
+    };
     const consecutiveFailedAttempts = dataFrames.pipe(
-      scan(
-        ({ failures, prevRecordsMatched }, frames) => {
-          failures++;
-          for (const frame of frames) {
-            const recordsMatched = frame.meta?.stats?.find((stat) => stat.displayName === 'Records scanned')?.value!;
-            if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
-              failures = 0;
-            }
-            prevRecordsMatched[frame.refId!] = recordsMatched;
+      scan(({ failures, prevRecordsMatched }, frames) => {
+        failures++;
+        for (const frame of frames) {
+          const recordsMatched = frame.meta?.stats?.find((stat) => stat.displayName === 'Records scanned')?.value!;
+          if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
+            failures = 0;
           }
+          prevRecordsMatched[frame.refId!] = recordsMatched;
+        }
 
-          return { failures, prevRecordsMatched };
-        },
-        { failures: 0, prevRecordsMatched: {} as Record<string, number> }
-      ),
+        return { failures, prevRecordsMatched };
+      }, initialValue),
       map(({ failures }) => failures),
       share()
     );
@@ -294,6 +294,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchQueryRunner {
       from: range.from.valueOf().toString(),
       to: range.to.valueOf().toString(),
       queries: queryParams.map((param: CloudWatchLogsRequest) => ({
+        // eslint-ignore-next-line
         refId: (param as StartQueryRequest).refId || 'A',
         intervalMs: 1, // dummy
         maxDataPoints: 1, // dummy
