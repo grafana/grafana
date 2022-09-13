@@ -154,7 +154,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 			name:              "Editor mapping via groups",
 			roleAttributePath: "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
 			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Editor",
+			autoAssignOrgRole: "Viewer",
 			userTeamsRawJSON:  testGHUserTeamsJSON,
 			want: &BasicUserInfo{
 				Id:     "1",
@@ -176,7 +176,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Name:   "monalisa octocat",
 				Email:  "octocat@github.com",
 				Login:  "octocat",
-				Role:   "Editor",
+				Role:   "", // user will be automatically assigned role on user creation
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
