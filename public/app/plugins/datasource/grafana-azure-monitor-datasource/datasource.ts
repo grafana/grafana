@@ -152,7 +152,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     if (resourceGroup) {
       url += `/resourceGroups/${resourceGroup};`;
     }
-    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url });
+    return this.azureMonitorDatasource.getMetricNamespaces({ resourceUri: url }, true);
   }
 
   getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string) {
