@@ -105,7 +105,7 @@ FROM debian:buster-20220822
 ENV GOVERSION=1.19.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=16.17.0-1nodesource1 \
+    NODEVERSION=16.14.0-1nodesource1 \
     YARNVERSION=1.22.19-1
 
 # Use ARG so as not to persist environment variable in image
