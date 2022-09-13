@@ -41,6 +41,8 @@ whitelist =
 headers =
 # Non-ASCII strings in header values are encoded using quoted-printable encoding
 ;headers_encoded = false
+# If a prefix appears in the headers you wish to strip, specify it
+;headers_strip_prefix = accounts.google.com:
 # Check out docs on this for more details on the below setting
 enable_login_token = false
 ```
