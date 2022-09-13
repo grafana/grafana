@@ -213,13 +213,14 @@ Check out the [Templating]({{< relref "../dashboards/variables" >}}) documentati
 ## Query variable
 
 Variable of the type _Query_ allows you to query Loki for a list labels or label values. The Loki data source plugin
-provides the following functions you can use in the `Query` input field.
+provides a form to select the type of values that can be expected for a given variable.
+The form has these options:
 
-| Name                                       | Description                                                                            |
-| ------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `label_names()`                            | Returns a list of label names.                                                         |
-| `label_values(label)`                      | Returns a list of label values for the `label`.                                        |
-| `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`. |
+| Query Type   | Label        | Stream Selector       | Description                                                                            |
+| ------------ | ------------ | --------------------- | -------------------------------------------------------------------------------------- |
+| Label names  | Not required | Not required          | Returns a list of label names.                                                         |
+| Label values | `label`      |                       | Returns a list of label values for the `label`.                                        |
+| Label values | `label`      | `log stream selector` | Returns a list of label values for the `label` in the specified `log stream selector`. |
 
 ### Ad hoc filters variable
 
