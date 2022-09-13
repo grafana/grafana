@@ -75,6 +75,7 @@ pkg/tsdb/testdatasource/sims/ @grafana/grafana-edge-squad
 /pkg/services/alerting @grafana/alerting-squad-backend
 /pkg/tests/api/alerting @grafana/alerting-squad-backend
 /public/app/features/alerting @grafana/alerting-squad-frontend
+/docs/sources/alerting @brendamuir
 
 # Library Services
 /pkg/services/libraryelements @grafana/user-essentials
