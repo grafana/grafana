@@ -180,13 +180,6 @@ steps:
   image: grafana/build-container:1.6.2
   name: codespell
 - commands:
-  - ./bin/build shellcheck
-  depends_on:
-  - grabpl
-  - compile-build-cmd
-  image: grafana/build-container:1.6.2
-  name: shellcheck
-- commands:
   - make lint-go
   depends_on:
   - wire-install
@@ -940,13 +933,6 @@ steps:
   - rm words_to_ignore.txt
   image: grafana/build-container:1.6.2
   name: codespell
-- commands:
-  - ./bin/build shellcheck
-  depends_on:
-  - grabpl
-  - compile-build-cmd
-  image: grafana/build-container:1.6.2
-  name: shellcheck
 - commands:
   - make lint-go
   depends_on:
@@ -2085,13 +2071,6 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.19.1
   name: compile-build-cmd
-- commands:
-  - ./bin/build shellcheck
-  depends_on:
-  - grabpl
-  - compile-build-cmd
-  image: grafana/build-container:1.6.2
-  name: shellcheck
 - commands:
   - |-
     echo -e "unknwon
@@ -4030,13 +4009,6 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
-  - ./bin/build shellcheck
-  depends_on:
-  - grabpl
-  - compile-build-cmd
-  image: grafana/build-container:1.6.2
-  name: shellcheck
-- commands:
   - |-
     echo -e "unknwon
     referer
@@ -5155,6 +5127,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 4bbc2634a2ab447c9f9e7fc38a8015570562edd36294b6c17025a72b87eed396
+hmac: f8201ab7fe1632df9158ee66cc0a9bff140e9a7e4b2044b34b8e4e30d424aaad
 
 ...
