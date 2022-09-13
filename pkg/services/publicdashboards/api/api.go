@@ -86,7 +86,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 	)
 
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "Failed to get public dashboard", err)
+		return api.handleError(http.StatusInternalServerError, "failed to get public dashboard", err)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -116,7 +116,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 func (api *Api) GetPublicDashboardConfig(c *models.ReqContext) response.Response {
 	pdc, err := api.PublicDashboardService.GetPublicDashboardConfig(c.Req.Context(), c.OrgID, web.Params(c.Req)[":uid"])
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "Failed to get public dashboard config", err)
+		return api.handleError(http.StatusInternalServerError, "failed to get public dashboard config", err)
 	}
 	return response.JSON(http.StatusOK, pdc)
 }
@@ -147,7 +147,7 @@ func (api *Api) SavePublicDashboardConfig(c *models.ReqContext) response.Respons
 	// Save the public dashboard
 	pubdash, err := api.PublicDashboardService.SavePublicDashboardConfig(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "Failed to save public dashboard configuration", err)
+		return api.handleError(http.StatusInternalServerError, "failed to save public dashboard configuration", err)
 	}
 
 	return response.JSON(http.StatusOK, pubdash)
@@ -168,7 +168,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 
 	resp, err := api.PublicDashboardService.GetQueryDataResponse(c.Req.Context(), c.SkipCache, reqDTO, panelId, web.Params(c.Req)[":accessToken"])
 	if err != nil {
-		return api.handleError(http.StatusInternalServerError, "Error running public dashboard panel queries", err)
+		return api.handleError(http.StatusInternalServerError, "error running public dashboard panel queries", err)
 	}
 
 	return toJsonStreamingResponse(api.Features, resp)
