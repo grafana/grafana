@@ -17,7 +17,7 @@ type queryReducer struct {
 	Type string
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (s *queryReducer) Reduce(series legacydata.DataTimeSeries) null.Float {
 	if len(series.Points) == 0 {
 		return null.FloatFromPtr(nil)

@@ -54,7 +54,8 @@ type GoogleChatNotifier struct {
 	log log.Logger
 }
 
-/**
+/*
+*
 Structs used to build a custom Google Hangouts Chat message card.
 See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
 */
