@@ -146,7 +146,7 @@ To add a filter, click the plus icon to the right of the `Measurements/Fields` b
 
 ## Annotations
 
-[Annotations]({{< relref "../../dashboards/annotations/" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
+[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
 
 An example query:
 

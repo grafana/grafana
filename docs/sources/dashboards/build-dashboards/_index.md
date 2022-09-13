@@ -15,6 +15,6 @@ keywords:
 
 # Build dashboards
 
-xxx
+This section includes the following topics:
 
 {{< section >}}
