@@ -18,7 +18,7 @@ import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types'
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
-import { trackDataSourceCreated } from '../tracking';
+import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { nameExits, findNewName } from '../utils';
 
 import { buildCategories } from './buildCategories';
@@ -109,6 +109,12 @@ export const testDataSource = (
         const result = await dsApi.testDatasource();
 
         dispatch(testDataSourceSucceeded(result));
+        trackDataSourceTested({
+          grafana_version: config.buildInfo.version,
+          datasource: dsApi.type,
+          datasource_uid: dsApi.uid,
+          success: true,
+        });
       } catch (err) {
         let message: string | undefined;
         let details: HealthCheckResultDetails;
@@ -123,6 +129,12 @@ export const testDataSource = (
         }
 
         dispatch(testDataSourceFailed({ message, details }));
+        trackDataSourceTested({
+          grafana_version: config.buildInfo.version,
+          datasource: dsApi.type,
+          datasource_uid: dsApi.uid,
+          success: false,
+        });
       }
     });
   };
@@ -203,7 +215,6 @@ export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURC
       grafana_version: config.buildInfo.version,
       datasource: plugin.id,
       datasource_uid: result.datasource.uid,
-      source: DATASOURCES_ROUTES.New,
     });
 
     locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));
