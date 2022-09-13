@@ -27,16 +27,8 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
         return item.url ? (
           <MenuItem
             url={item.url}
-            label={
-              showExternalLinkIcon ? (
-                <>
-                  {itemText}
-                  {showExternalLinkIcon && <Icon name="external-link-alt" className={styles.icon} aria-hidden />}
-                </>
-              ) : (
-                itemText
-              )
-            }
+            label={itemText}
+            icon={showExternalLinkIcon ? 'external-link-alt' : undefined}
             target={item.target}
             key={item.id}
           />

@@ -287,7 +287,7 @@ export const ContextMenuView: React.FC<ContextMenuViewProps> = ({
       <MenuGroup key={`${group.label}${index}`} label={group.label}>
         {(group.items || []).map((item, index) => (
           <MenuItem
-            key={typeof item.label === 'string' ? item.label : index}
+            key={item.label}
             url={item.url}
             label={item.label}
             target={item.target}
