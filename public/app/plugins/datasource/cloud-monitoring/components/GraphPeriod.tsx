@@ -3,7 +3,7 @@ import React, { FunctionComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, HorizontalGroup, Switch } from '@grafana/ui';
 
-import { GRAPH_PERIODS, SELECT_WIDTH } from '../constants';
+import { GRAPH_PERIODS } from '../constants';
 
 import { PeriodSelect } from './index';
 
@@ -38,7 +38,6 @@ export const GraphPeriod: FunctionComponent<Props> = ({ refId, onChange, graphPe
             templateVariableOptions={variableOptionGroup.options}
             current={graphPeriod}
             onChange={onChange}
-            selectWidth={SELECT_WIDTH}
             disabled={graphPeriod === 'disabled'}
             aligmentPeriods={GRAPH_PERIODS}
           />

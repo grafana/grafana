@@ -3,8 +3,6 @@ import React, { FunctionComponent, useState } from 'react';
 
 import { EditorField, Input } from '@grafana/ui';
 
-import { SELECT_WIDTH } from '../constants';
-
 export interface Props {
   refId: string;
   onChange: (alias: any) => void;
@@ -23,7 +21,7 @@ export const AliasBy: FunctionComponent<Props> = ({ refId, value = '', onChange 
 
   return (
     <EditorField label="Alias by">
-      <Input id={`${refId}-alias-by`} width={SELECT_WIDTH} value={alias} onChange={onChange} />
+      <Input id={`${refId}-alias-by`} value={alias} onChange={onChange} />
     </EditorField>
   );
 };
