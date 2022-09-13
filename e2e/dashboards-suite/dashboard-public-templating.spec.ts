@@ -8,13 +8,15 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard with template variables
+    e2e().intercept('/api/ds/query').as('query');
     e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
+    e2e().wait('@query');
 
     // Open sharing modal
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-config').as('query-public-config');
+    e2e().intercept('GET', '/api/dashboards/uid/HYaGDGIMk/public-config').as('query-public-config');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
     e2e().wait('@query-public-config');
 
