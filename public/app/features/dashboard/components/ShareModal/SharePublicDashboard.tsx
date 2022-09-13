@@ -191,8 +191,8 @@ export const SharePublicDashboard = (props: Props) => {
                   </Label>
                   <TimeRangeInput
                     value={{
-                      from: props.dashboard.getDefaultTime().from,
-                      to: props.dashboard.getDefaultTime().to,
+                      from: dateTime(props.dashboard.getDefaultTime().from),
+                      to: dateTime(props.dashboard.getDefaultTime().to),
                       raw: {
                         from: dateTime(null),
                         to: dateTime(null),
