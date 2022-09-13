@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
 )
@@ -69,7 +70,7 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client, token *oauth2.Token) (*
 		Name:  data.Name,
 		Login: data.Login,
 		Email: data.Email,
-		Role:  data.Role,
+		Role:  org.RoleType(data.Role),
 	}
 
 	if !s.IsOrganizationMember(data.Orgs) {

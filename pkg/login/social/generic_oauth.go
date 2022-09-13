@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"golang.org/x/oauth2"
 )
 
@@ -144,15 +145,11 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 
 		if userInfo.Role == "" {
-			role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{})
+			role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
 			if role != "" {
-				if s.roleAttributeStrict && !role.IsValid() {
-					return nil, ErrInvalidBasicRole
-				}
-
 				s.log.Debug("Setting user info role from extracted role")
 
-				userInfo.Role = string(role)
+				userInfo.Role = role
 				if s.allowAssignGrafanaAdmin {
 					userInfo.IsGrafanaAdmin = &grafanaAdmin
 				}
@@ -168,6 +165,10 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 				userInfo.Groups = groups
 			}
 		}
+	}
+
+	if s.roleAttributeStrict && !org.RoleType(userInfo.Role).IsValid() {
+		return nil, ErrInvalidBasicRole
 	}
 
 	if userInfo.Email == "" {

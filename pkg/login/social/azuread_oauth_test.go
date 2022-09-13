@@ -142,6 +142,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name: "Only other roles",
+			fields: fields{
+				SocialBase: &SocialBase{autoAssignOrgRole: "Viewer"},
+			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
