@@ -119,6 +119,11 @@ func main() {
 			Usage:  "Verify Drone configuration",
 			Action: VerifyDrone,
 		},
+		{
+			Name:   "export-version",
+			Usage:  "Exports version in dist/grafana.version",
+			Action: ExportVersion,
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
