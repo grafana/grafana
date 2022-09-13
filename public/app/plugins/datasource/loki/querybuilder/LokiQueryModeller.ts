@@ -38,15 +38,6 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Parse log lines with json parser',
-        type: LokiQueryPatternType.Log,
-        // {} | json | __error__=``
-        operations: [
-          { id: LokiOperationId.Json, params: [] },
-          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-        ],
-      },
-      {
         name: 'Parse log lines with JSON parser',
         type: LokiQueryPatternType.Log,
         // {} | json | __error__=``
