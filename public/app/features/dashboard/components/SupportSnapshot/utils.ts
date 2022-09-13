@@ -140,6 +140,9 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
         type: 'grafana',
         uid: 'grafana',
       },
+      options: {
+        showTypeIcons: true,
+      },
       targets: [
         {
           refId: 'A',
@@ -272,6 +275,9 @@ const embeddedDataTemplate: any = {
         w: 15,
         x: 0,
         y: 13,
+      },
+      options: {
+        showTypeIcons: true,
       },
       targets: [
         {
