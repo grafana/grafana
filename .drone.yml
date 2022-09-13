@@ -686,6 +686,47 @@ clone:
   retries: 3
 depends_on: []
 kind: pipeline
+name: shellcheck
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build shellcheck
+  depends_on:
+  - compile-build-cmd
+  image: koalaman/shellcheck:v0.8.0
+  name: shellcheck
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+    include:
+    - scripts/**.sh
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+kind: pipeline
 name: main-docs
 node:
   type: no-parallel
@@ -5114,6 +5155,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 4dab9811ddd4be2ca5cd598be69ce216e82406ca4197fdaeb75691156d356382
+hmac: 780ad78593f60b778eb69464afd26aec18243eb6651382c53b6d080b5ba8318f
 
 ...
