@@ -14,20 +14,23 @@ import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType } from '../type
 
 type Props = {
   isOpen: boolean;
-
   query: LokiQuery;
   onClose: () => void;
   onChange: (query: LokiQuery) => void;
-  onAddQuery: (query: LokiQuery) => void;
   queries?: DataQuery[];
+  onAddQuery?: (query: LokiQuery) => void;
 };
 
 export const QueryPatternsModal = (props: Props) => {
   const { isOpen, onClose, onChange, onAddQuery, query, queries } = props;
+
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [selectedPatternIndex, setSelectedPatternIndex] = useState<number | null>(null);
+
   const indexOfSelectedCard = useRef<number | null>(null);
+
   const lang = { grammar: logqlGrammar, name: 'logql' };
+  const hasNewQueryOption = !!onAddQuery;
 
   const styles = useStyles2(getStyles);
 
@@ -45,7 +48,7 @@ export const QueryPatternsModal = (props: Props) => {
     const result = buildVisualQueryFromString(queryString);
     result.query.operations = pattern.operations;
 
-    if (addNewQuery) {
+    if (hasNewQueryOption && addNewQuery) {
       onAddQuery({
         ...query,
         refId: getNextRefIdChar(queries ?? [query]),
@@ -73,6 +76,7 @@ export const QueryPatternsModal = (props: Props) => {
             collapsible={true}
             onToggle={() =>
               setOpenTabs((tabs) =>
+                // close tab if it's already open, otherwise open it
                 tabs.includes(patternType) ? tabs.filter((t) => t !== patternType) : [...tabs, patternType]
               )
             }
@@ -111,8 +115,9 @@ export const QueryPatternsModal = (props: Props) => {
                       {selectedPatternIndex === index && (
                         <>
                           <div className={styles.spacing}>
-                            If you would like to use this query, you can either replace your current query or create a
-                            new query.
+                            {hasNewQueryOption
+                              ? 'If you would like to use this query, you can either replace your current query or create a new query.'
+                              : 'If you would like to use this query, your current query will be replaced.'}
                           </div>
                           <Button size="sm" fill="outline" onClick={() => setSelectedPatternIndex(null)}>
                             Back
@@ -127,16 +132,18 @@ export const QueryPatternsModal = (props: Props) => {
                           >
                             Replace query
                           </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              onPatternSelect(pattern, true);
-                              setSelectedPatternIndex(null);
-                              onClose();
-                            }}
-                          >
-                            Create new query
-                          </Button>
+                          {hasNewQueryOption && (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                onPatternSelect(pattern, true);
+                                setSelectedPatternIndex(null);
+                                onClose();
+                              }}
+                            >
+                              Create new query
+                            </Button>
+                          )}
                         </>
                       )}
                     </Card.Actions>

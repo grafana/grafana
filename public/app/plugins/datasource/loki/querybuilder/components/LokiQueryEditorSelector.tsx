@@ -25,7 +25,7 @@ import { LokiQueryCodeEditor } from './LokiQueryCodeEditor';
 import { QueryPatternsModal } from './QueryPatternsModal';
 
 export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, data, app } = props;
+  const { onChange, onRunQuery, onAddQuery, data, app, queries } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
 
@@ -94,8 +94,9 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         isOpen={queryPatternsModalOpen}
         onClose={() => setQueryPatternsModalOpen(false)}
         query={query}
+        queries={queries}
         onChange={onChange}
-        onAddQuery={() => {}}
+        onAddQuery={onAddQuery}
       />
       <EditorHeader>
         <Button
