@@ -1,5 +1,6 @@
 load(
     'scripts/drone/steps/lib.star',
+    'build_image',
     'compile_build_cmd'
 )
 
@@ -27,7 +28,7 @@ trigger = {
 def shellcheck_step():
     return {
         'name': 'shellcheck',
-        'image': 'koalaman/shellcheck:v0.8.0',
+        'image': build_image,
         'depends_on': [
             'compile-build-cmd',
         ],

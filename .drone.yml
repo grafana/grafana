@@ -686,7 +686,7 @@ clone:
   retries: 3
 depends_on: []
 kind: pipeline
-name: shellcheck
+name: pr-shellcheck
 node:
   type: no-parallel
 platform:
@@ -705,7 +705,7 @@ steps:
   - ./bin/build shellcheck
   depends_on:
   - compile-build-cmd
-  image: koalaman/shellcheck:v0.8.0
+  image: grafana/build-container:1.6.2
   name: shellcheck
 trigger:
   event:
@@ -716,7 +716,7 @@ trigger:
     - docs/**
     - latest.json
     include:
-    - scripts/**.sh
+    - '**.sh'
 type: docker
 volumes:
 - host:
@@ -5155,6 +5155,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 780ad78593f60b778eb69464afd26aec18243eb6651382c53b6d080b5ba8318f
+hmac: be233e03a7c7e269ff9e6b0888d1834efe6c144e74c436c2c19c71537405f738
 
 ...
