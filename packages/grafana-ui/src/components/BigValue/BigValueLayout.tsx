@@ -63,7 +63,7 @@ export abstract class BigValueLayout {
     };
 
     if (this.props.colorMode === BigValueColorMode.Background) {
-      styles.color = getTextColorForBackground(this.valueColor);
+      styles.color = getTextColorForBackground(this.valueColor, this.props.theme.isDark);
     }
 
     return styles;
@@ -87,7 +87,7 @@ export abstract class BigValueLayout {
         styles.color = this.valueColor;
         break;
       case BigValueColorMode.Background:
-        styles.color = getTextColorForBackground(this.valueColor);
+        styles.color = getTextColorForBackground(this.valueColor, this.props.theme.isDark);
         break;
       case BigValueColorMode.None:
         styles.color = this.props.theme.colors.text.primary;

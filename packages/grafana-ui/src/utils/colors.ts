@@ -112,8 +112,15 @@ function hslToHex(color: tinycolor.ColorFormats.HSLA) {
   return tinycolor(color).toHexString();
 }
 
-export function getTextColorForBackground(color: string) {
-  const b = tinycolor(color).getBrightness();
+export function getTextColorForBackground(color: string, themeIsDark: boolean) {
+  const tcolor = tinycolor(color);
+  const b = tcolor.getBrightness();
+  const a = tcolor.getAlpha();
+
+  if (a < 0.3) {
+    return themeIsDark ? 'rgb(247, 248, 250)' : 'rgb(32, 34, 38)';
+  }
+
   return b > 180 ? 'rgb(32, 34, 38)' : 'rgb(247, 248, 250)';
 }
 

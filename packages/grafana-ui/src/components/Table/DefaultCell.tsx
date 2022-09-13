@@ -63,7 +63,7 @@ function getCellStyle(
 
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
     const bgColor = tinycolor(displayValue.color);
-    const textColor = getTextColorForBackground(displayValue.color!);
+    const textColor = getTextColorForBackground(displayValue.color!, tableStyles.theme.isDark);
     return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString(), !disableOverflowOnHover);
   }
 
@@ -74,7 +74,7 @@ function getCellStyle(
       .spin(5)
       .toRgbString();
 
-    const textColor = getTextColorForBackground(displayValue.color!);
+    const textColor = getTextColorForBackground(displayValue.color!, tableStyles.theme.isDark);
 
     return tableStyles.buildCellContainerStyle(
       textColor,
