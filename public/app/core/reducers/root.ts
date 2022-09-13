@@ -3,6 +3,7 @@ import { AnyAction, combineReducers } from 'redux';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
+import { pubDashApi } from 'app/features/alerting/unified/api/pubDashApi';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import panelEditorReducers from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
@@ -46,6 +47,7 @@ const rootReducers = {
   ...searchQueryReducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
+  [pubDashApi.reducerPath]: pubDashApi.reducer,
 };
 
 const addedReducers = {};
