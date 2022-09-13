@@ -14,7 +14,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/datasources"
-	fakedatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -71,7 +71,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
-		&fakedatasources.FakeDataSourceService{},
+		&fakeDatasources.FakeDataSourceService{},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
@@ -120,7 +120,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
-		&fakedatasources.FakeDataSourceService{SimulatePluginFailure: true},
+		&fakeDatasources.FakeDataSourceService{SimulatePluginFailure: true},
 		&fakePluginClient{
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{

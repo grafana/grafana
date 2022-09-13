@@ -127,7 +127,7 @@ func (ps *fakePluginSettings) UpdatePluginSetting(ctx context.Context, args *plu
 }
 
 // UpdatePluginSettingPluginVersion updates a Plugin Setting's plugin version
-func (ps *fakePluginSettings) UpdatePluginSettingPluginVersion(_ context.Context, args *pluginsettings.UpdatePluginVersionArgs) error {
+func (ps *fakePluginSettings) UpdatePluginSettingPluginVersion(ctx context.Context, args *pluginsettings.UpdatePluginVersionArgs) error {
 	if res, ok := ps.plugins[args.PluginID]; ok {
 		res.PluginVersion = args.PluginVersion
 		return nil
