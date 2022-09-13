@@ -71,11 +71,21 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   const [snapshotText, setDashboardText] = useState('...');
   const [rand, setRand] = useState<Randomize>({});
   const [_, copyToClipboard] = useCopyToClipboard();
+  const [iframeLoading, setIframeLoading] = useState(false);
+  const snapshot = useAsync(async () => {
+    return getDebugDashboard(panel, rand, getTimeSrv().timeRange());
+  }, [rand, panel, plugin]);
+
   const info = useAsync(async () => {
-    const dashboard = await getDebugDashboard(panel, rand, getTimeSrv().timeRange());
-    setDashboardToFetchFromLocalStorage({ meta: {}, dashboard });
-    setDashboardText(JSON.stringify(dashboard, null, 2));
-  }, [rand, panel, plugin, setDashboardText, currentTab]);
+    const dashboard = snapshot.value;
+    if (dashboard) {
+      // When iframe is supported, pass the dashboard via local storage
+      if (iframeLoading && currentTab === InspectTab.Support) {
+        setDashboardToFetchFromLocalStorage({ meta: {}, dashboard });
+      }
+      setDashboardText(JSON.stringify(dashboard, null, 2));
+    }
+  }, [snapshot, currentTab, iframeLoading]);
 
   const snapshotSize = useMemo(() => {
     return formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
@@ -84,8 +94,6 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   const markdownText = useMemo(() => {
     return getGithubMarkdown(panel, snapshotText);
   }, [snapshotText, panel]);
-
-  const [iframeLoading, setIframeLoading] = useState(false);
 
   // Listen for messages from loaded iframe
   useEffect(() => {
@@ -280,7 +288,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
                     display: iframeLoading ? 'block' : 'none',
                   }}
                 />
-                {!iframeLoading && <div>No iframe support?</div>}
+                {!iframeLoading && <div>&nbsp;</div>}
               </>
             )}
           </AutoSizer>
