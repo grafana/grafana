@@ -20,7 +20,7 @@ export function NewDataSourcePage() {
 
 export function getNavModel(): NavModel {
   const main = {
-    icon: 'database',
+    icon: 'database' as const,
     id: 'datasource-new',
     text: 'Add data source',
     href: DATASOURCES_ROUTES.New,

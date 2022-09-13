@@ -8,9 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -19,22 +19,22 @@ import (
 
 // Authenticator can authenticate GRPC requests.
 type Authenticator struct {
-	logger   log.Logger
-	APIKey   apikey.Service
-	SQLStore sqlstore.Store
+	logger      log.Logger
+	APIKey      apikey.Service
+	UserService user.Service
 }
 
-func NewAuthenticator(apiKey apikey.Service, sqlStore sqlstore.Store) *Authenticator {
+func NewAuthenticator(apiKey apikey.Service, userService user.Service) *Authenticator {
 	return &Authenticator{
-		logger:   log.New("grpc-server-authenticator"),
-		APIKey:   apiKey,
-		SQLStore: sqlStore,
+		logger:      log.New("grpc-server-authenticator"),
+		APIKey:      apiKey,
+		UserService: userService,
 	}
 }
 
 // Authenticate checks that a token exists and is valid. It stores the user
 // metadata in the returned context and removes the token from the context.
-func (a *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
+func (a *Authenticator) authenticate(ctx context.Context) (context.Context, error) {
 	return a.tokenAuth(ctx)
 }
 
@@ -85,17 +85,18 @@ func (a *Authenticator) validateToken(ctx context.Context, keyString string) err
 		return status.Error(codes.Unauthenticated, "api key does not have a service account")
 	}
 
-	querySignedInUser := models.GetSignedInUserQuery{UserId: *apikey.ServiceAccountId, OrgId: apikey.OrgId}
-	if err := a.SQLStore.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser); err != nil {
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
+	if err != nil {
 		return err
 	}
 
-	if !querySignedInUser.Result.HasRole(models.ROLE_ADMIN) {
+	if !signedInUser.HasRole(org.RoleAdmin) {
 		return fmt.Errorf("api key does not have admin role")
 	}
 
 	// disabled service accounts are not allowed to access the API
-	if querySignedInUser.Result.IsDisabled {
+	if signedInUser.IsDisabled {
 		return fmt.Errorf("service account is disabled")
 	}
 

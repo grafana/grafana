@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"sync"
@@ -121,7 +120,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies)
 	proxyutil.PrepareProxyRequest(req)
 
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read request body: %w", err)
 	}

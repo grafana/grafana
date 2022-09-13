@@ -3,7 +3,7 @@ package definitions
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -808,10 +808,10 @@ alertmanager_config: |
 func Test_GettableUserConfigRoundtrip(t *testing.T) {
 	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
 	// the fields are not redacted.
-	yamlEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.yaml")
+	yamlEncoded, err := os.ReadFile("alertmanager_test_artifact.yaml")
 	require.Nil(t, err)
 
-	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
 	require.Nil(t, err)
 
 	// test GettableUserConfig (yamlDecode -> jsonEncode)
@@ -1031,7 +1031,7 @@ routes:
 }
 
 func Test_Marshaling_Validation(t *testing.T) {
-	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
 	require.Nil(t, err)
 
 	var tmp GettableUserConfig

@@ -32,7 +32,7 @@ const variableRegex = /\$(\w+)|\[\[([\s\S]+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\
 
 /**
  * As variables with $ are creating parsing errors, we first replace them with magic string that is parsable and at
- * the same time we can get the variable and it's format back from it.
+ * the same time we can get the variable and its format back from it.
  * @param expr
  */
 export function replaceVariables(expr: string) {
@@ -65,7 +65,7 @@ const varTypeFunc = [
  * Get back the text with variables in their original format.
  * @param expr
  */
-function returnVariables(expr: string) {
+export function returnVariables(expr: string) {
   return expr.replace(/__V_(\d)__(.+?)__V__(?:__F__(\w+)__F__)?/g, (match, type, v, f) => {
     return varTypeFunc[parseInt(type, 10)](v, f);
   });

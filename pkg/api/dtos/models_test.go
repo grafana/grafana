@@ -3,7 +3,7 @@ package dtos
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,14 +17,14 @@ func TestIsHiddenUser(t *testing.T) {
 	testcases := []struct {
 		desc         string
 		userLogin    string
-		signedInUser *models.SignedInUser
+		signedInUser *user.SignedInUser
 		hiddenUsers  map[string]struct{}
 		expected     bool
 	}{
 		{
 			desc:      "non-server admin user should see non-hidden user",
 			userLogin: "user",
-			signedInUser: &models.SignedInUser{
+			signedInUser: &user.SignedInUser{
 				IsGrafanaAdmin: false,
 				Login:          "admin",
 			},
@@ -34,7 +34,7 @@ func TestIsHiddenUser(t *testing.T) {
 		{
 			desc:      "non-server admin user should not see hidden user",
 			userLogin: "user",
-			signedInUser: &models.SignedInUser{
+			signedInUser: &user.SignedInUser{
 				IsGrafanaAdmin: false,
 				Login:          "admin",
 			},
@@ -44,7 +44,7 @@ func TestIsHiddenUser(t *testing.T) {
 		{
 			desc:      "non-server admin user should see himself, even if he's hidden",
 			userLogin: "admin",
-			signedInUser: &models.SignedInUser{
+			signedInUser: &user.SignedInUser{
 				IsGrafanaAdmin: false,
 				Login:          "admin",
 			},
@@ -56,7 +56,7 @@ func TestIsHiddenUser(t *testing.T) {
 		{
 			desc:      "server admin user should see hidden user",
 			userLogin: "user",
-			signedInUser: &models.SignedInUser{
+			signedInUser: &user.SignedInUser{
 				IsGrafanaAdmin: true,
 				Login:          "admin",
 			},
@@ -66,7 +66,7 @@ func TestIsHiddenUser(t *testing.T) {
 		{
 			desc:      "server admin user should see non-hidden user",
 			userLogin: "user",
-			signedInUser: &models.SignedInUser{
+			signedInUser: &user.SignedInUser{
 				IsGrafanaAdmin: true,
 				Login:          "admin",
 			},

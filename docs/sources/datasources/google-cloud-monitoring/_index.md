@@ -129,7 +129,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable]({{< relref "../../variables/variable-types/add-interval-variable/" >}}).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable]({{< relref "../../dashboards/variables/add-template-variables/#add-an-interval-variable" >}}).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -208,6 +208,7 @@ The friendly names for the time series selectors are shown in Grafana. Here is t
 | SLI Value                  | select_slo_health                       |
 | SLO Compliance             | select_slo_compliance                   |
 | SLO Error Budget Remaining | select_slo_budget_fraction              |
+| SLO Burn Rate              | select_slo_burn_rate                    |
 
 #### Alias patterns for SLO queries
 
@@ -251,7 +252,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../dashboards/variables/" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query Variable
@@ -273,7 +274,7 @@ Variable of the type _Query_ allows you to query Google Cloud Monitoring for var
 
 ### Using variables in queries
 
-Refer to the [variable syntax documentation]({{< relref "../../variables/syntax/" >}}).
+Refer to the [variable syntax documentation]({{< relref "../../dashboards/variables/variable-syntax" >}}).
 
 ## Annotations
 

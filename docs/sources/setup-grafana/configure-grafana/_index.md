@@ -1232,11 +1232,11 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 
 ### ha_listen_address
 
-Listen address/hostname and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
+Listen IP address and port to receive unified alerting messages for other Grafana instances. The port is used for both TCP and UDP. It is assumed other Grafana instances are also running on the same port. The default value is `0.0.0.0:9094`.
 
 ### ha_advertise_address
 
-Explicit address/hostname and port to advertise other Grafana instances. The port is used for both TCP and UDP.
+Explicit IP address and port to advertise other Grafana instances. The port is used for both TCP and UDP.
 
 ### ha_peers
 

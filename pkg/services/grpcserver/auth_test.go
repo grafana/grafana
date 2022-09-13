@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
@@ -22,10 +22,10 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeSQLStore{OrgRole: models.ROLE_ADMIN})
+		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleAdmin})
 		ctx, err := setupContext()
 		require.NoError(t, err)
-		ctx, err = a.Authenticate(ctx)
+		ctx, err = a.authenticate(ctx)
 		require.NoError(t, err)
 	})
 
@@ -37,10 +37,10 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
 		}, nil)
-		a := NewAuthenticator(s, &fakeSQLStore{OrgRole: models.ROLE_EDITOR})
+		a := NewAuthenticator(s, &fakeUserService{OrgRole: org.RoleEditor})
 		ctx, err := setupContext()
 		require.NoError(t, err)
-		ctx, err = a.Authenticate(ctx)
+		ctx, err = a.authenticate(ctx)
 		require.NotNil(t, err)
 	})
 }
@@ -62,18 +62,17 @@ func (f *fakeAPIKey) GetAPIKeyByHash(ctx context.Context, hash string) (*apikey.
 	return f.key, f.err
 }
 
-type fakeSQLStore struct {
-	sqlstore.Store
-	OrgRole models.RoleType
+type fakeUserService struct {
+	user.Service
+	OrgRole org.RoleType
 }
 
-func (f *fakeSQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	query.Result = &models.SignedInUser{
-		UserId:  1,
-		OrgId:   1,
+func (f *fakeUserService) GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+	return &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
 		OrgRole: f.OrgRole,
-	}
-	return nil
+	}, nil
 }
 
 func setupContext() (context.Context, error) {

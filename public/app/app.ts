@@ -34,6 +34,7 @@ import {
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import { getScrollbarWidth } from '@grafana/ui';
 import config from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
@@ -44,6 +45,7 @@ import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { AppWrapper } from './AppWrapper';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
+import { PluginPage } from './core/components/PageNew/PluginPage';
 import { GrafanaContextType } from './core/context/GrafanaContext';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
@@ -103,6 +105,7 @@ export class GrafanaApp {
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
+      setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);

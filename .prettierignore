@@ -29,3 +29,4 @@ theme.dark.generated.json
 # Generated Swagger API specs
 public/api-spec.json
 public/api-merged.json
+public/openapi3.json

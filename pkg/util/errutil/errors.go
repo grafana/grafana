@@ -23,9 +23,10 @@ type Base struct {
 // to serve as the base for user facing error messages.
 //
 // msgID should be structured as component.error-brief, for example
-//   login.failed-authentication
-//   dashboards.validation-error
-//   dashboards.uid-already-exists
+//
+//	login.failed-authentication
+//	dashboards.validation-error
+//	dashboards.uid-already-exists
 func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	b := Base{
 		reason:    reason,
@@ -80,16 +81,40 @@ func (b Base) Errorf(format string, args ...interface{}) Error {
 	}
 }
 
+// Error makes Base implement the error type. Relying on this is
+// discouraged, as the Error type can carry additional information
+// that's valuable when debugging.
+func (b Base) Error() string {
+	return b.Errorf("").Error()
+}
+
+func (b Base) Status() StatusReason {
+	if b.reason == nil {
+		return StatusUnknown
+	}
+	return b.reason.Status()
+}
+
 // Is validates that an Error has the same reason and messageID as the
 // Base.
 func (b Base) Is(err error) bool {
-	gfErr := Error{}
-	ok := errors.As(err, &gfErr)
-	if !ok {
+	// The linter complains that it wants to use errors.As because it
+	// handles unwrapping, we don't want to do that here since we want
+	// to validate the equality between the two objects.
+	// errors.Is handles the unwrapping, should you want it.
+	//nolint:errorlint
+	base, isBase := err.(Base)
+	//nolint:errorlint
+	gfErr, isGrafanaError := err.(Error)
+
+	switch {
+	case isGrafanaError:
+		return b.reason == gfErr.Reason && b.messageID == gfErr.MessageID
+	case isBase:
+		return b.reason == base.reason && b.messageID == base.messageID
+	default:
 		return false
 	}
-
-	return b.reason.Status() == gfErr.Reason.Status() && b.messageID == gfErr.MessageID
 }
 
 // Error is the error type for errors within Grafana, extending
@@ -138,12 +163,18 @@ func (e Error) Is(other error) bool {
 	// to validate the equality between the two objects.
 	// errors.Is handles the unwrapping, should you want it.
 	//nolint:errorlint
-	o, ok := other.(Error)
-	if !ok {
+	o, isGrafanaError := other.(Error)
+	//nolint:errorlint
+	base, isBase := other.(Base)
+
+	switch {
+	case isGrafanaError:
+		return o.Reason == e.Reason && o.MessageID == e.MessageID && o.Error() == e.Error()
+	case isBase:
+		return base.Is(e)
+	default:
 		return false
 	}
-
-	return o.Reason == e.Reason && o.MessageID == e.MessageID && o.Error() == e.Error()
 }
 
 // PublicError is derived from Error and only contains information

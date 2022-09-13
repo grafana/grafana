@@ -5,9 +5,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +17,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -99,7 +101,7 @@ func (server *Server) Dial() error {
 		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
 			// nolint:gosec
 			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
-			pem, err := ioutil.ReadFile(caCertFile)
+			pem, err := os.ReadFile(caCertFile)
 			if err != nil {
 				return err
 			}
@@ -429,7 +431,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 
 	attrs := server.Config.Attr
 	extUser := &models.ExternalUserInfo{
-		AuthModule: models.AuthModuleLDAP,
+		AuthModule: login.LDAPAuthModule,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
 			fmt.Sprintf(
@@ -441,7 +443,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		Login:    getAttribute(attrs.Username, user),
 		Email:    getAttribute(attrs.Email, user),
 		Groups:   memberOf,
-		OrgRoles: map[int64]models.RoleType{},
+		OrgRoles: map[int64]org.RoleType{},
 	}
 
 	for _, group := range server.Config.Groups {

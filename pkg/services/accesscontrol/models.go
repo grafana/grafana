@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // RoleRegistration stores a role and its assignments to built-in roles
@@ -211,12 +211,7 @@ type GetUserPermissionsQuery struct {
 	UserID  int64 `json:"userId"`
 	Roles   []string
 	Actions []string
-}
-
-// ScopeParams holds the parameters used to fill in scope templates
-type ScopeParams struct {
-	OrgID     int64
-	URLParams map[string]string
+	TeamIDs []int64
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -234,6 +229,7 @@ type ResourcePermission struct {
 	Team        string
 	BuiltInRole string
 	IsManaged   bool
+	IsInherited bool
 	Created     time.Time
 	Updated     time.Time
 }
@@ -410,7 +406,7 @@ func BuiltInRolesWithParents(builtInRoles []string) map[string]struct{} {
 	for _, br := range builtInRoles {
 		res[br] = struct{}{}
 		if br != RoleGrafanaAdmin {
-			for _, parent := range models.RoleType(br).Parents() {
+			for _, parent := range org.RoleType(br).Parents() {
 				res[string(parent)] = struct{}{}
 			}
 		}

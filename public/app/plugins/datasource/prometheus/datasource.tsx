@@ -22,6 +22,7 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  AnnotationQueryRequest,
   QueryFixAction,
 } from '@grafana/data';
 import {
@@ -146,6 +147,7 @@ export class PrometheusDatasource
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
   }
@@ -160,6 +162,13 @@ export class PrometheusDatasource
     data: Record<string, string> | null,
     overrides: Partial<BackendSrvRequest> = {}
   ): Observable<FetchResponse<T>> {
+    if (this.access === 'direct') {
+      const error = new Error(
+        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
+      );
+      return throwError(() => error);
+    }
+
     data = data || {};
     for (const [key, value] of this.customQueryParameters) {
       if (data[key] == null) {
@@ -697,7 +706,14 @@ export class PrometheusDatasource
     };
   }
 
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
+  async annotationQuery(options: AnnotationQueryRequest<PromQuery>): Promise<AnnotationEvent[]> {
+    if (this.access === 'direct') {
+      const error = new Error(
+        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
+      );
+      return Promise.reject(error);
+    }
+
     const annotation = options.annotation;
     const { expr = '' } = annotation;
 
@@ -737,7 +753,7 @@ export class PrometheusDatasource
     );
   }
 
-  processAnnotationResponse = (options: any, data: BackendDataSourceResponse) => {
+  processAnnotationResponse = (options: AnnotationQueryRequest<PromQuery>, data: BackendDataSourceResponse) => {
     const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
     if (!frames || !frames.length) {
       return [];

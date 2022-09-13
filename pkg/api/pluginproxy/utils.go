@@ -3,13 +3,13 @@ package pluginproxy
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"text/template"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // interpolateString accepts template data and return a string with substitutions
@@ -78,7 +78,7 @@ func setBodyContent(req *http.Request, route *plugins.Route, data templateData) 
 			return err
 		}
 
-		req.Body = ioutil.NopCloser(strings.NewReader(interpolatedBody))
+		req.Body = io.NopCloser(strings.NewReader(interpolatedBody))
 		req.ContentLength = int64(len(interpolatedBody))
 	}
 
@@ -86,7 +86,7 @@ func setBodyContent(req *http.Request, route *plugins.Route, data templateData) 
 }
 
 // Set the X-Grafana-User header if needed (and remove if not)
-func applyUserHeader(sendUserHeader bool, req *http.Request, user *models.SignedInUser) {
+func applyUserHeader(sendUserHeader bool, req *http.Request, user *user.SignedInUser) {
 	req.Header.Del("X-Grafana-User")
 	if sendUserHeader && !user.IsAnonymous {
 		req.Header.Set("X-Grafana-User", user.Login)

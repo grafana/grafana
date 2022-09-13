@@ -1,6 +1,6 @@
 import memoizeOne from 'memoize-one';
 
-import { TypedVariableModel, VariableWithMultiSupport, VariableWithOptions } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 
 import { getState } from '../../../store/store';
 import { StoreState } from '../../../types';
@@ -9,26 +9,31 @@ import { toStateKey } from '../utils';
 import { getInitialTemplatingState, TemplatingState } from './reducers';
 import { KeyedVariableIdentifier, VariablesState } from './types';
 
-// TODO: this is just a temporary type until we remove generics from getVariable and getInstanceState in a later PR
-// we need to it satisfy the constraint of callers who specify VariableWithOptions or VariableWithMultiSupport
-type GenericVariableModel = TypedVariableModel | VariableWithOptions | VariableWithMultiSupport;
-
-export const getVariable = <T extends GenericVariableModel = GenericVariableModel>(
+export function getVariable(
+  identifier: KeyedVariableIdentifier,
+  state: StoreState,
+  throwWhenMissing: false
+): TypedVariableModel | undefined;
+export function getVariable(identifier: KeyedVariableIdentifier, state?: StoreState): TypedVariableModel;
+export function getVariable(
   identifier: KeyedVariableIdentifier,
   state: StoreState = getState(),
   throwWhenMissing = true
-): T => {
+): TypedVariableModel | undefined {
   const { id, rootStateKey } = identifier;
   const variablesState = getVariablesState(rootStateKey, state);
-  if (!variablesState.variables[id]) {
+  const variable = variablesState.variables[id];
+
+  if (!variable) {
     if (throwWhenMissing) {
       throw new Error(`Couldn't find variable with id:${id}`);
     }
-    return undefined as unknown as T;
+
+    return undefined;
   }
 
-  return variablesState.variables[id] as T;
-};
+  return variable;
+}
 
 function getFilteredVariablesByKey(
   filter: (model: TypedVariableModel) => boolean,
@@ -114,10 +119,6 @@ export function getVariableWithName(name: string, state: StoreState = getState()
   return getVariable({ id: name, rootStateKey: lastKey, type: 'query' }, state, false);
 }
 
-// TODO: remove the generic and type assertion in a later PR
-export function getInstanceState<Model extends GenericVariableModel = GenericVariableModel>(
-  state: VariablesState,
-  id: string
-) {
-  return state[id] as Model;
+export function getInstanceState(state: VariablesState, id: string) {
+  return state[id];
 }

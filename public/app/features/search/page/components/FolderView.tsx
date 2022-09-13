@@ -39,12 +39,9 @@ export const FolderView = ({
         }
       }
 
-      const ids = impressionSrv.getDashboardOpened();
-      if (ids.length) {
-        const itemsUIDs = await getBackendSrv().get(`/api/dashboards/ids/${ids.slice(0, 30).join(',')}`);
-        if (itemsUIDs.length) {
-          folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'query-recent', uid: '__recent', itemsUIDs });
-        }
+      const itemsUIDs = await impressionSrv.getDashboardOpened();
+      if (itemsUIDs.length) {
+        folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'query-recent', uid: '__recent', itemsUIDs });
       }
     }
     folders.push({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });

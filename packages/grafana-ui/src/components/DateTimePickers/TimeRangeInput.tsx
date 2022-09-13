@@ -138,7 +138,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
         justify-content: space-between;
         cursor: pointer;
         padding-right: 0;
-        line-height: ${theme.v1.spacing.formInputHeight - 2}px;
+        line-height: ${theme.spacing.gridSize * 4 - 2}px;
       `
     ),
     caretIcon: cx(
@@ -146,17 +146,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
       css`
         position: relative;
         top: -1px;
-        margin-left: ${theme.v1.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       `
     ),
     clearIcon: css`
-      margin-right: ${theme.v1.spacing.xs};
+      margin-right: ${theme.spacing(0.5)};
       &:hover {
-        color: ${theme.v1.colors.linkHover};
+        color: ${theme.colors.text.maxContrast};
       }
     `,
     placeholder: css`
-      color: ${theme.v1.colors.formInputPlaceholderText};
+      color: ${theme.colors.text.disabled};
       opacity: 1;
     `,
   };

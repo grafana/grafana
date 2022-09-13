@@ -296,6 +296,27 @@ Config:
 role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
+#### Map server administrator privileges
+
+> Available in Grafana v9.2 and later versions.
+
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
+This is useful if you want to grant server administrator privileges to a subset of users.  
+Grafana also assigns the user the `Admin` role of the default organization.
+
+The setting `allow_assign_grafana_admin` under `[auth.generic_oauth]` must be set to `true` for this to work.  
+If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
+
+```ini
+allow_assign_grafana_admin = true
+```
+
+Example:
+
+```ini
+role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+```
+
 ### Groups mapping
 
 > Available in Grafana Enterprise v8.1 and later versions.

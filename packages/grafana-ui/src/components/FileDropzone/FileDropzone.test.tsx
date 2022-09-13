@@ -127,7 +127,7 @@ describe('The FileDropzone component', () => {
   });
 });
 
-function dispatchEvt(node: HTMLElement, type: string, data: any) {
+function dispatchEvt(node: HTMLElement, type: string, data: unknown) {
   const event = new Event(type, { bubbles: true });
   Object.assign(event, data);
   fireEvent(node, event);

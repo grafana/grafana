@@ -4,7 +4,7 @@ import React, { HTMLProps } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useStyles } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { InlineLabel } from '../Forms/InlineLabel';
 
 import { getSegmentStyles } from './styles';
@@ -36,7 +36,7 @@ export function Segment<T>({
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, labelWidth, expanded, setExpanded] = useExpandableLabel(autofocus, onExpandedChange);
   const width = inputMinWidth ? Math.max(inputMinWidth, labelWidth) : labelWidth;
-  const styles = useStyles(getSegmentStyles);
+  const styles = useStyles2(getSegmentStyles);
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;

@@ -69,11 +69,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheus_azure_auth",
-			Description: "Experimental. Azure authentication for Prometheus datasource",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
@@ -158,6 +153,12 @@ var (
 			Name:         "explore2Dashboard",
 			Description:  "Experimental Explore to Dashboard workflow",
 			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "exploreMixedDatasource",
+			Description:  "Enable mixed datasource in Explore",
+			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
@@ -272,6 +273,26 @@ var (
 			Description:     "Run GRPC server",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+		}, {
+			Name:        "traceqlEditor",
+			Description: "Show the TraceQL editor in the explore page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "redshiftAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Redshift",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "athenaAsyncQueryDataSupport",
+			Description:  "Enable async query data support for Athena",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "increaseInMemDatabaseQueryCache",
+			Description: "Enable more in memory caching for database queries",
 		},
 	}
 )

@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 
@@ -30,7 +30,7 @@ type GPRCServerService struct {
 	server *grpc.Server
 }
 
-func ProvideService(cfg *setting.Cfg, apiKey apikey.Service, sqlStore sqlstore.Store) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, apiKey apikey.Service, userService user.Service) (Provider, error) {
 	s := &GPRCServerService{
 		cfg:    cfg,
 		logger: log.New("grpc-server"),
@@ -41,10 +41,10 @@ func ProvideService(cfg *setting.Cfg, apiKey apikey.Service, sqlStore sqlstore.S
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
 	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/auth/auth.go#L30.
-	authenticator := NewAuthenticator(apiKey, sqlStore)
+	authenticator := NewAuthenticator(apiKey, userService)
 	opts = append(opts, []grpc.ServerOption{
-		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.Authenticate)),
-		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)),
+		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.authenticate)),
+		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.authenticate)),
 	}...)
 
 	if s.cfg.GRPCServerTLSConfig != nil {
