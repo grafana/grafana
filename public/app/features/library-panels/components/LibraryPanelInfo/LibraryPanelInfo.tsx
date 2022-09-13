@@ -4,7 +4,7 @@ import React from 'react';
 import { DateTimeInput, GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 
-import { LibraryElementDTOMeta, PanelModelWithLibraryPanel } from '../../types';
+import { PanelModelWithLibraryPanel } from '../../types';
 
 interface Props {
   panel: PanelModelWithLibraryPanel;
@@ -14,7 +14,7 @@ interface Props {
 export const LibraryPanelInformation = ({ panel, formatDate }: Props) => {
   const styles = useStyles(getStyles);
 
-  const meta = panel.libraryPanel?.meta as LibraryElementDTOMeta;
+  const meta = panel.libraryPanel?.meta;
   if (!meta) {
     return null;
   }
