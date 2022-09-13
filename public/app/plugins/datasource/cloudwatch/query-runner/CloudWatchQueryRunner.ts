@@ -1,13 +1,6 @@
 import { Observable, map } from 'rxjs';
 
-import {
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  getDataSourceRef,
-  ScopedVars,
-  TypedVariableModel,
-  VariableWithMultiSupport,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, getDataSourceRef, ScopedVars } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
