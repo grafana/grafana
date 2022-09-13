@@ -19,7 +19,7 @@ trigger = {
             'latest.json',
         ],
         'include': [
-            'scripts/**.sh'
+            '**.sh'
         ],
     },
 }
@@ -42,6 +42,6 @@ def shellcheck_pipeline():
         shellcheck_step(),
     ]
     return pipeline(
-            name='shellcheck', edition="oss", trigger=trigger, services=[], steps=steps,
+            name='pr-shellcheck', edition="oss", trigger=trigger, services=[], steps=steps,
     )
 
