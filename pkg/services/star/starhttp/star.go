@@ -12,13 +12,13 @@ import (
 )
 
 type Service struct {
-	storeService     star.Service
+	starService      star.Service
 	dashboardService dashboards.DashboardService
 }
 
 func ProvideService(storeService star.Service, dashboardService dashboards.DashboardService) *Service {
 	return &Service{
-		storeService:     storeService,
+		starService:      storeService,
 		dashboardService: dashboardService,
 	}
 }
@@ -28,7 +28,7 @@ func (s *Service) GetStars(c *models.ReqContext) response.Response {
 		UserID: c.SignedInUser.UserID,
 	}
 
-	iuserstars, err := s.storeService.GetByUser(c.Req.Context(), &query)
+	iuserstars, err := s.starService.GetByUser(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(500, "Failed to get user stars", err)
 	}
@@ -72,7 +72,7 @@ func (s *Service) StarDashboard(c *models.ReqContext) response.Response {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := s.storeService.Add(c.Req.Context(), &cmd); err != nil {
+	if err := s.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to star dashboard", err)
 	}
 
@@ -102,7 +102,7 @@ func (s *Service) UnstarDashboard(c *models.ReqContext) response.Response {
 		return response.Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := s.storeService.Delete(c.Req.Context(), &cmd); err != nil {
+	if err := s.starService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to unstar dashboard", err)
 	}
 

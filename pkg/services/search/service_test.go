@@ -17,7 +17,7 @@ import (
 )
 
 func TestSearch_SortedResults(t *testing.T) {
-	ss := startest.NewStarStoreServiceFake()
+	ss := startest.NewStarServiceFake()
 	ms := mockstore.NewSQLStoreMock()
 	ds := dashboards.NewFakeDashboardService(t)
 	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*models.FindPersistedDashboardsQuery")).Run(func(args mock.Arguments) {

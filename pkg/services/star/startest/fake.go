@@ -14,7 +14,7 @@ type FakeStarService struct {
 	ExpectedUserStars *star.GetUserStarsResult
 }
 
-func NewStarStoreServiceFake() *FakeStarService {
+func NewStarServiceFake() *FakeStarService {
 	return &FakeStarService{}
 }
 
