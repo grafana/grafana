@@ -461,7 +461,7 @@ func (hs *HTTPServer) buildStarredItemsNavLinks(c *models.ReqContext, prefs *pre
 		UserID: c.SignedInUser.UserID,
 	}
 
-	starredDashboardResult, err := hs.starStoreService.GetByUser(c.Req.Context(), &query)
+	starredDashboardResult, err := hs.starService.GetByUser(c.Req.Context(), &query)
 	if err != nil {
 		return nil, err
 	}
