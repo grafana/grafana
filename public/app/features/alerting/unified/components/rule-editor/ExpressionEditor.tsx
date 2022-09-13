@@ -1,18 +1,10 @@
 import { css } from '@emotion/css';
-import { noop } from 'lodash';
+import { max, noop } from 'lodash';
 import React, { FC, useCallback, useMemo } from 'react';
-import { useAsync, useAsyncFn } from 'react-use';
-import { lastValueFrom } from 'rxjs';
+import { useAsync } from 'react-use';
 
-import {
-  CoreApp,
-  DataFrameJSON,
-  DataQuery,
-  DataSourceInstanceSettings,
-  FieldSchema,
-  GrafanaTheme2,
-} from '@grafana/data';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { CoreApp, DataQuery, DataSourceInstanceSettings, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Icon, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
@@ -20,14 +12,12 @@ import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { isGrafanaAlertState } from '../../../../../types/unified-alerting-dto';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
+import { usePreview } from './PreviewRule';
+
 export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
   dsSettings: DataSourceInstanceSettings; // will be a prometheus or loki datasource
-}
-
-interface CloudRulePreviewResponse {
-  instances: DataFrameJSON[];
 }
 
 export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dsSettings }) => {
@@ -51,20 +41,10 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
     [onChange, mapToValue]
   );
 
-  const [previewState, fetchPreview] = useAsyncFn(() => {
-    return lastValueFrom(
-      getBackendSrv().fetch<CloudRulePreviewResponse>({
-        method: 'POST',
-        url: `/api/v1/rule/test/${dsSettings.uid}`,
-        data: {
-          expr: mapToValue(dataQuery),
-        },
-      })
-    );
-  }, [dsSettings, dataQuery]);
+  const [alertPreview, onPreview] = usePreview();
 
   const onRunQueriesClick = async () => {
-    await fetchPreview();
+    onPreview();
   };
 
   if (loading || dataSource?.name !== dsSettings.name) {
@@ -76,14 +56,15 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
     return <div>Could not load query editor due to: {errorMessage}</div>;
   }
 
-  const previewLoaded = !!previewState.value?.ok && !previewState.loading && !previewState.error;
-  const previewInstances = previewState.value?.data?.instances ?? [];
+  const previewLoaded = alertPreview?.data.state === LoadingState.Done;
   // The preview API returns arrays with empty elements when there are no firing alerts
-  const previewHasAlerts = previewInstances.every((instance) =>
-    instance?.data?.values.every((value) => value.length > 0)
+  const previewHasAlerts = alertPreview?.data.series.every((frame) =>
+    frame.fields.every((field) => field.values.length > 0)
   );
 
   const QueryEditor = dataSource?.components?.QueryEditor;
+
+  const previewSeries = alertPreview?.data.series ?? [];
 
   return (
     <>
@@ -97,7 +78,7 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
       />
 
       <div className={styles.preview}>
-        <Button type="button" onClick={onRunQueriesClick} disabled={previewState.loading}>
+        <Button type="button" onClick={onRunQueriesClick} disabled={alertPreview?.data.state === LoadingState.Loading}>
           Preview alerts
         </Button>
         {previewLoaded && (
@@ -110,15 +91,14 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
           </Alert>
         )}
         {previewHasAlerts &&
-          previewInstances.map((frame, index) => {
-            const fields: FieldSchema[] = frame.schema?.fields ?? [];
-            const values: string[][] = frame.data?.values ?? [];
-
+          previewSeries.map(({ fields }, index) => {
             const labelFields = fields.filter((field) => !['State', 'Info'].includes(field.name));
             const stateFieldIndex = fields.findIndex((field) => field.name === 'State');
             const infoFieldIndex = fields.findIndex((field) => field.name === 'Info');
 
             const labelIndexes = labelFields.map((labelField) => fields.indexOf(labelField));
+
+            const maxValues = max(fields.map((f) => f.values.length)) ?? 0;
 
             return (
               <table key={index} className={styles.table}>
@@ -130,13 +110,13 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.from({ length: values[stateFieldIndex].length }, (v, i) => i).map((index) => {
+                  {Array.from({ length: maxValues }, (v, i) => i).map((index) => {
                     const labelValues = labelIndexes.map((labelIndex) => [
                       fields[labelIndex].name,
-                      values[labelIndex][index],
+                      fields[labelIndex].values.get(index),
                     ]);
-                    const state = values[stateFieldIndex][index];
-                    const info = values[infoFieldIndex][index];
+                    const state = fields[stateFieldIndex].values.get(index);
+                    const info = fields[infoFieldIndex].values.get(index);
 
                     return (
                       <tr key={index}>

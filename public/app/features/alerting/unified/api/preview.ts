@@ -68,6 +68,37 @@ function previewGrafanaAlertRule(request: GrafanaPreviewRuleRequest): Observable
   });
 }
 
+function previewCloudAlertRule(request: CloudPreviewRuleRequest): Observable<PreviewRuleResponse> {
+  const type = RuleFormType.cloudAlerting;
+
+  return withLoadingIndicator({
+    whileLoading: createResponse(type),
+    source: getBackendSrv()
+      .fetch<GrafanaPreviewRuleResponse>({
+        method: 'POST',
+        url: `/api/v1/rule/test/${request.dataSourceUid}`,
+        data: request,
+      })
+      .pipe(
+        map(({ data }) => {
+          return createResponse(type, {
+            state: LoadingState.Done,
+            series: data.instances.map(dataFrameFromJSON),
+          });
+        }),
+        catchError((error: Error) => {
+          return of(
+            createResponse(type, {
+              state: LoadingState.Error,
+              error: toDataQueryError(error),
+            })
+          );
+        }),
+        share()
+      ),
+  });
+}
+
 function createResponse(ruleType: RuleFormType, data: Partial<PanelData> = {}): PreviewRuleResponse {
   return {
     ruleType,
@@ -78,8 +109,4 @@ function createResponse(ruleType: RuleFormType, data: Partial<PanelData> = {}): 
       ...data,
     },
   };
-}
-
-function previewCloudAlertRule(request: CloudPreviewRuleRequest): Observable<PreviewRuleResponse> {
-  throw new Error('preview for cloud alerting rules is not implemented');
 }
