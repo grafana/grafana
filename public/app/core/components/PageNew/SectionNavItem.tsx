@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2, Icon, toIconName } from '@grafana/ui';
+import { useStyles2, Icon } from '@grafana/ui';
 
 export interface Props {
   item: NavModelItem;
@@ -37,7 +37,7 @@ export function SectionNavItem({ item }: Props) {
         role="tab"
         aria-selected={item.active}
       >
-        {isRoot && item.icon && <Icon name={toIconName(item.icon)!} />}
+        {isRoot && item.icon && <Icon name={item.icon} />}
         {isRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
         {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
