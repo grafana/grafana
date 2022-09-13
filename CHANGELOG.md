@@ -1,3 +1,13 @@
+<!-- 9.1.6 START -->
+
+# 9.1.6 (unreleased)
+
+### Features and enhancements
+
+- **DataSource:** Adding possibility to hide queries from the inspector. [#54892](https://github.com/grafana/grafana/pull/54892), [@mckn](https://github.com/mckn)
+- **PanelMenu:** Remove hide legend action as it was showing on all panel types. [#54876](https://github.com/grafana/grafana/pull/54876), [@torkelo](https://github.com/torkelo)
+
+<!-- 9.1.6 END -->
 <!-- 9.1.4 START -->
 
 # 9.1.4 (2022-09-09)
