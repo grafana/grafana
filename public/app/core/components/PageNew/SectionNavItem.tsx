@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.primary};
       background-color: ${theme.colors.action.disabledBackground};
       border-radius: ${theme.shape.borderRadius(2)};
-      fontweight: theme.typography.fontWeightMedium;
+      font-weight: ${theme.typography.fontWeightMedium};
 
       &::before {
         display: block;
