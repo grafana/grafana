@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { GraphContextMenuHeader } from '..';
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { Icon } from '../Icon/Icon';
 import { VerticalGroup } from '../Layout/Layout';
 
 import { Menu } from './Menu';
@@ -28,15 +26,6 @@ const meta: ComponentMeta<typeof Menu> = {
       disabled: true,
     },
   },
-};
-
-const CustomLabel = () => {
-  return (
-    <>
-      item1
-      {<Icon name="external-link-alt" aria-hidden className={css`  margin-left: 6px };`} />}
-    </>
-  );
 };
 
 export function Examples() {
@@ -106,13 +95,6 @@ export function Examples() {
             ]}
           />
           <Menu.Item label="item3" icon="filter" />
-        </Menu>
-      </StoryExample>
-
-      <StoryExample name="With custom label renderer">
-        <Menu>
-          <Menu.Item label="item1" renderCustomLabel={<CustomLabel />} />
-          <Menu.Item label="item3" />
         </Menu>
       </StoryExample>
     </VerticalGroup>
