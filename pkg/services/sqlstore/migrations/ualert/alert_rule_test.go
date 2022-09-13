@@ -2,6 +2,7 @@ package ualert
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -82,5 +83,50 @@ func TestAddMigrationInfo(t *testing.T) {
 			require.Equal(t, tc.expectedLabels, labels)
 			require.Equal(t, tc.expectedAnnotations, annotations)
 		})
+	}
+}
+
+func TestMakeAlertRule(t *testing.T) {
+	t.Run("when mapping rule names", func(t *testing.T) {
+		t.Run("leaves basic names untouched", func(t *testing.T) {
+			m := newTestMigration(t)
+			da := createTestDashAlert()
+			cnd := createTestDashAlertCondition()
+
+			ar, err := m.makeAlertRule(cnd, da, "folder")
+
+			require.NoError(t, err)
+			require.Equal(t, da.Name, ar.Title)
+			require.Equal(t, ar.Title, ar.RuleGroup)
+		})
+
+		t.Run("truncates very long names to max length", func(t *testing.T) {
+			m := newTestMigration(t)
+			da := createTestDashAlert()
+			da.Name = strings.Repeat("a", DefaultFieldMaxLength+1)
+			cnd := createTestDashAlertCondition()
+
+			ar, err := m.makeAlertRule(cnd, da, "folder")
+
+			require.NoError(t, err)
+			require.Len(t, ar.Title, DefaultFieldMaxLength)
+			uniq := ar.Title[len(ar.Title)-11:]
+			require.Regexp(t, "^_.{10}$", uniq)
+			require.Equal(t, ar.Title, ar.RuleGroup)
+		})
+	})
+}
+
+func createTestDashAlert() dashAlert {
+	return dashAlert{
+		Id:             1,
+		Name:           "test",
+		ParsedSettings: &dashAlertSettings{},
+	}
+}
+
+func createTestDashAlertCondition() condition {
+	return condition{
+		Condition: "A",
 	}
 }

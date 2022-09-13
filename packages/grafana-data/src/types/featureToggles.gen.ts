@@ -43,6 +43,7 @@ export interface FeatureToggles {
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
   cloudWatchDynamicLabels?: boolean;
@@ -64,4 +65,7 @@ export interface FeatureToggles {
   topnav?: boolean;
   customBranding?: boolean;
   traceqlEditor?: boolean;
+  redshiftAsyncQueryDataSupport?: boolean;
+  athenaAsyncQueryDataSupport?: boolean;
+  increaseInMemDatabaseQueryCache?: boolean;
 }

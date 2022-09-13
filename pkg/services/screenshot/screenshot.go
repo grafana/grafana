@@ -78,6 +78,7 @@ func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
 }
 
 // ScreenshotService is an interface for taking screenshots.
+//
 //go:generate mockgen -destination=mock.go -package=screenshot github.com/grafana/grafana/pkg/services/screenshot ScreenshotService
 type ScreenshotService interface {
 	Take(ctx context.Context, opts ScreenshotOptions) (*Screenshot, error)

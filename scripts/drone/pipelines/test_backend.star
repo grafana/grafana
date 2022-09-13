@@ -2,7 +2,6 @@ load(
     'scripts/drone/steps/lib.star',
     'identify_runner_step',
     'download_grabpl_step',
-    'gen_version_step',
     'wire_install_step',
     'codespell_step',
     'shellcheck_step',
@@ -24,7 +23,6 @@ def test_backend(trigger, ver_mode):
         identify_runner_step(),
         download_grabpl_step(),
         compile_build_cmd(),
-        gen_version_step(ver_mode),
         verify_gen_cue_step(edition="oss"),
         wire_install_step(),
     ]

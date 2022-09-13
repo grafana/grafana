@@ -40,6 +40,7 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDT
     libraryPanel: updated,
     title: panel.title,
   });
+  panel.hasSavedPanelEditChange = true;
   panel.refresh();
 }
 

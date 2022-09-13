@@ -165,7 +165,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   showContextToggle(row?: LogRowModel): boolean;
 }
 
-export const hasLogsContextSupport = (datasource: any): datasource is DataSourceWithLogsContextSupport => {
+export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
   if (!datasource) {
     return false;
   }
