@@ -123,7 +123,6 @@ func createTestDashAlert() dashAlert {
 		Name:           "test",
 		ParsedSettings: &dashAlertSettings{},
 	}
-
 }
 
 func createTestDashAlertCondition() condition {
