@@ -1,8 +1,11 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import { createTheme } from '@grafana/data';
+
+import LokiLanguageProvider from '../LanguageProvider';
+
 import {
   buildSelector,
   facetLabels,
@@ -10,7 +13,12 @@ import {
   UnthemedLokiLabelBrowser,
   BrowserProps,
 } from './LokiLabelBrowser';
-import LokiLanguageProvider from '../language_provider';
+
+// we have to mock out reportInteraction, otherwise it crashes the test.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: () => null,
+}));
 
 describe('buildSelector()', () => {
   it('returns an empty selector for no labels', () => {

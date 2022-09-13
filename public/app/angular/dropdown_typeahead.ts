@@ -1,5 +1,6 @@
-import { each, reduce } from 'lodash';
 import $ from 'jquery';
+import { each, reduce } from 'lodash';
+
 import coreModule from './core_module';
 
 /** @ngInject */

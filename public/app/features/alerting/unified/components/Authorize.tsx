@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
-import { AccessControlAction } from 'app/types';
+
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 type Props = {
   actions: AccessControlAction[];

@@ -1,5 +1,6 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
+
 import {
   parseMatcher,
   parseMatchers,

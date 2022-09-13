@@ -1,5 +1,6 @@
-import { appNotificationsReducer, clearNotification, notifyApp } from './appNotification';
 import { AppNotificationSeverity, AppNotificationsState } from 'app/types/';
+
+import { appNotificationsReducer, clearNotification, notifyApp } from './appNotification';
 
 const timestamp = 1649849468889;
 describe('clear alert', () => {

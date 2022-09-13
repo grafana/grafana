@@ -1,5 +1,6 @@
-import { tokenizer } from './syntax';
 import Prism from 'prismjs';
+
+import { tokenizer } from './syntax';
 
 describe('Loki syntax', () => {
   it('should highlight Loki query correctly', () => {

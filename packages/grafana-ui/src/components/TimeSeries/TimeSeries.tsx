@@ -1,19 +1,20 @@
-import React from 'react';
+import React, { Component } from 'react';
+
 import { DataFrame, TimeRange } from '@grafana/data';
-import { GraphNG, GraphNGProps } from '../GraphNG/GraphNG';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { PlotLegend } from '../uPlot/PlotLegend';
-import { LegendDisplayMode } from '@grafana/schema';
-import { preparePlotConfigBuilder } from './utils';
+
 import { withTheme2 } from '../../themes/ThemeContext';
+import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
-import { PropDiffFn } from '../../../../../packages/grafana-ui/src/components/GraphNG/GraphNG';
+import { PlotLegend } from '../uPlot/PlotLegend';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+
+import { preparePlotConfigBuilder } from './utils';
 
 const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
-export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
+export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
@@ -24,7 +25,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       theme,
-      timeZone,
+      timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
       getTimeRange,
       eventBus,
       sync,
@@ -38,7 +39,8 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, frames } = this.props;
 
-    if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
+    //hides and shows the legend ON the uPlot graph
+    if (!config || (legend && !legend.showLegend)) {
       return null;
     }
 

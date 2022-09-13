@@ -1,13 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { Modal, TabContent, TabsBar, Tab, Button, useStyles } from '@grafana/ui';
-import { Rule, RuleType, PipeLineEntitiesInfo, RuleSetting } from './types';
-import { getBackendSrv } from '@grafana/runtime';
 import { css } from '@emotion/css';
+import React, { useState, useMemo } from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
-import { RuleSettingsEditor } from './RuleSettingsEditor';
-import { getPipeLineEntities } from './utils';
+import { getBackendSrv } from '@grafana/runtime';
+import { Modal, TabContent, TabsBar, Tab, Button, useStyles } from '@grafana/ui';
+
 import { RuleSettingsArray } from './RuleSettingsArray';
+import { RuleSettingsEditor } from './RuleSettingsEditor';
 import { RuleTest } from './RuleTest';
+import { Rule, RuleType, PipeLineEntitiesInfo, RuleSetting } from './types';
+import { getPipeLineEntities } from './utils';
 
 interface Props {
   rule: Rule;
@@ -29,7 +31,7 @@ const tabs: TabInfo[] = [
   { label: 'Test', isTest: true, icon: 'flask' },
 ];
 
-export const RuleModal: React.FC<Props> = (props) => {
+export const RuleModal = (props: Props) => {
   const { isOpen, onClose, clickColumn } = props;
   const [rule, setRule] = useState<Rule>(props.rule);
   const [activeTab, setActiveTab] = useState<TabInfo | undefined>(tabs.find((t) => t.type === clickColumn));

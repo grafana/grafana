@@ -1,4 +1,11 @@
 import { capitalize } from 'lodash';
+import pluralize from 'pluralize';
+
+import { SelectableValue } from '@grafana/data/src';
+
+import { LabelParamEditor } from '../components/LabelParamEditor';
+import { PromVisualQueryOperationCategory } from '../types';
+
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -6,10 +13,6 @@ import {
   QueryBuilderOperationParamValue,
   QueryWithOperations,
 } from './types';
-import { SelectableValue } from '@grafana/data/src';
-import { LabelParamEditor } from '../components/LabelParamEditor';
-import { PromVisualQueryOperationCategory } from '../types';
-import pluralize from 'pluralize';
 
 export function functionRendererLeft(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
   const params = renderParams(model, def, innerExpr);
@@ -276,15 +279,13 @@ function getAggregationExplainer(aggregationName: string, mode: 'by' | 'without'
 
 function getAggregationByRendererWithParameter(aggregation: string) {
   return function aggregationRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-    function mapType(p: QueryBuilderOperationParamValue) {
-      if (typeof p === 'string') {
-        return `\"${p}\"`;
-      }
-      return p;
-    }
-    const params = model.params.slice(0, -1);
-    const restParams = model.params.slice(1);
-    return `${aggregation} by(${restParams.join(', ')}) (${params.map(mapType).join(', ')}, ${innerExpr})`;
+    const restParamIndex = def.params.findIndex((param) => param.restParam);
+    const params = model.params.slice(0, restParamIndex);
+    const restParams = model.params.slice(restParamIndex);
+
+    return `${aggregation} by(${restParams.join(', ')}) (${params
+      .map((param, idx) => (def.params[idx].type === 'string' ? `\"${param}\"` : param))
+      .join(', ')}, ${innerExpr})`;
   };
 }
 
@@ -310,7 +311,7 @@ function getOnLabelAddedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDef) {
     // Check if we actually have the label param. As it's optional the aggregation can have one less, which is the
     // case of just simple aggregation without label. When user adds the label it now has the same number of params
-    // as it's definition, and now we can change it to it's `_by` variant.
+    // as its definition, and now we can change it to its `_by` variant.
     if (op.params.length === def.params.length) {
       return {
         ...op,

@@ -2,7 +2,6 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
 import {
   DataSourceInstanceSettings,
   DataSourceRef,
@@ -11,7 +10,11 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
+
 import { getDataSourceSrv } from '../services/dataSourceSrv';
+
+import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -43,6 +46,7 @@ export interface DataSourcePickerProps {
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
+  invalid?: boolean;
 }
 
 /**
@@ -116,6 +120,11 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     }
 
     const uid = getDataSourceUID(current);
+
+    if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
+      return { label: uid, value: uid, hideText: hideTextValue };
+    }
+
     return {
       label: (uid ?? 'no name') + ' - not found',
       value: uid ?? undefined,
@@ -164,7 +173,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
         <Select
           aria-label={selectors.components.DataSourcePicker.inputV2}
           inputId={inputId || 'data-source-picker'}
-          menuShouldPortal
           className="ds-picker select-container"
           isMulti={false}
           isClearable={isClearable}
@@ -179,7 +187,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
           value={value ?? null}
-          invalid={!!error}
+          invalid={Boolean(error) || Boolean(this.props.invalid)}
           getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
               return (

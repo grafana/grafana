@@ -1,17 +1,18 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
-
-import { TextBoxVariableModel } from '../types';
-import { changeVariableProp } from '../state/sharedReducer';
-import { VariablePickerProps } from '../pickers/types';
-import { Input } from '@grafana/ui';
-import { variableAdapters } from '../adapters';
 import { useDispatch } from 'react-redux';
+
+import { Input } from '@grafana/ui';
+
+import { variableAdapters } from '../adapters';
+import { VariablePickerProps } from '../pickers/types';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { changeVariableProp } from '../state/sharedReducer';
+import { TextBoxVariableModel } from '../types';
 import { toVariablePayload } from '../utils';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 
-export function TextBoxVariablePicker({ variable, onVariableChange }: Props): ReactElement {
+export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: Props): ReactElement {
   const dispatch = useDispatch();
   const [updatedValue, setUpdatedValue] = useState(variable.current.value);
   useEffect(() => {
@@ -67,9 +68,10 @@ export function TextBoxVariablePicker({ variable, onVariableChange }: Props): Re
       value={updatedValue}
       onChange={onChange}
       onBlur={onBlur}
+      disabled={readOnly}
       onKeyDown={onKeyDown}
       placeholder="Enter variable value"
-      id={variable.id}
+      id={`var-${variable.id}`}
     />
   );
 }

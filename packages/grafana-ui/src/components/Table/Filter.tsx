@@ -1,12 +1,14 @@
-import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
+
 import { Field, GrafanaTheme } from '@grafana/data';
 
-import { TableStyles } from './styles';
+import { Popover } from '..';
 import { stylesFactory, useStyles } from '../../themes';
 import { Icon } from '../Icon/Icon';
+
 import { FilterPopup } from './FilterPopup';
-import { Popover } from '..';
+import { TableStyles } from './styles';
 
 interface Props {
   column: any;
@@ -30,6 +32,7 @@ export const Filter: FC<Props> = ({ column, field, tableStyles }) => {
     <span
       className={cx(tableStyles.headerFilter, filterEnabled ? styles.filterIconEnabled : styles.filterIconDisabled)}
       ref={ref}
+      role="filterIcon"
       onClick={onShowPopover}
     >
       <Icon name="filter" />

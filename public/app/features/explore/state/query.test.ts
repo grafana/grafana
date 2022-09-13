@@ -1,3 +1,27 @@
+import { EMPTY, interval, Observable, of } from 'rxjs';
+import { thunkTester } from 'test/core/thunk/thunkTester';
+import { assertIsDefined } from 'test/helpers/asserts';
+
+import {
+  ArrayVector,
+  DataFrame,
+  DataQuery,
+  DataQueryResponse,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourceWithLogsVolumeSupport,
+  LoadingState,
+  MutableDataFrame,
+  PanelData,
+  RawTimeRange,
+} from '@grafana/data';
+import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { configureStore } from '../../../store/configureStore';
+import { setTimeSrv } from '../../dashboard/services/TimeSrv';
+
+import { createDefaultInitialState } from './helpers';
 import {
   addQueryRowAction,
   addResultsToCache,
@@ -12,28 +36,7 @@ import {
   scanStopAction,
   storeLogsVolumeDataProviderAction,
 } from './query';
-import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
-import { EMPTY, interval, Observable, of } from 'rxjs';
-import {
-  ArrayVector,
-  DataFrame,
-  DataQuery,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourceWithLogsVolumeSupport,
-  LoadingState,
-  MutableDataFrame,
-  PanelData,
-  RawTimeRange,
-} from '@grafana/data';
-import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { configureStore } from '../../../store/configureStore';
-import { setTimeSrv } from '../../dashboard/services/TimeSrv';
-import Mock = jest.Mock;
-import { createDefaultInitialState } from './helpers';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
@@ -53,7 +56,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function setupQueryResponse(state: StoreState) {
-  (state.explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(
+  const leftDatasourceInstance = assertIsDefined(state.explore[ExploreId.left].datasourceInstance);
+
+  jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(
     of({
       error: { message: 'test error' },
       data: [
@@ -103,7 +108,8 @@ describe('runQueries', () => {
     const { dispatch, getState } = configureStore({
       ...(defaultInitialState as any),
     });
-    (getState().explore[ExploreId.left].datasourceInstance?.query as Mock).mockReturnValueOnce(EMPTY);
+    const leftDatasourceInstance = assertIsDefined(getState().explore[ExploreId.left].datasourceInstance);
+    jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
     await dispatch(runQueries(ExploreId.left));
     await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
@@ -148,12 +154,31 @@ describe('running queries', () => {
 describe('importing queries', () => {
   describe('when importing queries between the same type of data source', () => {
     it('remove datasource property from all of the queries', async () => {
+      const datasources: DataSourceApi[] = [
+        {
+          name: 'testDs',
+          type: 'postgres',
+          uid: 'ds1',
+          getRef: () => {
+            return { type: 'postgres', uid: 'ds1' };
+          },
+        } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+        {
+          name: 'testDs2',
+          type: 'postgres',
+          uid: 'ds2',
+          getRef: () => {
+            return { type: 'postgres', uid: 'ds2' };
+          },
+        } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+      ];
+
       const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
         ...(defaultInitialState as any),
         explore: {
           [ExploreId.left]: {
             ...defaultInitialState.explore[ExploreId.left],
-            datasourceInstance: { name: 'testDs', type: 'postgres' },
+            datasourceInstance: datasources[0],
           },
         },
       });
@@ -162,18 +187,18 @@ describe('importing queries', () => {
         importQueries(
           ExploreId.left,
           [
-            { datasource: { type: 'postgresql' }, refId: 'refId_A' },
-            { datasource: { type: 'postgresql' }, refId: 'refId_B' },
+            { datasource: { type: 'postgresql', uid: 'ds1' }, refId: 'refId_A' },
+            { datasource: { type: 'postgresql', uid: 'ds1' }, refId: 'refId_B' },
           ],
-          { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
-          { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
+          datasources[0],
+          datasources[1]
         )
       );
 
       expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'refId_A');
       expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('refId', 'refId_B');
-      expect(getState().explore[ExploreId.left].queries[0]).not.toHaveProperty('datasource');
-      expect(getState().explore[ExploreId.left].queries[1]).not.toHaveProperty('datasource');
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('datasource.uid', 'ds2');
+      expect(getState().explore[ExploreId.left].queries[1]).toHaveProperty('datasource.uid', 'ds2');
     });
   });
 });

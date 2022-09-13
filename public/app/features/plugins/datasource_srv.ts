@@ -1,5 +1,11 @@
-// Services & Utils
-import { importDataSourcePlugin } from './plugin_loader';
+import {
+  AppEvents,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  DataSourceRef,
+  DataSourceSelectItem,
+  ScopedVars,
+} from '@grafana/data';
 import {
   GetDataSourceListFilters,
   DataSourceSrv as DataSourceService,
@@ -9,25 +15,16 @@ import {
   getLegacyAngularInjector,
   getBackendSrv,
 } from '@grafana/runtime';
-// Types
-import {
-  AppEvents,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  DataSourceSelectItem,
-  ScopedVars,
-} from '@grafana/data';
-// Pretend Datasource
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 import {
   dataSource as expressionDatasource,
   ExpressionDatasourceUID,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
-import { DataSourceVariableModel } from '../variables/types';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
+
+import { importDataSourcePlugin } from './plugin_loader';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -192,7 +189,9 @@ export class DatasourceSrv implements DataSourceService {
       this.datasources[instance.uid] = instance;
       return instance;
     } catch (err) {
-      appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
+      if (err instanceof Error) {
+        appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
+      }
       return Promise.reject({ message: `Datasource: ${key} was not found` });
     }
   }
@@ -244,11 +243,16 @@ export class DatasourceSrv implements DataSourceService {
     });
 
     if (filters.variables) {
-      for (const variable of this.templateSrv.getVariables().filter((variable) => variable.type === 'datasource')) {
-        const dsVar = variable as DataSourceVariableModel;
-        const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
-        const dsName = first as unknown as string;
-        const dsSettings = this.settingsMapByName[dsName];
+      for (const variable of this.templateSrv.getVariables()) {
+        if (variable.type !== 'datasource') {
+          continue;
+        }
+        let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
+        if (Array.isArray(dsValue) && dsValue.length === 1) {
+          // Support for multi-value variables with only one selected datasource
+          dsValue = dsValue[0];
+        }
+        const dsSettings = !Array.isArray(dsValue) && this.settingsMapByName[dsValue];
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;

@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo } from 'react';
 import { css } from '@emotion/css';
+import React, { useCallback, useMemo } from 'react';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
+
 import {
   DataTransformerID,
   GrafanaTheme,
@@ -8,10 +9,10 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
+import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
+import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import { stylesFactory, useTheme, Input, IconButton, Icon, FieldValidationMessage } from '@grafana/ui';
 
-import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
-import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
@@ -130,20 +131,20 @@ const DraggableFieldName: React.FC<DraggableFieldProps> = ({
   return (
     <Draggable draggableId={fieldName} index={index}>
       {(provided) => (
-        <div
-          className="gf-form-inline"
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-        >
+        <div className="gf-form-inline" ref={provided.innerRef} {...provided.draggableProps}>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--justify-left width-30">
-              <Icon name="draggabledots" title="Drag and drop to reorder" size="lg" className={styles.draggable} />
+              <Icon
+                name="draggabledots"
+                title="Drag and drop to reorder"
+                size="lg"
+                className={styles.draggable}
+                {...provided.dragHandleProps}
+              />
               <IconButton
                 className={styles.toggle}
                 size="md"
                 name={visible ? 'eye' : 'eye-slash'}
-                surface="header"
                 onClick={() => onToggleVisibility(fieldName, visible)}
               />
               <span className={styles.name} title={fieldName}>

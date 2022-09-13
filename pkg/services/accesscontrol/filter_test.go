@@ -8,9 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type filterDatasourcesTestCase struct {
@@ -170,14 +171,14 @@ func TestFilter_Datasources(t *testing.T) {
 
 			// seed 10 data sources
 			for i := 1; i <= 10; i++ {
-				err := store.AddDataSource(context.Background(), &models.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
+				err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{Name: fmt.Sprintf("ds:%d", i), Uid: fmt.Sprintf("uid%d", i)})
 				require.NoError(t, err)
 			}
 
 			baseSql := `SELECT data_source.* FROM data_source WHERE`
 			acFilter, err := accesscontrol.Filter(
-				&models.SignedInUser{
-					OrgId:       1,
+				&user.SignedInUser{
+					OrgID:       1,
 					Permissions: map[int64]map[string][]string{1: tt.permissions},
 				},
 				tt.sqlID,
@@ -187,7 +188,7 @@ func TestFilter_Datasources(t *testing.T) {
 
 			if !tt.expectErr {
 				require.NoError(t, err)
-				var datasources []models.DataSource
+				var datasources []datasources.DataSource
 				err = sess.SQL(baseSql+acFilter.Where, acFilter.Args...).Find(&datasources)
 				require.NoError(t, err)
 

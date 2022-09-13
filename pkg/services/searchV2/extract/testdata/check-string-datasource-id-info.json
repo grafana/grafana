@@ -1,11 +1,11 @@
 {
   "id": 250,
-  "uid": "K2X7hzwGk",
   "title": "fast streaming",
   "tags": null,
   "datasource": [
     {
-      "uid": "-- Grafana --"
+      "uid": "grafana",
+      "type": "datasource"
     }
   ],
   "panels": [
@@ -16,7 +16,8 @@
       "pluginVersion": "7.5.0-pre",
       "datasource": [
         {
-          "uid": "-- Grafana --"
+          "uid": "grafana",
+          "type": "datasource"
         }
       ]
     }

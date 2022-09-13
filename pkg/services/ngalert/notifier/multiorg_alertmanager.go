@@ -3,13 +3,14 @@ package notifier
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/secrets"
 
@@ -30,7 +31,8 @@ var (
 )
 
 type MultiOrgAlertmanager struct {
-	Crypto Crypto
+	Crypto    Crypto
+	ProvStore provisioning.ProvisioningStore
 
 	alertmanagersMtx sync.RWMutex
 	alertmanagers    map[int64]*Alertmanager
@@ -42,7 +44,7 @@ type MultiOrgAlertmanager struct {
 	peer         ClusterPeer
 	settleCancel context.CancelFunc
 
-	configStore store.AlertingStore
+	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
 
@@ -52,12 +54,13 @@ type MultiOrgAlertmanager struct {
 	ns      notifications.Service
 }
 
-func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore store.AlertingStore, orgStore store.OrgStore,
-	kvStore kvstore.KVStore, decryptFn channels.GetDecryptedValueFn, m *metrics.MultiOrgAlertmanager,
-	ns notifications.Service, l log.Logger, s secrets.Service,
+func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgStore store.OrgStore,
+	kvStore kvstore.KVStore, provStore provisioning.ProvisioningStore, decryptFn channels.GetDecryptedValueFn,
+	m *metrics.MultiOrgAlertmanager, ns notifications.Service, l log.Logger, s secrets.Service,
 ) (*MultiOrgAlertmanager, error) {
 	moa := &MultiOrgAlertmanager{
-		Crypto: NewCrypto(s, configStore, l),
+		Crypto:    NewCrypto(s, configStore, l),
+		ProvStore: provStore,
 
 		logger:        l,
 		settings:      cfg,
@@ -242,7 +245,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 	activeOrganizations map[int64]struct{}) {
 	dataDir := filepath.Join(moa.settings.DataPath, workingDir)
-	files, err := ioutil.ReadDir(dataDir)
+	files, err := os.ReadDir(dataDir)
 	if err != nil {
 		moa.logger.Error("failed to list local working directory", "dir", dataDir, "err", err)
 		return

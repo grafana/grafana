@@ -1,6 +1,6 @@
+import { NavModel, NavModelItem } from '@grafana/data';
 import coreModule from 'app/angular/core_module';
 import config from 'app/core/config';
-import { NavModel, NavModelItem } from '@grafana/data';
 
 interface Nav {
   breadcrumbs: NavModelItem[];
@@ -65,13 +65,12 @@ export function getNotFoundNav(): NavModel {
 }
 
 export function getWarningNav(text: string, subTitle?: string): NavModel {
-  const node = {
+  const node: NavModelItem = {
     text,
     subTitle,
     icon: 'exclamation-triangle',
   };
   return {
-    breadcrumbs: [node],
     node: node,
     main: node,
   };

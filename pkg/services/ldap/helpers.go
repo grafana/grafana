@@ -6,7 +6,7 @@ import (
 	"gopkg.in/ldap.v3"
 )
 
-func isMemberOf(memberOf []string, group string) bool {
+func IsMemberOf(memberOf []string, group string) bool {
 	if group == "*" {
 		return true
 	}

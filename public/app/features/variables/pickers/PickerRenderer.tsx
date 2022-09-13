@@ -1,11 +1,14 @@
 import React, { FunctionComponent, PropsWithChildren, ReactElement, useMemo } from 'react';
-import { VariableHide, VariableModel } from '../types';
+
 import { selectors } from '@grafana/e2e-selectors';
-import { variableAdapters } from '../adapters';
 import { Tooltip } from '@grafana/ui';
+
+import { variableAdapters } from '../adapters';
+import { VariableHide, VariableModel } from '../types';
 
 interface Props {
   variable: VariableModel;
+  readOnly?: boolean;
 }
 
 export const PickerRenderer: FunctionComponent<Props> = (props) => {
@@ -19,7 +22,7 @@ export const PickerRenderer: FunctionComponent<Props> = (props) => {
     <div className="gf-form">
       <PickerLabel variable={props.variable} />
       {props.variable.hide !== VariableHide.hideVariable && PickerToRender && (
-        <PickerToRender variable={props.variable} />
+        <PickerToRender variable={props.variable} readOnly={props.readOnly ?? false} />
       )}
     </div>
   );
@@ -32,13 +35,14 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     return null;
   }
 
+  const elementId = `var-${variable.id}`;
   if (variable.description) {
     return (
       <Tooltip content={variable.description} placement={'bottom'}>
         <label
           className="gf-form-label gf-form-label--variable"
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
-          htmlFor={variable.id}
+          htmlFor={elementId}
         >
           {labelOrName}
         </label>
@@ -50,7 +54,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     <label
       className="gf-form-label gf-form-label--variable"
       data-testid={selectors.pages.Dashboard.SubMenu.submenuItemLabels(labelOrName)}
-      htmlFor={variable.id}
+      htmlFor={elementId}
     >
       {labelOrName}
     </label>

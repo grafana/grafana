@@ -1,10 +1,10 @@
-import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
-
-import { OrgSwitcher } from '../components/OrgSwitcher';
-import { api } from '../../features/profile/api';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { api } from '../../features/profile/api';
 import { OrgRole } from '../../types';
+import { OrgSwitcher } from '../components/OrgSwitcher';
 
 jest.mock('@grafana/runtime', () => ({
   config: {

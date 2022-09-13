@@ -1,16 +1,19 @@
-import React, { HTMLAttributes } from 'react';
-import { PopoverContent } from '../Tooltip';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { css } from '@emotion/css';
+import { useButton } from '@react-aria/button';
+import { FocusScope } from '@react-aria/focus';
+import { useMenuTrigger } from '@react-aria/menu';
+import { useMenuTriggerState } from '@react-stately/menu';
+import React, { HTMLAttributes } from 'react';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+
 import { useStyles2 } from '../../themes/ThemeContext';
+import { ButtonGroup } from '../Button';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
-import { FocusScope } from '@react-aria/focus';
-import { useMenuTriggerState } from '@react-stately/menu';
-import { useMenuTrigger } from '@react-aria/menu';
-import { useButton } from '@react-aria/button';
+import { ToolbarButton, ToolbarButtonVariant } from '../ToolbarButton';
+import { PopoverContent } from '../Tooltip';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;

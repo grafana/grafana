@@ -1,11 +1,18 @@
-+++
-title = "Angular support deprecation"
-keywords = ["grafana", "documentation", "developers", "resources"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/developers/angular_deprecation/
+keywords:
+  - grafana
+  - documentation
+  - developers
+  - resources
+title: Angular support deprecation
+weight: 500
+---
 
 # Angular support deprecation
 
-Angular plugin support is deprecated, and it will be removed in a future release. There are still many community plugins that depend on Grafana’s angular plugin support for them to work. The same is true for many internal (private) plugins developed over the years by Grafana users. Grafana version 9 will have a server configuration option, global for the whole instance, that will control if angular plugin support is available or not. By default, angular plugin support will be disabled.
+Angular plugin support is deprecated, and it will be removed in a future release. There are still many community plugins that depend on Grafana’s angular plugin support for them to work. The same is true for many internal (private) plugins developed over the years by Grafana users. Grafana version 9 will have a server configuration option, global for the whole instance, that will control if angular plugin support is available or not. By default angular support is still enabled but this will soon change as we complete the migration of all angular code in the core product.
 
 ## Why are we deprecating angular support?
 
@@ -13,7 +20,7 @@ AngularJS is an old frontend framework that stopped active development many year
 
 ## When will angular plugins stop working?
 
-In Grafana version 9 coming in June 2022, all angular plugins will stop working unless a new server configuration option is turned on. If you still depend on community or internally developed plugins that require AngularJS then you will have to turn this option on.
+We hope to migrate the last remaining angular code in core Grafana later this year. Then the setting enable_angular_support can be disable by default. This will make all angular plugins stop working. If you still depend on community or internally developed plugins that require AngularJS then you will have to enable this option.
 
 This is a good time to start working on migrating plugins to React.
 

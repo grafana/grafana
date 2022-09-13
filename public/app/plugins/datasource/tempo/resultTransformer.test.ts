@@ -1,19 +1,8 @@
-import {
-  ArrayVector,
-  FieldType,
-  MutableDataFrame,
-  PluginType,
-  DataSourceInstanceSettings,
-  dateTime,
-} from '@grafana/data';
-import {
-  SearchResponse,
-  createTableFrame,
-  transformToOTLP,
-  transformFromOTLP,
-  transformTrace,
-  createTableFrameFromSearch,
-} from './resultTransformer';
+import { collectorTypes } from '@opentelemetry/exporter-collector';
+
+import { FieldType, MutableDataFrame, PluginType, DataSourceInstanceSettings, dateTime } from '@grafana/data';
+
+import { createTableFrame, transformToOTLP, transformFromOTLP, createTableFrameFromSearch } from './resultTransformer';
 import {
   badOTLPResponse,
   otlpDataFrameToResponse,
@@ -21,7 +10,7 @@ import {
   otlpResponse,
   tempoSearchResponse,
 } from './testResponse';
-import { collectorTypes } from '@opentelemetry/exporter-collector';
+import { TraceSearchMetadata } from './types';
 
 const defaultSettings: DataSourceInstanceSettings = {
   id: 0,
@@ -37,6 +26,7 @@ const defaultSettings: DataSourceInstanceSettings = {
     module: '',
     baseUrl: '',
   },
+  readOnly: false,
   jsonData: {},
 };
 
@@ -88,7 +78,10 @@ describe('transformFromOTLP()', () => {
       otlpResponse.batches as unknown as collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[],
       false
     );
-    expect(res.data[0]).toMatchObject(otlpDataFrameFromResponse);
+    expect(res.data[0]).toMatchObject({
+      ...otlpDataFrameFromResponse,
+      creator: expect.any(Function),
+    });
   });
 });
 
@@ -96,9 +89,12 @@ describe('createTableFrameFromSearch()', () => {
   const mockTimeUnix = dateTime(1643357709095).valueOf();
   global.Date.now = jest.fn(() => mockTimeUnix);
   test('transforms search response to dataFrame', () => {
-    const frame = createTableFrameFromSearch(tempoSearchResponse.traces as SearchResponse[], defaultSettings);
+    const frame = createTableFrameFromSearch(tempoSearchResponse.traces as TraceSearchMetadata[], defaultSettings);
     expect(frame.fields[0].name).toBe('traceID');
     expect(frame.fields[0].values.get(0)).toBe('e641dcac1c3a0565');
+
+    // TraceID must have unit = 'string' to prevent the ID from rendering as Infinity
+    expect(frame.fields[0].config.unit).toBe('string');
 
     expect(frame.fields[1].name).toBe('traceName');
     expect(frame.fields[1].values.get(0)).toBe('c10d7ca4e3a00354 ');
@@ -144,44 +140,5 @@ describe('transformFromOTLP()', () => {
         ],
       },
     }).not.toBeFalsy();
-  });
-});
-
-describe('transformTrace()', () => {
-  // Mock the console error so that running the test suite doesnt throw the error
-  const origError = console.error;
-  const consoleErrorMock = jest.fn();
-  afterEach(() => (console.error = origError));
-  beforeEach(() => (console.error = consoleErrorMock));
-
-  const badFrame = new MutableDataFrame({
-    fields: [
-      {
-        name: 'serviceTags',
-        values: new ArrayVector([undefined]),
-      },
-    ],
-  });
-
-  const goodFrame = new MutableDataFrame({
-    fields: [
-      {
-        name: 'serviceTags',
-        values: new ArrayVector(),
-      },
-    ],
-  });
-
-  test('if passed bad data, will surface an error', () => {
-    const response = transformTrace({ data: [badFrame] }, false);
-    expect(response.data[0]).toBeFalsy();
-    expect(response.error?.message).toBeTruthy();
-  });
-
-  test('if passed good data, will parse successfully', () => {
-    const response2 = transformTrace({ data: [goodFrame] }, false);
-    expect(response2.data[0]).toBeTruthy();
-    expect(response2.data[0]).toMatchObject(goodFrame);
-    expect(response2.error).toBeFalsy();
   });
 });

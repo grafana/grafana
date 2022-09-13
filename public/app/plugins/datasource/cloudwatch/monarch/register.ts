@@ -1,6 +1,8 @@
-import { Monaco } from '@grafana/ui';
-import { CompletionItemProvider } from './CompletionItemProvider';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+
+import { Monaco } from '@grafana/ui';
+
+import { Completeable } from './types';
 
 export type LanguageDefinition = {
   id: string;
@@ -16,7 +18,7 @@ export type LanguageDefinition = {
 export const registerLanguage = (
   monaco: Monaco,
   language: LanguageDefinition,
-  completionItemProvider: CompletionItemProvider
+  completionItemProvider: Completeable
 ) => {
   const { id, loader } = language;
 

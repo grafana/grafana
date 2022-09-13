@@ -1,9 +1,12 @@
 import { of } from 'rxjs';
-import { queryBuilder } from '../shared/testing/builders';
+
 import { FieldType, toDataFrame } from '@grafana/data';
-import { updateVariableOptions } from './reducer';
-import { areMetricFindValues, toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
+
+import { queryBuilder } from '../shared/testing/builders';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
+
+import { areMetricFindValues, toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
+import { updateVariableOptions } from './reducer';
 
 describe('operators', () => {
   beforeEach(() => {

@@ -1,11 +1,11 @@
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
+
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { FetchQueue, FetchQueueUpdate } from './FetchQueue';
-import { ResponseQueue } from './ResponseQueue';
 import { subscribeTester } from './FetchQueue.test';
-import { describe, expect } from '../../../test/lib/common';
+import { ResponseQueue } from './ResponseQueue';
 
 const getTestContext = () => {
   const id = 'id';

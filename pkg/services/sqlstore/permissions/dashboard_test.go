@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -55,31 +56,31 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 			queryType:  randomType,
 			permission: models.PERMISSION_ADMIN,
 			expectedDashboardActions: []string{
-				accesscontrol.ActionDashboardsRead,
-				accesscontrol.ActionDashboardsWrite,
+				dashboards.ActionDashboardsRead,
+				dashboards.ActionDashboardsWrite,
 			},
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
-				accesscontrol.ActionDashboardsCreate,
+				dashboards.ActionDashboardsCreate,
 			},
 		},
 		{
 			queryType:  randomType,
 			permission: models.PERMISSION_EDIT,
 			expectedDashboardActions: []string{
-				accesscontrol.ActionDashboardsRead,
-				accesscontrol.ActionDashboardsWrite,
+				dashboards.ActionDashboardsRead,
+				dashboards.ActionDashboardsWrite,
 			},
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
-				accesscontrol.ActionDashboardsCreate,
+				dashboards.ActionDashboardsCreate,
 			},
 		},
 		{
 			queryType:  randomType,
 			permission: models.PERMISSION_VIEW,
 			expectedDashboardActions: []string{
-				accesscontrol.ActionDashboardsRead,
+				dashboards.ActionDashboardsRead,
 			},
 			expectedFolderActions: []string{
 				dashboards.ActionFoldersRead,
@@ -89,7 +90,7 @@ func TestNewAccessControlDashboardPermissionFilter(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(fmt.Sprintf("query type %s, permissions %s", testCase.queryType, testCase.permission), func(t *testing.T) {
-			filters := NewAccessControlDashboardPermissionFilter(&models.SignedInUser{}, testCase.permission, testCase.queryType)
+			filters := NewAccessControlDashboardPermissionFilter(&user.SignedInUser{}, testCase.permission, testCase.queryType)
 
 			require.Equal(t, testCase.expectedDashboardActions, filters.dashboardActions)
 			require.Equal(t, testCase.expectedFolderActions, filters.folderActions)
@@ -133,7 +134,7 @@ func TestAccessControlDashboardPermissionFilter_Where(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.title, func(t *testing.T) {
 			filter := AccessControlDashboardPermissionFilter{
-				User:             &models.SignedInUser{Permissions: map[int64]map[string][]string{}},
+				User:             &user.SignedInUser{Permissions: map[int64]map[string][]string{}},
 				dashboardActions: testCase.dashboardActions,
 				folderActions:    testCase.folderActions,
 			}

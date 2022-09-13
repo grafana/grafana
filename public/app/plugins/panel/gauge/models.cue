@@ -12,21 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
-import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+import (
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+)
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    ui.SingleStatBaseOptions
-                    showThresholdLabels: bool
-                    showThresholdMarkers: bool
-                }
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "gauge"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						ui.SingleStatBaseOptions
+						showThresholdLabels:  bool | *false
+						showThresholdMarkers: bool | *true
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

@@ -1,5 +1,7 @@
-import React, { PureComponent, ChangeEvent } from 'react';
 import { css } from '@emotion/css';
+import { isNumber } from 'lodash';
+import React, { PureComponent, ChangeEvent } from 'react';
+
 import {
   Threshold,
   sortThresholds,
@@ -8,7 +10,6 @@ import {
   SelectableValue,
   GrafanaTheme,
 } from '@grafana/data';
-import { isNumber } from 'lodash';
 import {
   Input,
   colors,

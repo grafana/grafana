@@ -1,4 +1,5 @@
 import React, { ReactElement, useRef } from 'react';
+
 import { Popover as GrafanaPopover, PopoverController } from '@grafana/ui';
 
 export type PopoverProps = {

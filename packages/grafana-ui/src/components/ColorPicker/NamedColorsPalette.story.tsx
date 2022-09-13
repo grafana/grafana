@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { NamedColorsPalette, NamedColorsPaletteProps } from './NamedColorsPalette';
 import { Meta, Story } from '@storybook/react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import mdx from './ColorPicker.mdx';
+import React, { useState } from 'react';
 
-export default {
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import mdx from './ColorPicker.mdx';
+import { NamedColorsPalette, NamedColorsPaletteProps } from './NamedColorsPalette';
+
+const meta: Meta = {
   title: 'Pickers and Editors/ColorPicker/Palettes/NamedColorsPalette',
   component: NamedColorsPalette,
   decorators: [withCenteredStory],
@@ -19,7 +21,7 @@ export default {
   argTypes: {
     selectedColor: { control: { type: 'select', options: ['green', 'red', 'light-blue', 'yellow'] } },
   },
-} as Meta;
+};
 
 interface StoryProps extends Partial<NamedColorsPaletteProps> {
   selectedColor: string;
@@ -33,3 +35,5 @@ export const NamedColors: Story<StoryProps> = ({ selectedColor }) => {
 NamedColors.args = {
   color: 'green',
 };
+
+export default meta;

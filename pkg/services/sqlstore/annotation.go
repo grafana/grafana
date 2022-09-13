@@ -11,9 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Update the item so that EpochEnd >= Epoch
@@ -42,7 +42,7 @@ func NewSQLAnnotationRepo(sql *SQLStore) SQLAnnotationRepo {
 }
 
 func (r *SQLAnnotationRepo) Save(item *annotations.Item) error {
-	return inTransaction(func(sess *DBSession) error {
+	return r.sql.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
 		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
@@ -229,7 +229,7 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
-		if r.sql.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAccesscontrol) {
+		if !ac.IsDisabled(r.sql.Cfg) {
 			acFilter, acArgs, err := getAccessControlFilter(query.SignedInUser)
 			if err != nil {
 				return err
@@ -256,11 +256,11 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func getAccessControlFilter(user *models.SignedInUser) (string, []interface{}, error) {
-	if user == nil || user.Permissions[user.OrgId] == nil {
+func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, error) {
+	if user == nil || user.Permissions[user.OrgID] == nil {
 		return "", nil, errors.New("missing permissions")
 	}
-	scopes, has := user.Permissions[user.OrgId][ac.ActionAnnotationsRead]
+	scopes, has := user.Permissions[user.OrgID][ac.ActionAnnotationsRead]
 	if !has {
 		return "", nil, errors.New("missing permissions")
 	}

@@ -1,11 +1,13 @@
 import React, { useEffect, useState, ChangeEvent } from 'react';
+
 import { getBackendSrv } from '@grafana/runtime';
 import { Input } from '@grafana/ui';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
-import { Rule } from './types';
-import { PipelineTable } from './PipelineTable';
+
 import { AddNewRule } from './AddNewRule';
+import { PipelineTable } from './PipelineTable';
+import { Rule } from './types';
 
 export default function PipelineAdminPage() {
   const [rules, setRules] = useState<Rule[]>([]);

@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,12 +33,13 @@ type ItemQuery struct {
 	UserId       int64    `json:"userId"`
 	AlertId      int64    `json:"alertId"`
 	DashboardId  int64    `json:"dashboardId"`
+	DashboardUid string   `json:"dashboardUID"`
 	PanelId      int64    `json:"panelId"`
 	AnnotationId int64    `json:"annotationId"`
 	Tags         []string `json:"tags"`
 	Type         string   `json:"type"`
 	MatchAny     bool     `json:"matchAny"`
-	SignedInUser *models.SignedInUser
+	SignedInUser *user.SignedInUser
 
 	Limit int64 `json:"limit"`
 }
@@ -127,24 +128,25 @@ func (i Item) TableName() string {
 }
 
 type ItemDTO struct {
-	Id          int64            `json:"id"`
-	AlertId     int64            `json:"alertId"`
-	AlertName   string           `json:"alertName"`
-	DashboardId int64            `json:"dashboardId"`
-	PanelId     int64            `json:"panelId"`
-	UserId      int64            `json:"userId"`
-	NewState    string           `json:"newState"`
-	PrevState   string           `json:"prevState"`
-	Created     int64            `json:"created"`
-	Updated     int64            `json:"updated"`
-	Time        int64            `json:"time"`
-	TimeEnd     int64            `json:"timeEnd"`
-	Text        string           `json:"text"`
-	Tags        []string         `json:"tags"`
-	Login       string           `json:"login"`
-	Email       string           `json:"email"`
-	AvatarUrl   string           `json:"avatarUrl"`
-	Data        *simplejson.Json `json:"data"`
+	Id           int64            `json:"id"`
+	AlertId      int64            `json:"alertId"`
+	AlertName    string           `json:"alertName"`
+	DashboardId  int64            `json:"dashboardId"`
+	DashboardUID *string          `json:"dashboardUID"`
+	PanelId      int64            `json:"panelId"`
+	UserId       int64            `json:"userId"`
+	NewState     string           `json:"newState"`
+	PrevState    string           `json:"prevState"`
+	Created      int64            `json:"created"`
+	Updated      int64            `json:"updated"`
+	Time         int64            `json:"time"`
+	TimeEnd      int64            `json:"timeEnd"`
+	Text         string           `json:"text"`
+	Tags         []string         `json:"tags"`
+	Login        string           `json:"login"`
+	Email        string           `json:"email"`
+	AvatarUrl    string           `json:"avatarUrl"`
+	Data         *simplejson.Json `json:"data"`
 }
 
 type annotationType int

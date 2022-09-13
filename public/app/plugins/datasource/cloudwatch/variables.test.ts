@@ -1,6 +1,6 @@
+import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
-import { setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
 
 const defaultQuery: VariableQuery = {
   queryType: VariableQueryType.Regions,
@@ -8,19 +8,18 @@ const defaultQuery: VariableQuery = {
   region: 'bar',
   metricName: '',
   dimensionKey: '',
-  ec2Filters: '',
   instanceID: '',
   attributeName: '',
   resourceType: '',
-  tags: '',
   refId: '',
 };
 
-const ds = setupMockedDataSource();
+const ds = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable] });
 ds.datasource.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
 ds.datasource.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
 ds.datasource.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
 ds.datasource.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
+ds.datasource.describeAllLogGroups = jest.fn().mockResolvedValue(['a', 'b']);
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
@@ -114,7 +113,7 @@ describe('variables', () => {
       ...defaultQuery,
       queryType: VariableQueryType.EC2InstanceAttributes,
       attributeName: 'abc',
-      ec2Filters: '{"a":["b"]}',
+      ec2Filters: { a: ['b'] },
     };
     beforeEach(() => {
       ds.datasource.getEc2InstanceAttribute = getEc2InstanceAttribute;
@@ -139,7 +138,7 @@ describe('variables', () => {
       ...defaultQuery,
       queryType: VariableQueryType.ResourceArns,
       resourceType: 'abc',
-      tags: '{"a":["b"]}',
+      tags: { a: ['b'] },
     };
     beforeEach(() => {
       ds.datasource.getResourceARNs = getResourceARNs;
@@ -168,5 +167,15 @@ describe('variables', () => {
       { text: 'Sum', value: 'Sum', expandable: true },
       { text: 'SampleCount', value: 'SampleCount', expandable: true },
     ]);
+  });
+
+  describe('log groups', () => {
+    it('should call describe log groups', async () => {
+      const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.LogGroups });
+      expect(result).toEqual([
+        { text: 'a', value: 'a', expandable: true },
+        { text: 'b', value: 'b', expandable: true },
+      ]);
+    });
   });
 });

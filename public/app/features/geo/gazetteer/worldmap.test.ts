@@ -1,8 +1,10 @@
+import { toLonLat } from 'ol/proj';
+
+import countriesJSON from '../../../../gazetteer/countries.json';
+
 import { getGazetteer } from './gazetteer';
 
 let backendResults: any = { hello: 'world' };
-import countriesJSON from '../../../../gazetteer/countries.json';
-import { toLonLat } from 'ol/proj';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),

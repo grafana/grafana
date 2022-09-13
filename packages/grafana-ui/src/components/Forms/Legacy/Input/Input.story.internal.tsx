@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { zip, fromPairs } from 'lodash';
-
-import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
-import { Input } from './Input';
 import { Meta, Story } from '@storybook/react';
-import { EventsWithValidation } from '../../../../utils';
+import { zip, fromPairs } from 'lodash';
+import React, { useState } from 'react';
 
-export default {
+import { EventsWithValidation } from '../../../../utils';
+import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
+
+import { Input } from './Input';
+
+const meta: Meta = {
   title: 'Forms/Legacy/Input',
   component: Input,
   decorators: [withCenteredStory],
@@ -24,7 +25,7 @@ export default {
     },
     validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
   },
-} as Meta;
+};
 
 const Wrapper: Story = (args) => {
   const [value, setValue] = useState('');
@@ -55,3 +56,5 @@ Basic.args = {
   validationEvents: EventsWithValidation.onBlur,
   hideErrorMessage: false,
 };
+
+export default meta;

@@ -1,14 +1,15 @@
-import React, { ReactElement, useRef, useState } from 'react';
 import { css } from '@emotion/css';
-import { useTheme2 } from '@grafana/ui';
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { useMenuItem } from '@react-aria/menu';
 import { useFocus, useKeyboard } from '@react-aria/interactions';
-import { TreeState } from '@react-stately/tree';
+import { useMenuItem } from '@react-aria/menu';
 import { mergeProps } from '@react-aria/utils';
+import { TreeState } from '@react-stately/tree';
 import { Node } from '@react-types/shared';
+import React, { ReactElement, useRef, useState } from 'react';
 
-import { useNavBarItemMenuContext } from './context';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
+
+import { useNavBarItemMenuContext, useNavBarContext } from './context';
 
 export interface NavBarItemMenuItemProps {
   item: Node<NavModelItem>;
@@ -18,6 +19,7 @@ export interface NavBarItemMenuItemProps {
 
 export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuItemProps): ReactElement {
   const { onClose, onLeft } = useNavBarItemMenuContext();
+  const { setMenuIdOpen } = useNavBarContext();
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
   const isDisabled = state.disabledKeys.has(key);
@@ -29,6 +31,7 @@ export function NavBarItemMenuItem({ item, state, onNavigate }: NavBarItemMenuIt
   const isSection = item.value.menuItemType === 'section';
   const styles = getStyles(theme, isFocused, isSection);
   const onAction = () => {
+    setMenuIdOpen(undefined);
     onNavigate(item.value);
     onClose();
   };
@@ -84,12 +87,6 @@ function getStyles(theme: GrafanaTheme2, isFocused: boolean, isSection: boolean)
         outline-offset: -2px;
         transition: none;
       }
-    `,
-    upgradeBoxContainer: css`
-      padding: ${theme.spacing(1)};
-    `,
-    upgradeBox: css`
-      width: 300px;
     `,
   };
 }

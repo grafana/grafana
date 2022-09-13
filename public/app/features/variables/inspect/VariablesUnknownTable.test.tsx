@@ -1,10 +1,16 @@
-import React from 'react';
-import * as runtime from '@grafana/runtime';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
-import { VariablesUnknownTable, VariablesUnknownTableProps } from './VariablesUnknownTable';
+import * as runtime from '@grafana/runtime';
+
 import { customBuilder } from '../shared/testing/builders';
+
+import {
+  SLOW_VARIABLES_EXPANSION_THRESHOLD,
+  VariablesUnknownTable,
+  VariablesUnknownTableProps,
+} from './VariablesUnknownTable';
 import * as utils from './utils';
 import { UsagesToNetwork } from './utils';
 
@@ -98,34 +104,41 @@ describe('VariablesUnknownTable', () => {
       });
 
       describe('but when the unknown processing takes a while', () => {
-        const origDateNow = Date.now;
+        let user: ReturnType<typeof userEvent.setup>;
+
+        beforeEach(() => {
+          jest.useFakeTimers();
+          // Need to use delay: null here to work with fakeTimers
+          // see https://github.com/testing-library/user-event/issues/833
+          user = userEvent.setup({ delay: null });
+        });
 
         afterEach(() => {
-          Date.now = origDateNow;
+          jest.useRealTimers();
         });
 
         it('then it should report slow expansion', async () => {
           const variable = customBuilder().withId('Renamed Variable').withName('Renamed Variable').build();
           const usages = [{ variable, nodes: [], edges: [], showGraph: false }];
-          const { reportInteractionSpy, rerender } = await getTestContext({}, usages);
-          const dateNowStart = 1000;
-          const dateNowStop = 2000;
-          Date.now = jest.fn().mockReturnValueOnce(dateNowStart).mockReturnValue(dateNowStop);
-
-          await userEvent.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
-          const props: VariablesUnknownTableProps = {
-            variables: [],
-            dashboard: null,
-          };
-          await act(async () => {
-            rerender(<VariablesUnknownTable {...props} />);
+          const { getUnknownsNetworkSpy, reportInteractionSpy } = await getTestContext({}, usages);
+          getUnknownsNetworkSpy.mockImplementation(() => {
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                resolve(usages);
+              }, SLOW_VARIABLES_EXPANSION_THRESHOLD);
+            });
           });
 
+          await user.click(screen.getByRole('heading', { name: /renamed or missing variables/i }));
+
+          jest.advanceTimersByTime(SLOW_VARIABLES_EXPANSION_THRESHOLD);
+
           // make sure we report the interaction for slow expansion
-          await waitFor(() => expect(reportInteractionSpy).toHaveBeenCalledTimes(2));
-          expect(reportInteractionSpy.mock.calls[0][0]).toEqual('Unknown variables section expanded');
-          expect(reportInteractionSpy.mock.calls[1][0]).toEqual('Slow unknown variables expansion');
-          expect(reportInteractionSpy.mock.calls[1][1]).toEqual({ elapsed: 1000 });
+          await waitFor(() =>
+            expect(reportInteractionSpy).toHaveBeenCalledWith('Slow unknown variables expansion', {
+              elapsed: expect.any(Number),
+            })
+          );
         });
       });
     });

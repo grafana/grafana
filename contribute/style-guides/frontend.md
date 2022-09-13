@@ -351,7 +351,7 @@ static defaultProps: Partial<Props> = { ... }
 We recommend using named regular functions when creating a new react functional component.
 
 ```typescript
-export function Component(props: Props): ReactElement { ... }
+export function Component(props: Props) { ... }
 ```
 
 ## State management

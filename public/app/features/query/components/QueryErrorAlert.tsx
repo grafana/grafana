@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
+
 import { DataQueryError, GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
 
 export interface Props {
   error: DataQueryError;

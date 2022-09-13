@@ -1,12 +1,23 @@
-import { configureStore } from 'app/store/configureStore';
+import { render, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import Receivers from './Receivers';
-import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
+
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { render, waitFor } from '@testing-library/react';
-import { getAllDataSources } from './utils/config';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
+import { contextSrv } from 'app/core/services/context_srv';
+import store from 'app/core/store';
+import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
+
+import Receivers from './Receivers';
 import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus, testReceivers } from './api/alertmanager';
+import { discoverAlertmanagerFeatures } from './api/buildInfo';
+import { fetchNotifiers } from './api/grafana';
 import {
   mockDataSource,
   MockDataSourceSrv,
@@ -14,23 +25,16 @@ import {
   someCloudAlertManagerStatus,
   someGrafanaAlertManagerConfig,
 } from './mocks';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { fetchNotifiers } from './api/grafana';
 import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
-import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
-import userEvent from '@testing-library/user-event';
+import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
-import store from 'app/core/store';
-import { contextSrv } from 'app/core/services/context_srv';
-import { selectOptionInTest } from '@grafana/ui';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
-import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
-import { AccessControlAction } from 'app/types';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
 jest.mock('./utils/config');
 jest.mock('app/core/services/context_srv');
+jest.mock('./api/buildInfo');
 
 const mocks = {
   getAllDataSources: jest.mocked(getAllDataSources),
@@ -41,6 +45,7 @@ const mocks = {
     updateConfig: jest.mocked(updateAlertManagerConfig),
     fetchNotifiers: jest.mocked(fetchNotifiers),
     testReceivers: jest.mocked(testReceivers),
+    discoverAlertmanagerFeatures: jest.mocked(discoverAlertmanagerFeatures),
   },
   contextSrv: jest.mocked(contextSrv),
 };
@@ -127,6 +132,7 @@ describe('Receivers', () => {
     jest.resetAllMocks();
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
+    mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
@@ -135,9 +141,7 @@ describe('Receivers', () => {
     mocks.contextSrv.hasPermission.mockImplementation((action) => {
       const permissions = [
         AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsCreate,
-        AccessControlAction.AlertingNotificationsUpdate,
-        AccessControlAction.AlertingNotificationsDelete,
+        AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,
       ];
@@ -469,5 +473,19 @@ describe('Receivers', () => {
     expect(mocks.api.fetchConfig).toHaveBeenLastCalledWith('CloudManager');
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
     expect(mocks.api.fetchStatus).toHaveBeenLastCalledWith('CloudManager');
+  });
+
+  it('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+    mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
+    mocks.api.fetchConfig.mockRejectedValue({ message: 'alertmanager storage object not found' });
+
+    await renderReceivers('CloudManager');
+
+    const templatesTable = await ui.templatesTable.find();
+    const receiversTable = await ui.receiversTable.find();
+
+    expect(templatesTable).toBeInTheDocument();
+    expect(receiversTable).toBeInTheDocument();
+    expect(ui.newContactPointButton.get()).toBeInTheDocument();
   });
 });

@@ -1,23 +1,23 @@
 import React, { PureComponent } from 'react';
-import Page from 'app/core/components/Page/Page';
+
 import { DeleteButton, LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { AccessControlAction, Role, StoreState, Team } from 'app/types';
-import { deleteTeam, loadTeams } from './state/actions';
-import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { config } from 'app/core/config';
-import { contextSrv, User } from 'app/core/services/context_srv';
-import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
-import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
+import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { config } from 'app/core/config';
+import { contextSrv, User } from 'app/core/services/context_srv';
+import { AccessControlAction, Role, StoreState, Team } from 'app/types';
+
+import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
+
+import { deleteTeam, loadTeams } from './state/actions';
+import { initialTeamsState, setSearchQuery, setTeamsSearchPage } from './state/reducers';
+import { getSearchQuery, getTeams, getTeamsCount, getTeamsSearchPage, isPermissionTeamAdmin } from './state/selectors';
 
 const pageLimit = 30;
 
 export interface Props {
-  navModel: NavModel;
   teams: Team[];
   searchQuery: string;
   searchPage: number;
@@ -73,13 +73,8 @@ export class TeamList extends PureComponent<Props, State> {
     const canDelete = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsDelete, team, isTeamAdmin);
     const canReadTeam = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRead, team, isTeamAdmin);
     const canSeeTeamRoles = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesList, team, false);
-    const canUpdateTeamRoles =
-      contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesAdd, false) ||
-      contextSrv.hasAccess(AccessControlAction.ActionTeamsRolesRemove, false);
     const displayRolePicker =
-      contextSrv.licensedAccessControlEnabled() &&
-      contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) &&
-      contextSrv.hasPermission(AccessControlAction.ActionRolesList);
+      contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
     return (
       <tr key={team.id}>
@@ -114,15 +109,11 @@ export class TeamList extends PureComponent<Props, State> {
           )}
         </td>
         {displayRolePicker && (
-          <td>
-            {canSeeTeamRoles && (
-              <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} disabled={!canUpdateTeamRoles} />
-            )}
-          </td>
+          <td>{canSeeTeamRoles && <TeamRolePicker teamId={team.id} roleOptions={this.state.roleOptions} />}</td>
         )}
         <td className="text-right">
           <DeleteButton
-            aria-label="Delete team"
+            aria-label={`Delete team ${team.name}`}
             size="sm"
             disabled={!canDelete}
             onConfirm={() => this.deleteTeam(team)}
@@ -221,10 +212,10 @@ export class TeamList extends PureComponent<Props, State> {
   }
 
   render() {
-    const { hasFetched, navModel } = this.props;
+    const { hasFetched } = this.props;
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="teams">
         <Page.Contents isLoading={!hasFetched}>{this.renderList()}</Page.Contents>
       </Page>
     );
@@ -233,7 +224,6 @@ export class TeamList extends PureComponent<Props, State> {
 
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'teams'),
     teams: getTeams(state.teams),
     searchQuery: getSearchQuery(state.teams),
     searchPage: getTeamsSearchPage(state.teams),
@@ -251,4 +241,8 @@ const mapDispatchToProps = {
   setTeamsSearchPage,
 };
 
-export default connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.teams)(TeamList);
+export default connectWithCleanUp(
+  mapStateToProps,
+  mapDispatchToProps,
+  (state) => (state.teams = initialTeamsState)
+)(TeamList);

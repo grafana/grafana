@@ -1,13 +1,14 @@
-import { DataTransformerID } from './ids';
-import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType } from '../../types/dataFrame';
-import { ReducerID } from '../fieldReducer';
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { transformDataFrame } from '../transformDataFrame';
-import { CalculateFieldMode, calculateFieldTransformer, ReduceOptions } from './calculateField';
 import { DataFrameView } from '../../dataframe';
-import { BinaryOperationID } from '../../utils';
+import { toDataFrame } from '../../dataframe/processDataFrame';
 import { ScopedVars } from '../../types';
+import { FieldType } from '../../types/dataFrame';
+import { BinaryOperationID } from '../../utils';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ReducerID } from '../fieldReducer';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { CalculateFieldMode, calculateFieldTransformer, ReduceOptions } from './calculateField';
+import { DataTransformerID } from './ids';
 
 const seriesA = toDataFrame({
   fields: [

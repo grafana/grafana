@@ -54,10 +54,81 @@ func TestOpsgenieNotifier(t *testing.T) {
 			}`,
 		},
 		{
-			name: "Default config with one alert and send tags as tags",
+			name:     "Default config with one alert, custom message and description",
+			settings: `{"apiKey": "abcdefgh0123456789", "message": "test message", "description": "test description"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: `{
+				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"description": "test description",
+				"details": {
+					"url": "http://localhost/alerting/list"
+				},
+				"message": "test message",
+				"source": "Grafana",
+				"tags": ["alertname:alert1", "lbl1:val1"]
+			}`,
+		},
+		{
+			name: "Default config with one alert, message length > 130",
 			settings: `{
 				"apiKey": "abcdefgh0123456789",
-				"sendTagsAs": "tags"
+				"message": "IyJnsW78xQoiBJ7L7NqASv31JCFf0At3r9KUykqBVxSiC6qkDhvDLDW9VImiFcq0Iw2XwFy5fX4FcbTmlkaZzUzjVwx9VUuokhzqQlJVhWDYFqhj3a5wX0LjyvNQjsqT9WaWJAWOJanwOAWon"
+				}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: `{
+				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"description": "[FIRING:1]  (val1)\nhttp://localhost/alerting/list\n\n**Firing**\n\nValue: [no value]\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matcher=alertname%3Dalert1&matcher=lbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
+				"details": {
+					"url": "http://localhost/alerting/list"
+				},
+				"message": "IyJnsW78xQoiBJ7L7NqASv31JCFf0At3r9KUykqBVxSiC6qkDhvDLDW9VImiFcq0Iw2XwFy5fX4FcbTmlkaZzUzjVwx9VUuokhzqQlJVhWDYFqhj3a5wX0LjyvNQjsq...",
+				"source": "Grafana",
+				"tags": ["alertname:alert1", "lbl1:val1"]
+			}`,
+		},
+		{
+			name:     "Default config with one alert, templated message and description",
+			settings: `{"apiKey": "abcdefgh0123456789", "message": "Firing: {{ len .Alerts.Firing }}", "description": "{{ len .Alerts.Firing }} firing, {{ len .Alerts.Resolved }} resolved."}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
+					},
+				},
+			},
+			expMsg: `{
+				"alias": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				"description": "1 firing, 0 resolved.",
+				"details": {
+					"url": "http://localhost/alerting/list"
+				},
+				"message": "Firing: 1",
+				"source": "Grafana",
+				"tags": ["alertname:alert1", "lbl1:val1"]
+			}`,
+		},
+		{
+			name: "Default config with one alert and send tags as tags, empty description and message",
+			settings: `{
+				"apiKey": "abcdefgh0123456789",
+				"sendTagsAs": "tags",
+				"message": " ",
+				"description": " "
 			}`,
 			alerts: []*types.Alert{
 				{
@@ -184,7 +255,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			pn := NewOpsgenieNotifier(cfg, webhookSender, tmpl, decryptFn)
+			pn := NewOpsgenieNotifier(cfg, webhookSender, &UnavailableImageStore{}, tmpl, decryptFn)
 			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
 				require.False(t, ok)

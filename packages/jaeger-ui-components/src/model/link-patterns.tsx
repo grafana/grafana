@@ -14,10 +14,12 @@
 
 import { uniq as _uniq } from 'lodash';
 import memoize from 'lru-memoize';
-import { getConfigValue } from '../utils/config/get-config';
-import { getParent } from './span';
+
 import { TNil } from '../types';
 import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '../types/trace';
+import { getConfigValue } from '../utils/config/get-config';
+
+import { getParent } from './span';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 
@@ -54,7 +56,7 @@ function stringSupplant(str: string, encodeFn: (unencoded: any) => string, map: 
   });
 }
 
-export function processTemplate(template: any, encodeFn: (unencoded: any) => string): ProcessedTemplate {
+export function processTemplate(template: unknown, encodeFn: (unencoded: any) => string): ProcessedTemplate {
   if (typeof template !== 'string') {
     /*
 
@@ -74,10 +76,10 @@ export function processTemplate(template: any, encodeFn: (unencoded: any) => str
 
 export function createTestFunction(entry: any) {
   if (typeof entry === 'string') {
-    return (arg: any) => arg === entry;
+    return (arg: unknown) => arg === entry;
   }
   if (Array.isArray(entry)) {
-    return (arg: any) => entry.indexOf(arg) > -1;
+    return (arg: unknown) => entry.indexOf(arg) > -1;
   }
   /*
 

@@ -1,13 +1,17 @@
 import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-
-import { VariableModel } from '../types';
-import { KeyedVariableIdentifier } from '../state/types';
-import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
-import { VariableEditorListRow } from './VariableEditorListRow';
+import { Button, Stack } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+
+import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
+import { UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
+import { KeyedVariableIdentifier } from '../state/types';
+import { VariableModel } from '../types';
+
+import { VariableEditorListRow } from './VariableEditorListRow';
 
 export interface Props {
   variables: VariableModel[];
@@ -45,7 +49,7 @@ export function VariableEditorList({
         {variables.length === 0 && <EmptyVariablesList onAdd={onAdd} />}
 
         {variables.length > 0 && (
-          <div>
+          <Stack direction="column" gap={4}>
             <table
               className="filter-table filter-table--hover"
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
@@ -79,7 +83,17 @@ export function VariableEditorList({
                 </Droppable>
               </DragDropContext>
             </table>
-          </div>
+            <Stack>
+              <VariablesDependenciesButton variables={variables} />
+              <Button
+                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+                onClick={onAdd}
+                icon="plus"
+              >
+                New variable
+              </Button>
+            </Stack>
+          </Stack>
         )}
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
+
 import { ExtractFieldsOptions, extractFieldsTransformer } from './extractFields';
 
 describe('Fields from JSON', () => {

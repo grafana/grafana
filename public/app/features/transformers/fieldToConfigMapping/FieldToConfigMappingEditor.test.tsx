@@ -1,8 +1,10 @@
-import React from 'react';
-import { toDataFrame, FieldType } from '@grafana/data';
 import { fireEvent, render, screen, getByText, getByLabelText } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from '@grafana/ui';
+import React from 'react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+
+import { toDataFrame, FieldType } from '@grafana/data';
+
 import { Props, FieldToConfigMappingEditor } from './FieldToConfigMappingEditor';
 
 beforeEach(() => {

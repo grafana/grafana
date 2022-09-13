@@ -1,15 +1,32 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ExploreId, ExploreQueryParams } from 'app/types/explore';
-import { ErrorBoundaryAlert } from '@grafana/ui';
-import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
-import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { Branding } from '../../core/components/Branding/Branding';
 
-import { getNavModel } from '../../core/selectors/navModel';
-import { StoreState } from 'app/types';
 import { locationService } from '@grafana/runtime';
+import { ErrorBoundaryAlert } from '@grafana/ui';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { StoreState } from 'app/types';
+import { ExploreId, ExploreQueryParams } from 'app/types/explore';
+
+import { Branding } from '../../core/components/Branding/Branding';
+import { getNavModel } from '../../core/selectors/navModel';
+
+import { ExploreActions } from './ExploreActions';
+import { ExplorePaneContainer } from './ExplorePaneContainer';
+import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
+
+const styles = {
+  pageScrollbarWrapper: css`
+    width: 100%;
+    flex-grow: 1;
+    min-height: 0;
+  `,
+  exploreWrapper: css`
+    display: flex;
+    height: 100%;
+  `,
+};
 
 interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
 interface OwnProps {}
@@ -30,11 +47,17 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
 class WrapperUnconnected extends PureComponent<Props> {
+  static contextType = GrafanaContext;
+
   componentWillUnmount() {
     this.props.resetExploreAction({});
   }
 
   componentDidMount() {
+    //This is needed for breadcrumbs and topnav.
+    //We should probably abstract this out at some point
+    this.context.chrome.update({ sectionNav: this.props.navModel.node });
+
     lastSavedUrl.left = undefined;
     lastSavedUrl.right = undefined;
 
@@ -53,7 +76,7 @@ class WrapperUnconnected extends PureComponent<Props> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate() {
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
     const datasourceTitle = hasSplit
@@ -68,8 +91,9 @@ class WrapperUnconnected extends PureComponent<Props> {
     const hasSplit = Boolean(left) && Boolean(right);
 
     return (
-      <div className="page-scrollbar-wrapper">
-        <div className="explore-wrapper">
+      <div className={styles.pageScrollbarWrapper}>
+        <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
+        <div className={styles.exploreWrapper}>
           <ErrorBoundaryAlert style="page">
             <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
           </ErrorBoundaryAlert>

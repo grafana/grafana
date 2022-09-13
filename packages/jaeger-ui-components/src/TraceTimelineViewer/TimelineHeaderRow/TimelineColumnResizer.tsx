@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import * as React from 'react';
+
 import { stylesFactory } from '@grafana/ui';
 
 import { TNil } from '../../types';
@@ -193,11 +194,11 @@ export default class TimelineColumnResizer extends React.PureComponent<
 
     const isDragging = isDraggingLeft || isDraggingRight;
     return (
-      <div className={styles.TimelineColumnResizer} ref={this._setRootElm} data-test-id="TimelineColumnResizer">
+      <div className={styles.TimelineColumnResizer} ref={this._setRootElm} data-testid="TimelineColumnResizer">
         <div
           className={cx(styles.gripIcon, isDragging && styles.gripIconDragging)}
           style={gripStyle}
-          data-test-id="TimelineColumnResizer--gripIcon"
+          data-testid="TimelineColumnResizer--gripIcon"
         />
         <div
           aria-hidden
@@ -209,7 +210,7 @@ export default class TimelineColumnResizer extends React.PureComponent<
           )}
           onMouseDown={this._dragManager.handleMouseDown}
           style={draggerStyle}
-          data-test-id="TimelineColumnResizer--dragger"
+          data-testid="TimelineColumnResizer--dragger"
         />
       </div>
     );

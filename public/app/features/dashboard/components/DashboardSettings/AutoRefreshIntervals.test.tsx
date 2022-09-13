@@ -1,10 +1,12 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { defaultIntervals } from '@grafana/ui';
 
-import { AutoRefreshIntervals, getValidIntervals, Props, validateIntervals } from './AutoRefreshIntervals';
 import { TimeSrv } from '../../services/TimeSrv';
+
+import { AutoRefreshIntervals, getValidIntervals, Props, validateIntervals } from './AutoRefreshIntervals';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -97,7 +99,7 @@ describe('getValidIntervals', () => {
       const dependencies = {
         getTimeSrv: () =>
           ({
-            getValidIntervals: (intervals: any) => intervals,
+            getValidIntervals: (intervals: string[]) => intervals,
           } as unknown as TimeSrv),
       };
 
@@ -113,7 +115,7 @@ describe('getValidIntervals', () => {
       const dependencies = {
         getTimeSrv: () =>
           ({
-            getValidIntervals: (intervals: any) => intervals,
+            getValidIntervals: (intervals: string[]) => intervals,
           } as unknown as TimeSrv),
       };
 
@@ -129,7 +131,7 @@ describe('getValidIntervals', () => {
       const dependencies = {
         getTimeSrv: () =>
           ({
-            getValidIntervals: (intervals: any) => intervals,
+            getValidIntervals: (intervals: string[]) => intervals,
           } as unknown as TimeSrv),
       };
 
@@ -146,7 +148,7 @@ describe('validateIntervals', () => {
       const dependencies = {
         getTimeSrv: () =>
           ({
-            getValidIntervals: (intervals: any) => intervals,
+            getValidIntervals: (intervals: string[]) => intervals,
           } as unknown as TimeSrv),
       };
 

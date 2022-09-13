@@ -1,10 +1,17 @@
-+++
-title = "Bar chart"
-description = "Bar chart visualization"
-keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
-weight = 170
-aliases = ["/docs/grafana/latest/panels/visualizations/bar-chart/"]
-+++
+---
+aliases:
+  - /docs/grafana/latest/panels/visualizations/bar-chart/
+  - /docs/grafana/latest/visualizations/bar-chart/
+description: Bar chart visualization
+keywords:
+  - grafana
+  - docs
+  - bar chart
+  - panel
+  - barchart
+title: Bar chart
+weight: 170
+---
 
 # Bar chart
 
@@ -14,7 +21,7 @@ This panel visualization allows you to graph categorical data.
 
 ## Supported data formats
 
-Only one data frame is supported and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+Only one data frame is supported and it must have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
 
 Example:
 
@@ -98,7 +105,9 @@ Gradient color is generated based on the hue of the line color.
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../panels/calculation-types.md">}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../panels/calculation-types/" >}}) to show in the legend. You can have more than one.
+
+For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
 ## Text size
 
@@ -128,7 +137,9 @@ Display all Y-axes on the right side.
 
 #### Hidden
 
-Hide the Y-axes.
+Hide all axes.
+
+To selectively hide axes, [Add a field override]({{< relref "../panels/configure-overrides#add-a-field-override" >}}) that targets specific fields.
 
 ### Label
 
@@ -148,4 +159,4 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a defined point.
 
-You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard field definitions]({{< relref "../panels/standard-field-definitions.md#max" >}}).
+You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions]({{< relref "../panels/configure-standard-options/#max" >}}).

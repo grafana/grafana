@@ -1,8 +1,11 @@
 import { ComponentType } from 'react';
+
 import { RegistryItem } from '@grafana/data';
-import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
-import { DimensionContext } from '../dimensions/context';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+
+import { DimensionContext } from '../dimensions/context';
+
+import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
 
 /**
  * This gets saved in panel json
@@ -52,3 +55,6 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
   /** Build the configuration UI */
   registerOptionsUI?: PanelOptionsSupplier<CanvasElementOptions<TConfig>>;
 }
+
+export const defaultBgColor = '#D9D9D9';
+export const defaultTextColor = '#000000';

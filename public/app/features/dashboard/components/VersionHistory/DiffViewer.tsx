@@ -1,8 +1,9 @@
-import React from 'react';
 import { css } from '@emotion/css';
+import React from 'react';
 import ReactDiffViewer, { ReactDiffViewerProps, DiffMethod } from 'react-diff-viewer';
-import { useTheme } from '@grafana/ui';
 import tinycolor from 'tinycolor2';
+
+import { useTheme } from '@grafana/ui';
 
 export const DiffViewer: React.FC<ReactDiffViewerProps> = ({ oldValue, newValue }) => {
   const theme = useTheme();

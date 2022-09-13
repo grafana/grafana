@@ -1,6 +1,8 @@
 import { Feature } from 'ol';
 import { Point } from 'ol/geom';
+
 import { GeometryTypeId } from '../style/types';
+
 import { getLayerPropertyInfo, getUniqueFeatureValues } from './getFeatures';
 
 describe('get features utils', () => {

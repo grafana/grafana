@@ -1,6 +1,7 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
 import { SecretInput, RESET_BUTTON_TEXT, CONFIGURED_TEXT } from './SecretInput';
 
 const PLACEHOLDER_TEXT = 'Your secret...';

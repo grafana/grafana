@@ -10,6 +10,18 @@ import (
 type stubSearchService struct {
 }
 
+func (s *stubSearchService) IsReady(ctx context.Context, orgId int64) IsSearchReadyResponse {
+	return IsSearchReadyResponse{}
+}
+
+func (s *stubSearchService) IsDisabled() bool {
+	return true
+}
+
+func (s *stubSearchService) TriggerReIndex() {
+	// noop.
+}
+
 func NewStubSearchService() SearchService {
 	return &stubSearchService{}
 }
@@ -27,4 +39,12 @@ func (s *stubSearchService) DoDashboardQuery(ctx context.Context, user *backend.
 	rsp.Frames = append(rsp.Frames, data.NewFrame("dasboards", fid, uid))
 
 	return rsp
+}
+
+func (s *stubSearchService) RegisterDashboardIndexExtender(ext DashboardIndexExtender) {
+	// noop
+}
+
+func (s *stubSearchService) Run(_ context.Context) error {
+	return nil
 }

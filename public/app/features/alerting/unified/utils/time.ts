@@ -1,4 +1,6 @@
+import { durationToMilliseconds, parseDuration } from '@grafana/data';
 import { describeInterval } from '@grafana/data/src/datetime/rangeutil';
+
 import { TimeOptions } from '../types/time';
 
 export function parseInterval(value: string): [number, string] {
@@ -34,3 +36,7 @@ export const durationValidationPattern = {
     TimeOptions
   ).join(', ')}`,
 };
+
+export function parseDurationToMilliseconds(duration: string) {
+  return durationToMilliseconds(parseDuration(duration));
+}

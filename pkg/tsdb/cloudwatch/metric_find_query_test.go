@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,7 +54,7 @@ func TestQuery_Metrics(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetMetrics(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -88,7 +89,7 @@ func TestQuery_Metrics(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetDimensionKeys(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -128,7 +129,7 @@ func TestQuery_Regions(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetRegions(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -201,7 +202,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		filterJson, err := json.Marshal(filterMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetEc2InstanceAttribute(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -278,7 +279,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetEbsVolumeIds(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -344,7 +345,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		tagJson, err := json.Marshal(tagMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetResourceArns(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -374,7 +375,7 @@ func TestQuery_GetAllMetrics(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetAllMetrics(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -423,7 +424,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetDimensionKeys(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -453,7 +454,7 @@ func TestQuery_GetDimensionKeys(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 		resp, err := executor.handleGetDimensionKeys(
 			backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -548,7 +549,8 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, &fakeSessionCache{})
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, &fakeSessionCache{},
+			featuremgmt.WithFeatures())
 		response, err := executor.listMetrics(backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		}, "default", &cloudwatch.ListMetricsInput{})
@@ -563,7 +565,8 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return datasourceInfo{}, nil
 		})
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, &fakeSessionCache{})
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, &fakeSessionCache{},
+			featuremgmt.WithFeatures())
 		response, err := executor.listMetrics(backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		}, "default", &cloudwatch.ListMetricsInput{})

@@ -1,8 +1,14 @@
-import React from 'react';
-import { ShareEmbed } from './ShareEmbed';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
+import { BootData } from '@grafana/data';
+import { setEchoSrv } from '@grafana/runtime/src';
 import config from 'app/core/config';
+
+import { Echo } from '../../../../core/services/echo/Echo';
 import { DashboardModel, PanelModel } from '../../state';
+
+import { ShareEmbed } from './ShareEmbed';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: () => ({
@@ -43,9 +49,10 @@ function mockLocationHref(href: string) {
 }
 
 describe('ShareEmbed', () => {
-  let originalBootData: any;
+  let originalBootData: BootData;
 
   beforeAll(() => {
+    setEchoSrv(new Echo());
     originalBootData = config.bootData;
     config.appUrl = 'http://dashboards.grafana.com/';
 

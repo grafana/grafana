@@ -4,6 +4,21 @@
 [[Subject .Subject "[[.Title]]"]]
 
 [[ define "alert" ]]
+
+  [[ if ne .ImageURL "" ]]
+  <tr>
+    <td colspan="2" class="value">
+      <img src="[[.ImageURL]]" class="fluid-centered" alt="Alerting Panel" />
+    </td>
+  </tr>
+  [[ end ]]
+  [[ if ne .EmbeddedImage "" ]]
+  <tr>
+    <td colspan="2" class="value">
+      <img src="cid:[[.EmbeddedImage]]" alt="Alerting Chart Attached Below" />
+    </td>
+  </tr>
+  [[ end ]]
   <tr>
     <td colspan="2" class="value">
       <span class="value-heading">Value:</span> <span class="value-value">[[ .ValueString ]]</span>
@@ -101,7 +116,7 @@
 [[ end ]]
 
 [[ if gt (len .Message) 0 ]]
- [[ .Message ]]
+  <div style="white-space: pre-line;" align="left">[[ .Message ]]</span>
 [[ else ]]
 
 <style>

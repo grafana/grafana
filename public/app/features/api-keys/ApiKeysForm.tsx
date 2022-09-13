@@ -1,9 +1,11 @@
 import React, { ChangeEvent, FC, FormEvent, useEffect, useState } from 'react';
-import { EventsWithValidation, LegacyForms, ValidationEvents, Button, Select, InlineField } from '@grafana/ui';
-import { NewApiKey, OrgRole } from '../../types';
+
 import { rangeUtil, SelectableValue } from '@grafana/data';
-import { SlideDown } from '../../core/components/Animations/SlideDown';
+import { EventsWithValidation, LegacyForms, ValidationEvents, Button, Select, InlineField } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+
+import { SlideDown } from '../../core/components/Animations/SlideDown';
+import { NewApiKey, OrgRole } from '../../types';
 
 const { Input } = LegacyForms;
 const ROLE_OPTIONS: Array<SelectableValue<OrgRole>> = Object.keys(OrgRole).map((role) => ({
@@ -81,13 +83,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded, disabled }) 
             </div>
             <div className="gf-form">
               <InlineField label="Role">
-                <Select
-                  inputId="role-select"
-                  value={role}
-                  onChange={onRoleChange}
-                  options={ROLE_OPTIONS}
-                  menuShouldPortal
-                />
+                <Select inputId="role-select" value={role} onChange={onRoleChange} options={ROLE_OPTIONS} />
               </InlineField>
             </div>
             <div className="gf-form max-width-21">
@@ -103,7 +99,9 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded, disabled }) 
               </InlineField>
             </div>
             <div className="gf-form">
-              <Button disabled={disabled}>Add</Button>
+              <Button type="submit" disabled={disabled}>
+                Add
+              </Button>
             </div>
           </div>
         </form>

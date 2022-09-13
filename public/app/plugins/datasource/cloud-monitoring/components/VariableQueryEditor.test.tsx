@@ -1,10 +1,13 @@
 import React from 'react';
 // @ts-ignore
 import renderer from 'react-test-renderer';
-import { CloudMonitoringVariableQueryEditor, Props } from './VariableQueryEditor';
-import { CloudMonitoringVariableQuery, MetricFindQueryTypes } from '../types';
-import CloudMonitoringDatasource from '../datasource';
+
 import { VariableModel } from '@grafana/data';
+
+import CloudMonitoringDatasource from '../datasource';
+import { CloudMonitoringVariableQuery, MetricFindQueryTypes } from '../types';
+
+import { CloudMonitoringVariableQueryEditor, Props } from './VariableQueryEditor';
 
 jest.mock('../functions', () => ({
   getMetricTypes: (): any => ({ metricTypes: [], selectedMetricType: '' }),
@@ -31,6 +34,7 @@ const props: Props = {
     getMetricTypes: async (projectName: string) => Promise.resolve([]),
     getSLOServices: async (projectName: string) => Promise.resolve([]),
     getServiceLevelObjectives: (projectName: string, serviceId: string) => Promise.resolve([]),
+    ensureGCEDefaultProject: async () => Promise.resolve(''),
   } as unknown as CloudMonitoringDatasource,
   onRunQuery: () => {},
 };

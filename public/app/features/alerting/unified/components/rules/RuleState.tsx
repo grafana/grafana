@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
+import React, { FC, useMemo } from 'react';
+
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import React, { FC, useMemo } from 'react';
+
 import { isAlertingRule, isRecordingRule, getFirstActiveAt } from '../../utils/rules';
+
 import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
@@ -17,7 +20,7 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
   const style = useStyles2(getStyle);
   const { promRule } = rule;
 
-  // return how long the rule has been in it's firing state, if any
+  // return how long the rule has been in its firing state, if any
   const forTime = useMemo(() => {
     if (
       promRule &&

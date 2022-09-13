@@ -1,9 +1,10 @@
-import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { Dimensions } from '..';
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
 import { CloudWatchMetricsQuery } from '../../types';
-import userEvent from '@testing-library/user-event';
-import { Dimensions } from '..';
 
 const ds = setupMockedDataSource({
   variables: [],
@@ -42,7 +43,7 @@ describe('Dimensions', () => {
         InstanceId: '*',
         InstanceGroup: 'Group1',
       };
-      render(<Dimensions {...props} query={props.query} dimensionKeys={[]} />);
+      render(<Dimensions {...props} metricStat={props.query} dimensionKeys={[]} />);
       const filterItems = screen.getAllByTestId('cloudwatch-dimensions-filter-item');
       expect(filterItems.length).toBe(2);
 
@@ -58,7 +59,7 @@ describe('Dimensions', () => {
     it('it should add the new item but not call onChange', async () => {
       props.query.dimensions = {};
       const onChange = jest.fn();
-      render(<Dimensions {...props} query={props.query} onChange={onChange} dimensionKeys={[]} />);
+      render(<Dimensions {...props} metricStat={props.query} onChange={onChange} dimensionKeys={[]} />);
 
       await userEvent.click(screen.getByLabelText('Add'));
       expect(screen.getByTestId('cloudwatch-dimensions-filter-item')).toBeInTheDocument();
@@ -71,7 +72,7 @@ describe('Dimensions', () => {
       props.query.dimensions = {};
       const onChange = jest.fn();
       const { container } = render(
-        <Dimensions {...props} query={props.query} onChange={onChange} dimensionKeys={[]} />
+        <Dimensions {...props} metricStat={props.query} onChange={onChange} dimensionKeys={[]} />
       );
 
       await userEvent.click(screen.getByLabelText('Add'));
@@ -91,7 +92,7 @@ describe('Dimensions', () => {
       props.query.dimensions = {};
       const onChange = jest.fn();
       const { container } = render(
-        <Dimensions {...props} query={props.query} onChange={onChange} dimensionKeys={[]} />
+        <Dimensions {...props} metricStat={props.query} onChange={onChange} dimensionKeys={[]} />
       );
 
       const label = await screen.findByLabelText('Add');

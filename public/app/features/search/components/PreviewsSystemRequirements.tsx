@@ -1,7 +1,8 @@
-import { Alert, useStyles2 } from '@grafana/ui';
-import React from 'react';
-import { config } from '@grafana/runtime/src';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { config } from '@grafana/runtime/src';
+import { Alert, useStyles2 } from '@grafana/ui';
 
 export interface Props {
   showPreviews?: boolean;

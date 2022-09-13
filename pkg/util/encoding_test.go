@@ -1,6 +1,7 @@
 package util
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,7 +41,6 @@ func TestDecodeQuotedPrintable(t *testing.T) {
 			out string
 		}{
 			{"", ""},
-			{"  ", ""},
 			{"munich", "munich"},
 			{" munich", " munich"},
 			{"munich gothenburg", "munich gothenburg"},
@@ -62,6 +62,26 @@ func TestDecodeQuotedPrintable(t *testing.T) {
 			{"M=C3=BCnchen", "München"},
 			{"M=C3=BCnchen G=C3=B6teborg", "München Göteborg"},
 			{"=E5=85=AC=E5=8F=B8", "公司"},
+		}
+
+		for _, str := range testStrings {
+			val := DecodeQuotedPrintable(str.in)
+			assert.Equal(t, str.out, val)
+		}
+	})
+
+	t.Run("should preserve meaningful whitespace", func(t *testing.T) {
+		testStrings := []struct {
+			in  string
+			out string
+		}{
+			{"  ", ""},
+			{"  =", "  "},
+			{" munich  gothenburg", " munich  gothenburg"},
+			{" munich  gothenburg  ", " munich  gothenburg"},
+			{" munich  gothenburg  =", " munich  gothenburg  "},
+			{" munich\tgothenburg\t \t", " munich\tgothenburg"},
+			{" munich\t gothenburg\t \t=", " munich\t gothenburg\t \t"},
 		}
 
 		for _, str := range testStrings {
@@ -100,5 +120,13 @@ func TestDecodeQuotedPrintable(t *testing.T) {
 			val := DecodeQuotedPrintable(str.in)
 			assert.Equal(t, str.out, val)
 		}
+	})
+
+	t.Run("should support long strings", func(t *testing.T) {
+		str_in := strings.Repeat(" M=C3=BCnchen", 128)
+		str_out := strings.Repeat(" München", 128)
+
+		val := DecodeQuotedPrintable(str_in)
+		assert.Equal(t, str_out, val)
 	})
 }

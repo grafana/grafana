@@ -1,6 +1,7 @@
-import { DeleteDashboardConfig } from '.';
 import { e2e } from '../index';
 import { fromBaseUrl, getDashboardUid } from '../support/url';
+
+import { DeleteDashboardConfig } from '.';
 
 type Panel = {
   title: string;
@@ -53,7 +54,7 @@ export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: num
       e2e.components.Panels.Panel.headerItems('Inspect').should('be.visible').click();
       e2e.components.Tab.title('JSON').should('be.visible').click();
       e2e.components.PanelInspector.Json.content().should('be.visible').contains('Panel JSON').click({ force: true });
-      e2e.components.Select.option().should('be.visible').contains('Data').click();
+      e2e.components.Select.option().should('be.visible').contains('Panel data').click();
 
       // ensures that panel has loaded without knowingly hitting an error
       // note: this does not prove that data came back as we expected it,

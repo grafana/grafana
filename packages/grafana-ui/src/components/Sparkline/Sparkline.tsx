@@ -1,5 +1,7 @@
+import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 import { AlignedData, Range } from 'uplot';
+
 import {
   compareDataFrameStructures,
   DataFrame,
@@ -17,12 +19,13 @@ import {
   ScaleDirection,
   ScaleOrientation,
 } from '@grafana/schema';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { UPlotChart } from '../uPlot/Plot';
+
 import { Themeable2 } from '../../types';
+import { UPlotChart } from '../uPlot/Plot';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { preparePlotData2, getStackingGroups } from '../uPlot/utils';
+
 import { preparePlotFrame } from './utils';
-import { isEqual } from 'lodash';
 
 export interface SparklineProps extends Themeable2 {
   width: number;
@@ -90,7 +93,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
     }
   }
 
-  getYRange(field: Field) {
+  getYRange(field: Field): Range.MinMax {
     let { min, max } = this.state.alignedDataFrame.fields[1].state?.range!;
 
     if (min === max) {
@@ -100,12 +103,11 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         min = 0;
         max! *= 2;
       }
+
+      return [min, max!];
     }
 
-    return [
-      Math.max(min!, field.config.min ?? -Infinity),
-      Math.min(max!, field.config.max ?? Infinity),
-    ] as Range.MinMax;
+    return [Math.max(min!, field.config.min ?? -Infinity), Math.min(max!, field.config.max ?? Infinity)];
   }
 
   prepareConfig(data: DataFrame) {

@@ -1,13 +1,15 @@
-import React, { HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { HTMLProps } from 'react';
+
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Icon } from '../Icon/Icon';
-import { IconName } from '../../types';
 import { stylesFactory, useTheme2 } from '../../themes';
-import { Counter } from './Counter';
 import { getFocusStyles } from '../../themes/mixins';
+import { IconName } from '../../types';
+import { Icon } from '../Icon/Icon';
+
+import { Counter } from './Counter';
 
 export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   label: string;
@@ -40,7 +42,8 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
     return (
       <div className={tabsStyles.item}>
         <a
-          href={href}
+          // in case there is no href '#' is set in order to maintain a11y
+          href={href ? href : '#'}
           className={linkClass}
           {...otherProps}
           onClick={onChangeTab}

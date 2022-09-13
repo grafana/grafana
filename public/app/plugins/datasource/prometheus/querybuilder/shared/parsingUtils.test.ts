@@ -1,5 +1,6 @@
+import { parser } from '@prometheus-io/lezer-promql';
+
 import { getLeftMostChild, getString, replaceVariables } from './parsingUtils';
-import { parser } from 'lezer-promql';
 
 describe('getLeftMostChild', () => {
   it('return left most child', () => {

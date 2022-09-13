@@ -1,18 +1,22 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer } from 'react';
+
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
-import { buildVisualQueryFromString } from '../parsing';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { buildVisualQueryFromString } from '../parsing';
+import { LokiVisualQuery } from '../types';
+
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { QueryPreview } from './QueryPreview';
-import { LokiVisualQuery } from '../types';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface Props {
   query: LokiQuery;
   datasource: LokiDatasource;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
+  showRawQuery: boolean;
+  showExplain: boolean;
 }
 
 export interface State {
@@ -24,7 +28,7 @@ export interface State {
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
 export function LokiQueryBuilderContainer(props: Props) {
-  const { query, onChange, onRunQuery, datasource } = props;
+  const { query, onChange, onRunQuery, datasource, showRawQuery, showExplain } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, {
     expr: query.expr,
     // Use initial visual query only if query.expr is empty string
@@ -59,8 +63,9 @@ export function LokiQueryBuilderContainer(props: Props) {
         datasource={datasource}
         onChange={onVisQueryChange}
         onRunQuery={onRunQuery}
+        showExplain={showExplain}
       />
-      {query.rawQuery && <QueryPreview query={query.expr} />}
+      {showRawQuery && <QueryPreview query={query.expr} />}
     </>
   );
 }

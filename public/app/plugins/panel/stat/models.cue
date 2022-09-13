@@ -12,23 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package grafanaschema
+package grafanaplugin
 
-import ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+import (
+	"github.com/grafana/thema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+)
 
-Panel: {
-    lineages: [
-        [
-            {
-                PanelOptions: {
-                    ui.SingleStatBaseOptions
-                    graphMode: ui.BigValueGraphMode
-                    colorMode: ui.BigValueColorMode
-                    justifyMode: ui.BigValueJustifyMode
-                    textMode: ui.BigValueTextMode
-                }
-            }
-        ]
-    ]
-    migrations: []
+Panel: thema.#Lineage & {
+	name: "stat"
+	seqs: [
+		{
+			schemas: [
+				{
+					PanelOptions: {
+						ui.SingleStatBaseOptions
+						graphMode:   ui.BigValueGraphMode | *"area"
+						colorMode:   ui.BigValueColorMode | *"value"
+						justifyMode: ui.BigValueJustifyMode | *"auto"
+						textMode:    ui.BigValueTextMode | *"auto"
+					} @cuetsy(kind="interface")
+				},
+			]
+		},
+	]
 }

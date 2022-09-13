@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type LoginServiceMock struct {
@@ -15,23 +16,23 @@ type LoginServiceMock struct {
 	NoExistingOrgId     int64
 	AlreadyExitingLogin string
 	GeneratedUserId     int64
-	ExpectedUser        *models.User
-	ExpectedUserFunc    func(cmd *models.UpsertUserCommand) *models.User
+	ExpectedUser        *user.User
+	ExpectedUserFunc    func(cmd *models.UpsertUserCommand) *user.User
 	ExpectedError       error
 }
 
-func (s LoginServiceMock) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
-	if cmd.OrgId == s.NoExistingOrgId {
+func (s LoginServiceMock) CreateUser(cmd user.CreateUserCommand) (*user.User, error) {
+	if cmd.OrgID == s.NoExistingOrgId {
 		return nil, models.ErrOrgNotFound
 	}
 
 	if cmd.Login == s.AlreadyExitingLogin {
-		return nil, models.ErrUserAlreadyExists
+		return nil, user.ErrUserAlreadyExists
 	}
 
 	if s.ExpectedUserForm.Login == cmd.Login && s.ExpectedUserForm.Email == cmd.Email &&
-		s.ExpectedUserForm.Password == cmd.Password && s.ExpectedUserForm.Name == cmd.Name && s.ExpectedUserForm.OrgId == cmd.OrgId {
-		return &models.User{Id: s.GeneratedUserId}, nil
+		s.ExpectedUserForm.Password == cmd.Password && s.ExpectedUserForm.Name == cmd.Name && s.ExpectedUserForm.OrgId == cmd.OrgID {
+		return &user.User{ID: s.GeneratedUserId}, nil
 	}
 
 	return nil, errors.New("unexpected cmd")

@@ -1,17 +1,21 @@
-import { Stack } from '@grafana/experimental';
 import React from 'react';
+
+import { Stack } from '@grafana/ui';
+
 import { LokiDatasource } from '../../datasource';
 import { LokiVisualQuery, LokiVisualQueryBinary } from '../types';
+
 import { NestedQuery } from './NestedQuery';
 
 export interface Props {
   query: LokiVisualQuery;
   datasource: LokiDatasource;
+  showExplain: boolean;
   onChange: (query: LokiVisualQuery) => void;
   onRunQuery: () => void;
 }
 
-export function NestedQueryList({ query, datasource, onChange, onRunQuery }: Props) {
+export function NestedQueryList({ query, datasource, onChange, onRunQuery, showExplain }: Props) {
   const nestedQueries = query.binaryQueries ?? [];
 
   const onNestedQueryUpdate = (index: number, update: LokiVisualQueryBinary) => {
@@ -36,6 +40,7 @@ export function NestedQueryList({ query, datasource, onChange, onRunQuery }: Pro
           datasource={datasource}
           onRemove={onRemove}
           onRunQuery={onRunQuery}
+          showExplain={showExplain}
         />
       ))}
     </Stack>

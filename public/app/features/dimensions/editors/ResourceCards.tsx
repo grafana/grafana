@@ -1,10 +1,12 @@
+import { css, cx } from '@emotion/css';
 import React, { memo, CSSProperties } from 'react';
-import { areEqual, FixedSizeGrid as Grid } from 'react-window';
+import SVG from 'react-inlinesvg';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { areEqual, FixedSizeGrid as Grid } from 'react-window';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '@grafana/ui';
-import SVG from 'react-inlinesvg';
-import { css, cx } from '@emotion/css';
+
 import { ResourceItem } from './FolderPickerTab';
 
 interface CellProps {

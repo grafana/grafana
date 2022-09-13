@@ -1,17 +1,16 @@
-import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
-import { AppEvents, DataFrame } from '@grafana/data';
-
-import appEvents from 'app/core/app_events';
-import { PanelModel } from 'app/features/dashboard/state';
-import { getPanelInspectorStyles } from './styles';
-import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
-import { config, RefreshEvent } from '@grafana/runtime';
 import { css } from '@emotion/css';
+import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
+
+import { DataFrame } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { config, RefreshEvent } from '@grafana/runtime';
+import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { Stack } from '@grafana/experimental';
+import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
+import { PanelModel } from 'app/features/dashboard/state';
+
+import { getPanelInspectorStyles } from './styles';
 
 interface DsQuery {
   isLoading: boolean;
@@ -185,10 +184,6 @@ export class QueryInspector extends PureComponent<Props, State> {
     return JSON.stringify(this.formattedJson, null, 2);
   };
 
-  onClipboardSuccess = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-  };
-
   onToggleExpand = () => {
     this.setState((prevState) => ({
       ...prevState,
@@ -296,7 +291,6 @@ export class QueryInspector extends PureComponent<Props, State> {
           {haveData && (
             <ClipboardButton
               getText={this.getTextForClipboard}
-              onClipboardCopy={this.onClipboardSuccess}
               className={styles.toolbarItem}
               icon="copy"
               variant="secondary"

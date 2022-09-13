@@ -1,13 +1,25 @@
+import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+
+import {
+  PluginErrorCode,
+  PluginSignatureStatus,
+  PluginType,
+  dateTimeFormatTimeAgo,
+  WithAccessControlMetadata,
+} from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
-import { configureStore } from 'app/store/configureStore';
-import PluginDetailsPage from './PluginDetails';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { configureStore } from 'app/store/configureStore';
+
+import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
+import * as api from '../api';
+import { usePluginConfig } from '../hooks/usePluginConfig';
+import { fetchRemotePlugins } from '../state/actions';
 import {
   CatalogPlugin,
   CatalogPluginDetails,
@@ -16,11 +28,8 @@ import {
   ReducerState,
   RequestStatus,
 } from '../types';
-import * as api from '../api';
-import { fetchRemotePlugins } from '../state/actions';
-import { usePluginConfig } from '../hooks/usePluginConfig';
-import { PluginErrorCode, PluginSignatureStatus, PluginType, dateTimeFormatTimeAgo } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+
+import PluginDetailsPage from './PluginDetails';
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
@@ -40,6 +49,13 @@ jest.mock('../hooks/usePluginConfig.tsx', () => ({
 jest.mock('../helpers.ts', () => ({
   ...jest.requireActual('../helpers.ts'),
   updatePanels: jest.fn(),
+}));
+
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: (action: string, fallBack: boolean) => true,
+    hasAccessInMetadata: (action: string, object: WithAccessControlMetadata, fallBack: boolean) => true,
+  },
 }));
 
 const renderPluginDetails = (
@@ -80,7 +96,7 @@ const renderPluginDetails = (
 describe('Plugin details page', () => {
   const id = 'my-plugin';
   const originalWindowLocation = window.location;
-  let dateNow: any;
+  let dateNow: jest.SpyInstance<number, []>;
 
   beforeAll(() => {
     dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00

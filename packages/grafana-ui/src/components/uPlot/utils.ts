@@ -1,6 +1,8 @@
+import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
+
 import { DataFrame, ensureTimeField, FieldType } from '@grafana/data';
 import { BarAlignment, GraphDrawStyle, GraphTransform, LineInterpolation, StackingMode } from '@grafana/schema';
-import uPlot, { AlignedData, Options, PaddingSide } from 'uplot';
+
 import { attachDebugger } from '../../utils';
 import { createLogger } from '../../utils/logger';
 import { buildScaleKey } from '../GraphNG/utils';
@@ -18,6 +20,7 @@ const paddingSide: PaddingSide = (u, side, sidesWithAxes) => {
 };
 
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
+  ms: 1,
   focus: {
     alpha: 1,
   },
@@ -113,16 +116,17 @@ export function getStackingGroups(frame: DataFrame) {
     // will this be stacked up or down after any transforms applied
     let vals = values.toArray();
     let transform = custom.transform;
+    let firstValue = vals.find((v) => v != null);
     let stackDir =
       transform === GraphTransform.Constant
-        ? vals[0] > 0
+        ? firstValue >= 0
           ? StackDirection.Pos
           : StackDirection.Neg
         : transform === GraphTransform.NegativeY
-        ? vals.some((v) => v > 0)
+        ? firstValue >= 0
           ? StackDirection.Neg
           : StackDirection.Pos
-        : vals.some((v) => v > 0)
+        : firstValue >= 0
         ? StackDirection.Pos
         : StackDirection.Neg;
 
@@ -161,9 +165,36 @@ export function preparePlotData2(
 ) {
   let data = Array(frame.fields.length) as AlignedData;
 
+  let stacksQty = stackingGroups.length;
+
   let dataLen = frame.length;
-  let zeroArr = Array(dataLen).fill(0);
-  let accums = Array.from({ length: stackingGroups.length }, () => zeroArr.slice());
+  let zeroArr = stacksQty > 0 ? Array(dataLen).fill(0) : [];
+  let falseArr = stacksQty > 0 ? Array(dataLen).fill(false) : [];
+  let accums = Array.from({ length: stacksQty }, () => zeroArr.slice());
+
+  let anyValsAtX = Array.from({ length: stacksQty }, () => falseArr.slice());
+
+  // figure out at which time indices each stacking group has any values
+  // (needed to avoid absorbing initial accum 0s at unrelated joined timestamps)
+  stackingGroups.forEach((group, groupIdx) => {
+    let groupValsAtX = anyValsAtX[groupIdx];
+
+    group.series.forEach((seriesIdx) => {
+      let field = frame.fields[seriesIdx];
+
+      if (field.config.custom?.hideFrom?.viz) {
+        return;
+      }
+
+      let vals = field.values.toArray();
+
+      for (let i = 0; i < dataLen; i++) {
+        if (vals[i] != null) {
+          groupValsAtX[i] = true;
+        }
+      }
+    });
+  });
 
   frame.fields.forEach((field, i) => {
     let vals = field.values.toArray();
@@ -186,7 +217,10 @@ export function preparePlotData2(
 
     // apply transforms
     if (custom.transform === GraphTransform.Constant) {
-      vals = Array(vals.length).fill(vals[0]);
+      let firstValIdx = vals.findIndex((v) => v != null);
+      let firstVal = vals[firstValIdx];
+      vals = Array(vals.length).fill(undefined);
+      vals[firstValIdx] = firstVal;
     } else {
       vals = vals.slice();
 
@@ -207,6 +241,7 @@ export function preparePlotData2(
       let stackIdx = stackingGroups.findIndex((group) => group.series.indexOf(i) > -1);
 
       let accum = accums[stackIdx];
+      let groupValsAtX = anyValsAtX[stackIdx];
       let stacked = (data[i] = Array(dataLen));
 
       for (let i = 0; i < dataLen; i++) {
@@ -215,7 +250,7 @@ export function preparePlotData2(
         if (v != null) {
           stacked[i] = accum[i] += v;
         } else {
-          stacked[i] = v; // we may want to coerce to 0 here
+          stacked[i] = groupValsAtX[i] ? accum[i] : v;
         }
       }
     }
@@ -252,7 +287,7 @@ export function preparePlotData2(
 
         if (v != null) {
           // v / accum will always be pos, so properly (re)sign by group stacking dir
-          stacked[i] = group.dir * (v / accum[i]);
+          stacked[i] = accum[i] === 0 ? 0 : group.dir * (v / accum[i]);
         }
       }
     }

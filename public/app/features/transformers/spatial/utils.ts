@@ -1,8 +1,10 @@
-import { ArrayVector, Field, FieldType } from '@grafana/data';
 import { getCenter } from 'ol/extent';
 import { Geometry, LineString, Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 import { getArea, getLength } from 'ol/sphere';
+
+import { ArrayVector, Field, FieldType } from '@grafana/data';
+
 import { SpatialCalculation, SpatialCalculationOption } from './models.gen';
 
 /** Will return a field with a single row */

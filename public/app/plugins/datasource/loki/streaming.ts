@@ -1,9 +1,11 @@
+import { map, Observable, defer, mergeMap } from 'rxjs';
+
 import { DataFrameJSON, DataQueryRequest, DataQueryResponse, LiveChannelScope, LoadingState } from '@grafana/data';
 import { getGrafanaLiveSrv } from '@grafana/runtime';
-import { map, Observable, defer, mergeMap } from 'rxjs';
+import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
+
 import { LokiDatasource } from './datasource';
 import { LokiQuery } from './types';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 /**
  * Calculate a unique key for the query.  The key is used to pick a channel and should

@@ -2,24 +2,27 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import React, { useMemo } from 'react';
+import uPlot from 'uplot';
+
 import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
+import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
+import { config } from 'app/core/config';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+
+import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
-import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
-import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
-import { config } from 'app/core/config';
-import { drawMarkers, FieldIndices } from './utils';
-import { defaultColors, CandlestickOptions, VizDisplayMode } from './models.gen';
-import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { prepareCandlestickFields } from './fields';
-import uPlot from 'uplot';
-import { PanelDataErrorView } from '@grafana/runtime';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
+import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
+
+import { prepareCandlestickFields } from './fields';
+import { defaultColors, CandlestickOptions, VizDisplayMode } from './models.gen';
+import { drawMarkers, FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
@@ -43,7 +46,9 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
 
   const theme = useTheme2();
 
-  const info = useMemo(() => prepareCandlestickFields(data?.series, options, theme), [data, options, theme]);
+  const info = useMemo(() => {
+    return prepareCandlestickFields(data?.series, options, theme, timeRange);
+  }, [data, options, theme, timeRange]);
 
   const { renderers, tweakScale, tweakAxis } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
@@ -313,7 +318,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
               />
             )}
 
-            <OutsideRangePlugin config={config} range={timeRange} onChangeTimeRange={onChangeTimeRange} />
+            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

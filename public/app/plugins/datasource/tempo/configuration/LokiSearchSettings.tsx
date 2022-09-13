@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
+import React from 'react';
+
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, useStyles } from '@grafana/ui';
-import React from 'react';
-import { TempoJsonData } from '../datasource';
+
+import { TempoJsonData } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 

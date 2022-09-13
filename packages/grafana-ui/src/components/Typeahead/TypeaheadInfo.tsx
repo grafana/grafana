@@ -1,7 +1,8 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
 
 import { GrafanaTheme, renderMarkdown } from '@grafana/data';
+
 import { useTheme } from '../../themes/ThemeContext';
 import { CompletionItem } from '../../types';
 
@@ -33,7 +34,7 @@ interface Props {
   height: number;
 }
 
-export const TypeaheadInfo: React.FC<Props> = ({ item, height }) => {
+export const TypeaheadInfo = ({ item, height }: Props) => {
   const visible = item && !!item.documentation;
   const label = item ? item.label : '';
   const documentation = renderMarkdown(item?.documentation);

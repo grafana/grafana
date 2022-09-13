@@ -1,7 +1,10 @@
 import React, { PureComponent } from 'react';
-import appEvents from 'app/core/app_events';
-import AppNotificationItem from './AppNotificationItem';
+import { connect, ConnectedProps } from 'react-redux';
+
+import { AppEvents } from '@grafana/data';
+import { VerticalGroup } from '@grafana/ui';
 import { notifyApp, hideAppNotification } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
 import { selectVisible } from 'app/core/reducers/appNotification';
 import { StoreState } from 'app/types';
 
@@ -10,9 +13,8 @@ import {
   createSuccessNotification,
   createWarningNotification,
 } from '../../copy/appNotification';
-import { AppEvents } from '@grafana/data';
-import { connect, ConnectedProps } from 'react-redux';
-import { VerticalGroup } from '@grafana/ui';
+
+import AppNotificationItem from './AppNotificationItem';
 
 export interface OwnProps {}
 

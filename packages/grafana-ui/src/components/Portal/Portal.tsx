@@ -1,11 +1,12 @@
 ﻿import React, { PropsWithChildren, useLayoutEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
+
 import { useTheme2 } from '../../themes';
 
 interface Props {
   className?: string;
   root?: HTMLElement;
-  forwardedRef?: any;
+  forwardedRef?: React.ForwardedRef<HTMLDivElement>;
 }
 
 export function Portal(props: PropsWithChildren<Props>) {

@@ -1,7 +1,8 @@
+import { uniq } from 'lodash';
+
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
-import { uniq } from 'lodash';
 
 const profileRoutes: RouteDescriptor[] = [
   {
@@ -22,6 +23,12 @@ const profileRoutes: RouteDescriptor[] = [
       () => import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')
     ),
   },
+  {
+    path: '/profile/notifications',
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
+    ),
+  },
 ];
 
 export function getProfileRoutes(cfg = config): RouteDescriptor[] {
@@ -33,7 +40,7 @@ export function getProfileRoutes(cfg = config): RouteDescriptor[] {
   return uniquePaths.map((path) => ({
     path,
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "Profile feature toggle page"*/ 'app/features/profile/FeatureTogglePage')
+      () => import(/* webpackChunkName: "ProfileFeatureTogglePage"*/ 'app/features/profile/FeatureTogglePage')
     ),
   }));
 }

@@ -1,28 +1,20 @@
-// Store
-import store from 'app/core/store';
-import { dispatch } from 'app/store/store';
-
-// Models
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
-
-// Utils
 import { isString as _isString } from 'lodash';
+
+import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-
-// Services
-import { getTemplateSrv } from '@grafana/runtime';
-
-// Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-
+import store from 'app/core/store';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
+import { dispatch } from 'app/store/store';
+
+import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -110,10 +102,11 @@ export const refreshPanel = (panel: PanelModel) => {
 };
 
 export const toggleLegend = (panel: PanelModel) => {
-  console.warn('Toggle legend is not implemented yet');
-  // We need to set panel.legend defaults first
-  // panel.legend.show = !panel.legend.show;
-  refreshPanel(panel);
+  const newOptions = { ...panel.options };
+  newOptions.legend.showLegend === true
+    ? (newOptions.legend.showLegend = false)
+    : (newOptions.legend.showLegend = true);
+  panel.updateOptions(newOptions);
 };
 
 export interface TimeOverrideResult {

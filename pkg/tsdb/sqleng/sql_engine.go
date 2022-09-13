@@ -16,11 +16,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/core"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
@@ -44,6 +44,7 @@ type SqlQueryResultTransformer interface {
 var sqlIntervalCalculator = intervalv2.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
+//
 //nolint:gocritic
 var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driverName, connectionString)
@@ -823,13 +824,13 @@ func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
 func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error {
 	if qm.timeIndex != -1 {
 		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
-			return errutil.Wrap("failed to convert time column", err)
+			return fmt.Errorf("%v: %w", "failed to convert time column", err)
 		}
 	}
 
 	if qm.timeEndIndex != -1 {
 		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeEndIndex); err != nil {
-			return errutil.Wrap("failed to convert timeend column", err)
+			return fmt.Errorf("%v: %w", "failed to convert timeend column", err)
 		}
 	}
 
@@ -887,7 +888,8 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 }
 
 // convertSQLValueColumnToFloat converts timeseries value column to float.
-//nolint: gocyclo
+//
+//nolint:gocyclo
 func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
 	if Index < 0 || Index >= len(frame.Fields) {
 		return frame, fmt.Errorf("metricIndex %d is out of range", Index)

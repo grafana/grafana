@@ -1,8 +1,12 @@
 import { pick } from 'lodash';
-import { ThunkResult } from 'app/types';
+
 import store from 'app/core/store';
-import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
 import { cleanUpPanelState, initPanelState } from 'app/features/panel/state/actions';
+import { panelModelAndPluginReady } from 'app/features/panel/state/reducers';
+import { ThunkResult } from 'app/types';
+
+import { DashboardModel, PanelModel } from '../../../state';
+
 import {
   closeEditor,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
@@ -11,7 +15,6 @@ import {
   setPanelEditorUIState,
   updateEditorInitState,
 } from './reducers';
-import { DashboardModel, PanelModel } from '../../../state';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return async (dispatch) => {
@@ -113,7 +116,7 @@ export function exitPanelEditor(): ThunkResult<void> {
       dashboard.exitPanelEditor();
     }
 
-    if (!shouldDiscardChanges) {
+    if (hasPanelChangedInPanelEdit(panel) && !shouldDiscardChanges) {
       const modifiedSaveModel = panel.getSaveModel();
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
@@ -137,12 +140,21 @@ export function exitPanelEditor(): ThunkResult<void> {
       setTimeout(() => {
         sourcePanel.getQueryRunner().useLastResultFrom(panel.getQueryRunner());
         sourcePanel.render();
+
+        // If all changes where saved then reset configRev after applying changes
+        if (panel.hasSavedPanelEditChange && !panel.hasChanged) {
+          sourcePanel.configRev = 0;
+        }
       }, 20);
     }
 
     dispatch(cleanUpPanelState(panel.key));
     dispatch(closeEditor());
   };
+}
+
+function hasPanelChangedInPanelEdit(panel: PanelModel) {
+  return panel.hasChanged || panel.hasSavedPanelEditChange || panel.isAngularPlugin();
 }
 
 export function updatePanelEditorUIState(uiState: Partial<PanelEditorUIState>): ThunkResult<void> {

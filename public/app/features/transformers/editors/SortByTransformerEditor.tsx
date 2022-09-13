@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
+
 import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
-import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
+import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
+
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransformerOptions>> = ({
@@ -28,7 +30,6 @@ export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransfor
           <InlineFieldRow key={`${s.field}/${index}`}>
             <InlineField label="Field" labelWidth={10} grow={true}>
               <Select
-                menuShouldPortal
                 options={fieldNames}
                 value={s.field}
                 placeholder="Select field"

@@ -1,28 +1,33 @@
-+++
-title = "Explore"
-keywords = ["explore", "loki", "logs"]
-aliases = ["/docs/grafana/latest/features/explore/"]
-weight = 90
-+++
+---
+aliases:
+  - /docs/grafana/latest/explore/
+  - /docs/grafana/latest/features/explore/
+keywords:
+  - explore
+  - loki
+  - logs
+title: Explore
+weight: 90
+---
 
 # Explore
 
 Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away the dashboard and panel options so that you can focus on the query. It helps you iterate until you have a working query and then think about building a dashboard.
 
-> Refer to [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can control access with fine-grained permissions.
+> Refer to [Role-based access control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can control access with role-based permissions.
 
 If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
 
-- [Query management in Explore]({{< relref "query-management.md" >}})
-- [Logs integration in Explore]({{< relref "logs-integration.md" >}})
-- [Trace integration in Explore]({{< relref "trace-integration.md" >}})
-- [Inspector in Explore]({{< relref "explore-inspector.md" >}})
+- [Query management in Explore]({{< relref "query-management/" >}})
+- [Logs integration in Explore]({{< relref "logs-integration/" >}})
+- [Trace integration in Explore]({{< relref "trace-integration/" >}})
+- [Inspector in Explore]({{< relref "explore-inspector/" >}})
 
 ## Start exploring
 
-> Refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can manage Explore with fine-grained permissions.
+> Refer to [Role-based access Control]({{< relref "../administration/roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how you can manage Explore with role-based permissions.
 
-In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../administration/configuration/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/manage-users-and-permissions/about-users-and-permissions.md" >}}) for more information on what each role has access to.
+In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option]({{< relref "../setup-grafana/configure-grafana/#viewers_can_edit" >}}) is enabled. Refer to [About users and permissions]({{< relref "../administration/roles-and-permissions/" >}}) for more information on what each role has access to.
 
 To access Explore:
 
@@ -68,3 +73,7 @@ The Share shortened link capability allows you to create smaller and simpler URL
 > **Note:** Available in Grafana 8.5.0 and later versions.
 
 Enabled by default, allows users to create panels in dashboards from within Explore.
+
+### exploreMixedDatasource
+
+Disabled by default, allows users in Explore to have different datasources for different queries. If compatible, results will be combined.

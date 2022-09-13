@@ -1,17 +1,16 @@
+import { toLonLat } from 'ol/proj';
 import React, { FC, useMemo, useCallback } from 'react';
+
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, Select, VerticalGroup } from '@grafana/ui';
-import { GeomapPanelOptions, MapViewConfig } from '../types';
-import { centerPointRegistry, MapCenterID } from '../view';
-import { NumberInput } from 'app/features/dimensions/editors/NumberInput';
-import { toLonLat } from 'ol/proj';
-import { GeomapInstanceState } from '../GeomapPanel';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPanelOptions, GeomapInstanceState>> = ({
-  value,
-  onChange,
-  context,
-}) => {
+import { GeomapPanelOptions, MapViewConfig, GeomapInstanceState } from '../types';
+import { centerPointRegistry, MapCenterID } from '../view';
+
+export const MapViewEditor: FC<
+  StandardEditorProps<MapViewConfig, unknown, GeomapPanelOptions, GeomapInstanceState>
+> = ({ value, onChange, context }) => {
   const labelWidth = 10;
 
   const views = useMemo(() => {
@@ -62,7 +61,7 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
     <>
       <InlineFieldRow>
         <InlineField label="View" labelWidth={labelWidth} grow={true}>
-          <Select menuShouldPortal options={views.options} value={views.current} onChange={onSelectView} />
+          <Select options={views.options} value={views.current} onChange={onSelectView} />
         </InlineField>
       </InlineFieldRow>
       {value?.id === MapCenterID.Coordinates && (

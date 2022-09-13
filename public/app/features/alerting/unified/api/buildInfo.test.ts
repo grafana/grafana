@@ -1,6 +1,8 @@
-import { PromApplication } from 'app/types/unified-alerting-dto';
 import { of, throwError } from 'rxjs';
-import { fetchDataSourceBuildInfo } from './buildInfo';
+
+import { PromApplication } from 'app/types/unified-alerting-dto';
+
+import { discoverDataSourceFeatures } from './buildInfo';
 import { fetchRules } from './prometheus';
 import { fetchTestRulerRulesGroup } from './ruler';
 
@@ -10,6 +12,7 @@ jest.mock('./prometheus');
 jest.mock('./ruler');
 jest.mock('app/core/services/context_srv', () => {});
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch }),
 }));
 
@@ -20,7 +23,7 @@ const mocks = {
 
 beforeEach(() => jest.clearAllMocks());
 
-describe('buildInfo', () => {
+describe('discoverDataSourceFeatures', () => {
   describe('When buildinfo returns 200 response', () => {
     it('Should return Prometheus with disabled ruler API when application and features fields are missing', async () => {
       fetch.mockReturnValue(
@@ -34,7 +37,11 @@ describe('buildInfo', () => {
         })
       );
 
-      const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Prometheus' });
+      const response = await discoverDataSourceFeatures({
+        url: '/datasource/proxy',
+        name: 'Prometheus',
+        type: 'prometheus',
+      });
 
       expect(response.application).toBe(PromApplication.Prometheus);
       expect(response.features.rulerApiEnabled).toBe(false);
@@ -61,7 +68,11 @@ describe('buildInfo', () => {
           })
         );
 
-        const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Prometheus' });
+        const response = await discoverDataSourceFeatures({
+          url: '/datasource/proxy',
+          name: 'Prometheus',
+          type: 'prometheus',
+        });
 
         expect(response.application).toBe(PromApplication.Mimir);
         expect(response.features.rulerApiEnabled).toBe(rulerApiEnabled);
@@ -69,6 +80,28 @@ describe('buildInfo', () => {
         expect(mocks.fetchTestRulerRulesGroup).not.toHaveBeenCalled();
       }
     );
+
+    it('When the data source is Loki should not call the buildinfo endpoint', async () => {
+      await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Loki', type: 'loki' });
+
+      expect(fetch).not.toBeCalled();
+    });
+
+    it('When the data source is Loki should test Prom and Ruler API endpoints to discover available features', async () => {
+      mocks.fetchTestRulerRulesGroup.mockResolvedValue(null);
+      mocks.fetchRules.mockResolvedValue([]);
+
+      const response = await discoverDataSourceFeatures({ url: '/datasource/proxy', name: 'Loki', type: 'loki' });
+
+      expect(response.application).toBe(PromApplication.Lotex);
+      expect(response.features.rulerApiEnabled).toBe(true);
+
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledWith('Loki');
+
+      expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchRules).toHaveBeenCalledWith('Loki');
+    });
   });
 
   describe('When buildinfo returns 404 error', () => {
@@ -87,9 +120,13 @@ describe('buildInfo', () => {
       });
       mocks.fetchRules.mockResolvedValue([]);
 
-      const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Cortex' });
+      const response = await discoverDataSourceFeatures({
+        url: '/datasource/proxy',
+        name: 'Cortex',
+        type: 'prometheus',
+      });
 
-      expect(response.application).toBe(PromApplication.Cortex);
+      expect(response.application).toBe(PromApplication.Lotex);
       expect(response.features.rulerApiEnabled).toBe(false);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);
@@ -109,9 +146,13 @@ describe('buildInfo', () => {
       mocks.fetchTestRulerRulesGroup.mockResolvedValue(null);
       mocks.fetchRules.mockResolvedValue([]);
 
-      const response = await fetchDataSourceBuildInfo({ url: '/datasource/proxy', name: 'Cortex' });
+      const response = await discoverDataSourceFeatures({
+        url: '/datasource/proxy',
+        name: 'Cortex',
+        type: 'prometheus',
+      });
 
-      expect(response.application).toBe(PromApplication.Cortex);
+      expect(response.application).toBe(PromApplication.Lotex);
       expect(response.features.rulerApiEnabled).toBe(true);
 
       expect(mocks.fetchTestRulerRulesGroup).toHaveBeenCalledTimes(1);

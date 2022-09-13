@@ -1,6 +1,7 @@
 import React from 'react';
+
 import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
-import { MergeTransformerOptions } from '../../../../../packages/grafana-data/src/transformations/transformers/merge';
+import { MergeTransformerOptions } from '@grafana/data/src/transformations/transformers/merge';
 import { FieldValidationMessage } from '@grafana/ui';
 
 export const MergeTransformerEditor: React.FC<TransformerUIProps<MergeTransformerOptions>> = ({

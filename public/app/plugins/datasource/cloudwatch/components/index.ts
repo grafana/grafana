@@ -1,6 +1,5 @@
 export { Dimensions } from './Dimensions/Dimensions';
 export { QueryInlineField, QueryField } from './Forms';
-export { Alias } from './Alias';
 export { PanelQueryEditor } from './PanelQueryEditor';
 export { CloudWatchLogsQueryEditor } from './LogsQueryEditor';
 export { MetricStatEditor } from './MetricStatEditor';

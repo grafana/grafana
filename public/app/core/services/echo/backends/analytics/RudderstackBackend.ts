@@ -1,4 +1,6 @@
 import $ from 'jquery';
+
+import { CurrentUserDTO } from '@grafana/data';
 import {
   EchoBackend,
   EchoEventType,
@@ -7,7 +9,7 @@ import {
   isPageviewEvent,
   PageviewEchoEvent,
 } from '@grafana/runtime';
-import { CurrentUserDTO } from '@grafana/data';
+
 import { getUserIdentifier } from '../../utils';
 
 export interface RudderstackBackendOptions {
@@ -32,7 +34,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
 
     const rds = ((window as any).rudderanalytics = []);
 
-    var methods = [
+    const methods = [
       'load',
       'page',
       'track',

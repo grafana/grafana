@@ -1,27 +1,26 @@
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePluginMeta, TypedVariableModel } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
-import { variableAdapters } from '../adapters';
-import { createAdHocVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
+import { variableAdapters } from '../adapters';
+import { changeVariableEditorExtended } from '../editor/reducer';
+import { adHocBuilder } from '../shared/testing/builders';
 import { getPreloadedState, getRootReducer, RootReducerType } from '../state/helpers';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { addVariable, changeVariableProp } from '../state/sharedReducer';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import {
   addFilter,
   AdHocTableOptions,
   applyFilterFromTable,
   changeFilter,
   changeVariableDatasource,
-  initAdHocVariableEditor,
   removeFilter,
   setFiltersFromUrl,
 } from './actions';
+import { createAdHocVariableAdapter } from './adapter';
 import { filterAdded, filterRemoved, filtersRestored, filterUpdated } from './reducer';
-import { addVariable, changeVariableProp } from '../state/sharedReducer';
-import { VariableModel } from 'app/features/variables/types';
-import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
-import { adHocBuilder } from '../shared/testing/builders';
-import { locationService } from '@grafana/runtime';
-import { toKeyedAction } from '../state/keyedVariablesReducer';
-import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 const getList = jest.fn().mockReturnValue([]);
 const getDatasource = jest.fn().mockResolvedValue({});
@@ -43,14 +42,6 @@ const datasources = [
   createDatasource('influx'),
   createDatasource('google-sheets', false),
   createDatasource('elasticsearch-v7'),
-];
-
-const expectedDatasources = [
-  { text: '', value: {} },
-  { text: 'default (default)', value: { uid: 'default', type: 'default' } },
-  { text: 'elasticsearch-v1', value: { uid: 'elasticsearch-v1', type: 'elasticsearch-v1' } },
-  { text: 'influx', value: { uid: 'influx', type: 'influx' } },
-  { text: 'elasticsearch-v7', value: { uid: 'elasticsearch-v7', type: 'elasticsearch-v7' } },
 ];
 
 describe('adhoc actions', () => {
@@ -405,23 +396,6 @@ describe('adhoc actions', () => {
     });
   });
 
-  describe('when initAdHocVariableEditor is dispatched', () => {
-    it('then correct actions are dispatched', async () => {
-      const key = 'key';
-
-      getList.mockRestore();
-      getList.mockReturnValue(datasources);
-
-      const tester = reduxTester<RootReducerType>()
-        .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(initAdHocVariableEditor(key));
-
-      tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction(key, changeVariableEditorExtended({ dataSources: expectedDatasources }))
-      );
-    });
-  });
-
   describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
     it('then correct actions are dispatched', async () => {
       const key = 'key';
@@ -441,8 +415,6 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(toKeyedAction(key, setIdInEditor({ id: variable.id })))
-        .whenActionIsDispatched(initAdHocVariableEditor(key))
         .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
@@ -454,7 +426,6 @@ describe('adhoc actions', () => {
           key,
           changeVariableEditorExtended({
             infoText: 'This data source does not support ad hoc filters yet.',
-            dataSources: expectedDatasources,
           })
         )
       );
@@ -483,8 +454,6 @@ describe('adhoc actions', () => {
       const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(createAddVariableAction(variable))
-        .whenActionIsDispatched(toKeyedAction(key, setIdInEditor({ id: variable.id })))
-        .whenActionIsDispatched(initAdHocVariableEditor(key))
         .whenAsyncActionIsDispatched(changeVariableDatasource(toKeyedVariableIdentifier(variable), datasource), true);
 
       tester.thenDispatchedActionsShouldEqual(
@@ -492,13 +461,13 @@ describe('adhoc actions', () => {
           key,
           changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource }))
         ),
-        toKeyedAction(key, changeVariableEditorExtended({ infoText: loadingText, dataSources: expectedDatasources }))
+        toKeyedAction(key, changeVariableEditorExtended({ infoText: loadingText }))
       );
     });
   });
 });
 
-function createAddVariableAction(variable: VariableModel, index = 0) {
+function createAddVariableAction(variable: TypedVariableModel, index = 0) {
   const identifier = toKeyedVariableIdentifier(variable);
   const global = false;
   const data = { global, index, model: { ...variable, index: -1, global } };

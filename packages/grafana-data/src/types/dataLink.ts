@@ -1,6 +1,6 @@
-import { DataQuery } from './query';
-import { InterpolateFunction } from './panel';
 import { ExplorePanelsState } from './explore';
+import { InterpolateFunction } from './panel';
+import { DataQuery } from './query';
 
 /**
  * Callback info for DataLink click events
@@ -44,7 +44,7 @@ export interface DataLink<T extends DataQuery = any> {
 export interface InternalDataLink<T extends DataQuery = any> {
   query: T;
   datasourceUid: string;
-  datasourceName: string;
+  datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
 }
 

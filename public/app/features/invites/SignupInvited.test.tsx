@@ -1,10 +1,12 @@
-import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+
+import { backendSrv } from '../../core/services/backend_srv';
 
 import { SignupInvitedPage, Props } from './SignupInvited';
-import { backendSrv } from '../../core/services/backend_srv';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {

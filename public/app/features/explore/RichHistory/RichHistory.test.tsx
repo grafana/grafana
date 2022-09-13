@@ -1,11 +1,25 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { GrafanaTheme } from '@grafana/data';
+import { SortOrder } from 'app/core/utils/richHistory';
+
 import { ExploreId } from '../../../types/explore';
+
 import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
-import { SortOrder } from '../../../core/utils/richHistoryTypes';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getList: () => {
+        return [];
+      },
+    };
+  },
+}));
 
 const setup = (propOverrides?: Partial<RichHistoryProps>) => {
   const props: RichHistoryProps = {
@@ -14,8 +28,12 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
     height: 100,
     activeDatasourceInstance: 'Test datasource',
     richHistory: [],
+    richHistoryTotal: 0,
     firstTab: Tabs.RichHistory,
     deleteRichHistory: jest.fn(),
+    loadRichHistory: jest.fn(),
+    loadMoreRichHistory: jest.fn(),
+    clearRichHistoryResults: jest.fn(),
     onClose: jest.fn(),
     richHistorySearchFilters: {
       search: '',
@@ -23,6 +41,7 @@ const setup = (propOverrides?: Partial<RichHistoryProps>) => {
       datasourceFilters: [],
       from: 0,
       to: 7,
+      starred: false,
     },
     richHistorySettings: {
       retentionPeriod: 0,

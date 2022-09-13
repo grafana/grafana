@@ -1,6 +1,8 @@
+import { action } from '@storybook/addon-actions';
+import { ComponentMeta } from '@storybook/react';
 import React, { useState } from 'react';
 import { AsyncState } from 'react-use/lib/useAsync';
-import { action } from '@storybook/addon-actions';
+
 import { SelectableValue } from '@grafana/data';
 import { SegmentAsync, Icon, SegmentSection } from '@grafana/ui';
 
@@ -48,7 +50,7 @@ export const ArrayOptions = () => {
   );
 };
 
-export default {
+const meta: ComponentMeta<typeof SegmentAsync> = {
   title: 'Data Source/Segment/SegmentAsync',
   component: SegmentAsync,
 };
@@ -199,3 +201,5 @@ export const HtmlAttributes = () => {
     </SegmentFrame>
   );
 };
+
+export default meta;

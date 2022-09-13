@@ -1,12 +1,15 @@
-import React, { ReactElement, useRef } from 'react';
 import { css } from '@emotion/css';
+import React, { ReactElement, useRef } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
+
 import { MenuItemProps } from './MenuItem';
-import { getPosition } from './utils';
 import { useMenuFocus } from './hooks';
+import { getPosition } from './utils';
 
 /** @internal */
 export interface SubMenuProps {
@@ -55,6 +58,7 @@ export const SubMenu: React.FC<SubMenuProps> = React.memo(
     );
   }
 );
+
 SubMenu.displayName = 'SubMenu';
 
 /** @internal */
@@ -67,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     icon: css`
       opacity: 0.7;
-      margin-left: 10px;
+      margin-left: ${theme.spacing(2)};
       color: ${theme.colors.text.secondary};
     `,
     itemsWrapper: css`

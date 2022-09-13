@@ -1,14 +1,16 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
-import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 import { startCase, uniqBy } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { QueryEditorField, QueryEditorRow } from '.';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
+import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
+
 import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { MetricDescriptor } from '../types';
+
+import { QueryEditorField, QueryEditorRow } from '.';
 
 export interface Props {
   refId: string;
@@ -57,6 +59,21 @@ export function Metrics(props: Props) {
   );
 
   useEffect(() => {
+    const loadMetricDescriptors = async () => {
+      if (projectName) {
+        const metricDescriptors = await datasource.getMetricTypes(projectName);
+        const services = getServicesList(metricDescriptors);
+        setState((prevState) => ({
+          ...prevState,
+          metricDescriptors,
+          services,
+        }));
+      }
+    };
+    loadMetricDescriptors();
+  }, [datasource, projectName, customStyle, selectStyles.optionDescription]);
+
+  useEffect(() => {
     const getMetricsList = (metricDescriptors: MetricDescriptor[]) => {
       const selectedMetricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
       if (!selectedMetricDescriptor) {
@@ -80,26 +97,16 @@ export function Metrics(props: Props) {
         }));
       return metricsByService;
     };
-
-    const loadMetricDescriptors = async () => {
-      if (projectName) {
-        const metricDescriptors = await datasource.getMetricTypes(projectName);
-        const services = getServicesList(metricDescriptors);
-        const metrics = getMetricsList(metricDescriptors);
-        const service = metrics.length > 0 ? metrics[0].service : '';
-        const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
-        setState((prevState) => ({
-          ...prevState,
-          metricDescriptors,
-          services,
-          metrics,
-          service: service,
-          metricDescriptor,
-        }));
-      }
-    };
-    loadMetricDescriptors();
-  }, [datasource, getSelectedMetricDescriptor, metricType, projectName, customStyle, selectStyles.optionDescription]);
+    const metrics = getMetricsList(metricDescriptors);
+    const service = metrics.length > 0 ? metrics[0].service : '';
+    const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
+    setState((prevState) => ({
+      ...prevState,
+      metricDescriptor,
+      metrics,
+      service: service,
+    }));
+  }, [metricDescriptors, getSelectedMetricDescriptor, metricType, customStyle, selectStyles.optionDescription]);
 
   const onServiceChange = ({ value: service }: any) => {
     const metrics = metricDescriptors
@@ -138,7 +145,6 @@ export function Metrics(props: Props) {
       <QueryEditorRow>
         <QueryEditorField labelWidth={LABEL_WIDTH} label="Service" htmlFor={`${props.refId}-service`}>
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             onChange={onServiceChange}
             value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
@@ -155,7 +161,6 @@ export function Metrics(props: Props) {
         </QueryEditorField>
         <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH} htmlFor={`${props.refId}-select-metric`}>
           <Select
-            menuShouldPortal
             width={SELECT_WIDTH}
             onChange={onMetricTypeChange}
             value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}

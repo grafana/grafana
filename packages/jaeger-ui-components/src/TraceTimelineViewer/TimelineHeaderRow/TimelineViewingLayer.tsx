@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as React from 'react';
 import { css, cx } from '@emotion/css';
+import * as React from 'react';
+
 import { stylesFactory } from '@grafana/ui';
-import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
+
 import { TNil } from '../../types';
 import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
+import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 
 // exported for testing
 export const getStyles = stylesFactory(() => {
@@ -166,7 +168,7 @@ function getMarkers(viewStart: number, viewEnd: number, from: number, to: number
     <div
       className={cx(styles.TimelineViewingLayerDragged, styles.TimelineViewingLayerDraggedDraggingLeft, cls)}
       style={{ left, width }}
-      data-test-id="Dragged"
+      data-testid="Dragged"
     />
   );
 }
@@ -263,13 +265,13 @@ export default class TimelineViewingLayer extends React.PureComponent<TimelineVi
         onMouseDown={this._draggerReframe.handleMouseDown}
         onMouseLeave={this._draggerReframe.handleMouseLeave}
         onMouseMove={this._draggerReframe.handleMouseMove}
-        data-test-id="TimelineViewingLayer"
+        data-testid="TimelineViewingLayer"
       >
         {cusrorPosition != null && (
           <div
             className={styles.TimelineViewingLayerCursorGuide}
             style={{ left: cusrorPosition }}
-            data-test-id="TimelineViewingLayer--cursorGuide"
+            data-testid="TimelineViewingLayer--cursorGuide"
           />
         )}
         {reframe != null && getMarkers(viewStart, viewEnd, reframe.anchor, reframe.shift, false)}

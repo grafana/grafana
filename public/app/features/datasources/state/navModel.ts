@@ -1,11 +1,12 @@
 import { DataSourceSettings, PluginType, PluginInclude, NavModel, NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
+import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types';
-import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
-import { GenericDataSourcePlugin } from '../settings/PluginSettings';
-import { highlightTrial } from '../../admin/utils';
+
+import { GenericDataSourcePlugin } from '../types';
 
 const loadingDSType = 'Loading';
 
@@ -93,7 +94,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (featureEnabled('analytics')) {
-    navModel.children!.push(analytics);
+    if (contextSrv.hasPermission(AccessControlAction.DataSourcesInsightsRead)) {
+      navModel.children!.push(analytics);
+    }
   } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...analytics,
@@ -118,7 +121,9 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
   }
 
   if (featureEnabled('caching')) {
-    navModel.children!.push(caching);
+    if (contextSrv.hasPermissionInMetadata(AccessControlAction.DataSourcesCachingRead, dataSource)) {
+      navModel.children!.push(caching);
+    }
   } else if (highlightsEnabled && !isLoadingNav) {
     navModel.children!.push({
       ...caching,
@@ -153,7 +158,6 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       access: '',
       basicAuth: false,
       basicAuthUser: '',
-      basicAuthPassword: '',
       withCredentials: false,
       database: '',
       id: 1,
@@ -162,7 +166,6 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       jsonData: { authType: 'credentials', defaultRegion: 'eu-west-2' },
       name: 'Loading',
       orgId: 1,
-      password: '',
       readOnly: false,
       type: loadingDSType,
       typeName: loadingDSType,

@@ -1,12 +1,10 @@
 // Libraries
-import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import { cloneDeep, has } from 'lodash';
+import { cloneDeep, filter, has, uniqBy } from 'lodash';
+import pluralize from 'pluralize';
+import React, { PureComponent, ReactNode } from 'react';
+
 // Utils & Services
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
   CoreApp,
   DataQuery,
@@ -18,20 +16,26 @@ import {
   LoadingState,
   PanelData,
   PanelEvents,
+  QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
-import { QueryEditorRowHeader } from './QueryEditorRowHeader';
+import { selectors } from '@grafana/e2e-selectors';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
+import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import { selectors } from '@grafana/e2e-selectors';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
 import { RowActionComponents } from './QueryActionComponent';
+import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 
 interface Props<TQuery extends DataQuery> {
@@ -78,6 +82,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   componentDidMount() {
+    const { data, query } = this.props;
+    const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId);
+    this.setState({ data: dataFilteredByRefId });
+
     this.loadDatasource();
   }
 
@@ -305,9 +313,46 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     return null;
   }
 
+  renderWarnings = (): JSX.Element | null => {
+    const { data, query } = this.props;
+    const dataFilteredByRefId = filterPanelDataToQuery(data, query.refId)?.series ?? [];
+
+    const allWarnings = dataFilteredByRefId.reduce((acc: QueryResultMetaNotice[], serie) => {
+      if (!serie.meta?.notices) {
+        return acc;
+      }
+
+      const warnings = filter(serie.meta.notices, { severity: 'warning' }) ?? [];
+      return acc.concat(warnings);
+    }, []);
+
+    const uniqueWarnings = uniqBy(allWarnings, 'text');
+
+    const hasWarnings = uniqueWarnings.length > 0;
+    if (!hasWarnings) {
+      return null;
+    }
+
+    const serializedWarnings = uniqueWarnings.map((warning) => warning.text).join('\n');
+
+    return (
+      <Badge
+        color="orange"
+        icon="exclamation-triangle"
+        text={
+          <>
+            {uniqueWarnings.length} {pluralize('warning', uniqueWarnings.length)}
+          </>
+        }
+        tooltip={serializedWarnings}
+      />
+    );
+  };
+
   renderExtraActions = () => {
     const { query, queries, data, onAddQuery, dataSource } = this.props;
-    return RowActionComponents.getAllExtraRenderAction()
+
+    const extraActions = RowActionComponents.getAllExtraRenderAction()
       .map((action, index) =>
         action({
           query,
@@ -319,6 +364,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         })
       )
       .filter(Boolean);
+
+    extraActions.push(this.renderWarnings());
+
+    return extraActions;
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
@@ -414,6 +463,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
                 <OperationRowHelp>
                   <DatasourceCheatsheet
                     onClickExample={(query) => this.onClickExample(query)}
+                    query={this.props.query}
                     datasource={datasource}
                   />
                 </OperationRowHelp>

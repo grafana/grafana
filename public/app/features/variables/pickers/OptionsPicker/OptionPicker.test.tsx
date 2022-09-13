@@ -1,16 +1,18 @@
-import React from 'react';
-import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectors } from '@grafana/e2e-selectors';
-import { LoadingState } from '@grafana/data';
+import React from 'react';
+import { Provider } from 'react-redux';
 
-import { VariablePickerProps } from '../types';
-import { QueryVariableModel, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import { LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { queryBuilder } from '../../shared/testing/builders';
+import { getPreloadedState } from '../../state/helpers';
+import { QueryVariableModel, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import { VariablePickerProps } from '../types';
+
 import { optionPickerFactory } from './OptionsPicker';
 import { initialOptionPickerState, OptionsPickerState } from './reducer';
-import { getPreloadedState } from '../../state/helpers';
 
 interface Args {
   pickerState?: Partial<OptionsPickerState>;
@@ -35,6 +37,7 @@ function setupTestContext({ pickerState = {}, variable = {} }: Args = {}) {
   const props: VariablePickerProps<VariableWithMultiSupport | VariableWithOptions> = {
     variable: v,
     onVariableChange,
+    readOnly: false,
   };
   const Picker = optionPickerFactory();
   const optionsPicker: OptionsPickerState = { ...initialOptionPickerState, ...pickerState };

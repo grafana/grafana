@@ -1,11 +1,12 @@
 import { chain, map as _map, uniq } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 import { MetricFindValue, TimeRange } from '@grafana/data';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PrometheusDatasource } from './datasource';
 import { PromQueryRequest } from './types';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export default class PrometheusMetricFindQuery {
   range: TimeRange;
@@ -140,22 +141,35 @@ export default class PrometheusMetricFindQuery {
     const instantQuery: PromQueryRequest = { expr: query } as PromQueryRequest;
     return this.datasource.performInstantQuery(instantQuery, end).pipe(
       map((result) => {
-        return _map(result.data.data.result, (metricData) => {
-          let text = metricData.metric.__name__ || '';
-          delete metricData.metric.__name__;
-          text +=
-            '{' +
-            _map(metricData.metric, (v, k) => {
-              return k + '="' + v + '"';
-            }).join(',') +
-            '}';
-          text += ' ' + metricData.value[1] + ' ' + metricData.value[0] * 1000;
+        switch (result.data.data.resultType) {
+          case 'scalar': // [ <unix_time>, "<scalar_value>" ]
+          case 'string': // [ <unix_time>, "<string_value>" ]
+            return [
+              {
+                text: result.data.data.result[1] || '',
+                expandable: false,
+              },
+            ];
+          case 'vector':
+            return _map(result.data.data.result, (metricData) => {
+              let text = metricData.metric.__name__ || '';
+              delete metricData.metric.__name__;
+              text +=
+                '{' +
+                _map(metricData.metric, (v, k) => {
+                  return k + '="' + v + '"';
+                }).join(',') +
+                '}';
+              text += ' ' + metricData.value[1] + ' ' + metricData.value[0] * 1000;
 
-          return {
-            text: text,
-            expandable: true,
-          };
-        });
+              return {
+                text: text,
+                expandable: true,
+              };
+            });
+          default:
+            throw Error(`Unknown/Unhandled result type: [${result.data.data.resultType}]`);
+        }
       })
     );
   }

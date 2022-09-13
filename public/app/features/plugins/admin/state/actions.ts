@@ -1,8 +1,11 @@
 import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
-import { getBackendSrv } from '@grafana/runtime';
+
 import { PanelPlugin } from '@grafana/data';
-import { StoreState, ThunkResult } from 'app/types';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
+import { StoreState, ThunkResult } from 'app/types';
+
+import { invalidatePluginInCache } from '../../pluginCacheBuster';
 import {
   getRemotePlugins,
   getPluginErrors,
@@ -14,7 +17,6 @@ import {
 import { STATE_PREFIX } from '../constants';
 import { mergeLocalsAndRemotes, updatePanels } from '../helpers';
 import { CatalogPlugin, RemotePlugin } from '../types';
-import { invalidatePluginInCache } from '../../pluginCacheBuster';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
@@ -37,7 +39,9 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
     try {
       return await getRemotePlugins();
     } catch (error) {
-      error.isHandled = true;
+      if (isFetchError(error)) {
+        error.isHandled = true;
+      }
       return thunkApi.rejectWithValue([]);
     }
   }

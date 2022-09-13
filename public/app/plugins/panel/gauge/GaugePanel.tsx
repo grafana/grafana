@@ -1,13 +1,15 @@
 import React, { PureComponent } from 'react';
+
 import { FieldDisplay, getFieldDisplayValues, PanelProps } from '@grafana/data';
 import { DataLinksContextMenu, Gauge, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
-
 import { config } from 'app/core/config';
-import { GaugeOptions } from './types';
+
 import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
-export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
+import { PanelOptions } from './models.gen';
+
+export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay>,
     menuProps: DataLinksContextMenuApi
@@ -39,7 +41,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks} config={value.field}>
+        <DataLinksContextMenu links={getLinks}>
           {(api) => {
             return this.renderComponent(valueProps, api);
           }}

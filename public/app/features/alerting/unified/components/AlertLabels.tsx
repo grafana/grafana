@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { TagList } from '@grafana/ui';
 
 type Props = { labels: Record<string, string>; className?: string };

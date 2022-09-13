@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Cascader, CascaderOption, useStyles2 } from '@grafana/ui';
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { useMountedState, usePrevious } from 'react-use';
-import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from '../shared/types';
+
+import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { Button, Cascader, CascaderOption, Stack, useStyles2 } from '@grafana/ui';
+
 import { OperationEditor } from './OperationEditor';
+import { QueryBuilderOperation, QueryWithOperations, VisualQueryModeller } from './types';
 
 export interface Props<T extends QueryWithOperations> {
   query: T;
@@ -15,6 +16,7 @@ export interface Props<T extends QueryWithOperations> {
   onRunQuery: () => void;
   queryModeller: VisualQueryModeller;
   explainMode?: boolean;
+  highlightedOp?: QueryBuilderOperation;
 }
 
 export function OperationList<T extends QueryWithOperations>({
@@ -23,6 +25,7 @@ export function OperationList<T extends QueryWithOperations>({
   queryModeller,
   onChange,
   onRunQuery,
+  highlightedOp,
 }: Props<T>) {
   const styles = useStyles2(getStyles);
   const { operations } = query;
@@ -87,20 +90,23 @@ export function OperationList<T extends QueryWithOperations>({
             <Droppable droppableId="sortable-field-mappings" direction="horizontal">
               {(provided) => (
                 <div className={styles.operationList} ref={provided.innerRef} {...provided.droppableProps}>
-                  {operations.map((op, index) => (
-                    <OperationEditor
-                      key={op.id + index}
-                      queryModeller={queryModeller}
-                      index={index}
-                      operation={op}
-                      query={query}
-                      datasource={datasource}
-                      onChange={onOperationChange}
-                      onRemove={onRemove}
-                      onRunQuery={onRunQuery}
-                      highlight={opsToHighlight[index]}
-                    />
-                  ))}
+                  {operations.map((op, index) => {
+                    return (
+                      <OperationEditor
+                        key={op.id + JSON.stringify(op.params) + index}
+                        queryModeller={queryModeller}
+                        index={index}
+                        operation={op}
+                        query={query}
+                        datasource={datasource}
+                        onChange={onOperationChange}
+                        onRemove={onRemove}
+                        onRunQuery={onRunQuery}
+                        flash={opsToHighlight[index]}
+                        highlight={highlightedOp === op}
+                      />
+                    );
+                  })}
                   {provided.placeholder}
                 </div>
               )}

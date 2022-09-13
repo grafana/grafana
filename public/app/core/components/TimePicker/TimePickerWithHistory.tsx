@@ -1,13 +1,15 @@
 import React from 'react';
-import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
+
 import { TimeRange, isDateTime, toUtc } from '@grafana/data';
 import { TimeRangePickerProps, TimeRangePicker } from '@grafana/ui';
+
+import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
 
 const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
 
 interface Props extends Omit<TimeRangePickerProps, 'history' | 'theme'> {}
 
-export const TimePickerWithHistory: React.FC<Props> = (props) => {
+export const TimePickerWithHistory = (props: Props) => {
   return (
     <LocalStorageValueProvider<TimeRange[]> storageKey={LOCAL_STORAGE_KEY} defaultValue={[]}>
       {(values, onSaveToStore) => {

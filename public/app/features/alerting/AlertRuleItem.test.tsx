@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
+
 import AlertRuleItem, { Props } from './AlertRuleItem';
 
 const setup = (propOverrides?: object) => {
@@ -11,7 +12,7 @@ const setup = (propOverrides?: object) => {
       name: 'Some rule',
       state: 'Open',
       stateText: 'state text',
-      stateIcon: 'icon',
+      stateIcon: 'anchor',
       stateClass: 'state class',
       stateAge: 'age',
       url: 'https://something.something.darkside',

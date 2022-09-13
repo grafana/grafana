@@ -1,23 +1,18 @@
 import React from 'react';
-import { contextSrv } from 'app/core/core';
-import { DashboardModel } from '../../state';
-import { AccessControlAction } from 'app/types';
+
 import { Permissions } from 'app/core/components/AccessControl';
+import { Page } from 'app/core/components/PageNew/Page';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
 
-interface Props {
-  dashboard: DashboardModel;
-}
+import { SettingsPageProps } from '../DashboardSettings/types';
 
-export const AccessControlDashboardPermissions = ({ dashboard }: Props) => {
-  const canListUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
+export const AccessControlDashboardPermissions = ({ dashboard, sectionNav }: SettingsPageProps) => {
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsWrite);
 
   return (
-    <Permissions
-      resource={'dashboards'}
-      resourceId={dashboard.uid}
-      canListUsers={canListUsers}
-      canSetPermissions={canSetPermissions}
-    />
+    <Page navModel={sectionNav}>
+      <Permissions resource={'dashboards'} resourceId={dashboard.uid} canSetPermissions={canSetPermissions} />
+    </Page>
   );
 };

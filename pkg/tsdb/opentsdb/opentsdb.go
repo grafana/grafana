@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -130,7 +130,7 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, dat
 func (s *Service) parseResponse(res *http.Response) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +157,7 @@ func (s *Service) parseResponse(res *http.Response) (*backend.QueryDataResponse,
 		timeVector := make([]time.Time, 0, len(val.DataPoints))
 		values := make([]float64, 0, len(val.DataPoints))
 		name := val.Metric
+		tags := val.Tags
 
 		for timeString, value := range val.DataPoints {
 			timestamp, err := strconv.ParseInt(timeString, 10, 64)
@@ -169,7 +170,7 @@ func (s *Service) parseResponse(res *http.Response) (*backend.QueryDataResponse,
 		}
 		frames = append(frames, data.NewFrame(name,
 			data.NewField("time", nil, timeVector),
-			data.NewField("value", nil, values)))
+			data.NewField("value", tags, values)))
 	}
 	result := resp.Responses["A"]
 	result.Frames = frames

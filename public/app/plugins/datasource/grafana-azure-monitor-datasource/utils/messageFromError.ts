@@ -1,3 +1,15 @@
+import { isValidElement } from 'react';
+
+import { AzureMonitorErrorish } from '../types';
+
+export function messageFromElement(error: AzureMonitorErrorish): AzureMonitorErrorish | undefined {
+  if (isValidElement(error)) {
+    return error;
+  } else {
+    return messageFromError(error);
+  }
+}
+
 export default function messageFromError(error: any): string | undefined {
   if (!error || typeof error !== 'object') {
     return undefined;

@@ -1,4 +1,5 @@
 import { PluginSignatureType, PluginType } from '@grafana/data';
+
 import { RemotePlugin } from '../types';
 
 // Copied from /api/gnet/plugins/alexanderzobnin-zabbix-app

@@ -1,6 +1,7 @@
+import React, { useEffect, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import React, { useEffect, useState } from 'react';
 
 import { QueryEditorRow } from '..';
 import { SELECT_WIDTH } from '../../constants';
@@ -15,7 +16,7 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
 }
 
-export const Service: React.FC<Props> = ({ refId, query, templateVariableOptions, onChange, datasource }) => {
+export const Service = ({ refId, query, templateVariableOptions, onChange, datasource }: Props) => {
   const [services, setServices] = useState<Array<SelectableValue<string>>>([]);
   const { projectName } = query;
 
@@ -38,7 +39,6 @@ export const Service: React.FC<Props> = ({ refId, query, templateVariableOptions
   return (
     <QueryEditorRow label="Service" htmlFor={`${refId}-slo-service`}>
       <Select
-        menuShouldPortal
         inputId={`${refId}-slo-service`}
         width={SELECT_WIDTH}
         allowCustomValue

@@ -1,14 +1,16 @@
-import React from 'react';
+import { render, screen } from '@testing-library/react';
 import { range } from 'lodash';
+import React from 'react';
+
+import { LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
+
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
-import { mount } from 'enzyme';
-import { LogLevel, LogRowModel, LogsDedupStrategy, MutableDataFrame, LogsSortOrder } from '@grafana/data';
-import { LogRow } from './LogRow';
+import { createLogRow } from './__mocks__/logRow';
 
 describe('LogRows', () => {
   it('renders rows', () => {
-    const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
-    const wrapper = mount(
+    const rows: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' }), createLogRow({ uid: '3' })];
+    render(
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
@@ -21,16 +23,16 @@ describe('LogRows', () => {
       />
     );
 
-    expect(wrapper.find(LogRow).length).toBe(3);
-    expect(wrapper.contains('log message 1')).toBeTruthy();
-    expect(wrapper.contains('log message 2')).toBeTruthy();
-    expect(wrapper.contains('log message 3')).toBeTruthy();
+    expect(screen.queryAllByRole('row')).toHaveLength(3);
+    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
+    expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
+    expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 3');
   });
 
   it('renders rows only limited number of rows first', () => {
-    const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
-    jest.useFakeTimers('modern');
-    const wrapper = mount(
+    const rows: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' }), createLogRow({ uid: '3' })];
+    jest.useFakeTimers();
+    const { rerender } = render(
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
@@ -44,23 +46,37 @@ describe('LogRows', () => {
       />
     );
 
-    expect(wrapper.find(LogRow).length).toBe(1);
-    expect(wrapper.contains('log message 1')).toBeTruthy();
-    jest.runAllTimers();
-    wrapper.update();
+    // There is an extra row with the rows that are rendering
+    expect(screen.queryAllByRole('row')).toHaveLength(2);
+    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
 
-    expect(wrapper.find(LogRow).length).toBe(3);
-    expect(wrapper.contains('log message 1')).toBeTruthy();
-    expect(wrapper.contains('log message 2')).toBeTruthy();
-    expect(wrapper.contains('log message 3')).toBeTruthy();
+    jest.runAllTimers();
+    rerender(
+      <LogRows
+        logRows={rows}
+        dedupStrategy={LogsDedupStrategy.none}
+        showLabels={false}
+        showTime={false}
+        wrapLogMessage={true}
+        prettifyLogMessage={true}
+        timeZone={'utc'}
+        previewLimit={1}
+        enableLogDetails={true}
+      />
+    );
+
+    expect(screen.queryAllByRole('row')).toHaveLength(3);
+    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
+    expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
+    expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 3');
 
     jest.useRealTimers();
   });
 
   it('renders deduped rows if supplied', () => {
-    const rows: LogRowModel[] = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
-    const dedupedRows: LogRowModel[] = [makeLog({ uid: '4' }), makeLog({ uid: '5' })];
-    const wrapper = mount(
+    const rows: LogRowModel[] = [createLogRow({ uid: '1' }), createLogRow({ uid: '2' }), createLogRow({ uid: '3' })];
+    const dedupedRows: LogRowModel[] = [createLogRow({ uid: '4' }), createLogRow({ uid: '5' })];
+    render(
       <LogRows
         logRows={rows}
         deduplicatedRows={dedupedRows}
@@ -73,16 +89,15 @@ describe('LogRows', () => {
         enableLogDetails={true}
       />
     );
-
-    expect(wrapper.find(LogRow).length).toBe(2);
-    expect(wrapper.contains('log message 4')).toBeTruthy();
-    expect(wrapper.contains('log message 5')).toBeTruthy();
+    expect(screen.queryAllByRole('row')).toHaveLength(2);
+    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 4');
+    expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 5');
   });
 
   it('renders with default preview limit', () => {
     // PREVIEW_LIMIT * 2 is there because otherwise we just render all rows
-    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map((num) => makeLog({ uid: num.toString() }));
-    const wrapper = mount(
+    const rows: LogRowModel[] = range(PREVIEW_LIMIT * 2 + 1).map((num) => createLogRow({ uid: num.toString() }));
+    render(
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
@@ -95,16 +110,17 @@ describe('LogRows', () => {
       />
     );
 
-    expect(wrapper.find(LogRow).length).toBe(100);
+    // There is an extra row with the rows that are rendering
+    expect(screen.queryAllByRole('row')).toHaveLength(101);
   });
 
   it('renders asc ordered rows if order and function supplied', () => {
     const rows: LogRowModel[] = [
-      makeLog({ uid: '1', timeEpochMs: 1 }),
-      makeLog({ uid: '3', timeEpochMs: 3 }),
-      makeLog({ uid: '2', timeEpochMs: 2 }),
+      createLogRow({ uid: '1', timeEpochMs: 1 }),
+      createLogRow({ uid: '3', timeEpochMs: 3 }),
+      createLogRow({ uid: '2', timeEpochMs: 2 }),
     ];
-    const wrapper = mount(
+    render(
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
@@ -118,17 +134,17 @@ describe('LogRows', () => {
       />
     );
 
-    expect(wrapper.find(LogRow).at(0).text()).toBe('log message 1');
-    expect(wrapper.find(LogRow).at(1).text()).toBe('log message 2');
-    expect(wrapper.find(LogRow).at(2).text()).toBe('log message 3');
+    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
+    expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
+    expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 3');
   });
   it('renders desc ordered rows if order and function supplied', () => {
     const rows: LogRowModel[] = [
-      makeLog({ uid: '1', timeEpochMs: 1 }),
-      makeLog({ uid: '3', timeEpochMs: 3 }),
-      makeLog({ uid: '2', timeEpochMs: 2 }),
+      createLogRow({ uid: '1', timeEpochMs: 1 }),
+      createLogRow({ uid: '3', timeEpochMs: 3 }),
+      createLogRow({ uid: '2', timeEpochMs: 2 }),
     ];
-    const wrapper = mount(
+    render(
       <LogRows
         logRows={rows}
         dedupStrategy={LogsDedupStrategy.none}
@@ -142,34 +158,8 @@ describe('LogRows', () => {
       />
     );
 
-    expect(wrapper.find(LogRow).at(0).text()).toBe('log message 3');
-    expect(wrapper.find(LogRow).at(1).text()).toBe('log message 2');
-    expect(wrapper.find(LogRow).at(2).text()).toBe('log message 1');
+    expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 3');
+    expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
+    expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 1');
   });
 });
-
-const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
-  const uid = overrides.uid || '1';
-  const timeEpochMs = overrides.timeEpochMs || 1;
-  const entry = `log message ${uid}`;
-  return {
-    entryFieldIndex: 0,
-    rowIndex: 0,
-    // Does not need to be filled with current tests
-    dataFrame: new MutableDataFrame(),
-    uid,
-    logLevel: LogLevel.debug,
-    entry,
-    hasAnsi: false,
-    hasUnescapedContent: false,
-    labels: {},
-    raw: entry,
-    timeFromNow: '',
-    timeEpochMs,
-    timeEpochNs: (timeEpochMs * 1000000).toString(),
-    timeLocal: '',
-    timeUtc: '',
-    searchWords: [],
-    ...overrides,
-  };
-};

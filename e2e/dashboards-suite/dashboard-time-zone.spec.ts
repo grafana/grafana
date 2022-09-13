@@ -1,4 +1,3 @@
-import { e2e } from '@grafana/e2e';
 import {
   addDays,
   addHours,
@@ -9,6 +8,8 @@ import {
   parseISO,
   toDate,
 } from 'date-fns';
+
+import { e2e } from '@grafana/e2e';
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',
@@ -60,7 +61,8 @@ e2e.scenario({
     e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
 
     // click to go back to the dashboard.
-    e2e.components.BackButton.backArrow().click({ force: true }).wait(2000);
+    e2e.components.BackButton.backArrow().click({ force: true }).wait(5000);
+    e2e.components.RefreshPicker.runButtonV2().click();
 
     for (const title of panelsToCheck) {
       e2e.components.Panels.Panel.containerByTitle(title)

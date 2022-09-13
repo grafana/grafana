@@ -56,7 +56,7 @@
 }
 
 @include media-breakpoint-down(sm) {
-  div.page-toolbar {
+  nav.page-toolbar {
     padding-left: 53px;
 
     &--fullscreen {

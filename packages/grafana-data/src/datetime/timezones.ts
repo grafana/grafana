@@ -1,6 +1,8 @@
-import moment from 'moment-timezone';
 import { memoize } from 'lodash';
+import moment from 'moment-timezone';
+
 import { TimeZone } from '../types';
+
 import { getTimeZone } from './common';
 
 export enum InternalTimeZones {
@@ -339,7 +341,7 @@ const countryByCode: Record<string, string> = {
   OM: 'Oman',
   PK: 'Pakistan',
   PW: 'Palau',
-  PS: 'Palestinian Territory (Occupied)',
+  PS: 'Palestine, State of',
   PA: 'Panama',
   PG: 'Papua New Guinea',
   PY: 'Paraguay',

@@ -9,27 +9,98 @@ import (
 )
 
 func TestCloudWatchQuery(t *testing.T) {
-	t.Run("Deeplink is not generated for MetricQueryTypeQuery", func(t *testing.T) {
-		startTime := time.Now()
-		endTime := startTime.Add(2 * time.Hour)
-		query := &cloudWatchQuery{
-			RefId:      "A",
-			Region:     "us-east-1",
-			Expression: "",
-			Statistic:  "Average",
-			Period:     300,
-			Id:         "id1",
-			MatchExact: true,
-			Dimensions: map[string][]string{
-				"InstanceId": {"i-12345678"},
-			},
-			MetricQueryType:  MetricQueryTypeQuery,
-			MetricEditorMode: MetricEditorModeBuilder,
-		}
+	t.Run("Deeplink", func(t *testing.T) {
+		t.Run("is not generated for MetricQueryTypeQuery", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &cloudWatchQuery{
+				RefId:      "A",
+				Region:     "us-east-1",
+				Expression: "",
+				Statistic:  "Average",
+				Period:     300,
+				Id:         "id1",
+				MatchExact: true,
+				Dimensions: map[string][]string{
+					"InstanceId": {"i-12345678"},
+				},
+				MetricQueryType:  MetricQueryTypeQuery,
+				MetricEditorMode: MetricEditorModeBuilder,
+			}
 
-		deepLink, err := query.buildDeepLink(startTime, endTime)
-		require.NoError(t, err)
-		assert.Empty(t, deepLink)
+			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.Empty(t, deepLink)
+		})
+
+		t.Run("does not include label in case dynamic label is diabled", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &cloudWatchQuery{
+				RefId:      "A",
+				Region:     "us-east-1",
+				Expression: "",
+				Statistic:  "Average",
+				Period:     300,
+				Id:         "id1",
+				MatchExact: true,
+				Label:      "${PROP('Namespace')}",
+				Dimensions: map[string][]string{
+					"InstanceId": {"i-12345678"},
+				},
+				MetricQueryType:  MetricQueryTypeSearch,
+				MetricEditorMode: MetricEditorModeBuilder,
+			}
+
+			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.NotContains(t, deepLink, "label")
+		})
+
+		t.Run("includes label in case dynamic label is enabled and it's a metric stat query", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &cloudWatchQuery{
+				RefId:      "A",
+				Region:     "us-east-1",
+				Expression: "",
+				Statistic:  "Average",
+				Period:     300,
+				Id:         "id1",
+				MatchExact: true,
+				Label:      "${PROP('Namespace')}",
+				Dimensions: map[string][]string{
+					"InstanceId": {"i-12345678"},
+				},
+				MetricQueryType:  MetricQueryTypeSearch,
+				MetricEditorMode: MetricEditorModeBuilder,
+			}
+
+			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.NotContains(t, deepLink, "label")
+		})
+
+		t.Run("includes label in case dynamic label is enabled and it's a math expression query", func(t *testing.T) {
+			startTime := time.Now()
+			endTime := startTime.Add(2 * time.Hour)
+			query := &cloudWatchQuery{
+				RefId:            "A",
+				Region:           "us-east-1",
+				Statistic:        "Average",
+				Expression:       "SEARCH(someexpression)",
+				Period:           300,
+				Id:               "id1",
+				MatchExact:       true,
+				Label:            "${PROP('Namespace')}",
+				MetricQueryType:  MetricQueryTypeSearch,
+				MetricEditorMode: MetricEditorModeRaw,
+			}
+
+			deepLink, err := query.buildDeepLink(startTime, endTime, false)
+			require.NoError(t, err)
+			assert.NotContains(t, deepLink, "label")
+		})
 	})
 
 	t.Run("SEARCH(someexpression) was specified in the query editor", func(t *testing.T) {

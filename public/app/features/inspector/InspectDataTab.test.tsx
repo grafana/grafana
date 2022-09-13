@@ -1,7 +1,9 @@
-import React, { ComponentProps } from 'react';
-import { DataFrame, FieldType } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React, { ComponentProps } from 'react';
+
+import { DataFrame, FieldType } from '@grafana/data';
+
 import { InspectDataTab } from './InspectDataTab';
 
 // the mock below gets rid of this warning from recompose:
@@ -144,6 +146,32 @@ describe('InspectDataTab', () => {
     it('should not show download traces button if no traces data', () => {
       render(<InspectDataTab {...createProps()} />);
       expect(screen.queryByText(/Download traces/i)).not.toBeInTheDocument();
+    });
+    it('should show download service graph button', () => {
+      const sgFrames = [
+        {
+          name: 'Nodes',
+          fields: [],
+          meta: {
+            preferredVisualisationType: 'nodeGraph',
+          },
+        },
+        {
+          name: 'Edges',
+          fields: [],
+          meta: {
+            preferredVisualisationType: 'nodeGraph',
+          },
+        },
+      ] as unknown as DataFrame[];
+      render(
+        <InspectDataTab
+          {...createProps({
+            data: sgFrames,
+          })}
+        />
+      );
+      expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
     });
   });
 });

@@ -1,6 +1,8 @@
+import React, { FC } from 'react';
+
 import { CallToActionCard } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import React, { FC } from 'react';
+
 import { useRulesAccess } from '../../utils/accessControlHooks';
 
 export const NoRulesSplash: FC = () => {

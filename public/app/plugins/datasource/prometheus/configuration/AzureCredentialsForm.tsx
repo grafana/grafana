@@ -1,8 +1,10 @@
 import React, { ChangeEvent, FunctionComponent, useEffect, useReducer, useState } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { InlineFormLabel, Button } from '@grafana/ui/src/components';
-import { Select } from '@grafana/ui/src/components/Forms/Legacy/Select/Select';
 import { Input } from '@grafana/ui/src/components/Forms/Legacy/Input/Input';
+import { Select } from '@grafana/ui/src/components/Forms/Legacy/Select/Select';
+
 import { AzureAuthType, AzureCredentials, isCredentialsComplete } from './AzureCredentials';
 
 export interface Props {
@@ -155,7 +157,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               Authentication
             </InlineFormLabel>
             <Select
-              menuShouldPortal
               className="width-15"
               value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
               options={authTypeOptions}
@@ -173,7 +174,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   Azure Cloud
                 </InlineFormLabel>
                 <Select
-                  menuShouldPortal
                   className="width-15"
                   value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                   options={azureCloudOptions}
@@ -211,8 +211,10 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
           {typeof credentials.clientSecret === 'symbol' ? (
             <div className="gf-form-inline">
               <div className="gf-form">
-                <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
-                <Input className="width-25" placeholder="configured" disabled={true} />
+                <InlineFormLabel htmlFor="azure-client-secret" className="width-12">
+                  Client Secret
+                </InlineFormLabel>
+                <Input id="azure-client-secret" className="width-25" placeholder="configured" disabled={true} />
               </div>
               <div className="gf-form">
                 <div className="max-width-30 gf-form-inline">
@@ -246,7 +248,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
               <div className="width-25">
                 <Select
-                  menuShouldPortal
                   value={
                     credentials.defaultSubscriptionId
                       ? subscriptions.find((opt) => opt.value === credentials.defaultSubscriptionId)
