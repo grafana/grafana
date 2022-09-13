@@ -39,7 +39,7 @@ import (
 )
 
 var userAdmin = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUser"}
-var userAdminRBAC = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardPublicWrite: {dashboards.ScopeDashboardsAll}}}}
+var userAdminRBAC = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
 var userViewer = &user.SignedInUser{UserID: 3, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUser"}
 var userViewerRBAC = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
 var anonymousUser *user.SignedInUser
@@ -363,7 +363,7 @@ func TestApiSavePublicDashboardConfig(t *testing.T) {
 	}
 }
 
-// `/public/dashboards/:uid/query`` endpoint test
+// `/public/dashboards/:uid/query“ endpoint test
 func TestAPIQueryPublicDashboard(t *testing.T) {
 	mockedResponse := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{

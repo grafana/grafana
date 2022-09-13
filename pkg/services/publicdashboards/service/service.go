@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -109,7 +108,7 @@ func (pd *PublicDashboardServiceImpl) SavePublicDashboardConfig(ctx context.Cont
 
 	// set default value for time settings
 	if dto.PublicDashboard.TimeSettings == nil {
-		dto.PublicDashboard.TimeSettings = simplejson.New()
+		dto.PublicDashboard.TimeSettings = &TimeSettings{}
 	}
 
 	// get existing public dashboard if exists

@@ -328,7 +328,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		// Move server admin into Configuration and rename to administration
 		if configNode != nil && serverAdminNode != nil {
 			configNode.Text = "Administration"
-			serverAdminNode.Url = "/admin"
+			serverAdminNode.Url = "/admin/server"
+			serverAdminNode.HideFromTabs = false
 			configNode.Children = append(configNode.Children, serverAdminNode)
 			adminNodeIndex := len(navTree) - 1
 			navTree = navTree[:adminNodeIndex]
@@ -384,7 +385,8 @@ func (hs *HTTPServer) setupConfigNodes(c *models.ReqContext) ([]*dtos.NavLink, e
 		})
 	}
 
-	if c.OrgRole == org.RoleAdmin || (hs.Cfg.PluginAdminEnabled && ac.ReqGrafanaAdmin(c)) {
+	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
+	if plugins.ReqCanAdminPlugins(hs.Cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(hs.Cfg), plugins.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &dtos.NavLink{
 			Text:        "Plugins",
 			Id:          "plugins",
@@ -714,7 +716,7 @@ func (hs *HTTPServer) buildDataConnectionsNavLink(c *models.ReqContext) *dtos.Na
 
 func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasGlobalAccess := ac.HasGlobalAccess(hs.AccessControl, c)
+	hasGlobalAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
 	adminNavLinks := []*dtos.NavLink{}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)) {
