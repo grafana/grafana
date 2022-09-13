@@ -22,5 +22,6 @@ func TestTempo(t *testing.T) {
 		req, err := service.createRequest(context.Background(), &datasourceInfo{}, "traceID", 1, 2)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(req.Header))
+		assert.Equal(t, "/api/traces/traceID?start=1&end=2", req.URL.String())
 	})
 }
