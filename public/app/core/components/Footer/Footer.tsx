@@ -1,9 +1,11 @@
 import React from 'react';
 
+import { LinkTarget } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
 
 export interface FooterLink {
+  target: LinkTarget;
   text: string;
   id: string;
   icon?: IconName;
@@ -13,18 +15,21 @@ export interface FooterLink {
 export let getFooterLinks = (): FooterLink[] => {
   return [
     {
+      target: '_blank',
       id: 'documentation',
       text: 'Documentation',
       icon: 'document-info',
       url: 'https://grafana.com/docs/grafana/latest/?utm_source=grafana_footer',
     },
     {
+      target: '_blank',
       id: 'support',
       text: 'Support',
       icon: 'question-circle',
       url: 'https://grafana.com/products/enterprise/?utm_source=grafana_footer',
     },
     {
+      target: '_blank',
       id: 'community',
       text: 'Community',
       icon: 'comments-alt',
@@ -48,7 +53,12 @@ export let getVersionLinks = (): FooterLink[] => {
   const links: FooterLink[] = [];
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
 
-  links.push({ id: 'version', text: `${buildInfo.edition}${stateInfo}`, url: licenseInfo.licenseUrl });
+  links.push({
+    target: '_blank',
+    id: 'version',
+    text: `${buildInfo.edition}${stateInfo}`,
+    url: licenseInfo.licenseUrl,
+  });
 
   if (buildInfo.hideVersion) {
     return links;
@@ -59,6 +69,7 @@ export let getVersionLinks = (): FooterLink[] => {
   const docsVersion = isBeta ? 'next' : 'latest';
 
   links.push({
+    target: '_blank',
     id: 'version',
     text: `v${buildInfo.version} (${buildInfo.commit})`,
     url: hasReleaseNotes
@@ -68,6 +79,7 @@ export let getVersionLinks = (): FooterLink[] => {
 
   if (buildInfo.hasUpdate) {
     links.push({
+      target: '_blank',
       id: 'updateVersion',
       text: `New version available!`,
       icon: 'download-alt',
@@ -113,7 +125,7 @@ Footer.displayName = 'Footer';
 
 function FooterItem({ item }: { item: FooterLink }) {
   const content = item.url ? (
-    <a href={item.url} target="_blank" rel="noopener noreferrer" id={item.id}>
+    <a href={item.url} target={item.target} rel="noopener noreferrer" id={item.id}>
       {item.text}
     </a>
   ) : (

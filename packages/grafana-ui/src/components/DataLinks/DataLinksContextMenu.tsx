@@ -26,9 +26,9 @@ export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ chil
   const renderMenuGroupItems = () => {
     return itemsGroup.map((group, index) => (
       <MenuGroup key={`${group.label}${index}`} label={group.label}>
-        {(group.items || []).map((item) => (
+        {(group.items || []).map((item, itemIndex) => (
           <MenuItem
-            key={item.label}
+            key={typeof item.label === 'string' ? item.label : itemIndex}
             url={item.url}
             label={item.label}
             target={item.target}

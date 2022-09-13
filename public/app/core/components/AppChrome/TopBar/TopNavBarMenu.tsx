@@ -16,14 +16,6 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
   if (!node) {
     return null;
   }
-  const onNavigate = (item: NavModelItem) => {
-    const { url, target, onClick } = item;
-    onClick?.();
-
-    if (url) {
-      window.open(url, target);
-    }
-  };
 
   return (
     <Menu>
@@ -32,20 +24,24 @@ export function TopNavBarMenu({ node }: TopNavBarMenuProps) {
         const translationKey = item.id && menuItemTranslations[item.id];
         const itemText = translationKey ? i18n._(translationKey) : item.text;
         const showExternalLinkIcon = /^https?:\/\//.test(item.url || '');
-        return !item.target && item.url?.startsWith('/') ? (
-          <MenuItem url={item.url} label={itemText} key={item.id} />
-        ) : (
+        return item.url ? (
           <MenuItem
-            onClick={() => onNavigate(item)}
-            label={itemText}
-            key={item.id}
-            renderCustomLabel={
-              <>
-                {itemText}
-                {showExternalLinkIcon && <Icon name="external-link-alt" className={styles.icon} aria-hidden />}
-              </>
+            url={item.url}
+            label={
+              showExternalLinkIcon ? (
+                <>
+                  {itemText}
+                  {showExternalLinkIcon && <Icon name="external-link-alt" className={styles.icon} aria-hidden />}
+                </>
+              ) : (
+                itemText
+              )
             }
+            target={item.target}
+            key={item.id}
           />
+        ) : (
+          <MenuItem onClick={item.onClick} label={itemText} key={item.id} />
         );
       })}
       {node.subTitle && (

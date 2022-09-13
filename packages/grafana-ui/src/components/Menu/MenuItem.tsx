@@ -6,7 +6,6 @@ import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
-import { ReactUtils } from '../../utils';
 import { Icon } from '../Icon/Icon';
 
 import { SubMenu } from './SubMenu';
@@ -17,7 +16,7 @@ export type MenuItemElement = HTMLAnchorElement & HTMLButtonElement & HTMLDivEle
 /** @internal */
 export interface MenuItemProps<T = any> {
   /** Label of the menu item */
-  label: string;
+  label: React.ReactNode;
   /** Aria label for accessibility support */
   ariaLabel?: string;
   /** Aria checked for accessibility support */
@@ -41,8 +40,6 @@ export interface MenuItemProps<T = any> {
   tabIndex?: number;
   /** List of menu items for the subMenu */
   childItems?: Array<ReactElement<MenuItemProps>>;
-  /** Custom renderer for label */
-  renderCustomLabel?: React.ReactElement | (() => React.ReactElement);
 }
 
 /** @internal */
@@ -62,7 +59,6 @@ export const MenuItem = React.memo(
       childItems,
       role = 'menuitem',
       tabIndex = -1,
-      renderCustomLabel,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -119,17 +115,7 @@ export const MenuItem = React.memo(
         className={itemStyle}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         href={url}
-        onClick={
-          onClick
-            ? (event) => {
-                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onClick(event);
-                }
-              }
-            : undefined
-        }
+        onClick={onClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
@@ -140,14 +126,10 @@ export const MenuItem = React.memo(
         aria-checked={ariaChecked}
         tabIndex={tabIndex}
       >
-        {renderCustomLabel ? (
-          ReactUtils.renderOrCallToRender(renderCustomLabel)
-        ) : (
-          <>
-            {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
-            {label}
-          </>
-        )}
+        <>
+          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          {label}
+        </>
 
         {hasSubMenu && (
           <SubMenu
