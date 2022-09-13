@@ -23,7 +23,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource } from './datasource';
 import { createMetadataRequest, createLokiDatasource } from './mocks';
-import { LokiOptions, LokiQuery, LokiQueryType } from './types';
+import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType } from './types';
 import { LokiVariableSupport } from './variables';
 
 const templateSrvStub = {
@@ -464,36 +464,71 @@ describe('LokiDatasource', () => {
       return { ds };
     };
 
-    it(`should return label names for Loki`, async () => {
+    it('should return label names for Loki', async () => {
       const { ds } = getTestContext();
 
-      const res = await ds.metricFindQuery('label_names()');
+      const legacyResult = await ds.metricFindQuery('label_names()');
+      const result = await ds.metricFindQuery({ refId: 'test', type: LokiVariableQueryType.LabelNames });
 
-      expect(res).toEqual([{ text: 'label1' }, { text: 'label2' }]);
+      expect(legacyResult).toEqual(result);
+      expect(result).toEqual([{ text: 'label1' }, { text: 'label2' }]);
     });
 
-    it(`should return label values for Loki when no matcher`, async () => {
+    it('should return label values for Loki when no matcher', async () => {
       const { ds } = getTestContext();
 
-      const res = await ds.metricFindQuery('label_values(label1)');
+      const legacyResult = await ds.metricFindQuery('label_values(label1)');
+      const result = await ds.metricFindQuery({
+        refId: 'test',
+        type: LokiVariableQueryType.LabelValues,
+        label: 'label1',
+      });
 
-      expect(res).toEqual([{ text: 'value1' }, { text: 'value2' }]);
+      expect(legacyResult).toEqual(result);
+      expect(result).toEqual([{ text: 'value1' }, { text: 'value2' }]);
     });
 
-    it(`should return label values for Loki with matcher`, async () => {
+    it('should return label values for Loki with matcher', async () => {
       const { ds } = getTestContext();
 
-      const res = await ds.metricFindQuery('label_values({label1="value1", label2="value2"},label5)');
+      const legacyResult = await ds.metricFindQuery('label_values({label1="value1", label2="value2"},label5)');
+      const result = await ds.metricFindQuery({
+        refId: 'test',
+        type: LokiVariableQueryType.LabelValues,
+        stream: '{label1="value1", label2="value2"}',
+        label: 'label5',
+      });
 
-      expect(res).toEqual([{ text: 'value5' }]);
+      expect(legacyResult).toEqual(result);
+      expect(result).toEqual([{ text: 'value5' }]);
     });
 
-    it(`should return empty array when incorrect query for Loki`, async () => {
+    it('should return empty array when incorrect query for Loki', async () => {
       const { ds } = getTestContext();
 
-      const res = await ds.metricFindQuery('incorrect_query');
+      const result = await ds.metricFindQuery('incorrect_query');
 
-      expect(res).toEqual([]);
+      expect(result).toEqual([]);
+    });
+
+    it('should interpolate strings in the query', async () => {
+      const { ds } = getTestContext();
+
+      await ds.metricFindQuery('label_names()');
+      await ds.metricFindQuery({
+        refId: 'test',
+        type: LokiVariableQueryType.LabelValues,
+        stream: '{label1="value1", label2="value2"}',
+        label: 'label5',
+      });
+
+      expect(templateSrvStub.replace).toHaveBeenCalledWith('label_names()', undefined, expect.any(Function));
+      expect(templateSrvStub.replace).toHaveBeenCalledWith(
+        '{label1="value1", label2="value2"}',
+        undefined,
+        expect.any(Function)
+      );
+      expect(templateSrvStub.replace).toHaveBeenCalledWith('label5', undefined, expect.any(Function));
     });
   });
 

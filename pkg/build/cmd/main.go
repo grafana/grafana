@@ -108,6 +108,12 @@ func main() {
 				&noInstallDepsFlag,
 			},
 		},
+		{
+			Name:      "publish-metrics",
+			Usage:     "Publish a set of metrics from stdin",
+			ArgsUsage: "<api-key>",
+			Action:    ArgCountWrapper(1, PublishMetrics),
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
