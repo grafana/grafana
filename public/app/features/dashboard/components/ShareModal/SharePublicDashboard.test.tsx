@@ -74,7 +74,7 @@ describe('SharePublic', () => {
     render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
 
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
-    expect(screen.getByRole('tablist')).not.toHaveTextContent('Public Dashboard');
+    expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
   });
 
   it('renders share panel when public dashboards feature is enabled', async () => {
