@@ -223,3 +223,14 @@ func GetOrgRoles(user *user.SignedInUser) []string {
 
 	return roles
 }
+
+func BackgroundUser(name string, role org.RoleType, orgID int64, permissions []Permission) *user.SignedInUser {
+	return &user.SignedInUser{
+		OrgID:   orgID,
+		OrgRole: role,
+		Login:   "grafana_" + name,
+		Permissions: map[int64]map[string][]string{
+			orgID: GroupScopesByAction(permissions),
+		},
+	}
+}
