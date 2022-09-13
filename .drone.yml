@@ -1224,7 +1224,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
+  - ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   depends_on:
   - test-a11y-frontend
   environment:
@@ -5114,6 +5114,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 7b6e3697e7278f2efc8a8c3865df9bd4ad3526e883c27c57f4a08c2f51869793
+hmac: 20e4a947fba1881cbb9b18c8f11b2c896652c701e9c5018e135632034778b4f1
 
 ...
