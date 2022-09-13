@@ -241,7 +241,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
                   value={Boolean(rand.labels)}
                   onChange={(v) => toggleRandomize('labels')}
                 />
-                {/* <InlineSwitch
+                <InlineSwitch
                   label="Field names"
                   showLabel={true}
                   value={Boolean(rand.names)}
@@ -252,7 +252,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
                   showLabel={true}
                   value={Boolean(rand.values)}
                   onChange={(v) => toggleRandomize('values')}
-                /> */}
+                />
               </HorizontalGroup>
             </Field>
           )}
