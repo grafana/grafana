@@ -119,7 +119,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   };
 
   const doImportDashboard = () => {
-    setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: JSON.parse(snapshotText) });
+    setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot.value });
     global.open(config.appUrl + 'dashboard/new', '_blank');
   };
 
@@ -280,7 +280,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
             {({ height }) => (
               <>
                 <iframe
-                  src={`/dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`}
+                  src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`}
                   width="100%"
                   height={height - 100}
                   frameBorder="0"
