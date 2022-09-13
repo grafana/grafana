@@ -12,7 +12,6 @@ func ExportVersion(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	version := metadata.GrafanaVersion
 
 	const distDir = "dist"
 	if err := os.RemoveAll(distDir); err != nil {
@@ -23,7 +22,7 @@ func ExportVersion(c *cli.Context) error {
 	}
 
 	// nolint:gosec
-	if err := os.WriteFile(filepath.Join(distDir, "grafana.version"), []byte(version), 0664); err != nil {
+	if err := os.WriteFile(filepath.Join(distDir, "grafana.version"), []byte(metadata.GrafanaVersion), 0664); err != nil {
 		return err
 	}
 
