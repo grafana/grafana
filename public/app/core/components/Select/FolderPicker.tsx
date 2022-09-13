@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useStyles2, ActionMeta, AsyncSelect, Input } from '@grafana/ui';
+import { useStyles2, ActionMeta, AsyncSelect, Input, InputActionMeta } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderById, searchFolders } from 'app/features/manage-dashboards/state/actions';
@@ -68,6 +68,7 @@ export function FolderPicker(props: Props) {
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const styles = useStyles2(getStyles);
+  const [inputValue, setInputValue] = useState('');
 
   const getOptions = useCallback(
     async (query: string) => {
@@ -149,7 +150,7 @@ export function FolderPicker(props: Props) {
   useEffect(() => {
     // if this is not the same as our initial value notify parent
     if (folder && folder.value !== initialFolderId) {
-      onChange({ id: folder.value!, title: folder.label! });
+      !isCreatingNew && onChange({ id: folder.value!, title: folder.label! });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folder, initialFolderId]);
@@ -180,7 +181,7 @@ export function FolderPicker(props: Props) {
       if (value === VALUE_FOR_ADD) {
         setFolder({
           id: VALUE_FOR_ADD,
-          title: newFolder?.title,
+          title: inputValue,
         });
       } else {
         if (!newFolder) {
@@ -196,7 +197,7 @@ export function FolderPicker(props: Props) {
         onChange({ id: newFolder.value!, title: newFolder.label! });
       }
     },
-    [onChange, onClear, rootName]
+    [onChange, onClear, rootName, inputValue]
   );
 
   const createNewFolder = useCallback(
@@ -245,6 +246,18 @@ export function FolderPicker(props: Props) {
     setFolder({ value: 0, label: rootName });
     setIsCreatingNew(false);
   };
+
+  const onInputChange = (value: string, { action }: InputActionMeta) => {
+    if (action === 'input-change') {
+      setInputValue((ant) => value);
+    }
+
+    if (action === 'menu-close') {
+      setInputValue((_) => value);
+    }
+    return;
+  };
+
   if (isCreatingNew) {
     return (
       <>
@@ -270,6 +283,8 @@ export function FolderPicker(props: Props) {
           loadingMessage={t({ id: 'folder-picker.loading', message: 'Loading folders...' })}
           defaultOptions
           defaultValue={folder}
+          inputValue={inputValue}
+          onInputChange={onInputChange}
           value={folder}
           allowCustomValue={enableCreateNew && !customAdd}
           loadOptions={debouncedSearch}
