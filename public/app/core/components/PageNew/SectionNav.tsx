@@ -15,7 +15,7 @@ export function SectionNav({ model }: Props) {
 
   return (
     <nav className={styles.nav}>
-      <CustomScrollbar>
+      <CustomScrollbar showScrollIndicators>
         <div className={styles.items} role="tablist">
           <SectionNavItem item={model.main} />
         </div>
