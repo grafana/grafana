@@ -1,6 +1,10 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
+import { useStyles2 } from '@grafana/ui';
+
 export default function CheatSheet() {
+  const styles = useStyles2(getStyles);
   return (
     <>
       <h2 id="jaeger-cheat-sheet">Jaeger Cheat Sheet</h2>
@@ -10,7 +14,7 @@ export default function CheatSheet() {
           href="https://grafana.com/docs/grafana/latest/datasources/jaeger"
           target="_blank"
           rel="noreferrer"
-          style={{ color: '#1F62E0' }}
+          className={styles.linkColor}
         >
           here,
         </a>{' '}
@@ -18,7 +22,7 @@ export default function CheatSheet() {
       </p>
 
       <hr />
-      <ul style={{ listStyle: 'none' }}>
+      <ul className={styles.removeBullets}>
         <li>
           Search - filter traces by service name. Addtionally, you can filter by tags or min/max duration, as well as
           limit the number of traces that are returned.
@@ -31,7 +35,7 @@ export default function CheatSheet() {
             href="https://grafana.com/docs/grafana/latest/datasources/jaeger/#upload-json-trace-file"
             target="_blank"
             rel="noreferrer"
-            style={{ color: '#1F62E0' }}
+            className={styles.linkColor}
           >
             here
           </a>{' '}
@@ -41,3 +45,12 @@ export default function CheatSheet() {
     </>
   );
 }
+
+const getStyles = () => ({
+  linkColor: css`
+    color: #1f62e0;
+  `,
+  removeBullets: css`
+    list-style-type: none;
+  `,
+});
