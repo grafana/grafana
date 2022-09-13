@@ -6,10 +6,10 @@ export const pubDashApi = createApi({
   reducerPath: 'pubDashApi',
   baseQuery: fetchBaseQuery({ baseUrl: '/api/dashboards' }),
   endpoints: (builder) => ({
-    getConfig: builder.query<PublicDashboard, string>({
+    getPubDashConfig: builder.query<PublicDashboard, string>({
       query: (dashboardUid) => `/uid/${dashboardUid}/public-config`,
     }),
   }),
 });
 
-export const { useGetConfigQuery } = pubDashApi;
+export const { useGetPubDashConfigQuery } = pubDashApi;

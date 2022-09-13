@@ -22,6 +22,7 @@ import {
 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+// import { useGetPubDashConfigQuery } from 'app/features/alerting/unified/api/pubDashApi';
 import { dispatch } from 'app/store/store';
 
 import { contextSrv } from '../../../../core/services/context_srv';
@@ -51,6 +52,8 @@ export const SharePublicDashboard = (props: Props) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
 
+  // const { isLoading, data: publicDashboard } = useGetPubDashConfigQuery(props.dashboard.uid);
+
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
 
   const [publicDashboard, setPublicDashboardConfig] = useState<PublicDashboard>({
@@ -71,7 +74,7 @@ export const SharePublicDashboard = (props: Props) => {
   }, [props.dashboard.uid]);
 
   useEffect(() => {
-    if (publicDashboardPersisted(publicDashboard)) {
+    if (publicDashboard && publicDashboardPersisted(publicDashboard)) {
       setAcknowledgements({
         public: true,
         datasources: true,
