@@ -5,6 +5,7 @@ import {
   ArrayVector,
   DataFrame,
   dataFrameToJSON,
+  DataQueryRequest,
   dateTime,
   Field,
   FieldType,
@@ -28,12 +29,22 @@ import {
 import { validLogsQuery, validMetricsQuery } from './__mocks__/queries';
 import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './datasource';
 import {
+  CloudWatchAnnotationQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
   MetricEditorMode,
   MetricQueryType,
 } from './types';
+
+const mockTimeRange = {
+  from: dateTime(1546372800000),
+  to: dateTime(1546380000000),
+  raw: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+  },
+};
 
 describe('datasource', () => {
   describe('query', () => {
@@ -306,6 +317,53 @@ describe('datasource', () => {
         baseQuery.sqlExpression = 'select SUM(CPUUtilization) from "AWS/EC2"';
         const valid = datasource.filterMetricQuery(baseQuery);
         expect(valid).toBeTruthy();
+      });
+    });
+  });
+
+  describe('annotation query', () => {
+    const query: DataQueryRequest<CloudWatchAnnotationQuery> = {
+      range: mockTimeRange,
+      rangeRaw: mockTimeRange.raw,
+      targets: [
+        {
+          actionPrefix: '',
+          alarmNamePrefix: '',
+          datasource: { type: 'cloudwatch' },
+          dimensions: { InstanceId: 'i-12345678' },
+          matchExact: true,
+          metricName: 'CPUUtilization',
+          period: '300',
+          prefixMatching: false,
+          queryMode: 'Annotations',
+          refId: 'Anno',
+          namespace: `$${namespaceVariable.name}`,
+          region: `$${regionVariable.name}`,
+          statistic: 'Average',
+        },
+      ],
+      requestId: '',
+      interval: '',
+      intervalMs: 0,
+      scopedVars: {},
+      timezone: '',
+      app: '',
+      startTime: 0,
+    };
+
+    it('should issue the correct query', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource({ variables: [namespaceVariable, regionVariable] });
+      await expect(datasource.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject(
+          expect.objectContaining({
+            region: regionVariable.current.value,
+            namespace: namespaceVariable.current.value,
+            metricName: query.targets[0].metricName,
+            dimensions: { InstanceId: ['i-12345678'] },
+            statistic: query.targets[0].statistic,
+            period: query.targets[0].period,
+          })
+        );
       });
     });
   });

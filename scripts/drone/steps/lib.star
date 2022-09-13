@@ -1,13 +1,14 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v3.0.5'
-build_image = 'grafana/build-container:1.5.9'
+grabpl_version = 'v3.0.6'
+build_image = 'grafana/build-container:1.6.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
+go_image = 'golang:1.19.1'
 
 disable_tests = False
 trigger_oss = {
@@ -608,7 +609,7 @@ def frontend_metrics_step(edition, trigger=None):
         },
         'failure': 'ignore',
         'commands': [
-            './scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
+            './scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $${GRAFANA_MISC_STATS_API_KEY}',
         ],
     }
     if trigger:
@@ -1251,7 +1252,7 @@ def compile_build_cmd(edition='oss'):
           dependencies = ['init-enterprise',]
     return {
         'name': 'compile-build-cmd',
-        'image': 'golang:1.17',
+        'image': go_image,
         'commands': [
             "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
         ],

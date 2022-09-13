@@ -21,7 +21,7 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Public dashboards]({{< relref "dashboard-public/" >}})
 - [Annotations]({{< relref "annotations/" >}})
 - [Playlist]({{< relref "./create-manage-playlists/" >}})
-- [Reporting]({{< relref "../share-dashboards-panels#reporting" >}})
+- [Reporting]({{< relref "./create-reports" >}})
 - [Time range controls]({{< relref "./manage-dashboards/#common-time-range-controls" >}})
 - [Dashboard version history]({{< relref "dashboard-history/" >}})
 - [Dashboard export and import]({{< relref "./manage-dashboards/#export-and-import-dashboards" >}})

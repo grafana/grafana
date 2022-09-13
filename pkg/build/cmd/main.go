@@ -11,7 +11,6 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Before = GenerateVersions
 	app.Commands = cli.Commands{
 		{
 			Name:      "build-backend",
@@ -108,6 +107,12 @@ func main() {
 				&signFlag,
 				&noInstallDepsFlag,
 			},
+		},
+		{
+			Name:      "publish-metrics",
+			Usage:     "Publish a set of metrics from stdin",
+			ArgsUsage: "<api-key>",
+			Action:    ArgCountWrapper(1, PublishMetrics),
 		},
 	}
 

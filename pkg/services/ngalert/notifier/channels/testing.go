@@ -110,11 +110,12 @@ func newTestImage() (string, error) {
 // mockTimeNow replaces function timeNow to return constant time.
 // It returns a function that resets the variable back to its original value.
 // This allows usage of this function with defer:
-// func Test (t *testing.T) {
-//    now := time.Now()
-//    defer mockTimeNow(now)()
-//    ...
-// }
+//
+//	func Test (t *testing.T) {
+//	   now := time.Now()
+//	   defer mockTimeNow(now)()
+//	   ...
+//	}
 func mockTimeNow(constTime time.Time) func() {
 	timeNow = func() time.Time {
 		return constTime

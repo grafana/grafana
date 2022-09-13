@@ -16,10 +16,12 @@ import { languageDefinition } from './traceql';
 interface Props {
   value: string;
   onChange: (val: string) => void;
+  onRunQuery: () => void;
   datasource: TempoDatasource;
 }
 
 export function TraceQLEditor(props: Props) {
+  const { onRunQuery } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource);
   const styles = useStyles2(getStyles);
   return (
@@ -47,9 +49,27 @@ export function TraceQLEditor(props: Props) {
       onBeforeEditorMount={ensureTraceQL}
       onEditorDidMount={(editor, monaco) => {
         setupAutocompleteFn(editor, monaco);
+        setupActions(editor, monaco, onRunQuery);
       }}
     />
   );
+}
+
+function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco, onRunQuery: () => void) {
+  editor.addAction({
+    id: 'run-query',
+    label: 'Run Query',
+
+    keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+
+    contextMenuGroupId: 'navigation',
+
+    contextMenuOrder: 1.5,
+
+    run: function () {
+      onRunQuery();
+    },
+  });
 }
 
 /**

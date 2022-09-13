@@ -325,7 +325,6 @@ export const DashNav = React.memo<Props>((props) => {
   if (config.featureToggles.topnav) {
     return (
       <AppChromeUpdate
-        pageNav={{ text: title }}
         actions={
           <>
             {renderLeftActions()}

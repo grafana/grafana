@@ -131,7 +131,7 @@ func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.H
 
 // swagger:route GET /search/sorting search listSortOptions
 //
-// List search sorting options
+// List search sorting options.
 //
 // Responses:
 // 200: listSortOptionsResponse
