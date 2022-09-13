@@ -10,56 +10,47 @@ import logqlGrammar from '../../syntax';
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType } from '../types';
+import { LokiQueryPattern, LokiQueryPatternType } from '../types';
 
 type Props = {
   isOpen: boolean;
   query: LokiQuery;
+  queries: DataQuery[] | undefined;
   onClose: () => void;
   onChange: (query: LokiQuery) => void;
-  queries?: DataQuery[];
   onAddQuery?: (query: LokiQuery) => void;
 };
 
 export const QueryPatternsModal = (props: Props) => {
   const { isOpen, onClose, onChange, onAddQuery, query, queries } = props;
-
   const [openTabs, setOpenTabs] = useState<string[]>([]);
-  const [selectedPatternIndex, setSelectedPatternIndex] = useState<number | null>(null);
-
+  const [selectedPatternConfirmationIndex, setSelectedPatternConfirmationIndex] = useState<number | null>(null);
   const indexOfSelectedCard = useRef<number | null>(null);
 
+  const styles = useStyles2(getStyles);
   const lang = { grammar: logqlGrammar, name: 'logql' };
+  const hasPreviousQuery = buildVisualQueryFromString(query.expr).query.operations.length > 0;
   const hasNewQueryOption = !!onAddQuery;
 
-  const styles = useStyles2(getStyles);
+  const onPatternSelect = (pattern: LokiQueryPattern, selectAsNewQuery = false) => {
+    const queryString = selectAsNewQuery ? '' : query.expr;
+    const visualQuery = buildVisualQueryFromString(queryString);
+    visualQuery.query.operations = pattern.operations;
 
-  const {
-    query: { operations },
-  } = buildVisualQueryFromString(query.expr);
-
-  const hasPreviousQuery =
-    operations.length > 1 ||
-    // this is for a case when we have empty line contains pre-selected
-    (operations.length === 1 && operations[0].id === LokiOperationId.LineContains && operations[0].params[0] === '');
-
-  const onPatternSelect = (pattern: LokiQueryPattern, addNewQuery = false) => {
-    const queryString = addNewQuery ? '' : query.expr;
-    const result = buildVisualQueryFromString(queryString);
-    result.query.operations = pattern.operations;
-
-    if (hasNewQueryOption && addNewQuery) {
+    if (hasNewQueryOption && selectAsNewQuery) {
       onAddQuery({
         ...query,
         refId: getNextRefIdChar(queries ?? [query]),
-        expr: lokiQueryModeller.renderQuery(result.query),
+        expr: lokiQueryModeller.renderQuery(visualQuery.query),
       });
     } else {
       onChange({
         ...query,
-        expr: lokiQueryModeller.renderQuery(result.query),
+        expr: lokiQueryModeller.renderQuery(visualQuery.query),
       });
     }
+    setSelectedPatternConfirmationIndex(null);
+    onClose();
   };
 
   return (
@@ -96,38 +87,37 @@ export const QueryPatternsModal = (props: Props) => {
                       />
                     </div>
                     <Card.Actions>
-                      {(selectedPatternIndex === null || selectedPatternIndex !== index) && (
+                      {selectedPatternConfirmationIndex !== index ? (
                         <Button
                           size="sm"
                           onClick={() => {
                             if (hasPreviousQuery) {
+                              // If user has previous query, we need to confirm that they want to replace it
                               indexOfSelectedCard.current = index;
-                              setSelectedPatternIndex(index);
+                              setSelectedPatternConfirmationIndex(index);
                             } else {
                               onPatternSelect(pattern);
-                              onClose();
                             }
                           }}
                         >
                           Use this query
                         </Button>
-                      )}
-                      {selectedPatternIndex === index && (
+                      ) : (
                         <>
                           <div className={styles.spacing}>
-                            {hasNewQueryOption
-                              ? 'If you would like to use this query, you can either replace your current query or create a new query.'
-                              : 'If you would like to use this query, your current query will be replaced.'}
+                            {`If you would like to use this query, ${
+                              hasNewQueryOption
+                                ? 'you can either replace your current query or create a new query'
+                                : 'your current query will be replaced'
+                            }.`}
                           </div>
-                          <Button size="sm" fill="outline" onClick={() => setSelectedPatternIndex(null)}>
+                          <Button size="sm" fill="outline" onClick={() => setSelectedPatternConfirmationIndex(null)}>
                             Back
                           </Button>
                           <Button
                             size="sm"
                             onClick={() => {
                               onPatternSelect(pattern);
-                              setSelectedPatternIndex(null);
-                              onClose();
                             }}
                           >
                             Replace query
@@ -137,8 +127,6 @@ export const QueryPatternsModal = (props: Props) => {
                               size="sm"
                               onClick={() => {
                                 onPatternSelect(pattern, true);
-                                setSelectedPatternIndex(null);
-                                onClose();
                               }}
                             >
                               Create new query
