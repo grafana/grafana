@@ -1,7 +1,6 @@
 package config
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
@@ -31,41 +30,40 @@ type Cfg struct {
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
-	return NewCfg(settingProvider, grafanaCfg.BuildVersion)
+	return NewCfg(settingProvider, grafanaCfg)
 }
 
-func NewCfg(settingProvider setting.Provider, buildVersion string) *Cfg {
+func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 	logger := log.New("plugin.cfg")
 
 	azure := settingProvider.Section("azure")
-	managedIdentityEnabled, err := strconv.ParseBool(azure.KeyValue("managed_identity_enabled").Value())
-	if err != nil {
-		logger.Warn("Could not parse plugin config 'managed_identity_enabled'", "err", err)
-		managedIdentityEnabled = false
-	}
-
 	aws := settingProvider.Section("aws")
-	assumeRoleEnabled, err := strconv.ParseBool(aws.KeyValue("assume_role_enabled").Value())
-	if err != nil {
-		logger.Warn("Could not parse plugin config 'assume_role_enabled'", "err", err)
-		assumeRoleEnabled = false
+	plugins := settingProvider.Section("plugins")
+
+	allowedUnsigned := grafanaCfg.PluginsAllowUnsigned
+	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
+		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
 	}
 
-	// TODO confirm if we should specify default values
+	allowedAuth := grafanaCfg.AWSAllowedAuthProviders
+	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
+		allowedUnsigned = strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ",")
+	}
+
 	return &Cfg{
 		log:                     logger,
-		DevMode:                 settingProvider.KeyValue("", "app_mode").Value() == setting.Dev,
+		BuildVersion:            grafanaCfg.BuildVersion,
+		DevMode:                 settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
+		EnterpriseLicensePath:   settingProvider.KeyValue("enterprise", "license_path").MustString(grafanaCfg.EnterpriseLicensePath),
 		PluginSettings:          extractPluginSettings(settingProvider),
-		PluginsAllowUnsigned:    strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ","),
-		EnterpriseLicensePath:   settingProvider.KeyValue("enterprise", "license_path").Value(),
-		AWSAllowedAuthProviders: strings.Split(aws.KeyValue("allowed_auth_providers").Value(), ","),
-		AWSAssumeRoleEnabled:    assumeRoleEnabled,
+		PluginsAllowUnsigned:    allowedUnsigned,
+		AWSAllowedAuthProviders: allowedAuth,
+		AWSAssumeRoleEnabled:    aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
 		Azure: &azsettings.AzureSettings{
-			Cloud:                   azure.KeyValue("cloud").Value(),
-			ManagedIdentityEnabled:  managedIdentityEnabled,
-			ManagedIdentityClientId: azure.KeyValue("managed_identity_client_id").Value(),
+			Cloud:                   azure.KeyValue("cloud").MustString(grafanaCfg.Azure.Cloud),
+			ManagedIdentityEnabled:  azure.KeyValue("managed_identity_enabled").MustBool(grafanaCfg.Azure.ManagedIdentityEnabled),
+			ManagedIdentityClientId: azure.KeyValue("managed_identity_client_id").MustString(grafanaCfg.Azure.ManagedIdentityClientId),
 		},
-		BuildVersion: buildVersion,
 	}
 }
 
