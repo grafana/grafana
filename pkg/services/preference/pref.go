@@ -2,6 +2,9 @@ package pref
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type Service interface {
@@ -11,4 +14,10 @@ type Service interface {
 	Patch(context.Context, *PatchPreferenceCommand) error
 	GetDefaults() *Preference
 	DeleteByUser(context.Context, int64) error
+}
+
+type HTTPService interface {
+	GetOrgPreferences(c *models.ReqContext) response.Response
+	UpdateOrgPreferences(c *models.ReqContext) response.Response
+	PatchOrgPreferences(c *models.ReqContext) response.Response
 }

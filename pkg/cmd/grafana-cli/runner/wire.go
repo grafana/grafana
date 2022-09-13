@@ -332,6 +332,9 @@ var wireSet = wire.NewSet(
 	opentsdb.ProvideService,
 	acimpl.ProvideAccessControl,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
+	wire.Bind(new(pref.Service), new(*prefimpl.Service)),
+	prefhttp.ProvideService,
+	wire.Bind(new(pref.HTTPService), new(*prefhttp.Service)),
 )
 
 func Initialize(cfg *setting.Cfg) (Runner, error) {

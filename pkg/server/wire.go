@@ -94,6 +94,8 @@ import (
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
+	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/prefhttp"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -339,6 +341,9 @@ var wireBasicSet = wire.NewSet(
 	userauthimpl.ProvideService,
 	acimpl.ProvideAccessControl,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
+	wire.Bind(new(pref.Service), new(*prefimpl.Service)),
+	prefhttp.ProvideService,
+	wire.Bind(new(pref.HTTPService), new(*prefhttp.Service)),
 )
 
 var wireSet = wire.NewSet(
