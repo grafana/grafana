@@ -14,7 +14,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/org"
 	"golang.org/x/oauth2"
 )
 
@@ -167,7 +166,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 	}
 
-	if s.roleAttributeStrict && !org.RoleType(userInfo.Role).IsValid() {
+	if s.roleAttributeStrict && !userInfo.Role.IsValid() {
 		return nil, ErrInvalidBasicRole
 	}
 
