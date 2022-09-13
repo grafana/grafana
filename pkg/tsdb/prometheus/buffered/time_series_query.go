@@ -369,7 +369,7 @@ func matrixToDataFrames(matrix model.Matrix, query *PrometheusQuery, frames data
 			value := float64(k.Value)
 
 			if !math.IsNaN(value) {
-				valueField.Set(i, value)
+				valueField.Set(i, &value)
 			}
 		}
 
