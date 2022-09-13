@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { config } from '@grafana/runtime';
 import { Icon, IconName } from '@grafana/ui';
@@ -82,8 +82,13 @@ export function setVersionLinkFn(fn: typeof getFooterLinks) {
   getVersionLinks = fn;
 }
 
-export const Footer: FC = React.memo(() => {
-  const links = getFooterLinks().concat(getVersionLinks());
+export interface Props {
+  /** Link overrides to show specific links in the UI */
+  customLinks?: FooterLink[] | null;
+}
+
+export const Footer = React.memo(({ customLinks }: Props) => {
+  const links = (customLinks || getFooterLinks()).concat(getVersionLinks());
 
   return (
     <footer className="footer">

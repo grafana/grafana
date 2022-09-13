@@ -23,7 +23,7 @@ export function SectionNav(props: Props) {
         {main.img && <img className={styles.sectionImg} src={main.img} alt={`logo of ${main.text}`} />}
         {props.model.main.text}
       </h2>
-      <CustomScrollbar>
+      <CustomScrollbar showScrollIndicators>
         <div className={styles.items} role="tablist">
           {directChildren.map((child, index) => {
             return (

@@ -47,6 +47,7 @@ export interface AzureMetricQuery {
   resourceName?: string;
   /** Resource type */
   metricNamespace?: string;
+  customNamespace?: string;
   metricName?: string;
   timeGrain?: string;
   aggregation?: string;
