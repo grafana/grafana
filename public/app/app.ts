@@ -154,10 +154,17 @@ export class GrafanaApp {
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);
 
+      // initialize chrome service
+      const queryParams = locationService.getSearchObject();
+      const chromeService = new AppChromeService();
+
+      // Read initial kiosk mode from url at app startup
+      chromeService.setKioskModeFromUrl(queryParams.kiosk);
+
       this.context = {
         backend: backendSrv,
         location: locationService,
-        chrome: new AppChromeService(),
+        chrome: chromeService,
         config,
       };
 

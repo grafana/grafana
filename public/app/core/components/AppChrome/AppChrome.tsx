@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { KioskMode } from 'app/types';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 
@@ -19,6 +20,8 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
+  const chromeless = state.chromeless || state.kioskMode !== KioskMode.Off;
+
   if (!config.featureToggles.topnav) {
     return <main className="main-view">{children}</main>;
   }
@@ -26,12 +29,12 @@ export function AppChrome({ children }: Props) {
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentNoSearchBar]: state.searchBarHidden,
-    [styles.contentChromeless]: state.chromeless,
+    [styles.contentChromeless]: chromeless,
   });
 
   return (
     <main className="main-view">
-      {!state.chromeless && (
+      {!chromeless && (
         <div className={cx(styles.topNav)}>
           {!state.searchBarHidden && <TopSearchBar />}
           <NavToolbar

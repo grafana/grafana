@@ -39,7 +39,7 @@ export function NavToolbar({
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
-        <ToolbarButton onClick={onToggleSearchBar} narrow tooltip="Toggle top search bar">
+        <ToolbarButton onClick={onToggleSearchBar} narrow title="Toggle top search bar">
           <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
         </ToolbarButton>
       </div>

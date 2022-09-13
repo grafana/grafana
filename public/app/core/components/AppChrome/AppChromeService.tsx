@@ -1,9 +1,10 @@
 import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import store from 'app/core/store';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
+import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
@@ -14,6 +15,7 @@ export interface AppChromeState {
   actions?: React.ReactNode;
   searchBarHidden?: boolean;
   megaMenuOpen?: boolean;
+  kioskMode: KioskMode;
 }
 
 const defaultSection: NavModelItem = { text: 'Grafana' };
@@ -27,6 +29,7 @@ export class AppChromeService {
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: defaultSection,
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
+    kioskMode: KioskMode.Off,
   });
 
   registerRouteRender(route: RouteDescriptor) {
@@ -65,6 +68,18 @@ export class AppChromeService {
   setMegaMenu = (megaMenuOpen: boolean) => {
     this.update({ megaMenuOpen });
   };
+
+  setKioskModeFromUrl(kiosk: UrlQueryValue) {
+    switch (kiosk) {
+      case 'tv':
+        this.update({ kioskMode: KioskMode.TV });
+      case '1':
+      case true:
+        this.update({ kioskMode: KioskMode.Full });
+    }
+  }
+
+  cyckleKioskMode() {}
 
   toggleSearchBar = () => {
     const searchBarHidden = !this.state.getValue().searchBarHidden;
