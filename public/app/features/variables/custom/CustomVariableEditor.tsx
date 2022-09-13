@@ -52,7 +52,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
             <VariableTextAreaField
               name="Values separated by comma"
               value={this.props.variable.query}
-              placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
+              placeholder="1 : mykey, 10 : myvalue, mykey : escaped\,value"
               onChange={this.onChange}
               onBlur={this.onBlur}
               required
