@@ -33,13 +33,13 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	if len(route.URL) > 0 {
 		interpolatedURL, err := interpolateString(route.URL, data)
 		if err != nil {
-			logger.Error("Error interpolating proxy url", "error", err)
+			logger.ErrorCtx(ctx, "Error interpolating proxy url", "error", err)
 			return
 		}
 
 		routeURL, err := url.Parse(interpolatedURL)
 		if err != nil {
-			logger.Error("Error parsing plugin route url", "error", err)
+			logger.ErrorCtx(ctx, "Error parsing plugin route url", "error", err)
 			return
 		}
 
@@ -50,29 +50,29 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	if err := addQueryString(req, route, data); err != nil {
-		logger.Error("Failed to render plugin URL query string", "error", err)
+		logger.ErrorCtx(ctx, "Failed to render plugin URL query string", "error", err)
 	}
 
 	if err := addHeaders(&req.Header, route, data); err != nil {
-		logger.Error("Failed to render plugin headers", "error", err)
+		logger.ErrorCtx(ctx, "Failed to render plugin headers", "error", err)
 	}
 
 	if err := setBodyContent(req, route, data); err != nil {
-		logger.Error("Failed to set plugin route body content", "error", err)
+		logger.ErrorCtx(ctx, "Failed to set plugin route body content", "error", err)
 	}
 
 	if tokenProvider, err := getTokenProvider(ctx, cfg, ds, route, data); err != nil {
-		logger.Error("Failed to resolve auth token provider", "error", err)
+		logger.ErrorCtx(ctx, "Failed to resolve auth token provider", "error", err)
 	} else if tokenProvider != nil {
 		if token, err := tokenProvider.GetAccessToken(); err != nil {
-			logger.Error("Failed to get access token", "error", err)
+			logger.ErrorCtx(ctx, "Failed to get access token", "error", err)
 		} else {
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
 
 	if cfg.DataProxyLogging {
-		logger.Debug("Requesting", "url", req.URL.String())
+		logger.DebugCtx(ctx, "Requesting", "url", req.URL.String())
 	}
 }
 

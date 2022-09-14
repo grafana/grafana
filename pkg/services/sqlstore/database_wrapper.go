@@ -104,7 +104,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		span.AddEvents([]string{"error"}, []tracing.EventValue{{Str: err.Error()}})
 	}
 
-	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
+	h.log.DebugCtx(ctx, "query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
 }
 
 // OnError will be called if any error happens

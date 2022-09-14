@@ -49,7 +49,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 	err = callback(sess)
 
 	if !isNew {
-		tsclogger.Debug("skip committing the transaction because it belongs to a session created in the outer scope")
+		tsclogger.DebugCtx(ctx, "skip committing the transaction because it belongs to a session created in the outer scope")
 		// Do not commit the transaction if the session was reused.
 		return err
 	}
@@ -62,7 +62,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 		}
 
 		time.Sleep(time.Millisecond * time.Duration(10))
-		sqlog.Info("Database locked, sleeping then retrying", "error", err, "retry", retry)
+		sqlog.InfoCtx(ctx, "Database locked, sleeping then retrying", "error", err, "retry", retry)
 		return inTransactionWithRetryCtx(ctx, engine, bus, callback, retry+1)
 	}
 
@@ -79,7 +79,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus
 	if len(sess.events) > 0 {
 		for _, e := range sess.events {
 			if err = bus.Publish(ctx, e); err != nil {
-				tsclogger.Error("Failed to publish event after commit.", "error", err)
+				tsclogger.ErrorCtx(ctx, "Failed to publish event after commit.", "error", err)
 			}
 		}
 	}

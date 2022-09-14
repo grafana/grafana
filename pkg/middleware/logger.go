@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -74,15 +73,10 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 					logParams = append(logParams, "handler", handler)
 				}
 
-				traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
-				if traceID != "" {
-					logParams = append(logParams, "traceID", traceID)
-				}
-
 				if status >= 500 {
-					ctx.Logger.Error("Request Completed", logParams...)
+					ctx.Logger.ErrorCtx(ctx.Req.Context(), "Request Completed", logParams...)
 				} else {
-					ctx.Logger.Info("Request Completed", logParams...)
+					ctx.Logger.InfoCtx(ctx.Req.Context(), "Request Completed", logParams...)
 				}
 			}
 		})
