@@ -43,9 +43,6 @@ export class CloudWatchDatasource
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
 
-  logsTimeout: string;
-  defaultLogGroups: string[];
-
   type = 'cloudwatch';
   standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
 
@@ -61,8 +58,6 @@ export class CloudWatchDatasource
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
     this.languageProvider = new CloudWatchLanguageProvider(this);
-    this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
-    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups || [];
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this, this.templateSrv);
     this.variables = new CloudWatchVariableSupport(this);
