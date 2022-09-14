@@ -102,7 +102,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 ### Map roles
 
-By default, azureAD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
+By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
 
 If no application role is found, the user is assigned the role specified by
 [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
@@ -112,7 +112,7 @@ It denies user access if no role or an invalid role is returned.
 **On every login** the user organization role will be reset to match AzureAD's application role and
 their organization membership will be reset to the default organization.
 
-If azureAD authentication is not intented to sync user roles and organization membership,
+If Azure AD authentication is not intented to sync user roles and organization membership,
 `oauth_skip_org_role_update_sync` should be enabled.
 See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more details.
 
