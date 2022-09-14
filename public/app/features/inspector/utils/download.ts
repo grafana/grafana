@@ -13,7 +13,6 @@ import {
 /**
  * Downloads a DataFrame as a TXT file.
  *
- * @export
  * @param {(Pick<LogsModel, 'meta' | 'rows'>)} logsModel
  * @param {string} title
  */
@@ -42,7 +41,6 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
 /**
  * Exports a DataFrame as a CSV file.
  *
- * @export
  * @param {DataFrame} dataFrame
  * @param {CSVConfig} csvConfig
  * @param {string} title
@@ -68,7 +66,6 @@ export function downloadDataFrameAsCsv(
 /**
  * Downloads any object as JSON file.
  *
- * @export
  * @param {*} json
  * @param {string} title
  */
