@@ -37,7 +37,7 @@ var (
 
 func ProvideTeamPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
-	ac accesscontrol.AccessControl, license models.Licensing,
+	ac accesscontrol.AccessControl, license models.Licensing, service accesscontrol.Service,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "teams",
@@ -93,7 +93,7 @@ func ProvideTeamPermissions(
 		},
 	}
 
-	srv, err := resourcepermissions.New(options, cfg, router, license, ac, sql)
+	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql)
 	if err != nil {
 		return nil, err
 	}
@@ -109,8 +109,8 @@ var DashboardEditActions = append(DashboardViewActions, []string{dashboards.Acti
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
 func ProvideDashboardPermissions(
-	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
-	ac accesscontrol.AccessControl, license models.Licensing, dashboardStore dashboards.Store,
+	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*models.Dashboard, error) {
 		query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
@@ -164,7 +164,7 @@ func ProvideDashboardPermissions(
 		RoleGroup:      "Dashboards",
 	}
 
-	srv, err := resourcepermissions.New(options, cfg, router, license, ac, sql)
+	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql)
 	if err != nil {
 		return nil, err
 	}
@@ -187,8 +187,8 @@ var FolderEditActions = append(FolderViewActions, []string{
 var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFoldersPermissionsRead, dashboards.ActionFoldersPermissionsWrite}...)
 
 func ProvideFolderPermissions(
-	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
-	accesscontrol accesscontrol.AccessControl, license models.Licensing, dashboardStore dashboards.Store,
+	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, accesscontrol accesscontrol.AccessControl,
+	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
 ) (*FolderPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "folders",
@@ -219,7 +219,7 @@ func ProvideFolderPermissions(
 		WriterRoleName: "Folder permission writer",
 		RoleGroup:      "Folders",
 	}
-	srv, err := resourcepermissions.New(options, cfg, router, license, accesscontrol, sql)
+	srv, err := resourcepermissions.New(options, cfg, router, license, accesscontrol, service, sql)
 	if err != nil {
 		return nil, err
 	}
@@ -258,13 +258,27 @@ func (e DatasourcePermissionsService) MapActions(permission accesscontrol.Resour
 	return ""
 }
 
+var (
+	ServiceAccountEditActions = []string{
+		serviceaccounts.ActionRead,
+		serviceaccounts.ActionWrite,
+	}
+	ServiceAccountAdminActions = []string{
+		serviceaccounts.ActionRead,
+		serviceaccounts.ActionWrite,
+		serviceaccounts.ActionDelete,
+		serviceaccounts.ActionPermissionsRead,
+		serviceaccounts.ActionPermissionsWrite,
+	}
+)
+
 type ServiceAccountPermissionsService struct {
 	*resourcepermissions.Service
 }
 
 func ProvideServiceAccountPermissions(
-	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore,
-	ac accesscontrol.AccessControl, license models.Licensing, serviceAccountStore serviceaccounts.Store,
+	cfg *setting.Cfg, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	license models.Licensing, serviceAccountStore serviceaccounts.Store, service accesscontrol.Service,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "serviceaccounts",
@@ -283,15 +297,15 @@ func ProvideServiceAccountPermissions(
 			BuiltInRoles: false,
 		},
 		PermissionsToActions: map[string][]string{
-			"Edit":  {serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
-			"Admin": {serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionDelete, serviceaccounts.ActionPermissionsRead, serviceaccounts.ActionPermissionsWrite},
+			"Edit":  ServiceAccountEditActions,
+			"Admin": ServiceAccountAdminActions,
 		},
 		ReaderRoleName: "Service account permission reader",
 		WriterRoleName: "Service account permission writer",
 		RoleGroup:      "Service accounts",
 	}
 
-	srv, err := resourcepermissions.New(options, cfg, router, license, ac, sql)
+	srv, err := resourcepermissions.New(options, cfg, router, license, ac, service, sql)
 	if err != nil {
 		return nil, err
 	}

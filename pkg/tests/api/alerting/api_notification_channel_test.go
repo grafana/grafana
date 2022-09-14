@@ -913,6 +913,9 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 	require.NoError(t, err)
 
 	nc := &mockNotificationChannel{
+		// Skip gosec linter since this is in test code.
+		//
+		//nolint:gosec
 		server: &http.Server{
 			Addr: listener.Addr().String(),
 		},
@@ -2224,7 +2227,10 @@ var expNonEmailNotifications = map[string][]string{
 				  }
 				],
 				"type": "AdaptiveCard",
-				"version": "1.4"
+				"version": "1.4",
+				"msTeams": {
+				  "width": "Full"
+				}
 			  },
 			  "contentType": "application/vnd.microsoft.card.adaptive"
 		    }

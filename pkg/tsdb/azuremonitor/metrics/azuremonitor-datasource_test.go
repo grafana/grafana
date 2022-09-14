@@ -250,6 +250,27 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 	}
 }
 
+func TestCustomNamespace(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+
+	t.Run("it should set the metricNamespace to a customNamespace value if customNamespace is present as a parameter", func(t *testing.T) {
+		q := []backend.DataQuery{
+			{
+				JSON: []byte(`{
+							"azureMonitor": {
+								"customNamespace": "custom/namespace"						
+							}
+						}`),
+			},
+		}
+
+		result, err := datasource.buildQueries(q, types.DatasourceInfo{})
+		require.NoError(t, err)
+		expected := "custom/namespace"
+		require.Equal(t, expected, result[0].Params.Get("metricnamespace"))
+	})
+}
+
 func makeDates(startDate time.Time, count int, interval time.Duration) (times []time.Time) {
 	for i := 0; i < count; i++ {
 		times = append(times, startDate.Add(interval*time.Duration(i)))

@@ -1,6 +1,6 @@
 import uPlot, { Scale, Range } from 'uplot';
 
-import { isBooleanUnit } from '@grafana/data';
+import { DecimalCount, incrRoundDn, incrRoundUp, isBooleanUnit } from '@grafana/data';
 import { ScaleOrientation, ScaleDirection, ScaleDistribution } from '@grafana/schema';
 
 import { PlotConfigBuilder } from '../types';
@@ -17,7 +17,9 @@ export interface ScaleProps {
   orientation: ScaleOrientation;
   direction: ScaleDirection;
   log?: number;
+  linearThreshold?: number;
   centeredZero?: boolean;
+  decimals?: DecimalCount;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -38,16 +40,23 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       direction,
       orientation,
       centeredZero,
+      decimals,
     } = this.props;
+
+    const distr = this.props.distribution;
+
     const distribution = !isTime
       ? {
           distr:
-            this.props.distribution === ScaleDistribution.Log
+            distr === ScaleDistribution.Symlog
+              ? 4
+              : distr === ScaleDistribution.Log
               ? 3
-              : this.props.distribution === ScaleDistribution.Ordinal
+              : distr === ScaleDistribution.Ordinal
               ? 2
               : 1,
-          log: this.props.distribution === ScaleDistribution.Log ? this.props.log || 2 : undefined,
+          log: distr === ScaleDistribution.Log || distr === ScaleDistribution.Symlog ? this.props.log ?? 2 : undefined,
+          asinh: distr === ScaleDistribution.Symlog ? this.props.linearThreshold ?? 1 : undefined,
         }
       : {};
 
@@ -72,31 +81,47 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
     let hardMinOnly = softMin == null && hardMin != null;
     let hardMaxOnly = softMax == null && hardMax != null;
+    let hasFixedRange = hardMinOnly && hardMaxOnly;
 
-    // uPlot range function
-    const rangeFn = (u: uPlot, dataMin: number | null, dataMax: number | null, scaleKey: string) => {
+    const rangeFn: uPlot.Range.Function = (
+      u: uPlot,
+      dataMin: number | null,
+      dataMax: number | null,
+      scaleKey: string
+    ) => {
       const scale = u.scales[scaleKey];
 
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
       // happens when all series on a scale are `show: false`, re-returning nulls will auto-disable axis
-      if (dataMin == null || dataMax == null) {
+      if (!hasFixedRange && dataMin == null && dataMax == null) {
         return minMax;
       }
 
-      if (scale.distr === 1 || scale.distr === 2) {
+      if (scale.distr === 1 || scale.distr === 2 || scale.distr === 4) {
         if (centeredZero) {
-          let absMin = Math.abs(dataMin);
-          let absMax = Math.abs(dataMax);
+          let absMin = Math.abs(dataMin!);
+          let absMax = Math.abs(dataMax!);
           let max = Math.max(absMin, absMax);
           dataMin = -max;
           dataMax = max;
         }
 
-        // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
-        minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
+        if (scale.distr === 4) {
+          // TODO: switch to `, true)` after updating uPlot to 1.6.23+
+          // see https://github.com/leeoniya/uPlot/issues/749
+          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, scale.log ?? 10, false);
+        } else {
+          // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
+          minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
+        }
       } else if (scale.distr === 3) {
-        minMax = uPlot.rangeLog(dataMin, dataMax, scale.log ?? 10, true);
+        minMax = uPlot.rangeLog(dataMin!, dataMax!, scale.log ?? 10, true);
+      }
+
+      if (decimals === 0) {
+        minMax[0] = incrRoundDn(minMax[0]!, 1);
+        minMax[1] = incrRoundUp(minMax[1]!, 1);
       }
 
       // if all we got were hard limits, treat them as static min/max
@@ -108,10 +133,17 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         minMax[1] = hardMax!;
       }
 
+      // guard against invalid y ranges
+      if (minMax[0]! >= minMax[1]!) {
+        minMax[0] = 0;
+        minMax[1] = 100;
+      }
+
       return minMax;
     };
 
-    let auto = !isTime && !(hardMinOnly && hardMaxOnly);
+    let auto = !isTime && !hasFixedRange;
+
     if (isBooleanUnit(scaleKey)) {
       auto = false;
       range = [0, 1];

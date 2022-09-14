@@ -11,7 +11,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
@@ -74,7 +74,7 @@ interface ScenarioContext {
   setup: (fn: () => void) => void;
 }
 
-function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel {
+function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',
@@ -111,6 +111,9 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             match: { params: { slug: 'my-dash', uid: '11' } } as any,
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
+          navIndex: {
+            dashboards: { text: 'Dashboards' },
+          },
           initPhase: DashboardInitPhase.NotStarted,
           initError: null,
           initDashboard: jest.fn(),
@@ -291,9 +294,8 @@ describe('DashboardPage', () => {
 
   dashboardPageScenario('When in full kiosk mode', (ctx) => {
     ctx.setup(() => {
-      locationService.partial({ kiosk: true });
       ctx.mount({
-        queryParams: {},
+        queryParams: { kiosk: true },
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });

@@ -1,10 +1,12 @@
 package accesscontrol
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
 	"strconv"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -27,7 +29,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 }
 
 func authorize(c *models.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
-	injected, err := evaluator.MutateScopes(c.Req.Context(), ScopeInjector(ScopeParams{
+	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
 		OrgID:     c.OrgID,
 		URLParams: web.Params(c.Req),
 	}))
@@ -95,7 +97,7 @@ type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
-func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handler, OrgIDGetter, Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(web.Handler, OrgIDGetter, Evaluator) web.Handler {
 	return func(fallback web.Handler, getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		if ac.IsDisabled() {
 			return fallback
@@ -125,10 +127,18 @@ func AuthorizeInOrgMiddleware(ac AccessControl, cache userCache) func(web.Handle
 				userCopy.OrgRole = queryResult.OrgRole
 			}
 
+			if userCopy.Permissions[userCopy.OrgID] == nil {
+				permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
+				if err != nil {
+					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
+				}
+				userCopy.Permissions[userCopy.OrgID] = GroupScopesByAction(permissions)
+			}
+
 			authorize(c, ac, &userCopy, evaluator)
 
 			// Set the sign-ed in user permissions in that org
-			c.SignedInUser.Permissions = userCopy.Permissions
+			c.SignedInUser.Permissions[userCopy.OrgID] = userCopy.Permissions[userCopy.OrgID]
 		}
 	}
 }
@@ -148,13 +158,13 @@ func UseGlobalOrg(c *models.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
 }
 
-func LoadPermissionsMiddleware(ac AccessControl) web.Handler {
+func LoadPermissionsMiddleware(service Service) web.Handler {
 	return func(c *models.ReqContext) {
-		if ac.IsDisabled() {
+		if service.IsDisabled() {
 			return
 		}
 
-		permissions, err := ac.GetUserPermissions(c.Req.Context(), c.SignedInUser,
+		permissions, err := service.GetUserPermissions(c.Req.Context(), c.SignedInUser,
 			Options{ReloadCache: false})
 		if err != nil {
 			c.JsonApiErr(http.StatusForbidden, "", err)
@@ -165,5 +175,26 @@ func LoadPermissionsMiddleware(ac AccessControl) web.Handler {
 			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
 		}
 		c.SignedInUser.Permissions[c.OrgID] = GroupScopesByAction(permissions)
+	}
+}
+
+// scopeParams holds the parameters used to fill in scope templates
+type scopeParams struct {
+	OrgID     int64
+	URLParams map[string]string
+}
+
+// scopeInjector inject request params into the templated scopes. e.g. "settings:" + eval.Parameters(":id")
+func scopeInjector(params scopeParams) ScopeAttributeMutator {
+	return func(_ context.Context, scope string) ([]string, error) {
+		tmpl, err := template.New("scope").Parse(scope)
+		if err != nil {
+			return nil, err
+		}
+		var buf bytes.Buffer
+		if err = tmpl.Execute(&buf, params); err != nil {
+			return nil, err
+		}
+		return []string{buf.String()}, nil
 	}
 }

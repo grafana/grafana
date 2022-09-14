@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -17,7 +18,7 @@ import (
 
 // swagger:route GET /org org getCurrentOrg
 //
-// Get current Organization
+// Get current Organization.
 //
 // Responses:
 // 200: getCurrentOrgResponse
@@ -194,8 +195,8 @@ func (hs *HTTPServer) UpdateOrg(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgForm, orgID int64) response.Response {
-	cmd := models.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
-	if err := hs.SQLStore.UpdateOrg(ctx, &cmd); err != nil {
+	cmd := org.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
+	if err := hs.orgService.UpdateOrg(ctx, &cmd); err != nil {
 		if errors.Is(err, models.ErrOrgNameTaken) {
 			return response.Error(http.StatusBadRequest, "Organization name taken", err)
 		}
@@ -300,7 +301,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 
 // swagger:route GET /orgs orgs searchOrgs
 //
-// Search all Organizations
+// Search all Organizations.
 //
 // Security:
 // - basic:

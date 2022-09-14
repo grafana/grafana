@@ -147,7 +147,7 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 		if len(lockRows) > 0 {
 			result := lockRows[0]
 			if sl.isLockWithinInterval(result, maxInterval) {
-				return errors.New("there is already a lock for this operation")
+				return errors.New("there is already a lock for this actionName: " + actionName)
 			} else {
 				// lock has timeouted, so we update the timestamp
 				result.LastExecution = time.Now().Unix()
@@ -157,7 +157,7 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 					return err
 				}
 				if affected != 1 {
-					sl.log.Error("Expected rows affected to be 1 if there was no error.", "rowAffected", affected)
+					sl.log.Error("Expected rows affected to be 1 if there was no error.", "actionName", actionName, "rowAffected", affected)
 				}
 				return nil
 			}
@@ -175,7 +175,7 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 
 			if affected != 1 {
 				// this means that there was no error but there is something not working correctly
-				sl.log.Error("Expected rows affected to be 1 if there was no error.", "rowAffected", affected)
+				sl.log.Error("Expected rows affected to be 1 if there was no error.", "actionName", actionName, "rowAffected", affected)
 			}
 		}
 		return nil
@@ -195,7 +195,7 @@ func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string)
 		}
 		affected, err := res.RowsAffected()
 		if affected != 1 {
-			sl.log.Debug("Error releasing lock ", "affected", affected)
+			sl.log.Debug("Error releasing lock ", "actionName", actionName, "affected", affected)
 		}
 		return err
 	})

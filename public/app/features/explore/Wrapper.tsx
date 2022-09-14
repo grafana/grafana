@@ -4,6 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { locationService } from '@grafana/runtime';
 import { ErrorBoundaryAlert } from '@grafana/ui';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
@@ -46,11 +47,17 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
 class WrapperUnconnected extends PureComponent<Props> {
+  static contextType = GrafanaContext;
+
   componentWillUnmount() {
     this.props.resetExploreAction({});
   }
 
   componentDidMount() {
+    //This is needed for breadcrumbs and topnav.
+    //We should probably abstract this out at some point
+    this.context.chrome.update({ sectionNav: this.props.navModel.node });
+
     lastSavedUrl.left = undefined;
     lastSavedUrl.right = undefined;
 
@@ -69,7 +76,7 @@ class WrapperUnconnected extends PureComponent<Props> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate() {
     const { left, right } = this.props.queryParams;
     const hasSplit = Boolean(left) && Boolean(right);
     const datasourceTitle = hasSplit

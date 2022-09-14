@@ -339,7 +339,7 @@ export class CloudWatchDatasource
         namespace: this.templateSrv.replace(query.namespace),
         metricName: this.templateSrv.replace(query.metricName),
         dimensions: this.convertDimensionFormat(query.dimensions ?? {}, {}),
-        period: query.period ? parseInt(query.period, 10) : 300,
+        period: query.period ?? '',
         actionPrefix: query.actionPrefix ?? '',
         alarmNamePrefix: query.alarmNamePrefix ?? '',
         type: 'annotationQuery',
@@ -469,6 +469,13 @@ export class CloudWatchDatasource
 
   async describeLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
     const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeLogGroups', [params]));
+
+    const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
+    return logGroupNames;
+  }
+
+  async describeAllLogGroups(params: DescribeLogGroupsRequest): Promise<string[]> {
+    const dataFrames = await lastValueFrom(this.makeLogActionRequest('DescribeAllLogGroups', [params]));
 
     const logGroupNames = dataFrames[0]?.fields[0]?.values.toArray() ?? [];
     return logGroupNames;
@@ -663,9 +670,7 @@ export class CloudWatchDatasource
             }
           }
         }
-        // TODO: seems to be some sort of bug that we don't really send region with all queries. This means
-        //  if you select different than default region in editor you will get results for autocomplete from wrong
-        //  region.
+
         if (anyQuery.region) {
           anyQuery.region = this.replace(anyQuery.region, options.scopedVars, true, 'region');
           anyQuery.region = this.getActualRegion(anyQuery.region);
