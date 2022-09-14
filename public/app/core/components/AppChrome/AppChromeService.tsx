@@ -18,7 +18,7 @@ export interface AppChromeState {
   actions?: React.ReactNode;
   searchBarHidden?: boolean;
   megaMenuOpen?: boolean;
-  kioskMode: KioskMode;
+  kioskMode: KioskMode | null;
 }
 
 const defaultSection: NavModelItem = { text: 'Grafana' };
@@ -32,7 +32,7 @@ export class AppChromeService {
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: defaultSection,
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
-    kioskMode: KioskMode.Off,
+    kioskMode: null,
   });
 
   setMatchedRoute(route: RouteDescriptor) {
@@ -89,6 +89,11 @@ export class AppChromeService {
     locationService.partial({ kiosk: this.getKioskUrlValue(nextMode) });
   };
 
+  exitKioskMode() {
+    this.update({ kioskMode: undefined });
+    locationService.partial({ kiosk: null });
+  }
+
   setKioskModeFromUrl(kiosk: UrlQueryValue) {
     switch (kiosk) {
       case 'tv':
@@ -99,14 +104,14 @@ export class AppChromeService {
     }
   }
 
-  getKioskUrlValue(mode: KioskMode) {
+  getKioskUrlValue(mode: KioskMode | null) {
     switch (mode) {
-      case KioskMode.Off:
-        return null;
       case KioskMode.TV:
         return 'tv';
       case KioskMode.Full:
         return true;
+      default:
+        return null;
     }
   }
 
@@ -114,15 +119,15 @@ export class AppChromeService {
     const { kioskMode } = this.state.getValue();
 
     switch (kioskMode) {
-      case KioskMode.Off:
+      case null:
         return KioskMode.TV;
       case KioskMode.TV:
-        return KioskMode.Full;
-      case KioskMode.Full:
         appEvents.emit(AppEvents.alertSuccess, [
           t({ id: 'navigation.kiosk.tv-alert', message: 'Press ESC to exit Kiosk mode' }),
         ]);
-        return KioskMode.Off;
+        return KioskMode.Full;
+      default:
+        return null;
     }
   }
 }

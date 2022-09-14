@@ -158,7 +158,7 @@ export class GrafanaApp {
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
       const chromeService = new AppChromeService();
-      const keybindingsService = new KeybindingSrv();
+      const keybindingsService = new KeybindingSrv(locationService, chromeService);
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);

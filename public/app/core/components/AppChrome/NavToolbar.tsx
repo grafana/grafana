@@ -41,7 +41,9 @@ export function NavToolbar({
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
-        {searchBarHidden && <ToolbarButton onClick={onToggleKioskMode} narrow title="Cycle tv mode" icon="monitor" />}
+        {searchBarHidden && (
+          <ToolbarButton onClick={onToggleKioskMode} narrow title="Enable kiosk mode" icon="monitor" />
+        )}
         <ToolbarButton onClick={onToggleSearchBar} narrow title="Toggle top search bar">
           <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
         </ToolbarButton>

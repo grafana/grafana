@@ -10,7 +10,7 @@ import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationSearchToObject, locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, useTheme2, CustomScrollbar } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { KioskMode, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 
 import { OrgSwitcher } from '../OrgSwitcher';
 
@@ -177,9 +177,8 @@ export const NavBar = React.memo(() => {
 
 function shouldHideNavBar(location: HistoryLocation) {
   const queryParams = locationSearchToObject(location.search);
-  const kiosk = getKioskMode(queryParams);
 
-  if (kiosk !== KioskMode.Off) {
+  if (getKioskMode(queryParams)) {
     return true;
   }
 

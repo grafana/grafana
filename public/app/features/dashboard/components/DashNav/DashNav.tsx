@@ -18,6 +18,7 @@ import {
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
 import config from 'app/core/config';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
@@ -44,7 +45,7 @@ const selectors = e2eSelectors.pages.Dashboard.DashNav;
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
-  kioskMode: KioskMode;
+  kioskMode?: KioskMode | null;
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
@@ -72,6 +73,7 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export const DashNav = React.memo<Props>((props) => {
   const forceUpdate = useForceUpdate();
+  const { chrome } = useGrafana();
 
   const onStarDashboard = () => {
     const dashboardSrv = getDashboardSrv();
@@ -86,6 +88,10 @@ export const DashNav = React.memo<Props>((props) => {
 
   const onClose = () => {
     locationService.partial({ viewPanel: null });
+  };
+
+  const onToggleTVMode = () => {
+    chrome.onToggleKioskMode();
   };
 
   const onOpenSettings = () => {
@@ -122,7 +128,7 @@ export const DashNav = React.memo<Props>((props) => {
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-    if (kioskMode !== KioskMode.Off || isPlaylistRunning()) {
+    if (kioskMode || isPlaylistRunning()) {
       return [];
     }
 
@@ -230,13 +236,21 @@ export const DashNav = React.memo<Props>((props) => {
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
+    const tvButton = config.featureToggles.topnav ? null : (
+      <ToolbarButton
+        tooltip={t({ id: 'dashboard.toolbar.tv-button', message: 'Cycle view mode' })}
+        icon="monitor"
+        onClick={onToggleTVMode}
+        key="tv-button"
+      />
+    );
 
     if (isPlaylistRunning()) {
       return [renderPlaylistControls(), renderTimeControls()];
     }
 
     if (kioskMode === KioskMode.TV) {
-      return [renderTimeControls()];
+      return [renderTimeControls(), tvButton];
     }
 
     if (canEdit && !isFullscreen) {
@@ -294,6 +308,7 @@ export const DashNav = React.memo<Props>((props) => {
     addCustomContent(customRightActions, buttons);
 
     buttons.push(renderTimeControls());
+    buttons.push(tvButton);
     return buttons;
   };
 

@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { KioskMode } from 'app/types';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 
@@ -20,10 +19,10 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
-  const chromeless = state.chromeless || state.kioskMode !== KioskMode.Off;
+  const chromeless = state.chromeless || state.kioskMode != null;
 
   if (!config.featureToggles.topnav) {
-    return <main className="main-view">{children}</main>;
+    return <main className={cx('main-view', chromeless && 'main-view--chromeless')}>{children}</main>;
   }
 
   const contentClass = cx({
