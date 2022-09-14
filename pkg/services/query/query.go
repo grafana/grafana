@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util/errutil"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -117,7 +119,11 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 
 	for _, pq := range parsedReq.parsedQueries {
 		if pq.datasource == nil {
-			return nil, queryValidationError(fmt.Sprintf("query mising datasource info: %s", pq.query.RefID))
+			return nil, ErrMissingDataSourceInfo.Build(errutil.TemplateData{
+				Public: map[string]interface{}{
+					"RefId": pq.query.RefID,
+				},
+			})
 		}
 
 		exprReq.Queries = append(exprReq.Queries, expr.Query{
