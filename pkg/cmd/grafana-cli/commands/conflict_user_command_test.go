@@ -54,6 +54,33 @@ func TestBuildConflictBlock(t *testing.T) {
 			wantDiscardedBlock:  "conflict: overlapping conflict",
 			wantedNumberOfUsers: 3,
 		},
+		{
+			desc: "should get two blocks",
+			users: []user.User{
+				{
+					Email: "test",
+					Login: "test",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "TEST",
+					Login: "TEST",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "test2",
+					Login: "test2",
+					OrgID: int64(testOrgID),
+				},
+				{
+					Email: "TEST2",
+					Login: "TEST2",
+					OrgID: int64(testOrgID),
+				},
+			},
+			expectedBlock:       "conflict: test",
+			wantedNumberOfUsers: 2,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -77,7 +104,9 @@ func TestBuildConflictBlock(t *testing.T) {
 				r := ConflictResolver{}
 				r.BuildConflictBlocks(m, fmt.Sprintf)
 				require.Equal(t, tc.wantedNumberOfUsers, len(r.Blocks[tc.expectedBlock]))
-				require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
+				if tc.wantDiscardedBlock != "" {
+					require.Equal(t, true, r.DiscardedBlocks[tc.wantDiscardedBlock])
+				}
 			}
 		})
 	}

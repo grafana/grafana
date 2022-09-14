@@ -68,7 +68,7 @@ func runListConflictUsers() func(context *cli.Context) error {
 			return nil
 		}
 		whiteBold := color.New(color.FgWhite).Add(color.Bold)
-		resolver := ConflictResolver{}
+		resolver := ConflictResolver{Users: conflicts}
 		resolver.BuildConflictBlocks(conflicts, whiteBold.Sprintf)
 		logger.Infof("\n\nShowing conflicts\n\n")
 		logger.Infof(resolver.ToStringPresentation())
@@ -102,7 +102,7 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 			logger.Info(color.GreenString("No Conflicting users found.\n\n"))
 			return nil
 		}
-		resolver := ConflictResolver{}
+		resolver := ConflictResolver{Users: conflicts}
 		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
 		tmpFile, err := generateConflictUsersFile(&resolver)
 		if err != nil {
@@ -180,7 +180,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("%v: %w", "grafana error: sql error to get users with conflicts, abandoning validation", err)
 		}
-		resolver := ConflictResolver{}
+		resolver := ConflictResolver{Users: conflicts}
 		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
 		b, err := os.ReadFile(arg)
 		if err != nil {
@@ -327,7 +327,7 @@ func (r *ConflictResolver) showChanges() {
 		}
 		for _, user := range users {
 			if !startOfBlock[block] {
-				fileString += fmt.Sprintf("IDENTIFIED user conflict\n", block)
+				fileString += fmt.Sprintf("IDENTIFIED user conflict\n")
 				fileString += fmt.Sprintf("%s\n", block)
 				fileString += fmt.Sprintf("The permissions, roles and ownership will be transferred to the user below.\n")
 				fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
@@ -366,19 +366,20 @@ func shouldDiscardBlock(seenUsersInBlock map[string]string, block string, user C
 	return false
 }
 
+// BuildConflictBlocks builds blocks of users where each block is a unique email/login
+// NOTE: currently this function assumes that the users are in order of grouping already
 func (r *ConflictResolver) BuildConflictBlocks(users ConflictingUsers, f Formatter) {
-	r.Users = users
 	discardedBlocks := make(map[string]bool)
 	seenUsersToBlock := make(map[string]string)
 	blocks := make(map[string]ConflictingUsers)
-	for _, user := range r.Users {
+	for _, user := range users {
 		// conflict blocks is how we identify a conflict in the user base.
 		var conflictBlock string
-		if user.ConflictEmail != "" {
+		if user.Email != "" {
 			conflictBlock = f("conflict: %s", strings.ToLower(user.Email))
-		} else if user.ConflictLogin != "" {
+		} else if user.Login != "" {
 			conflictBlock = f("conflict: %s", strings.ToLower(user.Login))
-		} else if user.ConflictEmail != "" && user.ConflictLogin != "" {
+		} else if user.Email != "" && user.Login != "" {
 			// both conflicts
 			// should not be here unless changed in sql
 			conflictBlock = f("conflict: %s%s", strings.ToLower(user.Email), strings.ToLower(user.Login))
@@ -489,9 +490,6 @@ type ConflictingUser struct {
 	// FIXME: refactor change to correct type <>
 	LastSeenAt string `xorm:"last_seen_at"`
 	AuthModule string `xorm:"auth_module"`
-	// currently not really used for anything
-	ConflictEmail string `xorm:"conflict_email"`
-	ConflictLogin string `xorm:"conflict_login"`
 }
 
 // always better to have a slice of the object
@@ -581,7 +579,6 @@ func conflictingUserEntriesSQL(s *sqlstore.SQLStore) string {
 	return sqlQuery
 }
 
-// MergeUser sets the user Server Admin flag
 func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlstore.SQLStore) error {
 	for block, users := range r.Blocks {
 		if len(users) < 2 {
@@ -623,8 +620,6 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 					return fmt.Errorf("could not find from userId: %w", err)
 				}
 
-				// update intoUserId email and log
-
 				// update all tables fromUserIds to intoUserIds
 				for _, sql := range userUpdates() {
 					_, err := sess.Exec(sql, intoUser.ID, fromUser.ID)
@@ -633,8 +628,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 					}
 				}
 
-				// deletes the from user
-				// TODO: make test verify that before deleting a user, we make sure that that reference is not present in any tables
+				// delete the user
 				delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
 				if delErr != nil {
 					return fmt.Errorf("error during deletion of user: %w", delErr)
