@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { capitalize } from 'lodash';
 import React, { useRef, useState } from 'react';
 
 import { DataQuery, GrafanaTheme2 } from '@grafana/data';
@@ -62,7 +63,7 @@ export const QueryPatternsModal = (props: Props) => {
         return (
           <Collapse
             key={patternType}
-            label={`${patternType[0].toUpperCase() + patternType.slice(1)} query starters`}
+            label={`${capitalize(patternType)} query starters`}
             isOpen={openTabs.includes(patternType)}
             collapsible={true}
             onToggle={() =>
