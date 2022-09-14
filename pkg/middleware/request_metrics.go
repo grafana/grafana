@@ -20,7 +20,7 @@ var (
 
 	// DefBuckets are histogram buckets for the response time (in seconds)
 	// of a network service, including one that is responding very slowly.
-	defBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5}
+	defBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
 )
 
 func init() {
@@ -46,57 +46,60 @@ func init() {
 }
 
 // RequestMetrics is a middleware handler that instruments the request.
-func RequestMetrics(features featuremgmt.FeatureToggles) web.Handler {
+func RequestMetrics(features featuremgmt.FeatureToggles) web.Middleware {
 	log := log.New("middleware.request-metrics")
 
-	return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-		rw := res.(web.ResponseWriter)
-		now := time.Now()
-		httpRequestsInFlight.Inc()
-		defer httpRequestsInFlight.Dec()
-		c.Next()
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rw := web.Rw(w, r)
+			now := time.Now()
+			httpRequestsInFlight.Inc()
+			defer httpRequestsInFlight.Dec()
+			next.ServeHTTP(w, r)
 
-		status := rw.Status()
-		code := sanitizeCode(status)
+			status := rw.Status()
+			code := sanitizeCode(status)
 
-		handler := "unknown"
-		if routeOperation, exists := routeOperationName(c.Req); exists {
-			handler = routeOperation
-		} else {
-			// if grafana does not recognize the handler and returns 404 we should register it as `notfound`
-			if status == http.StatusNotFound {
-				handler = "notfound"
+			handler := "unknown"
+			// TODO: do not depend on web.Context from the future
+			if routeOperation, exists := routeOperationName(web.FromContext(r.Context()).Req); exists {
+				handler = routeOperation
 			} else {
-				// log requests where we could not identify handler so we can register them.
-				if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
-					log.Warn("request instrumented as unknown", "path", c.Req.URL.Path, "status_code", status)
+				// if grafana does not recognize the handler and returns 404 we should register it as `notfound`
+				if status == http.StatusNotFound {
+					handler = "notfound"
+				} else {
+					// log requests where we could not identify handler so we can register them.
+					if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
+						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
+					}
 				}
 			}
-		}
 
-		// avoiding the sanitize functions for in the new instrumentation
-		// since they dont make much sense. We should remove them later.
-		histogram := httpRequestDurationHistogram.
-			WithLabelValues(handler, code, req.Method)
-		if traceID := tracing.TraceIDFromContext(c.Req.Context(), true); traceID != "" {
-			// Need to type-convert the Observer to an
-			// ExemplarObserver. This will always work for a
-			// HistogramVec.
-			histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
-				time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
-			)
-			return
-		}
-		histogram.Observe(time.Since(now).Seconds())
+			// avoiding the sanitize functions for in the new instrumentation
+			// since they dont make much sense. We should remove them later.
+			histogram := httpRequestDurationHistogram.
+				WithLabelValues(handler, code, r.Method)
+			if traceID := tracing.TraceIDFromContext(r.Context(), true); traceID != "" {
+				// Need to type-convert the Observer to an
+				// ExemplarObserver. This will always work for a
+				// HistogramVec.
+				histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+					time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
+				)
+				return
+			}
+			histogram.Observe(time.Since(now).Seconds())
 
-		switch {
-		case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
-			countProxyRequests(status)
-		case strings.HasPrefix(req.RequestURI, "/api/"):
-			countApiRequests(status)
-		default:
-			countPageRequests(status)
-		}
+			switch {
+			case strings.HasPrefix(r.RequestURI, "/api/datasources/proxy"):
+				countProxyRequests(status)
+			case strings.HasPrefix(r.RequestURI, "/api/"):
+				countApiRequests(status)
+			default:
+				countPageRequests(status)
+			}
+		})
 	}
 }
 

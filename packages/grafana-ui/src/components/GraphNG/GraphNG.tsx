@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { Subscription } from 'rxjs';
 import { throttleTime } from 'rxjs/operators';
 import uPlot, { AlignedData } from 'uplot';
@@ -44,7 +44,7 @@ export interface GraphNGProps extends Themeable2 {
   width: number;
   height: number;
   timeRange: TimeRange;
-  timeZone: TimeZone;
+  timeZone: TimeZone[] | TimeZone;
   legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   renderers?: Renderers;
@@ -92,7 +92,7 @@ export interface GraphNGState {
 /**
  * "Time as X" core component, expects ascending x
  */
-export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
+export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
   private plotInstance: React.RefObject<uPlot>;

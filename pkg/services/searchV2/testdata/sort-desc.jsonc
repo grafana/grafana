@@ -9,14 +9,14 @@
 //  }
 //  Name: Query results
 //  Dimensions: 9 Fields by 2 Rows
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+-----------------+
-//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid             | Name: location | Name: test num  |
-//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                  | Labels:        | Labels:         |
-//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []*json.RawMessage | Type: []string | Type: []float64 |
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+-----------------+
-//  | dashboard      | 2              | z-test         |                  | /pfix/d/2/     | null                     | null                     |                | 3               |
-//  | dashboard      | 1              | a-test         |                  | /pfix/d/1/     | null                     | null                     |                | 2               |
-//  +----------------+----------------+----------------+------------------+----------------+--------------------------+--------------------------+----------------+-----------------+
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+-----------------+
+//  | Name: kind     | Name: uid      | Name: name     | Name: panel_type | Name: url      | Name: tags               | Name: ds_uid            | Name: location | Name: test num  |
+//  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        | Labels:         |
+//  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string | Type: []float64 |
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+-----------------+
+//  | dashboard      | 2              | z-test         |                  | /pfix/d/2/     | null                     | []                      |                | 3               |
+//  | dashboard      | 1              | a-test         |                  | /pfix/d/1/     | null                     | []                      |                | 2               |
+//  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -88,8 +88,7 @@
             "name": "ds_uid",
             "type": "other",
             "typeInfo": {
-              "frame": "json.RawMessage",
-              "nullable": true
+              "frame": "json.RawMessage"
             }
           },
           {
@@ -135,8 +134,8 @@
             null
           ],
           [
-            null,
-            null
+            [],
+            []
           ],
           [
             "",

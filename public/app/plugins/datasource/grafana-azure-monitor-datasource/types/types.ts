@@ -85,7 +85,7 @@ export interface AzureDataSourceSecureJsonData {
 
 // Represents an errors that come back from frontend requests.
 // Not totally sure how accurate this type is.
-export type AzureMonitorErrorish = Error;
+export type AzureMonitorErrorish = Error | string | React.ReactElement;
 
 // Azure Monitor API Types
 export interface AzureMonitorMetricsMetadataResponse {
@@ -127,14 +127,6 @@ export interface AzureMonitorMetricAvailabilityMetadata {
 export interface AzureMonitorLocalizedValue {
   value: string;
   localizedValue: string;
-}
-
-export interface AzureMonitorMetricDefinitionsResponse {
-  data: {
-    value: Array<{ name: string; type: string; location?: string }>;
-  };
-  status: number;
-  statusText: string;
 }
 
 export interface AzureMonitorResourceGroupsResponse {
@@ -233,34 +225,36 @@ export interface AzureGetMetricNamespacesQuery {
 export interface LegacyAzureGetMetricNamespacesQuery {
   subscription: string;
   resourceGroup: string;
-  metricDefinition: string;
-  resourceName: string;
+  metricNamespace?: string;
+  resourceName?: string;
 }
 
 export interface AzureGetMetricNamesQuery {
   resourceUri: string;
-  metricNamespace: string;
+  metricNamespace?: string;
+  customNamespace?: string;
 }
 
 export interface LegacyAzureGetMetricNamesQuery {
   subscription: string;
   resourceGroup: string;
-  metricDefinition: string;
   resourceName: string;
   metricNamespace: string;
+  customNamespace?: string;
 }
 
 export interface AzureGetMetricMetadataQuery {
   resourceUri: string;
   metricNamespace: string;
+  customNamespace?: string;
   metricName: string;
 }
 
 export interface LegacyAzureGetMetricMetadataQuery {
   subscription: string;
   resourceGroup: string;
-  metricDefinition: string;
   resourceName: string;
   metricNamespace: string;
+  customNamespace?: string;
   metricName: string;
 }

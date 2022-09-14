@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Update the item so that EpochEnd >= Epoch
@@ -255,11 +256,11 @@ func (r *SQLAnnotationRepo) Find(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func getAccessControlFilter(user *models.SignedInUser) (string, []interface{}, error) {
-	if user == nil || user.Permissions[user.OrgId] == nil {
+func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, error) {
+	if user == nil || user.Permissions[user.OrgID] == nil {
 		return "", nil, errors.New("missing permissions")
 	}
-	scopes, has := user.Permissions[user.OrgId][ac.ActionAnnotationsRead]
+	scopes, has := user.Permissions[user.OrgID][ac.ActionAnnotationsRead]
 	if !has {
 		return "", nil, errors.New("missing permissions")
 	}

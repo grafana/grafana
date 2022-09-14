@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"os"
 
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -117,33 +118,31 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	// Create the cmd to upload each image
-	_ = withStoredImages(ctx, tn.log, tn.images, func(index int, image *ngmodels.Image) error {
-		if image != nil {
-			cmd, err = tn.newWebhookSyncCmd("sendPhoto", func(w *multipart.Writer) error {
-				f, err := os.Open(image.Path)
-				if err != nil {
-					return fmt.Errorf("failed to open image: %w", err)
-				}
-				defer func() {
-					if err := f.Close(); err != nil {
-						tn.log.Warn("failed to close image", "err", err)
-					}
-				}()
-				fw, err := w.CreateFormFile("photo", image.Path)
-				if err != nil {
-					return fmt.Errorf("failed to create form file: %w", err)
-				}
-				if _, err := io.Copy(fw, f); err != nil {
-					return fmt.Errorf("failed to write to form file: %w", err)
-				}
-				return nil
-			})
+	_ = withStoredImages(ctx, tn.log, tn.images, func(index int, image ngmodels.Image) error {
+		cmd, err = tn.newWebhookSyncCmd("sendPhoto", func(w *multipart.Writer) error {
+			f, err := os.Open(image.Path)
 			if err != nil {
-				return fmt.Errorf("failed to create image: %w", err)
+				return fmt.Errorf("failed to open image: %w", err)
 			}
-			if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
-				return fmt.Errorf("failed to upload image to telegram: %w", err)
+			defer func() {
+				if err := f.Close(); err != nil {
+					tn.log.Warn("failed to close image", "err", err)
+				}
+			}()
+			fw, err := w.CreateFormFile("photo", image.Path)
+			if err != nil {
+				return fmt.Errorf("failed to create form file: %w", err)
 			}
+			if _, err := io.Copy(fw, f); err != nil {
+				return fmt.Errorf("failed to write to form file: %w", err)
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create image: %w", err)
+		}
+		if err := tn.ns.SendWebhookSync(ctx, cmd); err != nil {
+			return fmt.Errorf("failed to upload image to telegram: %w", err)
 		}
 		return nil
 	}, as...)
@@ -160,8 +159,14 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	}()
 
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+	// Telegram supports 4096 chars max
+	messageText, truncated := notify.Truncate(tmpl(tn.Message), 4096)
+	if truncated {
+		tn.log.Warn("Telegram message too long, truncate message", "original_message", tn.Message)
+	}
+
 	m := make(map[string]string)
-	m["text"] = tmpl(tn.Message)
+	m["text"] = messageText
 	m["parse_mode"] = "html"
 	return m, nil
 }

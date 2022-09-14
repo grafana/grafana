@@ -66,7 +66,8 @@ const AmRoutes: FC = () => {
     setIsRootRouteEditMode(false);
   };
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
+
   const handleSave = (data: Partial<FormAmRoute>) => {
     if (!result) {
       return;

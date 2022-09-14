@@ -58,9 +58,10 @@ type NGalertConfig struct {
 type AlertmanagersChoice string
 
 const (
-	AllAlertmanagers      AlertmanagersChoice = "all"
-	InternalAlertmanager  AlertmanagersChoice = "internal"
-	ExternalAlertmanagers AlertmanagersChoice = "external"
+	AllAlertmanagers           AlertmanagersChoice = "all"
+	InternalAlertmanager       AlertmanagersChoice = "internal"
+	ExternalAlertmanagers      AlertmanagersChoice = "external"
+	HandleGrafanaManagedAlerts                     = "handleGrafanaManagedAlerts"
 )
 
 // swagger:model

@@ -1,13 +1,11 @@
 import { cx, css } from '@emotion/css';
-import { isString } from 'lodash';
 import React, { forwardRef, ButtonHTMLAttributes } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
-import { IconName } from '../../types/icon';
 import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -37,7 +35,7 @@ type CommonProps = {
 
 export type ToolbarButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
+export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active' | 'canvas';
 
 export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   (
@@ -62,13 +60,12 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     const styles = useStyles2(getStyles);
 
     const buttonStyles = cx(
-      'toolbar-button',
       {
         [styles.button]: true,
         [styles.buttonFullWidth]: fullWidth,
         [styles.narrow]: narrow,
       },
-      (styles as any)[variant],
+      styles[variant],
       className
     );
 
@@ -116,8 +113,8 @@ function renderIcon(icon: IconName | React.ReactNode) {
     return null;
   }
 
-  if (isString(icon)) {
-    return <Icon name={icon as IconName} size={'lg'} />;
+  if (isIconName(icon)) {
+    return <Icon name={icon} size="lg" />;
   }
 
   return icon;
@@ -126,6 +123,27 @@ function renderIcon(icon: IconName | React.ReactNode) {
 const getStyles = (theme: GrafanaTheme2) => {
   const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
+
+  const defaultOld = css`
+    color: ${theme.colors.text.secondary};
+    background-color: ${theme.colors.background.primary};
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
+
+  const defaultTopNav = css`
+    color: ${theme.colors.text.secondary};
+    background-color: transparent;
+    border-color: transparent;
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
 
   return {
     button: css`
@@ -172,15 +190,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    default: css`
-      color: ${theme.colors.text.secondary};
-      background-color: ${theme.colors.background.primary};
-
-      &:hover {
-        color: ${theme.colors.text.primary};
-        background: ${theme.colors.background.secondary};
-      }
-    `,
+    default: theme.flags.topnav ? defaultTopNav : defaultOld,
+    canvas: defaultOld,
     active: css`
       color: ${theme.v1.palette.orangeDark};
       border-color: ${theme.v1.palette.orangeDark};

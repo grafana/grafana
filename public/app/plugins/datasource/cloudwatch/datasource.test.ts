@@ -1,7 +1,18 @@
 import { lastValueFrom, of } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 
-import { ArrayVector, DataFrame, dataFrameToJSON, dateTime, Field, MutableDataFrame } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  dataFrameToJSON,
+  DataQueryRequest,
+  dateTime,
+  Field,
+  FieldType,
+  LogLevel,
+  LogRowModel,
+  MutableDataFrame,
+} from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 
 import {
@@ -16,13 +27,24 @@ import {
   regionVariable,
 } from './__mocks__/CloudWatchDataSource';
 import { validLogsQuery, validMetricsQuery } from './__mocks__/queries';
+import { LOGSTREAM_IDENTIFIER_INTERNAL, LOG_IDENTIFIER_INTERNAL } from './datasource';
 import {
+  CloudWatchAnnotationQuery,
   CloudWatchLogsQueryStatus,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
   MetricEditorMode,
   MetricQueryType,
 } from './types';
+
+const mockTimeRange = {
+  from: dateTime(1546372800000),
+  to: dateTime(1546380000000),
+  raw: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+  },
+};
 
 describe('datasource', () => {
   describe('query', () => {
@@ -299,6 +321,53 @@ describe('datasource', () => {
     });
   });
 
+  describe('annotation query', () => {
+    const query: DataQueryRequest<CloudWatchAnnotationQuery> = {
+      range: mockTimeRange,
+      rangeRaw: mockTimeRange.raw,
+      targets: [
+        {
+          actionPrefix: '',
+          alarmNamePrefix: '',
+          datasource: { type: 'cloudwatch' },
+          dimensions: { InstanceId: 'i-12345678' },
+          matchExact: true,
+          metricName: 'CPUUtilization',
+          period: '300',
+          prefixMatching: false,
+          queryMode: 'Annotations',
+          refId: 'Anno',
+          namespace: `$${namespaceVariable.name}`,
+          region: `$${regionVariable.name}`,
+          statistic: 'Average',
+        },
+      ],
+      requestId: '',
+      interval: '',
+      intervalMs: 0,
+      scopedVars: {},
+      timezone: '',
+      app: '',
+      startTime: 0,
+    };
+
+    it('should issue the correct query', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource({ variables: [namespaceVariable, regionVariable] });
+      await expect(datasource.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries[0]).toMatchObject(
+          expect.objectContaining({
+            region: regionVariable.current.value,
+            namespace: namespaceVariable.current.value,
+            metricName: query.targets[0].metricName,
+            dimensions: { InstanceId: ['i-12345678'] },
+            statistic: query.targets[0].statistic,
+            period: query.targets[0].period,
+          })
+        );
+      });
+    });
+  });
+
   describe('resource requests', () => {
     it('should map resource response to metric response', async () => {
       const datasource = setupMockedDataSource().datasource;
@@ -385,6 +454,43 @@ describe('datasource', () => {
       expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe('us-west-1');
 
       await datasource.describeLogGroups({ region: 'eu-east' });
+      expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
+    });
+  });
+
+  describe('getLogRowContext', () => {
+    it('replaces parameters correctly in the query', async () => {
+      const { datasource, fetchMock } = setupMockedDataSource();
+      const row: LogRowModel = {
+        entryFieldIndex: 0,
+        rowIndex: 0,
+        dataFrame: new MutableDataFrame({
+          refId: 'B',
+          fields: [
+            { name: 'ts', type: FieldType.time, values: [1] },
+            { name: LOG_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['foo'], labels: {} },
+            { name: LOGSTREAM_IDENTIFIER_INTERNAL, type: FieldType.string, values: ['bar'], labels: {} },
+          ],
+        }),
+        entry: '4',
+        labels: {},
+        hasAnsi: false,
+        hasUnescapedContent: false,
+        raw: '4',
+        logLevel: LogLevel.info,
+        timeEpochMs: 4,
+        timeEpochNs: '4000000',
+        timeFromNow: '',
+        timeLocal: '',
+        timeUtc: '',
+        uid: '1',
+      };
+      await datasource.getLogRowContext(row);
+      expect(fetchMock.mock.calls[0][0].data.queries[0].endTime).toBe(4);
+      expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe(undefined);
+
+      await datasource.getLogRowContext(row, { direction: 'FORWARD' }, { ...validLogsQuery, region: 'eu-east' });
+      expect(fetchMock.mock.calls[1][0].data.queries[0].startTime).toBe(4);
       expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
     });
   });

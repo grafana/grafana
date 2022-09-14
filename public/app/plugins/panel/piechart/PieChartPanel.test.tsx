@@ -14,7 +14,7 @@ import {
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel } from './PieChartPanel';
-import { PieChartOptions, PieChartType, PieChartLegendValues } from './types';
+import { PanelOptions, PieChartType, PieChartLegendValues } from './models.gen';
 
 type PieChartPanelProps = ComponentProps<typeof PieChartPanel>;
 
@@ -166,11 +166,12 @@ const setup = (propsOverrides?: {}) => {
     overrides: [],
   };
 
-  const options: PieChartOptions = {
+  const options: PanelOptions = {
     pieType: PieChartType.Pie,
     displayLabels: [],
     legend: {
       displayMode: LegendDisplayMode.List,
+      showLegend: true,
       placement: 'right',
       calcs: [],
       values: [PieChartLegendValues.Percent],

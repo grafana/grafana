@@ -2,11 +2,15 @@ package grpcserver
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -15,18 +19,22 @@ import (
 
 // Authenticator can authenticate GRPC requests.
 type Authenticator struct {
-	logger log.Logger
+	logger      log.Logger
+	APIKey      apikey.Service
+	UserService user.Service
 }
 
-func NewAuthenticator() *Authenticator {
+func NewAuthenticator(apiKey apikey.Service, userService user.Service) *Authenticator {
 	return &Authenticator{
-		logger: log.New("grpc-server-authenticator"),
+		logger:      log.New("grpc-server-authenticator"),
+		APIKey:      apiKey,
+		UserService: userService,
 	}
 }
 
 // Authenticate checks that a token exists and is valid. It stores the user
 // metadata in the returned context and removes the token from the context.
-func (a *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {
+func (a *Authenticator) authenticate(ctx context.Context) (context.Context, error) {
 	return a.tokenAuth(ctx)
 }
 
@@ -49,7 +57,7 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 	newCtx := purgeHeader(ctx, "authorization")
 
-	err = a.validateToken(token)
+	err = a.validateToken(ctx, token)
 	if err != nil {
 		logger.Warn("request with invalid token", "error", err, "token", token)
 		return ctx, status.Error(codes.Unauthenticated, "invalid token")
@@ -57,9 +65,42 @@ func (a *Authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 	return newCtx, nil
 }
 
-func (a *Authenticator) validateToken(_ string) error {
-	// TODO: implement API key check, require admin role.
-	return errors.New("not implemented")
+func (a *Authenticator) validateToken(ctx context.Context, keyString string) error {
+	decoded, err := apikeygenprefix.Decode(keyString)
+	if err != nil {
+		return err
+	}
+
+	hash, err := decoded.Hash()
+	if err != nil {
+		return err
+	}
+
+	apikey, err := a.APIKey.GetAPIKeyByHash(ctx, hash)
+	if err != nil {
+		return err
+	}
+
+	if apikey == nil || apikey.ServiceAccountId == nil {
+		return status.Error(codes.Unauthenticated, "api key does not have a service account")
+	}
+
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
+	if err != nil {
+		return err
+	}
+
+	if !signedInUser.HasRole(org.RoleAdmin) {
+		return fmt.Errorf("api key does not have admin role")
+	}
+
+	// disabled service accounts are not allowed to access the API
+	if signedInUser.IsDisabled {
+		return fmt.Errorf("service account is disabled")
+	}
+
+	return nil
 }
 
 func extractAuthorization(ctx context.Context) (string, error) {

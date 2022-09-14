@@ -22,6 +22,8 @@ import {
   TimeRange,
   DataFrame,
   dateTime,
+  AnnotationQueryRequest,
+  QueryFixAction,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -145,6 +147,7 @@ export class PrometheusDatasource
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       httpOptions.headers['X-Dashboard-Id'] = options.dashboardId;
+      httpOptions.headers['X-Dashboard-UID'] = options.dashboardUID;
       httpOptions.headers['X-Panel-Id'] = options.panelId;
     }
   }
@@ -159,6 +162,13 @@ export class PrometheusDatasource
     data: Record<string, string> | null,
     overrides: Partial<BackendSrvRequest> = {}
   ): Observable<FetchResponse<T>> {
+    if (this.access === 'direct') {
+      const error = new Error(
+        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
+      );
+      return throwError(() => error);
+    }
+
     data = data || {};
     for (const [key, value] of this.customQueryParameters) {
       if (data[key] == null) {
@@ -212,7 +222,7 @@ export class PrometheusDatasource
   }
 
   // Use this for tab completion features, wont publish response to other components
-  async metadataRequest<T = any>(url: string, params = {}) {
+  async metadataRequest<T = any>(url: string, params = {}, options?: Partial<BackendSrvRequest>) {
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
@@ -221,6 +231,7 @@ export class PrometheusDatasource
             method: this.httpMethod,
             hideFromInspector: true,
             showErrorAlert: false,
+            ...options,
           })
         );
       } catch (err) {
@@ -237,6 +248,7 @@ export class PrometheusDatasource
       this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
         method: 'GET',
         hideFromInspector: true,
+        ...options,
       })
     ); // toPromise until we change getTagValues, getTagKeys to Observable
   }
@@ -694,7 +706,14 @@ export class PrometheusDatasource
     };
   }
 
-  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
+  async annotationQuery(options: AnnotationQueryRequest<PromQuery>): Promise<AnnotationEvent[]> {
+    if (this.access === 'direct') {
+      const error = new Error(
+        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
+      );
+      return Promise.reject(error);
+    }
+
     const annotation = options.annotation;
     const { expr = '' } = annotation;
 
@@ -734,7 +753,7 @@ export class PrometheusDatasource
     );
   }
 
-  processAnnotationResponse = (options: any, data: BackendDataSourceResponse) => {
+  processAnnotationResponse = (options: AnnotationQueryRequest<PromQuery>, data: BackendDataSourceResponse) => {
     const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
     if (!frames || !frames.length) {
       return [];
@@ -1002,7 +1021,7 @@ export class PrometheusDatasource
 
   async loadRules() {
     try {
-      const res = await this.metadataRequest('/api/v1/rules');
+      const res = await this.metadataRequest('/api/v1/rules', {}, { showErrorAlert: false });
       const groups = res.data?.data?.groups;
 
       if (groups) {
@@ -1016,11 +1035,18 @@ export class PrometheusDatasource
 
   async areExemplarsAvailable() {
     try {
-      const res = await this.getResource('/api/v1/query_exemplars', {
-        query: 'test',
-        start: dateTime().subtract(30, 'minutes').valueOf(),
-        end: dateTime().valueOf(),
-      });
+      const res = await this.metadataRequest(
+        '/api/v1/query_exemplars',
+        {
+          query: 'test',
+          start: dateTime().subtract(30, 'minutes').valueOf().toString(),
+          end: dateTime().valueOf().toString(),
+        },
+        {
+          // Avoid alerting the user if this test fails
+          showErrorAlert: false,
+        }
+      );
       if (res.data.status === 'success') {
         return true;
       }
@@ -1030,15 +1056,22 @@ export class PrometheusDatasource
     }
   }
 
-  modifyQuery(query: PromQuery, action: any): PromQuery {
+  modifyQuery(query: PromQuery, action: QueryFixAction): PromQuery {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value);
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value);
+        }
+
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=');
+        const { key, value } = action.options ?? {};
+        if (key && value) {
+          expression = addLabelToQuery(expression, key, value, '!=');
+        }
         break;
       }
       case 'ADD_HISTOGRAM_QUANTILE': {
@@ -1054,8 +1087,8 @@ export class PrometheusDatasource
         break;
       }
       case 'EXPAND_RULES': {
-        if (action.mapping) {
-          expression = expandRecordingRules(expression, action.mapping);
+        if (action.options) {
+          expression = expandRecordingRules(expression, action.options);
         }
         break;
       }

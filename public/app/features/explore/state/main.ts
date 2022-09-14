@@ -2,7 +2,7 @@ import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
 import { ExploreUrlState, serializeStateToUrlParam, SplitOpen, UrlQueryMap } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
@@ -108,9 +108,8 @@ export const splitOpen: SplitOpen = (options): ThunkResult<void> => {
     let rightUrlState: ExploreUrlState = leftUrlState;
 
     if (options) {
-      const datasourceName = getDataSourceSrv().getInstanceSettings(options.datasourceUid)?.name || '';
       rightUrlState = {
-        datasource: datasourceName,
+        datasource: options.datasourceUid,
         queries: [options.query],
         range: options.range || leftState.range,
         panelsState: options.panelsState,

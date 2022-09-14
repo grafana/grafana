@@ -34,17 +34,27 @@ func NewContactPointService(store AMConfigStore, encryptionService secrets.Servi
 	}
 }
 
-func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int64) ([]apimodels.EmbeddedContactPoint, error) {
-	revision, err := getLastConfiguration(ctx, orgID, ecp.amStore)
+type ContactPointQuery struct {
+	// Optionally filter by name.
+	Name  string
+	OrgID int64
+}
+
+func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery) ([]apimodels.EmbeddedContactPoint, error) {
+	revision, err := getLastConfiguration(ctx, q.OrgID, ecp.amStore)
 	if err != nil {
 		return nil, err
 	}
-	provenances, err := ecp.provenanceStore.GetProvenances(ctx, orgID, "contactPoint")
+	provenances, err := ecp.provenanceStore.GetProvenances(ctx, q.OrgID, "contactPoint")
 	if err != nil {
 		return nil, err
 	}
 	contactPoints := []apimodels.EmbeddedContactPoint{}
 	for _, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
+		if q.Name != "" && contactPoint.Name != q.Name {
+			continue
+		}
+
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   contactPoint.UID,
 			Type:                  contactPoint.Type,
@@ -66,6 +76,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, orgID int6
 			}
 			embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
 		}
+
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
 	sort.SliceStable(contactPoints, func(i, j int) bool {
@@ -178,7 +189,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	}
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		err = PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,
@@ -273,7 +284,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		err = PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,
@@ -333,7 +344,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		if err != nil {
 			return err
 		}
-		return ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		return PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,
@@ -407,6 +418,7 @@ groupLoop:
 				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
 				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
 					configModified = true
@@ -448,4 +460,16 @@ groupLoop:
 	}
 
 	return configModified
+}
+
+func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
+	if len(routes) == 0 {
+		return
+	}
+	for _, route := range routes {
+		if route.Receiver == oldName {
+			route.Receiver = newName
+		}
+		replaceReferences(oldName, newName, route.Routes...)
+	}
 }

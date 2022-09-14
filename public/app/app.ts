@@ -34,6 +34,7 @@ import {
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import { getScrollbarWidth } from '@grafana/ui';
 import config from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
@@ -42,7 +43,10 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
+import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
+import { PluginPage } from './core/components/PageNew/PluginPage';
+import { GrafanaContextType } from './core/context/GrafanaContext';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -91,6 +95,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export class GrafanaApp {
+  context!: GrafanaContextType;
+
   async init() {
     try {
       setBackendSrv(backendSrv);
@@ -99,6 +105,7 @@ export class GrafanaApp {
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
+      setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
@@ -146,6 +153,13 @@ export class GrafanaApp {
 
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);
+
+      this.context = {
+        backend: backendSrv,
+        location: locationService,
+        chrome: new AppChromeService(),
+        config,
+      };
 
       ReactDOM.render(
         React.createElement(AppWrapper, {

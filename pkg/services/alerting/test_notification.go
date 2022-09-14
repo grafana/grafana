@@ -57,7 +57,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 		ID:          rand.Int63(),
 	}
 
-	ctx := NewEvalContext(context.Background(), testRule, fakeRequestValidator{}, nil, nil)
+	ctx := NewEvalContext(context.Background(), testRule, fakeRequestValidator{}, nil, nil, nil)
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
 		ctx.ImagePublicURL = "https://grafana.com/assets/img/blog/mixed_styles.png"
 	}

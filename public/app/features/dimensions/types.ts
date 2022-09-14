@@ -12,7 +12,7 @@ export interface DimensionSupplier<T = any> {
   isAssumed?: boolean;
 
   /**
-   * The fied used for
+   * The field used for
    */
   field?: Field;
 

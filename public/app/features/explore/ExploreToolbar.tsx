@@ -3,14 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
-import {
-  defaultIntervals,
-  PageToolbar,
-  RefreshPicker,
-  SetInterval,
-  ToolbarButton,
-  ToolbarButtonRow,
-} from '@grafana/ui';
+import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { AccessControlAction } from 'app/types';
@@ -145,21 +138,22 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
             !datasourceMissing && (
               <DataSourcePicker
                 key={`${exploreId}-ds-picker`}
+                mixed={config.featureToggles.exploreMixedDatasource === true}
                 onChange={this.onChangeDatasource}
-                current={this.props.datasourceName}
+                current={this.props.datasourceRef}
                 hideTextValue={showSmallDataSourcePicker}
                 width={showSmallDataSourcePicker ? 8 : undefined}
               />
             ),
           ].filter(Boolean)}
         >
-          <ToolbarButtonRow>
+          <>
             {!splitted ? (
-              <ToolbarButton title="Split" onClick={() => split()} icon="columns" disabled={isLive}>
+              <ToolbarButton tooltip="Split the pane" onClick={() => split()} icon="columns" disabled={isLive}>
                 Split
               </ToolbarButton>
             ) : (
-              <ToolbarButton title="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
+              <ToolbarButton tooltip="Close split pane" onClick={() => closeSplit(exploreId)} icon="times">
                 Close
               </ToolbarButton>
             )}
@@ -216,7 +210,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
                 }}
               </LiveTailControls>
             )}
-          </ToolbarButtonRow>
+          </>
         </PageToolbar>
       </div>
     );
@@ -233,7 +227,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
 
   return {
     datasourceMissing,
-    datasourceName: datasourceInstance?.name,
+    datasourceRef: datasourceInstance?.getRef(),
     datasourceType: datasourceInstance?.type,
     loading,
     range,

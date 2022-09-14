@@ -1,6 +1,7 @@
-import { locationUtil, setWeekStart } from '@grafana/data';
+import { DataQuery, locationUtil, setWeekStart, DashboardLoadedEvent } from '@grafana/data';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
+import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
@@ -9,6 +10,7 @@ import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoa
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
 import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
@@ -17,6 +19,7 @@ import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
 
 import { DashboardModel } from './DashboardModel';
+import { PanelModel } from './PanelModel';
 import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardInitCompleted, dashboardInitFailed, dashboardInitFetching, dashboardInitServices } from './reducers';
 
@@ -68,7 +71,7 @@ async function fetchDashboard(
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
-        if (args.fixUrl && dashDTO.meta.url) {
+        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
           const currentPath = locationService.getLocation().pathname;
@@ -87,6 +90,10 @@ async function fetchDashboard(
       case DashboardRoutes.New: {
         return getNewDashboardModelData(args.urlFolderId, args.panelType);
       }
+      case DashboardRoutes.Path: {
+        const path = args.urlSlug ?? '';
+        return await dashboardLoaderSrv.loadDashboard(DashboardRoutes.Path, path, path);
+      }
       default:
         throw { message: 'Unknown route ' + args.routeName };
     }
@@ -101,6 +108,28 @@ async function fetchDashboard(
     return null;
   }
 }
+
+const getQueriesByDatasource = (
+  panels: PanelModel[],
+  queries: { [datasourceId: string]: DataQuery[] } = {}
+): { [datasourceId: string]: DataQuery[] } => {
+  panels.forEach((panel) => {
+    if (panel.panels) {
+      getQueriesByDatasource(panel.panels, queries);
+    } else if (panel.targets) {
+      panel.targets.forEach((target) => {
+        if (target.datasource?.type) {
+          if (queries[target.datasource.type]) {
+            queries[target.datasource.type].push(target);
+          } else {
+            queries[target.datasource.type] = [target];
+          }
+        }
+      });
+    }
+  });
+  return queries;
+};
 
 /**
  * This action (or saga) does everything needed to bootstrap a dashboard & dashboard model.
@@ -208,6 +237,17 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     } else {
       setWeekStart(config.bootData.user.weekStart);
     }
+
+    // Propagate an app-wide event about the dashboard being loaded
+    appEvents.publish(
+      new DashboardLoadedEvent({
+        dashboardId: dashboard.uid,
+        orgId: storeState.user.orgId,
+        userId: storeState.user.user?.id,
+        grafanaVersion: config.buildInfo.version,
+        queries: getQueriesByDatasource(dashboard.panels),
+      })
+    );
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));

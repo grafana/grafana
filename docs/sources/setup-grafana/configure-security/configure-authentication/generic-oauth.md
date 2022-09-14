@@ -51,6 +51,7 @@ tls_client_cert =
 tls_client_key =
 tls_client_ca =
 use_pkce = true
+auth_style =
 ```
 
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
@@ -62,6 +63,9 @@ You can also specify the SSL/TLS configuration used by the client.
 - Set `tls_client_ca` to the path containing a trusted certificate authority list.
 
 `tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
+
+`auth_style` controls which [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) is used when token is requested from OAuth provider. It determines how `client_id` and `client_secret` are sent to Oauth provider.
+Available values are `AutoDetect`, `InParams` and `InHeader`. By default, `AutoDetect` is used.
 
 Set `empty_scopes` to true to use an empty scope during authentication. By default, Grafana uses `user:email` as scope.
 
@@ -290,6 +294,27 @@ Config:
 
 ```bash
 role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+```
+
+#### Map server administrator privileges
+
+> Available in Grafana v9.2 and later versions.
+
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
+This is useful if you want to grant server administrator privileges to a subset of users.  
+Grafana also assigns the user the `Admin` role of the default organization.
+
+The setting `allow_assign_grafana_admin` under `[auth.generic_oauth]` must be set to `true` for this to work.  
+If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
+
+```ini
+allow_assign_grafana_admin = true
+```
+
+Example:
+
+```ini
+role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
 ### Groups mapping

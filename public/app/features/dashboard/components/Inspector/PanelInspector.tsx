@@ -11,6 +11,7 @@ import { StoreState } from 'app/types';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
+import { SupportSnapshot } from '../SupportSnapshot/SupportSnapshot';
 
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
@@ -26,7 +27,7 @@ export interface ConnectedProps {
 
 export type Props = OwnProps & ConnectedProps;
 
-const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }) => {
+const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
@@ -47,6 +48,10 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
 
   if (!plugin) {
     return null;
+  }
+
+  if (defaultTab === InspectTab.Support) {
+    return <SupportSnapshot panel={panel} plugin={plugin} onClose={onClose} />;
   }
 
   return (

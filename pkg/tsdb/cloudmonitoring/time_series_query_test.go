@@ -104,7 +104,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 
 	t.Run("appends graph_period to the query", func(t *testing.T) {
 		query := &cloudMonitoringTimeSeriesQuery{}
-		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), " | graph_period 10ms")
+		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), " | graph_period 1ms")
 	})
 
 	t.Run("skips graph_period if disabled", func(t *testing.T) {
