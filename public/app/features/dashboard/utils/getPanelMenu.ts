@@ -48,11 +48,6 @@ export function getPanelMenu(
     sharePanel(dashboard, panel);
   };
 
-  const onToggleLegend = (event: React.MouseEvent<any>) => {
-    event.preventDefault();
-    toggleLegend(panel);
-  };
-
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
@@ -96,6 +91,10 @@ export function getPanelMenu(
     store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
   };
 
+  const onToggleLegend = (event: React.MouseEvent) => {
+    event.preventDefault();
+    toggleLegend(panel);
+  };
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
@@ -141,13 +140,6 @@ export function getPanelMenu(
     });
   }
 
-  menu.push({
-    text: panel.options.legend?.showLegend ? 'Hide legend' : 'Show legend',
-    iconClassName: 'exchange-alt',
-    onClick: onToggleLegend,
-    shortcut: 'p l',
-  });
-
   const inspectMenu: PanelMenuItem[] = [];
 
   // Only show these inspect actions for data plugins
@@ -192,6 +184,7 @@ export function getPanelMenu(
     id: 'panel.header-menu.inspect',
     message: `Inspect`,
   });
+
   menu.push({
     type: 'submenu',
     text: inspectTextTranslation,
@@ -249,6 +242,14 @@ export function getPanelMenu(
 
       subMenu.push(reactItem);
     }
+  }
+
+  if (panel.options.legend) {
+    subMenu.push({
+      text: panel.options.legend.showLegend ? 'Hide legend' : 'Show legend',
+      onClick: onToggleLegend,
+      shortcut: 'p l',
+    });
   }
 
   if (!panel.isEditing && subMenu.length) {
