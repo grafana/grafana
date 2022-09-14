@@ -13,6 +13,7 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export interface Props {
   onToggleSearchBar(): void;
   onToggleMegaMenu(): void;
+  onToggleKioskMode(): void;
   searchBarHidden?: boolean;
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
@@ -26,6 +27,7 @@ export function NavToolbar({
   pageNav,
   onToggleMegaMenu,
   onToggleSearchBar,
+  onToggleKioskMode,
 }: Props) {
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav);
@@ -39,6 +41,7 @@ export function NavToolbar({
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
+        {searchBarHidden && <ToolbarButton onClick={onToggleKioskMode} narrow title="Cycle tv mode" icon="monitor" />}
         <ToolbarButton onClick={onToggleSearchBar} narrow title="Toggle top search bar">
           <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
         </ToolbarButton>

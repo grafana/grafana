@@ -57,6 +57,7 @@ class WrapperUnconnected extends PureComponent<Props> {
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
     this.context.chrome.update({ sectionNav: this.props.navModel.node });
+    this.context.keybindings.setupTimeRangeBindings(false);
 
     lastSavedUrl.left = undefined;
     lastSavedUrl.right = undefined;

@@ -28,11 +28,9 @@ import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
 
 export class KeybindingSrv {
-  reset() {
+  clearAndInitGlobalBindings() {
     Mousetrap.reset();
-  }
 
-  initGlobals() {
     if (locationService.getLocation().pathname !== '/login') {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
@@ -42,7 +40,7 @@ export class KeybindingSrv {
       this.bind('t a', this.makeAbsoluteTime);
       this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
-      this.bindGlobal('esc', this.globalEsc);
+      this.bindGlobalEsc();
     }
 
     this.bind('t t', () => toggleTheme(false));
@@ -51,6 +49,10 @@ export class KeybindingSrv {
     if (process.env.NODE_ENV === 'development') {
       this.bind('t n', () => this.toggleNav());
     }
+  }
+
+  bindGlobalEsc() {
+    this.bindGlobal('esc', this.globalEsc);
   }
 
   globalEsc() {
@@ -346,5 +348,3 @@ export class KeybindingSrv {
     });
   }
 }
-
-export const keybindingSrv = new KeybindingSrv();

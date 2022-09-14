@@ -1,7 +1,10 @@
+import { t } from '@lingui/macro';
 import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
-import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types';
@@ -32,7 +35,7 @@ export class AppChromeService {
     kioskMode: KioskMode.Off,
   });
 
-  registerRouteRender(route: RouteDescriptor) {
+  setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {
       this.currentRoute = route;
       this.routeChangeHandled = false;
@@ -61,12 +64,29 @@ export class AppChromeService {
     }
   }
 
-  toggleMegaMenu = () => {
+  useState() {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useObservable(this.state, this.state.getValue());
+  }
+
+  onToggleMegaMenu = () => {
     this.update({ megaMenuOpen: !this.state.getValue().megaMenuOpen });
   };
 
   setMegaMenu = (megaMenuOpen: boolean) => {
     this.update({ megaMenuOpen });
+  };
+
+  onToggleSearchBar = () => {
+    const searchBarHidden = !this.state.getValue().searchBarHidden;
+    store.set(this.searchBarStorageKey, searchBarHidden);
+    this.update({ searchBarHidden });
+  };
+
+  onToggleKioskMode = () => {
+    const nextMode = this.getNextKioskMode();
+    this.update({ kioskMode: nextMode });
+    locationService.partial({ kiosk: this.getKioskUrlValue(nextMode) });
   };
 
   setKioskModeFromUrl(kiosk: UrlQueryValue) {
@@ -79,16 +99,30 @@ export class AppChromeService {
     }
   }
 
-  cyckleKioskMode() {}
+  getKioskUrlValue(mode: KioskMode) {
+    switch (mode) {
+      case KioskMode.Off:
+        return null;
+      case KioskMode.TV:
+        return 'tv';
+      case KioskMode.Full:
+        return true;
+    }
+  }
 
-  toggleSearchBar = () => {
-    const searchBarHidden = !this.state.getValue().searchBarHidden;
-    store.set(this.searchBarStorageKey, searchBarHidden);
-    this.update({ searchBarHidden });
-  };
+  private getNextKioskMode() {
+    const { kioskMode } = this.state.getValue();
 
-  useState() {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useObservable(this.state, this.state.getValue());
+    switch (kioskMode) {
+      case KioskMode.Off:
+        return KioskMode.TV;
+      case KioskMode.TV:
+        return KioskMode.Full;
+      case KioskMode.Full:
+        appEvents.emit(AppEvents.alertSuccess, [
+          t({ id: 'navigation.kiosk.tv-alert', message: 'Press ESC to exit Kiosk mode' }),
+        ]);
+        return KioskMode.Off;
+    }
   }
 }

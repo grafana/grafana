@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { FetchError, locationService, setEchoSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
+import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { createConstantVariableAdapter } from 'app/features/variables/constant/adapter';
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
@@ -193,6 +193,9 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         urlUid: DASH_UID,
         fixUrl: false,
         routeName: DashboardRoutes.Normal,
+        keybindingSrv: {
+          setupDashboardBindings: jest.fn(),
+        } as unknown as KeybindingSrv,
       },
       backendSrv: getBackendSrv(),
       loaderSrv,
@@ -221,8 +224,6 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
     };
 
     beforeEach(async () => {
-      keybindingSrv.setupDashboardBindings = jest.fn();
-
       setDashboardSrv({
         setCurrent: jest.fn(),
       } as any);
@@ -273,7 +274,7 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardSrv().setCurrent).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
-    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
+    expect(ctx.args.keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 });
 
@@ -408,7 +409,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
     expect(getTimeSrv().init).toBeCalled();
     expect(getDashboardSrv().setCurrent).toBeCalled();
     expect(getDashboardQueryRunner().run).toBeCalled();
-    expect(keybindingSrv.setupDashboardBindings).toBeCalled();
+    expect(ctx.args.keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 
   it('Should initialize redux variables if newVariables is enabled', () => {
