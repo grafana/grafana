@@ -12,7 +12,6 @@ load(
     'publish_image',
     'lint_backend_step',
     'lint_frontend_step',
-    'codespell_step',
     'test_backend_step',
     'test_backend_integration_step',
     'test_frontend_step',
@@ -171,7 +170,6 @@ def get_steps(edition, ver_mode):
     test_steps = []
 
     test_steps.extend([
-        codespell_step(),
         lint_backend_step(edition=edition),
         lint_frontend_step(),
         test_backend_step(edition=edition),
