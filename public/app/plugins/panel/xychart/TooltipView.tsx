@@ -23,18 +23,30 @@ import {
 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
+import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
 import { ScatterSeries } from './types';
 
 export interface Props {
   allSeries: ScatterSeries[];
   data: DataFrame[]; // source data
+  manualSeriesConfigs: ScatterSeriesConfig[] | undefined;
   rowIndex?: number; // the hover row
+  seriesMapping: SeriesMapping;
   hoveredPointIndex: number; // the hovered point
   options: VizTooltipOptions;
   range: TimeRange;
 }
 
-export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, options, range }: Props) => {
+export const TooltipView = ({
+  allSeries,
+  data,
+  manualSeriesConfigs,
+  seriesMapping,
+  rowIndex,
+  hoveredPointIndex,
+  options,
+  range,
+}: Props) => {
   const style = useStyles2(getStyles);
   const { onSplitOpen } = usePanelContext();
 
@@ -54,7 +66,25 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
   });
 
   let yValues = [];
+  let extraFacets: string | any[] = [];
   if (options.mode === TooltipDisplayMode.Single) {
+    if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
+      const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field;
+      const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field;
+
+      const colorFacet = colorFacetFieldName ? frame.fields.find((f) => f.name === colorFacetFieldName) : undefined;
+      const sizeFacet = sizeFacetFieldName ? frame.fields.find((f) => f.name === sizeFacetFieldName) : undefined;
+
+      extraFacets = [
+        {
+          colorFacetFieldName,
+          sizeFacetFieldName,
+          colorFacetValue: colorFacet?.values.get(rowIndex),
+          sizeFacetValue: sizeFacet?.values.get(rowIndex),
+        },
+      ];
+    }
+
     yValues = [
       {
         name: getFieldDisplayName(yField, frame),
@@ -64,6 +94,25 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
       },
     ];
   } else {
+    if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
+      extraFacets = allSeries.map((series, i) => {
+        const colorFacetFieldName = manualSeriesConfigs[i].pointColor?.field;
+        const sizeFacetFieldName = manualSeriesConfigs[i].pointSize?.field;
+
+        const frame = series.frame(data);
+
+        const colorFacet = colorFacetFieldName ? frame.fields.find((f) => f.name === colorFacetFieldName) : undefined;
+        const sizeFacet = sizeFacetFieldName ? frame.fields.find((f) => f.name === sizeFacetFieldName) : undefined;
+
+        return {
+          colorFacetFieldName,
+          sizeFacetFieldName,
+          colorFacetValue: colorFacet?.values.get(rowIndex),
+          sizeFacetValue: sizeFacet?.values.get(rowIndex),
+        };
+      });
+    }
+
     yValues = allSeries
       .map((series, i) => {
         const frame = series.frame(data);
@@ -73,7 +122,7 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
           return null;
         }
 
-        const seriesYField = series.y(frame);
+        const seriesYField: Field = series.y(frame);
 
         return {
           name: getFieldDisplayName(seriesYField, frame),
@@ -99,7 +148,7 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
   return (
     <>
       <div className={style.xVal} aria-label="x-val">
-        {fmt(frame.fields[0], xField.values.get(rowIndex))}
+        {xField.name}: {fmt(frame.fields[0], xField.values.get(rowIndex))}
       </div>
       <table className={style.infoWrap}>
         <tbody>
@@ -110,13 +159,32 @@ export const TooltipView = ({ allSeries, data, rowIndex, hoveredPointIndex, opti
             }
 
             return (
-              <tr key={`${index}/${rowIndex}`} className={index === activePointIndex ? style.highlight : ''}>
-                <th>
-                  {color && <SeriesIcon color={color} className={style.icon} />}
-                  {el!.name}:
-                </th>
-                <td>{fmt(el!.field, el!.val)}</td>
-              </tr>
+              <>
+                <tr key={`${index}/${rowIndex}`} className={index === activePointIndex ? style.highlight : ''}>
+                  <th>{color && <SeriesIcon color={color} className={style.icon} />}</th>
+                  <th>Y - {el!.name}:</th>
+                  <td>{fmt(el!.field, el!.val)}</td>
+                </tr>
+                {extraFacets.length > 0 && (
+                  <>
+                    {extraFacets[index].colorFacetFieldName && (
+                      <tr
+                        key={`${index}/${rowIndex}/color`}
+                        className={index === activePointIndex ? style.highlight : ''}
+                      >
+                        <th></th>
+                        <th>Color - {extraFacets[index].colorFacetFieldName}:</th>
+                        <td>{extraFacets[index].colorFacetValue}</td>
+                      </tr>
+                    )}
+                    <tr key={`${index}/${rowIndex}/size`} className={index === activePointIndex ? style.highlight : ''}>
+                      <th></th>
+                      <th>Size - {extraFacets[index].sizeFacetFieldName}:</th>
+                      <td>{extraFacets[index].sizeFacetValue}</td>
+                    </tr>
+                  </>
+                )}
+              </>
             );
           })}
           {links.length > 0 && (

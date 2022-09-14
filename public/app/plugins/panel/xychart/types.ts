@@ -3,8 +3,6 @@ import { LineStyle, VisibilityMode } from '@grafana/schema';
 import { VizLegendItem } from '@grafana/ui';
 import { ScaleDimensionConfig } from 'app/features/dimensions';
 
-import { ScatterLineMode } from './models.gen';
-
 /**
  * @internal
  */
@@ -39,12 +37,12 @@ export interface ScatterSeries {
 
   legend: (frame: DataFrame) => VizLegendItem[]; // could be single if symbol is constant
 
-  line: ScatterLineMode;
+  showLine: boolean;
   lineWidth: number;
   lineStyle: LineStyle;
   lineColor: (frame: DataFrame) => CanvasRenderingContext2D['strokeStyle'];
 
-  point: VisibilityMode;
+  showPoints: VisibilityMode;
   pointSize: DimensionValues<number>;
   pointColor: DimensionValues<CanvasRenderingContext2D['strokeStyle']>;
   pointSymbol: DimensionValues<string>; // single field, multiple symbols.... kinda equals multiple series

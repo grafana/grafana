@@ -12,8 +12,8 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
   .setPanelOptions((builder) => {
     builder
       .addRadio({
-        path: 'mode',
-        name: 'Mode',
+        path: 'seriesMapping',
+        name: 'Series mapping',
         defaultValue: 'auto',
         settings: {
           options: [
@@ -27,7 +27,7 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
         path: 'dims',
         name: '',
         editor: AutoEditor,
-        showIf: (cfg) => cfg.mode === 'auto',
+        showIf: (cfg) => cfg.seriesMapping === 'auto',
       })
       .addCustomEditor({
         id: 'series',
@@ -35,7 +35,7 @@ export const plugin = new PanelPlugin<XYChartOptions, ScatterFieldConfig>(XYChar
         name: '',
         defaultValue: [],
         editor: ManualEditor,
-        showIf: (cfg) => cfg.mode === 'manual',
+        showIf: (cfg) => cfg.seriesMapping === 'manual',
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);

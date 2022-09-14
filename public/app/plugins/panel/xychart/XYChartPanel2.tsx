@@ -240,6 +240,8 @@ export const XYChartPanel2: React.FC<Props> = (props: Props) => {
             <TooltipView
               options={props.options.tooltip}
               allSeries={series}
+              manualSeriesConfigs={props.options.series}
+              seriesMapping={props.options.seriesMapping!}
               rowIndex={hover.xIndex}
               hoveredPointIndex={hover.scatterIndex}
               data={props.data.series}

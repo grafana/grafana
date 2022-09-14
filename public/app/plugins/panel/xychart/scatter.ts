@@ -26,7 +26,7 @@ import {
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { isGraphable } from './dims';
-import { defaultScatterConfig, ScatterFieldConfig, ScatterLineMode, XYChartOptions } from './models.gen';
+import { defaultScatterConfig, ScatterFieldConfig, ScatterShow, XYChartOptions } from './models.gen';
 import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
@@ -172,12 +172,12 @@ function getScatterSeries(
       ];
     },
 
-    line: fieldConfig.line ?? ScatterLineMode.None,
+    showLine: fieldConfig.show !== ScatterShow.Points,
     lineWidth: fieldConfig.lineWidth ?? 2,
     lineStyle: fieldConfig.lineStyle!,
     lineColor: () => seriesColor,
 
-    point: fieldConfig.point!,
+    showPoints: fieldConfig.show !== ScatterShow.Lines ? VisibilityMode.Always : VisibilityMode.Never,
     pointSize,
     pointColor,
     pointSymbol: (frame: DataFrame, from?: number) => 'circle', // single field, multiple symbols.... kinda equals multiple series 🤔
@@ -201,7 +201,7 @@ function prepSeries(options: XYChartOptions, frames: DataFrame[]): ScatterSeries
     throw 'Missing data';
   }
 
-  if (options.mode === 'manual') {
+  if (options.seriesMapping === 'manual') {
     if (options.series?.length) {
       const scatterSeries: ScatterSeries[] = [];
 
@@ -323,9 +323,9 @@ const prepConfig = (
           const scatterInfo = scatterSeries[seriesIdx - 1];
           let d = u.data[seriesIdx] as unknown as FacetSeries;
 
-          let showLine = scatterInfo.line !== ScatterLineMode.None;
-          let showPoints = scatterInfo.point === VisibilityMode.Always;
-          if (!showPoints && scatterInfo.point === VisibilityMode.Auto) {
+          let showLine = scatterInfo.showLine;
+          let showPoints = scatterInfo.showPoints === VisibilityMode.Always;
+          if (!showPoints && scatterInfo.showPoints === VisibilityMode.Auto) {
             showPoints = d[0].length < 1000;
           }
 
