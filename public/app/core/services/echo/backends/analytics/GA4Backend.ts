@@ -4,7 +4,6 @@ import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime'
 
 export interface GA4EchoBackendOptions {
   googleAnalyticsId: string;
-  debug?: boolean;
 }
 
 export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBackendOptions> {
@@ -12,7 +11,7 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
   trackedUserId: number | null = null;
 
   constructor(public options: GA4EchoBackendOptions) {
-    const url = `https://www.google-analytics.com/analytics${options.debug ? '_debug' : ''}.js`;
+    const url = `https://www.googletagmanager.com/gtag/js?id=${options.googleAnalyticsId}`;
 
     $.ajax({
       url,
@@ -20,29 +19,28 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
       cache: true,
     });
 
-    const ga = (window.ga =
-      window.ga ||
-      // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
-      function () {
-        (ga.q = ga.q || []).push(arguments);
-      });
-    ga.l = +new Date();
-    ga('create', options.googleAnalyticsId, 'auto');
-    ga('set', 'anonymizeIp', true);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function gtag() {
+      dataLayer.push(arguments);
+    };
+    window.gtag('js', new Date());
+    window.gtag('config', options.googleAnalyticsId, {
+      user_id: userId,
+    });
   }
 
   addEvent = (e: PageviewEchoEvent) => {
-    if (!window.ga) {
+    if (!window.gtag) {
       return;
     }
 
-    window.ga('set', { page: e.payload.page });
-    window.ga('send', 'pageview');
+    window.gtag('set', 'page_path', e.payload.page);
+    window.gtag('event', 'page_view');
 
     const { userSignedIn, userId } = e.meta;
     if (userSignedIn && userId !== this.trackedUserId) {
       this.trackedUserId = userId;
-      window.ga('set', 'userId', userId);
+      window.gtag('set', 'userId', userId);
     }
   };
 
