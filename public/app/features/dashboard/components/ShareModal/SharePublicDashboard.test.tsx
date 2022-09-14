@@ -97,7 +97,7 @@ describe('SharePublic', () => {
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
   });
 
-  it('renders default time in inputs', async () => {
+  it('renders default relative time in input', async () => {
     config.featureToggles.publicDashboards = true;
     const mockDashboard = new DashboardModel({
       uid: 'mockDashboardUid',
@@ -108,10 +108,8 @@ describe('SharePublic', () => {
 
     expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
 
-    const from = '2022-06-08T03:00:00.000Z';
-    const to = '2022-09-08T03:00:00.000Z';
     //@ts-ignore
-    mockDashboard.originalTime = { from, to };
+    mockDashboard.originalTime = { from: 'now-6h', to: 'now' };
 
     render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
 
@@ -119,7 +117,28 @@ describe('SharePublic', () => {
     fireEvent.click(screen.getByText('Public dashboard'));
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
-    expect(screen.getByText(`${from} to ${to}`)).toBeInTheDocument();
+    expect(screen.getByText('Last 6 hours')).toBeInTheDocument();
+  });
+  it('renders default absolute time in input 2', async () => {
+    config.featureToggles.publicDashboards = true;
+    const mockDashboard = new DashboardModel({
+      uid: 'mockDashboardUid',
+    });
+    const mockPanel = new PanelModel({
+      id: 'mockPanelId',
+    });
+
+    mockDashboard.time = { from: '2022-08-30T03:00:00.000Z', to: '2022-09-04T02:59:59.000Z' };
+    //@ts-ignore
+    mockDashboard.originalTime = { from: '2022-08-30T06:00:00.000Z', to: '2022-09-04T06:59:59.000Z' };
+
+    render(<ShareModal panel={mockPanel} dashboard={mockDashboard} onDismiss={() => {}} />);
+
+    await waitFor(() => screen.getByText('Link'));
+    fireEvent.click(screen.getByText('Public dashboard'));
+
+    await screen.findByText('Welcome to Grafana public dashboards alpha!');
+    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 01:59:59')).toBeInTheDocument();
   });
 
   // test checking if current version of dashboard in state is persisted to db

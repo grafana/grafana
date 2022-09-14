@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -319,11 +320,10 @@ func Test_GetPluginAssets(t *testing.T) {
 }
 
 func TestMakePluginResourceRequest(t *testing.T) {
-	pluginClient := &fakePluginClient{}
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
-		pluginClient: pluginClient,
+		pluginClient: &fakePluginClient{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()

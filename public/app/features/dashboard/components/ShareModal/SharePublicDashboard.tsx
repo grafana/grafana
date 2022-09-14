@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { dateTime, GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
 import {
@@ -23,6 +23,7 @@ import {
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 // import { useGetPubDashConfigQuery } from 'app/features/alerting/unified/api/pubDashApi';
+import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { dispatch } from 'app/store/store';
 
 import { contextSrv } from '../../../../core/services/context_srv';
@@ -66,6 +67,11 @@ export const SharePublicDashboard = (props: Props) => {
     datasources: false,
     usage: false,
   });
+
+  const timeRange = getTimeRange(
+    { from: props.dashboard.getDefaultTime().from, to: props.dashboard.getDefaultTime().to },
+    props.dashboard.timezone
+  );
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_public_share_viewed');
@@ -192,18 +198,7 @@ export const SharePublicDashboard = (props: Props) => {
                   <Label description="The public dashboard uses the default time settings of the dashboard">
                     Time Range
                   </Label>
-                  <TimeRangeInput
-                    value={{
-                      from: dateTime(props.dashboard.getDefaultTime().from),
-                      to: dateTime(props.dashboard.getDefaultTime().to),
-                      raw: {
-                        from: dateTime(null),
-                        to: dateTime(null),
-                      },
-                    }}
-                    disabled
-                    onChange={() => {}}
-                  />
+                  <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
                 </HorizontalGroup>
                 <HorizontalGroup spacing="xs" justify="space-between">
                   <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>

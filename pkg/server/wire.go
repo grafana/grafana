@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
@@ -174,6 +175,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(usagestats.Service), new(*uss.UsageStats)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	pluginsCfg.ProvideConfig,
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	manager.ProvideService,
