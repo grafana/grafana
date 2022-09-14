@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
@@ -61,7 +62,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		}
 		proc := fakes.NewFakeProcessManager()
 
-		pm := New(&plugins.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{}, loader, pluginRepo, fs, proc)
+		pm := New(&config.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{}, loader, pluginRepo, fs, proc)
 		err := pm.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
 		require.NoError(t, err)
 
@@ -175,7 +176,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			}
 
 			proc := fakes.NewFakeProcessManager()
-			pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, proc)
+			pm := New(&config.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, proc)
 			err := pm.Add(context.Background(), p.ID, "3.2.0", plugins.CompatOpts{})
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
@@ -201,7 +202,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 func TestPluginManager_Run(t *testing.T) {
 	t.Run("Plugin sources are loaded in order", func(t *testing.T) {
 		loader := &fakes.FakeLoader{}
-		pm := New(&plugins.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{
+		pm := New(&config.Cfg{}, fakes.NewFakePluginRegistry(), []plugins.PluginSource{
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.Core, Paths: []string{"path2"}},
 			{Class: plugins.External, Paths: []string{"path3"}},
@@ -227,7 +228,7 @@ func TestManager_Renderer(t *testing.T) {
 			},
 		}
 
-		pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{},
+		pm := New(&config.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{},
 			&fakes.FakePluginStorage{}, &fakes.FakeProcessManager{})
 
 		r := pm.Renderer(context.Background())
@@ -251,7 +252,7 @@ func TestManager_SecretsManager(t *testing.T) {
 			},
 		}
 
-		pm := New(&plugins.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{},
+		pm := New(&config.Cfg{}, reg, []plugins.PluginSource{}, &fakes.FakeLoader{}, &fakes.FakePluginRepo{},
 			&fakes.FakePluginStorage{}, &fakes.FakeProcessManager{})
 
 		r := pm.SecretsManager(context.Background())

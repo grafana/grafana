@@ -133,7 +133,28 @@ func (t *Tree) RootPlugin() PluginInfo {
 // SubPlugins returned a map of the PluginInfos for subplugins
 // within the tree, if any, keyed by subpath.
 func (t *Tree) SubPlugins() map[string]PluginInfo {
-	panic("TODO")
+	// TODO implement these once ParsePluginFS descends
+	return nil
+}
+
+// TreeList is a slice of validated plugin fs Trees with helper methods
+// for filtering to particular subsets of its members.
+type TreeList []*Tree
+
+// LineagesForSlot returns the set of plugin-defined lineages that implement a
+// particular named Grafana slot (See ["github.com/grafana/grafana/pkg/framework/coremodel".Slot]).
+func (tl TreeList) LineagesForSlot(slotname string) map[string]thema.Lineage {
+	m := make(map[string]thema.Lineage)
+	for _, tree := range tl {
+		rootp := tree.RootPlugin()
+		rid := rootp.Meta().Id
+
+		if lin, has := rootp.SlotImplementations()[slotname]; has {
+			m[rid] = lin
+		}
+	}
+
+	return m
 }
 
 // PluginInfo represents everything knowable about a single plugin from static
@@ -166,8 +187,8 @@ func (pi PluginInfo) Meta() pluginmeta.Model {
 // ParsePluginFS takes an fs.FS and checks that it represents exactly one valid
 // plugin fs tree, with the fs.FS root as the root of the tree.
 //
-// It does not descend into subdirectories to search for additional
-// plugin.json files.
+// It does not descend into subdirectories to search for additional plugin.json
+// files.
 // TODO no descent is ok for core plugins, but won't cut it in general
 func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	if f == nil {
@@ -234,6 +255,9 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 		}
 
 		val := ctx.BuildInstance(bi)
+		if val.Err() != nil {
+			return nil, ewrap(fmt.Errorf("models.cue is invalid CUE: %w", val.Err()), ErrInvalidCUE)
+		}
 		for _, s := range allslots {
 			iv := val.LookupPath(cue.ParsePath(s.slot.Name()))
 			lin, err := bindSlotLineage(iv, s.slot, r.meta, lib)
@@ -249,7 +273,7 @@ func ParsePluginFS(f fs.FS, lib thema.Library) (*Tree, error) {
 	return tree, nil
 }
 
-func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib thema.Library) (thema.Lineage, error) {
+func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib thema.Library, opts ...thema.BindOption) (thema.Lineage, error) {
 	accept, required := s.ForPluginType(string(meta.Type))
 	exists := v.Exists()
 
@@ -269,7 +293,7 @@ func bindSlotLineage(v cue.Value, s *coremodel.Slot, meta pluginmeta.Model, lib 
 
 	// TODO make this opt real in thema, then uncomment to enforce joinSchema
 	// lin, err := thema.BindLineage(iv, lib, thema.SatisfiesJoinSchema(s.MetaSchema()))
-	lin, err := thema.BindLineage(v, lib)
+	lin, err := thema.BindLineage(v, lib, opts...)
 	if err != nil {
 		return nil, ewrap(fmt.Errorf("%s: invalid thema lineage for slot %s: %w", meta.Id, s.Name(), err), ErrInvalidLineage)
 	}
