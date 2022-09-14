@@ -168,18 +168,6 @@ steps:
   image: grafana/build-container:1.6.2
   name: wire-install
 - commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
-  image: grafana/build-container:1.6.2
-  name: codespell
-- commands:
   - make lint-go
   depends_on:
   - wire-install
@@ -921,18 +909,6 @@ steps:
   - verify-gen-cue
   image: grafana/build-container:1.6.2
   name: wire-install
-- commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
-  image: grafana/build-container:1.6.2
-  name: codespell
 - commands:
   - make lint-go
   depends_on:
@@ -2072,18 +2048,6 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
-  image: grafana/build-container:1.6.2
-  name: codespell
-- commands:
   - make lint-go
   depends_on:
   - wire-install
@@ -2736,18 +2700,6 @@ steps:
   - init-enterprise
   image: grafana/build-container:1.6.2
   name: verify-gen-cue
-- commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
-  image: grafana/build-container:1.6.2
-  name: codespell
 - commands:
   - make lint-go
   depends_on:
@@ -4009,18 +3961,6 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
-  image: grafana/build-container:1.6.2
-  name: codespell
-- commands:
   - make lint-go
   depends_on:
   - wire-install
@@ -4638,18 +4578,6 @@ steps:
   image: grafana/build-container:1.6.2
   name: verify-gen-cue
 - commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
-  image: grafana/build-container:1.6.2
-  name: codespell
-- commands:
   - make lint-go
   depends_on:
   - wire-install
@@ -5127,6 +5055,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: f8201ab7fe1632df9158ee66cc0a9bff140e9a7e4b2044b34b8e4e30d424aaad
+hmac: 5ddbaf0b3a60ffec387d728b2141c59a4875d72108a71b2ee0baf278d2b4e939
 
 ...

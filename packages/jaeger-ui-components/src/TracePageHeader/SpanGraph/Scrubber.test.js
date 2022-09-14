@@ -12,51 +12,51 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow } from 'enzyme';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
-import sinon from 'sinon';
 
-import Scrubber, { getStyles } from './Scrubber';
+import Scrubber from './Scrubber';
 
 describe('<Scrubber>', () => {
   const defaultProps = {
-    onMouseDown: sinon.spy(),
     position: 0,
   };
 
-  let wrapper;
+  let rerender;
 
   beforeEach(() => {
-    wrapper = shallow(<Scrubber {...defaultProps} />);
+    ({ rerender } = render(
+      <svg>
+        <Scrubber {...defaultProps} />
+      </svg>
+    ));
   });
 
   it('contains the proper svg components', () => {
-    const styles = getStyles();
-    expect(
-      wrapper.matchesElement(
-        <g>
-          <g className={styles.ScrubberHandles}>
-            <rect className={styles.ScrubberHandleExpansion} />
-            <rect className={styles.ScrubberHandle} />
-          </g>
-          <line className={styles.ScrubberLine} />
-        </g>
-      )
-    ).toBeTruthy();
+    const scrubberComponent = screen.getByTestId('scrubber-component');
+    const scrubberComponentG = screen.getByTestId('scrubber-component-g');
+
+    expect(within(scrubberComponent).getByTestId('scrubber-component-g')).toBeTruthy();
+    expect(within(scrubberComponent).getByTestId('scrubber-component-line')).toBeTruthy();
+    expect(within(scrubberComponentG).getByTestId('scrubber-component-rect-1')).toBeTruthy();
+    expect(within(scrubberComponentG).getByTestId('scrubber-component-rect-2')).toBeTruthy();
   });
 
   it('calculates the correct x% for a timestamp', () => {
-    wrapper = shallow(<Scrubber {...defaultProps} position={0.5} />);
-    const line = wrapper.find('line').first();
-    const rect = wrapper.find('rect').first();
-    expect(line.prop('x1')).toBe('50%');
-    expect(line.prop('x2')).toBe('50%');
-    expect(rect.prop('x')).toBe('50%');
+    rerender(
+      <svg>
+        <Scrubber {...defaultProps} position={0.5} />
+      </svg>
+    );
+    const line = screen.getByTestId('scrubber-component-line');
+    const rect = screen.getByTestId('scrubber-component-rect-1');
+
+    expect(line).toHaveAttribute('x1', '50%');
+    expect(line).toHaveAttribute('x2', '50%');
+    expect(rect).toHaveAttribute('x', '50%');
   });
 
   it('supports onMouseDown', () => {
-    const event = {};
-    wrapper.find(`.${getStyles().ScrubberHandles}`).prop('onMouseDown')(event);
-    expect(defaultProps.onMouseDown.calledWith(event)).toBeTruthy();
+    expect(fireEvent.mouseDown(screen.getByTestId('scrubber-component-g'))).toBeTruthy();
   });
 });
