@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { FolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/FolderPicker';
 import { PermissionLevelString } from 'app/types';
@@ -12,7 +12,8 @@ export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialT
   value?: Folder;
 }
 
-export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, ...props }) => {
+export function RuleFolderPicker(props: RuleFolderPickerProps) {
+  const { value } = props;
   return (
     <FolderPicker
       showRoot={false}
@@ -22,6 +23,7 @@ export const RuleFolderPicker: FC<RuleFolderPickerProps> = ({ value, ...props })
       accessControlMetadata
       {...props}
       permissionLevel={PermissionLevelString.View}
+      customAdd={true}
     />
   );
-};
+}

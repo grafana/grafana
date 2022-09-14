@@ -6,7 +6,7 @@ import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
 import { Switch } from './Forms/Legacy/Switch/Switch';
 import { SecretFormField } from './SecretFormField/SecretFormField';
 
-export { Icon, toIconName } from './Icon/Icon';
+export { Icon } from './Icon/Icon';
 export { IconButton, type IconButtonVariant } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';
 export { DeleteButton } from './ConfirmButton/DeleteButton';

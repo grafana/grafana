@@ -245,11 +245,13 @@ require (
 	github.com/blugelabs/bluge v0.1.9
 	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/dlmiddlecote/sqlstats v1.0.2
+	github.com/drone/drone-cli v1.5.0
 	github.com/getkin/kin-openapi v0.94.0
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/urfave/cli v1.22.5
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.31.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.6.0
@@ -261,7 +263,10 @@ require (
 require (
 	cloud.google.com/go v0.100.2 // indirect
 	github.com/armon/go-metrics v0.3.10 // indirect
+	github.com/bmatcuk/doublestar v1.1.1 // indirect
+	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/drone/drone-yaml v0.0.0-20190729072335-70fa398b3560 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
@@ -270,6 +275,7 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	go.starlark.net v0.0.0-20201118183435-e55f603d8c79 // indirect
 )
 
 require (
