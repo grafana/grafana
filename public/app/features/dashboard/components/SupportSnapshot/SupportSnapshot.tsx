@@ -53,8 +53,8 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
     service.buildDebugDashboard();
   }, [service, plugin, randomize]);
 
-  // Listen for messages from loaded iframe
   useEffect(() => {
+    // Listen for messages from loaded iframe
     return service.subscribeToIframeLoadingMessage();
   }, [service]);
 
