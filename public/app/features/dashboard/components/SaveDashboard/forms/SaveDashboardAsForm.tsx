@@ -14,12 +14,11 @@ interface SaveDashboardAsFormDTO {
 }
 
 const getSaveAsDashboardClone = (dashboard: DashboardModel) => {
-  const clone: any = dashboard.getSaveModelClone();
+  const clone = dashboard.getSaveModelClone();
   clone.id = null;
   clone.uid = '';
   clone.title += ' Copy';
   clone.editable = true;
-  clone.hideControls = false;
 
   // remove alerts if source dashboard is already persisted
   // do not want to create alert dupes

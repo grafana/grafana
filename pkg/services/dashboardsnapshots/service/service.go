@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -26,7 +25,7 @@ func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Servi
 	return s
 }
 
-func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *models.CreateDashboardSnapshotCommand) error {
+func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) error {
 	marshalledData, err := cmd.Dashboard.Encode()
 	if err != nil {
 		return err
@@ -42,7 +41,7 @@ func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *models.C
 	return s.store.CreateDashboardSnapshot(ctx, cmd)
 }
 
-func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *models.GetDashboardSnapshotQuery) error {
+func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) error {
 	err := s.store.GetDashboardSnapshot(ctx, query)
 	if err != nil {
 		return err
@@ -65,14 +64,14 @@ func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *models.Ge
 	return err
 }
 
-func (s *ServiceImpl) DeleteDashboardSnapshot(ctx context.Context, cmd *models.DeleteDashboardSnapshotCommand) error {
+func (s *ServiceImpl) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.DeleteDashboardSnapshotCommand) error {
 	return s.store.DeleteDashboardSnapshot(ctx, cmd)
 }
 
-func (s *ServiceImpl) SearchDashboardSnapshots(ctx context.Context, query *models.GetDashboardSnapshotsQuery) error {
+func (s *ServiceImpl) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) error {
 	return s.store.SearchDashboardSnapshots(ctx, query)
 }
 
-func (s *ServiceImpl) DeleteExpiredSnapshots(ctx context.Context, cmd *models.DeleteExpiredSnapshotsCommand) error {
+func (s *ServiceImpl) DeleteExpiredSnapshots(ctx context.Context, cmd *dashboardsnapshots.DeleteExpiredSnapshotsCommand) error {
 	return s.store.DeleteExpiredSnapshots(ctx, cmd)
 }

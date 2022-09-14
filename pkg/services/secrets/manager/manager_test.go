@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
+	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -67,21 +68,6 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 		keys, err := store.GetAllDataKeys(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, len(keys), 2)
-	})
-
-	t.Run("decrypting empty payload should return error", func(t *testing.T) {
-		_, err := svc.Decrypt(context.Background(), []byte(""))
-		require.Error(t, err)
-
-		assert.Equal(t, "unable to decrypt empty payload", err.Error())
-	})
-
-	t.Run("decrypting legacy secret encrypted with secret key from settings", func(t *testing.T) {
-		expected := "grafana"
-		encrypted := []byte{122, 56, 53, 113, 101, 117, 73, 89, 20, 254, 36, 112, 112, 16, 128, 232, 227, 52, 166, 108, 192, 5, 28, 125, 126, 42, 197, 190, 251, 36, 94}
-		decrypted, err := svc.Decrypt(context.Background(), encrypted)
-		require.NoError(t, err)
-		assert.Equal(t, expected, string(decrypted))
 	})
 
 	t.Run("usage stats should be registered", func(t *testing.T) {
@@ -190,8 +176,14 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		raw, err := ini.Load([]byte(rawCfg))
 		require.NoError(t, err)
 
-		encryptionService := ossencryption.ProvideService()
 		settings := &setting.OSSImpl{Cfg: &setting.Cfg{Raw: raw}}
+
+		encProvider := encryptionprovider.Provider{}
+		usageStats := &usagestats.UsageStatsMock{}
+
+		encryptionService, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+		require.NoError(t, err)
+
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, settings, features))
 		secretStore := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
@@ -344,5 +336,67 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 
 		assert.Empty(t, svc.dataKeyCache.byId)
 		assert.Empty(t, svc.dataKeyCache.byLabel)
+	})
+}
+
+func TestSecretsService_Decrypt(t *testing.T) {
+	ctx := context.Background()
+	store := database.ProvideSecretsStore(sqlstore.InitTestDB(t))
+
+	t.Run("empty payload should fail", func(t *testing.T) {
+		svc := SetupTestService(t, store)
+		_, err := svc.Decrypt(context.Background(), []byte(""))
+		require.Error(t, err)
+
+		assert.Equal(t, "unable to decrypt empty payload", err.Error())
+	})
+
+	t.Run("ee encrypted payload with ee disabled should fail", func(t *testing.T) {
+		svc := SetupTestService(t, store)
+		ciphertext, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
+		require.NoError(t, err)
+
+		svc = SetupDisabledTestService(t, store)
+
+		_, err = svc.Decrypt(ctx, ciphertext)
+		assert.Error(t, err)
+	})
+
+	t.Run("ee encrypted payload with providers initialized should work", func(t *testing.T) {
+		svc := SetupTestService(t, store)
+		ciphertext, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
+		require.NoError(t, err)
+
+		svc = SetupDisabledTestService(t, store)
+		err = svc.InitProviders()
+		require.NoError(t, err)
+
+		plaintext, err := svc.Decrypt(ctx, ciphertext)
+		assert.NoError(t, err)
+		assert.Equal(t, []byte("grafana"), plaintext)
+	})
+
+	t.Run("ee encrypted payload with ee enabled should work", func(t *testing.T) {
+		svc := SetupTestService(t, store)
+		ciphertext, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
+		require.NoError(t, err)
+
+		plaintext, err := svc.Decrypt(ctx, ciphertext)
+		assert.NoError(t, err)
+		assert.Equal(t, []byte("grafana"), plaintext)
+	})
+
+	t.Run("legacy payload should always work", func(t *testing.T) {
+		encrypted := []byte{122, 56, 53, 113, 101, 117, 73, 89, 20, 254, 36, 112, 112, 16, 128, 232, 227, 52, 166, 108, 192, 5, 28, 125, 126, 42, 197, 190, 251, 36, 94}
+
+		svc := SetupTestService(t, store)
+		decrypted, err := svc.Decrypt(context.Background(), encrypted)
+		require.NoError(t, err)
+		assert.Equal(t, []byte("grafana"), decrypted)
+
+		svc = SetupDisabledTestService(t, store)
+		decrypted, err = svc.Decrypt(context.Background(), encrypted)
+		require.NoError(t, err)
+		assert.Equal(t, []byte("grafana"), decrypted)
 	})
 }

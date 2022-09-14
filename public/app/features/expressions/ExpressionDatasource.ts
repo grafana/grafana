@@ -53,9 +53,9 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
   newQuery(query?: Partial<ExpressionQuery>): ExpressionQuery {
     return {
       refId: '--', // Replaced with query
-      type: query?.type ?? ExpressionQueryType.math,
       datasource: ExpressionDatasourceRef,
-      conditions: query?.conditions ?? undefined,
+      type: query?.type ?? ExpressionQueryType.math,
+      ...query,
     };
   }
 }
@@ -94,6 +94,7 @@ export const instanceSettings: DataSourceInstanceSettings = {
     },
   },
   jsonData: {},
+  readOnly: true,
 };
 
 export const dataSource = new ExpressionDatasourceApi(instanceSettings);

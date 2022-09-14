@@ -1,12 +1,14 @@
 import { ComponentType } from 'react';
 
+import { IconName } from './icon';
+
 export interface NavLinkDTO {
   id?: string;
   text: string;
   description?: string;
   section?: NavSection;
   subTitle?: string;
-  icon?: string;
+  icon?: IconName;
   img?: string;
   url?: string;
   target?: string;
@@ -14,8 +16,11 @@ export interface NavLinkDTO {
   divider?: boolean;
   hideFromMenu?: boolean;
   hideFromTabs?: boolean;
+  showIconInNavbar?: boolean;
+  roundIcon?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
+  emptyMessageId?: string;
 }
 
 export interface NavModelItem extends NavLinkDTO {
@@ -29,7 +34,7 @@ export interface NavModelItem extends NavLinkDTO {
   highlightText?: string;
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
-  showIconInNavbar?: boolean;
+  hideFromBreadcrumbs?: boolean;
 }
 
 export enum NavSection {
@@ -55,10 +60,6 @@ export interface NavModel {
    *   This is the current active tab/navigation.
    */
   node: NavModelItem;
-  /**
-   *  Describes breadcrumbs that are used in places such as data source settings., folder page and plugins page.
-   */
-  breadcrumbs?: NavModelItem[];
 }
 
 export interface NavModelBreadcrumb {
@@ -67,3 +68,9 @@ export interface NavModelBreadcrumb {
 }
 
 export type NavIndex = { [s: string]: NavModelItem };
+
+export enum PageLayoutType {
+  Standard,
+  Canvas,
+  Custom,
+}

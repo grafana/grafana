@@ -11,18 +11,28 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// GET /api/teams/:teamId/members
+// swagger:route GET /teams/{team_id}/members teams getTeamMembers
+//
+// Get Team Members.
+//
+// Responses:
+// 200: getTeamMembersResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	query := models.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: teamId, SignedInUser: c.SignedInUser}
+	query := models.GetTeamMembersQuery{OrgId: c.OrgID, TeamId: teamId, SignedInUser: c.SignedInUser}
 
 	// With accesscontrol the permission check has been done at middleware layer
 	// and the membership filtering will be done at DB layer based on user permissions
@@ -46,7 +56,7 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 		member.Labels = []string{}
 
 		if hs.License.FeatureEnabled("teamgroupsync") && member.External {
-			authProvider := GetAuthProviderLabel(member.AuthModule)
+			authProvider := login.GetAuthProviderLabel(member.AuthModule)
 			member.Labels = append(member.Labels, authProvider)
 		}
 
@@ -56,14 +66,23 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, filteredMembers)
 }
 
-// POST /api/teams/:teamId/members
+// swagger:route POST /teams/{team_id}/members teams addTeamMember
+//
+// Add Team Member.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 	cmd := models.AddTeamMemberCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgId
+	cmd.OrgId = c.OrgID
 	cmd.TeamId, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -75,7 +94,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 		}
 	}
 
-	isTeamMember, err := hs.SQLStore.IsTeamMember(c.OrgId, cmd.TeamId, cmd.UserId)
+	isTeamMember, err := hs.SQLStore.IsTeamMember(c.OrgID, cmd.TeamId, cmd.UserId)
 	if err != nil {
 		return response.Error(500, "Failed to add team member.", err)
 	}
@@ -93,7 +112,16 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 	})
 }
 
-// PUT /:teamId/members/:userId
+// swagger:route PUT /teams/{team_id}/members/{user_id} teams updateTeamMember
+//
+// Update Team Member.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	cmd := models.UpdateTeamMemberCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -107,7 +135,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
-	orgId := c.OrgId
+	orgId := c.OrgID
 
 	if hs.AccessControl.IsDisabled() {
 		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
@@ -140,9 +168,18 @@ func getPermissionName(permission models.PermissionType) string {
 	return permissionName
 }
 
-// DELETE /api/teams/:teamId/members/:userId
+// swagger:route DELETE /teams/{team_id}/members/{user_id} teams removeTeamMember
+//
+// Remove Member From Team.
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
-	orgId := c.OrgId
+	orgId := c.OrgID
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -182,4 +219,51 @@ var addOrUpdateTeamMember = func(ctx context.Context, resourcePermissionService 
 		return fmt.Errorf("failed setting permissions for user %d in team %d: %w", userID, teamID, err)
 	}
 	return nil
+}
+
+// swagger:parameters getTeamMembers
+type GetTeamMembersParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters addTeamMember
+type AddTeamMemberParams struct {
+	// in:body
+	// required:true
+	Body models.AddTeamMemberCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+}
+
+// swagger:parameters updateTeamMember
+type UpdateTeamMemberParams struct {
+	// in:body
+	// required:true
+	Body models.UpdateTeamMemberCommand `json:"body"`
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters removeTeamMember
+type RemoveTeamMemberParams struct {
+	// in:path
+	// required:true
+	TeamID string `json:"team_id"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:response getTeamMembersResponse
+type GetTeamMembersResponse struct {
+	// The response message
+	// in: body
+	Body []*models.TeamMemberDTO `json:"body"`
 }

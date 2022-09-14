@@ -130,7 +130,7 @@ Grafana supports user authentication through Okta, which is useful when you want
 **Before you begin:**
 
 - To configure SAML integration with Okta, create integration inside the Okta organization first. [Add integration in Okta](https://help.okta.com/en/prod/Content/Topics/Apps/apps-overview-add-apps.htm)
-- Ensure you have permission to administer SAML authentication. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions/#" >}}).
+- Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 **To set up SAML with Okta:**
 
@@ -241,6 +241,9 @@ IdP-initiated SSO has some security risks, so make sure you understand the risks
 
 SAML's single logout feature allows users to log out from all applications associated with the current IdP session established via SAML SSO. If the `single_logout` option is set to `true` and a user logs out, Grafana requests IdP to end the user session which in turn triggers logout from all other applications the user is logged into using the same IdP session (applications should support single logout). Conversely, if another application connected to the same IdP logs out using single logout, Grafana receives a logout request from IdP and ends the user session.
 
+`HTTP-Redirect` and `HTTP-POST` bindings are supported for single logout.
+When using `HTTP-Redirect` bindings the query should include a request signature.
+
 ### Assertion mapping
 
 During the SAML SSO authentication flow, Grafana receives the ACS callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
@@ -281,7 +284,7 @@ To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../conf
 
 > **Note:** Available in Grafana version 7.0 and later.
 
-Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [About users and permissions]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions/" >}}).
+Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 1. In the configuration file, set [`assertion_attribute_role`]({{< relref "../../configure-grafana/enterprise-configuration/#assertion-attribute-role" >}}) option to the attribute name where the role information will be extracted from.
 1. Set the [`role_values_editor`]({{< relref "../../configure-grafana/enterprise-configuration/#role-values-editor" >}}) option to the values mapped to the `Editor` role.
@@ -290,7 +293,7 @@ Role sync allows you to map user roles from an identity provider to Grafana. To 
 
 If a user role doesn't match any of configured values, then the `Viewer` role will be assigned.
 
-Refer to [About users and permissions]({{< relref "../../../administration/manage-users-and-permissions/about-users-and-permissions/" >}}) for more information about roles and permissions in Grafana.
+For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
 
 Example configuration:
 

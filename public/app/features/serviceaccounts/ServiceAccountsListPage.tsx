@@ -6,10 +6,9 @@ import { connect, ConnectedProps } from 'react-redux';
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Alert, ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import Page from 'app/core/components/Page/Page';
+import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
-import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState, ServiceAccountDTO, AccessControlAction, ServiceAccountStateFilter } from 'app/types';
 
 import { CreateTokenModal, ServiceAccountToken } from './components/CreateTokenModal';
@@ -23,6 +22,8 @@ import {
   changeStateFilter,
   createServiceAccountToken,
   getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 } from './state/actions';
 
 interface OwnProps {}
@@ -31,7 +32,6 @@ export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
   return {
-    navModel: getNavModel(state.navIndex, 'serviceaccounts'),
     ...state.serviceAccounts,
   };
 }
@@ -45,19 +45,20 @@ const mapDispatchToProps = {
   changeStateFilter,
   createServiceAccountToken,
   getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export const ServiceAccountsListPageUnconnected = ({
-  navModel,
   serviceAccounts,
   isLoading,
   roleOptions,
-  builtInRoles,
   query,
   serviceAccountStateFilter,
   apiKeysMigrated,
+  showApiKeysMigrationInfo,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
@@ -66,6 +67,8 @@ export const ServiceAccountsListPageUnconnected = ({
   changeStateFilter,
   createServiceAccountToken,
   getApiKeysMigrationStatus,
+  getApiKeysMigrationInfo,
+  closeApiKeysMigrationInfo,
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -77,10 +80,11 @@ export const ServiceAccountsListPageUnconnected = ({
   useEffect(() => {
     fetchServiceAccounts({ withLoadingIndicator: true });
     getApiKeysMigrationStatus();
+    getApiKeysMigrationInfo();
     if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
-  }, [fetchACOptions, fetchServiceAccounts, getApiKeysMigrationStatus]);
+  }, [fetchACOptions, fetchServiceAccounts, getApiKeysMigrationStatus, getApiKeysMigrationInfo]);
 
   const noServiceAccountsCreated =
     serviceAccounts.length === 0 && serviceAccountStateFilter === ServiceAccountStateFilter.All && !query;
@@ -157,13 +161,29 @@ export const ServiceAccountsListPageUnconnected = ({
   };
 
   const onMigrationInfoClose = () => {
-    // TODO: dismiss banner permanently
+    closeApiKeysMigrationInfo();
   };
 
+  const docsLink = (
+    <a
+      className="external-link"
+      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      here.
+    </a>
+  );
+  const subTitle = (
+    <span>
+      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more {docsLink}
+    </span>
+  );
+
   return (
-    <Page navModel={navModel}>
+    <Page navId="serviceaccounts" subTitle={subTitle}>
       <Page.Contents>
-        {apiKeysMigrated && (
+        {apiKeysMigrated && showApiKeysMigrationInfo && (
           <Alert
             title="API keys migrated to Service accounts. Your keys are now called tokens and live inside respective service
           accounts. Learn more."
@@ -171,41 +191,45 @@ export const ServiceAccountsListPageUnconnected = ({
             onRemove={onMigrationInfoClose}
           ></Alert>
         )}
-        <div className={styles.pageHeader}>
-          <h2>Service accounts</h2>
-          <div className={styles.apiKeyInfoLabel}>
-            <Tooltip
-              placement="bottom"
-              interactive
-              content={
-                <>
-                  API keys are now service Accounts with tokens. <a href="">Read more</a>
-                </>
-              }
-            >
-              <Icon name="question-circle" />
-            </Tooltip>
-            <span>Looking for API keys?</span>
+        <Page.OldNavOnly>
+          <div className={styles.pageHeader}>
+            <h2>Service accounts</h2>
+            <div className={styles.apiKeyInfoLabel}>
+              <Tooltip
+                placement="bottom"
+                interactive
+                content={<>API keys are now service accounts with tokens. Find out more {docsLink}</>}
+              >
+                <Icon name="question-circle" />
+              </Tooltip>
+              <span>Looking for API keys?</span>
+            </div>
           </div>
-          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
-            <LinkButton href="org/serviceaccounts/create" variant="primary">
-              Add service account
-            </LinkButton>
-          )}
-        </div>
-        <div className={styles.filterRow}>
-          <FilterInput placeholder="Search service account by name" value={query} onChange={onQueryChange} width={50} />
-          <div className={styles.filterDelimiter}></div>
+        </Page.OldNavOnly>
+        <div className="page-action-bar">
+          <div className="gf-form gf-form--grow">
+            <FilterInput
+              placeholder="Search service account by name"
+              value={query}
+              onChange={onQueryChange}
+              width={50}
+            />
+          </div>
           <RadioButtonGroup
             options={[
               { label: 'All', value: ServiceAccountStateFilter.All },
-              { label: 'With expiring tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
+              { label: 'With expired tokens', value: ServiceAccountStateFilter.WithExpiredTokens },
               { label: 'Disabled', value: ServiceAccountStateFilter.Disabled },
             ]}
             onChange={onStateFilterChange}
             value={serviceAccountStateFilter}
             className={styles.filter}
           />
+          {!noServiceAccountsCreated && contextSrv.hasPermission(AccessControlAction.ServiceAccountsCreate) && (
+            <LinkButton href="org/serviceaccounts/create" variant="primary">
+              Add service account
+            </LinkButton>
+          )}
         </div>
         {isLoading && <PageLoader />}
         {!isLoading && noServiceAccountsCreated && (
@@ -224,27 +248,25 @@ export const ServiceAccountsListPageUnconnected = ({
           </>
         )}
 
-        <>
-          <div className={cx(styles.table, 'admin-list-table')}>
-            <table className="filter-table filter-table--hover">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Account</th>
-                  <th>ID</th>
-                  <th>Roles</th>
-                  <th>Tokens</th>
-                  <th style={{ width: '34px' }} />
-                </tr>
-              </thead>
-              <tbody>
-                {!isLoading &&
-                  serviceAccounts.length !== 0 &&
-                  serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
+        {!isLoading && serviceAccounts.length !== 0 && (
+          <>
+            <div className={cx(styles.table, 'admin-list-table')}>
+              <table className="filter-table filter-table--hover">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Account</th>
+                    <th>ID</th>
+                    <th>Roles</th>
+                    <th>Tokens</th>
+                    <th style={{ width: '34px' }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {serviceAccounts.map((serviceAccount: ServiceAccountDTO) => (
                     <ServiceAccountListItem
                       serviceAccount={serviceAccount}
                       key={serviceAccount.id}
-                      builtInRoles={builtInRoles}
                       roleOptions={roleOptions}
                       onRoleChange={onRoleChange}
                       onRemoveButtonClick={onRemoveButtonClick}
@@ -253,10 +275,11 @@ export const ServiceAccountsListPageUnconnected = ({
                       onAddTokenClick={onTokenAdd}
                     />
                   ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
         {currentServiceAccount && (
           <>
             <ConfirmModal
@@ -344,13 +367,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding: ${theme.spacing(0.5)};
       }
     `,
-    filterRow: cx(
-      'page-action-bar',
-      css`
-        display: flex;
-        justifycontent: flex-end;
-      `
-    ),
     filterDelimiter: css`
       flex-grow: 1;
     `,

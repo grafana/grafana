@@ -21,6 +21,8 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -90,7 +92,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 		_, _, _, api := setupAPI(t)
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
 
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -109,7 +111,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2)
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
 
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -151,7 +153,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2, withAlertingState())
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
 
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -193,7 +195,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 		fakeAIM.GenerateAlertInstances(orgID, util.GenerateShortUID(), 2)
 		req, err := http.NewRequest("GET", "/api/v1/alerts?includeInternalLabels=true", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID}}
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
 
 		r := api.RouteGetAlertStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -255,7 +257,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 	req, err := http.NewRequest("GET", "/api/v1/rules", nil)
 	require.NoError(t, err)
-	c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID, OrgRole: models.ROLE_VIEWER}}
+	c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer}}
 
 	t.Run("with no rules", func(t *testing.T) {
 		_, _, _, api := setupAPI(t)
@@ -325,7 +327,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
 		require.NoError(t, err)
-		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &models.SignedInUser{OrgId: orgID, OrgRole: models.ROLE_VIEWER}}
+		c := &models.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer}}
 
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -417,6 +419,49 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	}
 }
 `, folder.Title), string(r.Body()))
+	})
+
+	t.Run("with many rules in a group", func(t *testing.T) {
+		t.Run("should return sorted", func(t *testing.T) {
+			ruleStore := store.NewFakeRuleStore(t)
+			fakeAIM := NewFakeAlertInstanceManager(t)
+			groupKey := ngmodels.GenerateGroupKey(orgID)
+			_, rules := ngmodels.GenerateUniqueAlertRules(rand.Intn(5)+5, ngmodels.AlertRuleGen(withGroupKey(groupKey), ngmodels.WithUniqueGroupIndex()))
+			ruleStore.PutRule(context.Background(), rules...)
+
+			api := PrometheusSrv{
+				log:     log.NewNopLogger(),
+				manager: fakeAIM,
+				store:   ruleStore,
+				ac:      acmock.New().WithDisabled(),
+			}
+
+			response := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, response.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(response.Body(), result))
+
+			ngmodels.RulesGroup(rules).SortByGroupIndex()
+
+			require.Len(t, result.Data.RuleGroups, 1)
+			group := result.Data.RuleGroups[0]
+			require.Equal(t, groupKey.RuleGroup, group.Name)
+			require.Len(t, group.Rules, len(rules))
+			for i, actual := range group.Rules {
+				expected := rules[i]
+				if actual.Name != expected.Title {
+					var actualNames []string
+					var expectedNames []string
+					for _, rule := range group.Rules {
+						actualNames = append(actualNames, rule.Name)
+					}
+					for _, rule := range rules {
+						expectedNames = append(expectedNames, rule.Title)
+					}
+					require.Fail(t, fmt.Sprintf("rules are not sorted by group index. Expected: %v. Actual: %v", expectedNames, actualNames))
+				}
+			}
+		})
 	})
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {

@@ -18,7 +18,6 @@ export interface FeatureToggles {
 
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
-  serviceAccounts?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   dashboardPreviewsAdmin?: boolean;
@@ -27,12 +26,9 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  tempoServiceGraph?: boolean;
   tempoApmTable?: boolean;
-  prometheus_azure_auth?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   influxdbBackendMigration?: boolean;
-  newNavigation?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   lokiLive?: boolean;
@@ -43,24 +39,33 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
+  dashboardsFromStorage?: boolean;
   export?: boolean;
-  storageLocalUpload?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
   explore2Dashboard?: boolean;
+  exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
-  savedItems?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
-  azureMonitorExperimentalUI?: boolean;
   traceToMetrics?: boolean;
   prometheusStreamingJSONParser?: boolean;
+  prometheusStreamingJSONParserTest?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
+  scenes?: boolean;
+  useLegacyHeatmapPanel?: boolean;
   cloudMonitoringExperimentalUI?: boolean;
+  disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   internationalization?: boolean;
+  topnav?: boolean;
+  customBranding?: boolean;
+  traceqlEditor?: boolean;
+  redshiftAsyncQueryDataSupport?: boolean;
+  athenaAsyncQueryDataSupport?: boolean;
+  increaseInMemDatabaseQueryCache?: boolean;
 }

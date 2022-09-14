@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { NavModel, createTheme } from '@grafana/data';
+import { createTheme } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { User } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -40,6 +40,12 @@ jest.mock('@grafana/runtime', () => ({
     bootData: { navTree: [], user: {} },
     buildInfo: {
       edition: 'Open Source',
+      version: '7.5.0',
+      commit: 'abc123',
+      env: 'production',
+      latestVersion: '',
+      hasUpdate: false,
+      hideVersion: false,
     },
     appSubUrl: '',
   },
@@ -68,7 +74,7 @@ const setup = (propOverrides?: object) => {
         },
       } as any,
     }),
-    navModel: { node: {}, main: {} } as NavModel,
+    pageNav: { text: 'Cool team ' },
     teamId: 1,
     loadTeam: jest.fn(),
     loadTeamMembers: jest.fn(),
@@ -93,7 +99,7 @@ const setup = (propOverrides?: object) => {
   );
 };
 
-describe('Render', () => {
+describe('TeamPages', () => {
   it('should render member page if team not empty', async () => {
     setup({
       team: getMockTeam(),
@@ -106,7 +112,7 @@ describe('Render', () => {
       team: getMockTeam(),
       pageName: 'settings',
       preferences: {
-        homeDashboardId: 1,
+        homeDashboardUID: 'home-dashboard',
         theme: 'Default',
         timezone: 'Default',
       },
@@ -123,26 +129,26 @@ describe('Render', () => {
 
     expect(await screen.findByText('Team group sync')).toBeInTheDocument();
   });
-});
 
-describe('when feature toggle editorsCanAdmin is turned on', () => {
-  it('should render settings page if user is team admin', async () => {
-    setup({
-      team: getMockTeam(),
-      pageName: 'settings',
-      preferences: {
-        homeDashboardId: 1,
-        theme: 'Default',
-        timezone: 'Default',
-      },
-      editorsCanAdmin: true,
-      signedInUser: {
-        id: 1,
-        isGrafanaAdmin: false,
-        orgRole: OrgRole.Admin,
-      } as User,
+  describe('when feature toggle editorsCanAdmin is turned on', () => {
+    it('should render settings page if user is team admin', async () => {
+      setup({
+        team: getMockTeam(),
+        pageName: 'settings',
+        preferences: {
+          homeDashboardUID: 'home-dashboard',
+          theme: 'Default',
+          timezone: 'Default',
+        },
+        editorsCanAdmin: true,
+        signedInUser: {
+          id: 1,
+          isGrafanaAdmin: false,
+          orgRole: OrgRole.Admin,
+        } as User,
+      });
+
+      expect(await screen.findByText('Team settings')).toBeInTheDocument();
     });
-
-    expect(await screen.findByText('Team settings')).toBeInTheDocument();
   });
 });

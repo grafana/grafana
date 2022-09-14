@@ -78,6 +78,19 @@ export interface PromApiFeatures {
   };
 }
 
+export interface AlertmanagerApiFeatures {
+  /**
+   * Some Alertmanager implementations (Mimir) are multi-tenant systems.
+   *
+   * To save on compute costs, tenants are not active until they have a configuration set.
+   * If there is no fallback_config_file set, Alertmanager endpoints will respond with HTTP 404
+   *
+   * Despite that, it is possible to create a configuration for such datasource
+   * by posting a new config to the `/api/v1/alerts` endpoint
+   */
+  lazyConfigInit: boolean;
+}
+
 interface PromRuleDTOBase {
   health: string;
   name: string;
@@ -159,6 +172,7 @@ export enum GrafanaAlertStateDecision {
 export interface AlertDataQuery extends DataQuery {
   maxDataPoints?: number;
   intervalMs?: number;
+  expression?: string;
 }
 
 export interface AlertQuery {
@@ -182,6 +196,7 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   uid: string;
   namespace_uid: string;
   namespace_id: number;
+  provenance?: string;
 }
 
 export interface RulerGrafanaRuleDTO {

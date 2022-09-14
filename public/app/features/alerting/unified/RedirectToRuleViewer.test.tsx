@@ -17,7 +17,7 @@ import { getRulesSourceByName } from './utils/datasource';
 jest.mock('./hooks/useCombinedRule');
 jest.mock('./utils/datasource');
 jest.mock('react-router-dom', () => ({
-  ...(jest.requireActual('react-router-dom') as any),
+  ...jest.requireActual('react-router-dom'),
   Redirect: jest.fn(({}) => `Redirected`),
 }));
 
@@ -41,6 +41,7 @@ const mockRuleSourceByName = () => {
     meta: {} as PluginMeta,
     jsonData: {} as DataSourceJsonData,
     access: 'proxy',
+    readOnly: false,
   });
 };
 
@@ -99,6 +100,7 @@ const mockedRules: CombinedRule[] = [
         meta: {} as PluginMeta,
         jsonData: {} as DataSourceJsonData,
         access: 'proxy',
+        readOnly: false,
       },
     },
   },
@@ -128,6 +130,7 @@ const mockedRules: CombinedRule[] = [
         meta: {} as PluginMeta,
         jsonData: {} as DataSourceJsonData,
         access: 'proxy',
+        readOnly: false,
       },
     },
   },

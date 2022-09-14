@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TimeNow makes it possible to test usage of time
@@ -28,13 +29,23 @@ type AlertingStore interface {
 
 // DBstore stores the alert definitions and instances in the database.
 type DBstore struct {
-	// the base scheduler tick rate; it's used for validating definition interval
-	BaseInterval time.Duration
-	// default alert definiiton interval
-	DefaultInterval  time.Duration
+	Cfg              setting.UnifiedAlertingSettings
 	SQLStore         *sqlstore.SQLStore
 	Logger           log.Logger
 	FolderService    dashboards.FolderService
 	AccessControl    accesscontrol.AccessControl
 	DashboardService dashboards.DashboardService
+}
+
+func ProvideDBStore(
+	cfg *setting.Cfg, sqlstore *sqlstore.SQLStore, folderService dashboards.FolderService,
+	access accesscontrol.AccessControl, dashboards dashboards.DashboardService) *DBstore {
+	return &DBstore{
+		Cfg:              cfg.UnifiedAlerting,
+		SQLStore:         sqlstore,
+		Logger:           log.New("dbstore"),
+		FolderService:    folderService,
+		AccessControl:    access,
+		DashboardService: dashboards,
+	}
 }

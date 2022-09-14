@@ -62,9 +62,13 @@ export enum LokiOperationId {
   LineContainsNot = '__line_contains_not',
   LineMatchesRegex = '__line_matches_regex',
   LineMatchesRegexNot = '__line_matches_regex_not',
+  LineFilterIpMatches = '__line_filter_ip_matches',
   LabelFilter = '__label_filter',
   LabelFilterNoErrors = '__label_filter_no_errors',
+  LabelFilterIpMatches = '__label_filter_ip_marches',
   Unwrap = 'unwrap',
+  SumBy = '__sum_by',
+  SumWithout = '__sum_without',
   // Binary ops
   Addition = '__addition',
   Subtraction = '__subtraction',

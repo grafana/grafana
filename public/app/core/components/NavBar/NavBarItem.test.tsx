@@ -19,10 +19,11 @@ jest.mock('history', () => ({
 }));
 
 import NavBarItem, { Props } from './NavBarItem';
+import { NavBarContext } from './context';
 
 const onClickMock = jest.fn();
+const setMenuIdOpenMock = jest.fn();
 const defaults: Props = {
-  children: undefined,
   link: {
     text: 'Parent Node',
     onClick: onClickMock,
@@ -30,10 +31,11 @@ const defaults: Props = {
       { text: 'Child Node 1', onClick: onClickMock, children: [] },
       { text: 'Child Node 2', onClick: onClickMock, children: [] },
     ],
+    id: 'MY_NAV_ID',
   },
 };
 
-async function getTestContext(overrides: Partial<Props> = {}, subUrl = '') {
+async function getTestContext(overrides: Partial<Props> = {}, subUrl = '', isMenuOpen = false) {
   jest.clearAllMocks();
   config.appSubUrl = subUrl;
   locationUtil.initialize({ config, getTimeRangeForUrl: jest.fn(), getVariablesUrlParams: jest.fn() });
@@ -45,7 +47,14 @@ async function getTestContext(overrides: Partial<Props> = {}, subUrl = '') {
   const { rerender } = render(
     <TestProvider>
       <BrowserRouter>
-        <NavBarItem {...props}>{props.children}</NavBarItem>
+        <NavBarContext.Provider
+          value={{
+            menuIdOpen: isMenuOpen ? props.link.id : undefined,
+            setMenuIdOpen: setMenuIdOpenMock,
+          }}
+        >
+          <NavBarItem {...props} />
+        </NavBarContext.Provider>
       </BrowserRouter>
     </TestProvider>
   );
@@ -74,32 +83,34 @@ describe('NavBarItem', () => {
     });
 
     describe('and hovering over the menu trigger button', () => {
-      it('then the menu items should be visible', async () => {
+      it('then the menuIdOpen should be set correctly', async () => {
         await getTestContext();
 
         await userEvent.hover(screen.getByRole('button'));
-
-        expect(screen.getByRole('menuitem', { name: 'Parent Node' })).toBeInTheDocument();
-        expect(screen.getByText('Child Node 1')).toBeInTheDocument();
-        expect(screen.getByText('Child Node 2')).toBeInTheDocument();
+        expect(setMenuIdOpenMock).toHaveBeenCalledWith(defaults.link.id);
       });
     });
 
     describe('and tabbing to the menu trigger button', () => {
-      it('then the menu items should be visible', async () => {
+      it('then the menuIdOpen should be set correctly', async () => {
         await getTestContext();
 
         await userEvent.tab();
-
-        expect(screen.getByText('Parent Node')).toBeInTheDocument();
-        expect(screen.getByText('Child Node 1')).toBeInTheDocument();
-        expect(screen.getByText('Child Node 2')).toBeInTheDocument();
+        expect(setMenuIdOpenMock).toHaveBeenCalledWith(defaults.link.id);
       });
+    });
+
+    it('shows the menu when the correct menuIdOpen is set', async () => {
+      await getTestContext(undefined, undefined, true);
+
+      expect(screen.getByText('Parent Node')).toBeInTheDocument();
+      expect(screen.getByText('Child Node 1')).toBeInTheDocument();
+      expect(screen.getByText('Child Node 2')).toBeInTheDocument();
     });
 
     describe('and pressing arrow right on the menu trigger button', () => {
       it('then the correct menu item should receive focus', async () => {
-        await getTestContext();
+        await getTestContext(undefined, undefined, true);
 
         await userEvent.tab();
         expect(screen.getAllByRole('menuitem')).toHaveLength(3);
@@ -125,32 +136,36 @@ describe('NavBarItem', () => {
     });
 
     describe('and hovering over the menu trigger link', () => {
-      it('then the menu items should be visible', async () => {
+      it('sets the correct menuIdOpen', async () => {
         await getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
 
         await userEvent.hover(screen.getByRole('link'));
 
-        expect(screen.getByText('Parent Node')).toBeInTheDocument();
-        expect(screen.getByText('Child Node 1')).toBeInTheDocument();
-        expect(screen.getByText('Child Node 2')).toBeInTheDocument();
+        expect(setMenuIdOpenMock).toHaveBeenCalledWith(defaults.link.id);
       });
     });
 
     describe('and tabbing to the menu trigger link', () => {
-      it('then the menu items should be visible', async () => {
+      it('sets the correct menuIdOpen', async () => {
         await getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
 
         await userEvent.tab();
 
-        expect(screen.getByText('Parent Node')).toBeInTheDocument();
-        expect(screen.getByText('Child Node 1')).toBeInTheDocument();
-        expect(screen.getByText('Child Node 2')).toBeInTheDocument();
+        expect(setMenuIdOpenMock).toHaveBeenCalledWith(defaults.link.id);
       });
+    });
+
+    it('shows the menu when the correct menuIdOpen is set', async () => {
+      await getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } }, undefined, true);
+
+      expect(screen.getByText('Parent Node')).toBeInTheDocument();
+      expect(screen.getByText('Child Node 1')).toBeInTheDocument();
+      expect(screen.getByText('Child Node 2')).toBeInTheDocument();
     });
 
     describe('and pressing arrow right on the menu trigger link', () => {
       it('then the correct menu item should receive focus', async () => {
-        await getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
+        await getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } }, undefined, true);
 
         await userEvent.tab();
         expect(screen.getAllByRole('link')[0]).toHaveFocus();
@@ -170,7 +185,7 @@ describe('NavBarItem', () => {
 
     describe('and pressing arrow left on a menu item', () => {
       it('then the nav bar item should receive focus', async () => {
-        await getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } });
+        await getTestContext({ link: { ...defaults.link, url: 'https://www.grafana.com' } }, undefined, true);
 
         await userEvent.tab();
         await userEvent.keyboard('{ArrowRight}');
@@ -199,14 +214,9 @@ describe('NavBarItem', () => {
               children: [{ text: 'New', url: '/grafana/dashboard/new', children: [] }],
             },
           },
-          '/grafana'
+          '/grafana',
+          true
         );
-
-        await userEvent.hover(screen.getByRole('link'));
-        await waitFor(() => {
-          expect(screen.getByText('Parent Node')).toBeInTheDocument();
-          expect(screen.getByText('New')).toBeInTheDocument();
-        });
 
         await userEvent.click(screen.getByText('New'));
         await waitFor(() => {
@@ -218,19 +228,17 @@ describe('NavBarItem', () => {
 
     describe('when appSubUrl is not configured and user clicks on menuitem link', () => {
       it('then location service should be called with correct url', async () => {
-        const { pushMock } = await getTestContext({
-          link: {
-            ...defaults.link,
-            url: 'https://www.grafana.com',
-            children: [{ text: 'New', url: '/grafana/dashboard/new', children: [] }],
+        const { pushMock } = await getTestContext(
+          {
+            link: {
+              ...defaults.link,
+              url: 'https://www.grafana.com',
+              children: [{ text: 'New', url: '/grafana/dashboard/new', children: [] }],
+            },
           },
-        });
-
-        await userEvent.hover(screen.getByRole('link'));
-        await waitFor(() => {
-          expect(screen.getByText('Parent Node')).toBeInTheDocument();
-          expect(screen.getByText('New')).toBeInTheDocument();
-        });
+          undefined,
+          true
+        );
 
         await userEvent.click(screen.getByText('New'));
         await waitFor(() => {

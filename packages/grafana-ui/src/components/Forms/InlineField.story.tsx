@@ -1,4 +1,5 @@
 import { action } from '@storybook/addon-actions';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { Input } from '../Input/Input';
@@ -7,43 +8,77 @@ import { Select } from '../Select/Select';
 import { InlineField } from './InlineField';
 import mdx from './InlineField.mdx';
 
-export default {
+const meta: ComponentMeta<typeof InlineField> = {
   title: 'Forms/InlineField',
   component: InlineField,
+  argTypes: {
+    label: { control: { type: 'text' } },
+    labelWidth: { control: { type: 'number' } },
+    tooltip: { control: { type: 'text' } },
+    error: { control: { type: 'text' } },
+  },
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['htmlFor', 'className', 'children'],
+    },
   },
 };
 
-export const basic = () => {
+export const basic: ComponentStory<typeof InlineField> = (args) => {
   return (
-    <InlineField label="Inline field">
+    <InlineField {...args}>
       <Input placeholder="Inline input" />
     </InlineField>
   );
 };
 
-export const withTooltip = () => {
+basic.args = {
+  label: 'Inline field',
+  transparent: false,
+  grow: false,
+  shrink: false,
+  disabled: false,
+  interactive: false,
+  loading: false,
+  required: false,
+  invalid: false,
+  validationMessageHorizontalOverflow: false,
+};
+
+export const withTooltip: ComponentStory<typeof InlineField> = (args) => {
   return (
-    <InlineField label="Label" tooltip="Tooltip">
+    <InlineField {...args}>
       <Input placeholder="Inline input" />
     </InlineField>
   );
 };
 
-export const grow = () => {
+withTooltip.args = {
+  tooltip: 'Tooltip',
+  ...basic.args,
+  label: 'Label',
+};
+
+export const grow: ComponentStory<typeof InlineField> = (args) => {
   return (
-    <InlineField label="Label" grow>
+    <InlineField {...args}>
       <Input placeholder="Inline input" />
     </InlineField>
   );
 };
 
-export const withSelect = () => {
+grow.args = {
+  ...basic.args,
+  label: 'Label',
+  grow: true,
+};
+
+export const withSelect: ComponentStory<typeof InlineField> = (args) => {
   return (
-    <InlineField label="Select option">
+    <InlineField {...args}>
       <Select
         width={16}
         onChange={action('item selected')}
@@ -56,7 +91,12 @@ export const withSelect = () => {
   );
 };
 
-export const multiple = () => {
+withSelect.args = {
+  ...basic.args,
+  label: 'Select option',
+};
+
+export const multiple: ComponentStory<typeof InlineField> = () => {
   return (
     <>
       <InlineField label="Field 1">
@@ -71,3 +111,20 @@ export const multiple = () => {
     </>
   );
 };
+
+export const error: ComponentStory<typeof InlineField> = (args) => {
+  return (
+    <InlineField {...args}>
+      <Input placeholder="Inline input" />
+    </InlineField>
+  );
+};
+
+error.args = {
+  ...basic.args,
+  label: 'Label',
+  error: 'Error',
+  invalid: true,
+};
+
+export default meta;

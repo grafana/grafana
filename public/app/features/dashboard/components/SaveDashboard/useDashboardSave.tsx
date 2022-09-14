@@ -36,6 +36,9 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
 
   const notifyApp = useAppNotification();
   useEffect(() => {
+    if (state.error) {
+      notifyApp.error(state.error.message ?? 'Error saving dashboard');
+    }
     if (state.value) {
       dashboard.version = state.value.version;
       dashboard.clearUnsavedChanges();
@@ -43,7 +46,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
       // important that these happen before location redirect below
       appEvents.publish(new DashboardSavedEvent());
       notifyApp.success('Dashboard saved');
-      reportInteraction(`Dashboard ${dashboard.id ? 'saved' : 'created'}`, {
+      reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
         name: dashboard.title,
         url: state.value.url,
       });

@@ -14,6 +14,7 @@ import (
 // DashboardProvisioner is responsible for syncing dashboard from disk to
 // Grafana's database.
 type DashboardProvisioner interface {
+	HasDashboardSources() bool
 	Provision(ctx context.Context) error
 	PollChanges(ctx context.Context)
 	GetProvisionerResolvedPath(name string) string
@@ -31,6 +32,10 @@ type Provisioner struct {
 	configs            []*config
 	duplicateValidator duplicateValidator
 	provisioner        dashboards.DashboardProvisioningService
+}
+
+func (provider *Provisioner) HasDashboardSources() bool {
+	return len(provider.fileReaders) > 0
 }
 
 // New returns a new DashboardProvisioner
@@ -101,7 +106,7 @@ func (provider *Provisioner) PollChanges(ctx context.Context) {
 }
 
 // GetProvisionerResolvedPath returns resolved path for the specified provisioner name. Can be used to generate
-// relative path to provisioning file from it's external_id.
+// relative path to provisioning file from its external_id.
 func (provider *Provisioner) GetProvisionerResolvedPath(name string) string {
 	for _, reader := range provider.fileReaders {
 		if reader.Cfg.Name == name {

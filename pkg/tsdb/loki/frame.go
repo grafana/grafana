@@ -128,7 +128,7 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	// so we send a separate timestamp-as-string field too. it is provided by the
 	// loki-json-parser-code
 
-	idField, err := makeIdField(stringTimeField, lineField, labelsField, frame.RefID)
+	idField, err := makeIdField(stringTimeField, lineField, labelsField, query.RefID)
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func formatNamePrometheusStyle(labels map[string]string) string {
 	return fmt.Sprintf("{%s}", strings.Join(parts, ", "))
 }
 
-//If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
+// If legend (using of name or pattern instead of time series name) is used, use that name/pattern for formatting
 func formatName(labels map[string]string, query *lokiQuery) string {
 	if query.LegendFormat == "" {
 		return formatNamePrometheusStyle(labels)

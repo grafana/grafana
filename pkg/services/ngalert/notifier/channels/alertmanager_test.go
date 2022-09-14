@@ -66,7 +66,7 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(cfg, &UnavailableImageStore{}, tmpl, decryptFn)
 			require.NotNil(t, sn)
 		})
 	}
@@ -74,6 +74,8 @@ func TestNewAlertmanagerNotifier(t *testing.T) {
 
 func TestAlertmanagerNotifier_Notify(t *testing.T) {
 	tmpl := templateForTests(t)
+
+	images := newFakeImageStore(1)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -99,8 +101,19 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 				},
 			},
 			receiverName: "Alertmanager",
-		},
-		{
+		}, {
+			name:     "Default config with one alert with image URL",
+			settings: `{"url": "https://alertmanager.com"}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1"},
+						Annotations: model.LabelSet{"__alertImageToken__": "test-image-1"},
+					},
+				},
+			},
+			receiverName: "Alertmanager",
+		}, {
 			name:     "Default config with one alert with empty receiver name",
 			settings: `{"url": "https://alertmanager.com"}`,
 			alerts: []*types.Alert{
@@ -146,7 +159,7 @@ func TestAlertmanagerNotifier_Notify(t *testing.T) {
 			decryptFn := secretsService.GetDecryptedValue
 			cfg, err := NewAlertmanagerConfig(m, decryptFn)
 			require.NoError(t, err)
-			sn := NewAlertmanagerNotifier(cfg, tmpl, decryptFn)
+			sn := NewAlertmanagerNotifier(cfg, images, tmpl, decryptFn)
 			var body []byte
 			origSendHTTPRequest := sendHTTPRequest
 			t.Cleanup(func() {

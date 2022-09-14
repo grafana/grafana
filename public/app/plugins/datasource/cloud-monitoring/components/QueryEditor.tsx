@@ -2,15 +2,16 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { QueryEditorProps, toOption } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, Select } from '@grafana/ui';
+import { Button, EditorRows, Select } from '@grafana/ui';
 
 import { QUERY_TYPES, SELECT_WIDTH } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery, CloudMonitoringOptions } from '../types';
 
 import { MetricQueryEditor as ExperimentalMetricQueryEditor } from './Experimental/MetricQueryEditor';
+import { QueryHeader } from './Experimental/QueryHeader';
+import { SLOQueryEditor as ExperimentalSLOQueryEditor } from './Experimental/SLOQueryEditor';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
 
@@ -57,7 +58,42 @@ export class QueryEditor extends PureComponent<Props> {
       options: datasource.getVariables().map(toOption),
     };
 
-    return (
+    return config.featureToggles.cloudMonitoringExperimentalUI ? (
+      <EditorRows>
+        <QueryHeader
+          query={query}
+          metricQuery={metricQuery}
+          sloQuery={sloQuery}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+        />
+        {queryType === QueryType.METRICS && (
+          <ExperimentalMetricQueryEditor
+            refId={query.refId}
+            variableOptionGroup={variableOptionGroup}
+            customMetaData={customMetaData}
+            onChange={(metricQuery: MetricQuery) => {
+              this.props.onChange({ ...this.props.query, metricQuery });
+            }}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={metricQuery}
+          />
+        )}
+
+        {queryType === QueryType.SLO && (
+          <ExperimentalSLOQueryEditor
+            refId={query.refId}
+            variableOptionGroup={variableOptionGroup}
+            customMetaData={customMetaData}
+            onChange={(query: SLOQuery) => this.onQueryChange('sloQuery', query)}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={sloQuery}
+          />
+        )}
+      </EditorRows>
+    ) : (
       <EditorRows>
         <QueryEditorRow
           label="Query type"
@@ -94,32 +130,19 @@ export class QueryEditor extends PureComponent<Props> {
           />
         </QueryEditorRow>
 
-        {queryType === QueryType.METRICS &&
-          (config.featureToggles.cloudMonitoringExperimentalUI ? (
-            <ExperimentalMetricQueryEditor
-              refId={query.refId}
-              variableOptionGroup={variableOptionGroup}
-              customMetaData={customMetaData}
-              onChange={(metricQuery: MetricQuery) => {
-                this.props.onChange({ ...this.props.query, metricQuery });
-              }}
-              onRunQuery={onRunQuery}
-              datasource={datasource}
-              query={metricQuery}
-            />
-          ) : (
-            <MetricQueryEditor
-              refId={query.refId}
-              variableOptionGroup={variableOptionGroup}
-              customMetaData={customMetaData}
-              onChange={(metricQuery: MetricQuery) => {
-                this.props.onChange({ ...this.props.query, metricQuery });
-              }}
-              onRunQuery={onRunQuery}
-              datasource={datasource}
-              query={metricQuery}
-            />
-          ))}
+        {queryType === QueryType.METRICS && (
+          <MetricQueryEditor
+            refId={query.refId}
+            variableOptionGroup={variableOptionGroup}
+            customMetaData={customMetaData}
+            onChange={(metricQuery: MetricQuery) => {
+              this.props.onChange({ ...this.props.query, metricQuery });
+            }}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={metricQuery}
+          />
+        )}
 
         {queryType === QueryType.SLO && (
           <SLOQueryEditor
@@ -130,7 +153,7 @@ export class QueryEditor extends PureComponent<Props> {
             onRunQuery={onRunQuery}
             datasource={datasource}
             query={sloQuery}
-          ></SLOQueryEditor>
+          />
         )}
       </EditorRows>
     );

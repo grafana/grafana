@@ -34,6 +34,7 @@ import {
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
+import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import { getScrollbarWidth } from '@grafana/ui';
 import config from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
@@ -42,7 +43,10 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
+import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
+import { PluginPage } from './core/components/PageNew/PluginPage';
+import { GrafanaContextType } from './core/context/GrafanaContext';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
 import { backendSrv } from './core/services/backend_srv';
@@ -53,6 +57,7 @@ import { PerformanceBackend } from './core/services/echo/backends/PerformanceBac
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
+import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -80,8 +85,8 @@ import { configureStore } from './store/configureStore';
 _.move = arrayMove;
 
 // import symlinked extensions
-const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
-const extensionsExports = extensionsIndex.keys().map((key: any) => {
+const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
@@ -90,6 +95,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export class GrafanaApp {
+  context!: GrafanaContextType;
+
   async init() {
     try {
       setBackendSrv(backendSrv);
@@ -98,6 +105,7 @@ export class GrafanaApp {
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
+      setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
@@ -146,13 +154,20 @@ export class GrafanaApp {
       // Preload selected app plugins
       await preloadPlugins(config.pluginsToPreload);
 
+      this.context = {
+        backend: backendSrv,
+        location: locationService,
+        chrome: new AppChromeService(),
+        config,
+      };
+
       ReactDOM.render(
         React.createElement(AppWrapper, {
           app: this,
         }),
         document.getElementById('reactRoot')
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
     }
@@ -203,23 +218,39 @@ function initEchoSrv() {
       })
     );
   }
-
-  if ((config as any).googleAnalyticsId) {
+  if (config.grafanaJavascriptAgent.enabled) {
     registerEchoBackend(
-      new GAEchoBackend({
-        googleAnalyticsId: (config as any).googleAnalyticsId,
+      new GrafanaJavascriptAgentBackend({
+        ...config.grafanaJavascriptAgent,
+        app: {
+          version: config.buildInfo.version,
+          environment: config.buildInfo.env,
+        },
+        buildInfo: config.buildInfo,
+        user: {
+          id: String(config.bootData.user?.id),
+          email: config.bootData.user?.email,
+        },
       })
     );
   }
 
-  if ((config as any).rudderstackWriteKey && (config as any).rudderstackDataPlaneUrl) {
+  if (config.googleAnalyticsId) {
+    registerEchoBackend(
+      new GAEchoBackend({
+        googleAnalyticsId: config.googleAnalyticsId,
+      })
+    );
+  }
+
+  if (config.rudderstackWriteKey && config.rudderstackDataPlaneUrl) {
     registerEchoBackend(
       new RudderstackBackend({
-        writeKey: (config as any).rudderstackWriteKey,
-        dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
+        writeKey: config.rudderstackWriteKey,
+        dataPlaneUrl: config.rudderstackDataPlaneUrl,
         user: config.bootData.user,
-        sdkUrl: (config as any).rudderstackSdkUrl,
-        configUrl: (config as any).rudderstackConfigUrl,
+        sdkUrl: config.rudderstackSdkUrl,
+        configUrl: config.rudderstackConfigUrl,
       })
     );
   }

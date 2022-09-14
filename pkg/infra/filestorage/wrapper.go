@@ -114,25 +114,35 @@ func (b wrapper) removeRoot(path string) string {
 	return Join(Delimiter, strings.TrimPrefix(path, b.rootFolder))
 }
 
-func (b wrapper) Get(ctx context.Context, path string) (*File, error) {
+func (b wrapper) getOptionsWithDefaults(options *GetFileOptions) *GetFileOptions {
+	if options == nil {
+		return &GetFileOptions{WithContents: true}
+	}
+
+	return options
+}
+
+func (b wrapper) Get(ctx context.Context, path string, options *GetFileOptions) (*File, bool, error) {
 	if err := b.validatePath(path); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	rootedPath := b.addRoot(path)
 	if !b.filter.IsAllowed(rootedPath) {
-		return nil, nil
+		return nil, false, nil
 	}
+
+	optionsWithDefaults := b.getOptionsWithDefaults(options)
 
 	if b.rootFolder == rootedPath {
-		return nil, nil
+		return nil, false, nil
 	}
 
-	file, err := b.wrapped.Get(ctx, rootedPath)
+	file, _, err := b.wrapped.Get(ctx, rootedPath, optionsWithDefaults)
 	if file != nil {
 		file.FullPath = b.removeRoot(file.FullPath)
 	}
-	return file, err
+	return file, file != nil, err
 }
 
 func (b wrapper) Delete(ctx context.Context, path string) error {
@@ -230,7 +240,7 @@ func (b wrapper) listOptionsWithDefaults(options *ListOptions) *ListOptions {
 
 	var filter PathFilter
 	if options.Filter != nil {
-		filter = newAndPathFilter(b.filter, wrapPathFilter(options.Filter, b.rootFolder))
+		filter = NewAndPathFilter(b.filter, wrapPathFilter(options.Filter, b.rootFolder))
 	} else {
 		filter = b.filter
 	}
@@ -256,26 +266,58 @@ func (b wrapper) CreateFolder(ctx context.Context, path string) error {
 	return b.wrapped.CreateFolder(ctx, rootedPath)
 }
 
-func (b wrapper) DeleteFolder(ctx context.Context, path string) error {
+func (b wrapper) deleteFolderOptionsWithDefaults(options *DeleteFolderOptions) *DeleteFolderOptions {
+	if options == nil {
+		return &DeleteFolderOptions{
+			Force:        false,
+			AccessFilter: b.filter,
+		}
+	}
+
+	if options.AccessFilter == nil {
+		return &DeleteFolderOptions{
+			Force:        options.Force,
+			AccessFilter: b.filter,
+		}
+	}
+
+	var filter PathFilter
+	if options.AccessFilter != nil {
+		filter = NewAndPathFilter(b.filter, wrapPathFilter(options.AccessFilter, b.rootFolder))
+	} else {
+		filter = b.filter
+	}
+
+	return &DeleteFolderOptions{
+		Force:        options.Force,
+		AccessFilter: filter,
+	}
+}
+
+func (b wrapper) DeleteFolder(ctx context.Context, path string, options *DeleteFolderOptions) error {
 	if err := b.validatePath(path); err != nil {
 		return err
 	}
 
 	rootedPath := b.addRoot(path)
-	if !b.filter.IsAllowed(rootedPath) {
-		return nil
+
+	optionsWithDefaults := b.deleteFolderOptionsWithDefaults(options)
+	if !optionsWithDefaults.AccessFilter.IsAllowed(rootedPath) {
+		return fmt.Errorf("delete folder unauthorized - no access to %s", rootedPath)
 	}
 
-	isEmpty, err := b.isFolderEmpty(ctx, path)
-	if err != nil {
-		return err
+	if !optionsWithDefaults.Force {
+		isEmpty, err := b.isFolderEmpty(ctx, path)
+		if err != nil {
+			return err
+		}
+
+		if !isEmpty {
+			return fmt.Errorf("folder %s is not empty - cant remove it", path)
+		}
 	}
 
-	if !isEmpty {
-		return fmt.Errorf("folder %s is not empty - cant remove it", path)
-	}
-
-	return b.wrapped.DeleteFolder(ctx, rootedPath)
+	return b.wrapped.DeleteFolder(ctx, rootedPath, optionsWithDefaults)
 }
 
 func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, options *ListOptions) (*ListResponse, error) {
@@ -291,7 +333,11 @@ func (b wrapper) List(ctx context.Context, folderPath string, paging *Paging, op
 
 	go func() {
 		if options.WithFiles {
-			if f, err := b.Get(fileRetrievalCtx, folderPath); err == nil {
+			var getOptions *GetFileOptions
+			if options.WithContents {
+				getOptions = &GetFileOptions{WithContents: true}
+			}
+			if f, _, err := b.Get(fileRetrievalCtx, folderPath, getOptions); err == nil {
 				fileChan <- f
 				return
 			}

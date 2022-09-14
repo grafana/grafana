@@ -7,7 +7,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './TextArea.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Forms/TextArea',
   component: TextArea,
   decorators: [withCenteredStory],
@@ -22,7 +22,7 @@ export default {
   argTypes: {
     containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
   },
-} as Meta;
+};
 
 export const Basic: Story = (args) => {
   return (
@@ -38,3 +38,5 @@ Basic.args = {
   cols: 30,
   containerWidth: 300,
 };
+
+export default meta;

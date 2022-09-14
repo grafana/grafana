@@ -4,7 +4,17 @@ import React, { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
-import { Alert, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  BigValue,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  CustomScrollbar,
+  LoadingPlaceholder,
+  useStyles2,
+} from '@grafana/ui';
+import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
@@ -22,9 +32,10 @@ import { AccessControlAction } from 'app/types';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { GroupMode, SortOrder, UnifiedAlertListOptions } from './types';
+import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
+import { filterAlerts } from './util';
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
@@ -85,10 +96,21 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
         {dispatched && loading && !haveResults && <LoadingPlaceholder text="Loading..." />}
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
         <section>
-          {props.options.groupMode === GroupMode.Custom && haveResults && (
+          {props.options.viewMode === ViewMode.Stat && haveResults && (
+            <BigValue
+              width={props.width}
+              height={props.height}
+              graphMode={BigValueGraphMode.None}
+              textMode={BigValueTextMode.Auto}
+              justifyMode={BigValueJustifyMode.Auto}
+              theme={config.theme2}
+              value={{ text: `${rules.length}`, numeric: rules.length }}
+            />
+          )}
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && haveResults && (
             <GroupedModeView rules={rules} options={props.options} />
           )}
-          {props.options.groupMode === GroupMode.Default && haveResults && (
+          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
             <UngroupedModeView rules={rules} options={props.options} />
           )}
         </section>
@@ -143,14 +165,15 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
     const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
     const matchers = parseMatchers(replacedLabelFilter);
     // Reduce rules and instances to only those that match
-    filteredRules = filteredRules.reduce((rules, rule) => {
+    filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
       const filteredAlerts = (rule.rule.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
       if (filteredAlerts.length) {
         rules.push({ ...rule, rule: { ...rule.rule, alerts: filteredAlerts } });
       }
       return rules;
-    }, [] as PromRuleWithLocation[]);
+    }, []);
   }
+
   if (options.folder) {
     filteredRules = filteredRules.filter((rule) => {
       return rule.namespaceName === options.folder.title;
@@ -165,6 +188,19 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
         : ({ dataSourceName }) => dataSourceName === options.datasource
     );
   }
+
+  // Remove rules having 0 instances
+  // AlertInstances filters instances and we need to prevent situation
+  // when we display a rule with 0 instances
+  filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
+    const filteredAlerts = filterAlerts(options, rule.rule.alerts ?? []);
+    if (filteredAlerts.length) {
+      // We intentionally don't set alerts to filteredAlerts
+      // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
+      rules.push(rule);
+    }
+    return rules;
+  }, []);
 
   return filteredRules;
 }

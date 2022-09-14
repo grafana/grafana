@@ -73,7 +73,7 @@ describe('getFieldLinksForExplore', () => {
 
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
       )}`
     );
     expect(links[0].title).toBe('test_ds');

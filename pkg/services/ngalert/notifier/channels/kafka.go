@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -23,6 +24,7 @@ type KafkaNotifier struct {
 	Endpoint string
 	Topic    string
 	log      log.Logger
+	images   ImageStore
 	ns       notifications.WebhookSender
 	tmpl     *template.Template
 }
@@ -41,7 +43,7 @@ func KafkaFactory(fc FactoryConfig) (NotificationChannel, error) {
 			Cfg:    *fc.Config,
 		}
 	}
-	return NewKafkaNotifier(cfg, fc.NotificationService, fc.Template), nil
+	return NewKafkaNotifier(cfg, fc.ImageStore, fc.NotificationService, fc.Template), nil
 }
 
 func NewKafkaConfig(config *NotificationChannelConfig) (*KafkaConfig, error) {
@@ -61,7 +63,7 @@ func NewKafkaConfig(config *NotificationChannelConfig) (*KafkaConfig, error) {
 }
 
 // NewKafkaNotifier is the constructor function for the Kafka notifier.
-func NewKafkaNotifier(config *KafkaConfig, ns notifications.WebhookSender, t *template.Template) *KafkaNotifier {
+func NewKafkaNotifier(config *KafkaConfig, images ImageStore, ns notifications.WebhookSender, t *template.Template) *KafkaNotifier {
 	return &KafkaNotifier{
 		Base: NewBase(&models.AlertNotification{
 			Uid:                   config.UID,
@@ -73,6 +75,7 @@ func NewKafkaNotifier(config *KafkaConfig, ns notifications.WebhookSender, t *te
 		Endpoint: config.Endpoint,
 		Topic:    config.Topic,
 		log:      log.New("alerting.notifier.kafka"),
+		images:   images,
 		ns:       ns,
 		tmpl:     t,
 	}
@@ -101,6 +104,21 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)
 	bodyJSON.Set("client_url", ruleURL)
+
+	var contexts []interface{}
+	_ = withStoredImages(ctx, kn.log, kn.images,
+		func(_ int, image ngmodels.Image) error {
+			if image.URL != "" {
+				imageJSON := simplejson.New()
+				imageJSON.Set("type", "image")
+				imageJSON.Set("src", image.URL)
+				contexts = append(contexts, imageJSON)
+			}
+			return nil
+		}, as...)
+	if len(contexts) > 0 {
+		bodyJSON.Set("contexts", contexts)
+	}
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {

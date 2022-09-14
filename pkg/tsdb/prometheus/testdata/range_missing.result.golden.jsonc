@@ -12,7 +12,7 @@
 //  +-------------------------------+------------------------------------------------+
 //  | Name: Time                    | Name: Value                                    |
 //  | Labels:                       | Labels: __name__=go_goroutines, job=prometheus |
-//  | Type: []time.Time             | Type: []*float64                               |
+//  | Type: []time.Time             | Type: []float64                                |
 //  +-------------------------------+------------------------------------------------+
 //  | 2022-01-11 08:25:33 +0000 UTC | 21                                             |
 //  | 2022-01-11 08:25:34 +0000 UTC | 32                                             |
@@ -48,8 +48,7 @@
             "name": "Value",
             "type": "number",
             "typeInfo": {
-              "frame": "float64",
-              "nullable": true
+              "frame": "float64"
             },
             "labels": {
               "__name__": "go_goroutines",

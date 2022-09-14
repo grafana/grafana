@@ -8,15 +8,14 @@ import { testIds } from '../../components/PromQueryEditor';
 import PromQueryField from '../../components/PromQueryField';
 import { PromQueryEditorProps } from '../../components/types';
 
-export function PromQueryCodeEditor({
-  query,
-  datasource,
-  range,
-  onRunQuery,
-  onChange,
-  data,
-  app,
-}: PromQueryEditorProps) {
+import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
+
+type Props = PromQueryEditorProps & {
+  showExplain: boolean;
+};
+
+export function PromQueryCodeEditor(props: Props) {
+  const { query, datasource, range, onRunQuery, onChange, data, app, showExplain } = props;
   const styles = useStyles2(getStyles);
 
   return (
@@ -32,6 +31,8 @@ export function PromQueryCodeEditor({
         data-testid={testIds.editor}
         app={app}
       />
+
+      {showExplain && <PromQueryBuilderExplained query={query.expr} />}
     </div>
   );
 }

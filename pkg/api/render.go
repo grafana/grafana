@@ -57,8 +57,8 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 			Timeout: time.Duration(timeout) * time.Second,
 		},
 		AuthOpts: rendering.AuthOpts{
-			OrgID:   c.OrgId,
-			UserID:  c.UserId,
+			OrgID:   c.OrgID,
+			UserID:  c.UserID,
 			OrgRole: c.OrgRole,
 		},
 		Width:             width,

@@ -4,28 +4,32 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useFocusWithin, useHover, useKeyboard } from '@react-aria/interactions';
 import { useMenuTrigger } from '@react-aria/menu';
-import { DismissButton, useOverlay } from '@react-aria/overlays';
+import { DismissButton, OverlayContainer, useOverlay, useOverlayPosition } from '@react-aria/overlays';
 import { useMenuTriggerState } from '@react-stately/menu';
 import { MenuTriggerProps } from '@react-types/menu';
 import React, { ReactElement, useEffect, useState } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { reportExperimentView } from '@grafana/runtime';
-import { Icon, IconName, Link, useTheme2 } from '@grafana/ui';
+import { Link, useTheme2 } from '@grafana/ui';
 
+import { NavBarItemIcon } from './NavBarItemIcon';
+import { getNavMenuPortalContainer } from './NavBarMenuPortalContainer';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
-import { NavBarItemMenuContext } from './context';
+import { NavBarItemMenuContext, useNavBarContext } from './context';
 
 export interface NavBarItemMenuTriggerProps extends MenuTriggerProps {
   children: ReactElement;
   item: NavModelItem;
   isActive?: boolean;
   label: string;
+  reverseMenuDirection: boolean;
 }
 
 export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactElement {
-  const { item, isActive, label, children: menu, ...rest } = props;
+  const { item, isActive, label, children: menu, reverseMenuDirection, ...rest } = props;
   const [menuHasFocus, setMenuHasFocus] = useState(false);
+  const { menuIdOpen, setMenuIdOpen } = useNavBarContext();
   const theme = useTheme2();
   const styles = getStyles(theme, isActive);
 
@@ -46,23 +50,23 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
     onHoverChange: (isHovering) => {
       if (isHovering) {
         state.open();
+        setMenuIdOpen(item.id);
       } else {
         state.close();
+        setMenuIdOpen(undefined);
       }
     },
   });
 
-  const { focusWithinProps } = useFocusWithin({
-    onFocusWithinChange: (isFocused) => {
-      if (isFocused) {
-        state.open();
-      }
-      if (!isFocused) {
-        state.close();
-        setMenuHasFocus(false);
-      }
-    },
-  });
+  useEffect(() => {
+    // close the menu when changing submenus
+    if (menuIdOpen !== item.id) {
+      state.close();
+      setMenuHasFocus(false);
+    } else {
+      state.open();
+    }
+  }, [menuIdOpen, state, item.id]);
 
   const { keyboardProps } = useKeyboard({
     onKeyDown: (e) => {
@@ -70,8 +74,12 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         case 'ArrowRight':
           if (!state.isOpen) {
             state.open();
+            setMenuIdOpen(item.id);
           }
           setMenuHasFocus(true);
+          break;
+        case 'Tab':
+          setMenuIdOpen(undefined);
           break;
         default:
           break;
@@ -85,8 +93,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
   const itemContent = (
     <Wrapper>
       <span className={styles.icon}>
-        {item?.icon && <Icon name={item.icon as IconName} size="xl" />}
-        {item?.img && <img src={item.img} alt={`${item.text} logo`} />}
+        <NavBarItemIcon link={item} />
       </span>
     </Wrapper>
   );
@@ -95,6 +102,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       className={styles.element}
       {...buttonProps}
       {...keyboardProps}
+      {...hoverProps}
       ref={ref as React.RefObject<HTMLButtonElement>}
       onClick={item?.onClick}
       aria-label={label}
@@ -109,6 +117,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
         <Link
           {...buttonProps}
           {...keyboardProps}
+          {...hoverProps}
           ref={ref as React.RefObject<HTMLAnchorElement>}
           href={item.url}
           target={item.target}
@@ -125,6 +134,7 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
           onClick={item?.onClick}
           {...buttonProps}
           {...keyboardProps}
+          {...hoverProps}
           ref={ref as React.RefObject<HTMLAnchorElement>}
           className={styles.element}
           aria-label={label}
@@ -134,85 +144,111 @@ export function NavBarItemMenuTrigger(props: NavBarItemMenuTriggerProps): ReactE
       );
   }
 
-  const overlayRef = React.useRef(null);
+  const overlayRef = React.useRef<HTMLDivElement>(null);
   const { dialogProps } = useDialog({}, overlayRef);
   const { overlayProps } = useOverlay(
     {
-      onClose: () => state.close(),
+      onClose: () => {
+        state.close();
+        setMenuIdOpen(undefined);
+      },
       isOpen: state.isOpen,
       isDismissable: true,
     },
     overlayRef
   );
 
+  let { overlayProps: overlayPositionProps } = useOverlayPosition({
+    targetRef: ref,
+    overlayRef,
+    placement: reverseMenuDirection ? 'right bottom' : 'right top',
+    isOpen: state.isOpen,
+  });
+
+  const { focusWithinProps } = useFocusWithin({
+    onFocusWithin: (e) => {
+      if (e.target.id === ref.current?.id) {
+        // If focussing on the trigger itself, set the menu id that is open
+        setMenuIdOpen(item.id);
+        state.open();
+      }
+      e.target.scrollIntoView?.({
+        block: 'nearest',
+      });
+    },
+    onBlurWithin: (e) => {
+      if (e.target?.getAttribute('role') === 'menuitem' && !overlayRef.current?.contains(e.relatedTarget)) {
+        // If it is blurring from a menuitem to an element outside the current overlay
+        // close the menu that is open
+        setMenuIdOpen(undefined);
+      }
+    },
+  });
+
   return (
-    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps} {...hoverProps}>
+    <div className={cx(styles.element, 'dropdown')} {...focusWithinProps}>
       {element}
       {state.isOpen && (
-        <NavBarItemMenuContext.Provider
-          value={{
-            menuProps,
-            menuHasFocus,
-            onClose: () => state.close(),
-            onLeft: () => {
-              setMenuHasFocus(false);
-              ref.current?.focus();
-            },
-          }}
-        >
-          <FocusScope restoreFocus>
-            <div {...overlayProps} {...dialogProps} ref={overlayRef}>
-              <DismissButton onDismiss={() => state.close()} />
-              {menu}
-              <DismissButton onDismiss={() => state.close()} />
-            </div>
-          </FocusScope>
-        </NavBarItemMenuContext.Provider>
+        <OverlayContainer portalContainer={getNavMenuPortalContainer()}>
+          <NavBarItemMenuContext.Provider
+            value={{
+              menuProps,
+              menuHasFocus,
+              onClose: () => state.close(),
+              onLeft: () => {
+                setMenuHasFocus(false);
+                ref.current?.focus();
+              },
+            }}
+          >
+            <FocusScope restoreFocus>
+              <div {...overlayProps} {...overlayPositionProps} {...dialogProps} {...hoverProps} ref={overlayRef}>
+                <DismissButton onDismiss={() => state.close()} />
+                {menu}
+                <DismissButton onDismiss={() => state.close()} />
+              </div>
+            </FocusScope>
+          </NavBarItemMenuContext.Provider>
+        </OverlayContainer>
       )}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2, isActive?: boolean) => ({
-  element: css`
-    background-color: transparent;
-    border: none;
-    color: inherit;
-    display: block;
-    line-height: ${theme.components.sidemenu.width}px;
-    padding: 0;
-    text-align: center;
-    width: ${theme.components.sidemenu.width}px;
+  element: css({
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'inherit',
+    display: 'grid',
+    padding: 0,
+    placeContent: 'center',
+    height: theme.spacing(6),
+    width: theme.spacing(7),
 
-    &::before {
-      display: ${isActive ? 'block' : 'none'};
-      content: ' ';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      border-radius: 2px;
-      background-image: ${theme.colors.gradients.brandVertical};
-    }
+    '&::before': {
+      display: isActive ? 'block' : 'none',
+      content: '" "',
+      position: 'absolute',
+      left: theme.spacing(1),
+      top: theme.spacing(1.5),
+      bottom: theme.spacing(1.5),
+      width: theme.spacing(0.5),
+      borderRadius: theme.shape.borderRadius(1),
+      backgroundImage: theme.colors.gradients.brandVertical,
+    },
 
-    &:focus-visible {
-      background-color: ${theme.colors.action.hover};
-      box-shadow: none;
-      color: ${theme.colors.text.primary};
-      outline: 2px solid ${theme.colors.primary.main};
-      outline-offset: -2px;
-      transition: none;
-    }
-  `,
-  icon: css`
-    height: 100%;
-    width: 100%;
-
-    img {
-      border-radius: 50%;
-      height: ${theme.spacing(3)};
-      width: ${theme.spacing(3)};
-    }
-  `,
+    '&:focus-visible': {
+      backgroundColor: theme.colors.action.hover,
+      boxShadow: 'none',
+      color: theme.colors.text.primary,
+      outline: `${theme.shape.borderRadius(1)} solid ${theme.colors.primary.main}`,
+      outlineOffset: `-${theme.shape.borderRadius(1)}`,
+      transition: 'none',
+    },
+  }),
+  icon: css({
+    height: '100%',
+    width: '100%',
+  }),
 });

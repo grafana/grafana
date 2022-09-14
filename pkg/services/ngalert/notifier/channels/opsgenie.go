@@ -242,8 +242,8 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 		images := []string{}
 		_ = withStoredImages(ctx, on.log, on.images,
-			func(index int, image *ngmodels.Image) error {
-				if image == nil || len(image.URL) == 0 {
+			func(_ int, image ngmodels.Image) error {
+				if len(image.URL) == 0 {
 					return nil
 				}
 				images = append(images, image.URL)

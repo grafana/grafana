@@ -51,3 +51,36 @@ export function isRegexSelector(selector?: string) {
   }
   return false;
 }
+
+export function isBytesString(string: string) {
+  const BYTES_KEYWORDS = [
+    'b',
+    'kib',
+    'Kib',
+    'kb',
+    'KB',
+    'mib',
+    'Mib',
+    'mb',
+    'MB',
+    'gib',
+    'Gib',
+    'gb',
+    'GB',
+    'tib',
+    'Tib',
+    'tb',
+    'TB',
+    'pib',
+    'Pib',
+    'pb',
+    'PB',
+    'eib',
+    'Eib',
+    'eb',
+    'EB',
+  ];
+  const regex = new RegExp(`^(?:-?\\d+(?:\\.\\d+)?)(?:${BYTES_KEYWORDS.join('|')})$`);
+  const match = string.match(regex);
+  return !!match;
+}

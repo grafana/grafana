@@ -119,14 +119,14 @@ class LiveLogs extends PureComponent<Props, State> {
         <table className={styles.fullWidth}>
           <tbody
             onScroll={isPaused ? undefined : this.onScroll}
-            className={cx(['logs-rows', styles.logsRowsLive])}
+            className={styles.logsRowsLive}
             ref={this.scrollContainerRef}
           >
             {this.rowsToRender().map((row: LogRowModel) => {
               return (
                 <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
-                  <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
-                  <td className={cx(logsRowMessage)}>{row.hasAnsi ? <LogMessageAnsi value={row.raw} /> : row.entry}</td>
+                  <td className={logsRowLocalTime}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
+                  <td className={logsRowMessage}>{row.hasAnsi ? <LogMessageAnsi value={row.raw} /> : row.entry}</td>
                 </tr>
               );
             })}

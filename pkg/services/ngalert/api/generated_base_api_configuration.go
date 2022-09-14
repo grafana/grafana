@@ -18,31 +18,32 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type ConfigurationApiForkingService interface {
+type ConfigurationApi interface {
 	RouteDeleteNGalertConfig(*models.ReqContext) response.Response
 	RouteGetAlertmanagers(*models.ReqContext) response.Response
 	RouteGetNGalertConfig(*models.ReqContext) response.Response
 	RoutePostNGalertConfig(*models.ReqContext) response.Response
 }
 
-func (f *ForkedConfigurationApi) RouteDeleteNGalertConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteNGalertConfig(ctx)
+func (f *ConfigurationApiHandler) RouteDeleteNGalertConfig(ctx *models.ReqContext) response.Response {
+	return f.handleRouteDeleteNGalertConfig(ctx)
 }
-func (f *ForkedConfigurationApi) RouteGetAlertmanagers(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAlertmanagers(ctx)
+func (f *ConfigurationApiHandler) RouteGetAlertmanagers(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetAlertmanagers(ctx)
 }
-func (f *ForkedConfigurationApi) RouteGetNGalertConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetNGalertConfig(ctx)
+func (f *ConfigurationApiHandler) RouteGetNGalertConfig(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetNGalertConfig(ctx)
 }
-func (f *ForkedConfigurationApi) RoutePostNGalertConfig(ctx *models.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) RoutePostNGalertConfig(ctx *models.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.PostableNGalertConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostNGalertConfig(ctx, conf)
+	return f.handleRoutePostNGalertConfig(ctx, conf)
 }
 
-func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingService, m *metrics.API) {
+func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
