@@ -134,6 +134,11 @@ export const SearchView = ({
   };
 
   const results = useAsync(() => {
+    // No need to query all dashboards if we are in folder view
+    if (layout === SearchLayout.Folders) {
+      return Promise.resolve();
+    }
+
     const trackingInfo = {
       layout: query.layout,
       starred: query.starred,
