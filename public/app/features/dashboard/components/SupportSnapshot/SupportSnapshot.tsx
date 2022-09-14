@@ -48,6 +48,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
     snapshotText,
     randomize,
     panelTitle,
+    snapshotUpdate,
   } = service.useState();
 
   useEffect(() => {
@@ -137,7 +138,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
       )}
       {currentTab === SnapshotTab.Support && (
         <>
-          {false && (
+          {true && (
             <Field
               label="Randomize data"
               description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
@@ -193,7 +194,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
             {({ height }) => (
               <>
                 <iframe
-                  src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`}
+                  src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk&${snapshotUpdate}`}
                   width="100%"
                   height={height - 100}
                   frameBorder="0"

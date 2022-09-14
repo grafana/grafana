@@ -27,7 +27,10 @@ interface SupportSnapshotState {
   };
   panel: PanelModel;
   panelTitle: string;
+
+  // eslint-disable-next-line
   snapshot?: any;
+  snapshotUpdate: number;
 }
 
 export enum SnapshotTab {
@@ -50,6 +53,7 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
       snapshotText: '',
       markdownText: '',
       randomize: {},
+      snapshotUpdate: 0,
       options: [
         {
           label: 'GitHub comment',
@@ -66,13 +70,17 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
   }
 
   async buildDebugDashboard() {
-    const { panel, randomize } = this.state;
+    const { panel, randomize, currentTab, iframeLoading, snapshotUpdate } = this.state;
     const snapshot = await getDebugDashboard(panel, randomize, getTimeSrv().timeRange());
     const snapshotText = JSON.stringify(snapshot, null, 2);
     const markdownText = getGithubMarkdown(panel, snapshotText);
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
 
-    this.setState({ snapshot, snapshotText, markdownText, snapshotSize });
+    if (iframeLoading && currentTab === SnapshotTab.Support) {
+      setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot });
+    }
+
+    this.setState({ snapshot, snapshotText, markdownText, snapshotSize, snapshotUpdate: snapshotUpdate + 1 });
   }
 
   onCurrentTabChange = (value: SnapshotTab) => {
