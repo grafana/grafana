@@ -106,3 +106,7 @@ You can sort the dashboards by:
 - Views 30 days
 
 {{< figure src="/static/img/docs/enterprise/improved-search-7-5.png" max-width="650px" class="docs-image--no-shadow" >}}
+
+## Usage insights dashboards
+
+**TODO**
