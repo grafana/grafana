@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import { intersectionBy, debounce, unionBy } from 'lodash';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
-import { Editor, Node, Plugin } from 'slate';
+import { Node, Plugin } from 'slate';
+import { Editor } from 'slate-react';
 
 import { AbsoluteTimeRange, QueryEditorProps, SelectableValue } from '@grafana/data';
 import {
@@ -76,7 +77,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     hint: undefined,
   };
 
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
 
   constructor(props: CloudWatchLogsQueryFieldProps, context: React.Context<any>) {
     super(props, context);
@@ -261,7 +262,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     );
   };
 
-  onQueryFieldClick = (_event: Event, _editor: Editor, next: () => any) => {
+  onQueryFieldClick = (_event: Event | React.MouseEvent, _editor: Editor, next: () => any) => {
     const { selectedLogGroups, loadingLogGroups } = this.state;
 
     const queryFieldDisabled = loadingLogGroups || selectedLogGroups.length === 0;
