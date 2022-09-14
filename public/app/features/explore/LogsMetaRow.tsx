@@ -1,10 +1,21 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
-import { Button, Tooltip, LogLabels } from '@grafana/ui';
+import { LogRowModel, LogsDedupStrategy, LogsMetaItem, LogsMetaKind } from '@grafana/data';
+import { Button, LogLabels, Tooltip, useStyles2 } from '@grafana/ui';
 import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
 
+import { downloadLogsModelAsTxt } from '../inspector/utils/download';
+
 import { MetaInfoText, MetaItemProps } from './MetaInfoText';
+
+const getStyles = () => ({
+  metaContainer: css`
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+  `,
+});
 
 export type Props = {
   meta: LogsMetaItem[];
@@ -30,6 +41,12 @@ export const LogsMetaRow = React.memo(
     onEscapeNewlines,
     logRows,
   }: Props) => {
+    const style = useStyles2(getStyles);
+
+    const downloadLogs = () => {
+      downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
+    };
+
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
 
     // Add deduplication info
@@ -83,18 +100,22 @@ export const LogsMetaRow = React.memo(
         ),
       });
     }
-
     return (
       <>
         {logsMetaItem && (
-          <MetaInfoText
-            metaItems={logsMetaItem.map((item) => {
-              return {
-                label: item.label,
-                value: 'kind' in item ? renderMetaItem(item.value, item.kind) : item.value,
-              };
-            })}
-          />
+          <div className={style.metaContainer}>
+            <MetaInfoText
+              metaItems={logsMetaItem.map((item) => {
+                return {
+                  label: item.label,
+                  value: 'kind' in item ? renderMetaItem(item.value, item.kind) : item.value,
+                };
+              })}
+            />
+            <Button onClick={downloadLogs} variant="secondary" size="sm" fill="outline" icon="download-alt">
+              Download
+            </Button>
+          </div>
         )}
       </>
     );

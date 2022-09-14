@@ -19,6 +19,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { dataFrameToLogsModel } from 'app/core/logsModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
@@ -27,7 +28,7 @@ import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transform
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
-import { downloadAsJson, downloadDataFrameAsCsv, downloadDataFrameAsTxt } from './utils/download';
+import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt } from './utils/download';
 
 interface Props {
   isLoading: boolean;
@@ -106,7 +107,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
       format: 'logs',
     });
 
-    downloadDataFrameAsTxt(data ?? [], panel ? panel.getDisplayTitle() : 'Explore');
+    const logsModel = dataFrameToLogsModel(data || [], undefined);
+    downloadLogsModelAsTxt(logsModel, panel ? panel.getDisplayTitle() : 'Explore');
   };
 
   exportTracesAsJson = () => {

@@ -1,16 +1,23 @@
 import saveAs from 'file-saver';
 
-import { CSVConfig, DataFrame, DataTransformerID, dateTimeFormat, dateTimeFormatISO, toCSV } from '@grafana/data';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
+import {
+  CSVConfig,
+  DataFrame,
+  DataTransformerID,
+  dateTimeFormat,
+  dateTimeFormatISO,
+  LogsModel,
+  toCSV,
+} from '@grafana/data';
 
 /**
  * Downloads a DataFrame as a TXT file.
  *
- * @param {DataFrame[]} data
+ * @export
+ * @param {(Pick<LogsModel, 'meta' | 'rows'>)} logsModel
  * @param {string} title
  */
-export function downloadDataFrameAsTxt(data: DataFrame[], title: string) {
-  const logsModel = dataFrameToLogsModel(data || [], undefined);
+export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title: string) {
   let textToDownload = '';
 
   logsModel.meta?.forEach((metaItem) => {
