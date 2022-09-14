@@ -112,7 +112,7 @@ It denies user access if no role or an invalid role is returned.
 **On every login** the user organization role will be reset to match AzureAD's application role and
 their organization membership will be reset to the default organization.
 
-If Azure AD authentication is not intented to sync user roles and organization membership,
+If Azure AD authentication is not intended to sync user roles and organization membership,
 `oauth_skip_org_role_update_sync` should be enabled.
 See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more details.
 
