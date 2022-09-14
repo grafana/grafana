@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	queryModels "github.com/grafana/grafana/pkg/services/query/models"
+	publicDashboards "github.com/grafana/grafana/pkg/services/publicdashboards/queries"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -81,10 +81,10 @@ func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipCa
 
 // QueryData can process queries and return query responses.
 func (s *Service) QueryDataMultipleSources(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest, handleExpressions bool) (*backend.QueryDataResponse, error) {
-	byDataSource := queryModels.GroupQueriesByDataSource(reqDTO.Queries)
+	byDataSource := publicDashboards.GroupQueriesByDataSource(reqDTO.Queries)
 
 	// The expression service will handle mixed datasources, so we don't need to group them when an expression is present.
-	if queryModels.HasExpressionQuery(reqDTO.Queries) || len(byDataSource) == 1 {
+	if publicDashboards.HasExpressionQuery(reqDTO.Queries) || len(byDataSource) == 1 {
 		return s.QueryData(ctx, user, skipCache, reqDTO, handleExpressions)
 	} else {
 		resp := backend.NewQueryDataResponse()
