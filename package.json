@@ -384,6 +384,7 @@
     "regenerator-runtime": "0.13.9",
     "reselect": "4.1.6",
     "rst2html": "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809",
+    "rudder-sdk-js": "^2.13.0",
     "rxjs": "7.5.6",
     "sass": "link:./public/sass",
     "selecto": "1.19.1",
