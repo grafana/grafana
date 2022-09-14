@@ -316,18 +316,30 @@ export async function ensureQueries(
   if (queries && typeof queries === 'object' && queries.length > 0) {
     const allQueries = [];
     for (let index = 0; index < queries.length; index++) {
-      const query = queries[index];
+      let query = queries[index];
       const key = generateKey(index);
       let refId = query.refId;
       if (!refId) {
         refId = getNextRefIdChar(allQueries);
       }
 
-      allQueries.push({
-        ...query,
-        refId,
-        key,
-      });
+      let validDS = true;
+      if (query.datasource) {
+        try {
+          await getDataSourceSrv().get(query.datasource.uid);
+        } catch {
+          console.error(`One of the queries has a datasource that is no longer available and was removed.`);
+          validDS = false;
+        }
+      }
+
+      if (validDS) {
+        allQueries.push({
+          ...query,
+          refId,
+          key,
+        });
+      }
     }
     return allQueries;
   }
