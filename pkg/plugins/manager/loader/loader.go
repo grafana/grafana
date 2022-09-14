@@ -210,10 +210,6 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 		return plugins.JSONData{}, err
 	}
 
-	if plugin.ID == "grafana-piechart-panel" {
-		plugin.Name = "Pie Chart (old)"
-	}
-
 	if len(plugin.Dependencies.Plugins) == 0 {
 		plugin.Dependencies.Plugins = []plugins.Dependency{}
 	}
