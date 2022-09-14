@@ -30,21 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-var grafanaDSQuery = `{
-	"from": "",
-	"to": "",
-	"queries": [
-		{
-			"datasource": {
-				"type": "datasource",
-				"uid": "grafana"
-			},
-			"queryType": "randomWalk",
-			"refId": "A"
-		}
-	]
-}`
-
 type fakePluginRequestValidator struct {
 	err error
 }
@@ -103,7 +88,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	})
 
 	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
-		req := serverFeatureDisabled.NewPostRequest("/api/ds/query", strings.NewReader(grafanaDSQuery))
+		req := serverFeatureDisabled.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := serverFeatureDisabled.SendJSON(req)
 		require.NoError(t, err)
@@ -112,7 +97,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	})
 
 	t.Run("Status code is 207 when data source response has an error and feature toggle is enabled", func(t *testing.T) {
-		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(grafanaDSQuery))
+		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := serverFeatureEnabled.SendJSON(req)
 		require.NoError(t, err)
@@ -146,7 +131,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	})
 
 	t.Run("Status code is 500 and a secrets plugin error is returned if there is a problem getting secrets from the remote plugin", func(t *testing.T) {
-		req := httpServer.NewPostRequest("/api/ds/query", strings.NewReader(grafanaDSQuery))
+		req := httpServer.NewPostRequest("/api/ds/query", strings.NewReader(reqValid))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := httpServer.SendJSON(req)
 		require.NoError(t, err)
@@ -162,6 +147,21 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		require.Contains(t, resObj.Message, "Secrets Plugin error:")
 	})
 }
+
+var reqValid = `{
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"datasource": {
+				"type": "datasource",
+				"uid": "grafana"
+			},
+			"queryType": "randomWalk",
+			"refId": "A"
+		}
+	]
+}`
 
 var reqNoQueries = `{
 	"from": "",
@@ -215,19 +215,19 @@ func TestDataSourceQueryError(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			request:        grafanaDSQuery,
+			request:        reqValid,
 			clientErr:      backendplugin.ErrPluginUnavailable,
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
 		},
 		{
-			request:        grafanaDSQuery,
+			request:        reqValid,
 			clientErr:      backendplugin.ErrMethodNotImplemented,
 			expectedStatus: http.StatusNotImplemented,
 			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
 		},
 		{
-			request:        grafanaDSQuery,
+			request:        reqValid,
 			clientErr:      errors.New("surprise surprise"),
 			expectedStatus: errutil.StatusInternal.HTTPStatus(),
 			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":500,"traceID":""}`,
