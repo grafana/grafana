@@ -10,7 +10,7 @@ describe('breadcrumb utils', () => {
         url: '/my-section',
       };
       const result = buildBreadcrumbs(sectionNav);
-      expect(result[0]).toEqual({ icon: 'home-alt', href: '/', text: 'Home' });
+      expect(result[0]).toEqual({ href: '/', text: 'Home' });
     });
 
     it('includes breadcrumbs for the section nav', () => {
@@ -19,7 +19,7 @@ describe('breadcrumb utils', () => {
         url: '/my-section',
       };
       expect(buildBreadcrumbs(sectionNav)).toEqual([
-        { icon: 'home-alt', href: '/', text: 'Home' },
+        { href: '/', text: 'Home' },
         { text: 'My section', href: '/my-section' },
       ]);
     });
@@ -35,7 +35,7 @@ describe('breadcrumb utils', () => {
         url: '/my-page',
       };
       expect(buildBreadcrumbs(sectionNav, pageNav)).toEqual([
-        { icon: 'home-alt', href: '/', text: 'Home' },
+        { href: '/', text: 'Home' },
         { text: 'My section', href: '/my-section' },
         { text: 'My page', href: '/my-page' },
       ]);
@@ -51,7 +51,7 @@ describe('breadcrumb utils', () => {
         },
       };
       expect(buildBreadcrumbs(sectionNav)).toEqual([
-        { icon: 'home-alt', href: '/', text: 'Home' },
+        { href: '/', text: 'Home' },
         { text: 'My parent section', href: '/my-parent-section' },
         { text: 'My section', href: '/my-section' },
       ]);
@@ -75,7 +75,7 @@ describe('breadcrumb utils', () => {
         },
       };
       expect(buildBreadcrumbs(sectionNav, pageNav)).toEqual([
-        { icon: 'home-alt', href: '/', text: 'Home' },
+        { href: '/', text: 'Home' },
         { text: 'My parent section', href: '/my-parent-section' },
         { text: 'My section', href: '/my-section' },
         { text: 'My parent page', href: '/my-parent-page' },
