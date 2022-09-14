@@ -138,7 +138,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
       )}
       {currentTab === SnapshotTab.Support && (
         <>
-          {true && (
+          {false && (
             <Field
               label="Randomize data"
               description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."

@@ -70,15 +70,11 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
   }
 
   async buildDebugDashboard() {
-    const { panel, randomize, currentTab, iframeLoading, snapshotUpdate } = this.state;
+    const { panel, randomize, snapshotUpdate } = this.state;
     const snapshot = await getDebugDashboard(panel, randomize, getTimeSrv().timeRange());
     const snapshotText = JSON.stringify(snapshot, null, 2);
     const markdownText = getGithubMarkdown(panel, snapshotText);
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
-
-    if (iframeLoading && currentTab === SnapshotTab.Support) {
-      setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot });
-    }
 
     this.setState({ snapshot, snapshotText, markdownText, snapshotSize, snapshotUpdate: snapshotUpdate + 1 });
   }
