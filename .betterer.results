@@ -5942,14 +5942,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloud-monitoring/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/cloudwatch/__mocks__/CloudWatchDataSource.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
-    ],
     "public/app/plugins/datasource/cloudwatch/__mocks__/monarch/Monaco.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -5993,9 +5985,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloudwatch/components/QueryHeader.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/datasource.d.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/datasource.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
