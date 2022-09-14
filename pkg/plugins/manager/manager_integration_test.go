@@ -11,6 +11,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
@@ -78,6 +79,7 @@ func TestIntegrationPluginManager_Run(t *testing.T) {
 		Raw:                raw,
 		StaticRootPath:     staticRootPath,
 		BundledPluginsPath: bundledPluginsPath,
+		Azure:              &azsettings.AzureSettings{},
 	}
 
 	tracer := &fakeTracer{}
