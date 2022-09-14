@@ -5,6 +5,7 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -188,6 +189,32 @@ func (cl *ConcreteLogger) Info(msg string, args ...interface{}) {
 
 func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...interface{}) error {
 	return cl.Log(append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)...)
+}
+
+func (cl *ConcreteLogger) logCtx(ctx context.Context, msg string, logLevel level.Value, args ...interface{}) error {
+	allArgs := append([]interface{}{level.Key(), logLevel, "msg", msg}, args...)
+
+	if ctxArgs := contextualArgs(ctx); ctxArgs != nil {
+		allArgs = append(allArgs, ctxArgs.args...)
+	}
+
+	return cl.Log(allArgs...)
+}
+
+func (cl *ConcreteLogger) DebugCtx(ctx context.Context, msg string, args ...interface{}) {
+	_ = cl.logCtx(ctx, msg, level.DebugValue(), args...)
+}
+
+func (cl *ConcreteLogger) WarnCtx(ctx context.Context, msg string, args ...interface{}) {
+	_ = cl.logCtx(ctx, msg, level.WarnValue(), args...)
+}
+
+func (cl *ConcreteLogger) InfoCtx(ctx context.Context, msg string, args ...interface{}) {
+	_ = cl.logCtx(ctx, msg, level.InfoValue(), args...)
+}
+
+func (cl *ConcreteLogger) ErrorCtx(ctx context.Context, msg string, args ...interface{}) {
+	_ = cl.logCtx(ctx, msg, level.ErrorValue(), args...)
 }
 
 func (cl *ConcreteLogger) New(ctx ...interface{}) *ConcreteLogger {
