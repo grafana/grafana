@@ -1,20 +1,9 @@
 import { css } from '@emotion/css';
-import { saveAs } from 'file-saver';
-import React, { useState, useMemo, useEffect } from 'react';
-import { useAsync, useCopyToClipboard } from 'react-use';
+import React, { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import {
-  PanelPlugin,
-  GrafanaTheme2,
-  AppEvents,
-  SelectableValue,
-  dateTimeFormat,
-  getValueFormat,
-  FeatureState,
-  formattedValueToString,
-} from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { PanelPlugin, GrafanaTheme2, FeatureState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Drawer,
   Tab,
@@ -29,16 +18,13 @@ import {
   Alert,
   FeatureBadge,
   Select,
+  ClipboardButton,
+  Stack,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import { contextSrv } from 'app/core/core';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { InspectTab } from 'app/features/inspector/types';
 
-import { Randomize } from './randomizer';
-import { getGithubMarkdown, getDebugDashboard } from './utils';
+import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 
 interface Props {
   panel: PanelModel;
@@ -46,168 +32,90 @@ interface Props {
   onClose: () => void;
 }
 
-enum ShowMessge {
-  PanelSnapshot = 'snap',
-  GithubComment = 'github',
-}
-
-const options: Array<SelectableValue<ShowMessge>> = [
-  {
-    label: 'Github comment',
-    description: 'Copy and paste this message into a github issue or comment',
-    value: ShowMessge.GithubComment,
-  },
-  {
-    label: 'Panel support snapshot',
-    description: 'Dashboard JSON used to help troubleshoot visualization issues',
-    value: ShowMessge.PanelSnapshot,
-  },
-];
-
 export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   const styles = useStyles2(getStyles);
-  const [currentTab, setCurrentTab] = useState(InspectTab.Support);
-  const [showMessage, setShowMessge] = useState(ShowMessge.GithubComment);
-  const [snapshotText, setDashboardText] = useState('...');
-  const [rand, setRand] = useState<Randomize>({});
-  const [_, copyToClipboard] = useCopyToClipboard();
-  const [iframeLoading, setIframeLoading] = useState(false);
-  const snapshot = useAsync(async () => {
-    return getDebugDashboard(panel, rand, getTimeSrv().timeRange());
-  }, [rand, panel, plugin]);
+  const service = useMemo(() => new SupportSnapshotService(panel), [panel]);
 
-  const info = useAsync(async () => {
-    const dashboard = snapshot.value;
-    if (dashboard) {
-      // When iframe is supported, pass the dashboard via local storage
-      if (iframeLoading && currentTab === InspectTab.Support) {
-        setDashboardToFetchFromLocalStorage({ meta: {}, dashboard });
-      }
-      setDashboardText(JSON.stringify(dashboard, null, 2));
-    }
-  }, [snapshot, currentTab, iframeLoading]);
+  const {
+    currentTab,
+    loading,
+    error,
+    iframeLoading,
+    options,
+    showMessage,
+    snapshotSize,
+    markdownText,
+    snapshotText,
+    randomize,
+    panelTitle,
+    snapshotUpdate,
+  } = service.useState();
 
-  const snapshotSize = useMemo(() => {
-    return formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
-  }, [snapshotText]);
-
-  const markdownText = useMemo(() => {
-    return getGithubMarkdown(panel, snapshotText);
-  }, [snapshotText, panel]);
-
-  // Listen for messages from loaded iframe
   useEffect(() => {
-    const handleEvent = (evt: MessageEvent<string>) => {
-      if (evt.data === 'GrafanaAppInit') {
-        setIframeLoading(true);
-      }
-    };
-    window.addEventListener('message', handleEvent, false);
-    return function cleanup() {
-      window.removeEventListener('message', handleEvent);
-    };
-  }, []);
+    service.buildDebugDashboard();
+  }, [service, plugin, randomize]);
+
+  useEffect(() => {
+    // Listen for messages from loaded iframe
+    return service.subscribeToIframeLoadingMessage();
+  }, [service]);
 
   if (!plugin) {
     return null;
   }
 
-  const panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
-
-  const toggleRandomize = (k: keyof Randomize) => {
-    setRand({ ...rand, [k]: !rand[k] });
-  };
-
-  const doImportDashboard = () => {
-    setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot.value });
-    global.open(config.appUrl + 'dashboard/new', '_blank');
-  };
-
-  const doDownloadDashboard = () => {
-    const blob = new Blob([snapshotText], {
-      type: 'text/plain',
-    });
-    const fileName = `debug-${panelTitle}-${dateTimeFormat(new Date())}.json.txt`;
-    saveAs(blob, fileName);
-  };
-
-  const doCopyMarkdown = () => {
-    const maxLen = Math.pow(1024, 2) * 1.5; // 1.5MB
-    if (markdownText.length > maxLen) {
-      appEvents.emit(AppEvents.alertError, [
-        `Snapshot is too large`,
-        'Consider downloading and attaching the file instead',
-      ]);
-      return;
-    }
-
-    copyToClipboard(markdownText);
-    appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
-  };
-
   const tabs = [
-    { label: 'Support', value: InspectTab.Support },
-    { label: 'Data', value: InspectTab.JSON },
+    { label: 'Support', value: SnapshotTab.Support },
+    { label: 'Data', value: SnapshotTab.Data },
   ];
-  let activeTab = currentTab;
-  if (!tabs.find((item) => item.value === currentTab)) {
-    activeTab = InspectTab.JSON;
-  }
-
-  const renderError = () => {
-    console.error('Error', info.error);
-    return <Alert title="Error loading dashboard">{`${info.error}`}</Alert>;
-  };
 
   return (
     <Drawer
-      title={`Panel: ${panelTitle}`}
+      title={`Support snapshot`}
       width="90%"
       onClose={onClose}
       expandable
       scrollableContent
       subtitle={
-        <div>
-          <p>
+        <Stack direction="column" gap={1}>
+          <span>
             <FeatureBadge featureState={FeatureState.beta} />
-          </p>
-        </div>
+          </span>
+          <span className="muted">
+            A support snapshot contains the query response data and raw panel settings. Include this snapshot in support
+            requests to help identify issues faster
+          </span>
+        </Stack>
       }
       tabs={
         <TabsBar>
-          {tabs.map((t, index) => {
-            return (
-              <Tab
-                key={`${t.value}-${index}`}
-                label={t.label}
-                active={t.value === activeTab}
-                onChangeTab={() => setCurrentTab(t.value || InspectTab.Support)}
-              />
-            );
-          })}
+          {tabs.map((t, index) => (
+            <Tab
+              key={`${t.value}-${index}`}
+              label={t.label}
+              active={t.value === currentTab}
+              onChangeTab={() => service.onCurrentTabChange(t.value!)}
+            />
+          ))}
         </TabsBar>
       }
     >
-      {info.loading && <Spinner />}
-      {info.error && renderError()}
+      {loading && <Spinner />}
+      {error && <Alert title={error.title}>{error.message}</Alert>}
 
-      {activeTab === InspectTab.JSON ? (
+      {currentTab === SnapshotTab.Data && (
         <div className={styles.code}>
           <div className={styles.opts}>
             <Field label="Template" className={styles.field}>
-              <Select
-                options={options}
-                value={options.find((v) => v.value === showMessage) ?? options[0]}
-                onChange={(v) => setShowMessge(v.value ?? options[0].value!)}
-              />
+              <Select options={options} value={showMessage} onChange={service.onShowMessageChange} />
             </Field>
 
-            {showMessage === ShowMessge.GithubComment ? (
-              <Button icon="github" onClick={doCopyMarkdown}>
-                Copy
-              </Button>
+            {showMessage === ShowMessage.GithubComment ? (
+              <ClipboardButton icon="copy" getText={service.onGetMarkdownForClipboard}>
+                Copy to clipboard
+              </ClipboardButton>
             ) : (
-              <Button icon="download-alt" onClick={doDownloadDashboard}>
+              <Button icon="download-alt" onClick={service.onDownloadDashboard}>
                 Download ({snapshotSize})
               </Button>
             )}
@@ -217,19 +125,20 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
               <CodeEditor
                 width="100%"
                 height={height}
-                language={showMessage === ShowMessge.GithubComment ? 'markdown' : 'json'}
+                language={showMessage === ShowMessage.GithubComment ? 'markdown' : 'json'}
                 showLineNumbers={true}
                 showMiniMap={true}
-                value={showMessage === ShowMessge.GithubComment ? markdownText : snapshotText}
+                value={showMessage === ShowMessage.GithubComment ? markdownText : snapshotText}
                 readOnly={false}
-                onBlur={setDashboardText}
+                onBlur={service.onSetSnapshotText}
               />
             )}
           </AutoSizer>
         </div>
-      ) : (
+      )}
+      {currentTab === SnapshotTab.Support && (
         <>
-          {false && (
+          {true && (
             <Field
               label="Randomize data"
               description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
@@ -238,38 +147,43 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
                 <InlineSwitch
                   label="Labels"
                   showLabel={true}
-                  value={Boolean(rand.labels)}
-                  onChange={(v) => toggleRandomize('labels')}
+                  value={Boolean(randomize.labels)}
+                  onChange={() => service.onToggleRandomize('labels')}
                 />
                 <InlineSwitch
                   label="Field names"
                   showLabel={true}
-                  value={Boolean(rand.names)}
-                  onChange={(v) => toggleRandomize('names')}
+                  value={Boolean(randomize.names)}
+                  onChange={() => service.onToggleRandomize('names')}
                 />
                 <InlineSwitch
                   label="String values"
                   showLabel={true}
-                  value={Boolean(rand.values)}
-                  onChange={(v) => toggleRandomize('values')}
+                  value={Boolean(randomize.values)}
+                  onChange={() => service.onToggleRandomize('values')}
                 />
               </HorizontalGroup>
             </Field>
           )}
 
-          <Field
-            label="Support snapshot"
-            description="This snapshot contains the query response data and raw panel settings.  Including this snapshot in support requests can help identify issues faster."
-          >
+          <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
             <>
               <HorizontalGroup>
-                <Button icon="download-alt" onClick={doDownloadDashboard}>
+                <Button icon="download-alt" onClick={service.onDownloadDashboard}>
                   Dashboard ({snapshotSize})
                 </Button>
-                <Button icon="github" onClick={doCopyMarkdown} title="Paste this into a github issue">
-                  Copy for github
-                </Button>
-                <Button onClick={doImportDashboard} variant="secondary">
+                <ClipboardButton
+                  icon="github"
+                  getText={service.onGetMarkdownForClipboard}
+                  title="Copy a complete GitHub comment to the clipboard"
+                >
+                  Copy to clipboard
+                </ClipboardButton>
+                <Button
+                  onClick={service.onPreviewDashboard}
+                  variant="secondary"
+                  title="Open support snapshot dashboard in a new tab"
+                >
                   Preview
                 </Button>
               </HorizontalGroup>
@@ -280,7 +194,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
             {({ height }) => (
               <>
                 <iframe
-                  src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk`}
+                  src={`${config.appUrl}dashboard/new?orgId=${contextSrv.user.orgId}&kiosk&${snapshotUpdate}`}
                   width="100%"
                   height={height - 100}
                   frameBorder="0"
