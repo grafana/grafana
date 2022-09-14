@@ -1,4 +1,4 @@
-package query
+package queries
 
 import (
 	"testing"
@@ -51,7 +51,7 @@ const (
   "schemaVersion": 35
 }`
 
-	dashboardWithQueries = `
+	dashboardWithQueriesExemplarEnabled = `
 {
   "panels": [
     {
@@ -362,6 +362,18 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
 		require.Len(t, queriesByDatasource[0], 1)
 	})
+	t.Run("will delete exemplar property from target if exists", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithQueriesExemplarEnabled))
+		require.NoError(t, err)
+		queries := GroupQueriesByPanelId(json)
+
+		panelId := int64(2)
+		queriesByDatasource := GroupQueriesByDataSource(queries[panelId])
+		for _, query := range queriesByDatasource[0] {
+			_, ok := query.CheckGet("exemplar")
+			require.False(t, ok)
+		}
+	})
 	t.Run("can extract queries from dashboard with panel json datasource that has no datasource on panel targets", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithTargetsWithNoDatasources))
 		require.NoError(t, err)
@@ -390,7 +402,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 	})
 
 	t.Run("can extract queries from panels", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithQueries))
+		json, err := simplejson.NewJson([]byte(dashboardWithQueriesExemplarEnabled))
 		require.NoError(t, err)
 
 		queries := GroupQueriesByPanelId(json)
@@ -404,7 +416,6 @@ func TestGroupQueriesByPanelId(t *testing.T) {
               "type": "prometheus",
               "uid": "_yxMP8Ynk"
             },
-            "exemplar": true,
             "expr": "go_goroutines{job=\"$job\"}",
             "interval": "",
             "legendFormat": "",
@@ -417,7 +428,6 @@ func TestGroupQueriesByPanelId(t *testing.T) {
               "type": "prometheus",
               "uid": "promds2"
             },
-            "exemplar": true,
             "expr": "query2",
             "interval": "",
             "legendFormat": "",
@@ -440,7 +450,6 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 				"uid": "_yxMP8Ynk",
 				"type": "public-ds"
 			},
-            "exemplar": true,
             "expr": "go_goroutines{job=\"$job\"}",
             "interval": "",
             "legendFormat": "",

@@ -1,4 +1,4 @@
-package query
+package queries
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -44,6 +44,9 @@ func GroupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
+
+			// We dont support exemplars for public dashboards currently
+			query.Del("exemplar")
 
 			// if query target has no datasource, set it to have the datasource on the panel
 			if _, ok := query.CheckGet("datasource"); !ok {
