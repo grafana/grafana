@@ -72,7 +72,7 @@ export const centerPointRegistry = new Registry<MapCenterItems>(() => [
   },
   {
     id: 'se-asia',
-    name: 'South-east Asia',
+    name: 'South-East Asia',
     lat: 10,
     lon: 106,
     zoom: 4,
