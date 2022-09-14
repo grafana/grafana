@@ -18,6 +18,7 @@ import {
   Alert,
   FeatureBadge,
   Select,
+  ClipboardButton,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -66,11 +67,6 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
     { label: 'Data', value: SnapshotTab.Data },
   ];
 
-  const renderError = () => {
-    console.error('Error', error);
-    return <Alert title="Error loading dashboard">{`${error}`}</Alert>;
-  };
-
   return (
     <Drawer
       title={`Panel: ${panelTitle}`}
@@ -80,9 +76,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
       scrollableContent
       subtitle={
         <div>
-          <p>
-            <FeatureBadge featureState={FeatureState.beta} />
-          </p>
+          <FeatureBadge featureState={FeatureState.beta} />
         </div>
       }
       tabs={
@@ -101,7 +95,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
       }
     >
       {loading && <Spinner />}
-      {error && renderError()}
+      {error && <Alert title={error.title}>{error.message}</Alert>}
 
       {currentTab === SnapshotTab.Data && (
         <div className={styles.code}>
@@ -111,9 +105,9 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
             </Field>
 
             {showMessage === ShowMessage.GithubComment ? (
-              <Button icon="github" onClick={service.onCopyMarkdown}>
-                Copy
-              </Button>
+              <ClipboardButton icon="copy" getText={service.onGetMarkdownForClipboard}>
+                Copy to clipboard
+              </ClipboardButton>
             ) : (
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
                 Download ({snapshotSize})
@@ -175,9 +169,9 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
                 <Button icon="download-alt" onClick={service.onDownloadDashboard}>
                   Dashboard ({snapshotSize})
                 </Button>
-                <Button icon="github" onClick={service.onCopyMarkdown} title="Paste this into a github issue">
-                  Copy for github
-                </Button>
+                <ClipboardButton icon="github" getText={service.onGetMarkdownForClipboard}>
+                  Copy to clipboard
+                </ClipboardButton>
                 <Button onClick={service.onPreviewDashboard} variant="secondary">
                   Preview
                 </Button>

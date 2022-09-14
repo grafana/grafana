@@ -1,8 +1,7 @@
 import saveAs from 'file-saver';
 
-import { AppEvents, dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
 import { SceneObjectBase } from 'app/features/scenes/core/SceneObjectBase';
 import { SceneObjectStatePlain } from 'app/features/scenes/core/types';
 
@@ -23,7 +22,10 @@ interface SupportSnapshotState extends SceneObjectStatePlain {
   randomize: Randomize;
   iframeLoading?: boolean;
   loading?: boolean;
-  error?: Error;
+  error?: {
+    title: string;
+    message: string;
+  };
   panel: PanelModel;
   panelTitle: string;
   snapshot?: any;
@@ -82,20 +84,22 @@ export class SupportSnapshotService extends SceneObjectBase<SupportSnapshotState
     this.setState({ showMessage: value.value! });
   };
 
-  onCopyMarkdown = () => {
+  onGetMarkdownForClipboard = () => {
     const { markdownText } = this.state;
     const maxLen = Math.pow(1024, 2) * 1.5; // 1.5MB
+
     if (markdownText.length > maxLen) {
-      appEvents.emit(AppEvents.alertError, [
-        `Snapshot is too large`,
-        'Consider downloading and attaching the file instead',
-      ]);
-      return;
+      this.setState({
+        error: {
+          title: 'Copy to clipboard failed',
+          message: 'Snapshot is too large, consider download and attaching a file instead',
+        },
+      });
+
+      return '';
     }
 
-    //TODO replace with ClipboardButton
-    //copyToClipboard(markdownText);
-    appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
+    return markdownText;
   };
 
   onDownloadDashboard = () => {
