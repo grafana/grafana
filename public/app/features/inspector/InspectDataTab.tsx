@@ -1,29 +1,24 @@
 import { css } from '@emotion/css';
-import { Trans, t } from '@lingui/macro';
-import { saveAs } from 'file-saver';
+import { t, Trans } from '@lingui/macro';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
+  CoreApp,
   CSVConfig,
   DataFrame,
   DataTransformerID,
-  dateTimeFormat,
-  dateTimeFormatISO,
   MutableDataFrame,
   SelectableValue,
-  toCSV,
-  transformDataFrame,
   TimeZone,
-  CoreApp,
+  transformDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { transformToJaeger } from 'app/plugins/datasource/jaeger/responseTransform';
@@ -32,6 +27,7 @@ import { transformToZipkin } from 'app/plugins/datasource/zipkin/utils/transform
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
+import { downloadAsJson, downloadDataFrameAsCsv, downloadDataFrameAsTxt } from './utils/download';
 
 interface Props {
   isLoading: boolean;
@@ -99,43 +95,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const { transformId } = this.state;
 
-    const dataFrameCsv = toCSV([dataFrame], csvConfig);
-
-    const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
-      type: 'text/csv;charset=utf-8',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
-    const fileName = `${displayTitle}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
-    saveAs(blob, fileName);
+    downloadDataFrameAsCsv(dataFrame, csvConfig, panel ? panel.getDisplayTitle() : 'Explore', transformId);
   };
 
   exportLogsAsTxt = () => {
     const { data, panel, app } = this.props;
+
     reportInteraction('grafana_logs_download_logs_clicked', {
       app,
       format: 'logs',
     });
-    const logsModel = dataFrameToLogsModel(data || [], undefined);
-    let textToDownload = '';
 
-    logsModel.meta?.forEach((metaItem) => {
-      const string = `${metaItem.label}: ${JSON.stringify(metaItem.value)}\n`;
-      textToDownload = textToDownload + string;
-    });
-    textToDownload = textToDownload + '\n\n';
-
-    logsModel.rows.forEach((row) => {
-      const newRow = dateTimeFormatISO(row.timeEpochMs) + '\t' + row.entry + '\n';
-      textToDownload = textToDownload + newRow;
-    });
-
-    const blob = new Blob([textToDownload], {
-      type: 'text/plain;charset=utf-8',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-logs-${dateTimeFormat(new Date())}.txt`;
-    saveAs(blob, fileName);
+    downloadDataFrameAsTxt(data ?? [], panel ? panel.getDisplayTitle() : 'Explore');
   };
 
   exportTracesAsJson = () => {
@@ -153,31 +124,22 @@ export class InspectDataTab extends PureComponent<Props, State> {
       switch (df.meta?.custom?.traceFormat) {
         case 'jaeger': {
           let res = transformToJaeger(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
+          downloadAsJson(res, panel ? panel.getDisplayTitle() : 'Explore');
           break;
         }
         case 'zipkin': {
           let res = transformToZipkin(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
+          downloadAsJson(res, panel ? panel.getDisplayTitle() : 'Explore');
           break;
         }
         case 'otlp':
         default: {
           let res = transformToOTLP(new MutableDataFrame(df));
-          this.saveTraceJson(res, panel);
+          downloadAsJson(res, panel ? panel.getDisplayTitle() : 'Explore');
           break;
         }
       }
     }
-  };
-
-  saveTraceJson = (json: any, panel?: PanelModel) => {
-    const blob = new Blob([JSON.stringify(json)], {
-      type: 'application/json',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-traces-${dateTimeFormat(new Date())}.json`;
-    saveAs(blob, fileName);
   };
 
   exportServiceGraph = () => {
@@ -186,12 +148,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       return;
     }
 
-    const blob = new Blob([JSON.stringify(data)], {
-      type: 'application/json',
-    });
-    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
-    const fileName = `${displayTitle}-service-graph-${dateTimeFormat(new Date())}.json`;
-    saveAs(blob, fileName);
+    downloadAsJson(data, panel ? panel.getDisplayTitle() : 'Explore');
   };
 
   onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
