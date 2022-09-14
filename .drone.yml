@@ -22,6 +22,13 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
   - ./bin/build verify-drone
   depends_on:
   - grabpl
@@ -5055,6 +5062,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 8fa8ef66dbf2acd5d4df7c94e6e746b4e846e23cbddfd6f4a4d1aa9423971064
+hmac: 40fcd829587457ce183d7e65414851b57c2dc7dca9a88e2abbf68858d951c7f7
 
 ...
