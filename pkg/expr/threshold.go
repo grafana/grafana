@@ -17,13 +17,13 @@ type ThresholdCommand struct {
 }
 
 const (
-	ThresholdIsAbove = iota
-	ThresholdIsBelow
-	ThresholdIsWithinRange
-	ThresholdIsOutsideRange
+	ThresholdIsAbove        = "gt"
+	ThresholdIsBelow        = "lt"
+	ThresholdIsWithinRange  = "within_range"
+	ThresholdIsOutsideRange = "outside_range"
 )
 
-func NewThresholdCommand(refID string, referenceVar string, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
+func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
 	return &ThresholdCommand{
 		RefID:         refID,
 		ReferenceVar:  referenceVar,
@@ -102,13 +102,13 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, vars mathexp.Vars) (mat
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
 func createMathExpression(referenceVar string, thresholdFunc string, args []float64) (string, error) {
 	switch thresholdFunc {
-	case "gt":
+	case ThresholdIsAbove:
 		return fmt.Sprintf("${%s} > %f", referenceVar, args[0]), nil
-	case "lt":
+	case ThresholdIsBelow:
 		return fmt.Sprintf("${%s} < %f", referenceVar, args[0]), nil
-	case "within_range":
+	case ThresholdIsWithinRange:
 		return fmt.Sprintf("${%s} > %f && ${%s} < %f", referenceVar, args[0], referenceVar, args[1]), nil
-	case "outside_range":
+	case ThresholdIsOutsideRange:
 		return fmt.Sprintf("${%s} < %f || ${%s} > %f", referenceVar, args[0], referenceVar, args[1]), nil
 	default:
 		return "", fmt.Errorf("failed to evaluate threshold expression: no such threshold function %s", thresholdFunc)
@@ -117,7 +117,7 @@ func createMathExpression(referenceVar string, thresholdFunc string, args []floa
 
 // GetSupportedThresholdFuncs returns collection of supported threshold function names
 func GetSupportedThresholdFuncs() []string {
-	return []string{"gt", "lt", "within_range", "outside_range"}
+	return []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange}
 }
 
 func IsSupportedThresholdFunc(name string) bool {
