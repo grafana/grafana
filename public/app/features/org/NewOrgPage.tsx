@@ -1,24 +1,18 @@
 import React, { FC } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
+import { NavModelItem } from '@grafana/data';
 import { Button, Input, Field, Form } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { StoreState } from 'app/types';
-
-import { getNavModel } from '../../core/selectors/navModel';
 
 import { createOrganization } from './state/actions';
-
-const mapStateToProps = (state: StoreState) => {
-  return { navModel: getNavModel(state.navIndex, 'global-orgs') };
-};
 
 const mapDispatchToProps = {
   createOrganization,
 };
 
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(undefined, mapDispatchToProps);
 
 type Props = ConnectedProps<typeof connector>;
 
@@ -26,17 +20,22 @@ interface CreateOrgFormDTO {
   name: string;
 }
 
-export const NewOrgPage: FC<Props> = ({ navModel, createOrganization }) => {
+const pageNav: NavModelItem = {
+  icon: 'building',
+  id: 'org-new',
+  text: 'Add new organization',
+  breadcrumbs: [{ title: 'Server admin', url: 'admin/orgs' }],
+};
+
+export const NewOrgPage: FC<Props> = ({ createOrganization }) => {
   const createOrg = async (newOrg: { name: string }) => {
     await createOrganization(newOrg);
     window.location.href = getConfig().appSubUrl + '/org';
   };
 
   return (
-    <Page navModel={navModel}>
+    <Page navId="global-orgs" pageNav={pageNav}>
       <Page.Contents>
-        <h3 className="page-sub-heading">New organization</h3>
-
         <p className="playlist-description">
           Each organization contains their own dashboards, data sources, and configuration, which cannot be shared
           shared between organizations. While users might belong to more than one organization, multiple organizations
