@@ -202,6 +202,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = alertingSect.NewKey("max_attempts", "3")
 	require.NoError(t, err)
 
+	rbacSect, err := cfg.NewSection("rbac")
+	require.NoError(t, err)
+	_, err = rbacSect.NewKey("permission_cache", "false")
+	require.NoError(t, err)
+
 	getOrCreateSection := func(name string) (*ini.Section, error) {
 		section, err := cfg.GetSection(name)
 		if err != nil {

@@ -16,17 +16,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
-	provisionerPermissions = map[string][]string{
-		dashboards.ActionFoldersCreate:    {},
-		dashboards.ActionFoldersWrite:     {dashboards.ScopeFoldersAll},
-		dashboards.ActionDashboardsCreate: {dashboards.ScopeFoldersAll},
-		dashboards.ActionDashboardsWrite:  {dashboards.ScopeFoldersAll},
+	provisionerPermissions = []accesscontrol.Permission{
+		{Action: dashboards.ActionFoldersCreate},
+		{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
+		{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+		{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
 	}
 	// DashboardServiceImpl implements the DashboardService interface
 	_ dashboards.DashboardService = (*DashboardServiceImpl)(nil)
@@ -218,14 +217,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 		dto.Dashboard.Data.Set("refresh", setting.MinRefreshInterval)
 	}
 
-	dto.User = &user.SignedInUser{
-		UserID:  0,
-		OrgRole: org.RoleAdmin,
-		OrgID:   dto.OrgId,
-		Permissions: map[int64]map[string][]string{
-			dto.OrgId: provisionerPermissions,
-		},
-	}
+	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgId, org.RoleAdmin, provisionerPermissions)
 
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, setting.IsLegacyAlertingEnabled(), false)
 	if err != nil {
@@ -268,12 +260,7 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 }
 
 func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
-	dto.User = &user.SignedInUser{
-		UserID:      0,
-		OrgRole:     org.RoleAdmin,
-		OrgID:       dto.OrgId,
-		Permissions: map[int64]map[string][]string{dto.OrgId: provisionerPermissions},
-	}
+	dto.User = accesscontrol.BackgroundUser("dashboard_provisioning", dto.OrgId, org.RoleAdmin, provisionerPermissions)
 	cmd, err := dr.BuildSaveDashboardCommand(ctx, dto, false, false)
 	if err != nil {
 		return nil, err

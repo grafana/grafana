@@ -2,8 +2,11 @@ package acimpl
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -14,8 +17,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func ProvideService(cfg *setting.Cfg, store accesscontrol.Store, routeRegister routing.RouteRegister) (*Service, error) {
-	service := ProvideOSSService(cfg, store)
+const (
+	cacheTTL = 10 * time.Second
+)
+
+func ProvideService(cfg *setting.Cfg, store accesscontrol.Store, routeRegister routing.RouteRegister, cache *localcache.CacheService) (*Service, error) {
+	service := ProvideOSSService(cfg, store, cache)
 
 	if !accesscontrol.IsDisabled(cfg) {
 		api.NewAccessControlAPI(routeRegister, service).RegisterAPIEndpoints()
@@ -27,11 +34,12 @@ func ProvideService(cfg *setting.Cfg, store accesscontrol.Store, routeRegister r
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *localcache.CacheService) *Service {
 	s := &Service{
 		cfg:   cfg,
 		store: store,
 		log:   log.New("accesscontrol.service"),
+		cache: cache,
 		roles: accesscontrol.BuildBasicRoleDefinitions(),
 	}
 
@@ -43,6 +51,7 @@ type Service struct {
 	log           log.Logger
 	cfg           *setting.Cfg
 	store         accesscontrol.Store
+	cache         *localcache.CacheService
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 }
@@ -63,12 +72,19 @@ var actionsToFetch = append(
 )
 
 // GetUserPermissions returns user permissions based on built-in roles
-func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	permissions := make([]accesscontrol.Permission, 0)
+	if !s.cfg.RBACPermissionCache || !user.HasUniqueId() {
+		return s.getUserPermissions(ctx, user, options)
+	}
 
+	return s.getCachedUserPermissions(ctx, user, options)
+}
+
+func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range accesscontrol.GetOrgRoles(user) {
 		if basicRole, ok := s.roles[builtin]; ok {
 			permissions = append(permissions, basicRole.Permissions...)
@@ -87,6 +103,32 @@ func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUse
 	}
 
 	return append(permissions, dbPermissions...), nil
+}
+
+func (s *Service) getCachedUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	key, err := permissionCacheKey(user)
+	if err != nil {
+		return nil, err
+	}
+
+	if !options.ReloadCache {
+		permissions, ok := s.cache.Get(key)
+		if ok {
+			s.log.Debug("using cached permissions", "key", key)
+			return permissions.([]accesscontrol.Permission), nil
+		}
+	}
+
+	s.log.Debug("fetch permissions from store", "key", key)
+	permissions, err := s.getUserPermissions(ctx, user, options)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log.Debug("cache permissions", "key", key)
+	s.cache.Set(key, permissions, cacheTTL)
+
+	return permissions, nil
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
@@ -139,4 +181,12 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 
 func (s *Service) IsDisabled() bool {
 	return accesscontrol.IsDisabled(s.cfg)
+}
+
+func permissionCacheKey(user *user.SignedInUser) (string, error) {
+	key, err := user.GetCacheKey()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("rbac-permissions-%s", key), nil
 }
