@@ -31,7 +31,7 @@ steps:
 - commands:
   - ./bin/build verify-drone
   depends_on:
-  - grabpl
+  - compile-build-cmd
   image: byrnedo/alpine-curl:0.1.8
   name: lint-drone
 trigger:
@@ -939,7 +939,7 @@ steps:
 - commands:
   - ./bin/build verify-drone
   depends_on:
-  - grabpl
+  - compile-build-cmd
   image: byrnedo/alpine-curl:0.1.8
   name: lint-drone
 trigger:
@@ -5062,6 +5062,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 2f2295555b64af31bf1e0418463e642eb41f2a0089ed9250fe99743367c11ded
+hmac: a53ea9eebb70e652a3d3165d0ee31cb6b5057bf40b6109c0d53a9d9610f4d073
 
 ...

@@ -167,7 +167,7 @@ def lint_drone_step():
             './bin/build verify-drone',
         ],
         'depends_on': [
-            'grabpl',
+            'compile-build-cmd',
         ],
     }
 
