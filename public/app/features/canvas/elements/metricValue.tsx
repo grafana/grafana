@@ -41,15 +41,23 @@ const MetricValueInlineEdit = (props: CanvasElementProps<TextBoxConfig, TextBoxD
     (field) => {
       const selectedElement = context.instanceState?.selected[0] as ElementState;
       if (selectedElement) {
+        const options = selectedElement.options;
         selectedElement.onChange({
-          ...selectedElement.options,
+          ...options,
           config: {
-            ...selectedElement.options.config,
+            ...options.config,
             text: { fixed: '', field: field, mode: TextDimensionMode.Field },
+          },
+          background: {
+            color: { field: field, fixed: options.background?.color?.fixed ?? '' },
           },
         });
 
-        context.instanceState?.scene?.updateData(context.instanceState?.scene?.data);
+        // Force a re-render (update scene data after config update)
+        const scene = context.instanceState?.scene;
+        if (scene) {
+          scene.updateData(scene.data);
+        }
       }
     },
     [context.instanceState?.scene, context.instanceState?.selected]
