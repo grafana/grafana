@@ -161,7 +161,6 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
             showExplain={explain}
           />
         )}
-        <Button onClick={() => onRunQuery()}>Run log</Button>
         <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} app={app} />
       </EditorRows>
     </>
