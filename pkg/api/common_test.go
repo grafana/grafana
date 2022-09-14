@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -379,7 +380,7 @@ func setupHTTPServerWithCfgDb(
 		acService = acmock
 	} else {
 		var err error
-		acService, err = acimpl.ProvideService(cfg, database.ProvideService(db), routeRegister)
+		acService, err = acimpl.ProvideService(cfg, database.ProvideService(db), routeRegister, localcache.ProvideService())
 		require.NoError(t, err)
 		ac = acimpl.ProvideAccessControl(cfg)
 	}
