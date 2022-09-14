@@ -137,6 +137,15 @@ export const SharePublicDashboard = (props: Props) => {
                   data-testid={selectors.WillBePublicCheckbox}
                   onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
                 />
+                <LinkButton
+                  variant="primary"
+                  href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"
+                  target="_blank"
+                  fill="text"
+                  icon="info-circle"
+                  rel="noopener noreferrer"
+                  tooltip="Learn more about public dashboards"
+                />
               </div>
               <br />
               <div>
