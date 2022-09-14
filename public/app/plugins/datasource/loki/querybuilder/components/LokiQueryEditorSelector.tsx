@@ -94,6 +94,7 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
         onClose={() => setQueryPatternsModalOpen(false)}
         query={query}
         queries={queries}
+        app={app}
         onChange={onChange}
         onAddQuery={onAddQuery}
       />
@@ -102,7 +103,18 @@ export const LokiQueryEditorSelector = React.memo<LokiQueryEditorProps>((props) 
           aria-label={selectors.components.QueryBuilder.queryPatterns}
           variant="secondary"
           size="sm"
-          onClick={() => setQueryPatternsModalOpen((prevValue) => !prevValue)}
+          onClick={() => {
+            setQueryPatternsModalOpen((prevValue) => !prevValue);
+
+            const visualQuery = buildVisualQueryFromString(query.expr || '');
+            reportInteraction('grafana_loki_query_patterns_opened', {
+              version: 'v2',
+              app: app ?? '',
+              editorMode: query.editorMode,
+              preSelectedOperationsCount: visualQuery.query.operations.length,
+              preSelectedLabelsCount: visualQuery.query.labels.length,
+            });
+          }}
         >
           Kick start your query
         </Button>
