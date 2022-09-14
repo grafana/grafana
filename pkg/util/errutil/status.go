@@ -88,19 +88,19 @@ func (s CoreStatus) HTTPStatus() int {
 func (s CoreStatus) LogLevel() LogLevel {
 	switch s {
 	case StatusUnauthorized:
-		return LevelInfo
+		return LevelError
 	case StatusForbidden:
-		return LevelInfo
+		return LevelError
 	case StatusNotFound:
-		return LevelDebug
+		return LevelNever
 	case StatusTimeout:
-		return LevelInfo
+		return LevelError
 	case StatusTooManyRequests:
-		return LevelInfo
+		return LevelError
 	case StatusBadRequest:
-		return LevelInfo
+		return LevelError
 	case StatusValidationFailed:
-		return LevelInfo
+		return LevelError
 	case StatusNotImplemented:
 		return LevelError
 	case StatusUnknown, StatusInternal:
