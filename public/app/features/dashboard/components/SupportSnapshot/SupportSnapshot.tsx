@@ -138,56 +138,55 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
       )}
       {currentTab === SnapshotTab.Support && (
         <>
-          {false && (
-            <Field
-              label="Randomize data"
-              description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
-            >
-              <HorizontalGroup>
-                <InlineSwitch
-                  label="Labels"
-                  showLabel={true}
-                  value={Boolean(randomize.labels)}
-                  onChange={() => service.onToggleRandomize('labels')}
-                />
-                <InlineSwitch
-                  label="Field names"
-                  showLabel={true}
-                  value={Boolean(randomize.names)}
-                  onChange={() => service.onToggleRandomize('names')}
-                />
-                <InlineSwitch
-                  label="String values"
-                  showLabel={true}
-                  value={Boolean(randomize.values)}
-                  onChange={() => service.onToggleRandomize('values')}
-                />
-              </HorizontalGroup>
-            </Field>
-          )}
+          <Field
+            label="Randomize data"
+            description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+          >
+            <HorizontalGroup>
+              <InlineSwitch
+                label="Labels"
+                id="randomize-labels"
+                showLabel={true}
+                value={Boolean(randomize.labels)}
+                onChange={() => service.onToggleRandomize('labels')}
+              />
+              <InlineSwitch
+                label="Field names"
+                id="randomize-field-names"
+                showLabel={true}
+                value={Boolean(randomize.names)}
+                onChange={() => service.onToggleRandomize('names')}
+              />
+              <InlineSwitch
+                label="String values"
+                id="randomize-string-values"
+                showLabel={true}
+                value={Boolean(randomize.values)}
+                onChange={() => service.onToggleRandomize('values')}
+              />
+            </HorizontalGroup>
+          </Field>
 
           <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
-            <>
-              <HorizontalGroup>
-                <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                  Dashboard ({snapshotSize})
-                </Button>
-                <ClipboardButton
-                  icon="github"
-                  getText={service.onGetMarkdownForClipboard}
-                  title="Copy a complete GitHub comment to the clipboard"
-                >
-                  Copy to clipboard
-                </ClipboardButton>
-                <Button
-                  onClick={service.onPreviewDashboard}
-                  variant="secondary"
-                  title="Open support snapshot dashboard in a new tab"
-                >
-                  Preview
-                </Button>
-              </HorizontalGroup>
-            </>
+            <Stack>
+              <Button icon="download-alt" onClick={service.onDownloadDashboard}>
+                Dashboard ({snapshotSize})
+              </Button>
+              <ClipboardButton
+                icon="github"
+                getText={service.onGetMarkdownForClipboard}
+                title="Copy a complete GitHub comment to the clipboard"
+              >
+                Copy to clipboard
+              </ClipboardButton>
+              <Button
+                onClick={service.onPreviewDashboard}
+                variant="secondary"
+                title="Open support snapshot dashboard in a new tab"
+              >
+                Preview
+              </Button>
+            </Stack>
           </Field>
 
           <AutoSizer disableWidth>
@@ -200,6 +199,7 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
                   frameBorder="0"
                   style={{
                     display: iframeLoading ? 'block' : 'none',
+                    marginTop: 16,
                   }}
                 />
                 {!iframeLoading && <div>&nbsp;</div>}
