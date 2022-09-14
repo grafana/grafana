@@ -77,7 +77,13 @@ export const DEFAULT_MAX_LINES = 1000;
 export const LOKI_ENDPOINT = '/loki/api/v1';
 const NS_IN_MS = 1000000;
 
-function makeRequest(query: LokiQuery, range: TimeRange, app: CoreApp, requestId: string): DataQueryRequest<LokiQuery> {
+function makeRequest(
+  query: LokiQuery,
+  range: TimeRange,
+  app: CoreApp,
+  requestId: string,
+  hideFromInspector?: boolean
+): DataQueryRequest<LokiQuery> {
   const intervalInfo = rangeUtil.calculateInterval(range, 1);
   return {
     targets: [query],
@@ -89,6 +95,7 @@ function makeRequest(query: LokiQuery, range: TimeRange, app: CoreApp, requestId
     timezone: 'UTC',
     app,
     startTime: Date.now(),
+    hideFromInspector,
   };
 }
 
@@ -413,7 +420,7 @@ export class LokiDatasource
 
     // For samples, we use defaultTimeRange (now-6h/now) and limit od 10 lines so queries are small and fast
     const timeRange = getDefaultTimeRange();
-    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Explore, 'log-samples');
+    const request = makeRequest(lokiLogsQuery, timeRange, CoreApp.Explore, 'log-samples', true);
     return await lastValueFrom(this.query(request).pipe(switchMap((res) => of(res.data))));
   }
 
