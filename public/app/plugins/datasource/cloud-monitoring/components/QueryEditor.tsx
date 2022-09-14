@@ -25,7 +25,7 @@ export class QueryEditor extends PureComponent<Props> {
       this.props.query.metricQuery = metricQuery;
     }
 
-    if (!this.props.query.hasOwnProperty('queryType')) {
+    if (this.props.query.queryType !== QueryType.METRICS || QueryType.SLO) {
       this.props.query.queryType = QueryType.METRICS;
     }
 
