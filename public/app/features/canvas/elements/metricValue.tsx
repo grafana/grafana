@@ -35,10 +35,10 @@ const MetricValueInlineEdit = (props: CanvasElementProps<TextBoxConfig, TextBoxD
   const data = context.instanceState?.scene?.data.series as DataFrame[];
   const styles = useStyles2(getStyles(props.data));
   return (
-    <div className={styles.container}>
+    <div className={styles.inlineEditorContainer}>
       <FieldNamePicker
         context={{ data }}
-        value={''}
+        value={props.config.text?.field ?? ''}
         onChange={(foo: any) => console.log(foo)}
         item={dummyFieldSettings}
       />
@@ -52,6 +52,15 @@ const getStyles = (data: TextBoxData | undefined) => (theme: GrafanaTheme2) => (
     height: 100%;
     width: 100%;
     display: table;
+  `,
+  inlineEditorContainer: css`
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    div < {
+      font-size: 20px;
+    }
   `,
   span: css`
     display: table-cell;
@@ -83,7 +92,7 @@ export const metricValueItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
         fixed: defaultTextColor,
       },
       text: { mode: TextDimensionMode.Field, fixed: '', field: '' },
-      size: 24,
+      size: 20,
     },
     background: {
       color: {
