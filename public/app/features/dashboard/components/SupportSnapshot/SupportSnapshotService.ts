@@ -36,8 +36,8 @@ export enum SnapshotTab {
 }
 
 export enum ShowMessage {
-  PanelSnapshot = 'snap',
-  GithubComment = 'github',
+  PanelSnapshot,
+  GithubComment,
 }
 
 export class SupportSnapshotService extends StateManagerBase<SupportSnapshotState> {
@@ -52,8 +52,8 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
       randomize: {},
       options: [
         {
-          label: 'Github comment',
-          description: 'Copy and paste this message into a github issue or comment',
+          label: 'GitHub comment',
+          description: 'Copy and paste this message into a GitHub issue or comment',
           value: ShowMessage.GithubComment,
         },
         {
