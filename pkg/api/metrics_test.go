@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-var queryDatasourceInput = `{
+var grafanaDSQuery = `{
 	"from": "",
 	"to": "",
 	"queries": [
@@ -103,7 +103,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	})
 
 	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
-		req := serverFeatureDisabled.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+		req := serverFeatureDisabled.NewPostRequest("/api/ds/query", strings.NewReader(grafanaDSQuery))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := serverFeatureDisabled.SendJSON(req)
 		require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	})
 
 	t.Run("Status code is 207 when data source response has an error and feature toggle is enabled", func(t *testing.T) {
-		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+		req := serverFeatureEnabled.NewPostRequest("/api/ds/query", strings.NewReader(grafanaDSQuery))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := serverFeatureEnabled.SendJSON(req)
 		require.NoError(t, err)
@@ -146,7 +146,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	})
 
 	t.Run("Status code is 500 and a secrets plugin error is returned if there is a problem getting secrets from the remote plugin", func(t *testing.T) {
-		req := httpServer.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+		req := httpServer.NewPostRequest("/api/ds/query", strings.NewReader(grafanaDSQuery))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 		resp, err := httpServer.SendJSON(req)
 		require.NoError(t, err)
@@ -163,31 +163,99 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	})
 }
 
+var reqNoQueries = `{
+	"from": "",
+	"to": "",
+	"queries": []
+}`
+
+var reqQueryWithInvalidDatasourceID = `{
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"queryType": "randomWalk",
+			"refId": "A"
+		}
+	]
+}`
+
+var reqDatasourceByUidNotFound = `{
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"datasource": {
+				"type": "datasource",
+				"uid": "not-found"
+			},
+			"queryType": "randomWalk",
+			"refId": "A"
+		}
+	]
+}`
+
+var reqDatasourceByIdNotFound = `{
+	"from": "",
+	"to": "",
+	"queries": [
+		{
+			"datasourceId": 1,
+			"queryType": "randomWalk",
+			"refId": "A"
+		}
+	]
+}`
+
 func TestDataSourceQueryError(t *testing.T) {
 	tcs := []struct {
-		err            error
+		request        string
+		clientErr      error
 		expectedStatus int
 		expectedBody   string
 	}{
 		{
-			err:            backendplugin.ErrPluginUnavailable,
-			expectedStatus: errutil.StatusInternal.HTTPStatus(),
+			request:        grafanaDSQuery,
+			clientErr:      backendplugin.ErrPluginUnavailable,
+			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
 		},
 		{
-			err:            backendplugin.ErrMethodNotImplemented,
-			expectedStatus: errutil.StatusNotImplemented.HTTPStatus(),
+			request:        grafanaDSQuery,
+			clientErr:      backendplugin.ErrMethodNotImplemented,
+			expectedStatus: http.StatusNotImplemented,
 			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
 		},
 		{
-			err:            errors.New("surprise surprise"),
+			request:        grafanaDSQuery,
+			clientErr:      errors.New("surprise surprise"),
 			expectedStatus: errutil.StatusInternal.HTTPStatus(),
 			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":500,"traceID":""}`,
+		},
+		{
+			request:        reqNoQueries,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   `{"message":"No queries found","messageId":"query.noQueries","statusCode":400,"traceID":""}`,
+		},
+		{
+			request:        reqQueryWithInvalidDatasourceID,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   `{"message":"Query does not contain a valid data source identifier","messageId":"query.invalidDatasourceId","statusCode":400,"traceID":""}`,
+		},
+		{
+			request:        reqDatasourceByUidNotFound,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
+		},
+		{
+			request:        reqDatasourceByIdNotFound,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"error":"data source not found","message":"Data source not found","traceID":""}`,
 		},
 	}
 
 	for _, tc := range tcs {
-		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.err), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.clientErr), func(t *testing.T) {
 			p := &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: "grafana",
@@ -195,7 +263,7 @@ func TestDataSourceQueryError(t *testing.T) {
 			}
 			p.RegisterClient(&fakePluginBackend{
 				qdr: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-					return nil, tc.err
+					return nil, tc.clientErr
 				},
 			})
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -204,7 +272,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				require.NoError(t, err)
 				hs.queryDataService = query.ProvideService(
 					nil,
-					nil,
+					&fakeDatasources.FakeCacheService{},
 					nil,
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
@@ -213,7 +281,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				)
 				hs.QuotaService = quotatest.NewQuotaServiceFake()
 			})
-			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(queryDatasourceInput))
+			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(tc.request))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
