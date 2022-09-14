@@ -795,6 +795,11 @@ Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins.
 Use this setting to distribute users with external login to multiple organizations.
 Otherwise, the users' organization would get reset on every new login, for example, via AzureAD.
 
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
+> update the user's organization role. This is going to change in Grafana 10. If `oauth_skip_org_role_update_sync` option
+> is set to `false`, users with no mapping will be reset to the default organization role.
+> [See `auto_assign_org_role` option]({{< relref ".#auto_assign_org_role" >}}).
+
 ### api_key_max_seconds_to_live
 
 Limit of API key seconds to live before expiration. Default is -1 (unlimited).
