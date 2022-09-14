@@ -180,13 +180,6 @@ steps:
   image: grafana/build-container:1.6.2
   name: codespell
 - commands:
-  - ./bin/build shellcheck
-  depends_on:
-  - grabpl
-  - compile-build-cmd
-  image: grafana/build-container:1.6.2
-  name: shellcheck
-- commands:
   - make lint-go
   depends_on:
   - wire-install
@@ -686,6 +679,47 @@ clone:
   retries: 3
 depends_on: []
 kind: pipeline
+name: pr-shellcheck
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build shellcheck
+  depends_on:
+  - compile-build-cmd
+  image: grafana/build-container:1.6.2
+  name: shellcheck
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - latest.json
+    include:
+    - scripts/**/*.sh
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+kind: pipeline
 name: main-docs
 node:
   type: no-parallel
@@ -899,13 +933,6 @@ steps:
   - rm words_to_ignore.txt
   image: grafana/build-container:1.6.2
   name: codespell
-- commands:
-  - ./bin/build shellcheck
-  depends_on:
-  - grabpl
-  - compile-build-cmd
-  image: grafana/build-container:1.6.2
-  name: shellcheck
 - commands:
   - make lint-go
   depends_on:
@@ -2044,13 +2071,6 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.19.1
   name: compile-build-cmd
-- commands:
-  - ./bin/build shellcheck
-  depends_on:
-  - grabpl
-  - compile-build-cmd
-  image: grafana/build-container:1.6.2
-  name: shellcheck
 - commands:
   - |-
     echo -e "unknwon
@@ -3989,13 +4009,6 @@ steps:
   image: golang:1.19.1
   name: compile-build-cmd
 - commands:
-  - ./bin/build shellcheck
-  depends_on:
-  - grabpl
-  - compile-build-cmd
-  image: grafana/build-container:1.6.2
-  name: shellcheck
-- commands:
   - |-
     echo -e "unknwon
     referer
@@ -5114,6 +5127,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 4dab9811ddd4be2ca5cd598be69ce216e82406ca4197fdaeb75691156d356382
+hmac: f8201ab7fe1632df9158ee66cc0a9bff140e9a7e4b2044b34b8e4e30d424aaad
 
 ...
