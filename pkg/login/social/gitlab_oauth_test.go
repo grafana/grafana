@@ -84,7 +84,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedGrafanaAdmin: falseBoolPtr(),
 		},
 		{ // Case that's going to change with Grafana 10
-			Name:              "No fallback to default org role (change in Grafana 10)",
+			Name:              "No fallback to default org role (will change in Grafana 10)",
 			Cfg:               conf{AutoAssignOrgRole: org.RoleViewer},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
