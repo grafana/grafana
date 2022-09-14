@@ -53,9 +53,6 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
       .put(`/api/datasources/${options.id}`, options)
       .then((result: { datasource: any }) => {
         updateDatasourcePluginOption(props, 'version', result.datasource.version);
-      })
-      .catch((err) => {
-        console.log(err);
       });
     setSaved(true);
   };

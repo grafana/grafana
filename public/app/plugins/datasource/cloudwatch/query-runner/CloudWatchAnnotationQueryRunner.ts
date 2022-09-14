@@ -1,6 +1,6 @@
 import { map, Observable } from 'rxjs';
 
-import { DataFrame, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
 import { toDataQueryResponse } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
