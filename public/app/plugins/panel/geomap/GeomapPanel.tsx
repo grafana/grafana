@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Global } from '@emotion/react';
 import { cloneDeep } from 'lodash';
-import { Collection, Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
+import { Map as OpenLayersMap, MapBrowserEvent, PluggableMap, View } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
@@ -10,7 +10,6 @@ import { Coordinate } from 'ol/coordinate';
 import { isEmpty } from 'ol/extent';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
-import BaseLayer from 'ol/layer/Base';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import React, { Component, ReactNode } from 'react';
 import { Subject, Subscription } from 'rxjs';
@@ -249,7 +248,7 @@ export class GeomapPanel extends Component<Props, State> {
   optionsChanged(options: GeomapPanelOptions) {
     const oldOptions = this.props.options;
     if (options.view !== oldOptions.view) {
-      this.map!.setView(this.initMapView(options.view, this.map!.getLayers()));
+      this.map!.setView(this.initMapView(options.view));
     }
 
     if (options.controls !== oldOptions.controls) {
@@ -270,7 +269,7 @@ export class GeomapPanel extends Component<Props, State> {
     // Because data changed, check map view and change if needed (data fit)
     const v = centerPointRegistry.getIfExists(this.props.options.view.id);
     if (v && v.id === MapCenterID.Fit) {
-      this.map!.setView(this.initMapView(this.props.options.view, this.map!.getLayers()));
+      this.map!.setView(this.initMapView(this.props.options.view));
     }
   }
 
@@ -287,7 +286,7 @@ export class GeomapPanel extends Component<Props, State> {
     const { options } = this.props;
 
     const map = (this.map = new OpenLayersMap({
-      view: this.initMapView(options.view, undefined),
+      view: this.initMapView(options.view),
       pixelRatio: 1, // or zoom?
       layers: [], // loaded explicitly below
       controls: [],
@@ -317,7 +316,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
     this.layers = layers;
     this.map = map; // redundant
-    this.initViewExtent(map.getView(), options.view, map.getLayers());
+    this.initViewExtent(map.getView(), options.view);
 
     this.mouseWheelZoom = new MouseWheelZoom();
     this.map.addInteraction(this.mouseWheelZoom);
@@ -575,7 +574,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
   }
 
-  initMapView(config: MapViewConfig, layers?: Collection<BaseLayer>): View {
+  initMapView(config: MapViewConfig): View {
     let view = new View({
       center: [0, 0],
       zoom: 1,
@@ -590,13 +589,11 @@ export class GeomapPanel extends Component<Props, State> {
         view = sharedView;
       }
     }
-    if (layers) {
-      this.initViewExtent(view, config, layers);
-    }
+    this.initViewExtent(view, config);
     return view;
   }
 
-  initViewExtent(view: View, config: MapViewConfig, layers: Collection<BaseLayer>) {
+  initViewExtent(view: View, config: MapViewConfig) {
     const v = centerPointRegistry.getIfExists(config.id);
     if (v) {
       let coord: Coordinate | undefined = undefined;
@@ -604,7 +601,12 @@ export class GeomapPanel extends Component<Props, State> {
         if (v.id === MapCenterID.Coordinates) {
           coord = [config.lon ?? 0, config.lat ?? 0];
         } else if (v.id === MapCenterID.Fit) {
-          const extent = getLayersExtent(layers, config.lastOnly ?? false);
+          const extent = getLayersExtent(
+            this.layers,
+            config.allLayers ?? false,
+            config.lastOnly ?? false,
+            config.layer
+          );
           if (!isEmpty(extent)) {
             const padding = config.padding ?? 5;
             const res = view.getResolutionForExtent(extent, this.map?.getSize());

@@ -16,6 +16,18 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
 }) => {
   const labelWidth = 10;
 
+  // Populate layers as select options
+  const layers: Array<SelectableValue<string>> = [];
+  if (context.options && context.options.layers) {
+    for (let i = 0; i < context.options.layers.length; i++) {
+      layers.push({
+        label: context.options.layers[i].name,
+        value: context.options.layers[i].name,
+        description: undefined,
+      });
+    }
+  }
+
   const views = useMemo(() => {
     const ids: string[] = [];
     if (value?.id) {
@@ -60,6 +72,13 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
     [value, onChange]
   );
 
+  const onSelectLayer = useCallback(
+    (selection: SelectableValue<string>) => {
+      onChange({ ...value, layer: selection.value });
+    },
+    [value, onChange]
+  );
+
   return (
     <>
       <InlineFieldRow>
@@ -97,6 +116,48 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
           </InlineFieldRow>
         </>
       )}
+      {value?.id === MapCenterID.Fit && (
+        <>
+          <InlineFieldRow>
+            <InlineField label="Data" labelWidth={labelWidth} grow={true}>
+              <RadioButtonGroup
+                value={value?.allLayers ? 'all' : !value?.allLayers && value.lastOnly ? 'last' : 'layer'}
+                options={[
+                  { label: 'All layers', value: 'all' },
+                  { label: 'Layer', value: 'layer' },
+                  { label: 'Last value', value: 'last' },
+                ]}
+                onChange={(v) => {
+                  if (v !== 'all' && !value.layer) {
+                    onChange({ ...value, allLayers: v === 'all', lastOnly: v === 'last', layer: layers[0].value });
+                  } else {
+                    onChange({ ...value, allLayers: v === 'all', lastOnly: v === 'last' });
+                  }
+                }}
+              ></RadioButtonGroup>
+            </InlineField>
+          </InlineFieldRow>
+          {!value?.allLayers && (
+            <InlineFieldRow>
+              <InlineField label="Layer" labelWidth={labelWidth} grow={true}>
+                <Select options={layers} onChange={onSelectLayer} placeholder={layers[0].label} />
+              </InlineField>
+            </InlineFieldRow>
+          )}
+          <InlineFieldRow>
+            <InlineField label="Padding" labelWidth={labelWidth} grow={true} tooltip="relative expansion of view...">
+              <NumberInput
+                value={value?.padding ?? 5}
+                min={0}
+                step={1}
+                onChange={(v) => {
+                  onChange({ ...value, padding: v });
+                }}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        </>
+      )}
 
       <InlineFieldRow>
         <InlineField label={value?.id === MapCenterID.Fit ? 'Max Zoom' : 'Zoom'} labelWidth={labelWidth} grow={true}>
@@ -111,37 +172,6 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
           />
         </InlineField>
       </InlineFieldRow>
-
-      {value?.id === MapCenterID.Fit && (
-        <>
-          <InlineFieldRow>
-            <InlineField label="Padding %" labelWidth={labelWidth} grow={true}>
-              <NumberInput
-                value={value?.padding ?? 5}
-                min={0}
-                step={1}
-                onChange={(v) => {
-                  onChange({ ...value, padding: v });
-                }}
-              />
-            </InlineField>
-          </InlineFieldRow>
-          <InlineFieldRow>
-            <InlineField label="Data Scope" labelWidth={labelWidth} grow={true}>
-              <RadioButtonGroup
-                value={value?.lastOnly ? 'last' : 'all'}
-                options={[
-                  { label: 'All', value: 'all' },
-                  { label: 'Last Only', value: 'last' },
-                ]}
-                onChange={(v) => {
-                  onChange({ ...value, lastOnly: v === 'last' });
-                }}
-              ></RadioButtonGroup>
-            </InlineField>
-          </InlineFieldRow>
-        </>
-      )}
 
       <VerticalGroup>
         <Button variant="secondary" size="sm" fullWidth onClick={onSetCurrentView}>
