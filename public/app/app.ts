@@ -99,6 +99,9 @@ export class GrafanaApp {
 
   async init() {
     try {
+      // Let iframe container know grafana has started loading
+      parent.postMessage('GrafanaAppInit', '*');
+
       setBackendSrv(backendSrv);
       initEchoSrv();
       addClassIfNoOverlayScrollbar();
