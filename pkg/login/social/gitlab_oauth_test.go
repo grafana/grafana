@@ -15,9 +15,10 @@ const (
 	userURI   = "/api/v4/user"
 	groupsURI = "/api/v4/groups"
 
-	gitlabAttrPath = `[login == root] && 'GrafanaAdmin' || contains(groups[*], 'admins') && 'Admin' || contains(groups[*], 'editors') && 'Editor' || contains(groups[*], 'viewers') && 'Viewer'`
+	gitlabAttrPath = `is_admin && 'GrafanaAdmin' || contains(groups[*], 'admins') && 'Admin' || contains(groups[*], 'editors') && 'Editor' || contains(groups[*], 'viewers') && 'Viewer'`
 
-	rootUserRespBody = `{"id":1,"username":"root","name":"Administrator","state":"active","email":"root@example.org","is_admin":true,"namespace_id":1}`
+	rootUserRespBody   = `{"id":1,"username":"root","name":"Administrator","state":"active","email":"root@example.org","is_admin":true,"namespace_id":1}`
+	editorUserRespBody = `{"id":3,"username":"gitlab-editor","name":"Gitlab Editor","state":"active","email":"gitlab-editor@example.org","is_admin":false,"namespace_id":1}`
 
 	adminGroup       = `{"id":4,"web_url":"http://grafana-gitlab.local/groups/admins","name":"Admins","path":"admins","project_creation_level":"developer","full_name":"Admins","full_path":"admins","created_at":"2022-09-13T19:38:04.891Z"}`
 	editorGroup      = `{"id":5,"web_url":"http://grafana-gitlab.local/groups/editors","name":"Editors","path":"editors","project_creation_level":"developer","full_name":"Editors","full_path":"editors","created_at":"2022-09-13T19:38:15.074Z"}`
@@ -44,7 +45,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		ExpectedGrafanaAdmin    *bool
 	}{
 		{
-			Name:                    "Server Admin",
+			Name:                    "Server Admin Allowed",
 			AllowAssignGrafanaAdmin: true,
 			UserRespBody:            rootUserRespBody,
 			GroupsRespBody:          "[" + strings.Join([]string{adminGroup, editorGroup, viewerGroup, serverAdminGroup}, ",") + "]",
@@ -53,6 +54,28 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedEmail:           "root@example.org",
 			ExpectedRole:            "Admin",
 			ExpectedGrafanaAdmin:    trueBoolPtr(),
+		},
+		{ // Edge case, he is in the Viewer Group, Server Admin is disabled but the attribute path has a condition for it
+			Name:                    "Server Admin Disabled",
+			AllowAssignGrafanaAdmin: false,
+			UserRespBody:            rootUserRespBody,
+			GroupsRespBody:          "[" + strings.Join([]string{viewerGroup}, ",") + "]",
+			RoleAttributePath:       gitlabAttrPath,
+			ExpectedLogin:           "root",
+			ExpectedEmail:           "root@example.org",
+			ExpectedRole:            "Admin",
+			ExpectedGrafanaAdmin:    nil,
+		},
+		{
+			Name:                    "Editor",
+			AllowAssignGrafanaAdmin: true,
+			UserRespBody:            editorUserRespBody,
+			GroupsRespBody:          "[" + strings.Join([]string{viewerGroup, editorGroup}, ",") + "]",
+			RoleAttributePath:       gitlabAttrPath,
+			ExpectedLogin:           "gitlab-editor",
+			ExpectedEmail:           "gitlab-editor@example.org",
+			ExpectedRole:            "Editor",
+			ExpectedGrafanaAdmin:    falseBoolPtr(),
 		},
 	}
 
