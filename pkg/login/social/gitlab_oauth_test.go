@@ -62,7 +62,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedRole:         "Admin",
 			ExpectedGrafanaAdmin: trueBoolPtr(),
 		},
-		{ // Edge case, he is in the Viewer Group, Server Admin is disabled but the attribute path has a condition for it
+		{ // Edge case, user in Viewer Group, Server Admin disabled but attribute path contains a condition for Server Admin => User has the Admin role
 			Name:              "Server Admin Disabled",
 			Cfg:               conf{AllowAssignGrafanaAdmin: false},
 			UserRespBody:      rootUserRespBody,
@@ -99,10 +99,17 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
+			ExpectedError:     ErrInvalidBasicRole,
+		},
+		{ // Edge case, no match, no strict mode and no fallback => User has an empty role
+			Name:              "Fallback with no default will create a user with an empty role",
+			Cfg:               conf{},
+			UserRespBody:      editorUserRespBody,
+			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
+			RoleAttributePath: gitlabAttrPath,
 			ExpectedLogin:     "gitlab-editor",
 			ExpectedEmail:     "gitlab-editor@example.org",
 			ExpectedRole:      "",
-			ExpectedError:     ErrInvalidBasicRole,
 		},
 	}
 
