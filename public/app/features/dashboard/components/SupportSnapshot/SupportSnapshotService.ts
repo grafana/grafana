@@ -1,8 +1,17 @@
-import { SelectableValue } from '@grafana/data';
+import saveAs from 'file-saver';
+
+import { AppEvents, dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import { SceneObjectBase } from 'app/features/scenes/core/SceneObjectBase';
 import { SceneObjectStatePlain } from 'app/features/scenes/core/types';
 
+import { getTimeSrv } from '../../services/TimeSrv';
+import { PanelModel } from '../../state';
+import { setDashboardToFetchFromLocalStorage } from '../../state/initDashboard';
+
 import { Randomize } from './randomizer';
+import { getDebugDashboard, getGithubMarkdown } from './utils';
 
 interface SupportSnapshotState extends SceneObjectStatePlain {
   currentTab: SnapshotTab;
@@ -10,11 +19,14 @@ interface SupportSnapshotState extends SceneObjectStatePlain {
   options: Array<SelectableValue<ShowMessage>>;
   snapshotText: string;
   markdownText: string;
-  snapshotSize?: number;
+  snapshotSize?: string;
   randomize: Randomize;
   iframeLoading?: boolean;
   loading?: boolean;
   error?: Error;
+  panel: PanelModel;
+  panelTitle: string;
+  snapshot?: any;
 }
 
 export enum SnapshotTab {
@@ -28,8 +40,10 @@ export enum ShowMessage {
 }
 
 export class SupportSnapshotService extends SceneObjectBase<SupportSnapshotState> {
-  constructor() {
+  constructor(panel: PanelModel) {
     super({
+      panel,
+      panelTitle: panel.replaceVariables(panel.title, undefined, 'text') || 'Panel',
       currentTab: SnapshotTab.Support,
       showMessage: ShowMessage.GithubComment,
       snapshotText: '',
@@ -50,6 +64,16 @@ export class SupportSnapshotService extends SceneObjectBase<SupportSnapshotState
     });
   }
 
+  async buildDebugDashboard() {
+    const { panel, randomize } = this.state;
+    const snapshot = await getDebugDashboard(panel, randomize, getTimeSrv().timeRange());
+    const snapshotText = JSON.stringify(snapshot, null, 2);
+    const markdownText = getGithubMarkdown(panel, snapshotText);
+    const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
+
+    this.setState({ snapshot, snapshotText, markdownText, snapshotSize });
+  }
+
   onCurrentTabChange = (value: SnapshotTab) => {
     this.setState({ currentTab: value });
   };
@@ -58,9 +82,30 @@ export class SupportSnapshotService extends SceneObjectBase<SupportSnapshotState
     this.setState({ showMessage: value.value! });
   };
 
-  onCopyMarkdown = () => {};
+  onCopyMarkdown = () => {
+    const { markdownText } = this.state;
+    const maxLen = Math.pow(1024, 2) * 1.5; // 1.5MB
+    if (markdownText.length > maxLen) {
+      appEvents.emit(AppEvents.alertError, [
+        `Snapshot is too large`,
+        'Consider downloading and attaching the file instead',
+      ]);
+      return;
+    }
 
-  onDownloadDashboard = () => {};
+    //TODO replace with ClipboardButton
+    //copyToClipboard(markdownText);
+    appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
+  };
+
+  onDownloadDashboard = () => {
+    const { snapshotText, panelTitle } = this.state;
+    const blob = new Blob([snapshotText], {
+      type: 'text/plain',
+    });
+    const fileName = `debug-${panelTitle}-${dateTimeFormat(new Date())}.json.txt`;
+    saveAs(blob, fileName);
+  };
 
   onSetSnapshotText = (snapshotText: string) => {
     this.setState({ snapshotText });
@@ -71,5 +116,27 @@ export class SupportSnapshotService extends SceneObjectBase<SupportSnapshotState
     this.setState({ randomize: { ...randomize, [k]: !randomize[k] } });
   };
 
-  onPreviewDashboard = () => {};
+  onPreviewDashboard = () => {
+    const { snapshot } = this.state;
+    if (snapshot) {
+      setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot });
+      global.open(config.appUrl + 'dashboard/new', '_blank');
+    }
+  };
+
+  subscribeToIframeLoadingMessage() {
+    console.log('subscribeToIframeLoadingMessage');
+    const handleEvent = (evt: MessageEvent<string>) => {
+      if (evt.data === 'GrafanaAppInit') {
+        setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: this.state.snapshot });
+        this.setState({ iframeLoading: true });
+      }
+    };
+    window.addEventListener('message', handleEvent, false);
+
+    return function cleanup() {
+      console.log('unsub');
+      window.removeEventListener('message', handleEvent);
+    };
+  }
 }

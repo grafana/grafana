@@ -1,20 +1,9 @@
 import { css } from '@emotion/css';
-import { saveAs } from 'file-saver';
-import React, { useState, useMemo, useEffect } from 'react';
-import { useAsync, useCopyToClipboard } from 'react-use';
+import React, { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import {
-  PanelPlugin,
-  GrafanaTheme2,
-  AppEvents,
-  SelectableValue,
-  dateTimeFormat,
-  getValueFormat,
-  FeatureState,
-  formattedValueToString,
-} from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { PanelPlugin, GrafanaTheme2, FeatureState } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Drawer,
   Tab,
@@ -30,16 +19,10 @@ import {
   FeatureBadge,
   Select,
 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
-import { contextSrv } from 'app/core/core';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { InspectTab } from 'app/features/inspector/types';
 
 import { ShowMessage, SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
-import { Randomize } from './randomizer';
-import { getGithubMarkdown, getDebugDashboard } from './utils';
 
 interface Props {
   panel: PanelModel;
@@ -49,7 +32,7 @@ interface Props {
 
 export function SupportSnapshot({ panel, plugin, onClose }: Props) {
   const styles = useStyles2(getStyles);
-  const service = useMemo(() => new SupportSnapshotService(), []);
+  const service = useMemo(() => new SupportSnapshotService(panel), [panel]);
 
   const {
     currentTab,
@@ -62,82 +45,21 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
     markdownText,
     snapshotText,
     randomize,
+    panelTitle,
   } = service.useState();
 
-  // const [_, copyToClipboard] = useCopyToClipboard();
-
-  // const snapshot = useAsync(async () => {
-  //   return getDebugDashboard(panel, rand, getTimeSrv().timeRange());
-  // }, [rand, panel, plugin]);
-
-  // const info = useAsync(async () => {
-  //   const dashboard = snapshot.value;
-  //   if (dashboard) {
-  //     // When iframe is supported, pass the dashboard via local storage
-  //     if (iframeLoading && currentTab === InspectTab.Support) {
-  //       setDashboardToFetchFromLocalStorage({ meta: {}, dashboard });
-  //     }
-  //     setDashboardText(JSON.stringify(dashboard, null, 2));
-  //   }
-  // }, [snapshot, currentTab, iframeLoading]);
-
-  // const snapshotSize = useMemo(() => {
-  //   return formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
-  // }, [snapshotText]);
-
-  // const markdownText = useMemo(() => {
-  //   return getGithubMarkdown(panel, snapshotText);
-  // }, [snapshotText, panel]);
+  useEffect(() => {
+    service.buildDebugDashboard();
+  }, [service, plugin, randomize]);
 
   // Listen for messages from loaded iframe
-  // useEffect(() => {
-  //   const handleEvent = (evt: MessageEvent<string>) => {
-  //     if (evt.data === 'GrafanaAppInit') {
-  //       setIframeLoading(true);
-  //     }
-  //   };
-  //   window.addEventListener('message', handleEvent, false);
-  //   return function cleanup() {
-  //     window.removeEventListener('message', handleEvent);
-  //   };
-  // }, []);
+  useEffect(() => {
+    return service.subscribeToIframeLoadingMessage();
+  }, [service]);
 
   if (!plugin) {
     return null;
   }
-
-  const panelTitle = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text') || 'Panel';
-
-  // const toggleRandomize = (k: keyof Randomize) => {
-  //   setRand({ ...rand, [k]: !rand[k] });
-  // };
-
-  // const doImportDashboard = () => {
-  //   setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot.value });
-  //   global.open(config.appUrl + 'dashboard/new', '_blank');
-  // };
-
-  // const doDownloadDashboard = () => {
-  //   const blob = new Blob([snapshotText], {
-  //     type: 'text/plain',
-  //   });
-  //   const fileName = `debug-${panelTitle}-${dateTimeFormat(new Date())}.json.txt`;
-  //   saveAs(blob, fileName);
-  // };
-
-  // const doCopyMarkdown = () => {
-  //   const maxLen = Math.pow(1024, 2) * 1.5; // 1.5MB
-  //   if (markdownText.length > maxLen) {
-  //     appEvents.emit(AppEvents.alertError, [
-  //       `Snapshot is too large`,
-  //       'Consider downloading and attaching the file instead',
-  //     ]);
-  //     return;
-  //   }
-
-  //   copyToClipboard(markdownText);
-  //   appEvents.emit(AppEvents.alertSuccess, [`Message copied`]);
-  // };
 
   const tabs = [
     { label: 'Support', value: SnapshotTab.Support },
