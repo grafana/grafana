@@ -22,7 +22,14 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
-  - ./bin/grabpl verify-drone
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.1
+  name: compile-build-cmd
+- commands:
+  - ./bin/build verify-drone
   depends_on:
   - grabpl
   image: byrnedo/alpine-curl:0.1.8
@@ -930,7 +937,7 @@ steps:
   image: grafana/build-container:1.6.2
   name: test-backend-integration
 - commands:
-  - ./bin/grabpl verify-drone
+  - ./bin/build verify-drone
   depends_on:
   - grabpl
   image: byrnedo/alpine-curl:0.1.8
@@ -5055,6 +5062,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: e21a281dc63df0317ad1082113a224b53fb5ef2f62d74eb2d7b6d11d80f0f079
+hmac: f23b5538265d938735483a05a19321048c331c76551faee762816ddd59bb70e6
 
 ...
