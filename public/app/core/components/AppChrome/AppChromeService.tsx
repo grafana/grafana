@@ -98,6 +98,7 @@ export class AppChromeService {
     switch (kiosk) {
       case 'tv':
         this.update({ kioskMode: KioskMode.TV });
+        break;
       case '1':
       case true:
         this.update({ kioskMode: KioskMode.Full });
@@ -116,7 +117,11 @@ export class AppChromeService {
   }
 
   private getNextKioskMode() {
-    const { kioskMode } = this.state.getValue();
+    const { kioskMode, searchBarHidden } = this.state.getValue();
+
+    if (searchBarHidden) {
+      return KioskMode.Full;
+    }
 
     switch (kioskMode) {
       case null:
