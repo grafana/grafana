@@ -9,8 +9,6 @@ import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEve
 
 import 'app/features/all';
 
-import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -73,7 +71,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
-import { configureStore } from './store/configureStore';
+import { ConfiguredStore, configureStore } from './store/configureStore';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -91,13 +89,18 @@ if (process.env.NODE_ENV === 'development') {
 
 export class GrafanaApp {
   context!: GrafanaContextType;
+  readonly store: ConfiguredStore;
+
+  constructor() {
+    this.store = configureStore();
+  }
 
   async init() {
     try {
       backendSrv.setGrafanaPrefix(true);
       setBackendSrv(backendSrv);
-      let settings: Settings = await backendSrv.get('/api/frontend/settings');
-      // merge(config, settings, config);
+      const settings: Settings = await backendSrv.get('/api/frontend/settings');
+
       config.panels = settings.panels;
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;
@@ -112,7 +115,6 @@ export class GrafanaApp {
       setTimeZoneResolver(() => config.bootData.user.timezone);
       // Important that extension reducers are initialized before store
       addExtensionReducers();
-      configureStore();
       initExtensions();
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -163,7 +165,10 @@ export class GrafanaApp {
       };
     } catch (error) {
       console.error('Failed to start Grafana', error);
-      window.__grafana_load_failed();
+
+      if (window.__grafana_load_failed) {
+        window.__grafana_load_failed();
+      }
     }
   }
 }

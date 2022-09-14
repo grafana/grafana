@@ -4,7 +4,7 @@ declare let __webpack_public_path__: string;
 window.__grafana_public_path__ =
   __webpack_public_path__.substring(0, __webpack_public_path__.lastIndexOf('build/')) || __webpack_public_path__;
 
-import React from 'react';
+import React, { ComponentType } from 'react';
 import ReactDOM from 'react-dom';
 
 import { createTheme } from '@grafana/data';
@@ -13,11 +13,32 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import fn_app from 'app/fn_app';
 
+import { FnGlobalState } from '../core/reducers/fn-slice';
+
+import { FNDashboardProps, FailedToMountGrafanaErrorName } from './types';
+
+/**
+ * NOTE:
+ * Qiankun expects Promise. Otherwise warnings are logged nad life cycle hooks do not work
+ */
+/* eslint-disable-next-line  */
+type LifeCycleFn<R = any, A extends any[] = any[]> = (...args: A) => Promise<R>;
+
 class createMfe {
-  constructor(public theme: string) {
-    this.theme = theme;
+  private static readonly containerSelector = '#grafanaRoot';
+
+  private static readonly logPrefix = '[FN Grafana]';
+
+  theme: FNDashboardProps['theme'];
+
+  constructor(readonly props: FNDashboardProps) {
+    this.theme = props.theme;
   }
-  static create(component: React.Component) {
+
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  private static logger = (...args: any[]) => console.log(createMfe.logPrefix, ...args);
+
+  static create(component: ComponentType<FNDashboardProps>) {
     return {
       bootstrap: this.boot(),
       mount: this.mountFnApp(component),
@@ -27,14 +48,16 @@ class createMfe {
   }
 
   static boot() {
-    // eslint-disable-next-line
-    return async function bootstrap() {
+    return async () => {
       await fn_app.init();
     };
   }
 
-  loadFnTheme() {
+  private loadFnTheme() {
     const theme = this.theme;
+
+    createMfe.logger('Trying to load theme...', theme);
+
     config.theme2 = createTheme({
       colors: {
         mode: theme,
@@ -55,40 +78,84 @@ class createMfe {
         link.remove();
       }
     }
+
+    createMfe.logger('Successfully loaded theme:', theme);
   }
 
-  static mountFnApp(component: React.Component) {
-    // eslint-disable-next-line
-    return async function mount(props: any) {
-      console.log('mount grafana app');
-      const mfe = new createMfe(props.theme);
-      mfe.loadFnTheme();
-      ReactDOM.render(
-        React.createElement(component, { ...props }),
-        props.container ? props.container.querySelector('#grafanaRoot') : document.getElementById('grafanaRoot')
-      );
-      props.isLoading(false);
+  private static getContainer(props: FNDashboardProps) {
+    const parentElement = props.container || document;
+
+    return parentElement.querySelector(createMfe.containerSelector);
+  }
+
+  private get container() {
+    return createMfe.getContainer(this.props);
+  }
+
+  static mountFnApp(component: ComponentType<FNDashboardProps>) {
+    const lifeCycleFn: LifeCycleFn = (props: FNDashboardProps) => {
+      return new Promise((res, rej) => {
+        createMfe.logger('Trying to mount grafana...');
+
+        try {
+          const mfe = new createMfe(props);
+
+          mfe.loadFnTheme();
+
+          ReactDOM.render(React.createElement(component, { ...props }), mfe.container, () => {
+            createMfe.logger('Successfully mounted grafana.');
+
+            res(true);
+          });
+        } catch (err) {
+          const message = `[FN Grafana]: Failed to mount grafana. ${err}`;
+
+          console.log(message);
+
+          const fnError = new Error(message);
+
+          const name: FailedToMountGrafanaErrorName = 'FailedToMountGrafana';
+          fnError.name = name;
+
+          return rej(fnError);
+        }
+      });
     };
+
+    return lifeCycleFn;
   }
 
   static unMountFnApp() {
-    // eslint-disable-next-line
-    return async function unmount(props: any) {
-      console.log('unmount grafana app');
-      const container = props.container
-        ? props.container.querySelector('#grafanaRoot')
-        : document.getElementById('grafanaRoot');
+    const lifeCycleFn: LifeCycleFn = (props: FNDashboardProps) => {
+      const container = createMfe.getContainer(props);
+
       if (container) {
+        createMfe.logger('Trying to unmount grafana...');
         ReactDOM.unmountComponentAtNode(container);
+        createMfe.logger('Successfully unmounted grafana.');
+
+        return Promise.resolve(true);
+      } else {
+        const message = '[Failed to unmount grafana. Container does not exist.';
+        createMfe.logger(message);
+
+        // TODO: I'm not sure what would break so I leave the target implementation in the comment
+        // return Promise.reject(new Error(message));
+        return Promise.resolve(false);
       }
     };
+
+    return lifeCycleFn;
   }
 
   static updateFnApp() {
-    // eslint-disable-next-line
-    return async function update(props: any) {
-      console.log('update grafana app');
+    const lifeCycleFn: LifeCycleFn = (props: FnGlobalState) => {
+      createMfe.logger('Trying to update grafana...');
+
+      return Promise.resolve(false);
     };
+
+    return lifeCycleFn;
   }
 }
 

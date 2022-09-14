@@ -18,6 +18,7 @@ interface OwnProps {
   dashboard: DashboardModel;
   links: DashboardLink[];
   annotations: AnnotationQuery[];
+  hiddenVariables?: string[];
 }
 
 interface ConnectedProps {
@@ -26,7 +27,7 @@ interface ConnectedProps {
 
 interface DispatchProps {}
 
-type Props = OwnProps & ConnectedProps & DispatchProps & { hiddenVariables: string[] };
+type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class SubMenuUnConnected extends PureComponent<Props> {
   onAnnotationStateChanged = (updatedAnnotation: any) => {

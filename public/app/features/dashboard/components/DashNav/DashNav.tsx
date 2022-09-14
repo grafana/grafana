@@ -1,9 +1,8 @@
 import { t, Trans } from '@lingui/macro';
 import React, { FC, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 
-import { locationUtil, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data';
 // import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
@@ -32,7 +31,7 @@ const mapDispatchToProps = {
 };
 
 const mapStateToProps = (state: StoreState) => {
-  return { ...state.fnGlobleState };
+  return { ...state.fnGlobalState };
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -315,7 +314,7 @@ export const DashNav = React.memo<Props>((props) => {
     window.location.href = textUtil.sanitizeUrl(snapshotUrl);
   };
 
-  const { isFullscreen, title, folderTitle, kioskMode } = props;
+  const { isFullscreen, title, folderTitle } = props;
 
   // let titleHref = '';
   // let parentHref = '';

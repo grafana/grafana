@@ -1,32 +1,34 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface FNState {
+import { GrafanaThemeType } from '@grafana/data';
+
+export interface FnGlobalState {
   FNDashboard: boolean;
   uid: string;
   slug: string;
-  theme: string;
-  controlsContainer: HTMLElement | undefined;
+  theme: GrafanaThemeType;
+  controlsContainer: HTMLElement | null | undefined;
   pageTitle: string;
   queryParams: object;
   hiddenVariables: string[];
 }
 
-const initialState: FNState = {
+const initialState: FnGlobalState = {
   FNDashboard: false,
   uid: '',
   slug: '',
-  theme: '',
-  controlsContainer: undefined,
+  theme: GrafanaThemeType.Light,
+  controlsContainer: null,
   pageTitle: '',
   queryParams: {},
   hiddenVariables: [],
 };
 
 const fnSlice = createSlice({
-  name: 'fnGlobleState',
+  name: 'fnGlobalState',
   initialState,
   reducers: {
-    setIntialMountState: (state, action: PayloadAction<FNState>) => {
+    setInitialMountState: (state, action: PayloadAction<FnGlobalState>) => {
       return {
         ...state,
         ...action.payload,
@@ -42,5 +44,5 @@ const fnSlice = createSlice({
   },
 });
 
-export const { updateFnState, setIntialMountState } = fnSlice.actions;
+export const { updateFnState, setInitialMountState } = fnSlice.actions;
 export const fnSliceReducer = fnSlice.reducer;

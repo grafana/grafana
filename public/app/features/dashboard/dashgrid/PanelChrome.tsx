@@ -54,6 +54,7 @@ export interface Props {
   width: number;
   height: number;
   onInstanceStateChange: (value: any) => void;
+  FNDashboard?: boolean;
 }
 
 export interface State {
@@ -504,7 +505,7 @@ class PanelChromeUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height, plugin, FNDashboard, slug } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, plugin, FNDashboard } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
@@ -565,7 +566,7 @@ class PanelChromeUnconnected extends PureComponent<Props, State> {
 }
 
 const mapStateToProps = (state: StoreState) => {
-  return { ...state.fnGlobleState };
+  return { ...state.fnGlobalState };
 };
 const connector = connect(mapStateToProps);
 export const PanelChrome = connector(PanelChromeUnconnected);

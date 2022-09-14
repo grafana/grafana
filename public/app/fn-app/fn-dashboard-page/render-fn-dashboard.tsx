@@ -1,60 +1,110 @@
-import React, { useEffect } from 'react';
+import { merge } from 'lodash';
+import React, { useEffect, FC } from 'react';
 import { useDispatch } from 'react-redux';
+import { ThunkDispatch } from 'redux-thunk';
 
-import { locationService } from '@grafana/runtime';
-import { setIntialMountState } from 'app/core/reducers/fn-slice';
-import DashboardPage from 'app/features/dashboard/containers/DashboardPage';
-import { DashboardRoutes } from 'app/types';
+/* eslint-disable-next-line  */
+import { locationService as locationSrv, HistoryWrapper } from '@grafana/runtime';
+import { setInitialMountState } from 'app/core/reducers/fn-slice';
+import DashboardPage, {
+  Props,
+  MapStateToDashboardPageProps,
+  MappedDispatch,
+} from 'app/features/dashboard/containers/DashboardPage';
+import { DashboardRoutes, StoreState, useSelector } from 'app/types';
 
+import { Themeable2 } from '../../../../packages/grafana-ui/src/types/theme';
 import { FNDashboardProps } from '../types';
 
-export const RenderFNDashboard: React.Component<FNDashboardProps> = (data) => {
-  const dispatch = useDispatch();
+type DashboardPageProps = Omit<
+  Props,
+  keyof ReturnType<MapStateToDashboardPageProps> | keyof MappedDispatch | keyof Themeable2
+>;
+
+/* eslint-disable-next-line  */
+const locationService = locationSrv as HistoryWrapper;
+
+const DEFAULT_DASHBOARD_PAGE_PROPS: Pick<DashboardPageProps, 'isFNDashboard' | 'history' | 'route'> & {
+  match: Pick<DashboardPageProps['match'], 'isExact' | 'path' | 'url'>;
+} = {
+  isFNDashboard: true,
+  match: {
+    isExact: true,
+    path: '/d/:uid/:slug?',
+    url: '',
+  },
+  /* eslint-disable-next-line  */
+  history: {} as DashboardPageProps['history'],
+  route: {
+    routeName: DashboardRoutes.Normal,
+    path: '/d/:uid/:slug?',
+    pageClass: 'page-dashboard',
+    component: DashboardPage,
+  },
+};
+
+export const RenderFNDashboard: FC<FNDashboardProps> = (props) => {
+  const { queryParams, uid, slug, theme, controlsContainer, pageTitle = '', hiddenVariables, setErrors } = props;
+
+  const dispatch = useDispatch<ThunkDispatch<any, any, any>>();
+
+  const firstError = useSelector((state: StoreState) => {
+    const { appNotifications } = state;
+
+    return Object.values(appNotifications.byId).find(({ severity }) => severity === 'error');
+  });
+
+  /**
+   * NOTE:
+   * Grafana renders notifications in StoredNotifications component.
+   * We do not use this component in FN.
+   * But we would like to propagate grafana's errors to FN.
+   */
   useEffect(() => {
+    setErrors(firstError ? { [firstError.timestamp]: firstError.text } : {});
+  }, [firstError, setErrors]);
+
+  useEffect(() => {
+    console.log('[FN Grafana] Trying to set initial state...');
+
     dispatch(
-      setIntialMountState({
+      setInitialMountState({
         FNDashboard: true,
-        uid: data.uid,
-        slug: data.slug,
-        theme: data.theme,
-        controlsContainer: data.controlsContainer,
-        pageTitle: data?.pageTitle || '',
-        queryParams: data.queryParams,
-        hiddenVariables: data.hiddenVariables,
+        uid,
+        slug,
+        theme,
+        controlsContainer,
+        pageTitle,
+        queryParams,
+        hiddenVariables,
       })
     );
-    console.log(locationService.getLocation(), locationService.getHistory, 'location params');
-    locationService.fnPathnameChange(window.location.pathname, data.queryParams);
+
+    // TODO: catch success in redux-thunk way
+    console.log(
+      '[FN Grafana] Successfully set initial state.',
+      locationService.getLocation(),
+      locationService.getHistory,
+      'location params'
+    );
+
+    locationService.fnPathnameChange(window.location.pathname, queryParams);
 
     return () => {};
-  }, [data, dispatch]);
+  }, [dispatch, uid, slug, theme, controlsContainer, pageTitle, hiddenVariables, queryParams]);
 
-  const props = {
+  const dashboardPageProps: DashboardPageProps = merge({}, DEFAULT_DASHBOARD_PAGE_PROPS, {
+    ...DEFAULT_DASHBOARD_PAGE_PROPS,
     match: {
       params: {
-        ...data,
+        ...props,
       },
-      isExact: true,
-      path: '/d/:uid/:slug?',
-      url: '',
     },
-    // eslint-disable-next-line
-    history: {} as any,
-    // eslint-disable-next-line
-    location: {
-      ...locationService.getLocation(),
-    },
-    queryParams: {
-      ...data.queryParams,
-    },
-    route: {
-      routeName: DashboardRoutes.Normal,
-      path: '/d/:uid/:slug?',
-      pageClass: 'page-dashboard',
-      component: DashboardPage,
-    },
-    hiddenVariables: data.hiddenVariables,
-  };
+    location: locationService.getLocation(),
+    queryParams,
+    hiddenVariables,
+    controlsContainer,
+  });
 
-  return <DashboardPage isFNDashboard controlsContainer={data.controlsContainer} {...props} />;
+  return <DashboardPage {...dashboardPageProps} />;
 };

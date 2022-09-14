@@ -1,4 +1,5 @@
 import produce from 'immer';
+import { CombinedState, PreloadedState } from 'redux';
 
 import {
   DataSourceApi,
@@ -22,7 +23,7 @@ import {
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
-import { AccessControlAction, FolderDTO, StoreState } from 'app/types';
+import { AccessControlAction, DataSourcesState, FolderDTO, StoreState } from 'app/types';
 import { Alert, AlertingRule, CombinedRule, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
@@ -35,7 +36,10 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { UnifiedAlertingState } from './state/reducers';
+
 let nextDataSourceId = 1;
+
 
 export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData>(
   partial: Partial<DataSourceInstanceSettings<T>> = {},
@@ -484,21 +488,24 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
     .mockImplementation((action) => permissions.includes(action as AccessControlAction));
 };
 
-export function mockDataSourcesStore(partial?: Partial<StoreState['dataSources']>) {
-  const defaultState = configureStore().getState();
+export function mockDataSourcesStore(partial?: Partial<DataSourcesState>) {
+  const defaultState = configureStore().getState() as { dataSources: DataSourcesState };
   const store = configureStore({
     ...defaultState,
     dataSources: {
       ...defaultState.dataSources,
-      ...partial,
+      ...(partial || {}),
     },
   });
 
   return store;
 }
 
-export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['unifiedAlerting']>) {
-  const defaultState = configureStore().getState();
+export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<UnifiedAlertingState>) {
+  /* eslint-disable-next-line  */
+  const defaultState = configureStore().getState() as any as CombinedState<{
+    unifiedAlerting: Required<UnifiedAlertingState>;
+  }>;
 
   return configureStore({
     ...defaultState,
@@ -509,8 +516,17 @@ export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['u
   });
 }
 
-export function mockStore(recipe: (state: StoreState) => void) {
-  const defaultState = configureStore().getState();
+/**
+ * NOTE: I used void just to fix ts errors in tests.
+ */
+export function mockStore(recipe: (state: StoreState) => Promise<StoreState> | void) {
+  /* eslint-disable-next-line  */
+  const defaultState = configureStore().getState() as PreloadedState<StoreState>;
 
-  return configureStore(produce(defaultState, recipe));
+  return configureStore(
+    /* eslint-disable-next-line  */
+    produce(defaultState, recipe as (state: StoreState) => Promise<StoreState>) as Promise<
+      Required<PreloadedState<StoreState>>
+    >
+  );
 }

@@ -1,6 +1,4 @@
-import React, { ComponentType } from 'react';
-
-import { store } from 'app/store/store';
+import React, { ComponentType, FC } from 'react';
 
 import { AngularRoot } from '../../angular/AngularRoot';
 import { FnAppProvider } from '../fn-app-provider';
@@ -17,8 +15,8 @@ import { RenderFNDashboard } from './render-fn-dashboard';
 // import { DashboardRoutes } from '../types';
 
 /** Used by enterprise */
-let bodyRenderHooks: ComponentType[] = [];
-let pageBanners: ComponentType[] = [];
+const bodyRenderHooks: ComponentType[] = [];
+const pageBanners: ComponentType[] = [];
 
 export function addBodyRenderHook(fn: ComponentType) {
   bodyRenderHooks.push(fn);
@@ -28,9 +26,9 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
-export const FNDashboard: React.Component<FNDashboardProps> = (props) => {
+export const FNDashboard: FC<FNDashboardProps> = (props) => {
   return (
-    <FnAppProvider FnError={props.fnError}>
+    <FnAppProvider fnError={props.fnError}>
       <div className="page-dashboard">
         <AngularRoot />
         <RenderFNDashboard {...props} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FC,  } from 'react';
 import { Provider } from 'react-redux';
 
 import { config, navigationLogger } from '@grafana/runtime';
@@ -11,12 +11,13 @@ import { LiveConnectionWarning } from 'app/features/live/LiveConnectionWarning';
 import { store } from 'app/store/store';
 
 import app from '../fn_app';
+import { FNDashboardProps } from './types';
 
-interface FnAppProviderProps {
-  fnError: React.FunctionComponent;
-}
+type FnAppProviderProps  = Pick<FNDashboardProps, 'fnError'>;
 
-export const FnAppProvider: React.Component<FnAppProviderProps> = ({ children, FnError }) => {
+export const FnAppProvider: FC<FnAppProviderProps> = (props) => {
+  const { children, fnError = null } = props;
+
   const [ready, setReady] = useState(false);
   navigationLogger('AppWrapper', false, 'rendering');
   useEffect(() => {
@@ -30,12 +31,19 @@ export const FnAppProvider: React.Component<FnAppProviderProps> = ({ children, F
   }, []);
 
   if (!ready) {
-    return <>{FnError}</>;
+    /**
+     * TODO: I think loader would be better
+     */
+    return <>{fnError}</>;
   }
 
   if (!store) {
-    return <>{FnError}</>;
+    /**
+     * TODO: I think loader would be better
+     */
+    return <>{fnError}</>;
   }
+
   return (
     <Provider store={store}>
       <I18nProvider>
