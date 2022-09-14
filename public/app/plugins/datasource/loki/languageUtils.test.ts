@@ -1,4 +1,4 @@
-import { isBytesString } from './language_utils';
+import { isBytesString } from './languageUtils';
 
 describe('isBytesString', () => {
   it('correctly matches bytes string with integers', () => {
