@@ -211,7 +211,7 @@ type parsedRequest struct {
 
 func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUser, skipCache bool, reqDTO dtos.MetricRequest) (*parsedRequest, error) {
 	if len(reqDTO.Queries) == 0 {
-		return nil, queryValidationError("no queries found")
+		return nil, ErrNoQueriesFound
 	}
 
 	timeRange := legacydata.NewDataTimeRange(reqDTO.From, reqDTO.To)
@@ -228,7 +228,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			return nil, err
 		}
 		if ds == nil {
-			return nil, queryValidationError("invalid data source ID")
+			return nil, ErrInvalidDatasourceID
 		}
 
 		datasourcesByUid[ds.Uid] = ds
@@ -262,7 +262,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 	if !req.hasExpression {
 		if len(datasourcesByUid) > 1 {
 			// We do not (yet) support mixed query type
-			return nil, queryValidationError("all queries must use the same datasource")
+			return nil, ErrMultipleDatasources
 		}
 	}
 
@@ -314,7 +314,7 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedI
 		return ds, nil
 	}
 
-	return nil, queryValidationError("missing data source ID/UID")
+	return nil, ErrInvalidDatasourceID
 }
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
