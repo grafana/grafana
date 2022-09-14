@@ -143,12 +143,23 @@ export const SharePublicDashboard = (props: Props) => {
             <p>Before you click Save, please acknowledge the following information:</p>
             <FieldSet disabled={publicDashboardPersisted(publicDashboard) || !hasWritePermissions}>
               <VerticalGroup spacing="md">
-                <Checkbox
-                  label="Your entire dashboard will be public"
-                  value={acknowledgements.public}
-                  data-testid={selectors.WillBePublicCheckbox}
-                  onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
-                />
+                <HorizontalGroup spacing="none">
+                  <Checkbox
+                    label="Your entire dashboard will be public"
+                    value={acknowledgements.public}
+                    data-testid={selectors.WillBePublicCheckbox}
+                    onChange={(e) => onAcknowledge('public', e.currentTarget.checked)}
+                  />
+                  <LinkButton
+                    variant="primary"
+                    href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"
+                    target="_blank"
+                    fill="text"
+                    icon="info-circle"
+                    rel="noopener noreferrer"
+                    tooltip="Learn more about public dashboards"
+                  />
+                </HorizontalGroup>
                 <HorizontalGroup spacing="none">
                   <Checkbox
                     label="Publishing currently only works with a subset of datasources"
