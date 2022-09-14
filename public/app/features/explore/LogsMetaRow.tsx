@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { LogRowModel, LogsDedupStrategy, LogsMetaItem, LogsMetaKind } from '@grafana/data';
-import { Button, LogLabels, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, LogLabels, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
 
 import { downloadLogsModelAsTxt } from '../inspector/utils/download';
@@ -112,9 +112,9 @@ export const LogsMetaRow = React.memo(
                 };
               })}
             />
-            <Button onClick={downloadLogs} variant="secondary" size="sm" fill="outline" icon="download-alt">
-              Download
-            </Button>
+            <ToolbarButton onClick={downloadLogs} variant="default" icon="download-alt">
+              Download logs
+            </ToolbarButton>
           </div>
         )}
       </>
