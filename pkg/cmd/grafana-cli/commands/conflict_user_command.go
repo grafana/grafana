@@ -306,9 +306,6 @@ func (r *ConflictResolver) showChanges() {
 		fmt.Printf("no changes will take place as we have no valid users to merge.\n")
 		return
 	}
-	// TODO:
-	// use something like
-	// diff --git a/pkg/cmd/grafana-cli/commands/commands.go b/pkg/cmd/grafana-cli/commands/commands.go
 	/*
 		hej@test.com+hej@test.com
 		all of the permissions, roles and ownership will be transferred to the user.
@@ -480,24 +477,19 @@ type ConflictResolver struct {
 }
 
 type ConflictingUser struct {
-	// IDENTIFIER
-	// TODO: should have conflict block in sql for performance and stability
-	Direction string `xorm:"direction"`
-	// FIXME: refactor change to correct type int64
-	Id    string `xorm:"id"`
-	Email string `xorm:"email"`
-	Login string `xorm:"login"`
-	// FIXME: refactor change to correct type <>
+	Direction  string `xorm:"direction"`
+	Id         string `xorm:"id"`
+	Email      string `xorm:"email"`
+	Login      string `xorm:"login"`
 	LastSeenAt string `xorm:"last_seen_at"`
 	AuthModule string `xorm:"auth_module"`
 }
 
-// always better to have a slice of the object
-// not a pointer for slice type ConflictingUsers []*ConflictingUser
 type ConflictingUsers []ConflictingUser
 
 func (c *ConflictingUser) Marshal(filerow string) error {
-	// +/- id: 1, email: hej,
+	// example view of the file to ingest
+	// +/- id: 1, email: hej, auth_module: LDAP
 	trimmedSpaces := strings.ReplaceAll(filerow, " ", "")
 	if trimmedSpaces[0] == '+' {
 		c.Direction = "+"
@@ -584,9 +576,11 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 		if len(users) < 2 {
 			return fmt.Errorf("not enough users to perform merge, found %d for id %s, should be at least 2", len(users), block)
 		}
+
+		// creating a session for each block of users
+		// we want to rollback incase something happens during update / delete
 		sess := ss.NewSession(ctx)
 		defer sess.Close()
-		// add Begin() before any action
 		err := sess.Begin()
 		if err != nil {
 			return fmt.Errorf("could not open a sess: %w", err)
