@@ -76,9 +76,14 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
       expandable
       scrollableContent
       subtitle={
-        <Stack direction="column">
-          <FeatureBadge featureState={FeatureState.beta} />
-          Panel: {panelTitle}
+        <Stack direction="column" gap={1}>
+          <span>
+            <FeatureBadge featureState={FeatureState.beta} />
+          </span>
+          <span className="muted">
+            A support snapshot contains the query response data and raw panel settings. Include this snapshot in support
+            requests to help identify issues faster
+          </span>
         </Stack>
       }
       tabs={
@@ -160,19 +165,24 @@ export function SupportSnapshot({ panel, plugin, onClose }: Props) {
             </Field>
           )}
 
-          <Field
-            label="Support snapshot"
-            description="This snapshot contains the query response data and raw panel settings.  Including this snapshot in support requests can help identify issues faster."
-          >
+          <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
             <>
               <HorizontalGroup>
                 <Button icon="download-alt" onClick={service.onDownloadDashboard}>
                   Dashboard ({snapshotSize})
                 </Button>
-                <ClipboardButton icon="github" getText={service.onGetMarkdownForClipboard}>
+                <ClipboardButton
+                  icon="github"
+                  getText={service.onGetMarkdownForClipboard}
+                  title="Copy a complete GitHub comment to the clipboard"
+                >
                   Copy to clipboard
                 </ClipboardButton>
-                <Button onClick={service.onPreviewDashboard} variant="secondary">
+                <Button
+                  onClick={service.onPreviewDashboard}
+                  variant="secondary"
+                  title="Open support snapshot dashboard in a new tab"
+                >
                   Preview
                 </Button>
               </HorizontalGroup>
