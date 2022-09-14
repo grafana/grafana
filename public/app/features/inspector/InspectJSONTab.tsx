@@ -1,11 +1,12 @@
 import { t } from '@lingui/macro';
+import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
 
 import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, CodeEditor, Field, Select } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -121,6 +122,14 @@ export class InspectJSONTab extends PureComponent<Props, State> {
         } else {
           const updates = JSON.parse(this.state.text);
           dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
+
+          //Report relevant updates
+          reportInteraction('grafana_panel_inspect_applied_clicked', {
+            panel_type_changed: panel!.type !== updates.type,
+            panel_id_changed: panel!.id !== updates.id,
+            panel_grid_pos_changed: !isEqual(panel!.gridPos, updates.gridPos),
+          });
+
           panel!.restoreModel(updates);
           panel!.refresh();
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
