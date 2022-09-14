@@ -1,9 +1,13 @@
 import $ from 'jquery';
 
+import { CurrentUserDTO } from '@grafana/data';
 import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
+
+import { getUserIdentifier } from '../../utils';
 
 export interface GA4EchoBackendOptions {
   googleAnalyticsId: string;
+  user?: CurrentUserDTO;
 }
 
 export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBackendOptions> {
@@ -24,9 +28,14 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
       dataLayer.push(arguments);
     };
     window.gtag('js', new Date());
-    window.gtag('config', options.googleAnalyticsId, {
-      user_id: userId,
-    });
+
+    const configOptions = {};
+
+    if (options.user) {
+      configOptions.user_id = getUserIdentifier(options.user);
+    }
+
+    window.gtag('config', options.googleAnalyticsId, configOptions);
   }
 
   addEvent = (e: PageviewEchoEvent) => {
