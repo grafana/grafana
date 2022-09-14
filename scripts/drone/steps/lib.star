@@ -630,20 +630,6 @@ def codespell_step():
     }
 
 
-def shellcheck_step():
-    return {
-        'name': 'shellcheck',
-        'image': build_image,
-        'depends_on': [
-            'grabpl',
-            'compile-build-cmd',
-        ],
-        'commands': [
-            './bin/build shellcheck',
-        ],
-    }
-
-
 def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
     deps = [
         'build-plugins',
