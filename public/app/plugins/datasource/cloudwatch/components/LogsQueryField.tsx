@@ -27,7 +27,6 @@ import syntax from '../syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
-import { LogGroupSelector } from './LogGroupSelector';
 import QueryHeader from './QueryHeader';
 
 export interface CloudWatchLogsQueryFieldProps
@@ -262,7 +261,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
     );
   };
 
-  onQueryFieldClick = (_event: Event, _editor: Editor, next: () => any) => {
+  onQueryFieldClick = (_event: Event | React.MouseEvent<Element, MouseEvent>, _editor: Editor, next: () => any) => {
     const { selectedLogGroups, loadingLogGroups } = this.state;
 
     const queryFieldDisabled = loadingLogGroups || selectedLogGroups.length === 0;

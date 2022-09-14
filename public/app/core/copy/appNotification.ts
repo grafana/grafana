@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { logzioServices } from '@grafana/data'; // LOGZ.IO GRAFANA CHANGE :: DEV-23041 - log to logzio on any error
 
+import { logzioServices } from '@grafana/data'; // LOGZ.IO GRAFANA CHANGE :: DEV-23041 - log to logzio on any error
 import { getMessageFromError } from 'app/core/utils/errors';
 import { AppNotification, AppNotificationSeverity, useDispatch } from 'app/types';
 
