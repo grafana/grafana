@@ -24,6 +24,7 @@ function setup() {
       }),
     ],
   });
+  panel.getQueryRunner().resendLastResult();
 
   return render(<SupportSnapshot panel={panel} onClose={() => {}} plugin={panel.plugin} />);
 }

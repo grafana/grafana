@@ -19,7 +19,7 @@ describe('SupportSnapshotService', () => {
       }),
     ],
   });
-  panel.resendLastResult();
+  panel.getQueryRunner().resendLastResult();
 
   it('Can create it with default state', () => {
     const service = new SupportSnapshotService(panel);
