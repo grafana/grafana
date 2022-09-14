@@ -17,7 +17,7 @@ const model = {
     {
       key: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa',
       inputParams: {
-        timeRange: '94d745c9-7c8e-4234-bd98-e620ee643a61',
+        timeRange: { $ref: '94d745c9-7c8e-4234-bd98-e620ee643a61' },
       },
       type: 'SceneDataProviderNode',
       queries: [
@@ -54,7 +54,7 @@ const model = {
         {
           key: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa',
           inputParams: {
-            timeRange: '94d745c9-7c8e-4234-bd98-e620ee643a61',
+            timeRange: { $ref: '94d745c9-7c8e-4234-bd98-e620ee643a61' },
           },
           type: 'SceneDataProviderNode',
           queries: [
@@ -92,7 +92,7 @@ const model = {
                 children: [
                   {
                     inputParams: {
-                      data: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa',
+                      data: { $ref: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa' },
                     },
                     key: '3',
                     pluginId: 'timeseries',
@@ -108,7 +108,7 @@ const model = {
                 children: [
                   {
                     inputParams: {
-                      data: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa',
+                      data: { $ref: 'a3ebb3ff-dce8-40bd-8ef3-066fdbdeb7fa' },
                     },
                     key: '3',
                     pluginId: 'timeseries',

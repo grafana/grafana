@@ -144,10 +144,10 @@ export class NestedScene extends SceneObjectBase<NestedSceneState> {
 
     return {
       ...serializeScene(clone, true),
-      actions: this.state.actions?.map((x) => serializeNode(x)),
-      isCollapsed: this.state.isCollapsed,
-      canCollapse: this.state.canCollapse,
-      canRemove: this.state.canRemove,
+      actions: this.state.actions?.map((x) => serializeNode(x)) || [],
+      isCollapsed: Boolean(this.state.isCollapsed),
+      canCollapse: Boolean(this.state.canCollapse),
+      canRemove: Boolean(this.state.canRemove),
     };
   }
 }

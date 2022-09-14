@@ -17,7 +17,7 @@ const model = {
     {
       key: '4ec67e47-3dc3-4c5a-babb-c815f14dbadf',
       inputParams: {
-        timeRange: '01d4b949-0ea8-4430-b478-392b829d1605',
+        timeRange: { $ref: '01d4b949-0ea8-4430-b478-392b829d1605' },
       },
       type: 'SceneDataProviderNode',
       queries: [
@@ -43,7 +43,7 @@ const model = {
     {
       key: '6d7c1fa4-0205-46ab-adee-56ab786a44bf',
       inputParams: {
-        timeRange: '7df4af7f-b55b-40aa-8bd1-e2d2ec3a4ccf',
+        timeRange: { $ref: '7df4af7f-b55b-40aa-8bd1-e2d2ec3a4ccf' },
       },
       type: 'SceneDataProviderNode',
       queries: [
@@ -107,7 +107,7 @@ const model = {
                         children: [
                           {
                             inputParams: {
-                              data: '4ec67e47-3dc3-4c5a-babb-c815f14dbadf',
+                              data: { $ref: '4ec67e47-3dc3-4c5a-babb-c815f14dbadf' },
                             },
                             pluginId: 'timeseries',
                             title: 'Title',
@@ -128,7 +128,7 @@ const model = {
                         children: [
                           {
                             inputParams: {
-                              data: '4ec67e47-3dc3-4c5a-babb-c815f14dbadf',
+                              data: { $ref: '4ec67e47-3dc3-4c5a-babb-c815f14dbadf' },
                             },
                             pluginId: 'timeseries',
                             title: 'Title',
@@ -185,7 +185,7 @@ const model = {
                     children: [
                       {
                         inputParams: {
-                          data: '6d7c1fa4-0205-46ab-adee-56ab786a44bf',
+                          data: { $ref: '6d7c1fa4-0205-46ab-adee-56ab786a44bf' },
                         },
                         pluginId: 'timeseries',
                         title: 'Title',

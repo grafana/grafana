@@ -27,7 +27,7 @@ const model = {
       ],
       key: 'f821561a-033c-4bf8-a502-911ad7338a62',
       inputParams: {
-        timeRange: 'b4bc6395-38ac-49ef-a533-12bca6cb4bcc',
+        timeRange: { $ref: 'b4bc6395-38ac-49ef-a533-12bca6cb4bcc' },
       },
       type: 'SceneDataProviderNode',
     },
@@ -53,7 +53,7 @@ const model = {
       ],
       key: '3defa351-4455-4a09-8425-c33ad73ab3e1',
       inputParams: {
-        timeRange: 'dfae5b0b-a34a-4d95-a814-2014b91c2e29',
+        timeRange: { $ref: 'dfae5b0b-a34a-4d95-a814-2014b91c2e29' },
       },
       type: 'SceneDataProviderNode',
     },
@@ -100,7 +100,7 @@ const model = {
                     children: [
                       {
                         inputParams: {
-                          data: 'f821561a-033c-4bf8-a502-911ad7338a62',
+                          data: { $ref: 'f821561a-033c-4bf8-a502-911ad7338a62' },
                         },
                         key: '3',
                         pluginId: 'timeseries',
@@ -148,7 +148,7 @@ const model = {
                 children: [
                   {
                     inputParams: {
-                      data: '3defa351-4455-4a09-8425-c33ad73ab3e1',
+                      data: { $ref: '3defa351-4455-4a09-8425-c33ad73ab3e1' },
                     },
                     key: '3',
                     pluginId: 'timeseries',
@@ -165,7 +165,7 @@ const model = {
                 children: [
                   {
                     inputParams: {
-                      data: '3defa351-4455-4a09-8425-c33ad73ab3e1',
+                      data: { $ref: '3defa351-4455-4a09-8425-c33ad73ab3e1' },
                     },
                     key: '3',
                     pluginId: 'timeseries',
@@ -180,13 +180,7 @@ const model = {
       },
       actions: [
         {
-          range: {
-            from: 'now-6h',
-            to: 'now',
-          },
-          key: 'dfae5b0b-a34a-4d95-a814-2014b91c2e29',
-          inputParams: {},
-          type: 'SceneTimeRange',
+          $ref: 'dfae5b0b-a34a-4d95-a814-2014b91c2e29',
         },
       ],
       isCollapsed: false,
@@ -197,6 +191,6 @@ const model = {
 };
 
 export const nestedSceneFromJson = {
-  title: 'Scene with a nested scene (from JSON) BUGGY!',
+  title: 'Scene with a nested scene (from JSON)',
   getScene: () => sceneFromJSON(model),
 };

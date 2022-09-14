@@ -27,7 +27,7 @@ const model = {
       ],
       key: 'fda86f55-d29f-432f-891d-ff7fd9d0df72',
       inputParams: {
-        timeRange: '7dbf266f-c263-477b-bbcb-7dc16d07744a',
+        timeRange: { $ref: '7dbf266f-c263-477b-bbcb-7dc16d07744a' },
       },
       type: 'SceneDataProviderNode',
     },
@@ -39,7 +39,7 @@ const model = {
       },
       {
         inputParams: {
-          data: 'fda86f55-d29f-432f-891d-ff7fd9d0df72',
+          data: { $ref: 'fda86f55-d29f-432f-891d-ff7fd9d0df72' },
         },
         pluginId: 'timeseries',
         title: 'Title',

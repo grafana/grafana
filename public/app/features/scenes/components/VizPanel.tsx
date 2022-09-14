@@ -49,7 +49,6 @@ export class VizPanel<T extends SceneDataObject<any> = SceneDataProviderNode> ex
 
 function ScenePanelRenderer({ model }: SceneComponentProps<VizPanel>) {
   const { title, pluginId, options, fieldConfig } = model.useState();
-  debugger;
   const { $data } = model.getData().useState();
   // const { inputParams } = model.useState();
   // const { $data } = inputParams.data.useState();

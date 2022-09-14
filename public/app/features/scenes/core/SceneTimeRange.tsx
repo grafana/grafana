@@ -11,7 +11,6 @@ export class SceneTimeRange extends SceneTimeRangeObject {
   static Component = SceneTimeRangeRenderer;
 
   constructor(state: SceneTimeRangeState) {
-    debugger;
     super({
       ...state,
       range: state.range

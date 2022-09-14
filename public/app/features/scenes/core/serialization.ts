@@ -28,10 +28,10 @@ type SerializedScene = {
 };
 
 export function serializeInputParams(inputs: Record<string, SceneObject>) {
-  const serializedInputParams: Record<string, string> = {};
+  const serializedInputParams: Record<string, { $ref: string }> = {};
 
   for (const [key, input] of Object.entries(inputs)) {
-    serializedInputParams[key] = input.state.key!;
+    serializedInputParams[key] = { $ref: input.state.key! };
   }
 
   return serializedInputParams;
@@ -183,8 +183,8 @@ export function sceneFromJSON(
 
       if (input.inputParams) {
         for (const [inputParamName, paramKey] of Object.entries(input.inputParams)) {
-          inputParamsDependencies.set(paramKey as string, [
-            ...(inputParamsDependencies.get(paramKey as string) || []),
+          inputParamsDependencies.set(paramKey.$ref as string, [
+            ...(inputParamsDependencies.get(paramKey.$ref as string) || []),
             [inputParamName, input.key],
           ]);
         }
@@ -197,7 +197,6 @@ export function sceneFromJSON(
     const sourceNode = dataNodesMap.get(source);
     for (const [inputParamName, target] of dependencies) {
       const targetNode = dataNodesMap.get(target);
-      console.log('hookup', source, inputParamName, target);
       if (sourceNode && targetNode) {
         (targetNode.state as SceneParametrizedState<any>).inputParams[inputParamName] = sourceNode;
       }
@@ -290,8 +289,8 @@ function buildSceneChildren(
       }
 
       if (child.inputParams) {
-        for (const [inputParamName, paramKey] of Object.entries(child.inputParams)) {
-          const paramNode = dataDependencies.get(paramKey as string);
+        for (const [inputParamName, paramRef] of Object.entries(child.inputParams)) {
+          const paramNode = dataDependencies.get(paramRef.$ref as string);
           if (paramNode) {
             inputParams[inputParamName] = paramNode;
           }
