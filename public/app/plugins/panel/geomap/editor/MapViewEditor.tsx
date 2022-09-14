@@ -144,18 +144,25 @@ export const MapViewEditor: FC<StandardEditorProps<MapViewConfig, any, GeomapPan
               </InlineField>
             </InlineFieldRow>
           )}
-          <InlineFieldRow>
-            <InlineField label="Padding" labelWidth={labelWidth} grow={true} tooltip="relative expansion of view...">
-              <NumberInput
-                value={value?.padding ?? 5}
-                min={0}
-                step={1}
-                onChange={(v) => {
-                  onChange({ ...value, padding: v });
-                }}
-              />
-            </InlineField>
-          </InlineFieldRow>
+          {!value?.lastOnly && (
+            <InlineFieldRow>
+              <InlineField
+                label="Padding"
+                labelWidth={labelWidth}
+                grow={true}
+                tooltip="sets relative padding outside of data extent"
+              >
+                <NumberInput
+                  value={value?.padding ?? 5}
+                  min={0}
+                  step={1}
+                  onChange={(v) => {
+                    onChange({ ...value, padding: v });
+                  }}
+                />
+              </InlineField>
+            </InlineFieldRow>
+          )}
         </>
       )}
 
