@@ -91,7 +91,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Reformat log line',
+        name: 'Reformat log lines',
         type: LokiQueryPatternType.Log,
         // {} |= `` | logfmt | line_format `{{.message}}`
         operations: [
