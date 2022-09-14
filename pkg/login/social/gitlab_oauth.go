@@ -89,7 +89,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 	return fullPaths, next
 }
 
-func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id       int
 		Username string
