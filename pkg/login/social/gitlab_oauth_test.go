@@ -83,15 +83,15 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedRole:         "Editor",
 			ExpectedGrafanaAdmin: falseBoolPtr(),
 		},
-		{
-			Name:              "Fallback to default",
+		{ // Case that's going to change with Grafana 10
+			Name:              "No fallback to default org role (change in Grafana 10)",
 			Cfg:               conf{AutoAssignOrgRole: org.RoleViewer},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
 			ExpectedLogin:     "gitlab-editor",
 			ExpectedEmail:     "gitlab-editor@example.org",
-			ExpectedRole:      "Viewer",
+			ExpectedRole:      "",
 		},
 		{
 			Name:              "Strict mode prevents fallback to default",

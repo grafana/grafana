@@ -113,7 +113,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUse
 
 	groups := s.GetGroups(client)
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, groups, false)
+	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, groups, true)
 	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, ErrInvalidBasicRole
 	}
