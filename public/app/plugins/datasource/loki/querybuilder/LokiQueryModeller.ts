@@ -57,7 +57,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Filter log line and parse with json parser',
+        name: 'Filter log lines and parse with json parser',
         type: LokiQueryPatternType.Log,
         // {} |= `` | json | __error__=``
         operations: [
@@ -91,7 +91,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Reformat log line',
+        name: 'Reformat log lines',
         type: LokiQueryPatternType.Log,
         // {} |= `` | logfmt | line_format `{{.message}}`
         operations: [
@@ -113,7 +113,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Query on value inside log line',
+        name: 'Query on value inside a log line',
         type: LokiQueryPatternType.Metric,
         // sum(sum_over_time({ | logfmt | __error__=`` | unwrap | __error__=`` [$__interval]))
         operations: [
