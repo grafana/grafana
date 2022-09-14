@@ -25,8 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-var timeSettings, _ = simplejson.NewJson([]byte(`{"from": "now-12h", "to": "now"}`))
-var defaultPubdashTimeSettings, _ = simplejson.NewJson([]byte(`{}`))
+var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
+var defaultPubdashTimeSettings = &TimeSettings{}
 var dashboardData = simplejson.NewFromAny(map[string]interface{}{"time": map[string]interface{}{"from": "now-8h", "to": "now"}})
 var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
 
@@ -325,10 +325,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		updatedPubdash, err := service.SavePublicDashboardConfig(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		timeSettings, err := simplejson.NewJson([]byte("{}"))
-		require.NoError(t, err)
-
-		assert.Equal(t, timeSettings, updatedPubdash.TimeSettings)
+		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
 	})
 }
 
