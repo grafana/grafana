@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -56,45 +57,57 @@ type ImageService interface {
 // as an annotation or label to the Alertmanager. This service cannot take
 // screenshots of alert rules that are not associated with a dashboard panel.
 type ScreenshotImageService struct {
+	logger      log.Logger
 	screenshots screenshot.ScreenshotService
 	store       store.ImageStore
+	uploads     *UploadingService
 }
 
-func NewScreenshotImageService(screenshots screenshot.ScreenshotService, store store.ImageStore) ImageService {
+// NewScreenshotImageService returns a new ScreenshotImageService.
+func NewScreenshotImageService(
+	logger log.Logger,
+	screenshots screenshot.ScreenshotService,
+	store store.ImageStore,
+	uploads *UploadingService) ImageService {
 	return &ScreenshotImageService{
+		logger:      logger,
 		screenshots: screenshots,
 		store:       store,
+		uploads:     uploads,
 	}
 }
 
 // NewScreenshotImageServiceFromCfg returns a new ScreenshotImageService
 // from the configuration.
-func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, metrics prometheus.Registerer,
-	db *store.DBstore, ds dashboards.DashboardService, rs rendering.Service) (ImageService, error) {
-	// If screenshots are disabled then return the ScreenshotUnavailableService
-	if !cfg.UnifiedAlerting.Screenshots.Capture {
-		return &ScreenshotImageService{
-			screenshots: &screenshot.ScreenshotUnavailableService{},
-		}, nil
+func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds dashboards.DashboardService,
+	rs rendering.Service, r prometheus.Registerer) (ImageService, error) {
+	var (
+		s screenshot.ScreenshotService
+		u *UploadingService
+	)
+
+	// If screenshots are enabled
+	if cfg.UnifiedAlerting.Screenshots.Capture {
+		s = screenshot.NewManagedScreenshotService(
+			screenshot.NewHeadlessCaptureService(ds, rs),
+			screenshot.NewSingleFlight(),
+			screenshot.NewFixedTokenBucket(cfg.UnifiedAlerting.Screenshots.MaxConcurrentScreenshots),
+			screenshot.NewInmemCacheService(screenshotCacheTTL, r),
+			r)
+
+		// Image uploading is an optional feature
+		if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
+			m, err := imguploader.NewImageUploader()
+			if err != nil {
+				return nil, fmt.Errorf("failed to initialize uploading screenshot service: %w", err)
+			}
+			u = NewUploadingService(m, r)
+		}
+	} else {
+		s = &screenshot.ScreenshotUnavailableService{}
 	}
 
-	// Image uploading is an optional feature of screenshots
-	s := screenshot.NewRemoteRenderScreenshotService(ds, rs)
-	if cfg.UnifiedAlerting.Screenshots.UploadExternalImageStorage {
-		u, err := imguploader.NewImageUploader()
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize uploading screenshot service: %w", err)
-		}
-		s = screenshot.NewUploadingScreenshotService(metrics, s, u)
-	}
-	s = screenshot.NewRateLimitScreenshotService(s, cfg.UnifiedAlerting.Screenshots.MaxConcurrentScreenshots)
-	s = screenshot.NewSingleFlightScreenshotService(s)
-	s = screenshot.NewCachableScreenshotService(metrics, screenshotCacheTTL, s)
-	s = screenshot.NewObservableScreenshotService(metrics, s)
-	return &ScreenshotImageService{
-		store:       db,
-		screenshots: s,
-	}, nil
+	return NewScreenshotImageService(cfg.Logger, s, db, u), nil
 }
 
 // NewImage returns a screenshot of the alert rule or an error.
@@ -121,18 +134,19 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *ngmodels.Alert
 		PanelID:      *r.PanelID,
 	})
 	if err != nil {
-		// TODO: Check for screenshot upload failures. These images should still be
-		// stored because we have a local disk path that could be useful.
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return nil, ErrNoDashboard
 		}
 		return nil, err
 	}
 
-	v := ngmodels.Image{
-		Path: screenshot.Path,
-		URL:  screenshot.URL,
+	v := ngmodels.Image{Path: screenshot.Path}
+	if s.uploads != nil {
+		if v, err = s.uploads.Upload(ctx, v); err != nil {
+			s.logger.Warn("failed to upload image", "path", v.Path, "err", err)
+		}
 	}
+
 	if err := s.store.SaveImage(ctx, &v); err != nil {
 		return nil, fmt.Errorf("failed to save image: %w", err)
 	}
