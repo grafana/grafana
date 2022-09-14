@@ -113,7 +113,7 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
         ],
       },
       {
-        name: 'Query on value inside log line',
+        name: 'Query on value inside a log line',
         type: LokiQueryPatternType.Metric,
         // sum(sum_over_time({ | logfmt | __error__=`` | unwrap | __error__=`` [$__interval]))
         operations: [
