@@ -23,9 +23,6 @@ exports[`no enzyme tests`] = {
     "packages/grafana-ui/src/slate-plugins/suggestions.test.tsx:2682912140": [
       [0, 18, 13, "RegExp match", "2409514259"]
     ],
-    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/Scrubber.test.js:4256741694": [
-      [14, 19, 13, "RegExp match", "2409514259"]
-    ],
     "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/TickLabels.test.js:2931161174": [
       [14, 19, 13, "RegExp match", "2409514259"]
     ],
@@ -2724,10 +2721,6 @@ exports[`better eslint`] = {
     ],
     "public/app/core/components/RolePicker/RolePickerMenu.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/core/components/Select/FolderPicker.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/core/components/Select/MetricSelect.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
