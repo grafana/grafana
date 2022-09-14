@@ -4,14 +4,16 @@ aliases:
   - /docs/grafana/latest/alerting/metrics/
   - /docs/grafana/latest/alerting/unified-alerting/fundamentals/
 title: Alerting fundamentals
-weight: 110
+weight: 105
 ---
 
-# Alerting fundamentals
+# Explore Grafana Alerting
 
-This section includes the following fundamental concepts of Grafana Alerting:
+Whether you're starting or expanding your implementation of Grafana Alerting, learn more about the key concepts and available features that help you create, manage, and take action on your alerts and improve your team’s ability to resolve issues quickly.
 
-- [Annotations and labels for alerting rules]({{< relref "annotation-label/" >}})
-- [Alertmanager]({{< relref "alertmanager/" >}})
-- [State and health of alerting rules]({{< relref "state-and-health/" >}})
-- [Evaluating Grafana managed alerts]({{< relref "evaluate-grafana-alerts/" >}})
+- [Data sources](https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/)
+- [Alert rules](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/)
+- [Alerting on numeric data](https://grafana.com/docs/grafana/latest/alerting/fundamentals/evaluate-grafana-alerts/)
+- [Alertmanager](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alertmanager/)
+- [Annotations and labels for alerting rules](https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/)
+- [State and health of alerting rules](https://grafana.com/docs/grafana/latest/alerting/fundamentals/state-and-health/)
