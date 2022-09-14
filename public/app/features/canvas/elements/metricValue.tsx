@@ -108,7 +108,7 @@ export const metricValueItem: CanvasElementItem<TextBoxConfig, TextBoxData> = {
   display: MetricValueDisplay,
 
   defaultSize: {
-    width: 300,
+    width: 260,
     height: 50,
   },
 
