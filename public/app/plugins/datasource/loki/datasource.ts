@@ -46,10 +46,10 @@ import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import LanguageProvider from './LanguageProvider';
+import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { escapeLabelValueInSelector } from './language_utils';
-import { LiveStreams, LokiLiveTarget } from './live_streams';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
