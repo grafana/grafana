@@ -22,7 +22,7 @@ export function AppChrome({ children }: Props) {
   const chromeless = state.chromeless || state.kioskMode != null;
 
   if (!config.featureToggles.topnav) {
-    return <main className={cx('main-view', chromeless && 'main-view--chromeless')}>{children}</main>;
+    return <main className="main-view">{children}</main>;
   }
 
   const contentClass = cx({
