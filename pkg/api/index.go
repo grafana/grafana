@@ -173,6 +173,7 @@ func (hs *HTTPServer) ReqCanAdminTeams(c *models.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin || (hs.Cfg.EditorsCanAdmin && c.OrgRole == org.RoleEditor)
 }
 
+//nolint:gocyclo
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) ([]*dtos.NavLink, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	var navTree []*dtos.NavLink

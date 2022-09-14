@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -183,7 +184,7 @@ func (d *PublicDashboardStoreImpl) SavePublicDashboardConfig(ctx context.Context
 // updates existing public dashboard configuration
 func (d *PublicDashboardStoreImpl) UpdatePublicDashboardConfig(ctx context.Context, cmd SavePublicDashboardConfigCommand) error {
 	err := d.sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		timeSettingsJSON, err := cmd.PublicDashboard.TimeSettings.MarshalJSON()
+		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
 		if err != nil {
 			return err
 		}
