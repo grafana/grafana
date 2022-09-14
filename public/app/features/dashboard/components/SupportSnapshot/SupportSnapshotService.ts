@@ -128,7 +128,6 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
   };
 
   subscribeToIframeLoadingMessage() {
-    console.log('subscribeToIframeLoadingMessage');
     const handleEvent = (evt: MessageEvent<string>) => {
       if (evt.data === 'GrafanaAppInit') {
         setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: this.state.snapshot });
@@ -138,7 +137,6 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
     window.addEventListener('message', handleEvent, false);
 
     return function cleanup() {
-      console.log('unsub');
       window.removeEventListener('message', handleEvent);
     };
   }
