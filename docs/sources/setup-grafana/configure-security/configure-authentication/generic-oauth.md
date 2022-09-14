@@ -21,9 +21,8 @@ You can configure many different OAuth2 authentication services with Grafana usi
   - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
   - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
   - [Set up OAuth2 with OneLogin](#set-up-oauth2-with-onelogin)
-  - [JMESPath examples](#jmespath-examples)
-    - [Role mapping](#role-mapping)
-    - [Groups mapping](#groups-mapping)
+  - [Role mapping](#role-mapping)
+  - [Team synchronization](#team-synchronization)
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
@@ -257,6 +256,8 @@ It denies user access if no role or an invalid role is returned.
 
 ### JMESPath examples
 
+#### Map user organization role
+
 To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
 
 **Basic example:**
@@ -327,7 +328,7 @@ Example:
 role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
-### Groups mapping
+## Team synchronization
 
 > Available in Grafana Enterprise v8.1 and later versions.
 
