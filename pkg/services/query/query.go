@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -23,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
