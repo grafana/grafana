@@ -242,8 +242,8 @@ Grafana checks for the presence of a role using the [JMESPath](http://jmespath.o
 For more information, refer to the [JMESPath examples](#jmespath-examples).
 
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
-> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles, enable the
-> `oauth_skip_org_role_update_sync` option.
+> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+> enable the `oauth_skip_org_role_update_sync` option.
 > See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
