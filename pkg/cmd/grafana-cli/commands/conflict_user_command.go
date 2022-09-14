@@ -19,16 +19,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/urfave/cli/v2"
 )
 
-func getSqlStore(context *cli.Context) (*sqlstore.SQLStore, error) {
-	cmd := &utils.ContextCommandLine{Context: context}
-	cfg, err := initCfg(cmd)
-	cfg.Logger = nil
+func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
+	configOptions := strings.Split(cmd.String("configOverrides"), " ")
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   cmd.ConfigFile(),
+		HomePath: cmd.HomePath(),
+		Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
+	})
+
 	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "failed to load configuration", err)
+		return nil, err
 	}
+
+	return cfg, nil
+}
+
+func getSqlStore(context *cli.Context, cfg *setting.Cfg) (*sqlstore.SQLStore, error) {
 	tracer, err := tracing.ProvideService(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
@@ -39,7 +49,13 @@ func getSqlStore(context *cli.Context) (*sqlstore.SQLStore, error) {
 
 func runListConflictUsers() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
-		s, err := getSqlStore(context)
+		cmd := &utils.ContextCommandLine{Context: context}
+		cfg, err := initConflictCfg(cmd)
+		cfg.Logger = nil
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+		}
+		s, err := getSqlStore(context, cfg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get to sql", err)
 		}
@@ -54,7 +70,7 @@ func runListConflictUsers() func(context *cli.Context) error {
 		whiteBold := color.New(color.FgWhite).Add(color.Bold)
 		resolver := ConflictResolver{}
 		resolver.BuildConflictBlocks(conflicts, whiteBold.Sprintf)
-		logger.Infof("\n\nShowing Conflicts\n\n")
+		logger.Infof("\n\nShowing conflicts\n\n")
 		logger.Infof(resolver.ToStringPresentation())
 		logger.Infof("\n")
 		// TODO: remove line when finished
@@ -68,7 +84,13 @@ func runListConflictUsers() func(context *cli.Context) error {
 
 func runGenerateConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
-		s, err := getSqlStore(context)
+		cmd := &utils.ContextCommandLine{Context: context}
+		cfg, err := initConflictCfg(cmd)
+		cfg.Logger = nil
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+		}
+		s, err := getSqlStore(context, cfg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get to sql", err)
 		}
@@ -99,6 +121,11 @@ func runGenerateConflictUsersFile() func(context *cli.Context) error {
 func runValidateConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
+		cfg, err := initConflictCfg(cmd)
+		cfg.Logger = nil
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+		}
 		arg := cmd.Args().First()
 		if arg == "" {
 			return errors.New("please specify a absolute path to file to read from")
@@ -108,7 +135,7 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 			return fmt.Errorf("could not read file with error %s", err)
 		}
 		// validation
-		s, err := getSqlStore(context)
+		s, err := getSqlStore(context, cfg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get to sql", err)
 		}
@@ -134,12 +161,18 @@ func runValidateConflictUsersFile() func(context *cli.Context) error {
 func runIngestConflictUsersFile() func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
+
 		arg := cmd.Args().First()
 		if arg == "" {
 			return errors.New("please specify a absolute path to file to read from")
 		}
 
-		s, err := getSqlStore(context)
+		cfg, err := initConflictCfg(cmd)
+		cfg.Logger = nil
+		if err != nil {
+			return fmt.Errorf("%v: %w", "failed to load configuration", err)
+		}
+		s, err := getSqlStore(context, cfg)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to get to sql", err)
 		}
@@ -147,7 +180,7 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("%v: %w", "grafana error: sql error to get users with conflicts, abandoning validation", err)
 		}
-		resolver := ConflictResolver{Users: conflicts}
+		resolver := ConflictResolver{}
 		resolver.BuildConflictBlocks(conflicts, fmt.Sprintf)
 		b, err := os.ReadFile(arg)
 		if err != nil {
@@ -159,11 +192,19 @@ func runIngestConflictUsersFile() func(context *cli.Context) error {
 		}
 		// should we rebuild blocks here?
 		// kind of a weird thing maybe?
-		err = mergeUsers(context, &resolver)
-		if err != nil {
-			return fmt.Errorf("not able to merge")
+		if len(resolver.ValidUsers) == 0 {
+			return fmt.Errorf("no users")
 		}
-		return fmt.Errorf("not implemented")
+		resolver.showChanges()
+		if !confirm("\n\nWe encourage users to create a db backup before running this command. \n Proceed with operation?") {
+			return fmt.Errorf("user cancelled")
+		}
+		err = resolver.MergeConflictingUsers(context.Context, s)
+		if err != nil {
+			return fmt.Errorf("not able to merge with %e", err)
+		}
+		logger.Info("\n\nconflicts merged.\n")
+		return nil
 	}
 }
 
@@ -176,22 +217,6 @@ func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
 		return nil, err
 	}
 	return tmpFile, nil
-}
-
-func mergeUsers(context *cli.Context, r *ConflictResolver) error {
-	if len(r.ValidUsers) == 0 {
-		return fmt.Errorf("no users")
-	}
-	// need to validate input again, just because
-	sqlStore, err := getSqlStore(context)
-	if err != nil {
-		return fmt.Errorf("not able to get sqlstore for merging users with: %w", err)
-	}
-	r.Users.showChanges()
-	if !confirm() {
-		return fmt.Errorf("user cancelled")
-	}
-	return r.MergeConflictingUsers(context.Context, sqlStore)
 }
 
 func getValidConflictUsers(r *ConflictResolver, b []byte) error {
@@ -276,22 +301,56 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 	return nil
 }
 
-func (c *ConflictingUsers) showChanges() {
+func (r *ConflictResolver) showChanges() {
+	if len(r.ValidUsers) == 0 {
+		fmt.Printf("no changes will take place as we have no valid users to merge.\n")
+		return
+	}
 	// TODO:
 	// use something like
 	// diff --git a/pkg/cmd/grafana-cli/commands/commands.go b/pkg/cmd/grafana-cli/commands/commands.go
-	logger.Info("show changes should be implemented\n")
+	/*
+		hej@test.com+hej@test.com
+		all of the permissions, roles and ownership will be transferred to the user.
+		+ id: 1, email: hej@test.com, login: hej@test.com
+		these user(s) will be deleted and their permissions transferred.
+		- id: 2, email: HEJ@TEST.COM, login: HEJ@TEST.COM
+		- id: 3, email: hej@TEST.com, login: hej@TEST.com
+	*/
+	startOfBlock := make(map[string]bool)
+	startOfEndBlock := make(map[string]bool)
+	fileString := ""
+	for block, users := range r.Blocks {
+		if _, ok := r.DiscardedBlocks[block]; ok {
+			// skip block
+			continue
+		}
+		for _, user := range users {
+			if !startOfBlock[block] {
+				fileString += fmt.Sprintf("IDENTIFIED user conflict\n", block)
+				fileString += fmt.Sprintf("%s\n", block)
+				fileString += fmt.Sprintf("The permissions, roles and ownership will be transferred to the user below.\n")
+				fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+				fileString += fmt.Sprintf("\n")
+				startOfBlock[block] = true
+				continue
+			}
+			// mergable users
+			if !startOfEndBlock[block] {
+				fileString += fmt.Sprintf("The following user(s) will be deleted and their permissions transferred.\n")
+				startOfEndBlock[block] = true
+			}
+			fileString += fmt.Sprintf("id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+		}
+		fileString += fmt.Sprintf("\n\n")
+	}
+	logger.Info("Changes that will take place\n\n")
+	logger.Infof(fileString)
 }
 
 // Formatter make it possible for us to write to terminal and to a file
 // with different formats depending on the usecase
 type Formatter func(format string, a ...interface{}) string
-
-func BoldFormatter(format string, a ...interface{}) string {
-	white := color.New(color.FgWhite)
-	whiteBold := white.Add(color.Bold)
-	return whiteBold.Sprintf(format, a...)
-}
 
 func shouldDiscardBlock(seenUsersInBlock map[string]string, block string, user ConflictingUser) bool {
 	// loop through users to see if we should skip this block
@@ -401,17 +460,18 @@ func (r *ConflictResolver) ToStringPresentation() string {
 			if !startOfBlock[block] {
 				fileString += fmt.Sprintf("%s\n", block)
 				startOfBlock[block] = true
-				fileString += fmt.Sprintf("+ id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+				fileString += fmt.Sprintf("+ id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
 				continue
 			}
 			// mergable users
-			fileString += fmt.Sprintf("- id: %s, email: %s, login: %s\n", user.Id, user.Email, user.Login)
+			fileString += fmt.Sprintf("- id: %s, email: %s, login: %s, last_seen_at: %s, auth_module: %s\n", user.Id, user.Email, user.Login, user.LastSeenAt, user.AuthModule)
 		}
 	}
 	return fileString
 }
 
 type ConflictResolver struct {
+	Config          *setting.Cfg
 	Users           ConflictingUsers
 	ValidUsers      ConflictingUsers
 	Blocks          map[string]ConflictingUsers
@@ -566,13 +626,14 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 				// update intoUserId email and log
 
 				// update all tables fromUserIds to intoUserIds
-				err := updateUserIds(intoUser, fromUser, sess)
-				if err != nil {
-					return fmt.Errorf("error during updating userIds: %w", err)
+				for _, sql := range userUpdates() {
+					_, err := sess.Exec(sql, intoUser.ID, fromUser.ID)
+					if err != nil {
+						return fmt.Errorf("error during updating userIds: %w", err)
+					}
 				}
 
 				// deletes the from user
-
 				// TODO: make test verify that before deleting a user, we make sure that that reference is not present in any tables
 				delErr := ss.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
 				if delErr != nil {
@@ -592,62 +653,20 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context, ss *sqlsto
 	return nil
 }
 
-func updateUserIds(intoUser user.User, fromUser user.User, sess *sqlstore.DBSession) error {
-	// TODO:
-	/*
-		tables that have user_id references
+func userUpdates() []string {
+	updates := []string{
+		"UPDATE star set user_id = ? WHERE user_id = ?",
+		// commented out as their is a unique constraint on the table for user id
+		// "UPDATE org_user set user_id ? WHERE user_id = ?",
 
-			tbl_name |
-			--- |
-			temp_user |
-			star |
-			org_user |
-			dashboard_snapshot |
-			quota |
-			preferences |
-			annotation |
-			team_member |
-			dashboard_acl |
-			user_auth |
-			user_auth_token |
-			user_role |
-			query_history_star |
-
-			tables take using this query
-			```sql
-			select tbl_name, sql from sqlite_master where sql like '%CREATE TABLE%%user_id%'
-			and type = 'table';
-			```
-	*/
-	// -------------- approach 1 ---------
-	// ONE sql to rule them all
-
-	// approach taken from https://stackoverflow.com/a/32082037
-	// namedParameters := func(format string, args ...string) string {
-	// 	r := strings.NewReplacer(args...)
-	// 	return r.Replace(format)
-	// }
-	// innerJoinSql := namedParameters(`UPDATE user
-	// INNER JOIN team_member ON team_member.user_id = u.id
-	// INNER JOIN org_user ON org_user.user_id = u.id
-	// SET team_member.user_id = {intoUserID},
-	// org_user.user_id = {intoUserID}
-	// WHERE user.id = {fromUserID};`,
-	// 	"{intoUserID}", fmt.Sprintf("%d", intoUser.ID), "{fromUserID}", fmt.Sprintf("%d", fromUser.ID))
-
-	// -------------- approach 2 ---------
-	// updates for each table, will have multiple updates in one sql query
-	//
-	//
-	_, err := sess.Table("team_member").ID(fromUser.ID).Update(map[string]interface{}{"user_id": intoUser.ID})
-	if err != nil {
-		return err
+		"UPDATE dashboard_acl set user_id = ? WHERE user_id = ?",
+		"UPDATE preferences set user_id = ? WHERE user_id = ?",
+		"UPDATE team_member set user_id = ? WHERE user_id = ?",
+		"UPDATE user_auth set user_id = ? WHERE user_id = ?",
+		"UPDATE user_auth_token set user_id = ? WHERE user_id = ?",
+		"UPDATE quota set user_id = ? WHERE user_id = ?",
 	}
-	_, err = sess.Table("org_user").ID(fromUser.ID).Update(map[string]interface{}{"user_id": intoUser.ID})
-	if err != nil {
-		return err
-	}
-	return nil
+	return updates
 }
 
 func notServiceAccount(ss *sqlstore.SQLStore) string {
@@ -657,9 +676,9 @@ func notServiceAccount(ss *sqlstore.SQLStore) string {
 
 // confirm function asks for user input
 // returns bool
-func confirm() bool {
+func confirm(confirmPrompt string) bool {
 	var input string
-	logger.Infof("Do you want to continue with this operation? [y|n]: ")
+	logger.Infof("%s? [y|n]: ", confirmPrompt)
 
 	_, err := fmt.Scanln(&input)
 	if err != nil {
