@@ -156,7 +156,7 @@ def get_steps(edition, ver_mode):
     publish_steps = []
     should_publish = ver_mode == 'release'
     should_upload = should_publish or ver_mode in ('release-branch',)
-    include_enterprise2 = edition == 'enterprise'
+    include_enterprise = edition == 'enterprise'
     edition2 = 'enterprise2'
     init_steps = [
         identify_runner_step(),
@@ -189,7 +189,7 @@ def get_steps(edition, ver_mode):
         mysql_integration_tests_step(edition=edition, ver_mode=ver_mode),
     ]
 
-    if include_enterprise2:
+    if include_enterprise:
         test_steps.extend([
             lint_backend_step(edition=edition2),
             test_backend_step(edition=edition2),
@@ -200,7 +200,7 @@ def get_steps(edition, ver_mode):
 
     # Insert remaining steps
     build_steps.extend([
-        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise2),
+        package_step(edition=edition, ver_mode=ver_mode, include_enterprise2=include_enterprise),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=True),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=True),
@@ -232,9 +232,9 @@ def get_steps(edition, ver_mode):
             publish_steps.append(store_npm_step)
     windows_package_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
-    if include_enterprise2:
+    if include_enterprise:
         publish_steps.extend([
-            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise2, variants=['linux-amd64']),
+            package_step(edition=edition2, ver_mode=ver_mode, include_enterprise2=include_enterprise, variants=['linux-amd64']),
             upload_cdn_step(edition=edition2, ver_mode=ver_mode),
         ])
         if should_upload:
