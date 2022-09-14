@@ -1,17 +1,15 @@
 import { css } from '@emotion/css';
-import { max, noop } from 'lodash';
+import { noop } from 'lodash';
 import React, { FC, useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, DataQuery, DataSourceInstanceSettings, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Icon, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
-import { isGrafanaAlertState } from '../../../../../types/unified-alerting-dto';
-import { AlertStateTag } from '../rules/AlertStateTag';
-
+import { CloudAlertPreview } from './CloudAlertPreview';
 import { usePreview } from './PreviewRule';
 
 export interface ExpressionEditorProps {
@@ -90,105 +88,19 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
             )}
           </Alert>
         )}
-        {previewHasAlerts &&
-          previewSeries.map(({ fields }, index) => {
-            const labelFields = fields.filter((field) => !['State', 'Info'].includes(field.name));
-            const stateFieldIndex = fields.findIndex((field) => field.name === 'State');
-            const infoFieldIndex = fields.findIndex((field) => field.name === 'Info');
-
-            const labelIndexes = labelFields.map((labelField) => fields.indexOf(labelField));
-
-            const maxValues = max(fields.map((f) => f.values.length)) ?? 0;
-
-            return (
-              <table key={index} className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>State</th>
-                    <th>Labels</th>
-                    <th>Info</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: maxValues }, (v, i) => i).map((index) => {
-                    const labelValues = labelIndexes.map((labelIndex) => [
-                      fields[labelIndex].name,
-                      fields[labelIndex].values.get(index),
-                    ]);
-                    const state = fields[stateFieldIndex].values.get(index);
-                    const info = fields[infoFieldIndex].values.get(index);
-
-                    return (
-                      <tr key={index}>
-                        <td>{isGrafanaAlertState(state) && <AlertStateTag state={state} />}</td>
-                        <td>
-                          <TagList tags={labelValues.map(([key, value]) => `${key}=${value}`)} />
-                        </td>
-                        <td>
-                          <Tooltip content={info}>
-                            <Icon name="info-circle" />
-                          </Tooltip>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            );
-          })}
+        {previewHasAlerts && <CloudAlertPreview previewSeries={previewSeries} />}
       </div>
     </>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    width: 100%;
-
-    td,
-    th {
-      padding: ${theme.spacing(1, 0)};
-    }
-
-    td + td,
-    th + th {
-      padding-left: ${theme.spacing(1)};
-    }
-
-    thead th:nth-child(1) {
-      width: 80px;
-    }
-
-    thead th:nth-child(2) {
-      width: auto;
-    }
-
-    thead th:nth-child(3) {
-      width: 40px;
-    }
-
-    td:nth-child(3) {
-      text-align: center;
-    }
-
-    tbody tr:nth-child(2n + 1) {
-      background-color: ${theme.colors.background.secondary};
-    }
-  `,
   preview: css`
     padding: ${theme.spacing(2, 0)};
     max-width: ${theme.breakpoints.values.md}px;
   `,
   previewAlert: css`
     margin: ${theme.spacing(1, 0)};
-  `,
-  previewGrid: css`
-    margin: ${theme.spacing(2, 0)};
-    display: grid;
-    gap: ${theme.spacing(2)};
-    justify-content: flex-start;
-    align-items: center;
-    grid-template-columns: min-content 1fr min-content;
   `,
 });
 
