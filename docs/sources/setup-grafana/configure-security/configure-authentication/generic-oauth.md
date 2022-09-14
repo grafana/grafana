@@ -80,12 +80,6 @@ Grafana determines a user's email address by querying the OAuth provider until i
 1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
 1. If no email address is found in steps (1-4), then the email address of the user is set to an empty string.
 
-### Roles
-
-Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to the `id_token` first. If there is no match, then the UserInfo endpoint specified via the `api_url` configuration option is tried next. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
-
-For more information, refer to the [JMESPath examples](#jmespath-examples).
-
 ### Groups / Teams
 
 Similarly, group mappings are made using [JMESPath](http://jmespath.org/examples.html) with the `groups_attribute_path` configuration option. The `id_token` is attempted first, followed by the UserInfo from the `api_url`. The result of the JMESPath expression should be a string array of groups.
@@ -241,13 +235,29 @@ allowed_organizations =
    allowed_organizations =
    ```
 
-## JMESPath examples
+## Role Mapping
+
+Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to the `id_token` first. If there is no match, then the UserInfo endpoint specified via the `api_url` configuration option is tried next. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
+
+For more information, refer to the [JMESPath examples](#jmespath-examples).
+
+> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
+> update the user's organization role. This is going to change in Grafana 10. To keep 9.x behavior, enable the
+> `oauth_skip_org_role_update_sync` option.
+> See [configure-grafana]({{< relref "../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+
+On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
+specified by [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+It denies user access if no role or an invalid role is returned.
+
+> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+> then the user is assigned the role specified by
+> [the `auto_assign_org_role` option]({{< relref "../../configure-grafana#auto_assign_org_role" >}}).
+
+### JMESPath examples
 
 To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
-
-### Role mapping
-
-If  the`role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
 **Basic example:**
 
