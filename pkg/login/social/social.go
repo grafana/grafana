@@ -347,7 +347,7 @@ func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
 
 	if legacy {
 		s.log.Warn("No valid role found. Skipping role sync. " +
-			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment." +
+			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
 			"If role sync is not desired, set oauth_skip_org_role_update_sync to false")
 	}
 
