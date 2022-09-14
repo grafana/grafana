@@ -2,8 +2,7 @@ import saveAs from 'file-saver';
 
 import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneObjectBase } from 'app/features/scenes/core/SceneObjectBase';
-import { SceneObjectStatePlain } from 'app/features/scenes/core/types';
+import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 import { PanelModel } from '../../state';
@@ -12,7 +11,7 @@ import { setDashboardToFetchFromLocalStorage } from '../../state/initDashboard';
 import { Randomize } from './randomizer';
 import { getDebugDashboard, getGithubMarkdown } from './utils';
 
-interface SupportSnapshotState extends SceneObjectStatePlain {
+interface SupportSnapshotState {
   currentTab: SnapshotTab;
   showMessage: ShowMessage;
   options: Array<SelectableValue<ShowMessage>>;
@@ -41,7 +40,7 @@ export enum ShowMessage {
   GithubComment = 'github',
 }
 
-export class SupportSnapshotService extends SceneObjectBase<SupportSnapshotState> {
+export class SupportSnapshotService extends StateManagerBase<SupportSnapshotState> {
   constructor(panel: PanelModel) {
     super({
       panel,
